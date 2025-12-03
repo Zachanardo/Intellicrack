@@ -70,9 +70,16 @@ class IntellicrackMainWindow(QMainWindow):
         self.binary_path: str | None = None
         self.analyze_results: list[str] = []
         self.binary_info: dict[str, Any] | None = None
+        self.vulnerability_engine: AdvancedVulnerabilityEngine | None = None
+        self.binary_analyzer: MultiFormatBinaryAnalyzer | None = None
+        self.ai_assistant: IntellicrackAIAssistant | None = None
+        self.analysis_orchestrator: AnalysisResultOrchestrator | None = None
+        self.llm_handler: LLMHandler | None = None
+        self.script_handler: ScriptGenerationHandler | None = None
+        self.report_handler: ReportGenerationHandler | None = None
 
         # Component status tracking
-        self.component_status = {
+        self.component_status: dict[str, dict[str, bool | str | None]] = {
             "vulnerability_engine": {"enabled": False, "error": None},
             "binary_analyzer": {"enabled": False, "error": None},
             "ai_assistant": {"enabled": False, "error": None},
@@ -178,16 +185,33 @@ class IntellicrackMainWindow(QMainWindow):
         """Set up the main user interface."""
         # ...
 
+    def _setup_signals(self) -> None:
+        """Set up signal connections for the main window."""
+        pass
+
+    def _setup_status_bar(self) -> None:
+        """Set up the status bar for the main window."""
+        pass
+
+    def _setup_menu_bar(self) -> None:
+        """Set up the menu bar for the main window."""
+        pass
+
+    def _apply_initial_settings(self) -> None:
+        """Apply initial settings to the main window."""
+        pass
+
+    def _update_ui_for_disabled_components(self) -> None:
+        """Update UI based on disabled components."""
+        pass
+
     def _browse_for_file(self) -> None:
         """Browse for a binary file to analyze."""
-        dialog_options = QFileDialog.Options()
-        dialog_options |= QFileDialog.ReadOnly
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary for Analysis",
-            CONFIG.get("default_binary_directory", str(Path.cwd())),
+            str(CONFIG.get("default_binary_directory", str(Path.cwd()))),
             "Executable Files (*.exe *.dll *.bin);;All Files (*)",
-            options=dialog_options,
         )
 
         if file_path:

@@ -365,7 +365,12 @@ except ImportError as e:
                 self._parse()
 
         def _parse(self) -> None:
-            """Parse PE file structure."""
+            """Parse PE file structure.
+
+            Raises:
+                PEFormatError: If PE file format is invalid.
+
+            """
             # Parse DOS header
             if len(self.__data__) < 64:
                 raise PEFormatError("File too small to be PE")
@@ -1028,7 +1033,12 @@ except ImportError as e:
             self.__data__ = None
 
         def __str__(self) -> str:
-            """Return string representation."""
+            """Return string representation.
+
+            Returns:
+                str: String representation of the PE object.
+
+            """
             return f"PE({self.name})"
 
     # Assign main class

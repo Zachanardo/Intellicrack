@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import asyncio
 import http.server
 import json
@@ -25,10 +27,13 @@ import socketserver
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Awaitable, Callable
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 
 """
@@ -38,6 +43,10 @@ This module provides a centralized abstraction layer for aiohttp imports.
 When aiohttp is not available, it provides REAL, functional Python-based
 implementations for async HTTP operations used in Intellicrack.
 """
+
+# Module-level type declarations
+HAS_AIOHTTP: bool = False
+AIOHTTP_VERSION: str | None = None
 
 # AioHTTP availability detection and import handling
 try:
@@ -60,26 +69,25 @@ try:
 except ImportError as e:
     logger.error("AioHTTP not available, using fallback implementations: %s", e)
     HAS_AIOHTTP = False
-    AIOHTTP_VERSION = None
 
     # Production-ready fallback async HTTP implementations
 
     # Exception classes
-    class ClientError(Exception):
+    class _FallbackClientError(Exception):
         """Base aiohttp client error."""
 
-    class ClientConnectorError(ClientError):
+    class _FallbackClientConnectorError(_FallbackClientError):
         """Connection error."""
 
-    class ServerTimeoutError(ClientError):
+    class _FallbackServerTimeoutError(_FallbackClientError):
         """Server timeout error."""
 
     # Response class
-    class ClientResponse:
+    class _FallbackClientResponse:
         """Async HTTP response."""
 
         def __init__(
-            self: "ClientResponse",
+            self: _FallbackClientResponse,
             url: str,
             status: int = 200,
             headers: dict[str, str] | None = None,
@@ -101,7 +109,7 @@ except ImportError as e:
             self.reason: str = "OK" if status < 400 else "Error"
             self.cookies: dict[str, str] = {}
 
-        async def text(self: "ClientResponse", encoding: str = "utf-8") -> str:
+        async def text(self: _FallbackClientResponse, encoding: str = "utf-8") -> str:
             """Get response text.
 
             Args:
@@ -113,7 +121,7 @@ except ImportError as e:
             """
             return self._content.decode(encoding)
 
-        async def json(self: "ClientResponse", encoding: str = "utf-8") -> object:
+        async def json(self: _FallbackClientResponse, encoding: str = "utf-8") -> object:
             """Parse JSON response.
 
             Args:
@@ -126,7 +134,7 @@ except ImportError as e:
             text = await self.text(encoding)
             return json.loads(text)
 
-        async def read(self: "ClientResponse") -> bytes:
+        async def read(self: _FallbackClientResponse) -> bytes:
             """Read response content.
 
             Returns:
@@ -135,18 +143,18 @@ except ImportError as e:
             """
             return self._content
 
-        def raise_for_status(self: "ClientResponse") -> None:
+        def raise_for_status(self: _FallbackClientResponse) -> None:
             """Raise exception for bad status.
 
             Raises:
-                ClientError: If status code indicates an error (400-599).
+                _FallbackClientError: If status code indicates an error (400-599).
 
             """
             if 400 <= self.status < 600:
-                raise ClientError(f"{self.status} Error: {self.reason}")
+                raise _FallbackClientError(f"{self.status} Error: {self.reason}")
 
         @property
-        def ok(self: "ClientResponse") -> bool:
+        def ok(self: _FallbackClientResponse) -> bool:
             """Check if response is successful.
 
             Returns:
@@ -155,7 +163,7 @@ except ImportError as e:
             """
             return self.status < 400
 
-        async def __aenter__(self: "ClientResponse") -> "ClientResponse":
+        async def __aenter__(self: _FallbackClientResponse) -> _FallbackClientResponse:
             """Async context manager entry.
 
             Returns:
@@ -165,7 +173,7 @@ except ImportError as e:
             return self
 
         async def __aexit__(
-            self: "ClientResponse",
+            self: _FallbackClientResponse,
             *args: object,
         ) -> None:
             """Async context manager exit.
@@ -176,11 +184,11 @@ except ImportError as e:
             """
 
     # Timeout configuration
-    class ClientTimeout:
+    class _FallbackClientTimeout:
         """Client timeout configuration."""
 
         def __init__(
-            self: "ClientTimeout",
+            self: _FallbackClientTimeout,
             total: int | None = None,
             connect: int | None = None,
             sock_connect: int | None = None,
@@ -201,11 +209,11 @@ except ImportError as e:
             self.sock_read: int | None = sock_read
 
     # Connector class
-    class TCPConnector:
+    class _FallbackTCPConnector:
         """TCP connector for connection pooling."""
 
         def __init__(
-            self: "TCPConnector",
+            self: _FallbackTCPConnector,
             limit: int = 100,
             limit_per_host: int = 30,
             ttl_dns_cache: int = 10,
@@ -232,18 +240,18 @@ except ImportError as e:
             self.ssl: bool = ssl
             self._closed: bool = False
 
-        async def close(self: "TCPConnector") -> None:
+        async def close(self: _FallbackTCPConnector) -> None:
             """Close connector."""
             self._closed = True
 
     # Session class
-    class ClientSession:
+    class _FallbackClientSession:
         """Async HTTP session."""
 
         def __init__(
-            self: "ClientSession",
-            connector: Optional["TCPConnector"] = None,
-            timeout: Optional["ClientTimeout"] = None,
+            self: _FallbackClientSession,
+            connector: _FallbackTCPConnector | None = None,
+            timeout: _FallbackClientTimeout | None = None,
             headers: dict[str, str] | None = None,
             cookies: dict[str, str] | None = None,
             auth: tuple[str, str] | None = None,
@@ -260,8 +268,8 @@ except ImportError as e:
                 json_serialize: Function to serialize JSON.
 
             """
-            self.connector: TCPConnector = connector or TCPConnector()
-            self.timeout: ClientTimeout = timeout or ClientTimeout()
+            self.connector: _FallbackTCPConnector = connector or _FallbackTCPConnector()
+            self.timeout: _FallbackClientTimeout = timeout or _FallbackClientTimeout()
             self.headers: dict[str, str] = headers or {}
             self.cookies: dict[str, str] = cookies or {}
             self.auth: tuple[str, str] | None = auth
@@ -269,11 +277,11 @@ except ImportError as e:
             self._closed: bool = False
 
         async def request(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             method: str,
             url: str,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send async HTTP request.
 
             Args:
@@ -282,26 +290,29 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                ClientResponse object.
+                _FallbackClientResponse: ClientResponse object.
 
             Raises:
-                ServerTimeoutError: If request times out.
-                ClientConnectorError: If connection fails.
-                ClientError: If request fails.
+                _FallbackServerTimeoutError: If request times out.
+                _FallbackClientConnectorError: If connection fails.
+                _FallbackClientError: If request fails.
 
             """
             # Extract parameters
-            params: dict[str, object] | None = kwargs.get("params")
+            params_obj = kwargs.get("params")
+            params: dict[str, object] | None = params_obj if isinstance(params_obj, dict) else None
             data: object | None = kwargs.get("data")
             json_data: object | None = kwargs.get("json")
-            headers: dict[str, str] = kwargs.get("headers", {})
-            timeout: ClientTimeout = kwargs.get("timeout", self.timeout)
+            headers_obj = kwargs.get("headers", {})
+            headers: dict[str, str] = headers_obj if isinstance(headers_obj, dict) else {}
+            timeout_obj = kwargs.get("timeout", self.timeout)
+            timeout: _FallbackClientTimeout = timeout_obj if isinstance(timeout_obj, _FallbackClientTimeout) else self.timeout
 
             # Build URL with params
             if params:
                 parsed = urllib.parse.urlparse(url)
                 query = urllib.parse.parse_qs(parsed.query)
-                query.update(params)
+                query.update({k: [str(v)] if not isinstance(v, list) else v for k, v in params.items()})
                 query_string = urllib.parse.urlencode(query, doseq=True)
                 url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
@@ -325,7 +336,7 @@ except ImportError as e:
             req = urllib.request.Request(url, data=body, headers=req_headers, method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
 
             try:
-                timeout_value = timeout.total if hasattr(timeout, "total") else timeout
+                timeout_value: float | None = timeout.total if hasattr(timeout, "total") else None
 
                 def _execute_request() -> tuple[str, int, dict[str, Any], bytes]:
                     with urllib.request.urlopen(req, timeout=timeout_value) as response:  # noqa: S310 - Controlled URL for analysis tooling
@@ -336,16 +347,16 @@ except ImportError as e:
                             response.read(),
                         )
 
-                response_url, status_code, headers, content = await asyncio.to_thread(_execute_request)
+                response_url, status_code, headers_dict, content = await asyncio.to_thread(_execute_request)
 
                 # Create ClientResponse
-                resp = ClientResponse(url=response_url, status=status_code, headers=headers, content=content)
+                resp = _FallbackClientResponse(url=response_url, status=status_code, headers=headers_dict, content=content)
 
                 return resp
 
             except urllib.error.HTTPError as e:
                 # Create error response
-                return ClientResponse(
+                return _FallbackClientResponse(
                     url=url,
                     status=e.code,
                     headers=dict(e.headers) if hasattr(e, "headers") else {},
@@ -356,21 +367,21 @@ except ImportError as e:
                 if isinstance(e.reason, socket.timeout):
                     error_msg = f"Request timed out: {url}"
                     logger.error(error_msg)
-                    raise ServerTimeoutError(error_msg) from e
+                    raise _FallbackServerTimeoutError(error_msg) from e
                 error_msg = f"Connection error: {e.reason}"
                 logger.error(error_msg)
-                raise ClientConnectorError(error_msg) from e
+                raise _FallbackClientConnectorError(error_msg) from e
 
             except Exception as e:
                 error_msg = f"Request failed: {e}"
                 logger.error(error_msg)
-                raise ClientError(error_msg) from e
+                raise _FallbackClientError(error_msg) from e
 
         async def get(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send GET request.
 
             Args:
@@ -384,12 +395,12 @@ except ImportError as e:
             return await self.request("GET", url, **kwargs)
 
         async def post(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             data: object | None = None,
             json: object | None = None,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send POST request.
 
             Args:
@@ -405,11 +416,11 @@ except ImportError as e:
             return await self.request("POST", url, data=data, json=json, **kwargs)
 
         async def put(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             data: object | None = None,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send PUT request.
 
             Args:
@@ -424,11 +435,11 @@ except ImportError as e:
             return await self.request("PUT", url, data=data, **kwargs)
 
         async def patch(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             data: object | None = None,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send PATCH request.
 
             Args:
@@ -443,10 +454,10 @@ except ImportError as e:
             return await self.request("PATCH", url, data=data, **kwargs)
 
         async def delete(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send DELETE request.
 
             Args:
@@ -460,10 +471,10 @@ except ImportError as e:
             return await self.request("DELETE", url, **kwargs)
 
         async def head(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send HEAD request.
 
             Args:
@@ -477,10 +488,10 @@ except ImportError as e:
             return await self.request("HEAD", url, **kwargs)
 
         async def options(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             url: str,
             **kwargs: object,
-        ) -> "ClientResponse":
+        ) -> _FallbackClientResponse:
             """Send OPTIONS request.
 
             Args:
@@ -493,12 +504,13 @@ except ImportError as e:
             """
             return await self.request("OPTIONS", url, **kwargs)
 
-        async def close(self: "ClientSession") -> None:
+        async def close(self: _FallbackClientSession) -> None:
             """Close session."""
-            await self.connector.close()
+            if self.connector:
+                await self.connector.close()
             self._closed = True
 
-        async def __aenter__(self: "ClientSession") -> "ClientSession":
+        async def __aenter__(self: _FallbackClientSession) -> _FallbackClientSession:
             """Async context manager entry.
 
             Returns:
@@ -508,7 +520,7 @@ except ImportError as e:
             return self
 
         async def __aexit__(
-            self: "ClientSession",
+            self: _FallbackClientSession,
             *args: object,
         ) -> None:
             """Async context manager exit.
@@ -520,11 +532,11 @@ except ImportError as e:
             await self.close()
 
     # Web server components
-    class Request:
+    class _FallbackRequest:
         """Web request object."""
 
         def __init__(
-            self: "Request",
+            self: _FallbackRequest,
             method: str = "GET",
             path: str = "/",
             headers: dict[str, str] | None = None,
@@ -548,7 +560,7 @@ except ImportError as e:
             self.cookies: dict[str, str] = {}
             self.app: Any | None = None
 
-        async def text(self: "Request") -> str:
+        async def text(self: _FallbackRequest) -> str:
             """Get request text.
 
             Returns:
@@ -557,7 +569,7 @@ except ImportError as e:
             """
             return self.body.decode("utf-8")
 
-        async def json(self: "Request") -> object:
+        async def json(self: _FallbackRequest) -> object:
             """Parse JSON request.
 
             Returns:
@@ -567,7 +579,7 @@ except ImportError as e:
             text = await self.text()
             return json.loads(text)
 
-        async def post(self: "Request") -> dict[str, Any]:
+        async def post(self: _FallbackRequest) -> dict[str, Any]:
             """Get POST data.
 
             Returns:
@@ -578,11 +590,11 @@ except ImportError as e:
             text = await self.text()
             return urllib.parse.parse_qs(text)
 
-    class Response:
+    class _FallbackResponse:
         """Web response object."""
 
         def __init__(
-            self: "Response",
+            self: _FallbackResponse,
             text: str = "",
             status: int = 200,
             headers: dict[str, str] | None = None,
@@ -603,15 +615,15 @@ except ImportError as e:
             self.content_type: str = content_type
             self.body: bytes = text.encode("utf-8") if isinstance(text, str) else text
 
-    class RouteTableDef:
+    class _FallbackRouteTableDef:
         """Route table definition."""
 
-        def __init__(self: "RouteTableDef") -> None:
+        def __init__(self: _FallbackRouteTableDef) -> None:
             """Initialize route table."""
             self.routes: list[tuple[str, str, Callable[[Any], Any]]] = []
 
         def get(
-            self: "RouteTableDef",
+            self: _FallbackRouteTableDef,
             path: str,
         ) -> Callable[[Callable[[Any], Any]], Callable[[Any], Any]]:
             """GET route decorator.
@@ -633,7 +645,7 @@ except ImportError as e:
             return decorator
 
         def post(
-            self: "RouteTableDef",
+            self: _FallbackRouteTableDef,
             path: str,
         ) -> Callable[[Callable[[Any], Any]], Callable[[Any], Any]]:
             """POST route decorator.
@@ -655,7 +667,7 @@ except ImportError as e:
             return decorator
 
         def put(
-            self: "RouteTableDef",
+            self: _FallbackRouteTableDef,
             path: str,
         ) -> Callable[[Callable[[Any], Any]], Callable[[Any], Any]]:
             """PUT route decorator.
@@ -677,7 +689,7 @@ except ImportError as e:
             return decorator
 
         def delete(
-            self: "RouteTableDef",
+            self: _FallbackRouteTableDef,
             path: str,
         ) -> Callable[[Callable[[Any], Any]], Callable[[Any], Any]]:
             """DELETE route decorator.
@@ -699,7 +711,7 @@ except ImportError as e:
             return decorator
 
         def route(
-            self: "RouteTableDef",
+            self: _FallbackRouteTableDef,
             method: str,
             path: str,
         ) -> Callable[[Callable[[Any], Any]], Callable[[Any], Any]]:
@@ -722,19 +734,19 @@ except ImportError as e:
 
             return decorator
 
-    class Application:
+    class _FallbackApplication:
         """Web application."""
 
-        def __init__(self: "Application") -> None:
+        def __init__(self: _FallbackApplication) -> None:
             """Initialize application."""
             self.router: Any = type("Router", (), {"routes": []})()
             self.middlewares: list[Any] = []
             self.on_startup: list[Callable[[Any], Awaitable[None]]] = []
             self.on_cleanup: list[Callable[[Any], Awaitable[None]]] = []
             self.on_shutdown: list[Callable[[Any], Awaitable[None]]] = []
-            self["state"] = {}
+            self._state: dict[str, Any] = {}
 
-        def __getitem__(self: "Application", key: str) -> object:
+        def __getitem__(self: _FallbackApplication, key: str) -> object:
             """Get app state item.
 
             Args:
@@ -744,11 +756,9 @@ except ImportError as e:
                 State value.
 
             """
-            if not hasattr(self, "_state"):
-                self._state: dict[str, Any] = {}
             return self._state.get(key)
 
-        def __setitem__(self: "Application", key: str, value: object) -> None:
+        def __setitem__(self: _FallbackApplication, key: str, value: object) -> None:
             """Set app state item.
 
             Args:
@@ -756,11 +766,9 @@ except ImportError as e:
                 value: State value.
 
             """
-            if not hasattr(self, "_state"):
-                self._state: dict[str, Any] = {}
             self._state[key] = value
 
-        def add_routes(self: "Application", routes: object) -> None:
+        def add_routes(self: _FallbackApplication, routes: object) -> None:
             """Add routes to application.
 
             Args:
@@ -769,30 +777,34 @@ except ImportError as e:
             """
             if hasattr(routes, "routes"):
                 # RouteTableDef
-                for method, path, handler in routes.routes:
-                    self.router.routes.append((method, path, handler))
-            else:
+                routes_list = getattr(routes, "routes", [])
+                if isinstance(routes_list, list):
+                    for item in routes_list:
+                        if isinstance(item, tuple) and len(item) >= 3:
+                            method, path, handler = item[0], item[1], item[2]
+                            self.router.routes.append((method, path, handler))
+            elif isinstance(routes, list):
                 # List of routes
                 for route in routes:
                     self.router.routes.append(route)
 
-        async def startup(self: "Application") -> None:
+        async def startup(self: _FallbackApplication) -> None:
             """Run startup handlers."""
             for handler in self.on_startup:
                 await handler(self)
 
-        async def cleanup(self: "Application") -> None:
+        async def cleanup(self: _FallbackApplication) -> None:
             """Run cleanup handlers."""
             for handler in self.on_cleanup:
                 await handler(self)
 
-        async def shutdown(self: "Application") -> None:
+        async def shutdown(self: _FallbackApplication) -> None:
             """Run shutdown handlers."""
             for handler in self.on_shutdown:
                 await handler(self)
 
-    def run_app(
-        app: "Application",
+    def _run_app(
+        app: _FallbackApplication,
         host: str = "127.0.0.1",
         port: int = 8080,
         print_func: Callable[[str], None] = print,
@@ -812,7 +824,7 @@ except ImportError as e:
 
         # Simple HTTP server using built-in libraries
         class Handler(http.server.SimpleHTTPRequestHandler):
-            def do_GET(self: "Handler") -> None:
+            def do_GET(self: Handler) -> None:
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"AioHTTP fallback server running")
@@ -827,18 +839,18 @@ except ImportError as e:
     class FallbackWeb:
         """Web module."""
 
-        Application: type = Application
-        Request: type = Request
-        Response: type = Response
-        RouteTableDef: type = RouteTableDef
-        run_app: Callable[[Any, str, int, Callable[[str], None]], None] = staticmethod(run_app)
+        Application: type[_FallbackApplication] = _FallbackApplication
+        Request: type[_FallbackRequest] = _FallbackRequest
+        Response: type[_FallbackResponse] = _FallbackResponse
+        RouteTableDef: type[_FallbackRouteTableDef] = _FallbackRouteTableDef
+        run_app: Callable[[_FallbackApplication, str, int, Callable[[str], None]], None] = staticmethod(_run_app)
 
         @staticmethod
         def json_response(
             data: object,
             status: int = 200,
             **kwargs: object,
-        ) -> "Response":
+        ) -> _FallbackResponse:
             """Create JSON response.
 
             Args:
@@ -850,38 +862,28 @@ except ImportError as e:
                 Response object.
 
             """
-            return Response(text=json.dumps(data), status=status, content_type="application/json", **kwargs)
+            return _FallbackResponse(text=json.dumps(data), status=status, content_type="application/json")
 
-    # Create module-like object
-    class FallbackAioHTTP:
+    # Create module-like object that will replace aiohttp in except block
+    class _FallbackAioHTTPModule:
         """Fallback aiohttp module."""
 
         # Client classes
-        ClientSession: type = ClientSession
-        ClientResponse: type = ClientResponse
-        ClientTimeout: type = ClientTimeout
-        TCPConnector: type = TCPConnector
+        ClientSession: type[_FallbackClientSession] = _FallbackClientSession
+        ClientResponse: type[_FallbackClientResponse] = _FallbackClientResponse
+        ClientTimeout: type[_FallbackClientTimeout] = _FallbackClientTimeout
+        TCPConnector: type[_FallbackTCPConnector] = _FallbackTCPConnector
 
         # Exceptions
-        ClientError: type = ClientError
-        ClientConnectorError: type = ClientConnectorError
-        ServerTimeoutError: type = ServerTimeoutError
+        ClientError: type[_FallbackClientError] = _FallbackClientError
+        ClientConnectorError: type[_FallbackClientConnectorError] = _FallbackClientConnectorError
+        ServerTimeoutError: type[_FallbackServerTimeoutError] = _FallbackServerTimeoutError
 
         # Web module
-        web: type = FallbackWeb
+        web: type[FallbackWeb] = FallbackWeb
 
-    aiohttp: FallbackAioHTTP = FallbackAioHTTP()
-
-    # Direct exports
-    web: type = FallbackWeb
-    Application: type = FallbackWeb
-    Request: type = FallbackWeb
-    Response: type = FallbackWeb
-    RouteTableDef: type = FallbackWeb
-
-    def run_app(app: object, host: str, port: int, logger: Callable[[str], None]) -> None:
-        """Fallback implementation of run_app that simply prints the intended operation."""
-        return print(f"Would run app on {host}:{port}")
+    # Create a fallback module-like object
+    _aiohttp_fallback = _FallbackAioHTTPModule()
 
 
 # Export all aiohttp objects and availability flag

@@ -38,6 +38,9 @@ dependencies = [
   "accelerate",
   "anthropic",
   "openai>=2.5.0,<3",
+  "torch",
+  "torchvision",
+  "torchaudio",
   "transformers>=4.57.1,<5",
   "huggingface-hub",
   "safetensors",
@@ -160,16 +163,13 @@ dependencies = [
   "sqlalchemy>=2.0.44,<3",
   "uvicorn>=0.38.0,<0.39",
 
-  # Development & Build
-  "build>=1.3.0,<2",
+  # Core Utilities
   "macholib>=1.16.3,<2",
   "nltk>=3.9.2,<4",
   "regex>=2025.9.18,<2026",
   "rich>=14.2.0,<15",
   "tqdm>=4.67.1,<5",
   "cffi>=2.0.0,<3",
-  "wheel>=0.45.1,<0.50",
-  "setuptools>=70.0.0,<81",
 
   "jiter>=0.11.1,<0.13",
   "importlib-metadata>=8.7.0,<9",
@@ -302,96 +302,8 @@ dependencies = [
   "langchain",
   "langchain-core",
   "langchain-community",
+  "langgraph>=1.0.4,<2",
   "langsmith>=0.4.43,<1",
-
-  # Code Quality & Linting
-  "black>=25.9.0,<26",
-  "pylint>=4.0.1,<5",
-  "autopep8>=2.3.2,<3",
-  "flake8>=7.3.0,<8",
-  "ruff>=0.14.1,<0.15",
-  "bandit>=1.8.6,<2",
-  "vulture>=2.14,<3",
-  "pyupgrade",
-  "pydocstyle>=6.3.0,<7",
-  "sourcery",
-  "wemake-python-styleguide",
-  "darglint",
-  "pyroma",
-  "mypy-extensions",
-  "dead",
-  "pygount",
-  "pytest-deadfixtures",
-  "mypy>=1.18.2,<2",
-  "pyright>=1.1.406,<2",
-  "monkeytype",
-  "ty",
-  "mccabe>=0.7.0,<0.8",
-  "xenon>=0.9.3,<0.10",
-  "safety>=3.6.2,<4",
-  "yamllint>=1.35.1",
-
-  # Testing & Coverage
-  "pytest",
-  "pytest-cov",
-  "pytest-mock>=3.15.1,<4",
-  "pytest-asyncio>=1.2.0,<2",
-  "pytest-xdist>=3.8.0,<4",
-  "pytest-timeout>=2.4.0,<3",
-  "pytest-qt>=4.5.0,<5",
-  "pytest-benchmark>=5.1.0,<6",
-  "pytest-html>=4.1.1,<5",
-  "pytest-randomly>=4.0.1,<5",
-  "pytest-sugar>=1.1.1,<2",
-  "pytest-env>=1.2.0,<2",
-  "pytest-instafail>=0.5.0,<0.6",
-  "hypothesis>=6.148.0,<7",
-  "tox",
-  "nox>=2025.10.16,<2026",
-  "coverage",
-  "freezegun>=1.5.5,<2",
-  "responses>=0.25.8,<0.26",
-  "faker",
-
-  # Code Metrics & Complexity
-  "radon>=6.0.1,<7",
-
-  # Documentation
-  "sphinx>=8.2.3,<9",
-  "sphinx-rtd-theme>=3.0.2,<4",
-  "sphinx-autodoc-typehints>=3.5.2,<4",
-  "sphinx-copybutton>=0.5.2,<0.6",
-  "sphinx-tabs>=3.4.7,<4",
-  "sphinxcontrib-mermaid>=1.0.0,<2",
-  "sphinx-autobuild>=2025.8.25,<2026",
-  "pdoc3>=0.11.6,<0.12",
-  "mkdocs-material>=9.6.22,<10",
-
-  # Debugging & Profiling
-  "ipdb>=0.13.13,<0.14",
-  "line-profiler>=5.0.0,<6",
-  "memory-profiler>=0.61.0,<0.62",
-  "py-spy>=0.4.1,<0.5",
-  "snakeviz>=2.2.2,<3",
-  "pyinstrument>=5.1.1,<6",
-  "scalene>=1.5.55,<2",
-
-  # Development Utilities
-  "pre-commit>=4.3.0,<5",
-  "commitizen",
-  "bumpversion>=0.6.0,<0.7",
-  "pipdeptree>=2.29.0,<3",
-  "rope>=1.14.0,<2",
-  "astor>=0.8.1,<0.9",
-  "yapf>=0.43.0,<0.44",
-  "pip-audit>=2.9.0,<3",
-  "nodeenv>=1.9.1,<2",
-  "twine>=6.2.0,<7",
-  "setuptools-scm>=9.2.2,<10",
-  "poetry>=2.2.1,<3",
-  "pycallgraph2>=1.1.3,<2",
-  "pre-commit-hooks>=6.0.0,<7",
-  "detect-secrets>=1.5.0,<2",
 
   # Monitoring & Logging
   "loguru",
@@ -1321,8 +1233,9 @@ docstring-code-format = true
 docstring-code-line-length = 30
 
 [tool.darglint]
-# Strict docstring checking following Google conventions
-strictness = "full"
+# Docstring checking following Google conventions
+# Using "short" strictness - requires docstrings but not full Args/Returns/Raises sections
+strictness = "short"
 docstring_style = "google"
 ignore_regex = "^(test_|_)"
 

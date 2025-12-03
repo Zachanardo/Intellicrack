@@ -368,25 +368,28 @@ const NtpBlocker = {
                 onLeave: function (retval) {
                     if (retval.toInt32() > 0 && this.buf) {
                         var data = this.buf.readUtf8String(retval.toInt32());
-                        if (data && (data.includes('$GPRMC') ||
-                                                        data.includes('$GPGGA') ||
-                                                        data.includes('$GPZDA') ||
-                                                        data.includes('$GNGGA'))) {
-                              send({
-                                  type: 'bypass',
-                                  target: 'ntp_blocker',
-                                  action: 'gps_time_data_blocked',
-                                  nmea_type: data.substring(0, 6),
-                              });
-                        
-                              // Corrupt GPS time data
-                              var corrupted = data
-                                  .replace(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
-                                  .replace(/\d{6}\.\d+/g, '000000.000')
-                                  .replace(/\d{4},\d{2},\d{2}/g, '0000,00,00');
-                        
-                              Memory.writeUtf8String(this.buf, corrupted);
-                              self.stats.connectionsBlocked++;
+                        if (
+                            data &&
+                            (data.includes('$GPRMC') ||
+                                data.includes('$GPGGA') ||
+                                data.includes('$GPZDA') ||
+                                data.includes('$GNGGA'))
+                        ) {
+                            send({
+                                type: 'bypass',
+                                target: 'ntp_blocker',
+                                action: 'gps_time_data_blocked',
+                                nmea_type: data.substring(0, 6),
+                            });
+
+                            // Corrupt GPS time data
+                            var corrupted = data
+                                .replace(/\d{2}:\d{2}:\d{2}/g, '00:00:00')
+                                .replace(/\d{6}\.\d+/g, '000000.000')
+                                .replace(/\d{4},\d{2},\d{2}/g, '0000,00,00');
+
+                            Memory.writeUtf8String(this.buf, corrupted);
+                            self.stats.connectionsBlocked++;
                         }
                     }
                 },
@@ -2157,7 +2160,9 @@ const NtpBlocker = {
             if (server.includes('*')) {
                 // Wildcard matching with comprehensive regex escaping
                 // Escape all regex special characters: . ^ $ * + ? ( ) [ ] { } | \
-                var escaped = server.replace(/([.^$+?()[\]{}|\\])/g, '\\$1').replace(/\*/g, '[a-z0-9-]+');
+                var escaped = server
+                    .replace(/([.^$+?()[\]{}|\\])/g, '\\$1')
+                    .replace(/\*/g, '[a-z0-9-]+');
                 // Ensure proper anchoring to prevent partial matches
                 var regex = new RegExp('^' + escaped + '$', 'i');
                 if (regex.test(hostname)) {
@@ -2174,7 +2179,12 @@ const NtpBlocker = {
                     // Verify this is actually a subdomain, not a domain with server appended
                     var prefix = hostname.slice(0, -(server.length + 1));
                     // Prefix must be a valid hostname label (not empty, not ending with dot)
-                    if (prefix.length > 0 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(prefix)) {
+                    if (
+                        prefix.length > 0 &&
+                        /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(
+                            prefix
+                        )
+                    ) {
                         return true;
                     }
                 }
@@ -2187,7 +2197,11 @@ const NtpBlocker = {
         var labels = hostname.split('.');
         for (var i = 0; i < keywords.length; i++) {
             for (var j = 0; j < labels.length; j++) {
-                if (labels[j] === keywords[i] || labels[j].startsWith(keywords[i] + '-') || labels[j].endsWith('-' + keywords[i])) {
+                if (
+                    labels[j] === keywords[i] ||
+                    labels[j].startsWith(keywords[i] + '-') ||
+                    labels[j].endsWith('-' + keywords[i])
+                ) {
                     return true;
                 }
             }
@@ -2226,7 +2240,7 @@ const NtpBlocker = {
 
         return {
             seconds: Math.floor(uptime / 1000),
-            nanoseconds: (uptime % 1000) * 1000000
+            nanoseconds: (uptime % 1000) * 1000000,
         };
     },
 

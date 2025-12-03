@@ -104,8 +104,11 @@ class VirtualizationDetectionBypass:
 
         # Strategy 5: Hide VM artifacts (files, processes, etc.)
         try:
-            if self._hide_vm_artifacts():
+            hide_success, renamed_count = self._hide_vm_artifacts()
+            if hide_success:
                 results["methods_applied"].append("VM Artifact Hiding")
+                if renamed_count > 0:
+                    results["renamed_vm_files"] = renamed_count
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"VM artifact hiding failed: {e!s}")
@@ -325,8 +328,14 @@ class VirtualizationDetectionBypass:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Registry manipulation failed: {e!s}")
 
-    def _hide_vm_artifacts(self) -> bool:
-        """Hide VM-specific artifacts from detection."""
+    def _hide_vm_artifacts(self) -> tuple[bool, int]:
+        """Hide VM-specific artifacts from detection.
+
+        Returns:
+            Tuple of (success, renamed_files_count) where renamed_files_count
+            reports how many VM artifact files were successfully hidden.
+
+        """
         self.logger.info("Hiding VM artifacts")
 
         try:
@@ -427,7 +436,6 @@ class VirtualizationDetectionBypass:
                 "C:\\Windows\\System32\\drivers\\vmmemctl.sys",
             ]
 
-            # Rename VM files if possible (requires admin rights)
             renamed_files = 0
             for vm_file in vm_files:
                 if os.path.exists(vm_file):
@@ -439,11 +447,14 @@ class VirtualizationDetectionBypass:
                     except OSError as e:
                         self.logger.debug(f"Could not rename {vm_file}: {e}")
 
-            return True
+            if renamed_files > 0:
+                self.logger.info(f"Successfully hid {renamed_files} VM artifact files")
+
+            return (True, renamed_files)
 
         except Exception as e:
             self.logger.error(f"Error hiding VM artifacts: {e}")
-            return False
+            return (False, 0)
 
     def _modify_system_info(self) -> bool:
         """Modify system information to appear as physical machine."""

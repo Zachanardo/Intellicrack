@@ -255,19 +255,19 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 
     def _process_files_in_directory(self, root: str, files: list[str], patterns: list[str], results: dict[str, Any]) -> None:
         """Process files in a directory and update results."""
-        for _file in files:
+        for file in files:
             total_checked = results["total_files_checked"]
             if isinstance(total_checked, int):
                 results["total_files_checked"] = total_checked + 1
-            file_path = Path(root) / _file
+            file_path = Path(root) / file
 
-            for _pattern in patterns:
-                if fnmatch.fnmatch(_file.lower(), _pattern.lower()):
+            for pattern in patterns:
+                if fnmatch.fnmatch(file.lower(), pattern.lower()):
                     file_info: dict[str, Any] = {
                         "path": str(file_path),
-                        "name": _file,
+                        "name": file,
                         "size": file_path.stat().st_size if file_path.exists() else 0,
-                        "matched_pattern": _pattern,
+                        "matched_pattern": pattern,
                         "directory": str(Path(root)),
                     }
                     files_found = results["files_found"]
@@ -375,14 +375,14 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
                     content = f.read()
             except UnicodeDecodeError:
                 logger.exception("UnicodeDecodeError in ai_file_tools")
-                for _enc in ["latin-1", "cp1252", "ascii"]:
+                for enc in ["latin-1", "cp1252", "ascii"]:
                     try:
-                        with open(file_path_obj, encoding=_enc) as f:
+                        with open(file_path_obj, encoding=enc) as f:
                             content = f.read()
-                            encoding = _enc
+                            encoding = enc
                             break
                     except UnicodeDecodeError:
-                        logger.exception("UnicodeDecodeError in ai_file_tools with encoding %s", _enc)
+                        logger.exception("UnicodeDecodeError in ai_file_tools with encoding %s", enc)
                         continue
 
             if content is None:
@@ -425,15 +425,15 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
         total_size = 0
         valid_paths: list[Path] = []
 
-        for _path in file_paths:
-            file_path_obj = Path(_path)
+        for path in file_paths:
+            file_path_obj = Path(path)
             if file_path_obj.exists():
                 size = file_path_obj.stat().st_size
                 if size <= self.max_file_size:
                     total_size += size
                     valid_paths.append(file_path_obj)
 
-        file_list_str = "\n".join([f"- {_p.name} ({_p.stat().st_size:,} bytes)" for _p in valid_paths[:MAX_FILES_TO_DISPLAY]])
+        file_list_str = "\n".join([f"- {p.name} ({p.stat().st_size:,} bytes)" for p in valid_paths[:MAX_FILES_TO_DISPLAY]])
         additional_files = f"... and {len(valid_paths) - MAX_FILES_TO_DISPLAY} more" if len(valid_paths) > MAX_FILES_TO_DISPLAY else ""
 
         details = f"""Files to read: {len(valid_paths)}
@@ -454,8 +454,8 @@ Files:
             "total_size": total_size,
         }
 
-        for _file_path_obj in valid_paths:
-            file_result = self.read_file_content(str(_file_path_obj), f"{purpose} (batch)")
+        for file_path_obj_ in valid_paths:
+            file_result = self.read_file_content(str(file_path_obj_), f"{purpose} (batch)")
             if file_result.get("status") == "success":
                 files_read_list = results["files_read"]
                 if isinstance(files_read_list, list):
@@ -520,7 +520,7 @@ class AIFileTools:
 
         files_found = license_scan.get("files_found", [])
         if isinstance(files_found, list) and files_found:
-            file_paths = [str(_f.get("path", "")) for _f in files_found[:5] if isinstance(_f, dict)]
+            file_paths = [str(f.get("path", "")) for f in files_found[:5] if isinstance(f, dict)]
 
             read_results = self.read_multiple_files(
                 file_paths,
@@ -530,10 +530,10 @@ class AIFileTools:
             if read_results.get("status") == "success":
                 files_read = read_results.get("files_read", [])
                 if isinstance(files_read, list):
-                    for _file_data in files_read:
-                        if isinstance(_file_data, dict):
-                            file_path_key = _file_data.get("file_path", "")
-                            file_content = _file_data.get("content", "")
+                    for file_data in files_read:
+                        if isinstance(file_data, dict):
+                            file_path_key = file_data.get("file_path", "")
+                            file_content = file_data.get("content", "")
                             if isinstance(analysis["file_contents"], dict):
                                 analysis["file_contents"][file_path_key] = file_content
 

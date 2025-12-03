@@ -23,27 +23,48 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 
 
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Callable
+
+    import torch as torch_types
+
+    TorchType = torch_types
+    TensorType = type[torch_types.Tensor]
+    CudaType = types.ModuleType
+    DeviceType = type[torch_types.device]
+    DtypeType = type[torch_types.dtype]
+    NNType = types.ModuleType
+    OptimType = types.ModuleType
+    SaveType = Callable[..., None]
+    LoadType = Callable[..., Any]
+    TensorFuncType = Callable[..., torch_types.Tensor]
+
+
 # PyTorch availability detection and import handling with Intel Arc B580 compatibility
 
-# Initialize variables
+# Initialize variables with proper types for when torch is available
 HAS_TORCH: bool = False
 TORCH_AVAILABLE: bool = False
 TORCH_VERSION: str | None = None
-torch: object | None = None
-Tensor: type | None = None
-cuda: object | None = None
-device: type | None = None
-dtype: object | None = None
-nn: object | None = None
-optim: object | None = None
-save: object | None = None
-load: object | None = None
-tensor: object | None = None
+torch: TorchType | None = None
+Tensor: TensorType | None = None
+cuda: CudaType | None = None
+device: DeviceType | None = None
+dtype: DtypeType | None = None
+nn: NNType | None = None
+optim: OptimType | None = None
+save: SaveType | None = None
+load: LoadType | None = None
+tensor: TensorFuncType | None = None
 
 # Load environment variables from .env file
 # Users can customize GPU settings in the .env file
@@ -199,7 +220,7 @@ if not HAS_TORCH:
             """Return string representation of fallback tensor."""
             return f"FallbackTensor({self.data})"
 
-        def cuda(self) -> "FallbackTensor":
+        def cuda(self) -> FallbackTensor:
             """Move to CUDA (no-op in fallback).
 
             Returns:
@@ -208,7 +229,7 @@ if not HAS_TORCH:
             """
             return self
 
-        def cpu(self) -> "FallbackTensor":
+        def cpu(self) -> FallbackTensor:
             """Move to CPU (no-op in fallback).
 
             Returns:

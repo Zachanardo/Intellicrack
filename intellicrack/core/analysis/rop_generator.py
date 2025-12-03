@@ -1441,12 +1441,12 @@ class ROPChainGenerator:
         """
         )
 
-        for _target in self.target_functions:
+        for target in self.target_functions:
             html += f"""
                 <tr>
-                    <td>{_target["name"]}</td>
-                    <td>{_target["address"] or "Auto-detect"}</td>
-                    <td>{_target["description"]}</td>
+                    <td>{target["name"]}</td>
+                    <td>{target["address"] or "Auto-detect"}</td>
+                    <td>{target["description"]}</td>
                 </tr>
             """
 
@@ -1484,8 +1484,8 @@ class ROPChainGenerator:
             <pre>
             """
 
-            for _addr in chain["payload"]:
-                html += f"{_addr}\n"
+            for addr in chain["payload"]:
+                html += f"{addr}\n"
 
             html += """
             </pre>
@@ -1520,14 +1520,14 @@ class ROPChainGenerator:
 
         # Count gadgets by type
         type_counts = {}
-        for _gadget in self.gadgets:
-            gadget_type = _gadget.get("type", "unknown")
+        for gadget in self.gadgets:
+            gadget_type = gadget.get("type", "unknown")
             type_counts[gadget_type] = type_counts.get(gadget_type, 0) + 1
 
         # Calculate average chain length
         avg_chain_length = 0.0
         if self.chains:
-            total_length = sum(_chain["length"] for _chain in self.chains)
+            total_length = sum(chain["length"] for chain in self.chains)
             avg_chain_length = total_length / len(self.chains)
 
         return {
@@ -1789,8 +1789,8 @@ def _process_rop_results(app: object, generator: ROPChainGenerator) -> None:
             app.analyze_results.append(f"  {j + 1}. {gadget['address']}: {gadget['instruction']}")
 
         app.analyze_results.append("Payload:")
-        for _addr in chain["payload"]:
-            app.analyze_results.append(f"  {_addr}")
+        for addr in chain["payload"]:
+            app.analyze_results.append(f"  {addr}")
 
 
 def _handle_rop_report_generation(app: object, generator: ROPChainGenerator) -> None:

@@ -11,6 +11,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import z3
 from cryptography.hazmat.backends import default_backend
@@ -1105,8 +1106,8 @@ class SerialNumberGenerator:
         else:
             serial = f"{base_serial}-{flags_encoded}"
 
-        checksum = self._calculate_crc16(serial.encode())
-        serial = f"{serial}-{checksum:04X}"
+        checksum = self._calculate_crc16(serial)
+        serial = f"{serial}-{checksum}"
         logger.debug(f"Generated feature-encoded serial: {serial}")
         return GeneratedSerial(
             serial=serial,
@@ -1141,8 +1142,8 @@ class SerialNumberGenerator:
 
         serial = f"{seed:05d}-{result:08X}"
 
-        validation = self._calculate_crc32(serial.encode())
-        serial = f"{serial}-{validation:08X}"
+        validation = self._calculate_crc32(serial)
+        serial = f"{serial}-{validation}"
         logger.debug(f"Generated mathematical serial: {serial}")
         return GeneratedSerial(
             serial=serial,
@@ -1204,13 +1205,13 @@ class SerialNumberGenerator:
 
             full_serial = f"{partial_serial}-{checksum}"
 
-            if self._verify_checksum("CRC32", full_serial):
+            if self._verify_checksum(full_serial, self._calculate_crc32):
                 candidates.append(full_serial)
                 logger.debug(f"Found candidate (CRC32): {full_serial}")
-            elif self._verify_checksum("CRC16", full_serial):
+            elif self._verify_checksum(full_serial, self._calculate_crc16):
                 candidates.append(full_serial)
                 logger.debug(f"Found candidate (CRC16): {full_serial}")
-            elif self._verify_checksum("LUHN", full_serial):
+            elif self._verify_checksum(full_serial, self._calculate_luhn):
                 candidates.append(full_serial)
                 logger.debug(f"Found candidate (Luhn): {full_serial}")
         logger.debug(f"Brute-force checksum completed. Found {len(candidates)} candidates.")

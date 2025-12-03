@@ -60,7 +60,7 @@ class FridaScriptConfig:
     requires_admin: bool = False
     supports_spawn: bool = True
     supports_attach: bool = True
-    output_handlers: dict[str, Callable] = field(default_factory=dict)
+    output_handlers: dict[str, Callable[[dict[str, Any]], None]] = field(default_factory=dict)
     dependencies: list[str] = field(default_factory=list)
 
 
@@ -344,7 +344,8 @@ class FridaScriptManager:
             if metadata_match := re.search(r"/\*\*\s*@metadata(.*?)@end\s*\*/", content, re.DOTALL):
                 metadata_text = metadata_match.group(1)
                 if json_match := re.search(r"\{.*\}", metadata_text, re.DOTALL):
-                    return json.loads(json_match.group())
+                    parsed: dict[str, Any] = json.loads(json_match.group())
+                    return parsed
 
             return None
 
@@ -358,7 +359,7 @@ class FridaScriptManager:
         target: str,
         mode: str = "spawn",
         parameters: dict[str, Any] | None = None,
-        output_callback: Callable | None = None,
+        output_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ScriptResult:
         """Execute a Frida script.
 
@@ -481,7 +482,7 @@ class FridaScriptManager:
         result: ScriptResult,
         message: dict[str, Any],
         data: bytes | None,
-        callback: Callable | None,
+        callback: Callable[[dict[str, Any]], None] | None,
     ) -> None:
         """Handle messages from Frida script.
 
@@ -502,7 +503,8 @@ class FridaScriptManager:
                 # Handle specific message types
                 if isinstance(payload, dict):
                     if "memory_dump" in payload:
-                        result.memory_dumps.append(data)
+                        if data is not None:
+                            result.memory_dumps.append(data)
                     elif "patch" in payload:
                         result.patches.append(payload["patch"])
                     elif "data" in payload:

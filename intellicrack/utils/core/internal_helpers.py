@@ -2868,12 +2868,12 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
 
     if data_type == "float32":
         # Embedding values typically in range [-0.1, 0.1] with some structure
-        for _i in range(total_elements):
+        for i in range(total_elements):
             # Add some patterns to make embeddings more realistic
             base_val = random.gauss(0, 0.05)  # Small Gaussian distribution
             # Add positional encoding-like patterns for some dimensions
-            if len(dims) >= 2 and _i % dims[-1] < 64:  # First 64 dimensions get positional patterns
-                pos_component = 0.01 * math.sin(_i * 0.01) * math.cos(_i * 0.001)
+            if len(dims) >= 2 and i % dims[-1] < 64:  # First 64 dimensions get positional patterns
+                pos_component = 0.01 * math.sin(i * 0.01) * math.cos(i * 0.001)
                 base_val += pos_component
 
             # Clamp to reasonable range
@@ -2882,7 +2882,7 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
 
     elif data_type == "float16":
         # Half precision embeddings
-        for _i in range(total_elements):
+        for i in range(total_elements):
             val = random.gauss(0, 0.02)  # Smaller range for fp16
             val = max(-0.1, min(0.1, val))
             # Pack as half precision (approximated with struct)
@@ -2928,23 +2928,23 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
         std_dev = 0.02
 
     if data_type == "float16":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
             data.extend(struct.pack("e", weight))
 
     elif data_type == "float32":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             # Generate weight with proper initialization
             weight = random.gauss(0, std_dev)
 
             # Add small amount of structured initialization for some weights
-            if _i % 1000 == 0:  # Every 1000th weight gets a small boost
+            if i % 1000 == 0:  # Every 1000th weight gets a small boost
                 weight *= 1.1
 
             data.extend(struct.pack("f", weight))
 
     elif data_type == "int8":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             # Quantized weights typically in range [-128, 127]
             weight = random.gauss(0, 20)  # Scale for int8 range
             weight = max(-128, min(127, int(weight)))
@@ -3076,15 +3076,15 @@ def _generate_norm_data(dims: list[int], data_type: str, total_elements: int) ->
     data = bytearray()
 
     if data_type == "float16":
-        for _i in range(total_elements):
-            val = 1.0 if _i % 2 == 0 else 0.0
+        for i in range(total_elements):
+            val = 1.0 if i % 2 == 0 else 0.0
             data.extend(struct.pack("e", val))
 
     elif data_type == "float32":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             # Layer norm weights typically initialized to 1.0
             # Layer norm biases typically initialized to 0.0
-            val = 1.0 if "weight" in str(dims) or _i % 2 == 0 else 0.0
+            val = 1.0 if "weight" in str(dims) or i % 2 == 0 else 0.0
             data.extend(struct.pack("f", val))
 
     else:
@@ -3118,17 +3118,17 @@ def _generate_attention_data(dims: list[int], data_type: str, total_elements: in
         scale_factor = 0.02
 
     if data_type == "float16":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             weight = random.gauss(0, scale_factor * 0.9)
             data.extend(struct.pack("e", weight))
 
     elif data_type == "float32":
-        for _i in range(total_elements):
+        for i in range(total_elements):
             # Query/Key/Value projection weights
             weight = random.gauss(0, scale_factor)
 
             # Add some structure for positional patterns
-            if _i % 64 < 8:  # First few dimensions get slightly different initialization
+            if i % 64 < 8:  # First few dimensions get slightly different initialization
                 weight *= 0.9
 
             data.extend(struct.pack("f", weight))

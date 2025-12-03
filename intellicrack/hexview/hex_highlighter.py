@@ -113,7 +113,12 @@ class HexHighlight:
 
     @property
     def size(self) -> int:
-        """Get the size of the highlighted region."""
+        """Get the size of the highlighted region.
+
+        Returns:
+            Size of the region in bytes
+
+        """
         return max(0, self.end - self.start)
 
     def overlaps(self, start: int, end: int) -> bool:
@@ -159,7 +164,12 @@ class HexHighlight:
         return (r, g, b, a)
 
     def __repr__(self) -> str:
-        """Get a string representation of the highlight."""
+        """Get a string representation of the highlight.
+
+        Returns:
+            String representation of the highlight
+
+        """
         return f"HexHighlight(start={self.start}, end={self.end}, type={self.highlight_type.name}, color={self.color})"
 
 

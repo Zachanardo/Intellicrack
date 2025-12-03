@@ -225,7 +225,7 @@ class AIEventBus:
                 len(subscribers),
             )
 
-            for _subscriber in subscribers:
+            for subscriber in subscribers:
                 try:
                     # Call subscriber in a separate thread to avoid blocking
                     def call_subscriber(sub: dict[str, Any]) -> None:
@@ -243,16 +243,16 @@ class AIEventBus:
                         except (OSError, ValueError, RuntimeError) as e:
                             logger.error("Error in subscriber %s: %s", sub["component"], e)
 
-                    threading.Thread(target=lambda sub=_subscriber: call_subscriber(sub), daemon=True).start()
+                    threading.Thread(target=lambda sub=subscriber: call_subscriber(sub), daemon=True).start()
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error calling subscriber %s: %s", _subscriber["component"], e)
+                    logger.error("Error calling subscriber %s: %s", subscriber["component"], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
         """Unsubscribe a component from an event type."""
         with self._lock:
             if event_type in self._subscribers:
-                self._subscribers[event_type] = [_sub for _sub in self._subscribers[event_type] if _sub["component"] != component_name]
+                self._subscribers[event_type] = [sub for sub in self._subscribers[event_type] if sub["component"] != component_name]
 
 
 class AIOrchestrator:
@@ -805,9 +805,9 @@ class AIOrchestrator:
 
         # Look for common recommendation patterns
         lines = content.split("\n")
-        for _line in lines:
-            line = _line.strip()
-            if any(_keyword in line.lower() for _keyword in ["recommend", "suggest", "should", "consider"]) and (
+        for line_ in lines:
+            line = line_.strip()
+            if any(keyword in line.lower() for keyword in ["recommend", "suggest", "should", "consider"]) and (
                 len(line) > 20 and len(line) < 200
             ):
                 recommendations.append(line)

@@ -377,9 +377,9 @@ class VisualPatchEditorDialog(QDialog):
 
             section = next(
                 (
-                    _s
-                    for _s in pe.sections
-                    if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize)
+                    s
+                    for s in pe.sections
+                    if (s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < s.VirtualAddress + s.Misc_VirtualSize)
                 ),
                 None,
             )
@@ -427,9 +427,9 @@ class VisualPatchEditorDialog(QDialog):
 
             section = next(
                 (
-                    _s
-                    for _s in pe.sections
-                    if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < _s.VirtualAddress + _s.Misc_VirtualSize)
+                    s
+                    for s in pe.sections
+                    if (s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase < s.VirtualAddress + s.Misc_VirtualSize)
                 ),
                 None,
             )
@@ -447,12 +447,12 @@ class VisualPatchEditorDialog(QDialog):
                 original_bytes = f.read(max(1, len(new_bytes)))
 
             # Format original bytes
-            original_hex = " ".join(f"{_b:02X}" for _b in original_bytes)
+            original_hex = " ".join(f"{b:02X}" for b in original_bytes)
             self.original_bytes_view.setText(original_hex)
 
             # Format new bytes
             if isinstance(new_bytes, bytes):
-                new_hex = " ".join(f"{_b:02X}" for _b in new_bytes)
+                new_hex = " ".join(f"{b:02X}" for b in new_bytes)
                 self.patched_bytes_view.setText(new_hex)
             else:
                 self.patched_bytes_view.setText(str(new_bytes))

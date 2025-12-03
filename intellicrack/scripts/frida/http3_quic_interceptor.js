@@ -1653,21 +1653,25 @@ const Http3QuicInterceptor = {
             rebindingCount: 0,
 
             checkForRebinding: function (sourceIp, sourcePort) {
-                if (this.lastSourceIp && this.lastSourcePort && (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)) {
-                      this.rebindingCount++;
-                
-                      send({
-                          type: 'detection',
-                          target: 'http3_quic_interceptor',
-                          action: 'nat_rebinding_detected',
-                          old_ip: this.lastSourceIp,
-                          old_port: this.lastSourcePort,
-                          new_ip: sourceIp,
-                          new_port: sourcePort,
-                          count: this.rebindingCount,
-                      });
-                
-                      return true;
+                if (
+                    this.lastSourceIp &&
+                    this.lastSourcePort &&
+                    (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)
+                ) {
+                    this.rebindingCount++;
+
+                    send({
+                        type: 'detection',
+                        target: 'http3_quic_interceptor',
+                        action: 'nat_rebinding_detected',
+                        old_ip: this.lastSourceIp,
+                        old_port: this.lastSourcePort,
+                        new_ip: sourceIp,
+                        new_port: sourcePort,
+                        count: this.rebindingCount,
+                    });
+
+                    return true;
                 }
 
                 this.lastSourceIp = sourceIp;
@@ -2447,23 +2451,26 @@ const Http3QuicInterceptor = {
                                     let headerName = header.name ? header.name.toString() : '';
                                     let headerValue = header.value ? header.value.toString() : '';
 
-                                    if ((headerName.toLowerCase().includes('license') ||
-                                                                            headerName.toLowerCase().includes('activation')) && (headerValue.includes('check') ||
-                                                                                headerValue.includes('validate'))) {
-                                          headerValue = headerValue
-                                              .replace(/check/gi, 'bypass')
-                                              .replace(/validate/gi, 'accept')
-                                              .replace(/verify/gi, 'trust')
-                                              .replace(/authenticate/gi, 'allow');
-                                    
-                                          send({
-                                              type: 'bypass',
-                                              target: 'http3_quic_interceptor',
-                                              action: 'qpack_license_encode_bypass',
-                                              header: headerName,
-                                              original: header.value.toString(),
-                                              modified: headerValue,
-                                          });
+                                    if (
+                                        (headerName.toLowerCase().includes('license') ||
+                                            headerName.toLowerCase().includes('activation')) &&
+                                        (headerValue.includes('check') ||
+                                            headerValue.includes('validate'))
+                                    ) {
+                                        headerValue = headerValue
+                                            .replace(/check/gi, 'bypass')
+                                            .replace(/validate/gi, 'accept')
+                                            .replace(/verify/gi, 'trust')
+                                            .replace(/authenticate/gi, 'allow');
+
+                                        send({
+                                            type: 'bypass',
+                                            target: 'http3_quic_interceptor',
+                                            action: 'qpack_license_encode_bypass',
+                                            header: headerName,
+                                            original: header.value.toString(),
+                                            modified: headerValue,
+                                        });
                                     }
 
                                     const HeaderField = Java.use(
@@ -2900,9 +2907,9 @@ const Http3QuicInterceptor = {
                                 });
 
                                 return licenseProtocols[0].replace(
-                                                                    /check|verify|validate/gi,
-                                                                    'bypass'
-                                                                );
+                                    /check|verify|validate/gi,
+                                    'bypass'
+                                );
                             }
 
                             return this.negotiateProtocol.call(this, supportedProtocols);

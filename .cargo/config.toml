@@ -4,7 +4,6 @@ CARGO = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\cargo.e
 
 [build]
 rustc = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe"
-target-dir = "target"
 
 [term]
 verbose = false

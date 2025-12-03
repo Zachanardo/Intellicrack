@@ -47,7 +47,7 @@ class R2DecompilationEngine:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.decompilation_cache = {}
+        self.decompilation_cache: dict[str, dict[str, Any]] = {}
 
     def decompile_function(self, address: int, optimize: bool = True) -> dict[str, Any]:
         """Decompile a single function with advanced analysis.
@@ -64,7 +64,7 @@ class R2DecompilationEngine:
         if cache_key in self.decompilation_cache:
             return self.decompilation_cache[cache_key]
 
-        result = {
+        result: dict[str, Any] = {
             "address": hex(address),
             "pseudocode": "",
             "graph_data": {},
@@ -162,7 +162,7 @@ class R2DecompilationEngine:
 
     def _extract_variables(self, r2: R2Session, address: int) -> list[dict[str, Any]]:
         """Extract function variables and their types."""
-        variables = []
+        variables: list[dict[str, Any]] = []
 
         try:
             # Get function variables
@@ -425,7 +425,7 @@ class R2DecompilationEngine:
                             # Try to get string at address
                             try:
                                 string_data = r2._execute_command(f"ps @ {hex(addr)}")
-                                if string_data:
+                                if string_data and isinstance(string_data, str):
                                     strings.append(
                                         {
                                             "address": hex(addr),
@@ -441,7 +441,7 @@ class R2DecompilationEngine:
 
         return strings
 
-    def _analyze_control_flow(self, graph_data: dict[str, Any]) -> dict[str, Any]:
+    def _analyze_control_flow(self, graph_data: dict[str, Any] | list[Any]) -> dict[str, Any]:
         """Analyze control flow from graph data."""
         flow_analysis = {
             "basic_blocks": 0,
@@ -574,7 +574,7 @@ class R2DecompilationEngine:
             Dictionary containing license functions and their analysis results
 
         """
-        result = {
+        result: dict[str, Any] = {
             "license_functions": [],
             "decompiled_functions": {},
             "total_functions_analyzed": 0,
@@ -614,7 +614,7 @@ class R2DecompilationEngine:
                     "pirate",
                 ]
 
-                pattern_counts = {}
+                pattern_counts: dict[str, int] = {}
 
                 for func in functions:
                     func_name = func.get("name", "")

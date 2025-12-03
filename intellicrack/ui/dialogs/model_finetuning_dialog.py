@@ -27,15 +27,17 @@ import os
 import pickle  # noqa: S403
 import random
 import time
-from dataclasses import dataclass
+import types
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, TypedDict, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as PYQT6_AVAILABLE,
     QApplication,
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QDialog,
     QDoubleSpinBox,
@@ -70,12 +72,14 @@ if TYPE_CHECKING:
     import numpy as np
     import numpy.typing as npt
     import torch as torch_module
+    from torch import nn as nn_module
 
     TorchTensor = torch_module.Tensor
     TorchModule = torch_module.nn.Module
     TorchOptimizer = torch_module.optim.Optimizer
     TorchDevice = torch_module.device
     NumpyArray = npt.NDArray[np.float64]
+    NNModule = type[nn_module.Module]
 else:
     if TORCH_AVAILABLE and torch is not None:
         import torch as torch_module
@@ -169,15 +173,19 @@ except ImportError as e:
     NLTK_AVAILABLE = False
     nltk = None
 
+plt: types.ModuleType | None = None
 try:
-    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
+    from intellicrack.handlers.matplotlib_handler import (
+        HAS_MATPLOTLIB,
+        plt as _plt,
+    )
 
+    plt = _plt
     MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
-    plt = None
 
 
 class TrainingStatus(Enum):
@@ -217,7 +225,7 @@ class TrainingConfig:
     evaluation_strategy: str = "epoch"
     logging_steps: int = 10
 
-    def to_enhanced_config(self) -> "EnhancedTrainingConfiguration":
+    def to_enhanced_config(self) -> "EnhancedTrainingConfiguration | None":
         """Convert TrainingConfig to EnhancedTrainingConfiguration if available."""
         if ENHANCED_TRAINING_AVAILABLE:
             return EnhancedTrainingConfiguration(
@@ -240,17 +248,12 @@ class TrainingConfig:
 class AugmentationConfig:
     """Configuration for dataset augmentation."""
 
-    techniques: list[str] = None
+    techniques: list[str] = field(default_factory=lambda: ["synonym_replacement", "random_insertion"])
     augmentations_per_sample: int = 2
     augmentation_probability: float = 0.8
     preserve_labels: bool = True
     max_synonyms: int = 3
     synonym_threshold: float = 0.5
-
-    def __post_init__(self) -> None:
-        """Initialize DataAugmentationConfig after creation."""
-        if self.techniques is None:
-            self.techniques = ["synonym_replacement", "random_insertion"]
 
 
 class TrainingThread(QThread):
@@ -273,12 +276,13 @@ class TrainingThread(QThread):
         if PYQT6_AVAILABLE:
             super().__init__()
         self.config = config
-        self.model = None
-        self.tokenizer = None
-        self.training_history = []
+        self.model: TorchModule | object | None = None
+        self.tokenizer: object | None = None
+        self.training_history: list[dict[str, Any]] = []
         self.is_stopped = False
         self.status = TrainingStatus.IDLE
         self.logger = logging.getLogger(__name__)
+        self.training_args: object | None = None
 
     def run(self) -> None:
         """Run the model training process."""
@@ -328,7 +332,7 @@ class TrainingThread(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.status = TrainingStatus.ERROR
-            self.logger.error(f"Training failed: {e}", exc_info=True)
+            self.logger.exception("Training failed: %s", e)
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit(
                     {
@@ -344,29 +348,30 @@ class TrainingThread(QThread):
             model_path = self.config.model_path
 
             if TRANSFORMERS_AVAILABLE and self.config.model_format == "Transformers":
-                # Load using Transformers library
-                self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+                import torch as torch_local
+
+                self.tokenizer = cast("object", AutoTokenizer.from_pretrained(model_path))  # type: ignore[no-untyped-call]
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_path,
-                    torch_dtype=torch.float16 if TORCH_AVAILABLE else None,
+                    torch_dtype=torch_local.float16 if TORCH_AVAILABLE else None,
                     device_map="auto" if TORCH_AVAILABLE else None,
                 )
 
-                # Add padding token if needed
-                if self.tokenizer.pad_token is None:
-                    self.tokenizer.pad_token = self.tokenizer.eos_token
+                if hasattr(self.tokenizer, "pad_token") and self.tokenizer.pad_token is None:
+                    if hasattr(self.tokenizer, "eos_token"):
+                        self.tokenizer.pad_token = self.tokenizer.eos_token
 
             elif TORCH_AVAILABLE and self.config.model_format == "PyTorch":
-                # Load PyTorch model
+                import torch as torch_local
+
                 if model_path.endswith(".bin") or model_path.endswith(".pt"):
-                    checkpoint = torch.load(model_path, map_location="cpu")
-                    if "model_state_dict" in checkpoint:
+                    checkpoint = torch_local.load(model_path, map_location="cpu")
+                    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
                         self.model = checkpoint["model_state_dict"]
                     else:
                         self.model = checkpoint
 
             else:
-                # Fallback: create minimal viable model
                 self.logger.warning("Creating minimal model fallback")
                 self._create_minimal_model()
 
@@ -456,8 +461,12 @@ class TrainingThread(QThread):
             GPTModel instance with causal attention masking and proper positional encoding.
 
         """
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch required for model creation")
+        import torch as torch_local
+        from torch import nn as nn_local
 
-        class GPTModel(nn.Module):
+        class GPTModel(nn_local.Module):
             """GPT-style autoregressive transformer for language modeling.
 
             This implementation includes causal attention masking, proper positional
@@ -471,21 +480,17 @@ class TrainingThread(QThread):
                 self.num_layers = num_layers
                 self.max_position_embeddings = 2048
 
-                # Token and position embeddings
-                self.token_embedding = nn.Embedding(vocab_size, hidden_size)
-                self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
+                self.token_embedding = nn_local.Embedding(vocab_size, hidden_size)
+                self.position_embedding = nn_local.Embedding(self.max_position_embeddings, hidden_size)
 
-                # Transformer blocks
-                self.transformer_blocks = nn.ModuleList([self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)])
+                self.transformer_blocks = nn_local.ModuleList([self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)])
 
-                # Final layer norm and output projection
-                self.final_layer_norm = nn.LayerNorm(hidden_size)
-                self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
+                self.final_layer_norm = nn_local.LayerNorm(hidden_size)
+                self.lm_head = nn_local.Linear(hidden_size, vocab_size, bias=False)
 
-                # Dropout
-                self.dropout = nn.Dropout(0.1)
+                self.dropout = nn_local.Dropout(0.1)
 
-            def _create_gpt_block(self, hidden_size: int, num_heads: int) -> "GPTBlock":
+            def _create_gpt_block(self, hidden_size: int, num_heads: int) -> TorchModule:
                 """Create a single GPT transformer block.
 
                 Args:
@@ -497,26 +502,26 @@ class TrainingThread(QThread):
 
                 """
 
-                class GPTBlock(nn.Module):
+                class GPTBlock(nn_local.Module):
                     """A single GPT transformer block with attention and feed-forward layers."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
                         """Initialize GPT block with attention and feed-forward layers."""
                         super().__init__()
-                        self.attention = nn.MultiheadAttention(
+                        self.attention = nn_local.MultiheadAttention(
                             hidden_size,
                             num_heads,
                             dropout=0.1,
                             batch_first=True,
                         )
-                        self.feed_forward = nn.Sequential(
-                            nn.Linear(hidden_size, hidden_size * 4),
-                            nn.GELU(),
-                            nn.Linear(hidden_size * 4, hidden_size),
-                            nn.Dropout(0.1),
+                        self.feed_forward = nn_local.Sequential(
+                            nn_local.Linear(hidden_size, hidden_size * 4),
+                            nn_local.GELU(),
+                            nn_local.Linear(hidden_size * 4, hidden_size),
+                            nn_local.Dropout(0.1),
                         )
-                        self.ln1 = nn.LayerNorm(hidden_size)
-                        self.ln2 = nn.LayerNorm(hidden_size)
+                        self.ln1 = nn_local.LayerNorm(hidden_size)
+                        self.ln2 = nn_local.LayerNorm(hidden_size)
 
                     def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
                         """Forward pass through the GPT block.
@@ -555,25 +560,21 @@ class TrainingThread(QThread):
 
                 """
                 seq_len = input_ids.size(1)
-                position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+                position_ids = torch_local.arange(seq_len, device=input_ids.device).unsqueeze(0)
 
-                # Embeddings
                 token_embeds = self.token_embedding(input_ids)
                 position_embeds = self.position_embedding(position_ids)
                 x = self.dropout(token_embeds + position_embeds)
 
-                # Create causal attention mask
                 if attention_mask is None:
-                    attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
+                    attention_mask = torch_local.triu(torch_local.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
 
-                # Transformer blocks
                 for block in self.transformer_blocks:
                     x = block(x, attention_mask)
 
-                # Final processing
                 x = self.final_layer_norm(x)
-                return self.lm_head(x)
+                return cast("TorchTensor", self.lm_head(x))
 
         return GPTModel(vocab_size, hidden_size, num_layers, num_heads)
 
@@ -590,8 +591,12 @@ class TrainingThread(QThread):
             BERTModel instance with masked language modeling capabilities.
 
         """
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch required for model creation")
+        import torch as torch_local
+        from torch import nn as nn_local
 
-        class BERTModel(nn.Module):
+        class BERTModel(nn_local.Module):
             """BERT-style bidirectional transformer for masked language modeling.
 
             Includes proper token type embeddings, bidirectional attention,
@@ -604,13 +609,11 @@ class TrainingThread(QThread):
                 self.hidden_size = hidden_size
                 self.max_position_embeddings = 512
 
-                # Embeddings
-                self.token_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0)
-                self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
-                self.token_type_embedding = nn.Embedding(2, hidden_size)
+                self.token_embedding = nn_local.Embedding(vocab_size, hidden_size, padding_idx=0)
+                self.position_embedding = nn_local.Embedding(self.max_position_embeddings, hidden_size)
+                self.token_type_embedding = nn_local.Embedding(2, hidden_size)
 
-                # Transformer encoder
-                encoder_layer = nn.TransformerEncoderLayer(
+                encoder_layer = nn_local.TransformerEncoderLayer(
                     d_model=hidden_size,
                     nhead=num_heads,
                     dim_feedforward=hidden_size * 4,
@@ -618,18 +621,16 @@ class TrainingThread(QThread):
                     activation="gelu",
                     batch_first=True,
                 )
-                self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
+                self.transformer = nn_local.TransformerEncoder(encoder_layer, num_layers)
 
-                # MLM head
-                self.mlm_head = nn.Sequential(
-                    nn.Linear(hidden_size, hidden_size),
-                    nn.GELU(),
-                    nn.LayerNorm(hidden_size),
-                    nn.Linear(hidden_size, vocab_size),
+                self.mlm_head = nn_local.Sequential(
+                    nn_local.Linear(hidden_size, hidden_size),
+                    nn_local.GELU(),
+                    nn_local.LayerNorm(hidden_size),
+                    nn_local.Linear(hidden_size, vocab_size),
                 )
 
-                # Pooler for classification tasks
-                self.pooler = nn.Linear(hidden_size, hidden_size)
+                self.pooler = nn_local.Linear(hidden_size, hidden_size)
 
             def forward(
                 self,
@@ -649,30 +650,26 @@ class TrainingThread(QThread):
 
                 """
                 seq_len = input_ids.size(1)
-                position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+                position_ids = torch_local.arange(seq_len, device=input_ids.device).unsqueeze(0)
 
-                # Embeddings
                 token_embeds = self.token_embedding(input_ids)
                 position_embeds = self.position_embedding(position_ids)
 
                 if token_type_ids is not None:
                     token_type_embeds = self.token_type_embedding(token_type_ids)
                 else:
-                    token_type_embeds = torch.zeros_like(token_embeds)
+                    token_type_embeds = torch_local.zeros_like(token_embeds)
 
                 embeddings = token_embeds + position_embeds + token_type_embeds
 
-                # Transformer
                 if attention_mask is not None:
                     attention_mask = attention_mask.bool()
 
                 hidden_states = self.transformer(embeddings, src_key_padding_mask=attention_mask)
 
-                # MLM prediction
                 mlm_logits = self.mlm_head(hidden_states)
 
-                # Pooled output for classification
-                pooled_output = torch.tanh(self.pooler(hidden_states[:, 0]))
+                pooled_output = torch_local.tanh(self.pooler(hidden_states[:, 0]))
 
                 return {
                     "logits": mlm_logits,
@@ -695,8 +692,12 @@ class TrainingThread(QThread):
             RoBERTa model based on BERT architecture without token type embeddings.
 
         """
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch required for model creation")
+        from torch import nn as nn_local
+
         model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
-        model.token_type_embedding = nn.Embedding(1, hidden_size)
+        model.token_type_embedding = nn_local.Embedding(1, hidden_size)
         return model
 
     def _create_llama_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> TorchModule:
@@ -712,8 +713,12 @@ class TrainingThread(QThread):
             LlamaModel instance with RMSNorm and SwiGLU activation.
 
         """
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch required for model creation")
+        import torch as torch_local
+        from torch import nn as nn_local
 
-        class LlamaModel(nn.Module):
+        class LlamaModel(nn_local.Module):
             """LLaMA-style transformer with RMSNorm and SwiGLU activation.
 
             Implements the architectural improvements from the LLaMA paper including
@@ -726,17 +731,14 @@ class TrainingThread(QThread):
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
 
-                # Token embedding
-                self.token_embedding = nn.Embedding(vocab_size, hidden_size)
+                self.token_embedding = nn_local.Embedding(vocab_size, hidden_size)
 
-                # Transformer layers
-                self.layers = nn.ModuleList([self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)])
+                self.layers = nn_local.ModuleList([self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)])
 
-                # Final norm and output
                 self.final_norm = self._create_rms_norm(hidden_size)
-                self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
+                self.lm_head = nn_local.Linear(hidden_size, vocab_size, bias=False)
 
-            def _create_rms_norm(self, hidden_size: int) -> "RMSNorm":
+            def _create_rms_norm(self, hidden_size: int) -> "nn_local.Module":
                 """Create RMSNorm layer.
 
                 Args:
@@ -747,13 +749,13 @@ class TrainingThread(QThread):
 
                 """
 
-                class RMSNorm(nn.Module):
+                class RMSNorm(nn_local.Module):
                     """RMS normalization layer for transformer models."""
 
                     def __init__(self, hidden_size: int, eps: float = 1e-6) -> None:
                         """Initialize RMS normalization with hidden size and epsilon."""
                         super().__init__()
-                        self.weight = nn.Parameter(torch.ones(hidden_size))
+                        self.weight = nn_local.Parameter(torch_local.ones(hidden_size))
                         self.eps = eps
 
                     def forward(self, x: TorchTensor) -> TorchTensor:
@@ -767,12 +769,12 @@ class TrainingThread(QThread):
 
                         """
                         variance = x.pow(2).mean(-1, keepdim=True)
-                        x *= torch.rsqrt(variance + self.eps)
+                        x *= torch_local.rsqrt(variance + self.eps)
                         return self.weight * x
 
                 return RMSNorm(hidden_size)
 
-            def _create_llama_layer(self, hidden_size: int, num_heads: int) -> "LlamaLayer":
+            def _create_llama_layer(self, hidden_size: int, num_heads: int) -> "nn_local.Module":
                 """Create a single LLaMA transformer layer.
 
                 Args:
@@ -784,14 +786,14 @@ class TrainingThread(QThread):
 
                 """
 
-                class LlamaLayer(nn.Module):
+                class LlamaLayer(nn_local.Module):
                     """Single layer of a LLaMA transformer model."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
                         """Initialize LLaMA layer with attention and feed-forward networks."""
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
-                        self.attention = nn.MultiheadAttention(
+                        self.attention = nn_local.MultiheadAttention(
                             hidden_size,
                             num_heads,
                             dropout=0.0,
@@ -799,9 +801,9 @@ class TrainingThread(QThread):
                         )
 
                         self.ffn_norm = parent._create_rms_norm(hidden_size)
-                        self.gate_proj = nn.Linear(hidden_size, hidden_size * 4, bias=False)
-                        self.up_proj = nn.Linear(hidden_size, hidden_size * 4, bias=False)
-                        self.down_proj = nn.Linear(hidden_size * 4, hidden_size, bias=False)
+                        self.gate_proj = nn_local.Linear(hidden_size, hidden_size * 4, bias=False)
+                        self.up_proj = nn_local.Linear(hidden_size, hidden_size * 4, bias=False)
+                        self.down_proj = nn_local.Linear(hidden_size * 4, hidden_size, bias=False)
 
                     def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
                         """Forward pass through LLaMA layer with attention and SwiGLU FFN.
@@ -819,7 +821,7 @@ class TrainingThread(QThread):
                         x += attn_out
 
                         normed_x = self.ffn_norm(x)
-                        gate = torch.nn.functional.silu(self.gate_proj(normed_x))
+                        gate = torch_local.nn.functional.silu(self.gate_proj(normed_x))
                         up = self.up_proj(normed_x)
                         ffn_out = self.down_proj(gate * up)
                         x += ffn_out
@@ -844,14 +846,14 @@ class TrainingThread(QThread):
 
                 seq_len = input_ids.size(1)
                 if attention_mask is None:
-                    attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
+                    attention_mask = torch_local.triu(torch_local.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
 
                 for layer in self.layers:
                     x = layer(x, attention_mask)
 
                 x = self.final_norm(x)
-                return self.lm_head(x)
+                return cast("TorchTensor", self.lm_head(x))
 
         return LlamaModel(vocab_size, hidden_size, num_layers, num_heads)
 
@@ -868,8 +870,12 @@ class TrainingThread(QThread):
             EnhancedTransformerModel instance with modern architectural improvements.
 
         """
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("PyTorch required for model creation")
+        import torch as torch_local
+        from torch import nn as nn_local
 
-        class EnhancedTransformerModel(nn.Module):
+        class EnhancedTransformerModel(nn_local.Module):
             """Enhanced transformer model with modern architectural improvements.
 
             Includes features like pre-norm, improved attention, better initialization,
@@ -883,21 +889,17 @@ class TrainingThread(QThread):
                 self.num_heads = num_heads
                 self.max_seq_len = 2048
 
-                # Embeddings with improved initialization
-                self.token_embedding = nn.Embedding(vocab_size, hidden_size)
-                self.position_embedding = nn.Embedding(self.max_seq_len, hidden_size)
+                self.token_embedding = nn_local.Embedding(vocab_size, hidden_size)
+                self.position_embedding = nn_local.Embedding(self.max_seq_len, hidden_size)
 
-                # Transformer layers with pre-norm and improvements
-                self.layers = nn.ModuleList([self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)])
+                self.layers = nn_local.ModuleList([self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)])
 
-                # Output processing
-                self.final_norm = nn.LayerNorm(hidden_size)
-                self.output_projection = nn.Linear(hidden_size, vocab_size, bias=False)
+                self.final_norm = nn_local.LayerNorm(hidden_size)
+                self.output_projection = nn_local.Linear(hidden_size, vocab_size, bias=False)
 
-                # Dropout
-                self.embedding_dropout = nn.Dropout(0.1)
+                self.embedding_dropout = nn_local.Dropout(0.1)
 
-            def _create_enhanced_layer(self, hidden_size: int, num_heads: int) -> "EnhancedTransformerLayer":
+            def _create_enhanced_layer(self, hidden_size: int, num_heads: int) -> "nn_local.Module":
                 """Create enhanced transformer layer with modern improvements.
 
                 Args:
@@ -909,28 +911,28 @@ class TrainingThread(QThread):
 
                 """
 
-                class EnhancedTransformerLayer(nn.Module):
+                class EnhancedTransformerLayer(nn_local.Module):
                     """Enhanced transformer layer with modern improvements and optimizations."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
                         """Initialize enhanced transformer layer with pre-norm and improved attention."""
                         super().__init__()
-                        self.attention_norm = nn.LayerNorm(hidden_size)
-                        self.attention = nn.MultiheadAttention(
+                        self.attention_norm = nn_local.LayerNorm(hidden_size)
+                        self.attention = nn_local.MultiheadAttention(
                             hidden_size,
                             num_heads,
                             dropout=0.1,
                             batch_first=True,
                         )
-                        self.attention_dropout = nn.Dropout(0.1)
+                        self.attention_dropout = nn_local.Dropout(0.1)
 
-                        self.ffn_norm = nn.LayerNorm(hidden_size)
-                        self.feed_forward = nn.Sequential(
-                            nn.Linear(hidden_size, hidden_size * 4),
-                            nn.GELU(),
-                            nn.Dropout(0.1),
-                            nn.Linear(hidden_size * 4, hidden_size),
-                            nn.Dropout(0.1),
+                        self.ffn_norm = nn_local.LayerNorm(hidden_size)
+                        self.feed_forward = nn_local.Sequential(
+                            nn_local.Linear(hidden_size, hidden_size * 4),
+                            nn_local.GELU(),
+                            nn_local.Dropout(0.1),
+                            nn_local.Linear(hidden_size * 4, hidden_size),
+                            nn_local.Dropout(0.1),
                         )
 
                     def forward(self, x: TorchTensor, attention_mask: TorchTensor | None = None) -> TorchTensor:
@@ -968,7 +970,7 @@ class TrainingThread(QThread):
                 input_ids: TorchTensor,
                 attention_mask: TorchTensor | None = None,
                 return_attention: bool = False,
-            ) -> TorchTensor | dict[str, TorchTensor]:
+            ) -> TorchTensor | tuple[TorchTensor, list[TorchTensor]]:
                 """Forward pass through the enhanced transformer model.
 
                 Args:
@@ -982,24 +984,24 @@ class TrainingThread(QThread):
                 """
                 _, seq_len = input_ids.shape
 
-                positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+                positions = torch_local.arange(seq_len, device=input_ids.device).unsqueeze(0)
                 token_embeds = self.token_embedding(input_ids)
                 pos_embeds = self.position_embedding(positions)
                 x = self.embedding_dropout(token_embeds + pos_embeds)
 
                 if attention_mask is None:
-                    attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
+                    attention_mask = torch_local.triu(torch_local.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
 
                 for layer in self.layers:
                     x = layer(x, attention_mask)
 
                 x = self.final_norm(x)
-                logits = self.output_projection(x)
+                logits: TorchTensor = cast("TorchTensor", self.output_projection(x))
 
                 if return_attention:
-                    attention_weights = [] if return_attention else None
-                    return logits, attention_weights
+                    attention_weights: list[TorchTensor] = []
+                    return (logits, attention_weights)
                 return logits
 
         return EnhancedTransformerModel(vocab_size, hidden_size, num_layers, num_heads)
@@ -1131,7 +1133,7 @@ class TrainingThread(QThread):
                 add_special_tokens: bool = True,
                 max_length: int | None = None,
                 padding: bool = False,
-            ) -> dict[str, list[int] | list[list[int]]]:
+            ) -> list[int] | list[list[int]]:
                 """Encode text to token IDs.
 
                 Args:
@@ -1187,11 +1189,21 @@ class TrainingThread(QThread):
                     Decoded text string.
 
                 """
-                if TORCH_AVAILABLE and torch.is_tensor(token_ids):
-                    token_ids = token_ids.tolist()
+                ids_to_decode: list[int] = []
+                raw_ids: Any = token_ids
+                torch_mod = torch if TORCH_AVAILABLE else None
+                if torch_mod is not None and hasattr(torch_mod, "is_tensor"):  # type: ignore[unreachable]
+                    if torch_mod.is_tensor(raw_ids):  # type: ignore[unreachable]
+                        raw_ids = raw_ids.tolist()
+
+                if isinstance(raw_ids, list):
+                    if raw_ids and isinstance(raw_ids[0], list):
+                        ids_to_decode = raw_ids[0]
+                    else:
+                        ids_to_decode = raw_ids
 
                 tokens = []
-                for token_id in token_ids:
+                for token_id in ids_to_decode:
                     token = self.id_to_token.get(token_id, self.unk_token)
 
                     if skip_special_tokens and token in [
@@ -1214,57 +1226,69 @@ class TrainingThread(QThread):
         """Initialize model weights with proper initialization strategies."""
         if self.model is None:
             return
+        if not TORCH_AVAILABLE:
+            return
+        import torch as torch_local
+        from torch import nn as nn_local
 
         def init_weights(module: TorchModule) -> None:
-            if isinstance(module, nn.Linear):
-                # Xavier uniform initialization for linear layers
-                torch.nn.init.xavier_uniform_(module.weight)
+            if isinstance(module, nn_local.Linear):
+                torch_local.nn.init.xavier_uniform_(module.weight)
                 if module.bias is not None:
-                    torch.nn.init.zeros_(module.bias)
-            elif isinstance(module, nn.Embedding):
-                # Normal initialization for embeddings
-                torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            elif isinstance(module, nn.LayerNorm):
-                # Standard initialization for layer norm
-                torch.nn.init.ones_(module.weight)
-                torch.nn.init.zeros_(module.bias)
-            elif isinstance(module, nn.MultiheadAttention):
-                # Initialize attention weights
+                    torch_local.nn.init.zeros_(module.bias)
+            elif isinstance(module, nn_local.Embedding):
+                torch_local.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            elif isinstance(module, nn_local.LayerNorm):
+                torch_local.nn.init.ones_(module.weight)
+                torch_local.nn.init.zeros_(module.bias)
+            elif isinstance(module, nn_local.MultiheadAttention):
                 if hasattr(module, "in_proj_weight") and module.in_proj_weight is not None:
-                    torch.nn.init.xavier_uniform_(module.in_proj_weight)
+                    torch_local.nn.init.xavier_uniform_(module.in_proj_weight)
                 if hasattr(module, "out_proj") and module.out_proj.weight is not None:
-                    torch.nn.init.xavier_uniform_(module.out_proj.weight)
+                    torch_local.nn.init.xavier_uniform_(module.out_proj.weight)
 
-        self.model.apply(init_weights)
+        if hasattr(self.model, "apply"):
+            self.model.apply(init_weights)
         self.logger.info("Model weights initialized with Xavier/normal initialization")
 
     def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int) -> None:
         """Add comprehensive metadata to the model."""
-        if not hasattr(self.model, "config"):
-            self.model.config = {}
+        if self.model is None:
+            return
+        model = self.model
+        if not hasattr(model, "config"):
+            model.config = {}
 
-        self.model.config.update(
-            {
-                "model_type": model_type,
-                "vocab_size": vocab_size,
-                "hidden_size": hidden_size,
-                "num_layers": num_layers,
-                "num_parameters": sum(p.numel() for p in self.model.parameters()),
-                "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
-                "created_timestamp": time.time(),
-                "framework": "pytorch",
-                "version": "1.0.0",
-            },
-        )
+        model_config = getattr(model, "config", {})
+        if isinstance(model_config, dict):
+            num_params = 0
+            trainable_params = 0
+            if hasattr(model, "parameters") and callable(model.parameters):
+                params_list = list(model.parameters())
+                num_params = sum(p.numel() for p in params_list)
+                trainable_params = sum(p.numel() for p in params_list if p.requires_grad)
+            model_config.update(
+                {
+                    "model_type": model_type,
+                    "vocab_size": vocab_size,
+                    "hidden_size": hidden_size,
+                    "num_layers": num_layers,
+                    "num_parameters": num_params,
+                    "trainable_parameters": trainable_params,
+                    "created_timestamp": time.time(),
+                    "framework": "pytorch",
+                    "version": "1.0.0",
+                },
+            )
 
-        # Add training configuration
-        self.model.training_config = {
-            "learning_rate": getattr(self.config, "learning_rate", 1e-4),
+        training_config = {
+            "learning_rate": getattr(self.config, "learning_rate", 0.0001),
             "batch_size": getattr(self.config, "batch_size", 32),
             "max_epochs": getattr(self.config, "max_epochs", 10),
             "warmup_steps": getattr(self.config, "warmup_steps", 1000),
             "weight_decay": getattr(self.config, "weight_decay", 0.01),
         }
+        model.training_config = training_config
 
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
         """Estimate the number of parameters in the model."""
@@ -1274,6 +1298,661 @@ class TrainingThread(QThread):
         output_params = hidden_size * vocab_size  # Output projection
 
         return embedding_params + layer_params + output_params
+
+    def _create_fallback_model(self) -> object:
+        """Create a sophisticated fallback neural network for license protection analysis.
+
+        Returns:
+            LicenseAnalysisNeuralNetwork instance for neural analysis.
+
+        """
+        return LicenseAnalysisNeuralNetwork()
+
+    def _load_dataset(self) -> list[dict[str, Any]]:
+        """Load and prepare the training dataset.
+
+        Returns:
+            List of data samples loaded from the configured dataset path.
+
+        Raises:
+            FileNotFoundError: If the dataset file does not exist.
+            OSError: If there are issues reading the dataset file.
+
+        """
+        try:
+            dataset_path = self.config.dataset_path
+            dataset_format = self.config.dataset_format.lower()
+
+            if not os.path.exists(dataset_path):
+                error_msg = f"Dataset file not found: {dataset_path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+
+            data = []
+
+            if dataset_format == "json":
+                with open(dataset_path, encoding="utf-8") as f:
+                    raw_data = json.load(f)
+                    if isinstance(raw_data, list):
+                        data = raw_data
+                    elif isinstance(raw_data, dict) and "data" in raw_data:
+                        data = raw_data["data"]
+
+            elif dataset_format == "jsonl":
+                with open(dataset_path, encoding="utf-8") as f:
+                    for line in f:
+                        try:
+                            item = json.loads(line.strip())
+                            data.append(item)
+                        except json.JSONDecodeError as e:
+                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
+                            continue
+
+            elif dataset_format == "csv":
+                with open(dataset_path, encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    data = list(reader)
+
+            elif dataset_format == "txt":
+                with open(dataset_path, encoding="utf-8") as f:
+                    lines = f.readlines()
+                    data = [{"input": line.strip(), "output": ""} for line in lines if line.strip()]
+
+            if PYQT6_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit(
+                    {
+                        "status": f"Dataset loaded: {len(data)} samples",
+                        "step": 1,
+                    },
+                )
+
+            return data
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Failed to load dataset: %s", e)
+            raise
+
+    def _setup_training(self, dataset: object) -> None:
+        """Set up training configuration and prepare for training.
+
+        Args:
+            dataset: Training dataset for setup configuration.
+
+        """
+        _ = dataset
+        try:
+            if TRANSFORMERS_AVAILABLE and self.tokenizer:
+                # Setup LoRA if available
+                if PEFT_AVAILABLE and hasattr(self.model, "config"):
+                    lora_config = LoraConfig(
+                        task_type=TaskType.CAUSAL_LM,
+                        r=self.config.lora_rank,
+                        lora_alpha=self.config.lora_alpha,
+                        target_modules=["q_proj", "v_proj"],
+                        lora_dropout=0.1,
+                    )
+                    self.model = cast("TorchModule | object", get_peft_model(cast("Any", self.model), lora_config))
+
+                # Prepare training arguments
+                self.training_args = TrainingArguments(
+                    output_dir="./training_output",
+                    num_train_epochs=self.config.epochs,
+                    per_device_train_batch_size=self.config.batch_size,
+                    learning_rate=self.config.learning_rate,
+                    gradient_accumulation_steps=self.config.gradient_accumulation_steps,
+                    warmup_ratio=self.config.warmup_ratio,
+                    weight_decay=self.config.weight_decay,
+                    logging_steps=self.config.logging_steps,
+                    save_strategy=self.config.save_strategy,
+                    eval_strategy=self.config.evaluation_strategy,
+                    report_to=None,  # Disable wandb/tensorboard
+                )
+
+            if PYQT6_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit(
+                    {
+                        "status": "Training setup complete",
+                        "step": 2,
+                    },
+                )
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Failed to setup training: %s", e)
+            raise
+
+    def _train_model(self) -> None:
+        """Execute sophisticated license-focused model training with real neural network optimization."""
+        try:
+            if self.model is None:
+                error_msg = "Model not initialized before training"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+            # Generate sophisticated license protection training data
+            training_data, validation_data = self._generate_license_training_data()
+
+            if hasattr(self.model, "train") and callable(self.model.train):
+                # Use the sophisticated neural network training
+                if hasattr(self.model, "np"):  # Our custom neural network
+                    self.logger.info("Starting license protection model training with custom neural network")
+
+                    # Extract training features and labels
+                    X_train, y_train = training_data
+                    X_val, y_val = validation_data
+
+                    # Advanced training with real optimization
+                    validation_tuple = (X_val, y_val) if X_val is not None else None
+
+                    training_results = self.model.train(
+                        x_train=X_train,
+                        y_train=y_train,
+                        epochs=self.config.epochs,
+                        batch_size=self.config.batch_size,
+                        validation_data=validation_tuple,
+                    )
+
+                    # Process real training metrics
+                    if "metrics" in training_results:
+                        metrics = training_results["metrics"]
+
+                        # Emit progress for each epoch with real data
+                        for epoch, (loss, acc) in enumerate(zip(metrics["loss_history"], metrics["accuracy_history"], strict=False)):
+                            if self.is_stopped:
+                                break
+
+                            current_step = epoch + 1
+                            progress_ratio = current_step / self.config.epochs
+
+                            # Real training metrics
+                            training_metrics = {
+                                "step": current_step,
+                                "epoch": epoch,
+                                "loss": loss,
+                                "accuracy": acc,
+                                "lr": metrics["learning_rate_schedule"][epoch]
+                                if epoch < len(metrics["learning_rate_schedule"])
+                                else self.config.learning_rate,
+                                "progress": progress_ratio * 100,
+                                "validation_loss": metrics["validation_loss"][epoch]
+                                if epoch < len(metrics.get("validation_loss", []))
+                                else None,
+                                "validation_accuracy": metrics["validation_accuracy"][epoch]
+                                if epoch < len(metrics.get("validation_accuracy", []))
+                                else None,
+                            }
+
+                            self.training_history.append(training_metrics)
+
+                            # Emit real progress updates
+                            if PYQT6_AVAILABLE and self.progress_signal:
+                                self.progress_signal.emit(
+                                    {
+                                        **training_metrics,
+                                        "status": f"Training license analysis epoch {epoch + 1}/{self.config.epochs}",
+                                        "message": f"Loss: {loss:.4f}, Accuracy: {acc:.4f}",
+                                        "history": self.training_history[-5:],
+                                    },
+                                )
+
+                            # Real validation phase
+                            if training_metrics["validation_loss"] is not None:
+                                self.status = TrainingStatus.VALIDATING
+                                if PYQT6_AVAILABLE and self.progress_signal:
+                                    self.progress_signal.emit(
+                                        {
+                                            "status": self.status.value,
+                                            "message": f"Validation - Loss: {training_metrics['validation_loss']:.4f}, Acc: {training_metrics['validation_accuracy']:.4f}",
+                                            "step": current_step,
+                                        },
+                                    )
+                                self.status = TrainingStatus.TRAINING
+
+                    # Final training completion with real results
+                    final_metrics = {
+                        "status": "License protection training completed",
+                        "step": len(self.training_history),
+                        "final_loss": training_results.get("final_loss", 0),
+                        "final_accuracy": training_results.get("final_accuracy", 0),
+                        "message": training_results.get("message", "Training completed"),
+                        "license_capabilities": "Hardware binding, Registry validation, Activation analysis, Bypass assessment",
+                    }
+
+                    if PYQT6_AVAILABLE and self.progress_signal:
+                        self.progress_signal.emit(final_metrics)
+
+                elif hasattr(self.model, "parameters"):  # PyTorch model
+                    self.logger.info("Starting PyTorch-based license protection training")
+
+                    # Real PyTorch training implementation for license analysis
+                    self._train_pytorch_license_model(training_data, validation_data)
+
+                else:
+                    self.logger.warning("Model does not support training - using evaluation mode")
+                    eval_results: object = None
+                    if hasattr(self.model, "eval") and callable(getattr(self.model, "eval", None)):
+                        eval_fn = self.model.eval
+                        eval_results = eval_fn()
+                    if PYQT6_AVAILABLE and self.progress_signal:
+                        self.progress_signal.emit(
+                            {
+                                "status": "Model switched to evaluation mode",
+                                "message": str(eval_results),
+                                "step": 1,
+                            },
+                        )
+
+            else:
+                error_msg = "Model does not implement training functionality"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+        except Exception as e:
+            self.logger.error("License protection training failed: %s", e)
+            if PYQT6_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit(
+                    {
+                        "status": "Training failed",
+                        "error": str(e),
+                        "step": -1,
+                    },
+                )
+            raise
+
+    def _generate_license_training_data(self) -> tuple[tuple[Any, Any], tuple[Any, Any]]:
+        """Generate sophisticated training data for license protection analysis.
+
+        Returns:
+            Tuple of ((X_train, y_train), (X_val, y_val)) training and validation datasets.
+
+        """
+        self.logger.info("Generating license protection training dataset")
+
+        n_samples = max(1000, self.config.batch_size * 10)
+        n_features = 1024
+        n_classes = 32
+
+        X_train = self._generate_binary_features(n_samples, n_features)
+        y_train = self._generate_license_labels(n_samples, n_classes)
+
+        val_size = max(100, n_samples // 5)
+        X_val = self._generate_binary_features(val_size, n_features)
+        y_val = self._generate_license_labels(val_size, n_classes)
+
+        return (X_train, y_train), (X_val, y_val)
+
+    def _generate_binary_features(self, n_samples: int, n_features: int) -> NumpyArray:
+        """Generate realistic binary analysis feature vectors.
+
+        Args:
+            n_samples: Number of samples to generate.
+            n_features: Number of features per sample.
+
+        Returns:
+            NumPy array of binary analysis features normalized for training.
+
+        """
+        import numpy as np
+
+        features = np.zeros((n_samples, n_features))
+
+        for i in range(n_samples):
+            # Base entropy patterns (0-256 for entropy analysis)
+            entropy_features = np.random.beta(2, 5, 256)  # Low entropy bias
+
+            # Import table features (representing API usage patterns)
+            import_features = np.random.exponential(0.3, 128)  # Sparse import patterns
+
+            # Section characteristics (representing PE/ELF structure)
+            section_features = np.random.gamma(2, 0.5, 64)
+
+            # License-specific patterns
+            license_features = self._generate_license_specific_features(64)
+
+            # Hardware binding indicators
+            hwid_features = np.random.choice([0, 1], 128, p=[0.7, 0.3])  # Sparse binary patterns
+
+            # Protection complexity indicators
+            protection_features = np.random.lognormal(0, 1, 64)
+
+            # Anti-analysis features
+            anti_debug_features = np.random.binomial(1, 0.2, 32)
+
+            # Registry/file system access patterns
+            registry_features = np.random.poisson(1.5, 128)
+
+            # Combine all feature types
+            all_features = np.concatenate(
+                [
+                    entropy_features,
+                    import_features,
+                    section_features,
+                    license_features,
+                    hwid_features,
+                    protection_features,
+                    anti_debug_features,
+                    registry_features,
+                ],
+            )
+
+            # Ensure exact feature count
+            if len(all_features) > n_features:
+                all_features = all_features[:n_features]
+            elif len(all_features) < n_features:
+                padding = np.zeros(n_features - len(all_features))
+                all_features = np.concatenate([all_features, padding])
+
+            features[i] = all_features
+
+        # Normalize features for better training
+        features = (features - np.mean(features, axis=0)) / (np.std(features, axis=0) + 1e-8)
+
+        return cast("NumpyArray", features)
+
+    def _generate_license_specific_features(self, n_features: int) -> NumpyArray:
+        """Generate features specifically related to license protection mechanisms.
+
+        Args:
+            n_features: Number of features to generate.
+
+        Returns:
+            NumPy array of license-specific features for analysis.
+
+        """
+        import numpy as np
+
+        features = np.zeros(n_features)
+
+        # Hardware ID patterns
+        features[:16] = np.random.exponential(2.0, 16)
+
+        # Registry key patterns
+        features[16:32] = np.random.gamma(1.5, 2, 16)
+
+        # Activation server communication
+        features[32:48] = np.random.beta(3, 7, 16)
+
+        # Cryptographic operations
+        features[48:64] = np.random.weibull(2, 16)
+
+        return features
+
+    def _generate_license_labels(self, n_samples: int, n_classes: int) -> NumpyArray:
+        """Generate sophisticated license protection classification labels.
+
+        Args:
+            n_samples: Number of label samples to generate.
+            n_classes: Number of classification classes.
+
+        Returns:
+            NumPy array of multi-hot encoded license protection labels.
+
+        """
+        import numpy as np
+
+        labels = np.zeros((n_samples, n_classes))
+
+        for i in range(n_samples):
+            # Hardware binding (classes 0-7)
+            if np.random.rand() < 0.6:
+                binding_strength = np.random.exponential(2)
+                binding_class = min(7, int(binding_strength))
+                labels[i, binding_class] = 1.0
+
+            # Registry validation (classes 8-15)
+            if np.random.rand() < 0.7:
+                registry_complexity = np.random.gamma(2, 2)
+                registry_class = 8 + min(7, int(registry_complexity))
+                labels[i, registry_class] = 1.0
+
+            # Activation complexity (classes 16-23)
+            if np.random.rand() < 0.4:
+                activation_complexity = np.random.beta(2, 3) * 8
+                activation_class = 16 + min(7, int(activation_complexity))
+                labels[i, activation_class] = 1.0
+
+            # Bypass difficulty (classes 24-31)
+            bypass_difficulty = np.random.lognormal(1, 0.5)
+            difficulty_class = 24 + min(7, int(bypass_difficulty))
+            labels[i, difficulty_class] = 1.0
+
+            # Ensure at least one class is active
+            if not np.any(labels[i]):
+                labels[i, np.random.randint(0, n_classes)] = 1.0
+
+        return labels
+
+    def _train_pytorch_license_model(
+        self,
+        training_data: tuple[TorchTensor, TorchTensor],
+        validation_data: tuple[TorchTensor, TorchTensor] | None,
+    ) -> None:
+        """Advanced PyTorch training implementation for license protection analysis.
+
+        Args:
+            training_data: Tuple of (X_train, y_train) training tensors.
+            validation_data: Optional tuple of (X_val, y_val) validation tensors.
+
+        """
+        if self.model is None:
+            self.logger.error("Model is not initialized for PyTorch training")
+            return
+
+        model_obj = self.model
+        if not (hasattr(model_obj, "parameters") and hasattr(model_obj, "train") and callable(model_obj)):
+            self.logger.error("Model does not have required PyTorch interface")
+            return
+
+        try:
+            import torch
+            from torch import nn, optim
+            from torch.utils.data import DataLoader, TensorDataset
+
+            X_train, y_train = training_data
+            X_val, y_val = validation_data if validation_data is not None else (None, None)
+
+            # Convert to PyTorch tensors
+            X_train_tensor = torch.FloatTensor(X_train)
+            y_train_tensor = torch.FloatTensor(y_train)
+
+            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+            train_loader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
+
+            # Setup validation if available
+            val_loader = None
+            if X_val is not None:
+                X_val_tensor = torch.FloatTensor(X_val)
+                y_val_tensor = torch.FloatTensor(y_val)
+                val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
+                val_loader = DataLoader(val_dataset, batch_size=self.config.batch_size, shuffle=False)
+
+            # Setup loss function and optimizer for multi-label classification
+            criterion = nn.BCEWithLogitsLoss()  # Better for multi-label
+            params_fn = model_obj.parameters
+            optimizer = optim.AdamW(params_fn(), lr=self.config.learning_rate, weight_decay=1e-4)
+
+            # Learning rate scheduler
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.epochs)
+
+            # Real training loop
+            for epoch in range(self.config.epochs):
+                if self.is_stopped:
+                    break
+
+                # Training phase
+                train_fn = model_obj.train
+                train_fn()
+                epoch_loss = 0.0
+                epoch_accuracy = 0.0
+                num_batches = 0
+
+                for _batch_idx, (batch_x, batch_y) in enumerate(train_loader):
+                    if self.is_stopped:
+                        break  # type: ignore[unreachable]
+
+                    # Move to device if available
+                    if hasattr(self, "training_device") and torch.cuda.is_available():
+                        device_str = str(self.training_device)
+                        batch_x = batch_x.to(device_str)
+                        batch_y = batch_y.to(device_str)
+
+                    # Zero gradients
+                    optimizer.zero_grad()
+
+                    # Forward pass
+                    outputs = model_obj(batch_x)
+                    loss = criterion(outputs, batch_y)
+
+                    # Backward pass
+                    loss.backward()
+
+                    # Gradient clipping for stability
+                    torch.nn.utils.clip_grad_norm_(params_fn(), max_norm=1.0)
+
+                    # Update weights
+                    optimizer.step()
+
+                    # Track metrics
+                    epoch_loss += loss.item()
+
+                    # Multi-label accuracy (threshold at 0.5)
+                    predictions = (torch.sigmoid(outputs) > 0.5).float()
+                    batch_accuracy = (predictions == batch_y).float().mean().item()
+                    epoch_accuracy += batch_accuracy
+                    num_batches += 1
+
+                # Average metrics
+                avg_loss = epoch_loss / max(1, num_batches)
+                avg_accuracy = epoch_accuracy / max(1, num_batches)
+
+                # Validation phase
+                val_loss = 0.0
+                val_accuracy = 0.0
+                if val_loader:
+                    eval_fn = model_obj.eval
+                    eval_fn()
+                    val_batches = 0
+                    with torch.no_grad():
+                        for val_x, val_y in val_loader:
+                            if hasattr(self, "training_device") and torch.cuda.is_available():
+                                device_str = str(self.training_device)
+                                val_x = val_x.to(device_str)
+                                val_y = val_y.to(device_str)
+
+                            val_outputs = model_obj(val_x)
+                            val_loss += criterion(val_outputs, val_y).item()
+
+                            val_predictions = (torch.sigmoid(val_outputs) > 0.5).float()
+                            val_accuracy += (val_predictions == val_y).float().mean().item()
+                            val_batches += 1
+
+                    val_loss /= max(1, val_batches)
+                    val_accuracy /= max(1, val_batches)
+
+                # Update learning rate
+                scheduler.step()
+                current_lr = scheduler.get_last_lr()[0]
+
+                # Store training history
+                training_metrics = {
+                    "step": epoch + 1,
+                    "epoch": epoch,
+                    "loss": avg_loss,
+                    "accuracy": avg_accuracy,
+                    "lr": current_lr,
+                    "progress": ((epoch + 1) / self.config.epochs) * 100,
+                    "validation_loss": val_loss if val_loader else None,
+                    "validation_accuracy": val_accuracy if val_loader else None,
+                }
+
+                self.training_history.append(training_metrics)
+
+                # Emit progress
+                if PYQT6_AVAILABLE and self.progress_signal:
+                    message = f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}"
+                    if val_loader:
+                        message = f"{message}, Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}"
+                    progress_data = {
+                        **training_metrics,
+                        "status": f"PyTorch license training epoch {epoch + 1}/{self.config.epochs}",
+                        "message": message,
+                        "history": self.training_history[-5:],
+                    }
+                    self.progress_signal.emit(progress_data)
+
+                if val_loader:
+                    log_message = (
+                        f"Epoch {epoch + 1}/{self.config.epochs}: "
+                        f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}, "
+                        f"Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}"
+                    )
+                else:
+                    log_message = f"Epoch {epoch + 1}/{self.config.epochs}: Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}"
+                self.logger.info(log_message)
+
+            # Final completion signal
+            if PYQT6_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit(
+                    {
+                        "status": "PyTorch license protection training completed",
+                        "step": len(self.training_history),
+                        "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
+                        "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
+                        "message": "Advanced license analysis model training completed successfully",
+                    },
+                )
+
+        except ImportError:
+            self.logger.warning("PyTorch not available, falling back to custom neural network")
+            raise
+        except Exception as e:
+            self.logger.error("PyTorch training failed: %s", e)
+            raise
+
+    def stop(self) -> None:
+        """Stop the training process."""
+        self.is_stopped = True
+        self.status = TrainingStatus.ERROR  # Set to error as training was interrupted
+        self.logger.info("Training stop requested")
+
+    def pause(self) -> None:
+        """Pause the training process."""
+        self.status = TrainingStatus.PAUSED
+        self.logger.info("Training paused")
+        if PYQT6_AVAILABLE and self.progress_signal:
+            self.progress_signal.emit(
+                {
+                    "status": self.status.value,
+                    "message": "Training paused",
+                    "step": -1,
+                },
+            )
+
+    def resume(self) -> None:
+        """Resume the training process."""
+        self.status = TrainingStatus.TRAINING
+        self.logger.info("Training resumed")
+        if PYQT6_AVAILABLE and self.progress_signal:
+            self.progress_signal.emit(
+                {
+                    "status": self.status.value,
+                    "message": "Training resumed",
+                    "step": -1,
+                },
+            )
+
+
+class _LicenseNNConfig(TypedDict):
+    """Type definition for LicenseAnalysisNeuralNetwork configuration."""
+
+    model_type: str
+    input_size: int
+    hidden_layers: list[int]
+    output_size: int
+    activation: str
+    learning_rate: float
+    dropout_rate: float
+    l2_regularization: float
+    status: str
 
 
 class LicenseAnalysisNeuralNetwork:
@@ -1286,15 +1965,14 @@ class LicenseAnalysisNeuralNetwork:
         import numpy as np
 
         self.logger = logging.getLogger(__name__)
-        self.np = np  # Store numpy reference
+        self.np = np
         self.json = json
 
-        # Network architecture for license protection analysis
-        self.config = {
+        self.config: _LicenseNNConfig = {
             "model_type": "license_analysis_nn",
-            "input_size": 1024,  # Binary feature vector size
+            "input_size": 1024,
             "hidden_layers": [512, 256, 128, 64],
-            "output_size": 32,  # License protection classification outputs
+            "output_size": 32,
             "activation": "relu",
             "learning_rate": 0.001,
             "dropout_rate": 0.2,
@@ -1302,14 +1980,12 @@ class LicenseAnalysisNeuralNetwork:
             "status": "production_ready",
         }
 
-        # Initialize sophisticated weight matrices using Xavier/Glorot initialization
         self._initialize_weights()
 
-        # Training state
         self.training = False
         self.epoch = 0
-        self.loss_history = []
-        self.accuracy_history = []
+        self.loss_history: list[float] = []
+        self.accuracy_history: list[float] = []
 
         # License protection pattern recognition
         self.license_patterns = {
@@ -1392,7 +2068,7 @@ class LicenseAnalysisNeuralNetwork:
 
         """
         exp_x = self.np.exp(x - self.np.max(x, axis=1, keepdims=True))
-        return exp_x / self.np.sum(exp_x, axis=1, keepdims=True)
+        return cast("NumpyArray", exp_x / self.np.sum(exp_x, axis=1, keepdims=True))
 
     def forward(self, x: NumpyArray) -> NumpyArray:
         """Forward pass through the license analysis neural network.
@@ -1497,10 +2173,10 @@ class LicenseAnalysisNeuralNetwork:
         m = y_true.shape[0]
         cross_entropy = -self.np.sum(y_true * self.np.log(y_pred + 1e-8)) / m
 
-        l2_penalty = sum(self.np.sum(weight_matrix**2) for weight_matrix in self.weights.values())
-        l2_penalty *= self.config["l2_regularization"] / 2
+        l2_penalty: float = float(sum(self.np.sum(weight_matrix**2) for weight_matrix in self.weights.values()))
+        l2_penalty *= float(self.config["l2_regularization"]) / 2
 
-        return cross_entropy + l2_penalty
+        return float(cross_entropy + l2_penalty)
 
     def train(
         self,
@@ -1509,7 +2185,7 @@ class LicenseAnalysisNeuralNetwork:
         epochs: int = 10,
         batch_size: int = 32,
         validation_data: tuple[NumpyArray, NumpyArray] | None = None,
-    ) -> dict[str, list[float]]:
+    ) -> dict[str, str | float | dict[str, list[float]]]:
         """Production-ready training with sophisticated optimization.
 
         Args:
@@ -1529,8 +2205,7 @@ class LicenseAnalysisNeuralNetwork:
         n_samples = x_train.shape[0]
         n_batches = max(1, n_samples // batch_size)
 
-        # Training metrics tracking
-        training_metrics = {
+        training_metrics: dict[str, list[float]] = {
             "loss_history": [],
             "accuracy_history": [],
             "validation_loss": [],
@@ -1584,8 +2259,8 @@ class LicenseAnalysisNeuralNetwork:
             Tuple of (average_loss, average_accuracy) for the epoch.
 
         """
-        epoch_loss = 0
-        epoch_accuracy = 0
+        epoch_loss: float = 0.0
+        epoch_accuracy: float = 0.0
 
         current_lr = self.config["learning_rate"] * (0.5 * (1 + self.np.cos(self.np.pi * epoch / epochs)))
         training_metrics["learning_rate_schedule"].append(current_lr)
@@ -1715,7 +2390,7 @@ class LicenseAnalysisNeuralNetwork:
         self.training = False
 
         if not isinstance(binary_features, self.np.ndarray):
-            binary_features = self.np.array(binary_features)
+            binary_features = self.np.array(binary_features)  # type: ignore[unreachable]
 
         if len(binary_features.shape) == 1:
             binary_features = binary_features.reshape(1, -1)
@@ -1737,18 +2412,21 @@ class LicenseAnalysisNeuralNetwork:
             Flattened list of all weight and bias parameters.
 
         """
-        params = []
+        params: list[float] = []
         for weight_matrix in self.weights.values():
-            params.extend(weight_matrix.flatten())
+            params.extend(weight_matrix.flatten().tolist())
         for bias_vector in self.biases.values():
-            params.extend(bias_vector.flatten())
+            params.extend(bias_vector.flatten().tolist())
         return params
 
-    def save_model(self, filepath: str) -> None:
+    def save_model(self, filepath: str) -> dict[str, str]:
         """Save the trained model for license analysis.
 
         Args:
             filepath: Path where the model will be saved.
+
+        Returns:
+            Status dictionary with save result.
 
         """
         model_data = {
@@ -1766,631 +2444,6 @@ class LicenseAnalysisNeuralNetwork:
             self.json.dump(model_data, f, indent=2)
 
         return {"status": "model_saved", "path": filepath}
-
-    def _create_fallback_model(self) -> object:
-        """Create a sophisticated fallback neural network for license protection analysis.
-
-        Returns:
-            LicenseAnalysisNeuralNetwork instance for neural analysis.
-
-        """
-        return LicenseAnalysisNeuralNetwork()
-
-    def _load_dataset(self) -> list[dict[str, Any]]:
-        """Load and prepare the training dataset.
-
-        Returns:
-            List of data samples loaded from the configured dataset path.
-
-        Raises:
-            FileNotFoundError: If the dataset file does not exist.
-            OSError: If there are issues reading the dataset file.
-
-        """
-        try:
-            dataset_path = self.config.dataset_path
-            dataset_format = self.config.dataset_format.lower()
-
-            if not os.path.exists(dataset_path):
-                error_msg = f"Dataset file not found: {dataset_path}"
-                logger.error(error_msg)
-                raise FileNotFoundError(error_msg)
-
-            data = []
-
-            if dataset_format == "json":
-                with open(dataset_path, encoding="utf-8") as f:
-                    raw_data = json.load(f)
-                    if isinstance(raw_data, list):
-                        data = raw_data
-                    elif isinstance(raw_data, dict) and "data" in raw_data:
-                        data = raw_data["data"]
-
-            elif dataset_format == "jsonl":
-                with open(dataset_path, encoding="utf-8") as f:
-                    for _line in f:
-                        try:
-                            item = json.loads(_line.strip())
-                            data.append(item)
-                        except json.JSONDecodeError as e:
-                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
-                            continue
-
-            elif dataset_format == "csv":
-                with open(dataset_path, encoding="utf-8") as f:
-                    reader = csv.DictReader(f)
-                    data = list(reader)
-
-            elif dataset_format == "txt":
-                with open(dataset_path, encoding="utf-8") as f:
-                    lines = f.readlines()
-                    data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
-
-            if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit(
-                    {
-                        "status": f"Dataset loaded: {len(data)} samples",
-                        "step": 1,
-                    },
-                )
-
-            return data
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to load dataset: %s", e)
-            raise
-
-    def _setup_training(self, dataset: object) -> None:
-        """Set up training configuration and prepare for training.
-
-        Args:
-            dataset: Training dataset for setup configuration.
-
-        """
-        _ = dataset
-        try:
-            if TRANSFORMERS_AVAILABLE and self.tokenizer:
-                # Setup LoRA if available
-                if PEFT_AVAILABLE and hasattr(self.model, "config"):
-                    lora_config = LoraConfig(
-                        task_type=TaskType.CAUSAL_LM,
-                        r=self.config.lora_rank,
-                        lora_alpha=self.config.lora_alpha,
-                        target_modules=["q_proj", "v_proj"],
-                        lora_dropout=0.1,
-                    )
-                    self.model = get_peft_model(self.model, lora_config)
-
-                # Prepare training arguments
-                self.training_args = TrainingArguments(
-                    output_dir="./training_output",
-                    num_train_epochs=self.config.epochs,
-                    per_device_train_batch_size=self.config.batch_size,
-                    learning_rate=self.config.learning_rate,
-                    gradient_accumulation_steps=self.config.gradient_accumulation_steps,
-                    warmup_ratio=self.config.warmup_ratio,
-                    weight_decay=self.config.weight_decay,
-                    logging_steps=self.config.logging_steps,
-                    save_strategy=self.config.save_strategy,
-                    eval_strategy=self.config.evaluation_strategy,
-                    report_to=None,  # Disable wandb/tensorboard
-                )
-
-            if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit(
-                    {
-                        "status": "Training setup complete",
-                        "step": 2,
-                    },
-                )
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup training: %s", e)
-            raise
-
-    def _train_model(self) -> None:
-        """Execute sophisticated license-focused model training with real neural network optimization."""
-        try:
-            if self.model is None:
-                error_msg = "Model not initialized before training"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-
-            # Generate sophisticated license protection training data
-            training_data, validation_data = self._generate_license_training_data()
-
-            if hasattr(self.model, "train") and callable(self.model.train):
-                # Use the sophisticated neural network training
-                if hasattr(self.model, "np"):  # Our custom neural network
-                    self.logger.info("Starting license protection model training with custom neural network")
-
-                    # Extract training features and labels
-                    X_train, y_train = training_data
-                    X_val, y_val = validation_data or (None, None)
-
-                    # Advanced training with real optimization
-                    validation_tuple = (X_val, y_val) if X_val is not None else None
-
-                    training_results = self.model.train(
-                        x_train=X_train,
-                        y_train=y_train,
-                        epochs=self.config.epochs,
-                        batch_size=self.config.batch_size,
-                        validation_data=validation_tuple,
-                    )
-
-                    # Process real training metrics
-                    if "metrics" in training_results:
-                        metrics = training_results["metrics"]
-
-                        # Emit progress for each epoch with real data
-                        for epoch, (loss, acc) in enumerate(zip(metrics["loss_history"], metrics["accuracy_history"], strict=False)):
-                            if self.is_stopped:
-                                break
-
-                            current_step = epoch + 1
-                            progress_ratio = current_step / self.config.epochs
-
-                            # Real training metrics
-                            training_metrics = {
-                                "step": current_step,
-                                "epoch": epoch,
-                                "loss": loss,
-                                "accuracy": acc,
-                                "lr": metrics["learning_rate_schedule"][epoch]
-                                if epoch < len(metrics["learning_rate_schedule"])
-                                else self.config.learning_rate,
-                                "progress": progress_ratio * 100,
-                                "validation_loss": metrics["validation_loss"][epoch]
-                                if epoch < len(metrics.get("validation_loss", []))
-                                else None,
-                                "validation_accuracy": metrics["validation_accuracy"][epoch]
-                                if epoch < len(metrics.get("validation_accuracy", []))
-                                else None,
-                            }
-
-                            self.training_history.append(training_metrics)
-
-                            # Emit real progress updates
-                            if PYQT6_AVAILABLE and self.progress_signal:
-                                self.progress_signal.emit(
-                                    {
-                                        **training_metrics,
-                                        "status": f"Training license analysis epoch {epoch + 1}/{self.config.epochs}",
-                                        "message": f"Loss: {loss:.4f}, Accuracy: {acc:.4f}",
-                                        "history": self.training_history[-5:],
-                                    },
-                                )
-
-                            # Real validation phase
-                            if training_metrics["validation_loss"] is not None:
-                                self.status = TrainingStatus.VALIDATING
-                                if PYQT6_AVAILABLE and self.progress_signal:
-                                    self.progress_signal.emit(
-                                        {
-                                            "status": self.status.value,
-                                            "message": f"Validation - Loss: {training_metrics['validation_loss']:.4f}, Acc: {training_metrics['validation_accuracy']:.4f}",
-                                            "step": current_step,
-                                        },
-                                    )
-                                self.status = TrainingStatus.TRAINING
-
-                    # Final training completion with real results
-                    final_metrics = {
-                        "status": "License protection training completed",
-                        "step": len(self.training_history),
-                        "final_loss": training_results.get("final_loss", 0),
-                        "final_accuracy": training_results.get("final_accuracy", 0),
-                        "message": training_results.get("message", "Training completed"),
-                        "license_capabilities": "Hardware binding, Registry validation, Activation analysis, Bypass assessment",
-                    }
-
-                    if PYQT6_AVAILABLE and self.progress_signal:
-                        self.progress_signal.emit(final_metrics)
-
-                elif hasattr(self.model, "parameters"):  # PyTorch model
-                    self.logger.info("Starting PyTorch-based license protection training")
-
-                    # Real PyTorch training implementation for license analysis
-                    self._train_pytorch_license_model(training_data, validation_data)
-
-                else:
-                    self.logger.warning("Model does not support training - using evaluation mode")
-                    # Fallback to evaluation
-                    eval_results = self.model.eval()
-                    if PYQT6_AVAILABLE and self.progress_signal:
-                        self.progress_signal.emit(
-                            {
-                                "status": "Model switched to evaluation mode",
-                                "message": str(eval_results),
-                                "step": 1,
-                            },
-                        )
-
-            else:
-                error_msg = "Model does not implement training functionality"
-                logger.error(error_msg)
-                raise ValueError(error_msg)
-
-        except Exception as e:
-            self.logger.error("License protection training failed: %s", e)
-            if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit(
-                    {
-                        "status": "Training failed",
-                        "error": str(e),
-                        "step": -1,
-                    },
-                )
-            raise
-
-    def _generate_license_training_data(self) -> tuple[tuple[Any, Any], tuple[Any, Any]]:
-        """Generate sophisticated training data for license protection analysis.
-
-        Returns:
-            Tuple of ((X_train, y_train), (X_val, y_val)) training and validation datasets.
-
-        """
-        self.logger.info("Generating license protection training dataset")
-
-        n_samples = max(1000, self.config.batch_size * 10)
-        n_features = 1024
-        n_classes = 32
-
-        X_train = self._generate_binary_features(n_samples, n_features)
-        y_train = self._generate_license_labels(n_samples, n_classes)
-
-        val_size = max(100, n_samples // 5)
-        X_val = self._generate_binary_features(val_size, n_features)
-        y_val = self._generate_license_labels(val_size, n_classes)
-
-        return (X_train, y_train), (X_val, y_val)
-
-    def _generate_binary_features(self, n_samples: int, n_features: int) -> NumpyArray:
-        """Generate realistic binary analysis feature vectors.
-
-        Args:
-            n_samples: Number of samples to generate.
-            n_features: Number of features per sample.
-
-        Returns:
-            NumPy array of binary analysis features normalized for training.
-
-        """
-        import numpy as np
-
-        features = np.zeros((n_samples, n_features))
-
-        for i in range(n_samples):
-            # Base entropy patterns (0-256 for entropy analysis)
-            entropy_features = np.random.beta(2, 5, 256)  # Low entropy bias
-
-            # Import table features (representing API usage patterns)
-            import_features = np.random.exponential(0.3, 128)  # Sparse import patterns
-
-            # Section characteristics (representing PE/ELF structure)
-            section_features = np.random.gamma(2, 0.5, 64)
-
-            # License-specific patterns
-            license_features = self._generate_license_specific_features(64)
-
-            # Hardware binding indicators
-            hwid_features = np.random.choice([0, 1], 128, p=[0.7, 0.3])  # Sparse binary patterns
-
-            # Protection complexity indicators
-            protection_features = np.random.lognormal(0, 1, 64)
-
-            # Anti-analysis features
-            anti_debug_features = np.random.binomial(1, 0.2, 32)
-
-            # Registry/file system access patterns
-            registry_features = np.random.poisson(1.5, 128)
-
-            # Combine all feature types
-            all_features = np.concatenate(
-                [
-                    entropy_features,
-                    import_features,
-                    section_features,
-                    license_features,
-                    hwid_features,
-                    protection_features,
-                    anti_debug_features,
-                    registry_features,
-                ],
-            )
-
-            # Ensure exact feature count
-            if len(all_features) > n_features:
-                all_features = all_features[:n_features]
-            elif len(all_features) < n_features:
-                padding = np.zeros(n_features - len(all_features))
-                all_features = np.concatenate([all_features, padding])
-
-            features[i] = all_features
-
-        # Normalize features for better training
-        features = (features - np.mean(features, axis=0)) / (np.std(features, axis=0) + 1e-8)
-
-        return features
-
-    def _generate_license_specific_features(self, n_features: int) -> NumpyArray:
-        """Generate features specifically related to license protection mechanisms.
-
-        Args:
-            n_features: Number of features to generate.
-
-        Returns:
-            NumPy array of license-specific features for analysis.
-
-        """
-        import numpy as np
-
-        features = np.zeros(n_features)
-
-        # Hardware ID patterns
-        features[:16] = np.random.exponential(2.0, 16)
-
-        # Registry key patterns
-        features[16:32] = np.random.gamma(1.5, 2, 16)
-
-        # Activation server communication
-        features[32:48] = np.random.beta(3, 7, 16)
-
-        # Cryptographic operations
-        features[48:64] = np.random.weibull(2, 16)
-
-        return features
-
-    def _generate_license_labels(self, n_samples: int, n_classes: int) -> NumpyArray:
-        """Generate sophisticated license protection classification labels.
-
-        Args:
-            n_samples: Number of label samples to generate.
-            n_classes: Number of classification classes.
-
-        Returns:
-            NumPy array of multi-hot encoded license protection labels.
-
-        """
-        import numpy as np
-
-        labels = np.zeros((n_samples, n_classes))
-
-        for i in range(n_samples):
-            # Hardware binding (classes 0-7)
-            if np.random.rand() < 0.6:
-                binding_strength = np.random.exponential(2)
-                binding_class = min(7, int(binding_strength))
-                labels[i, binding_class] = 1.0
-
-            # Registry validation (classes 8-15)
-            if np.random.rand() < 0.7:
-                registry_complexity = np.random.gamma(2, 2)
-                registry_class = 8 + min(7, int(registry_complexity))
-                labels[i, registry_class] = 1.0
-
-            # Activation complexity (classes 16-23)
-            if np.random.rand() < 0.4:
-                activation_complexity = np.random.beta(2, 3) * 8
-                activation_class = 16 + min(7, int(activation_complexity))
-                labels[i, activation_class] = 1.0
-
-            # Bypass difficulty (classes 24-31)
-            bypass_difficulty = np.random.lognormal(1, 0.5)
-            difficulty_class = 24 + min(7, int(bypass_difficulty))
-            labels[i, difficulty_class] = 1.0
-
-            # Ensure at least one class is active
-            if not np.any(labels[i]):
-                labels[i, np.random.randint(0, n_classes)] = 1.0
-
-        return labels
-
-    def _train_pytorch_license_model(
-        self,
-        training_data: tuple[TorchTensor, TorchTensor],
-        validation_data: tuple[TorchTensor, TorchTensor] | None,
-    ) -> None:
-        """Advanced PyTorch training implementation for license protection analysis.
-
-        Args:
-            training_data: Tuple of (X_train, y_train) training tensors.
-            validation_data: Optional tuple of (X_val, y_val) validation tensors.
-
-        """
-        try:
-            import torch
-            from torch import nn, optim
-            from torch.utils.data import DataLoader, TensorDataset
-
-            X_train, y_train = training_data
-            X_val, y_val = validation_data or (None, None)
-
-            # Convert to PyTorch tensors
-            X_train_tensor = torch.FloatTensor(X_train)
-            y_train_tensor = torch.FloatTensor(y_train)
-
-            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-            train_loader = DataLoader(train_dataset, batch_size=self.config.batch_size, shuffle=True)
-
-            # Setup validation if available
-            val_loader = None
-            if X_val is not None:
-                X_val_tensor = torch.FloatTensor(X_val)
-                y_val_tensor = torch.FloatTensor(y_val)
-                val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-                val_loader = DataLoader(val_dataset, batch_size=self.config.batch_size, shuffle=False)
-
-            # Setup loss function and optimizer for multi-label classification
-            criterion = nn.BCEWithLogitsLoss()  # Better for multi-label
-            optimizer = optim.AdamW(self.model.parameters(), lr=self.config.learning_rate, weight_decay=1e-4)
-
-            # Learning rate scheduler
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.config.epochs)
-
-            # Real training loop
-            for epoch in range(self.config.epochs):
-                if self.is_stopped:
-                    break
-
-                # Training phase
-                self.model.train()
-                epoch_loss = 0.0
-                epoch_accuracy = 0.0
-                num_batches = 0
-
-                for _batch_idx, (batch_x, batch_y) in enumerate(train_loader):
-                    if self.is_stopped:
-                        break
-
-                    # Move to device if available
-                    if hasattr(self, "training_device") and torch.cuda.is_available():
-                        batch_x = batch_x.to(self.training_device)
-                        batch_y = batch_y.to(self.training_device)
-
-                    # Zero gradients
-                    optimizer.zero_grad()
-
-                    # Forward pass
-                    outputs = self.model(batch_x)
-                    loss = criterion(outputs, batch_y)
-
-                    # Backward pass
-                    loss.backward()
-
-                    # Gradient clipping for stability
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-
-                    # Update weights
-                    optimizer.step()
-
-                    # Track metrics
-                    epoch_loss += loss.item()
-
-                    # Multi-label accuracy (threshold at 0.5)
-                    predictions = (torch.sigmoid(outputs) > 0.5).float()
-                    batch_accuracy = (predictions == batch_y).float().mean().item()
-                    epoch_accuracy += batch_accuracy
-                    num_batches += 1
-
-                # Average metrics
-                avg_loss = epoch_loss / max(1, num_batches)
-                avg_accuracy = epoch_accuracy / max(1, num_batches)
-
-                # Validation phase
-                val_loss = 0.0
-                val_accuracy = 0.0
-                if val_loader:
-                    self.model.eval()
-                    val_batches = 0
-                    with torch.no_grad():
-                        for val_x, val_y in val_loader:
-                            if hasattr(self, "training_device") and torch.cuda.is_available():
-                                val_x = val_x.to(self.training_device)
-                                val_y = val_y.to(self.training_device)
-
-                            val_outputs = self.model(val_x)
-                            val_loss += criterion(val_outputs, val_y).item()
-
-                            val_predictions = (torch.sigmoid(val_outputs) > 0.5).float()
-                            val_accuracy += (val_predictions == val_y).float().mean().item()
-                            val_batches += 1
-
-                    val_loss /= max(1, val_batches)
-                    val_accuracy /= max(1, val_batches)
-
-                # Update learning rate
-                scheduler.step()
-                current_lr = scheduler.get_last_lr()[0]
-
-                # Store training history
-                training_metrics = {
-                    "step": epoch + 1,
-                    "epoch": epoch,
-                    "loss": avg_loss,
-                    "accuracy": avg_accuracy,
-                    "lr": current_lr,
-                    "progress": ((epoch + 1) / self.config.epochs) * 100,
-                    "validation_loss": val_loss if val_loader else None,
-                    "validation_accuracy": val_accuracy if val_loader else None,
-                }
-
-                self.training_history.append(training_metrics)
-
-                # Emit progress
-                if PYQT6_AVAILABLE and self.progress_signal:
-                    message = f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}"
-                    if val_loader:
-                        message = f"{message}, Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}"
-                    progress_data = {
-                        **training_metrics,
-                        "status": f"PyTorch license training epoch {epoch + 1}/{self.config.epochs}",
-                        "message": message,
-                        "history": self.training_history[-5:],
-                    }
-                    self.progress_signal.emit(progress_data)
-
-                if val_loader:
-                    log_message = (
-                        f"Epoch {epoch + 1}/{self.config.epochs}: "
-                        f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}, "
-                        f"Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}"
-                    )
-                else:
-                    log_message = f"Epoch {epoch + 1}/{self.config.epochs}: Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}"
-                self.logger.info(log_message)
-
-            # Final completion signal
-            if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit(
-                    {
-                        "status": "PyTorch license protection training completed",
-                        "step": len(self.training_history),
-                        "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
-                        "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
-                        "message": "Advanced license analysis model training completed successfully",
-                    },
-                )
-
-        except ImportError:
-            self.logger.warning("PyTorch not available, falling back to custom neural network")
-            raise
-        except Exception as e:
-            self.logger.error("PyTorch training failed: %s", e)
-            raise
-
-    def stop(self) -> None:
-        """Stop the training process."""
-        self.is_stopped = True
-        self.status = TrainingStatus.ERROR  # Set to error as training was interrupted
-        self.logger.info("Training stop requested")
-
-    def pause(self) -> None:
-        """Pause the training process."""
-        self.status = TrainingStatus.PAUSED
-        self.logger.info("Training paused")
-        if PYQT6_AVAILABLE and self.progress_signal:
-            self.progress_signal.emit(
-                {
-                    "status": self.status.value,
-                    "message": "Training paused",
-                    "step": -1,
-                },
-            )
-
-    def resume(self) -> None:
-        """Resume the training process."""
-        self.status = TrainingStatus.TRAINING
-        self.logger.info("Training resumed")
-        if PYQT6_AVAILABLE and self.progress_signal:
-            self.progress_signal.emit(
-                {
-                    "status": self.status.value,
-                    "message": "Training resumed",
-                    "step": -1,
-                },
-            )
 
 
 class ModelFinetuningDialog(QDialog):
@@ -2416,58 +2469,57 @@ class ModelFinetuningDialog(QDialog):
             ImportError: If PyQt6 is not available
 
         """
-        # Initialize UI attributes
-        self.apply_aug_button = None
-        self.aug_per_sample_spin = None
-        self.aug_prob_label = None
-        self.aug_prob_slider = None
-        self.aug_progress = None
-        self.aug_status = None
-        self.backtranslation_check = None
-        self.batch_size_spin = None
-        self.create_dataset_button = None
-        self.cutoff_len_spin = None
-        self.dataset_format_combo = None
-        self.dataset_path_button = None
-        self.dataset_path_edit = None
-        self.dataset_preview = None
-        self.epochs_spin = None
-        self.export_dataset_button = None
-        self.export_metrics_button = None
-        self.gradient_accum_spin = None
-        self.learning_rate_spin = None
-        self.load_preview_button = None
-        self.lora_alpha_spin = None
-        self.lora_rank_spin = None
-        self.metrics_view = None
-        self.model_format_combo = None
-        self.model_path_button = None
-        self.model_path_edit = None
-        self.paraphrase_check = None
-        self.preserve_labels_check = None
-        self.preview_aug_button = None
-        self.random_delete_check = None
-        self.random_insert_check = None
-        self.random_swap_check = None
-        self.sample_count_spin = None
-        self.save_model_button = None
-        self.save_plot_button = None
-        self.stop_button = None
-        self.synonym_check = None
-        self.train_button = None
-        self.training_args = None
-        self.training_log = None
-        self.validate_dataset_button = None
-        self.visualization_label = None
+        self.apply_aug_button: QPushButton
+        self.aug_per_sample_spin: QSpinBox
+        self.aug_prob_label: QLabel
+        self.aug_prob_slider: QSlider
+        self.aug_progress: QProgressBar
+        self.aug_status: QLabel
+        self.backtranslation_check: QCheckBox
+        self.batch_size_spin: QSpinBox
+        self.create_dataset_button: QPushButton
+        self.cutoff_len_spin: QSpinBox
+        self.dataset_format_combo: QComboBox
+        self.dataset_path_button: QPushButton
+        self.dataset_path_edit: QLineEdit
+        self.dataset_preview: QTableWidget
+        self.epochs_spin: QSpinBox
+        self.export_dataset_button: QPushButton
+        self.export_metrics_button: QPushButton
+        self.gradient_accum_spin: QSpinBox
+        self.learning_rate_spin: QDoubleSpinBox
+        self.load_preview_button: QPushButton
+        self.lora_alpha_spin: QSpinBox
+        self.lora_rank_spin: QSpinBox
+        self.metrics_view: QTextEdit
+        self.model_format_combo: QComboBox
+        self.model_path_button: QPushButton
+        self.model_path_edit: QLineEdit
+        self.paraphrase_check: QCheckBox
+        self.preserve_labels_check: QCheckBox
+        self.preview_aug_button: QPushButton
+        self.random_delete_check: QCheckBox
+        self.random_insert_check: QCheckBox
+        self.random_swap_check: QCheckBox
+        self.sample_count_spin: QSpinBox
+        self.save_model_button: QPushButton
+        self.save_plot_button: QPushButton
+        self.stop_button: QPushButton
+        self.synonym_check: QCheckBox
+        self.train_button: QPushButton
+        self.training_args: object | None = None
+        self.training_log: QTextEdit
+        self.validate_dataset_button: QPushButton
+        self.visualization_label: QLabel
         if not PYQT6_AVAILABLE:
             error_msg = "PyQt6 is required for ModelFinetuningDialog"
             logger.error(error_msg)
             raise ImportError(error_msg)
 
         super().__init__(parent)
-        self.parent = parent
-        self.training_thread = None
-        self.knowledge_base = {}
+        self._parent_widget: QWidget | None = parent
+        self.training_thread: TrainingThread | None = None
+        self.knowledge_base: dict[str, Any] = {}
         self.logger = logging.getLogger(__name__)
 
         # Initialize configuration
@@ -2537,8 +2589,11 @@ class ModelFinetuningDialog(QDialog):
 
         """
         try:
-            if GPU_AUTOLOADER_AVAILABLE and hasattr(tensor_or_model, "to"):
-                return to_device(tensor_or_model, self.training_device)
+            if hasattr(tensor_or_model, "to") and callable(getattr(tensor_or_model, "to", None)):
+                device_str: str = str(self.training_device)
+                result = tensor_or_model.to(device_str)
+                if isinstance(result, (type(tensor_or_model), )):
+                    return result
             return tensor_or_model
         except Exception as e:
             self.logger.warning(f"Failed to move to device: {e}")
@@ -2550,9 +2605,12 @@ class ModelFinetuningDialog(QDialog):
             if GPU_AUTOLOADER_AVAILABLE:
                 device_info = f"Training Device: {self.training_device}\n"
                 if self.gpu_info.get("available", False):
-                    device_info += f"GPU Devices: {len(self.gpu_info.get('devices', []))}\n"
-                    for i, device in enumerate(self.gpu_info.get("devices", [])):
-                        device_info += f"  GPU {i}: {device.get('name', 'Unknown')}\n"
+                    raw_devices = self.gpu_info.get("devices", [])
+                    devices = cast("list[dict[str, Any]]", raw_devices) if isinstance(raw_devices, list) else []
+                    device_info += f"GPU Devices: {len(devices)}\n"
+                    for i, device_dict in enumerate(devices):
+                        if isinstance(device_dict, dict):
+                            device_info += f"  GPU {i}: {device_dict.get('name', 'Unknown')}\n"
                 else:
                     device_info += "GPU: Not available\n"
                 return device_info
@@ -2767,7 +2825,9 @@ class ModelFinetuningDialog(QDialog):
         self.dataset_preview = QTableWidget()
         self.dataset_preview.setColumnCount(2)
         self.dataset_preview.setHorizontalHeaderLabels(["Input", "Output"])
-        self.dataset_preview.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.dataset_preview.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         preview_layout.addWidget(self.dataset_preview)
 
         # Preview controls
@@ -2848,7 +2908,7 @@ class ModelFinetuningDialog(QDialog):
         self.aug_per_sample_spin.setValue(2)
         params_layout.addRow("Augmentations per Sample:", self.aug_per_sample_spin)
 
-        self.aug_prob_slider = QSlider(Qt.Horizontal)
+        self.aug_prob_slider = QSlider(Qt.Orientation.Horizontal)
         self.aug_prob_slider.setRange(0, 100)
         self.aug_prob_slider.setValue(80)
         self.aug_prob_label = QLabel("80%")
@@ -2918,7 +2978,7 @@ class ModelFinetuningDialog(QDialog):
         viz_layout = QVBoxLayout()
 
         self.visualization_label = QLabel("No training data available")
-        self.visualization_label.setAlignment(Qt.AlignCenter)
+        self.visualization_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.visualization_label.setMinimumHeight(300)
         self.visualization_label.setStyleSheet(
             "background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;",
@@ -3048,7 +3108,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Create and start training thread
             self.training_thread = TrainingThread(self.training_config)
-            if hasattr(self.training_thread, "progress_signal"):
+            if hasattr(self.training_thread, "progress_signal") and self.training_thread.progress_signal is not None:
                 self.training_thread.progress_signal.connect(self._update_training_progress)
             self.training_thread.finished.connect(self._on_training_finished)
             self.training_thread.start()
@@ -3113,9 +3173,9 @@ class ModelFinetuningDialog(QDialog):
                 self._update_visualization(progress["history"])
 
             # Scroll to bottom of log
-            self.training_log.verticalScrollBar().setValue(
-                self.training_log.verticalScrollBar().maximum(),
-            )
+            scroll_bar = self.training_log.verticalScrollBar()
+            if scroll_bar is not None:
+                scroll_bar.setValue(scroll_bar.maximum())
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error updating training progress: %s", e)
@@ -3133,10 +3193,10 @@ class ModelFinetuningDialog(QDialog):
                     self,
                     "Training Complete",
                     "Training completed successfully. Would you like to save the fine-tuned model?",
-                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
 
-                if reply == QMessageBox.Yes:
+                if reply == QMessageBox.StandardButton.Yes:
                     self._save_model()
 
             self.logger.info("Training finished")
@@ -3198,8 +3258,9 @@ class ModelFinetuningDialog(QDialog):
                     pickle.dump(model_data, f)
             elif file_ext in (".pt", ".bin"):
                 # Save in PyTorch format
-                if TORCH_AVAILABLE and "model_state_dict" in model_data:
-                    torch.save(model_data, save_path)
+                use_torch_save = TORCH_AVAILABLE and "model_state_dict" in model_data
+                if use_torch_save and torch is not None:
+                    torch.save(model_data, save_path)  # type: ignore[unreachable]
                 else:
                     # Fallback to pickle format
                     with open(save_path, "wb") as f:
@@ -3281,8 +3342,8 @@ class ModelFinetuningDialog(QDialog):
                         samples.append(row)
 
             # Display samples in table
-            for _sample in samples:
-                self._add_dataset_row(_sample)
+            for sample_ in samples:
+                self._add_dataset_row(sample_)
 
             self.dataset_preview.resizeRowsToContents()
             self.logger.info(f"Loaded {len(samples)} dataset samples for preview")
@@ -3514,7 +3575,7 @@ class ModelFinetuningDialog(QDialog):
 
                 if target_ext == ".jsonl":
                     with open(save_path, "w", encoding="utf-8") as f:
-                        f.writelines(json.dumps(_item) + "\n" for _item in data)
+                        f.writelines(json.dumps(item) + "\n" for item in data)
 
                 elif target_ext == ".csv":
                     with open(save_path, "w", newline="", encoding="utf-8") as f:
@@ -3575,9 +3636,9 @@ class ModelFinetuningDialog(QDialog):
 
             # Generate augmented versions
             augmented_samples = []
-            for _technique in techniques:
-                augmented_text = self._apply_augmentation_technique(original_text, _technique)
-                augmented_samples.append(f"{_technique}: {augmented_text}")
+            for technique in techniques:
+                augmented_text = self._apply_augmentation_technique(original_text, technique)
+                augmented_samples.append(f"{technique}: {augmented_text}")
 
             # Show preview dialog
             preview_dialog = QDialog(self)
@@ -3625,14 +3686,14 @@ class ModelFinetuningDialog(QDialog):
 
                 # Replace some words with synonyms
                 result_words = []
-                for _word in words:
+                for word in words:
                     if random.random() < 0.3:  # noqa: S311 - ML data augmentation probability, 30% chance to replace
-                        if synsets := wordnet.synsets(_word):
-                            synonyms = [_lemma.name() for _lemma in synsets[0].lemmas()]
-                            if synonyms := [_s for _s in synonyms if _s != _word]:
+                        if synsets := wordnet.synsets(word):
+                            synonyms = [lemma.name() for lemma in synsets[0].lemmas()]
+                            if synonyms := [s for s in synonyms if s != word]:
                                 result_words.append(random.choice(synonyms))  # noqa: S311 - ML data augmentation synonym selection
                                 continue
-                    result_words.append(_word)
+                    result_words.append(word)
                 return " ".join(result_words)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in model_finetuning_dialog: %s", e)
@@ -3701,7 +3762,7 @@ class ModelFinetuningDialog(QDialog):
 
                 # Generate augmented versions
                 for __ in range(aug_per_sample):
-                    for _technique in techniques:
+                    for technique in techniques:
                         if random.random() < aug_prob:  # noqa: S311 - ML data augmentation probability control
                             augmented_sample = sample.copy()
 
@@ -3709,7 +3770,7 @@ class ModelFinetuningDialog(QDialog):
                             if "input" in sample:
                                 augmented_sample["input"] = self._apply_augmentation_technique(
                                     sample["input"],
-                                    _technique,
+                                    technique,
                                 )
 
                             augmented_data.append(augmented_sample)
@@ -3744,14 +3805,14 @@ class ModelFinetuningDialog(QDialog):
     def _update_visualization(self, history: list[dict[str, Any]]) -> None:
         """Update training visualization with loss curve."""
         try:
-            if not history or not MATPLOTLIB_AVAILABLE:
+            if not history or not MATPLOTLIB_AVAILABLE or plt is None:
                 return
 
             # Create plot
             fig, ax = plt.subplots(figsize=(8, 4))
 
-            steps = [_item["step"] for _item in history]
-            losses = [_item["loss"] for _item in history]
+            steps = [item["step"] for item in history]
+            losses = [item["loss"] for item in history]
 
             ax.plot(steps, losses, "b-", linewidth=2, label="Training Loss")
             ax.set_xlabel("Training Step")
@@ -3769,12 +3830,13 @@ class ModelFinetuningDialog(QDialog):
             from intellicrack.handlers.pyqt6_handler import QPixmap
 
             pixmap = QPixmap(temp_path)
-            scaled_pixmap = pixmap.scaled(
-                self.visualization_label.size(),
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation,
-            )
-            self.visualization_label.setPixmap(scaled_pixmap)
+            if self.visualization_label is not None:
+                scaled_pixmap = pixmap.scaled(
+                    self.visualization_label.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                self.visualization_label.setPixmap(scaled_pixmap)
 
             # Clean up temp file
             try:
@@ -3842,14 +3904,14 @@ class ModelFinetuningDialog(QDialog):
                 "PNG Files (*.png);;PDF Files (*.pdf);;All Files (*)",
             )
 
-            if save_path and MATPLOTLIB_AVAILABLE:
+            if save_path and MATPLOTLIB_AVAILABLE and plt is not None:
                 # Regenerate plot
                 history = self.training_thread.training_history
 
                 fig, ax = plt.subplots(figsize=(10, 6))
 
-                steps = [_item["step"] for _item in history]
-                losses = [_item["loss"] for _item in history]
+                steps = [item["step"] for item in history]
+                losses = [item["loss"] for item in history]
 
                 ax.plot(steps, losses, "b-", linewidth=2, label="Training Loss")
                 ax.set_xlabel("Training Step")
@@ -3998,13 +4060,15 @@ class ModelFinetuningDialog(QDialog):
 
         help_dialog.exec()
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close event.
 
         Args:
             event: Close event from Qt framework.
 
         """
+        if event is None:
+            return
         try:
             # Stop training if running
             if self.training_thread is not None and self.training_thread.isRunning():
@@ -4012,10 +4076,10 @@ class ModelFinetuningDialog(QDialog):
                     self,
                     "Training in Progress",
                     "Training is currently running. Do you want to stop it and close?",
-                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
 
-                if reply == QMessageBox.Yes:
+                if reply == QMessageBox.StandardButton.Yes:
                     self._stop_training()
                     event.accept()
                 else:

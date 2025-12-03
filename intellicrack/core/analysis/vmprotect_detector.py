@@ -66,6 +66,8 @@ class VMHandler:
     opcodes: list[tuple[int, str]] = field(default_factory=list)
     xrefs: list[int] = field(default_factory=list)
     complexity: int = 0
+    branches: int = 0
+    memory_ops: int = 0
 
 
 @dataclass
@@ -316,7 +318,12 @@ class VMProtectDetector:
 
                 handler_size = self._estimate_handler_size(data, offset, architecture)
 
-                complexity = self._calculate_handler_complexity(data, offset, handler_size, architecture)
+                complexity_metrics = self._calculate_handler_complexity(
+                    data, offset, handler_size, architecture
+                )
+                complexity = complexity_metrics["complexity"]
+                branches = complexity_metrics["branches"]
+                memory_ops = complexity_metrics["memory_ops"]
 
                 confidence = base_confidence * (0.8 + min(0.2, complexity / 100))
 
@@ -333,6 +340,8 @@ class VMProtectDetector:
                     opcodes=opcodes,
                     xrefs=xrefs,
                     complexity=complexity,
+                    branches=branches,
+                    memory_ops=memory_ops,
                 )
 
                 handlers.append(handler)
@@ -364,17 +373,29 @@ class VMProtectDetector:
 
         return max(size, 16)
 
-    def _calculate_handler_complexity(self, data: bytes, offset: int, size: int, architecture: str) -> int:
-        """Calculate handler complexity score."""
+    def _calculate_handler_complexity(
+        self, data: bytes, offset: int, size: int, architecture: str
+    ) -> dict[str, int]:
+        """Calculate handler complexity score with detailed metrics.
+
+        Returns:
+            Dictionary containing:
+                - complexity: Overall complexity score
+                - branches: Number of branch instructions detected
+                - memory_ops: Number of memory operations detected
+
+        """
+        default_result: dict[str, int] = {"complexity": 10, "branches": 0, "memory_ops": 0}
+
         if not CAPSTONE_AVAILABLE:
-            return 10
+            return default_result
 
         cs = self.cs_x64 if architecture == "x64" else self.cs_x86
         complexity = 0
 
         try:
             instruction_count = 0
-            unique_opcodes = set()
+            unique_opcodes: set[str] = set()
             branches = 0
             memory_ops = 0
 
@@ -396,10 +417,10 @@ class VMProtectDetector:
             complexity += len(unique_opcodes) * 2
             complexity += instruction_count
 
-        except Exception:
-            complexity = 10
+            return {"complexity": complexity, "branches": branches, "memory_ops": memory_ops}
 
-        return complexity
+        except Exception:
+            return default_result
 
     def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> list[tuple[int, str]]:
         """Extract opcodes from handler."""

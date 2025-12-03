@@ -1,0 +1,11 @@
+{
+  "theme": "high_contrast",
+  "font_family": "Consolas",
+  "font_size": 16,
+  "auto_refresh": true,
+  "refresh_interval": 1000,
+  "max_log_entries": 10000,
+  "enable_animations": true,
+  "show_tooltips": true,
+  "panel_weights": [1, 2, 1]
+}

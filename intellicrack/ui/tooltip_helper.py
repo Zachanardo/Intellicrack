@@ -1,6 +1,14 @@
 """Tooltip helper utilities for enhanced UI tooltips."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 """
@@ -260,151 +268,227 @@ def get_tooltip_definitions() -> dict[str, str]:
 
 
 def _apply_tooltips_to_buttons(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QPushButton elements."""
+    """Apply tooltips to QPushButton elements.
+
+    Args:
+        parent_widget: Parent widget to search for QPushButton children.
+        all_tooltips: Dictionary mapping button text to tooltip descriptions.
+
+    """
+    button_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        button_class = QPushButton
     except ImportError as e:
         logger.error("Import error in tooltip_helper: %s", e)
-        QPushButton = object  # Fallback
 
-    buttons = parent_widget.findChildren(QPushButton)
+    buttons: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(button_class)
     for button in buttons:
-        button_text = button.text()
+        button_text: str = getattr(button, "text", lambda: "")()
         if button_text in all_tooltips:
-            button.setToolTip(all_tooltips[button_text])
+            getattr(button, "setToolTip", lambda x: None)(all_tooltips[button_text])
 
 
 def _apply_tooltips_to_labels(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QLabel elements."""
+    """Apply tooltips to QLabel elements.
+
+    Args:
+        parent_widget: Parent widget to search for QLabel children.
+        all_tooltips: Dictionary mapping label text/names to tooltip descriptions.
+
+    """
+    label_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QLabel
+        label_class = QLabel
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        label_class = QPushButton
 
-        QLabel = QPushButton  # Fallback
-
-    labels = parent_widget.findChildren(QLabel)
+    labels: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(label_class)
     for label in labels:
-        label_text = label.text()
-        object_name = label.objectName()
+        label_text: str = getattr(label, "text", lambda: "")()
+        object_name: str = getattr(label, "objectName", lambda: "")()
 
         if label_text in all_tooltips:
-            label.setToolTip(all_tooltips[label_text])
+            getattr(label, "setToolTip", lambda x: None)(all_tooltips[label_text])
         elif object_name in all_tooltips:
-            label.setToolTip(all_tooltips[object_name])
+            getattr(label, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif label_text and _get_contextual_tooltip(label_text):
-            label.setToolTip(_get_contextual_tooltip(label_text))
+            getattr(label, "setToolTip", lambda x: None)(_get_contextual_tooltip(label_text))
 
 
 def _apply_tooltips_to_line_edits(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QLineEdit elements."""
+    """Apply tooltips to QLineEdit elements.
+
+    Args:
+        parent_widget: Parent widget to search for QLineEdit children.
+        all_tooltips: Dictionary mapping hint text/names to tooltip descriptions.
+
+    """
+    line_edit_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QLineEdit
+        line_edit_class = QLineEdit
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        line_edit_class = QPushButton
 
-        QLineEdit = QPushButton  # Fallback
-
-    line_edits = parent_widget.findChildren(QLineEdit)
+    line_edits: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(line_edit_class)
     for line_edit in line_edits:
-        hint_text = next(
-            (line_edit.property("hintText") or "" for prop in line_edit.dynamicPropertyNames() if prop.data().decode() == "hintText"),
-            "",
-        )
-        object_name = line_edit.objectName()
+        def get_hint_text_from_props() -> str:
+            props: list[Any] = getattr(line_edit, "dynamicPropertyNames", lambda: [])()
+            for prop in props:
+                prop_data_func = getattr(prop, "data", lambda: lambda: b"")
+                prop_data_bytes = prop_data_func()
+                prop_name: str = prop_data_bytes.decode() if isinstance(prop_data_bytes, bytes) else str(prop_data_bytes)
+                if prop_name == "hintText":
+                    hint_result = getattr(line_edit, "property", lambda x: lambda: "")(
+                        "hintText"
+                    )
+                    return str(hint_result) if hint_result else ""
+            return ""
+
+        hint_text: str = get_hint_text_from_props()
+        object_name: str = getattr(line_edit, "objectName", lambda: "")()
 
         if hint_text in all_tooltips:
-            line_edit.setToolTip(all_tooltips[hint_text])
+            getattr(line_edit, "setToolTip", lambda x: None)(all_tooltips[hint_text])
         elif object_name in all_tooltips:
-            line_edit.setToolTip(all_tooltips[object_name])
+            getattr(line_edit, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif hint_text and _get_contextual_tooltip(hint_text):
-            line_edit.setToolTip(_get_contextual_tooltip(hint_text))
+            getattr(line_edit, "setToolTip", lambda x: None)(_get_contextual_tooltip(hint_text))
 
 
 def _apply_tooltips_to_combo_boxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QComboBox elements."""
+    """Apply tooltips to QComboBox elements.
+
+    Args:
+        parent_widget: Parent widget to search for QComboBox children.
+        all_tooltips: Dictionary mapping object names to tooltip descriptions.
+
+    """
+    combo_box_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QComboBox
+        combo_box_class = QComboBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        combo_box_class = QPushButton
 
-        QComboBox = QPushButton  # Fallback
-
-    combo_boxes = parent_widget.findChildren(QComboBox)
+    combo_boxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(combo_box_class)
     for combo in combo_boxes:
-        object_name = combo.objectName()
-        current_text = combo.currentText()
+        object_name: str = getattr(combo, "objectName", lambda: "")()
+        current_text: str = getattr(combo, "currentText", lambda: "")()
 
         if object_name in all_tooltips:
-            combo.setToolTip(all_tooltips[object_name])
+            getattr(combo, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif current_text in all_tooltips:
-            combo.setToolTip(all_tooltips[current_text])
+            getattr(combo, "setToolTip", lambda x: None)(all_tooltips[current_text])
         elif object_name and _get_contextual_tooltip(object_name):
-            combo.setToolTip(_get_contextual_tooltip(object_name))
+            getattr(combo, "setToolTip", lambda x: None)(_get_contextual_tooltip(object_name))
 
 
 def _apply_tooltips_to_checkboxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QCheckBox elements."""
+    """Apply tooltips to QCheckBox elements.
+
+    Args:
+        parent_widget: Parent widget to search for QCheckBox children.
+        all_tooltips: Dictionary mapping checkbox text/names to tooltip descriptions.
+
+    """
+    checkbox_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QCheckBox
+        checkbox_class = QCheckBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        checkbox_class = QPushButton
 
-        QCheckBox = QPushButton  # Fallback
-
-    checkboxes = parent_widget.findChildren(QCheckBox)
+    checkboxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(checkbox_class)
     for checkbox in checkboxes:
-        checkbox_text = checkbox.text()
-        object_name = checkbox.objectName()
+        checkbox_text: str = getattr(checkbox, "text", lambda: "")()
+        object_name: str = getattr(checkbox, "objectName", lambda: "")()
 
         if checkbox_text in all_tooltips:
-            checkbox.setToolTip(all_tooltips[checkbox_text])
+            getattr(checkbox, "setToolTip", lambda x: None)(all_tooltips[checkbox_text])
         elif object_name in all_tooltips:
-            checkbox.setToolTip(all_tooltips[object_name])
+            getattr(checkbox, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif checkbox_text and _get_contextual_tooltip(checkbox_text):
-            checkbox.setToolTip(_get_contextual_tooltip(checkbox_text))
+            getattr(checkbox, "setToolTip", lambda x: None)(_get_contextual_tooltip(checkbox_text))
 
 
 def _apply_tooltips_to_spinboxes(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QSpinBox and QDoubleSpinBox elements."""
+    """Apply tooltips to QSpinBox and QDoubleSpinBox elements.
+
+    Args:
+        parent_widget: Parent widget to search for spinbox children.
+        all_tooltips: Dictionary mapping object names to tooltip descriptions.
+
+    """
+    spinbox_class: Any = object
+    double_spinbox_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QDoubleSpinBox, QSpinBox
+        spinbox_class = QSpinBox
+        double_spinbox_class = QDoubleSpinBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        spinbox_class = double_spinbox_class = QPushButton
 
-        QSpinBox = QDoubleSpinBox = QPushButton  # Fallback
-
-    spinboxes = parent_widget.findChildren(QSpinBox) + parent_widget.findChildren(QDoubleSpinBox)
+    spinboxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(spinbox_class) + getattr(parent_widget, "findChildren", lambda x: [])(double_spinbox_class)
     for spinbox in spinboxes:
-        object_name = spinbox.objectName()
+        object_name: str = getattr(spinbox, "objectName", lambda: "")()
 
         if object_name in all_tooltips:
-            spinbox.setToolTip(all_tooltips[object_name])
+            getattr(spinbox, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif object_name and _get_contextual_tooltip(object_name):
-            spinbox.setToolTip(_get_contextual_tooltip(object_name))
+            getattr(spinbox, "setToolTip", lambda x: None)(_get_contextual_tooltip(object_name))
 
 
 def _apply_tooltips_to_tab_widgets(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to QTabWidget elements."""
+    """Apply tooltips to QTabWidget elements.
+
+    Args:
+        parent_widget: Parent widget to search for QTabWidget children.
+        all_tooltips: Dictionary mapping tab text to tooltip descriptions.
+
+    """
+    tab_widget_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QTabWidget
+        tab_widget_class = QTabWidget
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        tab_widget_class = QPushButton
 
-        QTabWidget = QPushButton  # Fallback
-
-    tab_widgets = parent_widget.findChildren(QTabWidget)
+    tab_widgets: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(tab_widget_class)
     for tab_widget in tab_widgets:
-        for i in range(tab_widget.count()):
-            tab_text = tab_widget.tabText(i)
+        count_func: Callable[[], int] = getattr(tab_widget, "count", lambda: 0)
+        count_result: int = count_func()
+        for i in range(count_result):
+            tab_text: str = getattr(tab_widget, "tabText", lambda x: "")(i)
             if tab_text in all_tooltips:
-                tab_widget.setTabToolTip(i, all_tooltips[tab_text])
+                getattr(tab_widget, "setTabToolTip", lambda x, y: None)(i, all_tooltips[tab_text])
             elif tab_text and _get_contextual_tooltip(tab_text):
-                tab_widget.setTabToolTip(i, _get_contextual_tooltip(tab_text))
+                getattr(tab_widget, "setTabToolTip", lambda x, y: None)(i, _get_contextual_tooltip(tab_text))
 
 
 def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[str, str]) -> None:
-    """Apply tooltips to various other widget types."""
+    """Apply tooltips to various other widget types.
+
+    Args:
+        parent_widget: Parent widget to search for widget children.
+        all_tooltips: Dictionary mapping object names to tooltip descriptions.
+
+    """
+    slider_class: Any = object
+    progress_bar_class: Any = object
+    text_edit_class: Any = object
+    plain_text_edit_class: Any = object
+    list_widget_class: Any = object
+    tree_widget_class: Any = object
+    table_widget_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import (
             QListWidget,
@@ -415,28 +499,35 @@ def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[s
             QTextEdit,
             QTreeWidget,
         )
+        slider_class = QSlider
+        progress_bar_class = QProgressBar
+        text_edit_class = QTextEdit
+        plain_text_edit_class = QPlainTextEdit
+        list_widget_class = QListWidget
+        tree_widget_class = QTreeWidget
+        table_widget_class = QTableWidget
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+        slider_class = progress_bar_class = text_edit_class = plain_text_edit_class = QPushButton
+        list_widget_class = tree_widget_class = table_widget_class = QPushButton
 
-        QSlider = QProgressBar = QTextEdit = QPlainTextEdit = QPushButton
-        QListWidget = QTreeWidget = QTableWidget = QPushButton
-
-    other_widgets = (
-        parent_widget.findChildren(QSlider)
-        + parent_widget.findChildren(QProgressBar)
-        + parent_widget.findChildren(QTextEdit)
-        + parent_widget.findChildren(QPlainTextEdit)
-        + parent_widget.findChildren(QListWidget)
-        + parent_widget.findChildren(QTreeWidget)
-        + parent_widget.findChildren(QTableWidget)
+    find_children_method: Callable[[Any], list[Any]] = getattr(parent_widget, "findChildren", lambda x: [])
+    other_widgets: list[Any] = (
+        find_children_method(slider_class)
+        + find_children_method(progress_bar_class)
+        + find_children_method(text_edit_class)
+        + find_children_method(plain_text_edit_class)
+        + find_children_method(list_widget_class)
+        + find_children_method(tree_widget_class)
+        + find_children_method(table_widget_class)
     )
 
     for widget in other_widgets:
-        object_name = widget.objectName()
+        object_name: str = getattr(widget, "objectName", lambda: "")()
         if object_name in all_tooltips:
-            widget.setToolTip(all_tooltips[object_name])
+            getattr(widget, "setToolTip", lambda x: None)(all_tooltips[object_name])
         elif object_name and _get_contextual_tooltip(object_name):
-            widget.setToolTip(_get_contextual_tooltip(object_name))
+            getattr(widget, "setToolTip", lambda x: None)(_get_contextual_tooltip(object_name))
 
 
 def apply_tooltips_to_all_elements(parent_widget: object) -> None:

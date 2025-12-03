@@ -28,7 +28,7 @@ help software developers:
 
 ### Acceptable Use
 
-✅ **PERMITTED**:
+**PERMITTED**:
 
 - Testing your own software and applications
 - Authorized security research with proper permissions
@@ -37,7 +37,7 @@ help software developers:
   authorization to test
 - Improving your organization's security posture through authorized testing
 
-❌ **PROHIBITED**:
+**PROHIBITED**:
 
 - Any unauthorized testing, analysis, or exploitation of software you do not own
 - Bypassing, cracking, or circumventing protections on software without explicit

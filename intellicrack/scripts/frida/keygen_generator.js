@@ -41,10 +41,10 @@
 // Import existing production-ready capabilities
 const CloudLicenseBypass = require('./cloud_licensing_bypass.js').CloudLicensingBypass;
 const HardwareSpoofer = require('./enhanced_hardware_spoofer.js').EnhancedHardwareSpoofer;
-const {HWIDSpoofer} = require('./hwid_spoofer.js');
-const {TelemetryBlocker} = require('./anti_debugger.js');
+const { HWIDSpoofer } = require('./hwid_spoofer.js');
+const { TelemetryBlocker } = require('./anti_debugger.js');
 const AlgorithmExtractor = require('./universal_unpacker.js').UniversalUnpacker;
-const {RuntimeAnalyzer} = require('./memory_dumper.js');
+const { RuntimeAnalyzer } = require('./memory_dumper.js');
 
 const KeygenGenerator = {
     name: 'Advanced Keygen Generator v3.1.0',
@@ -1500,9 +1500,7 @@ const KeygenGenerator = {
                 const innerHash = KeygenGenerator.mathematicalCrypto.hash.sha256(
                     innerKey.concat(data)
                 );
-                return KeygenGenerator.mathematicalCrypto.hash.sha256(
-                                    outerKey.concat(innerHash)
-                                );
+                return KeygenGenerator.mathematicalCrypto.hash.sha256(outerKey.concat(innerHash));
             },
 
             base64UrlEncode: function (data) {
@@ -2180,11 +2178,11 @@ const KeygenGenerator = {
                     let seed = now ^ (perfNow * 1000000);
                     for (let i = 0; i < 4; i++) {
                         seed = (seed * 1103515245 + 12345) >>> 0;
-                        randomBytes[i] = (seed >>> 16) & 0xFF;
+                        randomBytes[i] = (seed >>> 16) & 0xff;
                     }
                 }
                 const randomHex = Array.from(randomBytes)
-                    .map(b => b.toString(36))
+                    .map((b) => b.toString(36))
                     .join('');
                 return (timestamp + randomHex).substr(0, 8);
             },
@@ -3614,7 +3612,7 @@ const KeygenGenerator = {
                 }
 
                 let entropy = 0;
-                const {length} = key;
+                const { length } = key;
 
                 for (const count of Object.values(frequency)) {
                     const probability = count / length;
@@ -3837,7 +3835,7 @@ const KeygenGenerator = {
 
                         // Track strategy performance
                         for (const key of batchResult.keys) {
-                            const {strategy} = key;
+                            const { strategy } = key;
                             if (!benchmark.results.strategies[strategy]) {
                                 benchmark.results.strategies[strategy] = { count: 0, rate: 0 };
                             }
@@ -4033,7 +4031,7 @@ const KeygenGenerator = {
         calculateKeyStrength: function (key) {
             try {
                 let score = 0;
-                const {length} = key;
+                const { length } = key;
 
                 // Length scoring
                 if (length >= 16) score += 25;
@@ -4201,10 +4199,10 @@ const KeygenGenerator = {
                 }
 
                 return {
-                                    isUnique: !existsInCache && duplicatesFound === 0,
-                                    duplicateCount: duplicatesFound,
-                                    uniquenessScore: Math.max(0, 100 - duplicatesFound * 20),
-                                };
+                    isUnique: !existsInCache && duplicatesFound === 0,
+                    duplicateCount: duplicatesFound,
+                    uniquenessScore: Math.max(0, 100 - duplicatesFound * 20),
+                };
             } catch (error) {
                 console.error(`[QualityAssurance] Uniqueness check failed: ${error.message}`);
                 return { isUnique: true, duplicateCount: 0, uniquenessScore: 100 };
@@ -4306,7 +4304,7 @@ const KeygenGenerator = {
 
                 // Calculate length distribution
                 for (const assessment of validAssessments) {
-                    const {length} = assessment.key;
+                    const { length } = assessment.key;
                     analysis.distribution.lengthDistribution.set(
                         length,
                         (analysis.distribution.lengthDistribution.get(length) || 0) + 1
@@ -4598,9 +4596,11 @@ const KeygenGenerator = {
                     (strategyResults.performanceScore / 1000) * 100
                 );
 
-                return strategyResults.qualityScore * weights.quality +
-                                    normalizedPerformance * weights.performance +
-                                    strategyResults.uniquenessScore * weights.uniqueness;
+                return (
+                    strategyResults.qualityScore * weights.quality +
+                    normalizedPerformance * weights.performance +
+                    strategyResults.uniquenessScore * weights.uniqueness
+                );
             } catch (error) {
                 console.error(`[QualityAssurance] Test score calculation failed: ${error.message}`);
                 return 0;
@@ -5154,11 +5154,11 @@ const KeygenGenerator = {
             // Initialize encrypted workflows
             initializeEncryptedWorkflows: function () {
                 return {
-                                    keyGeneration: this.createEncryptedWorkflow('key_generation'),
-                                    validation: this.createEncryptedWorkflow('validation'),
-                                    distribution: this.createEncryptedWorkflow('distribution'),
-                                    storage: this.createEncryptedWorkflow('storage'),
-                                };
+                    keyGeneration: this.createEncryptedWorkflow('key_generation'),
+                    validation: this.createEncryptedWorkflow('validation'),
+                    distribution: this.createEncryptedWorkflow('distribution'),
+                    storage: this.createEncryptedWorkflow('storage'),
+                };
             },
 
             // Create encrypted workflow

@@ -10,6 +10,7 @@ import struct
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 try:
@@ -67,7 +68,7 @@ class StarForceAnalysis:
     vm_detection_methods: list[str]
     disc_auth_mechanisms: list[str]
     kernel_hooks: list[tuple[str, int]]
-    details: dict[str, any]
+    details: dict[str, Any]
 
 
 class StarForceAnalyzer:
@@ -121,7 +122,7 @@ class StarForceAnalyzer:
     def __init__(self) -> None:
         """Initialize StarForce analyzer."""
         self.logger = logging.getLogger(__name__)
-        self._kernel32 = None
+        self._kernel32: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
@@ -210,7 +211,7 @@ class StarForceAnalyzer:
                         for st in entry.StringTable:
                             for key, value in st.entries.items():
                                 if key == b"FileVersion":
-                                    version = value.decode("utf-8", errors="ignore")
+                                    version: str = value.decode("utf-8", errors="ignore")
                                     pe.close()
                                     return version
 
@@ -223,7 +224,7 @@ class StarForceAnalyzer:
 
     def _analyze_ioctls(self, driver_path: Path) -> list[IOCTLCommand]:
         """Analyze and extract IOCTL command codes from driver."""
-        ioctls = []
+        ioctls: list[IOCTLCommand] = []
 
         if not driver_path.exists():
             return ioctls
@@ -299,7 +300,7 @@ class StarForceAnalyzer:
 
     def _detect_anti_debug(self, driver_path: Path) -> list[AntiDebugTechnique]:
         """Detect anti-debugging techniques in driver."""
-        techniques = []
+        techniques: list[AntiDebugTechnique] = []
 
         if not driver_path.exists():
             return techniques
@@ -359,7 +360,7 @@ class StarForceAnalyzer:
 
     def _detect_vm_checks(self, driver_path: Path) -> list[str]:
         """Detect virtual machine detection methods."""
-        vm_methods = []
+        vm_methods: list[str] = []
 
         if not driver_path.exists():
             return vm_methods
@@ -390,7 +391,7 @@ class StarForceAnalyzer:
 
     def _analyze_disc_auth(self, driver_path: Path) -> list[str]:
         """Analyze disc authentication mechanisms."""
-        mechanisms = []
+        mechanisms: list[str] = []
 
         if not driver_path.exists():
             return mechanisms
@@ -424,7 +425,7 @@ class StarForceAnalyzer:
 
     def _detect_kernel_hooks(self, driver_path: Path) -> list[tuple[str, int]]:
         """Detect kernel function hooks."""
-        hooks = []
+        hooks: list[tuple[str, int]] = []
 
         if not driver_path.exists():
             return hooks
@@ -547,7 +548,7 @@ class StarForceAnalyzer:
             pe = pefile.PE(data=data)
 
             if hasattr(pe, "OPTIONAL_HEADER"):
-                entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+                entry_point: int = pe.OPTIONAL_HEADER.AddressOfEntryPoint
                 pe.close()
                 return entry_point
 
@@ -611,7 +612,7 @@ class StarForceAnalyzer:
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
 
-        exports = []
+        exports: list[str] = []
 
         try:
             pe = pefile.PE(str(driver_path))
@@ -676,7 +677,7 @@ class StarForceAnalyzer:
         if not driver_path.exists():
             return []
 
-        algorithms = []
+        algorithms: list[str] = []
 
         crypto_constants = {
             b"\x67\x45\x23\x01\xef\xcd\xab\x89": "MD5",

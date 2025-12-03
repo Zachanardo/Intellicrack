@@ -838,10 +838,10 @@ class SystemUtilitiesDialog(QDialog):
 
     def filter_processes(self, filter_text: str) -> None:
         """Filter process table by name."""
-        for _i in range(self.process_table.rowCount()):
-            if name_item := self.process_table.item(_i, 1):
+        for i in range(self.process_table.rowCount()):
+            if name_item := self.process_table.item(i, 1):
                 show_row = filter_text.lower() in name_item.text().lower()
-                self.process_table.setRowHidden(_i, not show_row)
+                self.process_table.setRowHidden(i, not show_row)
 
     def on_process_selection_changed(self) -> None:
         """Handle process selection change."""
@@ -850,7 +850,7 @@ class SystemUtilitiesDialog(QDialog):
 
     def kill_selected_process(self) -> None:
         """Kill the selected process."""
-        selected_rows = {_item.row() for _item in self.process_table.selectedItems()}
+        selected_rows = {item.row() for item in self.process_table.selectedItems()}
         if not selected_rows:
             return
 

@@ -64,7 +64,7 @@ class SplashScreen(QSplashScreen):
             # Draw some text
             painter = QPainter(pixmap)
             painter.setPen(Qt.GlobalColor.white)
-            font = QFont("Arial", 24, QFont.Bold)
+            font = QFont("Arial", 24, QFont.Weight.Bold)
             painter.setFont(font)
             painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "Intellicrack")
 

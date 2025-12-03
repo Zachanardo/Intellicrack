@@ -29,7 +29,7 @@ import os
 import platform
 import subprocess
 import traceback
-from typing import Any
+from typing import Any, Protocol, cast
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
@@ -63,12 +63,35 @@ except ImportError as e:
 # Import common patterns from centralized module
 
 try:
-    from PyQt6.QtWidgets import QInputDialog, QMessageBox
+    from PyQt6.QtWidgets import QInputDialog, QMessageBox, QWidget
 
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in pdf_generator: %s", e)
     PYQT_AVAILABLE = False
+    QWidget = object  # type: ignore
+
+
+class QtSignal(Protocol):
+    """Protocol for PyQt signals."""
+
+    def emit(self, *args: Any) -> None:
+        """Emit signal with arguments."""
+        pass
+
+
+class ApplicationInstance(Protocol):
+    """Protocol for application instance interface."""
+
+    logger: logging.Logger
+    binary_path: str | None
+    analyze_results: list[str] | None
+    update_output: QtSignal
+    binary_info: dict[str, Any] | None
+
+    def isWidgetType(self) -> bool:
+        """Check if instance is a QWidget."""
+        pass
 
 
 class PDFReportGenerator:
@@ -273,7 +296,7 @@ class PDFReportGenerator:
                 "a4": A4,
                 "legal": legal,
             }
-            page_size = page_size_map.get(self.report_config["page_size"].lower(), letter)
+            page_size = page_size_map.get(str(self.report_config.get("page_size", "letter")).lower(), letter)
 
             # Create PDF document
             doc = SimpleDocTemplate(
@@ -476,7 +499,7 @@ class PDFReportGenerator:
         self.logger.info("License report generation not fully implemented")
         return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
 
-    def _add_pe_section_analysis(self, binary_path: str, elements: list[Any], styles: object, colors: object) -> bool:
+    def _add_pe_section_analysis(self, binary_path: str, elements: list[Any], styles: dict[str, Any], colors: Any) -> bool:
         """Add PE section analysis and visualization to the report.
 
         Args:
@@ -1038,7 +1061,7 @@ class PDFReportGenerator:
         else:
             csv_data.append([section, parent_key or "value", str(data), ""])
 
-    def _generate_analysis_summary(self, analysis_results: dict[str, Any]) -> dict[str, Any]:
+    def _generate_analysis_summary(self, analysis_results: dict[str, Any] | list[Any]) -> dict[str, Any]:
         """Generate summary of analysis results."""
         summary = {
             "total_items": 0,
@@ -1061,15 +1084,19 @@ class PDFReportGenerator:
 
             # Look for vulnerabilities
             vuln_keywords = ["vulnerability", "exploit", "security", "risk"]
-            for key, value in analysis_results.items() if isinstance(analysis_results, dict) else []:
-                if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in vuln_keywords):
-                    summary["vulnerabilities_found"] += 1
+            if isinstance(analysis_results, dict):
+                for key, value in analysis_results.items():
+                    if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in vuln_keywords):
+                        vuln_count = summary.get("vulnerabilities_found", 0)
+                        summary["vulnerabilities_found"] = cast("int", vuln_count) + 1
 
             # Look for license checks
             license_keywords = ["license", "activation", "serial", "key"]
-            for key, value in analysis_results.items() if isinstance(analysis_results, dict) else []:
-                if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in license_keywords):
-                    summary["license_checks"] += 1
+            if isinstance(analysis_results, dict):
+                for key, value in analysis_results.items():
+                    if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in license_keywords):
+                        license_count = summary.get("license_checks", 0)
+                        summary["license_checks"] = cast("int", license_count) + 1
 
         except Exception as e:
             logger.error("Exception in pdf_generator: %s", e)
@@ -1077,7 +1104,7 @@ class PDFReportGenerator:
         return summary
 
 
-def run_report_generation(app: object) -> None:
+def run_report_generation(app: ApplicationInstance) -> None:
     """Generate a report for the analysis results.
 
     Args:
@@ -1103,20 +1130,20 @@ def run_report_generation(app: object) -> None:
 
     # Ask for report type
     report_types = ["Comprehensive", "Vulnerability", "License"]
-    report_type, ok = QInputDialog.getItem(app, "Report Type", "Select report type:", report_types, 0, False)
+    report_type, ok = QInputDialog.getItem(cast("QWidget | None", app), "Report Type", "Select report type:", report_types, 0, False)
     if not ok:
         app.update_output.emit("[Report] Cancelled")
         return
 
     # Ask for report format
     report_formats = ["PDF", "HTML"]
-    report_format, ok = QInputDialog.getItem(app, "Report Format", "Select report format:", report_formats, 0, False)
+    report_format, ok = QInputDialog.getItem(cast("QWidget | None", app), "Report Format", "Select report format:", report_formats, 0, False)
     if not ok:
         app.update_output.emit("[Report] Cancelled")
         return
 
     # Prepare analysis results
-    analysis_results = {
+    analysis_results: dict[str, Any] = {
         "vulnerabilities": [],
         "protections": [],
         "license_checks": [],
@@ -1196,12 +1223,12 @@ def run_report_generation(app: object) -> None:
         # Ask if user wants to open the report
         open_report = (
             QMessageBox.question(
-                app,
+                cast("QWidget | None", app),
                 "Open Report",
                 f"Report generated successfully. Open {report_format} report?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         )
 
         if open_report:

@@ -1689,24 +1689,24 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (success && (this.lpType && !this.lpType.isNull())) {
-              const regType = this.lpType.readU32();
-              evt.data_type = regType;
-        
-              if (this.lpcbData && !this.lpcbData.isNull()) {
-                  const dataSize = this.lpcbData.readU32();
-                  evt.data_size = dataSize;
-        
-                  if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-                      const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                      if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                      if (formatted.raw) evt.data_preview_hex = formatted.raw;
-        
-                      if (config.performDeepAnalysis) {
-                          detectLicensePattern(this.keyPath, this.valueName, formatted);
-                      }
-                  }
-              }
+        if (success && this.lpType && !this.lpType.isNull()) {
+            const regType = this.lpType.readU32();
+            evt.data_type = regType;
+
+            if (this.lpcbData && !this.lpcbData.isNull()) {
+                const dataSize = this.lpcbData.readU32();
+                evt.data_size = dataSize;
+
+                if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                    const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                    if (config.performDeepAnalysis) {
+                        detectLicensePattern(this.keyPath, this.valueName, formatted);
+                    }
+                }
+            }
         }
 
         const includeBt =
@@ -1748,24 +1748,24 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (success && (this.lpType && !this.lpType.isNull())) {
-              const regType = this.lpType.readU32();
-              evt.data_type = regType;
-        
-              if (this.lpcbData && !this.lpcbData.isNull()) {
-                  const dataSize = this.lpcbData.readU32();
-                  evt.data_size = dataSize;
-        
-                  if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-                      const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                      if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                      if (formatted.raw) evt.data_preview_hex = formatted.raw;
-        
-                      if (config.performDeepAnalysis) {
-                          detectLicensePattern(this.keyPath, this.valueName, formatted);
-                      }
-                  }
-              }
+        if (success && this.lpType && !this.lpType.isNull()) {
+            const regType = this.lpType.readU32();
+            evt.data_type = regType;
+
+            if (this.lpcbData && !this.lpcbData.isNull()) {
+                const dataSize = this.lpcbData.readU32();
+                evt.data_size = dataSize;
+
+                if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                    const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                    if (config.performDeepAnalysis) {
+                        detectLicensePattern(this.keyPath, this.valueName, formatted);
+                    }
+                }
+            }
         }
 
         const includeBt =
@@ -2593,20 +2593,20 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (success && (this.lpType && !this.lpType.isNull())) {
-              const regType = this.lpType.readU32();
-              evt.data_type = regType;
-        
-              if (this.lpcbData && !this.lpcbData.isNull()) {
-                  const dataSize = this.lpcbData.readU32();
-                  evt.data_size = dataSize;
-        
-                  if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-                      const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                      if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                      if (formatted.raw) evt.data_preview_hex = formatted.raw;
-                  }
-              }
+        if (success && this.lpType && !this.lpType.isNull()) {
+            const regType = this.lpType.readU32();
+            evt.data_type = regType;
+
+            if (this.lpcbData && !this.lpcbData.isNull()) {
+                const dataSize = this.lpcbData.readU32();
+                evt.data_size = dataSize;
+
+                if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                    const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                }
+            }
         }
 
         const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
@@ -2652,20 +2652,20 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (success && (this.lpType && !this.lpType.isNull())) {
-              const regType = this.lpType.readU32();
-              evt.data_type = regType;
-        
-              if (this.lpcbData && !this.lpcbData.isNull()) {
-                  const dataSize = this.lpcbData.readU32();
-                  evt.data_size = dataSize;
-        
-                  if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
-                      const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                      if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                      if (formatted.raw) evt.data_preview_hex = formatted.raw;
-                  }
-              }
+        if (success && this.lpType && !this.lpType.isNull()) {
+            const regType = this.lpType.readU32();
+            evt.data_type = regType;
+
+            if (this.lpcbData && !this.lpcbData.isNull()) {
+                const dataSize = this.lpcbData.readU32();
+                evt.data_size = dataSize;
+
+                if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                    const formatted = formatRegData(regType, this.lpData, dataSize, true);
+                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                }
+            }
         }
 
         const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');

@@ -11,6 +11,7 @@ Licensed under GNU General Public License v3.0
 import hashlib
 import json
 import logging
+import math
 import os
 import re
 import shutil
@@ -212,7 +213,9 @@ class FirmwareAnalysisResult:
     @property
     def embedded_executables(self) -> list[ExtractedFile]:
         """Get embedded executable files."""
-        return self.extractions.executable_files if self.has_extractions else []
+        if self.extractions is not None and self.has_extractions:
+            return self.extractions.executable_files
+        return []
 
 
 class FirmwareAnalyzer:
@@ -238,8 +241,10 @@ class FirmwareAnalyzer:
         self.logger = logging.getLogger("IntellicrackLogger.FirmwareAnalyzer")
 
         # Storage for analysis results
-        self.extracted_files = []
-        self.analysis_results = {}  # Prevent infinite recursion
+        self.extracted_files: list[ExtractedFile] = []
+        self.analysis_results: dict[str, Any] = {}  # Prevent infinite recursion
+        self.analyzed_files: set[str] = set()
+        self.extraction_depth_limit: int = 5
 
     def analyze_firmware(
         self,
@@ -416,7 +421,7 @@ class FirmwareAnalyzer:
 
     def _analyze_entropy(self, file_path: str) -> dict[str, Any]:
         """Analyze file entropy to detect encryption/compression."""
-        entropy_analysis = {
+        entropy_analysis: dict[str, Any] = {
             "file_entropy": 0.0,
             "encrypted_regions": [],
             "compressed_regions": [],
@@ -432,31 +437,37 @@ class FirmwareAnalyzer:
                         "entropy": getattr(result, "entropy", 0.0),
                         "description": result.description,
                     }
-                    entropy_analysis["analysis_blocks"].append(block_info)
+                    analysis_blocks = entropy_analysis["analysis_blocks"]
+                    if isinstance(analysis_blocks, list):
+                        analysis_blocks.append(block_info)
 
                     # Classify high entropy regions
                     entropy_val = getattr(result, "entropy", 0.0)
                     if entropy_val > 7.5:
-                        entropy_analysis["encrypted_regions"].append(
-                            {
-                                "offset": result.offset,
-                                "entropy": entropy_val,
-                                "likely_type": "encrypted",
-                            },
-                        )
+                        encrypted_regions = entropy_analysis["encrypted_regions"]
+                        if isinstance(encrypted_regions, list):
+                            encrypted_regions.append(
+                                {
+                                    "offset": result.offset,
+                                    "entropy": entropy_val,
+                                    "likely_type": "encrypted",
+                                },
+                            )
                     elif entropy_val > 6.5:
-                        entropy_analysis["compressed_regions"].append(
-                            {
-                                "offset": result.offset,
-                                "entropy": entropy_val,
-                                "likely_type": "compressed",
-                            },
-                        )
+                        compressed_regions = entropy_analysis["compressed_regions"]
+                        if isinstance(compressed_regions, list):
+                            compressed_regions.append(
+                                {
+                                    "offset": result.offset,
+                                    "entropy": entropy_val,
+                                    "likely_type": "compressed",
+                                },
+                            )
 
             # Calculate overall file entropy
-            if entropy_analysis["analysis_blocks"]:
-                avg_entropy = sum(b.get("entropy", 0) for b in entropy_analysis["analysis_blocks"])
-                avg_entropy /= len(entropy_analysis["analysis_blocks"])
+            analysis_blocks = entropy_analysis["analysis_blocks"]
+            if isinstance(analysis_blocks, list) and analysis_blocks:
+                avg_entropy = sum(b.get("entropy", 0) for b in analysis_blocks) / len(analysis_blocks)
                 entropy_analysis["file_entropy"] = round(avg_entropy, 3)
 
         except Exception as e:
@@ -489,7 +500,7 @@ class FirmwareAnalyzer:
             for count in byte_counts:
                 if count > 0:
                     probability = count / data_len
-                    entropy -= probability * (probability.bit_length() - 1)
+                    entropy -= probability * math.log2(probability)
 
             return round(entropy, 3)
         except Exception as e:
@@ -537,7 +548,7 @@ class FirmwareAnalyzer:
                                 analyze_security=False,
                                 extraction_depth=max_depth - 1,
                             )
-                            if sub_result.has_extractions:
+                            if sub_result.has_extractions and sub_result.extractions is not None:
                                 extraction.extracted_files.extend(sub_result.extractions.extracted_files)
                                 extraction.total_extracted += sub_result.extractions.total_extracted
                         except Exception as e:
@@ -592,7 +603,7 @@ class FirmwareAnalyzer:
 
     def _analyze_file_security(self, file_path: str) -> dict[str, Any]:
         """Perform security analysis on a file."""
-        security_info = {
+        security_info: dict[str, Any] = {
             "has_credentials": False,
             "has_crypto_keys": False,
             "suspicious_strings": [],
@@ -670,7 +681,7 @@ class FirmwareAnalyzer:
 
     def _scan_for_credentials(self, file_path: str) -> list[SecurityFinding]:
         """Scan for hardcoded credentials."""
-        findings = []
+        findings: list[SecurityFinding] = []
 
         try:
             strings = self._extract_strings(file_path)
@@ -882,11 +893,15 @@ class FirmwareAnalyzer:
         if analysis_result.error:
             return {"error": analysis_result.error}
 
+        files_extracted = 0
+        if analysis_result.has_extractions and analysis_result.extractions is not None:
+            files_extracted = analysis_result.extractions.total_extracted
+
         supplemental_data = {
             "firmware_analysis": {
                 "firmware_type": analysis_result.firmware_type.value,
                 "signatures_found": len(analysis_result.signatures),
-                "files_extracted": analysis_result.extractions.total_extracted if analysis_result.has_extractions else 0,
+                "files_extracted": files_extracted,
                 "security_findings": len(analysis_result.security_findings),
                 "analysis_time": analysis_result.analysis_time,
             },
@@ -898,30 +913,34 @@ class FirmwareAnalyzer:
 
         # Process signatures
         for sig in analysis_result.signatures:
-            supplemental_data["embedded_components"].append(
-                {
-                    "type": sig.file_type,
-                    "name": sig.signature_name,
-                    "offset": sig.offset,
-                    "size": sig.size,
-                    "confidence": sig.confidence,
-                    "is_executable": sig.is_executable,
-                    "is_filesystem": sig.is_filesystem,
-                },
-            )
+            embedded_components = supplemental_data["embedded_components"]
+            if isinstance(embedded_components, list):
+                embedded_components.append(
+                    {
+                        "type": sig.file_type,
+                        "name": sig.signature_name,
+                        "offset": sig.offset,
+                        "size": sig.size,
+                        "confidence": sig.confidence,
+                        "is_executable": sig.is_executable,
+                        "is_filesystem": sig.is_filesystem,
+                    },
+                )
 
         # Process security findings
         for finding in analysis_result.security_findings:
-            supplemental_data["security_indicators"].append(
-                {
-                    "type": finding.finding_type.value,
-                    "severity": finding.severity,
-                    "confidence": finding.confidence,
-                    "description": finding.description,
-                    "file": finding.file_path,
-                    "remediation": finding.remediation,
-                },
-            )
+            security_indicators = supplemental_data["security_indicators"]
+            if isinstance(security_indicators, list):
+                security_indicators.append(
+                    {
+                        "type": finding.finding_type.value,
+                        "severity": finding.severity,
+                        "confidence": finding.confidence,
+                        "description": finding.description,
+                        "file": finding.file_path,
+                        "remediation": finding.remediation,
+                    },
+                )
 
         # Process entropy analysis
         if analysis_result.entropy_analysis:
@@ -934,15 +953,17 @@ class FirmwareAnalyzer:
         # Process extracted executables
         if analysis_result.has_extractions:
             for exe_file in analysis_result.embedded_executables:
-                supplemental_data["extracted_executables"].append(
-                    {
-                        "file_path": exe_file.file_path,
-                        "size": exe_file.size,
-                        "hash": exe_file.hash,
-                        "permissions": exe_file.permissions,
-                        "security_analysis": exe_file.security_analysis,
-                    },
-                )
+                extracted_executables = supplemental_data["extracted_executables"]
+                if isinstance(extracted_executables, list):
+                    extracted_executables.append(
+                        {
+                            "file_path": exe_file.file_path,
+                            "size": exe_file.size,
+                            "hash": exe_file.hash,
+                            "permissions": exe_file.permissions,
+                            "security_analysis": exe_file.security_analysis,
+                        },
+                    )
 
         return supplemental_data
 

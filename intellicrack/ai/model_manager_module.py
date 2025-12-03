@@ -157,7 +157,7 @@ class PyTorchBackend(ModelBackend):
 
         if hasattr(model, "parameters"):
             try:
-                info["parameters"] = sum(_p.numel() for _p in model.parameters())
+                info["parameters"] = sum(p.numel() for p in model.parameters())
             except (AttributeError, RuntimeError) as e:
                 logger.debug("Failed to count PyTorch model parameters: %s", e)
 
@@ -255,21 +255,21 @@ class ONNXBackend(ModelBackend):
         }
 
         try:
-            for _input_meta in model.get_inputs():
+            for input_meta in model.get_inputs():
                 info["inputs"].append(
                     {
-                        "name": _input_meta.name,
-                        "shape": _input_meta.shape,
-                        "type": _input_meta.type,
+                        "name": input_meta.name,
+                        "shape": input_meta.shape,
+                        "type": input_meta.type,
                     },
                 )
 
-            for _output_meta in model.get_outputs():
+            for output_meta in model.get_outputs():
                 info["outputs"].append(
                     {
-                        "name": _output_meta.name,
-                        "shape": _output_meta.shape,
-                        "type": _output_meta.type,
+                        "name": output_meta.name,
+                        "shape": output_meta.shape,
+                        "type": output_meta.type,
                     },
                 )
         except (AttributeError, RuntimeError) as e:
@@ -2670,7 +2670,7 @@ class ModelFineTuner:
         }
 
         # Training loop
-        for _epoch in range(epochs):
+        for epoch in range(epochs):
             # Training phase
             train_loss = 0.0
             for data, target in train_loader:
@@ -2699,7 +2699,7 @@ class ModelFineTuner:
 
             # Callback for progress updates
             if callback:
-                callback(_epoch + 1, epochs, avg_train_loss, avg_val_loss if val_loader else None)
+                callback(epoch + 1, epochs, avg_train_loss, avg_val_loss if val_loader else None)
 
         return results
 
@@ -2969,13 +2969,13 @@ def list_available_models() -> dict[str, Any]:
 
         # Get detailed info for each model
         detailed_models = {}
-        for _model_id in models:
+        for model_id in models:
             try:
-                info = manager.get_model_info(_model_id)
-                detailed_models[_model_id] = info
+                info = manager.get_model_info(model_id)
+                detailed_models[model_id] = info
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in model_manager_module: %s", e)
-                detailed_models[_model_id] = {"error": str(e)}
+                detailed_models[model_id] = {"error": str(e)}
 
         return {
             "success": True,

@@ -8,9 +8,10 @@ extraction, disc authentication analysis, and license validation flow mapping.
 import ctypes
 import logging
 import struct
-from ctypes import wintypes
+from ctypes import WinDLL, wintypes
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 try:
@@ -116,7 +117,7 @@ class SecuROMAnalysis:
     license_validation_functions: list[LicenseValidationFunction]
     encryption_techniques: list[str]
     obfuscation_methods: list[str]
-    details: dict[str, any]
+    details: dict[str, Any]
 
 
 class SecuROMAnalyzer:
@@ -196,15 +197,16 @@ class SecuROMAnalyzer:
     def __init__(self) -> None:
         """Initialize SecuROM analyzer."""
         self.logger = logging.getLogger(__name__)
-        self._kernel32 = None
+        self._kernel32: WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
         """Set up Windows API functions."""
         try:
-            self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            self._kernel32 = kernel32
 
-            self._kernel32.CreateFileW.argtypes = [
+            kernel32.CreateFileW.argtypes = [
                 wintypes.LPCWSTR,
                 wintypes.DWORD,
                 wintypes.DWORD,
@@ -213,10 +215,10 @@ class SecuROMAnalyzer:
                 wintypes.DWORD,
                 wintypes.HANDLE,
             ]
-            self._kernel32.CreateFileW.restype = wintypes.HANDLE
+            kernel32.CreateFileW.restype = wintypes.HANDLE
 
-            self._kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-            self._kernel32.CloseHandle.restype = wintypes.BOOL
+            kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+            kernel32.CloseHandle.restype = wintypes.BOOL
 
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e)
@@ -289,7 +291,7 @@ class SecuROMAnalyzer:
 
     def _analyze_activation_mechanisms(self, target_path: Path) -> list[ActivationMechanism]:
         """Analyze activation mechanisms in protected executable."""
-        mechanisms = []
+        mechanisms: list[ActivationMechanism] = []
 
         if not target_path.exists():
             return mechanisms
@@ -358,7 +360,7 @@ class SecuROMAnalyzer:
 
     def _identify_trigger_points(self, target_path: Path) -> list[TriggerPoint]:
         """Identify online validation trigger points."""
-        trigger_points = []
+        trigger_points: list[TriggerPoint] = []
 
         if not target_path.exists():
             return trigger_points
@@ -439,7 +441,7 @@ class SecuROMAnalyzer:
 
     def _extract_product_key_info(self, target_path: Path) -> list[ProductActivationKey]:
         """Extract product activation key structure information."""
-        keys = []
+        keys: list[ProductActivationKey] = []
 
         if not target_path.exists():
             return keys
@@ -522,7 +524,7 @@ class SecuROMAnalyzer:
 
     def _analyze_disc_authentication(self, target_path: Path) -> list[DiscAuthRoutine]:
         """Analyze disc authentication routines."""
-        routines = []
+        routines: list[DiscAuthRoutine] = []
 
         if not target_path.exists():
             return routines
@@ -602,7 +604,7 @@ class SecuROMAnalyzer:
 
     def _detect_phone_home(self, target_path: Path) -> list[PhoneHomeMechanism]:
         """Detect phone-home mechanisms."""
-        mechanisms = []
+        mechanisms: list[PhoneHomeMechanism] = []
 
         if not target_path.exists():
             return mechanisms
@@ -692,7 +694,7 @@ class SecuROMAnalyzer:
 
     def _analyze_challenge_response(self, target_path: Path) -> list[ChallengeResponseFlow]:
         """Analyze challenge-response authentication flows."""
-        flows = []
+        flows: list[ChallengeResponseFlow] = []
 
         if not target_path.exists():
             return flows
@@ -733,7 +735,7 @@ class SecuROMAnalyzer:
 
     def _map_license_validation(self, target_path: Path) -> list[LicenseValidationFunction]:
         """Map license validation functions."""
-        functions = []
+        functions: list[LicenseValidationFunction] = []
 
         if not target_path.exists():
             return functions
@@ -799,7 +801,7 @@ class SecuROMAnalyzer:
 
     def _identify_encryption(self, target_path: Path) -> list[str]:
         """Identify encryption techniques used."""
-        techniques = []
+        techniques: list[str] = []
 
         if not target_path.exists():
             return techniques
@@ -821,7 +823,7 @@ class SecuROMAnalyzer:
 
     def _detect_obfuscation(self, target_path: Path) -> list[str]:
         """Detect code obfuscation methods."""
-        methods = []
+        methods: list[str] = []
 
         if not PEFILE_AVAILABLE or not target_path.exists():
             return methods
@@ -880,7 +882,7 @@ class SecuROMAnalyzer:
         if not PEFILE_AVAILABLE or not target_path.exists():
             return []
 
-        exports = []
+        exports: list[str] = []
 
         try:
             pe = pefile.PE(str(target_path))
@@ -923,7 +925,7 @@ class SecuROMAnalyzer:
         if not target_path.exists():
             return []
 
-        strings = []
+        strings: list[str] = []
 
         try:
             with open(target_path, "rb") as f:
@@ -973,7 +975,7 @@ class SecuROMAnalyzer:
         if not target_path.exists():
             return []
 
-        registry_keys = []
+        registry_keys: list[str] = []
 
         try:
             with open(target_path, "rb") as f:

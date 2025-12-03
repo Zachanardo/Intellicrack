@@ -50,10 +50,15 @@ class BinarySimilaritySearch:
     def __init__(self, database_path: str = "binary_database.json") -> None:
         """Initialize the binary similarity search engine with database configuration."""
         self.database_path = database_path
-        self.database = {}
-        self.hash_functions = []
-        self.feature_extractors = []
+        self.database: dict[str, Any] = {}
+        self.hash_functions: list[Any] = []
+        self.feature_extractors: list[Any] = []
         self.logger = logging.getLogger("IntellicrackLogger.BinarySearch")
+        self.fuzzy_match_stats: dict[str, int] = {
+            "total_comparisons": 0,
+            "matches_found": 0,
+            "sample_size": 0,
+        }
 
         self.load_database()
 
@@ -94,8 +99,8 @@ class BinarySimilaritySearch:
         """
         try:
             # Check if binary already exists in database
-            for _existing in self.database["binaries"]:
-                if _existing["path"] == binary_path:
+            for existing in self.database["binaries"]:
+                if existing["path"] == binary_path:
                     self.logger.warning("Binary %s already exists in database", binary_path)
                     return False
 
@@ -167,31 +172,31 @@ class BinarySimilaritySearch:
                     features["characteristics"] = getattr(pe.FILE_HEADER, "Characteristics", 0)
 
                     # Extract section information
-                    for _section in pe.sections:
-                        section_name = _section.Name.decode("utf-8", "ignore").strip("\x00")
+                    for section in pe.sections:
+                        section_name = section.Name.decode("utf-8", "ignore").strip("\x00")
                         section_info = {
                             "name": section_name,
-                            "virtual_address": _section.VirtualAddress,
-                            "virtual_size": _section.Misc_VirtualSize,
-                            "raw_data_size": _section.SizeOfRawData,
-                            "entropy": calculate_entropy(_section.get_data()),
+                            "virtual_address": section.VirtualAddress,
+                            "virtual_size": section.Misc_VirtualSize,
+                            "raw_data_size": section.SizeOfRawData,
+                            "entropy": calculate_entropy(section.get_data()),
                         }
                         features["sections"].append(section_info)
 
                     # Extract import information
                     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-                        for _entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            dll_name = _entry.dll.decode("utf-8", "ignore")
-                            for _imp in _entry.imports:
-                                if _imp.name:
-                                    imp_name = _imp.name.decode("utf-8", "ignore")
+                        for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                            dll_name = entry.dll.decode("utf-8", "ignore")
+                            for imp in entry.imports:
+                                if imp.name:
+                                    imp_name = imp.name.decode("utf-8", "ignore")
                                     features["imports"].append(f"{dll_name}:{imp_name}")
 
                     # Extract export information
                     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                        for _exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                            if _exp.name:
-                                exp_name = _exp.name.decode("utf-8", "ignore")
+                        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                            if exp.name:
+                                exp_name = exp.name.decode("utf-8", "ignore")
                                 features["exports"].append(exp_name)
 
                     # Extract strings (basic implementation)
@@ -230,17 +235,17 @@ class BinarySimilaritySearch:
 
             # Calculate similarity with each binary in the database
             similar_binaries = []
-            for _binary in self.database["binaries"]:
-                similarity = self._calculate_similarity(target_features, _binary["features"])
+            for binary in self.database["binaries"]:
+                similarity = self._calculate_similarity(target_features, binary["features"])
                 if similarity >= threshold:
                     similar_binaries.append(
                         {
-                            "path": _binary["path"],
-                            "filename": _binary.get("filename", os.path.basename(_binary["path"])),
+                            "path": binary["path"],
+                            "filename": binary.get("filename", os.path.basename(binary["path"])),
                             "similarity": similarity,
-                            "cracking_patterns": _binary["cracking_patterns"],
-                            "added": _binary.get("added", "Unknown"),
-                            "file_size": _binary.get("file_size", 0),
+                            "cracking_patterns": binary["cracking_patterns"],
+                            "added": binary.get("added", "Unknown"),
+                            "file_size": binary.get("file_size", 0),
                         },
                     )
 
@@ -321,20 +326,20 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Compare section names
-            names1 = [_s.get("name", "") for _s in sections1]
-            names2 = [_s.get("name", "") for _s in sections2]
+            names1 = [s.get("name", "") for s in sections1]
+            names2 = [s.get("name", "") for s in sections2]
             name_similarity = self._calculate_list_similarity(names1, names2)
 
             # Compare section entropies
-            entropies1 = [_s.get("entropy", 0) for _s in sections1]
-            entropies2 = [_s.get("entropy", 0) for _s in sections2]
+            entropies1 = [s.get("entropy", 0) for s in sections1]
+            entropies2 = [s.get("entropy", 0) for s in sections2]
 
             entropy_similarity = 0.0
             if entropies1 and entropies2:
                 # Calculate average entropy difference
                 min_len = min(len(entropies1), len(entropies2))
                 if min_len > 0:
-                    entropy_diff = sum(abs(entropies1[_i] - entropies2[_i]) for _i in range(min_len)) / min_len
+                    entropy_diff = sum(abs(entropies1[i] - entropies2[i]) for i in range(min_len)) / min_len
                     entropy_similarity = max(0.0, 1.0 - entropy_diff / 8.0)  # Normalize by max entropy
 
             return name_similarity * 0.6 + entropy_similarity * 0.4
@@ -722,13 +727,16 @@ class BinarySimilaritySearch:
         """Calculate fuzzy string similarity using approximate matching."""
         try:
             if not strings1 or not strings2:
+                self.fuzzy_match_stats = {
+                    "total_comparisons": 0,
+                    "matches_found": 0,
+                    "sample_size": 0,
+                }
                 return 0.0
 
-            # Use simplified Levenshtein-based fuzzy matching
             matches = 0
             total_comparisons = 0
 
-            # Sample strings to avoid O(n²) complexity
             sample_size = min(20, len(strings1), len(strings2))
             sampled1 = strings1[:sample_size]
             sampled2 = strings2[:sample_size]
@@ -740,8 +748,14 @@ class BinarySimilaritySearch:
                     best_similarity = max(best_similarity, similarity)
                     total_comparisons += 1
 
-                if best_similarity > 0.7:  # Threshold for fuzzy match
+                if best_similarity > 0.7:
                     matches += 1
+
+            self.fuzzy_match_stats = {
+                "total_comparisons": total_comparisons,
+                "matches_found": matches,
+                "sample_size": sample_size,
+            }
 
             return matches / len(sampled1) if sampled1 else 0.0
 
@@ -1057,16 +1071,16 @@ class BinarySimilaritySearch:
 
         if stats["total_binaries"] > 0:
             total_size = 0
-            for _binary in self.database["binaries"]:
+            for binary in self.database["binaries"]:
                 # Count patterns
-                stats["total_patterns"] += len(_binary.get("cracking_patterns", []))
+                stats["total_patterns"] += len(binary.get("cracking_patterns", []))
 
                 # Calculate average file size
-                file_size = _binary.get("file_size", 0)
+                file_size = binary.get("file_size", 0)
                 total_size += file_size
 
                 # Collect unique imports and exports
-                features = _binary.get("features", {})
+                features = binary.get("features", {})
                 stats["unique_imports"].update(features.get("imports", []))
                 stats["unique_exports"].update(features.get("exports", []))
 
@@ -1075,6 +1089,18 @@ class BinarySimilaritySearch:
             stats["unique_exports"] = len(stats["unique_exports"])
 
         return stats
+
+    def get_fuzzy_match_statistics(self) -> dict[str, int]:
+        """Get statistics from the most recent fuzzy string similarity calculation.
+
+        Returns:
+            Dictionary containing:
+                - total_comparisons: Number of string pairs compared
+                - matches_found: Number of fuzzy matches found (similarity > 0.7)
+                - sample_size: Size of the string sample analyzed
+
+        """
+        return self.fuzzy_match_stats.copy()
 
     def remove_binary(self, binary_path: str) -> bool:
         """Remove a binary from the database.
@@ -1088,7 +1114,7 @@ class BinarySimilaritySearch:
         """
         try:
             original_count = len(self.database["binaries"])
-            self.database["binaries"] = [_b for _b in self.database["binaries"] if _b["path"] != binary_path]
+            self.database["binaries"] = [b for b in self.database["binaries"] if b["path"] != binary_path]
 
             if len(self.database["binaries"]) < original_count:
                 self._save_database()

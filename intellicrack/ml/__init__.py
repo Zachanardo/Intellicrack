@@ -22,11 +22,13 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
 
 # Attempt to import available ML modules
+PatternEvolutionTracker: Any
 try:
     from .pattern_evolution_tracker import PatternEvolutionTracker
 
@@ -52,7 +54,7 @@ def get_ml_capabilities() -> list[str]:
 
 
 __all__ = []
-if PatternEvolutionTracker:
+if HAS_PATTERN_TRACKER:
     __all__.append("PatternEvolutionTracker")
 
 __all__.extend(["get_ml_capabilities", "HAS_PATTERN_TRACKER"])

@@ -780,16 +780,26 @@ def analyze(
         if verbose:
             logging.basicConfig(level=logging.DEBUG)
 
+        progress_callback("Basic Analysis", 0.1, "Initializing")
+
         if gpu_accelerate:
+            progress_callback("GPU Processing", 0.0, "Starting GPU acceleration")
             _handle_gpu_acceleration(binary_path)
+            progress_callback("GPU Processing", 1.0, "GPU processing complete")
 
         if distributed:
+            progress_callback("Distributed Analysis", 0.0, "Starting distributed processing")
             _handle_distributed_processing(binary_path)
+            progress_callback("Distributed Analysis", 1.0, "Distributed processing complete")
 
         if symbolic_execution or concolic_execution:
+            progress_callback("Symbolic Analysis", 0.0, "Starting symbolic execution")
             _handle_symbolic_execution(binary_path, symbolic_execution, concolic_execution)
+            progress_callback("Symbolic Analysis", 1.0, "Symbolic execution complete")
 
+        progress_callback("Basic Analysis", 0.5, f"Running {mode} analysis")
         result = _perform_analysis(mode, binary_path, output, verbose, no_ai, deep)
+        progress_callback("Basic Analysis", 1.0, "Analysis complete")
 
         if not no_ai:
             click.echo("AI integration enabled - will suggest script generation opportunities")

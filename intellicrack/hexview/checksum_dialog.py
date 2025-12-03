@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..utils.logger import get_logger
@@ -46,7 +47,7 @@ class ChecksumWorker(QThread):
         super().__init__()
         self.data = data
         self.file_path = file_path
-        self.algorithms = []
+        self.algorithms: list[str] = []
         self.calculator = ChecksumCalculator()
         self.calculator.set_progress_callback(self._progress_callback)
 
@@ -70,7 +71,12 @@ class ChecksumWorker(QThread):
         self.progress.emit(current, total)
 
     def run(self) -> None:
-        """Run checksum calculation."""
+        """Run checksum calculation.
+
+        Raises:
+            ValueError: If neither data nor file path is provided
+
+        """
         try:
             results = {}
 
@@ -101,7 +107,7 @@ class ChecksumWorker(QThread):
 class ChecksumDialog(QDialog):
     """Dialog for calculating checksums and hashes."""
 
-    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, hex_viewer: object | None = None) -> None:
         """Initialize checksum dialog.
 
         Args:
@@ -111,7 +117,7 @@ class ChecksumDialog(QDialog):
         """
         super().__init__(parent)
         self.hex_viewer = hex_viewer
-        self.worker = None
+        self.worker: ChecksumWorker | None = None
         self.init_ui()
         self.setWindowTitle("Calculate Checksums")
         self.resize(600, 500)
@@ -136,10 +142,13 @@ class ChecksumDialog(QDialog):
         if (
             self.hex_viewer
             and hasattr(self.hex_viewer, "selection_start")
-            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+            and hasattr(self.hex_viewer, "selection_end")
+            and (getattr(self.hex_viewer, "selection_start", -1) != -1 and getattr(self.hex_viewer, "selection_end", -1) != -1)
         ):
             self.selection_radio.setEnabled(True)
-            selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
+            selection_start = getattr(self.hex_viewer, "selection_start", 0)
+            selection_end = getattr(self.hex_viewer, "selection_end", 0)
+            selection_size = selection_end - selection_start
             self.selection_radio.setText(f"Current selection ({selection_size} bytes)")
 
         source_group.setLayout(source_layout)
@@ -217,12 +226,13 @@ class ChecksumDialog(QDialog):
         # Dialog buttons
         button_box = QDialogButtonBox()
 
-        self.calculate_btn = QPushButton("Calculate")
+        self.calculate_btn: QPushButton = QPushButton("Calculate")
         self.calculate_btn.clicked.connect(self.calculate_checksums)
         button_box.addButton(self.calculate_btn, QDialogButtonBox.ButtonRole.ActionRole)
 
         close_btn = button_box.addButton(QDialogButtonBox.StandardButton.Close)
-        close_btn.clicked.connect(self.close)
+        if close_btn is not None:
+            close_btn.clicked.connect(self.close)
 
         layout.addWidget(button_box)
 
@@ -266,13 +276,15 @@ class ChecksumDialog(QDialog):
         if self.selection_radio.isChecked() and self.selection_radio.isEnabled():
             # Get selected data
             if self.hex_viewer:
-                start = self.hex_viewer.selection_start
-                end = self.hex_viewer.selection_end
+                start = getattr(self.hex_viewer, "selection_start", -1)
+                end = getattr(self.hex_viewer, "selection_end", -1)
                 if start != -1 and end != -1:
-                    data = self.hex_viewer.file_handler.read_data(start, end - start)
-                    if data is None:
-                        self.results_text.setPlainText("Failed to read selected data.")
-                        return
+                    file_handler = getattr(self.hex_viewer, "file_handler", None)
+                    if file_handler:
+                        data = file_handler.read_data(start, end - start)
+                        if data is None:
+                            self.results_text.setPlainText("Failed to read selected data.")
+                            return
                 else:
                     self.results_text.setPlainText("No selection available.")
                     return
@@ -281,15 +293,17 @@ class ChecksumDialog(QDialog):
                 return
         # Use entire file
         elif self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
-            if hasattr(self.hex_viewer.file_handler, "file_path"):
-                file_path = self.hex_viewer.file_handler.file_path
+            file_handler = getattr(self.hex_viewer, "file_handler", None)
+            if file_handler and hasattr(file_handler, "file_path"):
+                file_path = getattr(file_handler, "file_path", None)
             else:
                 # Read entire file into memory
-                file_size = self.hex_viewer.file_handler.file_size
-                data = self.hex_viewer.file_handler.read_data(0, file_size)
-                if data is None:
-                    self.results_text.setPlainText("Failed to read file data.")
-                    return
+                if file_handler:
+                    file_size = getattr(file_handler, "file_size", 0)
+                    data = file_handler.read_data(0, file_size)
+                    if data is None:
+                        self.results_text.setPlainText("Failed to read file data.")
+                        return
         else:
             self.results_text.setPlainText("No file loaded.")
             return
@@ -301,11 +315,12 @@ class ChecksumDialog(QDialog):
 
         # Create and start worker thread
         self.worker = ChecksumWorker(data, file_path)
-        self.worker.set_algorithms(algorithms)
-        self.worker.progress.connect(self.update_progress)
-        self.worker.result.connect(self.display_results)
-        self.worker.error.connect(self.display_error)
-        self.worker.start()
+        if self.worker is not None:
+            self.worker.set_algorithms(algorithms)
+            self.worker.progress.connect(self.update_progress)
+            self.worker.result.connect(self.display_results)
+            self.worker.error.connect(self.display_error)
+            self.worker.start()
 
     def update_progress(self, current: int, total: int) -> None:
         """Update progress bar.
@@ -331,13 +346,17 @@ class ChecksumDialog(QDialog):
         # Determine data source info
         if self.selection_radio.isChecked() and self.selection_radio.isEnabled():
             if self.hex_viewer:
-                start = self.hex_viewer.selection_start
-                end = self.hex_viewer.selection_end
+                start = getattr(self.hex_viewer, "selection_start", 0)
+                end = getattr(self.hex_viewer, "selection_end", 0)
                 text += f"Data: Selection (offset {start:#x} to {end:#x})\n"
                 text += f"Size: {end - start} bytes\n\n"
-        elif self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
-            text += f"File: {self.hex_viewer.file_handler.file_path}\n"
-            text += f"Size: {self.hex_viewer.file_handler.file_size} bytes\n\n"
+        elif self.hex_viewer:
+            file_handler = getattr(self.hex_viewer, "file_handler", None)
+            if file_handler and hasattr(file_handler, "file_path"):
+                file_path = getattr(file_handler, "file_path", "Unknown")
+                file_size = getattr(file_handler, "file_size", 0)
+                text += f"File: {file_path}\n"
+                text += f"Size: {file_size} bytes\n\n"
 
         # Add results
         for algo, result in results.items():
@@ -369,10 +388,11 @@ class ChecksumDialog(QDialog):
             from PyQt6.QtWidgets import QApplication
 
             clipboard = QApplication.clipboard()
-            clipboard.setText(text)
+            if clipboard is not None:
+                clipboard.setText(text)
 
-            # Show brief confirmation
-            original_text = self.copy_btn.text()
-            self.copy_btn.setText("Copied!")
-            QThread.msleep(1000)
-            self.copy_btn.setText(original_text)
+                # Show brief confirmation
+                original_text = self.copy_btn.text()
+                self.copy_btn.setText("Copied!")
+                QThread.msleep(1000)
+                self.copy_btn.setText(original_text)

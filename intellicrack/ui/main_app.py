@@ -682,7 +682,14 @@ class IntellicrackApp(QMainWindow):
         self.dashboard_manager = DashboardManager(self)
 
     def _setup_individual_tabs(self) -> None:
-        """Set up each individual tab with error handling."""
+        """Set up each individual tab with error handling.
+
+        Raises:
+            OSError: If file system operations fail during tab setup.
+            ValueError: If configuration values are invalid.
+            RuntimeError: If required components fail to initialize.
+
+        """
         # Initialize the binary_path variable before setting up tabs
         self.binary_path = None
 
@@ -839,45 +846,80 @@ class IntellicrackApp(QMainWindow):
             self.logger.error(f"Error handling coordinated analysis completion: {e}")
 
     def append_output(self, text: str) -> None:
-        """Append text to the main output widget."""
+        """Append text to the main output widget.
+
+        Args:
+            text: Text to append to the output displays.
+
+        """
         if hasattr(self, "output") and self.output:
             self.output.append(text)
         if hasattr(self, "raw_console_output") and self.raw_console_output:
             self.raw_console_output.appendPlainText(text)
 
     def set_status_message(self, message: str) -> None:
-        """Set status message in the application."""
+        """Set status message in the application.
+
+        Args:
+            message: Status message to display in the status bar.
+
+        """
         if hasattr(self, "statusBar") and self.statusBar():
             self.statusBar().showMessage(message, 5000)
         self.logger.info(f"Status: {message}")
 
     def append_analysis_results(self, results: str) -> None:
-        """Append analysis results to appropriate display."""
+        """Append analysis results to appropriate display.
+
+        Args:
+            results: Analysis results to display.
+
+        """
         if hasattr(self, "output") and self.output:
             formatted_results = f"[ANALYSIS] {results}"
             self.output.append(formatted_results)
         self.logger.info(f"Analysis results: {results}")
 
     def set_progress_value(self, value: int) -> None:
-        """Set progress value for any active progress indicators."""
+        """Set progress value for any active progress indicators.
+
+        Args:
+            value: Progress value as a percentage (0-100).
+
+        """
         self.logger.debug(f"Progress updated: {value}%")
 
     def set_assistant_status(self, status: str) -> None:
-        """Set AI assistant status."""
+        """Set AI assistant status.
+
+        Args:
+            status: Status message for the AI assistant.
+
+        """
         if hasattr(self, "assistant_status") and self.assistant_status:
             with contextlib.suppress(AttributeError):
                 self.assistant_status.setText(status)
         self.logger.info(f"Assistant status: {status}")
 
     def append_chat_display(self, message: str) -> None:
-        """Append message to chat display."""
+        """Append message to chat display.
+
+        Args:
+            message: Chat message to append.
+
+        """
         if hasattr(self, "chat_display") and self.chat_display:
             with contextlib.suppress(AttributeError):
                 self.chat_display.append(message)
         self.logger.info(f"Chat: {message}")
 
     def replace_last_chat_message(self, message: str) -> None:
-        """Replace the last message in chat display."""
+        """Replace the last message in chat display.
+
+        Args:
+            message: Message to replace the last one with.
+
+        """
         if hasattr(self, "chat_display") and self.chat_display:
             try:
                 cursor = self.chat_display.textCursor()
@@ -889,21 +931,41 @@ class IntellicrackApp(QMainWindow):
         self.logger.info(f"Chat replaced: {message}")
 
     def handle_log_user_question(self, question: str) -> None:
-        """Handle user question logging."""
+        """Handle user question logging.
+
+        Args:
+            question: User question to log.
+
+        """
         if hasattr(self, "ai_conversation_history"):
             self.ai_conversation_history.append({"type": "question", "content": question})
         self.logger.info(f"User question logged: {question}")
 
     def handle_set_keygen_name(self, name: str) -> None:
-        """Handle setting keygen name."""
+        """Handle setting keygen name.
+
+        Args:
+            name: Name to set for the key generator.
+
+        """
         self.logger.info(f"Keygen name set: {name}")
 
     def handle_set_keygen_version(self, version: str) -> None:
-        """Handle setting keygen version."""
+        """Handle setting keygen version.
+
+        Args:
+            version: Version to set for the key generator.
+
+        """
         self.logger.info(f"Keygen version set: {version}")
 
     def handle_switch_tab(self, tab_index: int) -> None:
-        """Handle tab switching."""
+        """Handle tab switching.
+
+        Args:
+            tab_index: Index of the tab to switch to.
+
+        """
         if hasattr(self, "tabs") and self.tabs:
             with contextlib.suppress(AttributeError, IndexError):
                 self.tabs.setCurrentIndex(tab_index)
@@ -922,14 +984,27 @@ class IntellicrackApp(QMainWindow):
         self.logger.info("Output displays cleared")
 
     def log_message(self, message: str) -> str:
-        """Format and return log message with timestamp."""
+        """Format and return log message with timestamp.
+
+        Args:
+            message: Message to format with timestamp.
+
+        Returns:
+            Formatted message with timestamp prefix.
+
+        """
         import datetime
 
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         return f"[{timestamp}] {message}"
 
     def _on_binary_loaded(self, binary_info: dict) -> None:
-        """Handle binary loaded event from app context."""
+        """Handle binary loaded event from app context.
+
+        Args:
+            binary_info: Dictionary containing binary information.
+
+        """
         if isinstance(binary_info, dict) and "path" in binary_info:
             self.binary_path = binary_info["path"]
             binary_name = binary_info.get("name", os.path.basename(binary_info["path"]))
@@ -956,22 +1031,43 @@ class IntellicrackApp(QMainWindow):
         self.logger.info("Analysis completed")
 
     def _on_task_started(self, task_name: str) -> None:
-        """Handle task started event from app context."""
+        """Handle task started event from app context.
+
+        Args:
+            task_name: Name of the task that started.
+
+        """
         self.update_status.emit(f"Task started: {task_name}")
         self.logger.info(f"Task started: {task_name}")
 
     def _on_task_progress(self, progress: int) -> None:
-        """Handle task progress event from app context."""
+        """Handle task progress event from app context.
+
+        Args:
+            progress: Progress percentage (0-100).
+
+        """
         self.update_progress.emit(progress)
         self.logger.debug(f"Task progress: {progress}%")
 
     def _on_task_completed(self, task_name: str) -> None:
-        """Handle task completed event from app context."""
+        """Handle task completed event from app context.
+
+        Args:
+            task_name: Name of the task that completed.
+
+        """
         self.update_status.emit(f"Task completed: {task_name}")
         self.logger.info(f"Task completed: {task_name}")
 
     def _on_task_failed(self, task_name: str, error: str) -> None:
-        """Handle task failed event from app context."""
+        """Handle task failed event from app context.
+
+        Args:
+            task_name: Name of the task that failed.
+            error: Error message describing the failure.
+
+        """
         self.update_status.emit(f"Task failed: {task_name} - {error}")
         self.logger.error(f"Task failed: {task_name} - {error}")
 
@@ -1019,7 +1115,12 @@ class IntellicrackApp(QMainWindow):
         self.logger.debug("Toolbar created")
 
     def on_theme_changed(self, theme_name: str) -> None:
-        """Handle theme change event."""
+        """Handle theme change event.
+
+        Args:
+            theme_name: Name of the theme to apply.
+
+        """
         if hasattr(self, "theme_manager") and self.theme_manager:
             self.theme_manager.set_theme(theme_name)
         self.logger.info(f"Theme changed to: {theme_name}")

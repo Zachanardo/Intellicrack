@@ -35,6 +35,7 @@ from intellicrack.utils.logger import get_logger
 
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
+
 logger = get_logger(__name__)
 
 

@@ -18,7 +18,12 @@ from pathlib import Path
 
 
 def get_project_root() -> Path:
-    """Get the project root directory."""
+    """Get the project root directory.
+
+    Returns:
+        Path object pointing to the project root directory.
+
+    """
     if intellicrack_root_env := os.environ.get("INTELLICRACK_ROOT"):
         return Path(intellicrack_root_env)
 
@@ -28,7 +33,12 @@ def get_project_root() -> Path:
 
 
 def get_data_dir() -> Path:
-    """Get the data directory within the project."""
+    """Get the data directory within the project.
+
+    Returns:
+        Path object pointing to the data directory.
+
+    """
     return get_project_root() / "data"
 
 
@@ -38,7 +48,9 @@ def get_data_dir() -> Path:
 def get_qemu_images_dir() -> Path:
     """Get the QEMU images directory.
 
-    Returns the path to intellicrack/assets/qemu_images/
+    Returns:
+        Path object pointing to the QEMU images directory (intellicrack/assets/qemu_images/).
+
     """
     project_root = get_project_root()
     assets_dir = project_root / "intellicrack" / "assets"
@@ -53,7 +65,15 @@ def get_qemu_images_dir() -> Path:
 
 
 def resolve_qemu_image_path(image_name: str) -> Path:
-    """Resolve a QEMU image file path."""
+    """Resolve a QEMU image file path.
+
+    Args:
+        image_name: Name of the QEMU image file, may include paths.
+
+    Returns:
+        Path object pointing to the resolved QEMU image file.
+
+    """
     # Remove any hardcoded path prefixes
     if isinstance(image_name, str):
         # Strip common hardcoded prefixes - including legacy absolute paths

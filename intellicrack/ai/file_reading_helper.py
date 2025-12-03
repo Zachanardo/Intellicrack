@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
 
 
@@ -55,6 +57,7 @@ def read_file_with_ai_tools(
     def _process_ai_content(raw_content: str | bytes | bytearray) -> str | bytes | None:
         """Normalize AI-provided content according to mode and max_bytes."""
         if mode == "binary":
+            data: bytes
             if isinstance(raw_content, str):
                 data = raw_content.encode("latin-1", errors="ignore")
             elif isinstance(raw_content, bytearray):
@@ -64,20 +67,19 @@ def read_file_with_ai_tools(
             if max_bytes and isinstance(data, bytes) and len(data) > max_bytes:
                 return data[:max_bytes]
             return data
+
         if isinstance(raw_content, (bytes, bytearray)):
             return raw_content.decode(encoding, errors="ignore")
-        if isinstance(raw_content, str):
-            return raw_content
-        return None
+        return raw_content
 
-    content = None
+    content: str | bytes | None = None
     used_ai_tools = False
 
     # Attempt AIFileTools path and return early on success to keep flow simple.
     try:
-        from .ai_file_tools import get_ai_file_tools
+        from .ai_file_tools import get_ai_file_tools as _get_ai_file_tools
 
-        ai_file_tools = get_ai_file_tools(app_instance)
+        ai_file_tools = _get_ai_file_tools(app_instance)
         file_data = ai_file_tools.read_file(file_path, purpose=purpose)
 
         if file_data.get("status") == "success" and file_data.get("content") is not None:
@@ -94,11 +96,11 @@ def read_file_with_ai_tools(
     # Fallback to direct file reading
     try:
         if mode == "binary":
-            with open(file_path, "rb") as f:
-                content = f.read(max_bytes) if max_bytes else f.read()
+            with open(file_path, "rb") as binary_file:
+                content = binary_file.read(max_bytes) if max_bytes else binary_file.read()
         else:
-            with open(file_path, encoding=encoding) as f:
-                content = f.read()
+            with open(file_path, encoding=encoding) as text_file:
+                content = text_file.read()
 
         logger.debug(f"Read file using direct file access: {file_path}")
         return content, False

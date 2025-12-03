@@ -1750,12 +1750,12 @@ const DrmBypass = {
                     onLeave: function (retval) {
                         var config = this.parent.parent.config;
                         if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
-                              retval.replace(244); // US geo ID
-                              send({
-                                  type: 'bypass',
-                                  target: 'drm_bypass',
-                                  action: 'geo_location_spoofed_to_us',
-                              });
+                            retval.replace(244); // US geo ID
+                            send({
+                                type: 'bypass',
+                                target: 'drm_bypass',
+                                action: 'geo_location_spoofed_to_us',
+                            });
                         }
                     },
                 });
@@ -2893,13 +2893,13 @@ const DrmBypass = {
 
                     onLeave: function (retval) {
                         if (this.allowKeyOperation && retval.toInt32() === 0) {
-                              retval.replace(1); // Success
-                              send({
-                                  type: 'bypass',
-                                  target: 'drm_bypass',
-                                  action: 'key_operation_forced_to_succeed',
-                                  function_name: funcName,
-                              });
+                            retval.replace(1); // Success
+                            send({
+                                type: 'bypass',
+                                target: 'drm_bypass',
+                                action: 'key_operation_forced_to_succeed',
+                                function_name: funcName,
+                            });
                         }
                     },
                 });

@@ -341,15 +341,18 @@ const MemoryIntegrityBypass = {
 
                     // Allow executable allocations in external processes
                     var config = this.parent.parent.config;
-                    if (config.memoryProtection.enabled &&
-                                            config.memoryProtection.allowExecutableWrites && this.flProtect & 0x20) {
-                          args[4] = ptr(0x40);
-                          send({
-                              type: 'bypass',
-                              target: 'memory_integrity_bypass',
-                              action: 'virtualallocex_upgraded',
-                              upgrade: 'to_rwx',
-                          });
+                    if (
+                        config.memoryProtection.enabled &&
+                        config.memoryProtection.allowExecutableWrites &&
+                        this.flProtect & 0x20
+                    ) {
+                        args[4] = ptr(0x40);
+                        send({
+                            type: 'bypass',
+                            target: 'memory_integrity_bypass',
+                            action: 'virtualallocex_upgraded',
+                            upgrade: 'to_rwx',
+                        });
                     }
                 },
             });
@@ -378,15 +381,18 @@ const MemoryIntegrityBypass = {
 
                     // Force executable permissions
                     var config = this.parent.parent.config;
-                    if (config.memoryProtection.enabled &&
-                                            config.memoryProtection.allowExecutableWrites && (this.newProtect & 0xf0) === 0) {
-                          args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
-                          send({
-                              type: 'bypass',
-                              target: 'memory_integrity_bypass',
-                              action: 'ntprotectvirtualmemory_modified',
-                              modification: 'to_rwx',
-                          });
+                    if (
+                        config.memoryProtection.enabled &&
+                        config.memoryProtection.allowExecutableWrites &&
+                        (this.newProtect & 0xf0) === 0
+                    ) {
+                        args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
+                        send({
+                            type: 'bypass',
+                            target: 'memory_integrity_bypass',
+                            action: 'ntprotectvirtualmemory_modified',
+                            modification: 'to_rwx',
+                        });
                     }
                 },
             });
@@ -1378,13 +1384,17 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (retval) {
                     var config = this.parent.parent.config;
-                    if (config.antiDump.enabled && config.antiDump.protectHeaders && (this.directoryEntry === 1 || this.directoryEntry === 2)) {
-                          send({
-                              type: 'info',
-                              target: 'memory_integrity_bypass',
-                              action: 'directory_entry_hideable',
-                              directory: this.directoryEntry,
-                          });
+                    if (
+                        config.antiDump.enabled &&
+                        config.antiDump.protectHeaders &&
+                        (this.directoryEntry === 1 || this.directoryEntry === 2)
+                    ) {
+                        send({
+                            type: 'info',
+                            target: 'memory_integrity_bypass',
+                            action: 'directory_entry_hideable',
+                            directory: this.directoryEntry,
+                        });
                     }
                 },
             });

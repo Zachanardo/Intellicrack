@@ -32,7 +32,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from ...utils.logger import get_logger
 

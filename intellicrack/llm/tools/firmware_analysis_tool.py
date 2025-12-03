@@ -1,4 +1,4 @@
-"""Firmware Analysis Tool for LLM Integration
+"""Firmware Analysis Tool for LLM Integration.
 
 Provides AI models with the ability to run comprehensive firmware analysis
 using Binwalk to detect embedded files, security issues, and firmware patterns.
@@ -8,10 +8,11 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
 from ...utils.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -19,10 +20,10 @@ logger = get_logger(__name__)
 class FirmwareAnalysisTool:
     """LLM tool for running firmware analysis using Binwalk"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize firmware analysis tool"""
         self.analyzer = get_firmware_analyzer()
-        self.analysis_cache = {}
+        self.analysis_cache: dict[str, Any] = {}
 
     def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
@@ -73,7 +74,7 @@ class FirmwareAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute firmware analysis
 
         Args:
@@ -102,11 +103,14 @@ class FirmwareAnalysisTool:
             cache_key = f"{file_path}:{extract_files}:{analyze_security}:{extraction_depth}"
             if cache_key in self.analysis_cache:
                 logger.debug(f"Returning cached firmware analysis for {file_path}")
-                cached_result = self.analysis_cache[cache_key]
+                cached_result: dict[str, Any] = self.analysis_cache[cache_key]
                 cached_result["from_cache"] = True
                 return cached_result
 
             # Run firmware analysis
+            if not self.analyzer:
+                return {"success": False, "error": "Firmware analyzer not initialized"}
+
             analysis_result = self.analyzer.analyze_firmware(
                 file_path=file_path,
                 extract_files=extract_files,
@@ -118,7 +122,7 @@ class FirmwareAnalysisTool:
                 return {"success": False, "error": analysis_result.error}
 
             # Build result for LLM consumption
-            result = {
+            result: dict[str, Any] = {
                 "success": True,
                 "file_path": file_path,
                 "analysis_time": analysis_result.analysis_time,
@@ -142,7 +146,7 @@ class FirmwareAnalysisTool:
                 }
 
             # Add extraction details if files were extracted
-            if analysis_result.has_extractions:
+            if analysis_result.has_extractions and analysis_result.extractions:
                 result["extracted_files"] = self._format_extracted_files(analysis_result.extractions.extracted_files)
 
                 if include_strings:
@@ -168,10 +172,10 @@ class FirmwareAnalysisTool:
 
     def _format_signatures(self, signatures: list[Any]) -> list[dict[str, Any]]:
         """Format firmware signatures for LLM consumption"""
-        formatted_signatures = []
+        formatted_signatures: list[dict[str, Any]] = []
 
         for sig in signatures:
-            sig_data = {
+            sig_data: dict[str, Any] = {
                 "offset": sig.offset,
                 "name": sig.signature_name,
                 "description": sig.description,
@@ -187,7 +191,7 @@ class FirmwareAnalysisTool:
 
     def _assess_security_findings(self, findings: list[Any]) -> dict[str, Any]:
         """Assess security implications of firmware findings"""
-        assessment = {
+        assessment: dict[str, Any] = {
             "overall_risk_level": "low",
             "critical_findings": 0,
             "high_findings": 0,
@@ -205,31 +209,37 @@ class FirmwareAnalysisTool:
         for finding in findings:
             severity = finding.severity.lower()
             if severity == "critical":
-                assessment["critical_findings"] += 1
+                assessment["critical_findings"] = int(assessment["critical_findings"]) + 1
                 assessment["immediate_threats"].append(finding.description)
             elif severity == "high":
-                assessment["high_findings"] += 1
+                assessment["high_findings"] = int(assessment["high_findings"]) + 1
                 assessment["primary_concerns"].append(finding.description)
             elif severity == "medium":
-                assessment["medium_findings"] += 1
+                assessment["medium_findings"] = int(assessment["medium_findings"]) + 1
             else:
-                assessment["low_findings"] += 1
+                assessment["low_findings"] = int(assessment["low_findings"]) + 1
 
         # Calculate security score (0-10 scale)
+        critical_findings: int = int(assessment["critical_findings"])
+        high_findings: int = int(assessment["high_findings"])
+        medium_findings: int = int(assessment["medium_findings"])
+        low_findings: int = int(assessment["low_findings"])
+
         score = (
-            assessment["critical_findings"] * 3.0
-            + assessment["high_findings"] * 2.0
-            + assessment["medium_findings"] * 1.0
-            + assessment["low_findings"] * 0.5
+            critical_findings * 3.0
+            + high_findings * 2.0
+            + medium_findings * 1.0
+            + low_findings * 0.5
         )
         assessment["security_score"] = min(score, 10.0)
 
         # Determine overall risk level
-        if assessment["critical_findings"] > 0 or assessment["security_score"] >= 7.0:
+        security_score: float = float(assessment["security_score"])
+        if critical_findings > 0 or security_score >= 7.0:
             assessment["overall_risk_level"] = "critical"
-        elif assessment["high_findings"] > 0 or assessment["security_score"] >= 5.0:
+        elif high_findings > 0 or security_score >= 5.0:
             assessment["overall_risk_level"] = "high"
-        elif assessment["medium_findings"] > 0 or assessment["security_score"] >= 3.0:
+        elif medium_findings > 0 or security_score >= 3.0:
             assessment["overall_risk_level"] = "medium"
 
         return assessment
@@ -257,7 +267,7 @@ class FirmwareAnalysisTool:
 
     def _generate_bypass_recommendations(self, analysis_result: Any) -> list[dict[str, Any]]:
         """Generate bypass recommendations based on firmware analysis"""
-        recommendations = []
+        recommendations: list[dict[str, Any]] = []
 
         # Check for embedded executables
         if analysis_result.has_extractions and analysis_result.embedded_executables:
@@ -327,10 +337,10 @@ class FirmwareAnalysisTool:
 
     def _format_extracted_files(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
         """Format extracted files information"""
-        formatted_files = []
+        formatted_files: list[dict[str, Any]] = []
 
         for file_obj in extracted_files[:20]:  # Limit to first 20 files
-            file_data = {
+            file_data: dict[str, Any] = {
                 "file_path": file_obj.file_path,
                 "original_offset": file_obj.original_offset,
                 "file_type": file_obj.file_type,
@@ -351,7 +361,7 @@ class FirmwareAnalysisTool:
 
     def _extract_interesting_strings(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
         """Extract interesting strings from extracted files"""
-        interesting_strings = []
+        interesting_strings: list[dict[str, Any]] = []
 
         for file_obj in extracted_files:
             if file_obj.extracted_strings:
@@ -396,10 +406,10 @@ class FirmwareAnalysisTool:
 
     def _format_security_findings(self, findings: list[Any]) -> list[dict[str, Any]]:
         """Format security findings for detailed analysis"""
-        formatted_findings = []
+        formatted_findings: list[dict[str, Any]] = []
 
         for finding in findings:
-            finding_data = {
+            finding_data: dict[str, Any] = {
                 "type": finding.finding_type.value,
                 "description": finding.description,
                 "file_path": finding.file_path,
@@ -416,7 +426,7 @@ class FirmwareAnalysisTool:
 
     def _analyze_embedded_components(self, signatures: list[Any]) -> dict[str, Any]:
         """Analyze embedded components detected in firmware"""
-        components = {
+        components: dict[str, Any] = {
             "filesystems": [],
             "executables": [],
             "archives": [],
@@ -475,7 +485,7 @@ class FirmwareAnalysisTool:
 
     def _classify_firmware(self, analysis_result: Any) -> dict[str, Any]:
         """Classify firmware based on analysis results"""
-        classification = {
+        classification: dict[str, Any] = {
             "primary_type": analysis_result.firmware_type.value,
             "complexity": "simple",
             "architecture": "unknown",
@@ -503,7 +513,7 @@ class FirmwareAnalysisTool:
 
         # Analyze encryption details if found
         if has_encryption:
-            encryption_details = [
+            encryption_details: list[dict[str, Any]] = [
                 {
                     "type": sig.description,
                     "offset": (
@@ -540,7 +550,7 @@ class FirmwareAnalysisTool:
 
     def _analyze_attack_surface(self, analysis_result: Any) -> dict[str, Any]:
         """Analyze potential attack surface of firmware"""
-        attack_surface = {
+        attack_surface: dict[str, Any] = {
             "network_interfaces": 0,
             "web_interfaces": 0,
             "debug_interfaces": 0,
@@ -550,24 +560,27 @@ class FirmwareAnalysisTool:
         }
 
         # Analyze extracted files for attack surface indicators
-        if analysis_result.has_extractions:
+        if analysis_result.has_extractions and analysis_result.extractions:
             for file_obj in analysis_result.extractions.extracted_files:
                 if file_obj.extracted_strings:
                     for string in file_obj.extracted_strings:
                         string_lower = string.lower()
 
                         if "telnet" in string_lower or "ssh" in string_lower:
-                            attack_surface["network_interfaces"] += 1
+                            attack_surface["network_interfaces"] = int(attack_surface["network_interfaces"]) + 1
                             attack_surface["exposed_services"].append("Remote access")
                         elif "http" in string_lower or "web" in string_lower:
-                            attack_surface["web_interfaces"] += 1
+                            attack_surface["web_interfaces"] = int(attack_surface["web_interfaces"]) + 1
                             attack_surface["exposed_services"].append("Web interface")
                         elif "debug" in string_lower or "uart" in string_lower:
-                            attack_surface["debug_interfaces"] += 1
+                            attack_surface["debug_interfaces"] = int(attack_surface["debug_interfaces"]) + 1
                             attack_surface["potential_vulnerabilities"].append("Debug interface")
 
         # Assess overall risk
-        total_interfaces = attack_surface["network_interfaces"] + attack_surface["web_interfaces"] + attack_surface["debug_interfaces"]
+        network_interfaces: int = int(attack_surface["network_interfaces"])
+        web_interfaces: int = int(attack_surface["web_interfaces"])
+        debug_interfaces: int = int(attack_surface["debug_interfaces"])
+        total_interfaces = network_interfaces + web_interfaces + debug_interfaces
 
         if total_interfaces > 5:
             attack_surface["risk_assessment"] = "high"

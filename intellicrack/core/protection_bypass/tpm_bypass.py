@@ -457,16 +457,28 @@ class TPMBypassEngine:
         return hasher.digest()
 
     def forge_attestation_signature(self, message: bytes) -> bytes:
-        """Forge attestation signature using extracted or generated key."""
+        """Forge attestation signature using PKCS#1 v1.5 padding structure.
+
+        Creates a properly structured signature that mimics legitimate TPM attestation.
+        The signature follows PKCS#1 v1.5 format with SHA-256 DigestInfo.
+
+        """
         hasher = hashlib.sha256(message)
+        digest = hasher.digest()
 
         padded = b"\x00\x01"
-        padded += b"\xff" * (256 - len(hasher.digest()) - 11)
+        padding_length = 256 - len(digest) - 11 - 19
+        padded += b"\xff" * padding_length
         padded += b"\x00"
         padded += bytes.fromhex("3031300d060960864801650304020105000420")
-        padded += hasher.digest()
+        padded += digest
 
-        return bytes.fromhex("".join([f"{b:02x}" for b in os.urandom(256)]))
+        if len(padded) < 256:
+            padded += b"\x00" * (256 - len(padded))
+        elif len(padded) > 256:
+            padded = padded[:256]
+
+        return padded
 
     def extract_sealed_keys(self, auth_value: bytes = b"") -> dict[str, bytes]:
         """Extract sealed keys from TPM NVRAM and persistent storage."""

@@ -1,6 +1,7 @@
 # Binary Signatures Database
 
-This directory stores binary signatures for pattern matching and malware detection.
+This directory stores binary signatures for pattern matching and malware
+detection.
 
 ## Signature Types:
 

@@ -5,7 +5,8 @@ import os
 import subprocess
 import tempfile
 import traceback
-from typing import Any
+from subprocess import Popen
+from typing import Any, cast
 
 from intellicrack.utils.logger import logger
 
@@ -79,11 +80,11 @@ class SSLTLSInterceptor:
             self.config |= config
 
         # Initialize components
-        self.proxy_server = None
-        self.ca_cert = None
-        self.ca_key = None
-        self.traffic_log = []
-        self.proxy_process = None
+        self.proxy_server: Any = None
+        self.ca_cert: bytes | None = None
+        self.ca_key: bytes | None = None
+        self.traffic_log: list[dict[str, Any]] = []
+        self.proxy_process: Popen[str] | None = None
 
     def generate_ca_certificate(self) -> tuple[bytes | None, bytes | None]:
         """Generate a CA certificate for SSL/TLS interception.
@@ -124,17 +125,19 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(self.config["ca_key_path"]):
+            ca_cert_path: str = cast("str", self.config["ca_cert_path"])
+            ca_key_path: str = cast("str", self.config["ca_key_path"])
+            if not os.path.exists(ca_cert_path) or not os.path.exists(ca_key_path):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
                 if cert_pem and key_pem:
                     # Create directory if it doesn't exist
-                    os.makedirs(os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True)
+                    os.makedirs(os.path.dirname(os.path.abspath(ca_cert_path)), exist_ok=True)
 
                     # Save certificate and key
-                    with open(self.config["ca_cert_path"], "wb") as f:
+                    with open(ca_cert_path, "wb") as f:
                         f.write(cert_pem)
-                    with open(self.config["ca_key_path"], "wb") as f:
+                    with open(ca_key_path, "wb") as f:
                         f.write(key_pem)
 
                     self.logger.info(f"CA certificate saved to {self.config['ca_cert_path']}")
@@ -222,14 +225,16 @@ def response(flow: http.HTTPFlow) -> None:
 """)
 
                 # Start mitmproxy
-                cmd = [
+                listen_ip: str = cast("str", self.config["listen_ip"])
+                listen_port: int = cast("int", self.config["listen_port"])
+                cmd: list[str] = [
                     mitmdump_path,
                     "-s",
                     script_path,
                     "--listen-host",
-                    self.config["listen_ip"],
+                    listen_ip,
                     "--listen-port",
-                    str(self.config["listen_port"]),
+                    str(listen_port),
                     "--set",
                     "block_global=false",
                     "--set",
@@ -243,7 +248,8 @@ def response(flow: http.HTTPFlow) -> None:
                     universal_newlines=True,
                 )
 
-                self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
+                if self.proxy_process is not None:
+                    self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
             else:
                 self.logger.warning("mitmproxy not found. SSL/TLS interception will be limited.")
             self.logger.info(
@@ -282,8 +288,8 @@ def response(flow: http.HTTPFlow) -> None:
             # Stop proxy process
             if self.proxy_process is not None:
                 self.proxy_process.terminate()
-                self.proxy_process = None
 
+            self.proxy_process = None
             self.logger.info("SSL/TLS interceptor stopped")
             return True
 
@@ -327,8 +333,9 @@ def response(flow: http.HTTPFlow) -> None:
             host: Hostname to intercept
 
         """
-        if host not in self.config["target_hosts"]:
-            self.config["target_hosts"].append(host)
+        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        if host not in target_hosts:
+            target_hosts.append(host)
             self.logger.info("Added target host: %s", host)
 
     def remove_target_host(self, host: str) -> None:
@@ -338,8 +345,9 @@ def response(flow: http.HTTPFlow) -> None:
             host: Hostname to remove
 
         """
-        if host in self.config["target_hosts"]:
-            self.config["target_hosts"].remove(host)
+        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        if host in target_hosts:
+            target_hosts.remove(host)
             self.logger.info("Removed target host: %s", host)
 
     def get_target_hosts(self) -> list[str]:
@@ -349,7 +357,8 @@ def response(flow: http.HTTPFlow) -> None:
             list: List of target hostnames
 
         """
-        return self.config["target_hosts"].copy()
+        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        return target_hosts.copy()
 
     def configure(self, config: dict[str, Any]) -> bool:
         """Configure SSL/TLS interception settings.
@@ -420,8 +429,10 @@ def response(flow: http.HTTPFlow) -> None:
 
             # Validate certificate paths if changed
             if "ca_cert_path" in config or "ca_key_path" in config:
-                if not os.path.exists(self.config["ca_cert_path"]):
-                    self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
+                ca_cert_path: str = cast("str", self.config["ca_cert_path"])
+                ca_key_path: str = cast("str", self.config["ca_key_path"])
+                if not os.path.exists(ca_cert_path):
+                    self.logger.warning(f"CA certificate not found at {ca_cert_path}")
                     # Generate new certificate if needed
                     self.logger.info("Generating new CA certificate")
                     cert, key = self.generate_ca_certificate()
@@ -430,8 +441,8 @@ def response(flow: http.HTTPFlow) -> None:
                         self.config = old_config  # Restore old config
                         return False
 
-                if not os.path.exists(self.config["ca_key_path"]):
-                    self.logger.error(f"CA key not found at {self.config['ca_key_path']}")
+                if not os.path.exists(ca_key_path):
+                    self.logger.error(f"CA key not found at {ca_key_path}")
                     self.config = old_config  # Restore old config
                     return False
 
@@ -484,14 +495,17 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Redact sensitive information
         if "ca_key_path" in safe_config:
-            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
+            ca_key_path_val: str = cast("str", self.config["ca_key_path"])
+            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(ca_key_path_val) else "not found"
 
         # Add runtime status
+        ca_cert_path: str = cast("str", self.config["ca_cert_path"])
+        ca_key_path: str = cast("str", self.config["ca_key_path"])
         safe_config["status"] = {
             "running": self.proxy_process is not None,
             "traffic_captured": len(self.traffic_log),
-            "ca_cert_exists": os.path.exists(self.config["ca_cert_path"]),
-            "ca_key_exists": os.path.exists(self.config["ca_key_path"]),
+            "ca_cert_exists": os.path.exists(ca_cert_path),
+            "ca_key_exists": os.path.exists(ca_key_path),
         }
 
         return safe_config

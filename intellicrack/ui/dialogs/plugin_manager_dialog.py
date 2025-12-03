@@ -148,7 +148,7 @@ else:
 
                 # Basic validation
                 plugin_files = os.listdir(self.install_dir)
-                if any(_f.endswith(".py") for _f in plugin_files):
+                if any(f.endswith(".py") for f in plugin_files):
                     self.progress_updated.emit(100)
                     self.status_updated.emit("Installation complete")
                     self.installation_finished.emit(True, "Plugin installed successfully")

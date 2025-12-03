@@ -30,7 +30,14 @@ logger = logging.getLogger(__name__)
 
 
 def _safe_import(name: str) -> Optional[ModuleType]:
-    """Safely import a module from the current package."""
+    """Safely import a module from the current package.
+
+    Args:
+        name: The module name to import from the current package.
+
+    Returns:
+        Optional[ModuleType]: The imported module, or None if import fails.
+    """
     try:
         return importlib.import_module(f".{name}", __package__)
     except ImportError as e:

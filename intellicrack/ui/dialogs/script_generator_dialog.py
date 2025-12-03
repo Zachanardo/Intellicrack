@@ -1088,8 +1088,8 @@ class PythonHighlighter(QSyntaxHighlighter):
             "return",
             "with",
         ]
-        for _keyword in keywords:
-            pattern = f"\\b{_keyword}\\b"
+        for keyword in keywords:
+            pattern = f"\\b{keyword}\\b"
             self.highlighting_rules.append((pattern, keyword_format))
 
         # Strings
@@ -1113,8 +1113,8 @@ class PythonHighlighter(QSyntaxHighlighter):
         import re
 
         for pattern, text_format in self.highlighting_rules:
-            for _match in re.finditer(pattern, text):
-                start, end = _match.span()
+            for match in re.finditer(pattern, text):
+                start, end = match.span()
                 self.setFormat(start, end - start, text_format)
 
 

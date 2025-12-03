@@ -48,7 +48,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         """
         self.models_directory = models_directory
         self.models_metadata_file = os.path.join(models_directory, "models_metadata.json")
-        self.models_cache = {}
+        self.models_cache: dict[str, ModelInfo] = {}
         self._cache_lock = Lock()
         self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="checksum_worker")
 

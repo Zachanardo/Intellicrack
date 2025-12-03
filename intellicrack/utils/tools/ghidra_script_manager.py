@@ -27,6 +27,7 @@ import os
 import re
 import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..resource_helper import get_resource_path
@@ -57,19 +58,19 @@ class GhidraScript:
         self.category = "User Scripts"
         self.version = "1.0"
         self.min_ghidra_version = None
-        self.tags = []
+        self.tags: list[str] = []
 
         # Runtime info
         self.last_modified = datetime.fromtimestamp(Path(path).stat().st_mtime)
         self.size = os.path.getsize(path)
         self.is_valid = False
-        self.validation_errors = []
+        self.validation_errors: list[str] = []
 
         # Extract metadata
         self._extract_metadata()
         self._validate()
 
-    def _extract_metadata(self):
+    def _extract_metadata(self) -> None:
         """Extract metadata from script comments."""
         try:
             with open(self.path, encoding="utf-8", errors="ignore") as f:
@@ -118,7 +119,7 @@ class GhidraScript:
         except Exception as e:
             logger.warning(f"Failed to extract metadata from {self.filename}: {e}")
 
-    def _validate(self):
+    def _validate(self) -> None:
         """Validate the script for basic requirements."""
         self.validation_errors = []
 
@@ -193,7 +194,7 @@ class GhidraScriptManager:
 
         self.scripts: dict[str, GhidraScript] = {}
         self.categories: dict[str, list[str]] = {}
-        self.last_scan = None
+        self.last_scan: datetime | None = None
 
         # Create default directories if they don't exist
         self._create_default_directories()
@@ -201,7 +202,7 @@ class GhidraScriptManager:
         # Load cache if available
         self._load_cache()
 
-    def _create_default_directories(self):
+    def _create_default_directories(self) -> None:
         """Create default script directories if they don't exist."""
         # Create main directory and subdirectories
         base_dir = get_resource_path("scripts/ghidra")
@@ -236,7 +237,7 @@ class GhidraScriptManager:
 
         """
         # Check if we need to rescan
-        if not force_rescan and self.scripts and self.last_scan and (datetime.now() - self.last_scan).seconds < 300:
+        if not force_rescan and len(self.scripts) > 0 and self.last_scan is not None and (datetime.now() - self.last_scan).seconds < 300:
             return self.scripts
 
         logger.info("Scanning for Ghidra scripts...")
@@ -446,7 +447,7 @@ class GhidraScriptManager:
                 os.remove(dest_path)
             return None
 
-    def _load_cache(self):
+    def _load_cache(self) -> None:
         """Load script cache from disk."""
         cache_path = os.path.join("cache", self.CACHE_FILE)
         if not os.path.exists(cache_path):
@@ -481,13 +482,14 @@ class GhidraScriptManager:
                             self.categories[script.category] = []
                         self.categories[script.category].append(path)
 
-            self.last_scan = datetime.fromisoformat(data.get("last_scan", datetime.now().isoformat()))
+            last_scan_str = data.get("last_scan")
+            self.last_scan = datetime.fromisoformat(last_scan_str) if last_scan_str else None
             logger.info(f"Loaded {len(self.scripts)} scripts from cache")
 
         except Exception as e:
             logger.warning(f"Failed to load script cache: {e}")
 
-    def _save_cache(self):
+    def _save_cache(self) -> None:
         """Save script cache to disk."""
         cache_dir = "cache"
         os.makedirs(cache_dir, exist_ok=True)
@@ -519,7 +521,7 @@ def get_script_manager() -> GhidraScriptManager:
     return _script_manager
 
 
-def add_script_directory(directory: str):
+def add_script_directory(directory: str) -> None:
     """Add a directory to search for scripts."""
     manager = get_script_manager()
     if directory not in manager.script_dirs:

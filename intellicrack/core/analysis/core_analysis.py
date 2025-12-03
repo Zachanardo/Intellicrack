@@ -144,7 +144,7 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
     if flags is None:
         flags = []
 
-    results = []
+    results: list[str] = []
 
     try:
         logger.info("Starting internal binary analysis for: %s. Flags: %s", binary_path, flags)
@@ -390,7 +390,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
         dict: Analysis results containing license-related findings
 
     """
-    results = {
+    results: dict[str, Any] = {
         "license_patterns": [],
         "validation_routines": [],
         "protection_mechanisms": [],
@@ -411,23 +411,23 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
 
         # Analyze imports for license-related functions
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = _entry.dll.decode("utf-8", errors="ignore").lower()
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode("utf-8", errors="ignore").lower()
 
-                for _imp in _entry.imports:
-                    if _imp.name:
-                        func_name = _imp.name.decode("utf-8", errors="ignore").lower()
+                for imp in entry.imports:
+                    if imp.name:
+                        func_name = imp.name.decode("utf-8", errors="ignore").lower()
 
                         # Network-related functions
-                        if any(_net in func_name for _net in ["inet", "socket", "winhttp", "urlmon"]):
+                        if any(net in func_name for net in ["inet", "socket", "winhttp", "urlmon"]):
                             results["network_calls"].append(f"{dll_name}::{func_name}")
 
                         # Registry-related functions
-                        if any(_reg in func_name for _reg in ["reg", "key", "value"]):
+                        if any(reg in func_name for reg in ["reg", "key", "value"]):
                             results["registry_access"].append(f"{dll_name}::{func_name}")
 
                         # File operation functions
-                        if any(_file_op in func_name for _file_op in ["file", "read", "write", "create"]):
+                        if any(file_op in func_name for file_op in ["file", "read", "write", "create"]):
                             results["file_operations"].append(f"{dll_name}::{func_name}")
 
                         # License validation patterns
@@ -440,7 +440,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                             "auth",
                             "trial",
                         ]
-                        if any(_pattern in func_name for _pattern in license_patterns):
+                        if any(pattern in func_name for pattern in license_patterns):
                             results["validation_routines"].append(f"{dll_name}::{func_name}")
 
         # Scan for strings (simplified version)
@@ -464,9 +464,9 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                 b"validation",
             ]
 
-            for _keyword in license_keywords:
-                if _keyword in data:
-                    results["suspicious_strings"].append(_keyword.decode("utf-8", errors="ignore"))
+            for keyword in license_keywords:
+                if keyword in data:
+                    results["suspicious_strings"].append(keyword.decode("utf-8", errors="ignore"))
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not scan strings in %s: %s", binary_path, e)
@@ -476,12 +476,12 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
 
         # Check for high-entropy sections (potential packing/encryption)
         if hasattr(pe, "sections"):
-            for _section in pe.sections:
+            for section in pe.sections:
                 try:
-                    section_data = _section.get_data()
+                    section_data = section.get_data()
                     entropy = calculate_entropy(section_data)
                     if entropy > 7.0:
-                        section_name = _section.Name.decode("utf-8", errors="ignore").rstrip("\0")
+                        section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\0")
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
                 except (AttributeError, ValueError) as e:
                     logger.error("Error in core_analysis: %s", e)
@@ -510,7 +510,7 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
         dict: Packing detection results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "is_packed": False,
         "confidence": 0.0,
         "indicators": [],
@@ -534,11 +534,11 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
         entropy_scores = []
 
         if hasattr(pe, "sections"):
-            for _section in pe.sections:
+            for section in pe.sections:
                 try:
-                    section_data = _section.get_data()
+                    section_data = section.get_data()
                     entropy = calculate_entropy(section_data)
-                    section_name = _section.Name.decode("utf-8", errors="ignore").rstrip("\0")
+                    section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\0")
 
                     entropy_scores.append(entropy)
                     total_sections += 1
@@ -560,6 +560,7 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
         }
 
         # Section analysis - look for suspicious section names/characteristics
+        # Known packer section signatures from common packers (UPX, ASPack, PECompact, etc.)
         suspicious_section_names = [
             "upx0",
             "upx1",
@@ -584,22 +585,21 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
             ".svkp",
             ".taz",
             ".tsuarch",
-            ".tsustub",
             ".wwpack",
             ".y0da",
         ]
 
-        for _section in pe.sections:
-            section_name = _section.Name.decode("utf-8", errors="ignore").rstrip("\0").lower()
-            if any(_sus_name in section_name for _sus_name in suspicious_section_names):
+        for section in pe.sections:
+            section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\0").lower()
+            if any(sus_name in section_name for sus_name in suspicious_section_names):
                 results["indicators"].append(f"Suspicious section name: {section_name}")
-                results["section_analysis"][section_name] = "Suspicious packer signature"
+                results["section_analysis"][section_name] = "Suspicious packer signature detected"
 
         # Import analysis - packed files often have minimal imports
         import_count = 0
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
-                for _imp in _entry.imports:
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for _imp in entry.imports:
                     import_count += 1
 
         results["import_analysis"]["import_count"] = import_count
@@ -628,12 +628,15 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
             confidence_factors.append(0.3)
 
         # Suspicious section names
-        if any("suspicious" in _indicator.lower() for _indicator in results["indicators"]):
-            confidence_factors.append(0.3)
+        indicators = results.get("indicators", [])
+        if isinstance(indicators, list):
+            if any("suspicious" in str(indicator).lower() for indicator in indicators):
+                confidence_factors.append(0.3)
 
         # Calculate final confidence
-        results["confidence"] = min(sum(confidence_factors), 1.0)
-        results["is_packed"] = results["confidence"] > 0.5
+        confidence: float = min(sum(confidence_factors), 1.0)
+        results["confidence"] = confidence
+        results["is_packed"] = confidence > 0.5
 
         pe.close()
 
@@ -658,7 +661,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
         list: Analysis results as formatted strings describing found scripts
 
     """
-    results = [f"Searching for embedded scripts in {binary_path}..."]
+    results: list[str] = [f"Searching for embedded scripts in {binary_path}..."]
 
     try:
         # Read the binary file
@@ -673,7 +676,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
             (b"/*SCRIPT_START*/", b"/*SCRIPT_END*/"),
         ]
 
-        found_scripts = []
+        found_scripts: list[dict[str, Any]] = []
 
         for start_marker, end_marker in script_markers:
             start_pos = 0
@@ -701,8 +704,8 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                     b"print(",
                     b"console.log",
                 ]
-                for _keyword in script_keywords:
-                    if _keyword in script_content:
+                for keyword in script_keywords:
+                    if keyword in script_content:
                         is_script = True
                         break
 
@@ -735,16 +738,16 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
             b"fromBase64",
         ]
 
-        for _marker in obfuscation_markers:
+        for marker_ in obfuscation_markers:
             start_pos = 0
             while True:
-                start_pos = binary_data.find(_marker, start_pos)
+                start_pos = binary_data.find(marker_, start_pos)
                 if start_pos == -1:
                     break
 
                 # Extract context (100 bytes before and after)
                 context_start = max(0, start_pos - 100)
-                context_end = min(len(binary_data), start_pos + len(_marker) + 100)
+                context_end = min(len(binary_data), start_pos + len(marker_) + 100)
                 context = binary_data[context_start:context_end]
 
                 try:
@@ -752,7 +755,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                     found_scripts.append(
                         {
                             "offset": start_pos,
-                            "marker": "Obfuscated: " + _marker.decode("utf-8", errors="ignore"),
+                            "marker": "Obfuscated: " + marker_.decode("utf-8", errors="ignore"),
                             "content": decoded_context,
                         },
                     )
@@ -760,22 +763,29 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                     logger.error("Error in core_analysis: %s", e)
                     results.append(f"Error decoding obfuscated script: {e}")
 
-                start_pos += len(_marker)
+                start_pos += len(marker_)
 
         # Report findings
         if found_scripts:
             results.append(f"Found {len(found_scripts)} potential embedded scripts:")
 
             for i, script in enumerate(found_scripts):
+                offset = script.get("offset", 0)
+                marker = script.get("marker", "Unknown")
+                content = script.get("content", "")
+
                 results.extend(
                     (
-                        f"\nScript {i + 1} at offset 0x{script['offset']:X}:",
-                        f"Marker: {script['marker']}",
+                        f"\nScript {i + 1} at offset 0x{offset:X}:",
+                        f"Marker: {marker}",
                         "Content preview:",
                     )
                 )
                 # Show first few lines
-                lines = script["content"].splitlines() if script.get("content") is not None else []
+                if isinstance(content, str):
+                    lines = content.splitlines()
+                else:
+                    lines = []
                 for j, line in enumerate(lines[:10]):
                     results.append(f"  {j + 1}: {line}")
 
@@ -783,14 +793,15 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                     results.append(f"  ... plus {len(lines) - 10} more lines")
 
                 # Try to determine script type
-                if "function" in script["content"] and "var" in script["content"]:
-                    results.append("Type: JavaScript")
-                elif "import" in script["content"] and "def " in script["content"]:
-                    results.append("Type: Python")
-                elif "<?php" in script["content"]:
-                    results.append("Type: PHP")
-                else:
-                    results.append("Type: Unknown")
+                if isinstance(content, str):
+                    if "function" in content and "var" in content:
+                        results.append("Type: JavaScript")
+                    elif "import" in content and "def " in content:
+                        results.append("Type: Python")
+                    elif "<?php" in content:
+                        results.append("Type: PHP")
+                    else:
+                        results.append("Type: Unknown")
         else:
             results.append("No embedded scripts found.")
 

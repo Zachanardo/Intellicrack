@@ -63,15 +63,15 @@ class SymbolicExecutionEngine:
         self.angr_available = ANGR_AVAILABLE
 
         # Execution state
-        self.states = []
-        self.completed_paths = []
-        self.crashed_states = []
-        self.timed_out_states = []
+        self.states: list[Any] = []
+        self.completed_paths: list[Any] = []
+        self.crashed_states: list[Any] = []
+        self.timed_out_states: list[Any] = []
 
         # Analysis results
-        self.coverage_data = {}
-        self.discovered_vulnerabilities = []
-        self.path_constraints = []
+        self.coverage_data: dict[str, Any] = {}
+        self.discovered_vulnerabilities: list[dict[str, Any]] = []
+        self.path_constraints: list[Any] = []
 
         # Check binary file
         if not os.path.exists(binary_path):
@@ -113,7 +113,7 @@ class SymbolicExecutionEngine:
 
         return project, initial_state, symbolic_args
 
-    def _configure_exploration_techniques(self, simgr: object, vulnerability_types: list[str]) -> None:
+    def _configure_exploration_techniques(self, simgr: Any, vulnerability_types: list[str]) -> None:
         """Configure advanced exploration techniques for path exploration.
 
         Args:
@@ -123,22 +123,26 @@ class SymbolicExecutionEngine:
         """
         # Add advanced exploration techniques
         if "buffer_overflow" in vulnerability_types:
-            simgr.use_technique(angr.exploration_techniques.Spiller())
-            simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
+            if hasattr(simgr, "use_technique"):
+                simgr.use_technique(angr.exploration_techniques.Spiller())
+                simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
             if hasattr(angr.exploration_techniques, "MemoryLimiter"):
-                simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
+                if hasattr(simgr, "use_technique"):
+                    simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
             else:
                 self.logger.warning("MemoryLimiter not available in this angr version")
 
         # Add veritesting for path explosion mitigation
         if hasattr(angr.exploration_techniques, "Veritesting"):
-            simgr.use_technique(angr.exploration_techniques.Veritesting())
+            if hasattr(simgr, "use_technique"):
+                simgr.use_technique(angr.exploration_techniques.Veritesting())
 
         # Add loop seer for infinite loop detection
         if hasattr(angr.exploration_techniques, "LoopSeer"):
-            simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
+            if hasattr(simgr, "use_technique"):
+                simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
 
-    def _explore_program_paths(self, simgr: object, project: object) -> None:
+    def _explore_program_paths(self, simgr: Any, project: Any) -> None:
         """Explore program paths with custom find/avoid conditions.
 
         Args:
@@ -149,23 +153,26 @@ class SymbolicExecutionEngine:
         self.logger.info("Exploring program paths with enhanced techniques...")
 
         # Define vulnerability-specific exploration targets
-        find_addrs = []
-        avoid_addrs = []
+        find_addrs: list[int] = []
+        avoid_addrs: list[int] = []
 
         # Add addresses of dangerous functions as exploration targets
         dangerous_funcs = ["strcpy", "strcat", "gets", "sprintf", "system", "exec"]
-        for func_name in dangerous_funcs:
-            if func_name in project.kb.functions:
-                func = project.kb.functions[func_name]
-                find_addrs.append(func.addr)
+        if hasattr(project, "kb"):
+            for func_name in dangerous_funcs:
+                if hasattr(project.kb, "functions") and func_name in project.kb.functions:
+                    func = project.kb.functions[func_name]
+                    if hasattr(func, "addr"):
+                        find_addrs.append(func.addr)
 
-        simgr.explore(
-            find=find_addrs or None,
-            avoid=avoid_addrs or None,
-            timeout=self.timeout,
-        )
+        if hasattr(simgr, "explore"):
+            simgr.explore(
+                find=find_addrs or None,
+                avoid=avoid_addrs or None,
+                timeout=self.timeout,
+            )
 
-    def _analyze_integer_overflows(self, simgr: object, vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_integer_overflows(self, simgr: Any, vulnerabilities: list[dict[str, Any]]) -> None:
         """Analyze states for integer overflow vulnerabilities.
 
         Args:
@@ -173,20 +180,24 @@ class SymbolicExecutionEngine:
             vulnerabilities: List to append discovered integer overflow vulnerabilities.
 
         """
-        for _state in simgr.deadended + simgr.active:
+        states_to_check: list[Any] = []
+        if hasattr(simgr, "deadended") and hasattr(simgr, "active"):
+            states_to_check = simgr.deadended + simgr.active
+        for state in states_to_check:
             # Look for arithmetic operations with insufficient bounds checking
-            for _constraint in _state.solver.constraints:
-                if ("mul" in str(_constraint) or "add" in str(_constraint)) and self._check_integer_overflow(_state, _constraint):
-                    vuln = {
-                        "type": "integer_overflow",
-                        "address": hex(_state.addr),
-                        "description": "Potential integer overflow detected",
-                        "constraint": str(_constraint),
-                        "severity": "high",
-                    }
-                    vulnerabilities.append(vuln)
+            if hasattr(state, "solver") and hasattr(state.solver, "constraints"):
+                for constraint in state.solver.constraints:
+                    if ("mul" in str(constraint) or "add" in str(constraint)) and self._check_integer_overflow(state, constraint):
+                        vuln = {
+                            "type": "integer_overflow",
+                            "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
+                            "description": "Potential integer overflow detected",
+                            "constraint": str(constraint),
+                            "severity": "high",
+                        }
+                        vulnerabilities.append(vuln)
 
-    def _analyze_format_string_vulns(self, simgr: object, project: object, vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_format_string_vulns(self, simgr: Any, project: Any, vulnerabilities: list[dict[str, Any]]) -> None:
         """Analyze states for format string vulnerabilities.
 
         Args:
@@ -195,18 +206,21 @@ class SymbolicExecutionEngine:
             vulnerabilities: List to append discovered format string vulnerabilities.
 
         """
-        for _state in simgr.active + simgr.deadended:
-            if self._check_format_string(_state, project):
+        states_to_check: list[Any] = []
+        if hasattr(simgr, "active") and hasattr(simgr, "deadended"):
+            states_to_check = simgr.active + simgr.deadended
+        for state in states_to_check:
+            if self._check_format_string(state, project):
                 vuln = {
                     "type": "format_string",
-                    "address": hex(_state.addr),
+                    "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
                     "description": "Potential format string vulnerability detected",
-                    "input": _state.posix.dumps(0) if hasattr(_state, "posix") else None,
+                    "input": state.posix.dumps(0) if hasattr(state, "posix") else None,
                     "severity": "high",
                 }
                 vulnerabilities.append(vuln)
 
-    def _analyze_memory_vulns(self, simgr: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+    def _analyze_memory_vulns(self, simgr: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
         """Analyze states for use-after-free and double-free vulnerabilities.
 
         Args:
@@ -217,29 +231,38 @@ class SymbolicExecutionEngine:
         """
         # Check for use-after-free vulnerabilities
         if "use_after_free" in vulnerability_types:
-            for _state in simgr.active + simgr.deadended + simgr.errored:
-                if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
+            states_to_check: list[Any] = []
+            if hasattr(simgr, "active") and hasattr(simgr, "deadended") and hasattr(simgr, "errored"):
+                states_to_check = simgr.active + simgr.deadended + simgr.errored
+            for state in states_to_check:
+                if hasattr(state, "heap") and hasattr(state.heap, "_freed_chunks"):
                     # Check for accesses to freed memory
-                    for action in _state.history.actions:
-                        if action.type == "mem" and action.action == "read":
-                            addr = _state.solver.eval(action.addr)
-                            if addr in _state.heap._freed_chunks:
-                                vuln = {
-                                    "type": "use_after_free",
-                                    "address": hex(_state.addr),
-                                    "description": f"Use-after-free detected: accessing freed memory at {hex(addr)}",
-                                    "freed_at": hex(_state.heap._freed_chunks[addr]["freed_at"]),
-                                    "severity": "critical",
-                                }
-                                vulnerabilities.append(vuln)
+                    if hasattr(state, "history") and hasattr(state.history, "actions"):
+                        for action in state.history.actions:
+                            if hasattr(action, "type") and hasattr(action, "action"):
+                                if action.type == "mem" and action.action == "read":
+                                    if hasattr(state, "solver") and hasattr(action, "addr"):
+                                        addr = state.solver.eval(action.addr)
+                                        if addr in state.heap._freed_chunks:
+                                            vuln = {
+                                                "type": "use_after_free",
+                                                "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
+                                                "description": f"Use-after-free detected: accessing freed memory at {hex(addr)}",
+                                                "freed_at": hex(state.heap._freed_chunks[addr]["freed_at"]),
+                                                "severity": "critical",
+                                            }
+                                            vulnerabilities.append(vuln)
 
         # Check for double-free vulnerabilities
         if "double_free" in vulnerability_types:
-            for _state in simgr.active + simgr.deadended:
-                if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
+            states_to_check = []
+            if hasattr(simgr, "active") and hasattr(simgr, "deadended"):
+                states_to_check = simgr.active + simgr.deadended
+            for state in states_to_check:
+                if hasattr(state, "heap") and hasattr(state.heap, "_freed_chunks"):
                     # Check if any pointer was freed twice
-                    freed_ptrs = {}
-                    for ptr, info in _state.heap._freed_chunks.items():
+                    freed_ptrs: dict[int, int] = {}
+                    for ptr, info in state.heap._freed_chunks.items():
                         if ptr in freed_ptrs:
                             vuln = {
                                 "type": "double_free",
@@ -254,9 +277,9 @@ class SymbolicExecutionEngine:
 
     def _analyze_injection_and_race_vulns(
         self,
-        simgr: object,
-        project: object,
-        initial_state: object,
+        simgr: Any,
+        project: Any,
+        initial_state: Any,
         vulnerability_types: list[str],
         vulnerabilities: list[dict[str, Any]],
     ) -> None:
@@ -272,11 +295,14 @@ class SymbolicExecutionEngine:
         """
         # Check for race conditions
         if "race_condition" in vulnerability_types:
-            for _state in simgr.active + simgr.deadended:
-                if self._check_race_condition(_state, project):
+            states_to_check: list[Any] = []
+            if hasattr(simgr, "active") and hasattr(simgr, "deadended"):
+                states_to_check = simgr.active + simgr.deadended
+            for state in states_to_check:
+                if self._check_race_condition(state, project):
                     vuln = {
                         "type": "race_condition",
-                        "address": hex(_state.addr),
+                        "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
                         "description": "Potential race condition: multi-threading without proper synchronization",
                         "severity": "high",
                     }
@@ -284,30 +310,35 @@ class SymbolicExecutionEngine:
 
         # Check for command injection via taint analysis
         if "command_injection" in vulnerability_types and hasattr(initial_state, "plugins") and "taint" in initial_state.plugins:
-            for _state in simgr.active + simgr.deadended:
+            states_to_check = []
+            if hasattr(simgr, "active") and hasattr(simgr, "deadended"):
+                states_to_check = simgr.active + simgr.deadended
+            for state in states_to_check:
                 # Check if tainted data reaches system/exec calls
                 for func_name in ["system", "exec", "execve", "popen"]:
-                    if func_name in project.kb.functions:
+                    if hasattr(project, "kb") and hasattr(project.kb, "functions") and func_name in project.kb.functions:
                         func = project.kb.functions[func_name]
-                        if _state.addr == func.addr:
+                        if hasattr(state, "addr") and hasattr(func, "addr") and state.addr == func.addr:
                             # Check if arguments are tainted
-                            arg_reg = "rdi" if _state.arch.bits == 64 else "eax"
-                            if hasattr(_state.regs, arg_reg):
-                                arg_val = getattr(_state.regs, arg_reg)
-                                if _state.plugins.taint.is_tainted(arg_val):
-                                    vuln = {
-                                        "type": "command_injection",
-                                        "address": hex(_state.addr),
-                                        "description": f"Command injection: tainted data reaches {func_name}",
-                                        "taint_source": _state.plugins.taint.get_taint_source(arg_val),
-                                        "severity": "critical",
-                                    }
-                                    vulnerabilities.append(vuln)
+                            if hasattr(state, "arch") and hasattr(state.arch, "bits"):
+                                arg_reg = "rdi" if state.arch.bits == 64 else "eax"
+                                if hasattr(state, "regs") and hasattr(state.regs, arg_reg):
+                                    arg_val = getattr(state.regs, arg_reg)
+                                    if hasattr(state.plugins, "taint") and hasattr(state.plugins.taint, "is_tainted"):
+                                        if state.plugins.taint.is_tainted(arg_val):
+                                            vuln = {
+                                                "type": "command_injection",
+                                                "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
+                                                "description": f"Command injection: tainted data reaches {func_name}",
+                                                "taint_source": state.plugins.taint.get_taint_source(arg_val) if hasattr(state.plugins.taint, "get_taint_source") else None,
+                                                "severity": "critical",
+                                            }
+                                            vulnerabilities.append(vuln)
 
     def _analyze_type_confusion_vulns(
         self,
-        simgr: object,
-        project: object,
+        simgr: Any,
+        project: Any,
         vulnerability_types: list[str],
         vulnerabilities: list[dict[str, Any]],
     ) -> None:
@@ -321,11 +352,14 @@ class SymbolicExecutionEngine:
 
         """
         if "type_confusion" in vulnerability_types:
-            for _state in simgr.active + simgr.deadended:
-                if self._check_type_confusion(_state, project):
+            states_to_check: list[Any] = []
+            if hasattr(simgr, "active") and hasattr(simgr, "deadended"):
+                states_to_check = simgr.active + simgr.deadended
+            for state in states_to_check:
+                if self._check_type_confusion(state, project):
                     vuln = {
                         "type": "type_confusion",
-                        "address": hex(_state.addr),
+                        "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
                         "description": "Potential type confusion vulnerability in C++ virtual function handling",
                         "severity": "high",
                     }
@@ -431,13 +465,13 @@ class SymbolicExecutionEngine:
                 state.addr,
             )
             if ("+" in constraint_str or "*" in constraint_str) and state.solver.satisfiable(extra_constraints=[constraint]):
-                for _var in state.solver.variables:
+                for var in state.solver.variables:
                     try:
-                        max_val = state.solver.max(_var)
+                        max_val = state.solver.max(var)
                         if max_val > 2**30:  # Large value threshold
                             self.logger.info(
                                 "Potential integer overflow identified due to large variable value for '%s'",
-                                _var,
+                                var,
                             )
                             return True
                     except (AttributeError, ValueError, RuntimeError) as e:
@@ -461,16 +495,16 @@ class SymbolicExecutionEngine:
         try:
             # Look for printf-like function calls with user-controlled format string
             self.logger.debug("Checking for format string vulnerability at 0x%d", state.addr)
-            for _addr in state.history.bbl_addrs:
+            for addr in state.history.bbl_addrs:
                 try:
-                    function = project.kb.functions.get_by_addr(_addr)
+                    function = project.kb.functions.get_by_addr(addr)
                     if function and function.name:
-                        self.logger.debug("Found call to %s at 0x%d", function.name, _addr)
+                        self.logger.debug("Found call to %s at 0x%d", function.name, addr)
                         if "printf" in function.name or "sprintf" in function.name or "fprintf" in function.name:
                             # Check if first argument (format string) is symbolic
-                            for _var in state.solver.variables:
-                                var_name = str(_var)
-                                if "arg" in var_name and "%" in state.solver.eval(_var, cast_to=bytes).decode("latin-1", errors="ignore"):
+                            for var in state.solver.variables:
+                                var_name = str(var)
+                                if "arg" in var_name and "%" in state.solver.eval(var, cast_to=bytes).decode("latin-1", errors="ignore"):
                                     self.logger.info(
                                         "Potential format string vulnerability: Symbolic format string for %s controlled by '%s'",
                                         function.name,
@@ -1214,16 +1248,16 @@ int main() {{
             return None
 
         # Calculate vtable location
-        heap_base = process_info.get("heap_base", 0x00007FF000000000)
-        vtable_addr = heap_base + 0x10000  # Predictable offset
+        heap_base: int = int(process_info.get("heap_base", 0x00007FF000000000))
+        vtable_addr: int = heap_base + 0x10000  # Predictable offset
 
         # Build vtable entries
         vtable_data = bytearray()
-        target_vfuncs = class_info["target"].get("vfuncs", [])
+        target_vfuncs: list[Any] = class_info["target"].get("vfuncs", [])
 
         # Analyze available gadgets
-        gadgets = process_info.get("gadgets", [])
-        rop_chain = self._build_rop_chain(process_info)
+        gadgets: list[Any] = process_info.get("gadgets", [])
+        rop_chain: list[int] = self._build_rop_chain(process_info)
 
         # Replace specific virtual functions
         for i, vfunc in enumerate(target_vfuncs):
@@ -1254,7 +1288,7 @@ int main() {{
         vtable_symbol = f"_ZTV{len(class_name)}{class_name}"  # Mangled vtable name
         symbols = process_info.get("symbols", {})
         if vtable_symbol in symbols:
-            return symbols[vtable_symbol]
+            return int(symbols[vtable_symbol])
 
         # Search in vtable section
         sections = process_info.get("sections", {})
@@ -1262,10 +1296,10 @@ int main() {{
             rodata = sections[".rodata"]
             # Estimate based on class name hash
             offset = int(hashlib.sha256(class_name.encode()).hexdigest()[:4], 16)
-            return rodata["address"] + (offset & 0xFFF0)
+            return int(rodata["address"]) + (offset & 0xFFF0)
 
         # Fallback to base + offset
-        base = process_info.get("base_address", 0x400000)
+        base: int = int(process_info.get("base_address", 0x400000))
         return base + 0x10000
 
     def _estimate_class_size(self, class_name: str, symbols: dict[str, Any]) -> int:
@@ -1288,7 +1322,7 @@ int main() {{
 
         # Would need memory reading capability
         # For now, estimate based on common patterns
-        base = process_info.get("base_address", 0x400000)
+        base: int = int(process_info.get("base_address", 0x400000))
         return [base + 0x1000 + (i * 0x100) for i in range(10)]
 
     def _find_exploitable_vfunc(self, class_data: dict[str, Any]) -> str:
@@ -1317,8 +1351,8 @@ int main() {{
 
     def _find_exploitable_offset(self, class_info: dict[str, Any]) -> int:
         """Find offset most suitable for exploitation."""
-        source_size = class_info["source"]["size"]
-        target_size = class_info["target"]["size"]
+        source_size: int = int(class_info["source"]["size"])
+        target_size: int = int(class_info["target"]["size"])
 
         # Look for offset where source ends but target continues
         return source_size if source_size < target_size else 8
@@ -1341,21 +1375,21 @@ int main() {{
 
     def _calculate_controlled_addr(self, process_info: dict[str, Any]) -> int:
         """Calculate address for controlled memory."""
-        heap_base = process_info.get("heap_base", 0x00007FF000000000)
+        heap_base: int = int(process_info.get("heap_base", 0x00007FF000000000))
         # Use predictable offset in heap
         return heap_base + 0x10000
 
     def _build_rop_chain(self, process_info: dict[str, Any]) -> list[int]:
         """Build ROP chain from available gadgets."""
-        gadgets = process_info.get("gadgets", [])
-        base = process_info.get("base_address", 0x400000)
+        gadgets: list[Any] = process_info.get("gadgets", [])
+        base: int = int(process_info.get("base_address", 0x400000))
 
-        rop_chain = []
+        rop_chain: list[int] = []
 
         # Find useful gadgets
         for gadget in gadgets:
             instr = gadget.get("instruction", "")
-            addr = gadget.get("address", 0)
+            addr: int = int(gadget.get("address", 0))
 
             if "pop rdi" in instr:
                 rop_chain.extend((addr, self._get_cmd_string_addr(process_info)))
@@ -1365,13 +1399,13 @@ int main() {{
                 rop_chain.append(addr)  # Stack align
 
         # Add function call
-        imports = process_info.get("imports", {})
+        imports: dict[str, Any] = process_info.get("imports", {})
         if "system" in imports:
-            rop_chain.append(imports["system"])
+            rop_chain.append(int(imports["system"]))
         elif "WinExec" in imports:
-            rop_chain.append(imports["WinExec"])
+            rop_chain.append(int(imports["WinExec"]))
         elif "CreateProcessA" in imports:
-            rop_chain.append(imports["CreateProcessA"])
+            rop_chain.append(int(imports["CreateProcessA"]))
         else:
             # Jump to shellcode
             rop_chain.append(self._allocate_shellcode_addr(process_info))
@@ -1381,32 +1415,33 @@ int main() {{
     def _get_cmd_string_addr(self, process_info: dict[str, Any]) -> int:
         """Get address of command string."""
         # Look for existing strings in binary
-        strings = process_info.get("strings", {})
+        strings: dict[str, Any] = process_info.get("strings", {})
         if "cmd.exe" in strings:
-            return strings["cmd.exe"]
+            return int(strings["cmd.exe"])
         if "/bin/sh" in strings:
-            return strings["/bin/sh"]
+            return int(strings["/bin/sh"])
 
         # Allocate in writable section
-        data_section = process_info.get("data_section", 0x600000)
+        data_section: int = int(process_info.get("data_section", 0x600000))
         return data_section + 0x100
 
     def _find_ret_gadget(self, gadgets: list[dict[str, Any]]) -> int | None:
         """Find simple ret gadget."""
-        return next(
+        result = next(
             (gadget.get("address") for gadget in gadgets if gadget.get("instruction") == "ret"),
             None,
         )
+        return int(result) if result is not None else None
 
     def _allocate_shellcode_addr(self, process_info: dict[str, Any]) -> int:
         """Allocate address for shellcode."""
         # Check for executable heap
         if process_info.get("nx_enabled", True):
             if rwx_regions := process_info.get("rwx_regions", []):
-                return rwx_regions[0]["address"] + 0x100
+                return int(rwx_regions[0]["address"]) + 0x100
 
         # Use heap with hope of execute permission
-        heap_base = process_info.get("heap_base", 0x00007FF000000000)
+        heap_base: int = int(process_info.get("heap_base", 0x00007FF000000000))
         return heap_base + 0x20000
 
     def _generate_shellcode(self, process_info: dict[str, Any]) -> bytearray | None:
@@ -1961,7 +1996,7 @@ int main() {{
 
     def _perform_basic_disassembly(self, binary_data: bytes) -> dict[str, Any]:
         """Perform basic disassembly and control flow analysis."""
-        disasm_info = {
+        disasm_info: dict[str, Any] = {
             "instructions": [],
             "function_calls": [],
             "jumps": [],
@@ -2036,7 +2071,7 @@ int main() {{
 
         return disasm_info
 
-    def _find_code_sections(self, binary_data: bytes) -> list[tuple]:
+    def _find_code_sections(self, binary_data: bytes) -> list[tuple[int, int]]:
         """Find executable code sections in the binary."""
         code_sections = []
 
@@ -2069,7 +2104,7 @@ int main() {{
 
     def _basic_pattern_analysis(self, binary_data: bytes) -> dict[str, Any]:
         """Perform basic pattern analysis when disassembly is not available."""
-        patterns = {
+        patterns: dict[str, Any] = {
             "instructions": [],
             "function_calls": [],
             "jumps": [],
@@ -2102,7 +2137,7 @@ int main() {{
 
         return patterns
 
-    def _detect_buffer_overflow_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_buffer_overflow_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential buffer overflow vulnerabilities."""
         vulnerabilities = []
 
@@ -2208,7 +2243,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential integer overflow vulnerabilities."""
         vulnerabilities = []
 
@@ -2248,7 +2283,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_command_injection_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_command_injection_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential command injection vulnerabilities."""
         vulnerabilities = []
 
@@ -2307,7 +2342,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_use_after_free_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_use_after_free_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential use-after-free vulnerabilities."""
         vulnerabilities = []
 
@@ -2334,7 +2369,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_path_traversal_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_path_traversal_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential path traversal vulnerabilities."""
         vulnerabilities = []
 
@@ -2361,7 +2396,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_sql_injection_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_sql_injection_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential SQL injection vulnerabilities."""
         vulnerabilities = []
 
@@ -2393,7 +2428,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_memory_leak_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_memory_leak_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential memory leak vulnerabilities."""
         vulnerabilities = []
 
@@ -2420,7 +2455,7 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_null_pointer_patterns(self, binary_data: bytes, strings: list[dict], disasm_info: dict) -> list[dict[str, Any]]:
+    def _detect_null_pointer_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect potential null pointer dereference vulnerabilities."""
         vulnerabilities = []
 
@@ -2523,11 +2558,15 @@ int main() {{
         """
         if not hasattr(state, "heap"):
             # Initialize heap tracking structures
+            allocated: dict[int, Any] = {}
+            freed: set[int] = set()
+            reused: dict[int, Any] = {}
+            metadata: dict[str, Any] = {}
             state.heap = {
-                "allocated": {},  # Track allocated chunks
-                "freed": set(),  # Track freed addresses
-                "reused": {},  # Track reused chunks
-                "metadata": {},  # Heap metadata
+                "allocated": allocated,  # Track allocated chunks
+                "freed": freed,  # Track freed addresses
+                "reused": reused,  # Track reused chunks
+                "metadata": metadata,  # Heap metadata
             }
 
         # Set up heap operation hooks
@@ -2553,6 +2592,9 @@ int main() {{
 
         """
         if not hasattr(state, "heap"):
+            return
+
+        if not hasattr(state, "inspect") or not hasattr(state, "solver"):
             return
 
         # Get write address and data
@@ -2598,6 +2640,9 @@ int main() {{
 
         """
         if not hasattr(state, "heap"):
+            return
+
+        if not hasattr(state, "inspect") or not hasattr(state, "solver"):
             return
 
         # Get read address
@@ -2698,15 +2743,16 @@ int main() {{
 
         """
         # Initialize taint tracking plugin if available
-        if hasattr(state, "plugins"):
+        if hasattr(state, "register_plugin"):
             state.register_plugin("taint", TaintTracker())
 
         # Mark user input as tainted
-        for i in range(len(state.solver.constraints)):
-            constraint = state.solver.constraints[i]
-            for var in constraint.variables:
-                if ("arg" in str(var) or "stdin" in str(var)) and hasattr(state.plugins, "taint"):
-                    state.plugins.taint.add_taint(var, "user_input")
+        if hasattr(state, "solver") and hasattr(state.solver, "constraints"):
+            for i in range(len(state.solver.constraints)):
+                constraint = state.solver.constraints[i]
+                for var in constraint.variables:
+                    if ("arg" in str(var) or "stdin" in str(var)) and hasattr(state, "plugins") and hasattr(state.plugins, "taint"):
+                        state.plugins.taint.add_taint(var, "user_input")
 
     def _check_race_condition(self, state: object, project: object) -> bool:
         """Check for potential race conditions.
@@ -2722,10 +2768,12 @@ int main() {{
         try:
             # Look for multi-threading indicators
             threading_funcs = ["pthread_create", "CreateThread", "fork", "clone"]
-            return next(
-                (self._analyze_synchronization(state, project) for func in threading_funcs if func in project.kb.functions),
-                False,
-            )
+            if hasattr(project, "kb") and hasattr(project.kb, "functions"):
+                return next(
+                    (self._analyze_synchronization(state, project) for func in threading_funcs if func in project.kb.functions),
+                    False,
+                )
+            return False
         except Exception as e:
             self.logger.debug(f"Race condition check failed: {e}")
             return False
@@ -2748,7 +2796,9 @@ int main() {{
             "EnterCriticalSection",
             "LeaveCriticalSection",
         ]
-        sync_count = sum(bool(f in project.kb.functions) for f in sync_funcs)
+        sync_count = 0
+        if hasattr(project, "kb") and hasattr(project.kb, "functions"):
+            sync_count = sum(bool(f in project.kb.functions) for f in sync_funcs)
 
         # Check if state has accessed shared memory without locks
         try:
@@ -2775,14 +2825,15 @@ int main() {{
         """
         try:
             # Look for virtual function tables
-            if hasattr(project.loader, "main_object"):
+            if hasattr(project, "loader") and hasattr(project.loader, "main_object"):
                 # Check for C++ virtual tables
                 for section in project.loader.main_object.sections:
                     if ".rdata" in section.name or ".rodata" in section.name:
                         # Look for vtable patterns
-                        data = state.memory.load(section.vaddr, section.memsize)
-                        if state.solver.symbolic(data):
-                            return True
+                        if hasattr(state, "memory") and hasattr(state, "solver"):
+                            data = state.memory.load(section.vaddr, section.memsize)
+                            if state.solver.symbolic(data):
+                                return True
             return False
         except Exception as e:
             self.logger.debug(f"Type confusion check failed: {e}")
@@ -3296,8 +3347,8 @@ int main() {{
 
     def _disassemble_from_address(self, binary_data: bytes, start_address: int) -> dict[str, Any]:
         """Disassemble code starting from a specific address."""
-        instructions = []
-        basic_blocks = {}
+        instructions: list[dict[str, Any]] = []
+        basic_blocks: dict[int, dict[str, Any]] = {}
 
         if not binary_data:
             return {
@@ -3311,7 +3362,7 @@ int main() {{
 
         current_block_start = start_address
         current_block_size = 0
-        successors = []
+        successors: list[int] = []
 
         # Simple heuristic-based disassembly for basic instruction detection
         while offset < max_offset:
@@ -3393,7 +3444,7 @@ int main() {{
                         rel_offset = int.from_bytes([binary_data[offset + 1]], "little", signed=True)
                         target = offset + 2 + rel_offset
 
-                        jump_names = {
+                        jump_names: dict[int, str] = {
                             0x74: "je",
                             0x75: "jne",
                             0x78: "js",

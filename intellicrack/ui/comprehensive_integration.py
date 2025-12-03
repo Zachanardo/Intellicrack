@@ -28,9 +28,6 @@ from .radare2_integration_ui import R2IntegrationWidget
 from .radare2_ui_manager import R2UIManager, integrate_radare2_ui_comprehensive
 
 
-if TYPE_CHECKING:
-    from typing import Any
-
 logger = get_logger(__name__)
 
 
@@ -203,20 +200,23 @@ class ComprehensiveR2Integration:
             self.logger.info("Integrating with tab widget application")
 
             # Create and add radare2 widgets
-            r2_widget = R2IntegrationWidget(main_app)
-            enhanced_dashboard = EnhancedAnalysisDashboard(main_app)
+            r2_widget = R2IntegrationWidget(None)
+            enhanced_dashboard = EnhancedAnalysisDashboard(None)
 
             # Add tabs
-            main_app.tab_widget.addTab(r2_widget, "Radare2 Analysis")
-            main_app.tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
+            if hasattr(main_app, "tab_widget") and main_app.tab_widget:
+                main_app.tab_widget.addTab(r2_widget, "Radare2 Analysis")
+                main_app.tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
 
             # Store references
-            main_app.r2_widget = r2_widget
-            main_app.enhanced_dashboard = enhanced_dashboard
+            if hasattr(main_app, "__dict__"):
+                main_app.r2_widget = r2_widget
+                main_app.enhanced_dashboard = enhanced_dashboard
 
             # Create UI manager
             self.ui_manager = R2UIManager(main_app)
-            main_app.r2_ui_manager = self.ui_manager
+            if hasattr(main_app, "__dict__"):
+                main_app.r2_ui_manager = self.ui_manager
 
             self.integration_status["ui_manager"] = True
             self.integration_status["main_app"] = True
@@ -241,11 +241,17 @@ class ComprehensiveR2Integration:
 
             # Create a tab widget if it doesn't exist
             if not hasattr(main_app, "tab_widget"):
-                main_app.tab_widget = QTabWidget()
+                if hasattr(main_app, "__dict__"):
+                    tab_widget_obj = QTabWidget()
+                    main_app.tab_widget = tab_widget_obj
 
-                # Try to add to layout if it exists
-                if hasattr(main_app, "layout") and main_app.layout():
-                    main_app.layout().addWidget(main_app.tab_widget)
+                    # Try to add to layout if it exists
+                    if hasattr(main_app, "layout"):
+                        layout = getattr(main_app, "layout", None)
+                        if layout and callable(layout):
+                            layout_obj = layout()
+                            if layout_obj:
+                                layout_obj.addWidget(tab_widget_obj)
 
             # Use tab widget integration method
             return self._integrate_with_tab_widget(main_app)
@@ -294,19 +300,25 @@ class ComprehensiveR2Integration:
         """
         try:
             # Connect to existing signals if they exist
-            if hasattr(main_app, "update_output"):
+            if self.ui_manager and hasattr(main_app, "update_output"):
                 self.ui_manager.status_updated.connect(
                     lambda msg: main_app.update_output.emit(f"[R2] {msg}"),
                 )
 
             # Add menu items to existing menu
-            if hasattr(main_app, "menuBar") and main_app.menuBar():
-                self._add_radare2_menu_items(main_app)
-                self.integration_status["menu_integration"] = True
+            if hasattr(main_app, "menuBar"):
+                menuBar = getattr(main_app, "menuBar", None)
+                if menuBar and callable(menuBar):
+                    menu_bar_obj = menuBar()
+                    if menu_bar_obj:
+                        self._add_radare2_menu_items(main_app)
+                        self.integration_status["menu_integration"] = True
 
             # Connect binary path updates
-            if hasattr(main_app, "binary_path") and main_app.binary_path:
-                self.ui_manager.set_binary_path(main_app.binary_path)
+            if self.ui_manager and hasattr(main_app, "binary_path"):
+                binary_path = getattr(main_app, "binary_path", None)
+                if binary_path:
+                    self.ui_manager.set_binary_path(binary_path)
 
             self.logger.info("IntellicrackApp specific features integrated")
 
@@ -323,12 +335,16 @@ class ComprehensiveR2Integration:
         try:
             # Create a method to update binary path
             def update_binary_path() -> None:
-                if hasattr(main_app, "binary_path") and main_app.binary_path:
-                    self.ui_manager.set_binary_path(main_app.binary_path)
+                if self.ui_manager and hasattr(main_app, "binary_path"):
+                    binary_path = getattr(main_app, "binary_path", None)
+                    if binary_path:
+                        self.ui_manager.set_binary_path(binary_path)
 
             # Connect to binary path changes if possible
             if hasattr(main_app, "binary_path_changed"):
-                main_app.binary_path_changed.connect(update_binary_path)
+                binary_path_changed = getattr(main_app, "binary_path_changed", None)
+                if binary_path_changed:
+                    binary_path_changed.connect(update_binary_path)
 
             # Initial sync
             update_binary_path()
@@ -347,14 +363,18 @@ class ComprehensiveR2Integration:
         """
         try:
             # Connect analysis completion to main app
-            if hasattr(main_app, "update_analysis_results"):
-                self.ui_manager.analysis_completed.connect(
-                    lambda results: main_app.update_analysis_results.emit(str(results)),
-                )
+            if self.ui_manager and hasattr(main_app, "update_analysis_results"):
+                update_analysis_results = getattr(main_app, "update_analysis_results", None)
+                if update_analysis_results:
+                    self.ui_manager.analysis_completed.connect(
+                        lambda results: update_analysis_results.emit(str(results)),
+                    )
 
             # Connect progress updates
-            if hasattr(main_app, "update_progress"):
-                self.ui_manager.analysis_progress.connect(main_app.update_progress.emit)
+            if self.ui_manager and hasattr(main_app, "update_progress"):
+                update_progress = getattr(main_app, "update_progress", None)
+                if update_progress:
+                    self.ui_manager.analysis_progress.connect(update_progress.emit)
 
             self.integration_status["signal_connections"] = True
             self.logger.info("Signal connections established")
@@ -393,7 +413,13 @@ class ComprehensiveR2Integration:
         try:
             from .menu_utils import find_or_create_menu
 
-            menu_bar = main_app.menuBar()
+            menuBar = getattr(main_app, "menuBar", None)
+            if not menuBar or not callable(menuBar):
+                return
+
+            menu_bar = menuBar()
+            if not menu_bar:
+                return
 
             # Create or find Radare2 menu
             r2_menu = find_or_create_menu(menu_bar, "Radare2")
@@ -414,21 +440,22 @@ class ComprehensiveR2Integration:
             ]
 
             for action_name, analysis_type in analysis_actions:
-                action.triggered.connect(
-                    lambda checked, t=analysis_type: (
-                        logger.debug("Menu action triggered, checked state: %s for type: %s", checked, t)
-                        or self.ui_manager.start_analysis(t)
-                    ),
-                )
+                action = r2_menu.addAction(action_name)
+                if action and self.ui_manager:
+                    action.triggered.connect(
+                        lambda checked, t=analysis_type: self.ui_manager.start_analysis(t) if self.ui_manager else None,
+                    )
 
             # Add separator and utilities
             r2_menu.addSeparator()
 
             config_action = r2_menu.addAction("Configuration")
-            config_action.triggered.connect(self.ui_manager.show_configuration)
+            if config_action and self.ui_manager:
+                config_action.triggered.connect(self.ui_manager.show_configuration)
 
             export_action = r2_menu.addAction("Export Results")
-            export_action.triggered.connect(self.ui_manager.export_results)
+            if export_action and self.ui_manager:
+                export_action.triggered.connect(self.ui_manager.export_results)
 
             self.logger.info("Radare2 menu items added")
 
@@ -443,7 +470,13 @@ class ComprehensiveR2Integration:
 
         """
         try:
-            toolbar = main_app.addToolBar("Radare2")
+            addToolBar = getattr(main_app, "addToolBar", None)
+            if not addToolBar or not callable(addToolBar):
+                return
+
+            toolbar = addToolBar("Radare2")
+            if not toolbar:
+                return
 
             # Add quick analysis buttons
             quick_actions = [
@@ -454,18 +487,17 @@ class ComprehensiveR2Integration:
 
             for action_name, analysis_type in quick_actions:
                 action = toolbar.addAction(action_name)
-                action.triggered.connect(
-                    lambda checked, t=analysis_type: (
-                        logger.debug("Toolbar action triggered, checked state: %s for type: %s", checked, t)
-                        or self.ui_manager.start_analysis(t)
-                    ),
-                )
+                if self.ui_manager:
+                    action.triggered.connect(
+                        lambda checked, t=analysis_type: self.ui_manager.start_analysis(t) if self.ui_manager else None,
+                    )
 
             toolbar.addSeparator()
 
             # Add configuration action
             config_action = toolbar.addAction("Config")
-            config_action.triggered.connect(self.ui_manager.show_configuration)
+            if config_action and self.ui_manager:
+                config_action.triggered.connect(self.ui_manager.show_configuration)
 
             self.logger.info("Radare2 toolbar added")
 
@@ -481,14 +513,17 @@ class ComprehensiveR2Integration:
         """
         try:
             if hasattr(main_app, "statusBar"):
-                status_bar = main_app.statusBar()
+                statusBar = getattr(main_app, "statusBar", None)
+                if statusBar and callable(statusBar):
+                    status_bar = statusBar()
 
-                # Connect status updates
-                self.ui_manager.status_updated.connect(
-                    lambda msg: status_bar.showMessage(f"R2: {msg}", 5000),
-                )
+                    # Connect status updates
+                    if self.ui_manager and status_bar:
+                        self.ui_manager.status_updated.connect(
+                            lambda msg: status_bar.showMessage(f"R2: {msg}", 5000),
+                        )
 
-                self.logger.info("Status bar integration completed")
+                    self.logger.info("Status bar integration completed")
 
         except Exception as e:
             self.logger.error(f"Status bar integration failed: {e}")
@@ -504,7 +539,7 @@ class ComprehensiveR2Integration:
             # Try to add at least a way to start analysis
             if hasattr(main_app, "__dict__"):
                 # Add start_radare2_analysis method
-                def start_r2_analysis(analysis_type: str = "comprehensive") -> bool:
+                def start_r2_analysis(analysis_type: str = "comprehensive") -> bool | None:
                     if self.ui_manager:
                         return self.ui_manager.start_analysis(analysis_type)
                     return False

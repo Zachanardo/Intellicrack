@@ -1271,14 +1271,14 @@ class CFGExplorer:
         # Prepare nodes
         nodes = []
         if self.graph is not None:
-            for _node in self.graph.nodes():
-                node_data = self.graph.nodes[_node]
+            for node in self.graph.nodes():
+                node_data = self.graph.nodes[node]
                 nodes.append(
                     {
-                        "id": _node,
-                        "label": node_data.get("label", f"0x{_node:x}"),
-                        "x": float(layout[_node][0]) if _node in layout else 0.0,
-                        "y": float(layout[_node][1]) if _node in layout else 0.0,
+                        "id": node,
+                        "label": node_data.get("label", f"0x{node:x}"),
+                        "x": float(layout[node][0]) if node in layout else 0.0,
+                        "y": float(layout[node][1]) if node in layout else 0.0,
                         "size": node_data.get("size", 0),
                     },
                 )
@@ -1601,28 +1601,28 @@ class CFGExplorer:
         blocks = self.functions[self.current_function]["blocks"]
 
         # Check each block for license-related instructions
-        for _block in blocks:
-            for _op in _block.get("ops", []):
-                disasm = _op.get("disasm", "").lower()
+        for block in blocks:
+            for op in block.get("ops", []):
+                disasm = op.get("disasm", "").lower()
 
                 # Check for license keywords in disassembly
-                if any(_keyword in disasm for _keyword in license_keywords):
+                if any(keyword in disasm for keyword in license_keywords):
                     license_patterns.append(
                         {
-                            "block_addr": _block["offset"],
-                            "op_addr": _op["offset"],
-                            "disasm": _op["disasm"],
+                            "block_addr": block["offset"],
+                            "op_addr": op["offset"],
+                            "disasm": op["disasm"],
                             "type": "license_keyword",
                         },
                     )
 
                 # Check for comparison followed by conditional jump
-                if ("cmp" in disasm or "test" in disasm) and _block.get("jump") and _block.get("fail"):
+                if ("cmp" in disasm or "test" in disasm) and block.get("jump") and block.get("fail"):
                     license_patterns.append(
                         {
-                            "block_addr": _block["offset"],
-                            "op_addr": _op["offset"],
-                            "disasm": _op["disasm"],
+                            "block_addr": block["offset"],
+                            "op_addr": op["offset"],
+                            "disasm": op["disasm"],
                             "type": "conditional_check",
                         },
                     )
@@ -1665,7 +1665,7 @@ class CFGExplorer:
                     <div style="margin-top: 10px;">
                         <p>Found {len(license_patterns)} potential license check points</p>
                         <ul style="font-size: 12px;">
-                            {"".join(f"<li>{_pattern['type']} at 0x{_pattern['op_addr']:x}</li>" for _pattern in license_patterns[:5])}
+                            {"".join(f"<li>{pattern['type']} at 0x{pattern['op_addr']:x}</li>" for pattern in license_patterns[:5])}
                             {"<li>...</li>" if len(license_patterns) > 5 else ""}
                         </ul>
                     </div>
@@ -2384,7 +2384,7 @@ def run_deep_cfg_analysis(app: object) -> None:
             mode = None
 
         # Find text section
-        text_section = next((_s for _s in pe.sections if b".text" in _s.Name), None)
+        text_section = next((s for s in pe.sections if b".text" in s.Name), None)
         if not text_section:
             app.update_output.emit(log_message("[CFG Analysis] No .text section found"))
             app.analyze_status.setText("CFG analysis failed")
@@ -2414,8 +2414,8 @@ def run_deep_cfg_analysis(app: object) -> None:
         G = nx.DiGraph()
 
         # Add nodes for _all instructions
-        for _insn in instructions:
-            G.add_node(_insn.address, instruction=f"{_insn.mnemonic} {_insn.op_str}")
+        for insn_ in instructions:
+            G.add_node(insn_.address, instruction=f"{insn_.mnemonic} {insn_.op_str}")
 
         # Add edges
         for i, insn in enumerate(instructions):
@@ -2453,7 +2453,7 @@ def run_deep_cfg_analysis(app: object) -> None:
         license_nodes = []
         for node, data in G.nodes(data=True):
             instruction = data.get("instruction", "").lower()
-            if any(_keyword in instruction for _keyword in license_keywords):
+            if any(keyword in instruction for keyword in license_keywords):
                 license_nodes.append(node)
 
         app.update_output.emit(log_message(f"[CFG Analysis] Found {len(license_nodes)} license-related nodes"))
@@ -2463,18 +2463,18 @@ def run_deep_cfg_analysis(app: object) -> None:
             license_subgraph = G.subgraph(license_nodes).copy()
 
             # Add immediate predecessors and successors
-            for _node in list(license_subgraph.nodes()):
-                predecessors = list(G.predecessors(_node))
-                successors = list(G.successors(_node))
+            for node_ in list(license_subgraph.nodes()):
+                predecessors = list(G.predecessors(node_))
+                successors = list(G.successors(node_))
 
                 license_subgraph.add_nodes_from(predecessors)
                 license_subgraph.add_nodes_from(successors)
 
-                for _pred in predecessors:
-                    license_subgraph.add_edge(_pred, _node, **G.get_edge_data(_pred, _node, {}))
+                for pred in predecessors:
+                    license_subgraph.add_edge(pred, node_, **G.get_edge_data(pred, node_, {}))
 
-                for _succ in successors:
-                    license_subgraph.add_edge(_node, _succ, **G.get_edge_data(_node, _succ, {}))
+                for succ in successors:
+                    license_subgraph.add_edge(node_, succ, **G.get_edge_data(node_, succ, {}))
 
             # Save license-focused CFG
             try:
@@ -2575,10 +2575,10 @@ def run_cfg_explorer(app: object) -> None:
                 )
 
                 # Display patterns
-                for _pattern in license_patterns:
+                for pattern in license_patterns:
                     app.update_output.emit(
                         log_message(
-                            f"[CFG Explorer] {_pattern['type']} at 0x{_pattern['op_addr']:x}: {_pattern['disasm']}",
+                            f"[CFG Explorer] {pattern['type']} at 0x{pattern['op_addr']:x}: {pattern['disasm']}",
                         ),
                     )
 

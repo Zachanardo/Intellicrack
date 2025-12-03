@@ -24,7 +24,7 @@ concurrent terminal sessions.
 
 import logging
 import uuid
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QPushButton, QTabWidget, QVBoxLayout, QWidget, pyqtSignal
 
@@ -207,7 +207,8 @@ class TerminalSessionWidget(QWidget):
             if session_data["widget"] == widget:
                 self._active_session_id = session_id
                 self.active_session_changed.emit(session_id)
-                widget.terminal_display.setFocus()
+                terminal_widget = session_data["widget"]
+                terminal_widget.terminal_display.setFocus()
                 break
 
     def get_active_session(self) -> tuple[str | None, EmbeddedTerminalWidget | None]:
@@ -234,7 +235,7 @@ class TerminalSessionWidget(QWidget):
 
         """
         if session_id in self._sessions:
-            return self._sessions[session_id]["widget"]
+            return cast("EmbeddedTerminalWidget", self._sessions[session_id]["widget"])
 
         return None
 

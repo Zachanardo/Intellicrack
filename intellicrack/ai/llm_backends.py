@@ -188,6 +188,10 @@ class LLMBackend:
             model="base_backend_fallback",
         )
 
+    def complete(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse:
+        """Send chat messages and get response (alias for chat)."""
+        return self.chat(messages, tools)
+
     def register_tools(self, tools: list[dict]) -> None:
         """Register tools for function calling."""
         self.tools = tools
@@ -253,12 +257,12 @@ class OpenAIBackend(LLMBackend):
 
         # Convert messages to OpenAI format
         openai_messages = []
-        for _msg in messages:
-            openai_msg = {"role": _msg.role, "content": _msg.content}
-            if _msg.tool_calls:
-                openai_msg["tool_calls"] = _msg.tool_calls
-            if _msg.tool_call_id:
-                openai_msg["tool_call_id"] = _msg.tool_call_id
+        for msg in messages:
+            openai_msg = {"role": msg.role, "content": msg.content}
+            if msg.tool_calls:
+                openai_msg["tool_calls"] = msg.tool_calls
+            if msg.tool_call_id:
+                openai_msg["tool_call_id"] = msg.tool_call_id
             openai_messages.append(openai_msg)
 
         # Prepare request parameters
@@ -271,7 +275,7 @@ class OpenAIBackend(LLMBackend):
 
         # Add tools if provided and enabled
         if tools and self.config.tools_enabled:
-            request_params["tools"] = [{"type": "function", "function": _tool} for _tool in tools]
+            request_params["tools"] = [{"type": "function", "function": tool} for tool in tools]
             request_params["tool_choice"] = "auto"
 
         try:
@@ -346,11 +350,11 @@ class AnthropicBackend(LLMBackend):
         system_message = ""
         anthropic_messages = []
 
-        for _msg in messages:
-            if _msg.role == "system":
-                system_message = _msg.content
+        for msg in messages:
+            if msg.role == "system":
+                system_message = msg.content
             else:
-                anthropic_messages.append({"role": _msg.role, "content": _msg.content})
+                anthropic_messages.append({"role": msg.role, "content": msg.content})
 
         request_params = {
             "model": self.config.model_name,
@@ -466,13 +470,13 @@ class LlamaCppBackend(LLMBackend):
         """Convert messages to prompt format."""
         prompt_parts = []
 
-        for _msg in messages:
-            if _msg.role == "system":
-                prompt_parts.append(f"<|im_start|>system\n{_msg.content}<|im_end|>")
-            elif _msg.role == "user":
-                prompt_parts.append(f"<|im_start|>user\n{_msg.content}<|im_end|>")
-            elif _msg.role == "assistant":
-                prompt_parts.append(f"<|im_start|>assistant\n{_msg.content}<|im_end|>")
+        for msg in messages:
+            if msg.role == "system":
+                prompt_parts.append(f"<|im_start|>system\n{msg.content}<|im_end|>")
+            elif msg.role == "user":
+                prompt_parts.append(f"<|im_start|>user\n{msg.content}<|im_end|>")
+            elif msg.role == "assistant":
+                prompt_parts.append(f"<|im_start|>assistant\n{msg.content}<|im_end|>")
 
         prompt_parts.append("<|im_start|>assistant\n")
         return "\n".join(prompt_parts)
@@ -484,20 +488,20 @@ class LlamaCppBackend(LLMBackend):
         tool_calls = []
 
         # Look for function call patterns
-        for _tool in tools:
-            tool_name = _tool["name"]
+        for tool in tools:
+            tool_name = tool["name"]
             pattern = rf"{tool_name}\((.*?)\)"
             matches = re.finditer(pattern, content, re.DOTALL)
 
-            for _match in matches:
+            for match in matches:
                 try:
-                    args_str = _match.group(1).strip()
+                    args_str = match.group(1).strip()
                     # Try to parse as JSON
                     args = json.loads(args_str) if args_str else {}
 
                     tool_calls.append(
                         {
-                            "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
+                            "id": f"call_{hashlib.sha256(match.group(0).encode()).hexdigest()[:8]}",
                             "type": "function",
                             "function": {
                                 "name": tool_name,
@@ -596,7 +600,7 @@ class OllamaBackend(LLMBackend):
                 finish_reason="error",
             )
 
-        ollama_messages = [{"role": _msg.role, "content": _msg.content} for _msg in messages]
+        ollama_messages = [{"role": msg.role, "content": msg.content} for msg in messages]
         request_data = {
             "model": self.config.model_name,
             "messages": ollama_messages,
@@ -2343,9 +2347,9 @@ Please analyze this script and return validation results in JSON format."""
             if self.background_loader:
                 self.background_loader.shutdown()
 
-            for _backend in self.backends.values():
+            for backend in self.backends.values():
                 try:
-                    _backend.shutdown()
+                    backend.shutdown()
                 except Exception as e:
                     logger.warning("Error shutting down backend: %s", e)
 
@@ -2546,7 +2550,7 @@ Please analyze this script and return validation results in JSON format."""
         """Add an LLM with the given configuration (alias for ``register_llm``)."""
         return self.register_llm(llm_id, config)
 
-    def get_llm(self, llm_id: str) -> object | None:
+    def get_llm(self, llm_id: str) -> LLMBackend | None:
         """Get an LLM backend by ID."""
         with self.lock:
             # First try to get from immediate backends

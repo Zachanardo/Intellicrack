@@ -228,7 +228,7 @@ class HwidSpooferEnhanced {
                 },
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull()) {
-                        const {property} = this;
+                        const { property } = this;
                         if (property === 0 || property === 1 || property === 12) {
                             // DeviceDesc, HardwareID, FriendlyName
                             const spoofedValue = 'Generic Hardware Device';
@@ -545,19 +545,22 @@ class HwidSpooferEnhanced {
                     this.outputLength = args[4].toInt32();
                 },
                 onLeave: function (retval) {
-                    if (retval.toInt32() === 0 &&
-                                            this.outputBuffer &&
-                                            !this.outputBuffer.isNull() && (this.infoLevel === 12 || this.infoLevel === 60)) {
-                          const spoofedData = new Uint8Array(this.outputLength);
-                          spoofedData.fill(0x42); // Generic pattern
-                          this.outputBuffer.writeByteArray(spoofedData);
-                    
-                          send({
-                              type: 'bypass',
-                              target: 'cpu_power_thermal',
-                              action: 'power_thermal_info_spoofed',
-                              info_level: this.infoLevel,
-                          });
+                    if (
+                        retval.toInt32() === 0 &&
+                        this.outputBuffer &&
+                        !this.outputBuffer.isNull() &&
+                        (this.infoLevel === 12 || this.infoLevel === 60)
+                    ) {
+                        const spoofedData = new Uint8Array(this.outputLength);
+                        spoofedData.fill(0x42); // Generic pattern
+                        this.outputBuffer.writeByteArray(spoofedData);
+
+                        send({
+                            type: 'bypass',
+                            target: 'cpu_power_thermal',
+                            action: 'power_thermal_info_spoofed',
+                            info_level: this.infoLevel,
+                        });
                     }
                 },
             });
@@ -1020,7 +1023,7 @@ class HwidSpooferEnhanced {
                     this.index = args[1].toInt32();
                 },
                 onLeave: function (retval) {
-                    const {index} = this;
+                    const { index } = this;
                     if (index === 12 || index === 14 || index === 88 || index === 90) {
                         // HORZRES, VERTRES, HORZSIZE, VERTSIZE
                         let spoofedValue = 0;
@@ -1310,22 +1313,27 @@ class HwidSpooferEnhanced {
                     this.returnedLength = args[2];
                 },
                 onLeave: function (retval) {
-                    if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull() && this.relationshipType === 3) {
-                          const cacheInfo = this.buffer.readPointer();
-                          if (cacheInfo && !cacheInfo.isNull()) {
-                              cacheInfo.add(8).writeU32(32 * 1024); // L1 Cache Size (32 KB)
-                              cacheInfo.add(12).writeU32(256 * 1024); // L2 Cache Size (256 KB)
-                              cacheInfo.add(16).writeU32(8 * 1024 * 1024); // L3 Cache Size (8 MB)
-                    
-                              send({
-                                  type: 'bypass',
-                                  target: 'cache_topology',
-                                  action: 'cache_hierarchy_spoofed',
-                                  l1_size: '32 KB',
-                                  l2_size: '256 KB',
-                                  l3_size: '8 MB',
-                              });
-                          }
+                    if (
+                        retval.toInt32() !== 0 &&
+                        this.buffer &&
+                        !this.buffer.isNull() &&
+                        this.relationshipType === 3
+                    ) {
+                        const cacheInfo = this.buffer.readPointer();
+                        if (cacheInfo && !cacheInfo.isNull()) {
+                            cacheInfo.add(8).writeU32(32 * 1024); // L1 Cache Size (32 KB)
+                            cacheInfo.add(12).writeU32(256 * 1024); // L2 Cache Size (256 KB)
+                            cacheInfo.add(16).writeU32(8 * 1024 * 1024); // L3 Cache Size (8 MB)
+
+                            send({
+                                type: 'bypass',
+                                target: 'cache_topology',
+                                action: 'cache_hierarchy_spoofed',
+                                l1_size: '32 KB',
+                                l2_size: '256 KB',
+                                l3_size: '8 MB',
+                            });
+                        }
                     }
                 },
             });

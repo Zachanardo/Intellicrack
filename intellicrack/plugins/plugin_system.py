@@ -66,7 +66,14 @@ except ImportError as e:
 
         @staticmethod
         def getrlimit(resource_type: int) -> tuple[float | int, float | int]:
-            """Get resource limits (returns Windows defaults)."""
+            """Get resource limits (returns Windows defaults).
+
+            Args:
+                resource_type: The resource type constant to get limits for.
+
+            Returns:
+                tuple[float | int, float | int]: A tuple of (soft_limit, hard_limit).
+            """
             # Windows doesn't have hard limits like Unix, return practical defaults
             # These values represent typical Windows process limits
             if resource_type == WindowsResourceCompat.RLIMIT_CPU:
@@ -79,7 +86,12 @@ except ImportError as e:
 
         @staticmethod
         def setrlimit(resource_type: int, limits: tuple[int, int]) -> None:
-            """Set resource limits (no-op on Windows)."""
+            """Set resource limits (no-op on Windows).
+
+            Args:
+                resource_type: The resource type constant to set limits for.
+                limits: A tuple of (soft_limit, hard_limit) values to set.
+            """
             # Windows doesn't support Unix-style resource limits
             # Process limits are controlled through Job Objects API instead
             logger.debug("Resource limits not applicable on Windows (would use Job Objects API)")
@@ -88,7 +100,14 @@ except ImportError as e:
 
 
 def log_message(msg: str) -> str:
-    """Format log messages consistently."""
+    """Format log messages consistently.
+
+    Args:
+        msg: The message string to format.
+
+    Returns:
+        str: The formatted message with brackets.
+    """
     return f"[{msg}]"
 
 
@@ -332,14 +351,6 @@ def run_frida_plugin_from_file(app: object, plugin_path: str) -> None:
     Returns:
         None
 
-    Raises:
-        frida.ProcessNotFoundError: If target process cannot be located
-        frida.TransportError: If Frida server connection fails
-        frida.InvalidArgumentError: If invalid arguments passed to Frida
-        frida.NotSupportedError: If operation unsupported by Frida
-        frida.ExecutableNotFoundError: If required executable not found
-        OSError, ValueError, RuntimeError: For file I/O and general execution errors
-
     """
     if not FRIDA_AVAILABLE:
         app.update_output.emit(log_message("[Plugin] Frida is not available. Please install frida-tools."))
@@ -394,12 +405,6 @@ def run_frida_plugin_from_file(app: object, plugin_path: str) -> None:
                 message: Dictionary containing message metadata with 'type', 'payload',
                     'description', and 'stack' keys
                 data: Optional binary data attached to the message
-
-            Returns:
-                None
-
-            Raises:
-                TypeError: If payload serialization to JSON fails
 
             """
             # Add plugin name prefix to logs
@@ -489,9 +494,6 @@ def run_ghidra_plugin_from_file(app: object, plugin_path: str) -> None:
 
     Returns:
         None
-
-    Raises:
-        OSError, ValueError, RuntimeError: For script execution and cleanup errors
 
     """
     if not app.binary_path:
@@ -602,9 +604,6 @@ def _create_specialized_templates(plugin_dir: str) -> None:
 
     Args:
         plugin_dir: Directory to create plugin templates in
-
-    Returns:
-        None
 
     """
     # Simple Analysis Plugin Template
@@ -1154,12 +1153,6 @@ def _sandbox_worker(
         args: Tuple of arguments to pass to the function
         result_queue: Multiprocessing queue for returning results
 
-    Returns:
-        None
-
-    Raises:
-        OSError, ValueError, RuntimeError: Caught and put in result_queue as ("error", str)
-
     """
     try:
         # Apply resource limits on Unix systems
@@ -1253,9 +1246,6 @@ def run_plugin_remotely(app: object, plugin_info: dict[str, object]) -> list[str
     Returns:
         List of strings containing remote execution results, None on error
 
-    Raises:
-        OSError, ValueError, RuntimeError: For network and execution errors
-
     """
     # Check if remote plugins are enabled
     if not CONFIG.get("enable_remote_plugins", False):
@@ -1332,9 +1322,6 @@ class PluginSystem:
         Args:
             plugin_dir: Root directory containing plugin subdirectories
 
-        Returns:
-            None
-
         """
         self.plugin_dir = plugin_dir
         self.plugins = None
@@ -1346,9 +1333,6 @@ class PluginSystem:
         Scans plugin directories and loads custom Python modules, Frida scripts,
         and Ghidra scripts. Returns a dictionary with 'frida', 'ghidra', and
         'custom' categories.
-
-        Args:
-            None
 
         Returns:
             Dictionary mapping category names to lists of plugin information dicts
@@ -1367,9 +1351,6 @@ class PluginSystem:
             app: Application instance with binary_path and update_output signal
             plugin_name: Name of the built-in plugin to execute
 
-        Returns:
-            None
-
         """
         run_plugin(app, plugin_name)
 
@@ -1383,9 +1364,6 @@ class PluginSystem:
             app: Application instance with binary_path and update_output signal
             plugin_info: Plugin information dictionary containing 'instance' key
 
-        Returns:
-            None
-
         """
         run_custom_plugin(app, plugin_info)
 
@@ -1398,9 +1376,6 @@ class PluginSystem:
         Args:
             app: Application instance with binary_path and update_output signal
             plugin_path: Path to the Frida script file
-
-        Returns:
-            None
 
         """
         run_frida_plugin_from_file(app, plugin_path)
@@ -1447,9 +1422,6 @@ class PluginSystem:
             app: Application instance with binary_path and update_output signal
             plugin_path: Path to the Ghidra script file
 
-        Returns:
-            None
-
         """
         run_ghidra_plugin_from_file(app, plugin_path)
 
@@ -1458,12 +1430,6 @@ class PluginSystem:
 
         Generates template Python plugins in the custom_modules directory to help
         users understand plugin development patterns.
-
-        Args:
-            None
-
-        Returns:
-            None
 
         """
         create_sample_plugins(self.plugin_dir)
@@ -1901,7 +1867,7 @@ class PluginSystem:
             Result from plugin execution, or None if download/execution fails
 
         Raises:
-            None explicitly, but logs all errors during remote execution
+            ValueError: If URL validation or plugin security checks fail.
 
         """
         self.logger.info(f"Execute remote plugin called: {plugin_url}")

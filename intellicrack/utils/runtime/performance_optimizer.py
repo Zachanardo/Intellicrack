@@ -176,7 +176,7 @@ class BinaryChunker:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all chunks for analysis
-            future_to_chunk = {executor.submit(analysis_func, _chunk): _chunk for _chunk in chunks}
+            future_to_chunk = {executor.submit(analysis_func, chunk_): chunk_ for chunk_ in chunks}
 
             # Collect results as they complete
             for future in as_completed(future_to_chunk):
@@ -603,8 +603,8 @@ def example_string_analysis(data: object, chunk_info: object = None) -> dict[str
     if isinstance(data, mmap.mmap):
         # For memory-mapped files, read in chunks
         strings = []
-        for _i in range(0, len(data), 1024 * 1024):
-            chunk = data[_i : _i + 1024 * 1024]
+        for i in range(0, len(data), 1024 * 1024):
+            chunk = data[i : i + 1024 * 1024]
             # Simple string extraction
             current_string = ""
             for byte in chunk:
@@ -656,9 +656,9 @@ def example_entropy_analysis(data: object, chunk_info: object = None) -> dict[st
         byte_counts[byte] += 1
 
     entropy = 0
-    for _count in byte_counts:
-        if _count > 0:
-            p = _count / len(sample_data)
+    for count in byte_counts:
+        if count > 0:
+            p = count / len(sample_data)
             entropy -= p * (p.bit_length() - 1)
 
     result = {

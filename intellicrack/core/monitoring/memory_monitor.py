@@ -9,6 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import threading
 import time
+from typing import Any
 
 import frida
 
@@ -116,7 +117,7 @@ class MemoryMonitor(BaseMonitor):
         except Exception as e:
             self._handle_error(e)
 
-    def _on_frida_message(self, message: dict, data: bytes) -> None:
+    def _on_frida_message(self, message: dict[str, Any], data: bytes) -> None:
         """Handle messages from Frida script.
 
         Args:
@@ -135,7 +136,7 @@ class MemoryMonitor(BaseMonitor):
             elif event_type == "error":
                 self._handle_error(Exception(payload.get("message", "Unknown error")))
 
-    def _handle_pattern_found(self, payload: dict) -> None:
+    def _handle_pattern_found(self, payload: dict[str, Any]) -> None:
         """Handle pattern found in memory.
 
         Args:

@@ -48,7 +48,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_ghidra(tool_path: str) -> dict[str, Any]:
-        """Validate Ghidra installation."""
+        """Validate Ghidra installation.
+
+        Args:
+            tool_path: Path to the Ghidra executable or installation directory.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -115,7 +124,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_radare2(tool_path: str) -> dict[str, Any]:
-        """Validate radare2 installation."""
+        """Validate radare2 installation.
+
+        Args:
+            tool_path: Path to the radare2 executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -165,7 +183,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_python(tool_path: str) -> dict[str, Any]:
-        """Validate Python installation."""
+        """Validate Python installation.
+
+        Args:
+            tool_path: Path to the Python executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -207,7 +234,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_frida(tool_path: str) -> dict[str, Any]:
-        """Validate Frida installation."""
+        """Validate Frida installation.
+
+        Args:
+            tool_path: Path to the Frida executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -249,7 +285,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_qemu(tool_path: str) -> dict[str, Any]:
-        """Validate QEMU installation."""
+        """Validate QEMU installation.
+
+        Args:
+            tool_path: Path to the QEMU executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -296,7 +341,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_nasm(tool_path: str) -> dict[str, Any]:
-        """Validate NASM (Netwide Assembler) installation."""
+        """Validate NASM (Netwide Assembler) installation.
+
+        Args:
+            tool_path: Path to the NASM executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -343,7 +397,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_masm(tool_path: str) -> dict[str, Any]:
-        """Validate MASM (Microsoft Macro Assembler) installation."""
+        """Validate MASM (Microsoft Macro Assembler) installation.
+
+        Args:
+            tool_path: Path to the MASM executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -393,7 +456,16 @@ class ToolValidator:
 
     @staticmethod
     def validate_accesschk(tool_path: str) -> dict[str, Any]:
-        """Validate SysInternals AccessChk installation."""
+        """Validate SysInternals AccessChk installation.
+
+        Args:
+            tool_path: Path to the AccessChk executable.
+
+        Returns:
+            Dictionary containing validation results with keys 'valid', 'version',
+            'capabilities', and 'issues'.
+
+        """
         validation = {
             "valid": False,
             "version": None,
@@ -480,7 +552,13 @@ class AdvancedToolDiscovery:
         self.search_cache = {}
 
     def discover_all_tools(self) -> dict[str, Any]:
-        """Discover all supported tools."""
+        """Discover all supported tools.
+
+        Returns:
+            Dictionary mapping tool names to discovery results containing availability,
+            path, version, and capabilities information.
+
+        """
         logger.info("Starting comprehensive tool discovery")
 
         # Report to terminal manager if available
@@ -603,7 +681,17 @@ class AdvancedToolDiscovery:
         return results
 
     def discover_tool(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any]:
-        """Discover a specific tool with comprehensive search."""
+        """Discover a specific tool with comprehensive search.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary containing tool information with availability, path, version,
+            discovery method, and other metadata.
+
+        """
         discovery_start = time.time()
 
         # Check for manual override first
@@ -668,14 +756,31 @@ class AdvancedToolDiscovery:
         return tool_info
 
     def _search_in_path(self, executables: list[str]) -> str | None:
-        """Search for tool in PATH."""
+        """Search for tool in PATH.
+
+        Args:
+            executables: List of executable names to search for.
+
+        Returns:
+            Full path to the executable if found, None otherwise.
+
+        """
         for executable in executables:
             if path := shutil.which(executable):
                 return path
         return None
 
     def _search_installations(self, tool_name: str, executables: list[str]) -> str | None:
-        """Search in typical installation directories."""
+        """Search in typical installation directories.
+
+        Args:
+            tool_name: Name of the tool to search for.
+            executables: List of executable names to search for.
+
+        Returns:
+            Full path to the executable if found, None otherwise.
+
+        """
         search_paths = self._get_installation_paths(tool_name)
 
         for search_path in search_paths:
@@ -696,7 +801,16 @@ class AdvancedToolDiscovery:
         return None
 
     def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
-        """Search in common installation locations."""
+        """Search in common installation locations.
+
+        Args:
+            tool_name: Name of the tool to search for.
+            executables: List of executable names to search for.
+
+        Returns:
+            Full path to the executable if found, None otherwise.
+
+        """
         logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
         common_paths = []
 
@@ -737,7 +851,15 @@ class AdvancedToolDiscovery:
         return None
 
     def _search_windows_registry(self, tool_name: str) -> str | None:
-        """Search Windows registry for tool installations."""
+        """Search Windows registry for tool installations.
+
+        Args:
+            tool_name: Name of the tool to search for.
+
+        Returns:
+            Installation path from Windows registry if found, None otherwise.
+
+        """
         if sys.platform != "win32":
             return None
 
@@ -781,7 +903,15 @@ class AdvancedToolDiscovery:
         return None
 
     def _get_installation_paths(self, tool_name: str) -> list[str]:
-        """Get tool-specific installation search paths."""
+        """Get tool-specific installation search paths.
+
+        Args:
+            tool_name: Name of the tool to get paths for.
+
+        Returns:
+            List of paths to search for tool installations.
+
+        """
         paths = []
 
         if tool_name == "accesschk":
@@ -909,7 +1039,16 @@ class AdvancedToolDiscovery:
         return paths
 
     def _validate_and_populate(self, tool_path: str, tool_name: str) -> dict[str, Any]:
-        """Validate tool and populate information."""
+        """Validate tool and populate information.
+
+        Args:
+            tool_path: Path to the tool executable.
+            tool_name: Name of the tool being validated.
+
+        Returns:
+            Dictionary containing validation results and tool information.
+
+        """
         result = {
             "available": False,
             "path": tool_path,
@@ -935,7 +1074,12 @@ class AdvancedToolDiscovery:
         return result
 
     def refresh_discovery(self) -> dict[str, Any]:
-        """Refresh tool discovery by clearing cache and re-scanning."""
+        """Refresh tool discovery by clearing cache and re-scanning.
+
+        Returns:
+            Dictionary with discovery results for all tools.
+
+        """
         logger.info("Refreshing tool discovery")
         # Clear config-based cache
         self.config.set("tools.discovered", {})
@@ -944,13 +1088,30 @@ class AdvancedToolDiscovery:
         return self.discover_all_tools()
 
     def get_tool_capabilities(self, tool_name: str) -> list[str]:
-        """Get capabilities of a discovered tool."""
+        """Get capabilities of a discovered tool.
+
+        Args:
+            tool_name: Name of the tool.
+
+        Returns:
+            List of capability strings for the tool.
+
+        """
         if tool_name in self.discovered_tools:
             return self.discovered_tools[tool_name].get("capabilities", [])
         return []
 
     def is_tool_compatible(self, tool_name: str, required_capabilities: list[str]) -> bool:
-        """Check if tool has required capabilities."""
+        """Check if tool has required capabilities.
+
+        Args:
+            tool_name: Name of the tool to check.
+            required_capabilities: List of required capability strings.
+
+        Returns:
+            True if tool has all required capabilities, False otherwise.
+
+        """
         tool_capabilities = self.get_tool_capabilities(tool_name)
         return all(cap in tool_capabilities for cap in required_capabilities)
 
@@ -1153,7 +1314,16 @@ class AdvancedToolDiscovery:
         return [tool_name for tool_name, status in health_results.items() if status.get("healthy", False)]
 
     def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
-        """Enhanced tool discovery with comprehensive fallback mechanisms."""
+        """Enhanced tool discovery with comprehensive fallback mechanisms.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary containing tool information with fallback attempts included.
+
+        """
         logger.info(f"Starting enhanced discovery for {tool_name} with fallbacks")
 
         # Start with standard discovery
@@ -1181,7 +1351,16 @@ class AdvancedToolDiscovery:
         return tool_info
 
     def _apply_fallback_strategies(self, tool_name: str, config: dict) -> dict[str, Any]:
-        """Apply various fallback strategies for tool discovery."""
+        """Apply various fallback strategies for tool discovery.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results from fallback strategies.
+
+        """
         strategies = [
             self._try_portable_versions,
             self._try_package_manager_paths,
@@ -1203,7 +1382,16 @@ class AdvancedToolDiscovery:
         return {"available": False, "path": None}
 
     def _try_portable_versions(self, tool_name: str, config: dict) -> dict[str, Any] | None:
-        """Try to find portable versions of tools."""
+        """Try to find portable versions of tools.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results if portable version found, None otherwise.
+
+        """
         portable_paths = [
             Path.home() / "portable_tools" / tool_name,
             Path.cwd() / "tools" / tool_name,
@@ -1222,7 +1410,16 @@ class AdvancedToolDiscovery:
         return None
 
     def _try_package_manager_paths(self, tool_name: str, config: dict) -> dict[str, Any] | None:
-        """Try package manager installation paths."""
+        """Try package manager installation paths.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results if package manager version found, None otherwise.
+
+        """
         pm_paths = []
 
         # Windows package managers
@@ -1268,7 +1465,16 @@ class AdvancedToolDiscovery:
         return None
 
     def _try_version_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any] | None:
-        """Try different versions of the same tool."""
+        """Try different versions of the same tool.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results if alternative version found, None otherwise.
+
+        """
         version_patterns = [
             f"{tool_name}3",
             f"{tool_name}2",
@@ -1287,7 +1493,16 @@ class AdvancedToolDiscovery:
         return None
 
     def _try_bundled_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
-        """Try tools bundled with Intellicrack."""
+        """Try tools bundled with Intellicrack.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results if bundled version found, None otherwise.
+
+        """
         bundled_dir = Path(__file__).parent.parent.parent / "bundled_tools" / tool_name
 
         if bundled_dir.exists():
@@ -1303,11 +1518,28 @@ class AdvancedToolDiscovery:
         return None
 
     def _try_container_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
-        """Try containerized versions of tools."""
+        """Try containerized versions of tools.
+
+        Args:
+            tool_name: Name of the tool to discover.
+            config: Configuration dictionary with executables and search strategy.
+
+        Returns:
+            Dictionary with discovery results if containerized version found, None otherwise.
+
+        """
         return None
 
     def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict]:
-        """Get alternative tools for a given tool."""
+        """Get alternative tools for a given tool.
+
+        Args:
+            tool_name: Name of the tool to get alternatives for.
+
+        Returns:
+            Dictionary mapping alternative tool names to their configurations.
+
+        """
         alternatives = {
             "ghidra": {
                 "cutter": {

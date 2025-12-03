@@ -1190,29 +1190,24 @@ class HexViewerDialog(QDialog):
             # Add selected value if it's a reasonable size
             if selection_size <= 8:
                 if data := self.hex_viewer.get_selected_data():
-                    _hex_str = " ".join(f"{b:02X}" for b in data)
+                    hex_str = " ".join(f"{b:02X}" for b in data)
 
-                    # Try to interpret as various types based on size
                     if selection_size == 1:
-                        # Byte
-                        value_str = f" | Value: {data[0]} (0x{data[0]:02X})"
+                        value_str = f" | Hex: {hex_str} | Value: {data[0]} (0x{data[0]:02X})"
                     elif selection_size == 2:
-                        # 16-bit
                         import struct
 
                         value_le = struct.unpack("<H", data)[0]
                         value_be = struct.unpack(">H", data)[0]
-                        value_str = f" | Value: {value_le} LE, {value_be} BE"
+                        value_str = f" | Hex: {hex_str} | Value: {value_le} LE, {value_be} BE"
                     elif selection_size == 4:
-                        # 32-bit
                         import struct
 
                         try:
-                            # Make sure we have exactly 4 bytes
                             if len(data) == 4:
                                 value_le = struct.unpack("<I", data)[0]
                                 value_be = struct.unpack(">I", data)[0]
-                                value_str = f" | Value: {value_le} LE, {value_be} BE"
+                                value_str = f" | Hex: {hex_str} | Value: {value_le} LE, {value_be} BE"
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
@@ -1221,15 +1216,13 @@ class HexViewerDialog(QDialog):
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 32-bit value: %s", e)
                     elif selection_size == 8:
-                        # 64-bit
                         import struct
 
                         try:
-                            # Make sure we have exactly 8 bytes
                             if len(data) == 8:
                                 value_le = struct.unpack("<Q", data)[0]
                                 value_be = struct.unpack(">Q", data)[0]
-                                value_str = f" | Value: {value_le} LE, {value_be} BE"
+                                value_str = f" | Hex: {hex_str} | Value: {value_le} LE, {value_be} BE"
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"

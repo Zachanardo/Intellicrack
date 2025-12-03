@@ -35,6 +35,7 @@ import subprocess
 import threading
 import time
 import uuid
+import xml.etree.ElementTree as ET
 import zlib
 from collections.abc import Callable
 from ctypes import wintypes
@@ -42,7 +43,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from types import ModuleType
+from typing import TYPE_CHECKING, Any
 
 import defusedxml.ElementTree as DefusedElementTree
 import jwt
@@ -53,53 +55,70 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from intellicrack.handlers.cryptography_handler import (
-    Cipher,
-    algorithms,
-    hashes,
-    modes,
-    padding as asym_padding,
-    rsa,
-)
+from intellicrack.handlers.cryptography_handler import Cipher, algorithms, asym_padding, hashes, modes, rsa
 from intellicrack.utils.logger import get_logger
+
+
+if TYPE_CHECKING:
+    import winreg as winreg_module
 
 
 logger = get_logger(__name__)
 
+_win32api: ModuleType | None = None
+_win32process: ModuleType | None = None
+_win32security: ModuleType | None = None
+_win32con: ModuleType | None = None
+_winreg: ModuleType | None = None
+_kernel32: ctypes.WinDLL | None = None
+_frida: ModuleType | None = None
+_pefile: ModuleType | None = None
+_capstone: ModuleType | None = None
+
 if platform.system() == "Windows":
     try:
-        import winreg
+        import winreg as _winreg_module
 
-        import win32api
-        import win32con
-        import win32process
-        import win32security
+        import win32api as _win32api_module
+        import win32con as _win32con_module
+        import win32process as _win32process_module
+        import win32security as _win32security_module
+
+        _win32api = _win32api_module
+        _win32process = _win32process_module
+        _win32security = _win32security_module
+        _win32con = _win32con_module
+        _winreg = _winreg_module
     except ImportError:
-        win32api = None
-        win32process = None
-        win32security = None
-        win32con = None
-        winreg = None
-    try:
-        kernel32 = ctypes.windll.kernel32
-    except (AttributeError, OSError):
-        kernel32 = None
-else:
-    kernel32 = None
+        pass
+    with contextlib.suppress(AttributeError, OSError):
+        _kernel32 = ctypes.windll.kernel32
+
 try:
-    import frida
+    import frida as _frida_module
+    _frida = _frida_module
 except ImportError:
-    frida = None
+    pass
 try:
-    import capstone
-    import pefile
+    import capstone as _capstone_module
+    import pefile as _pefile_module
+    _capstone = _capstone_module
+    _pefile = _pefile_module
 except ImportError:
-    pefile = None
-    capstone = None
+    pass
+
+win32api = _win32api
+win32process = _win32process
+win32security = _win32security
+win32con = _win32con
+winreg = _winreg
+kernel32 = _kernel32
+frida = _frida
+pefile = _pefile
+capstone = _capstone
 
 "\nLicense Server Emulator\n\nComprehensive local license server emulator supporting multiple licensing\nprotocols including FlexLM, HASP, Microsoft KMS, Adobe, and custom vendor\nsystems. Provides offline license validation and fallback capabilities.\n\nAuthor: Intellicrack Framework\nVersion: 2.0.0\nLicense: GPL v3\n"
 
@@ -162,54 +181,55 @@ class HardwareFingerprint:
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """SQLAlchemy declarative base class."""
 
 
 class LicenseEntry(Base):
     """License database entry."""
 
     __tablename__ = "licenses"
-    id = Column(Integer, primary_key=True)
-    license_key = Column(String(255), unique=True, nullable=False)
-    license_type = Column(String(50), nullable=False)
-    product_name = Column(String(255), nullable=False)
-    version = Column(String(50), nullable=False)
-    status = Column(String(50), default="valid")
-    created_date = Column(DateTime, default=datetime.utcnow)
-    expiry_date = Column(DateTime, nullable=True)
-    max_users = Column(Integer, default=1)
-    current_users = Column(Integer, default=0)
-    hardware_fingerprint = Column(String(255), nullable=True)
-    custom_data = Column(Text, nullable=True)
-    activations = relationship("LicenseActivation", back_populates="license")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    license_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    license_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    product_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    version: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="valid")
+    created_date: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow)
+    expiry_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    max_users: Mapped[int] = mapped_column(Integer, default=1)
+    current_users: Mapped[int] = mapped_column(Integer, default=0)
+    hardware_fingerprint: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    custom_data: Mapped[str | None] = mapped_column(Text, nullable=True)
+    activations: Mapped[list["LicenseActivation"]] = relationship("LicenseActivation", back_populates="license")
 
 
 class LicenseActivation(Base):
     """License activation tracking."""
 
     __tablename__ = "activations"
-    id = Column(Integer, primary_key=True)
-    license_id = Column(Integer, ForeignKey("licenses.id"), nullable=False)
-    client_ip = Column(String(45), nullable=False)
-    hardware_fingerprint = Column(String(255), nullable=False)
-    activation_time = Column(DateTime, default=datetime.utcnow)
-    last_checkin = Column(DateTime, default=datetime.utcnow)
-    is_active = Column(Boolean, default=True)
-    user_agent = Column(String(255), nullable=True)
-    license = relationship("LicenseEntry", back_populates="activations")
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    license_id: Mapped[int] = mapped_column(Integer, ForeignKey("licenses.id"), nullable=False)
+    client_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+    hardware_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
+    activation_time: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow)
+    last_checkin: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    license: Mapped["LicenseEntry"] = relationship("LicenseEntry", back_populates="activations")
 
 
 class LicenseLog(Base):
     """License operation logging."""
 
     __tablename__ = "license_logs"
-    id = Column(Integer, primary_key=True)
-    license_key = Column(String(255), nullable=False)
-    operation = Column(String(100), nullable=False)
-    client_ip = Column(String(45), nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    success = Column(Boolean, nullable=False)
-    details = Column(Text, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    license_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    operation: Mapped[str] = mapped_column(String(100), nullable=False)
+    client_ip: Mapped[str] = mapped_column(String(45), nullable=False)
+    timestamp: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow)
+    success: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class LicenseRequest(BaseModel):
@@ -338,11 +358,11 @@ class FlexLMEmulator:
         """Initialize FlexLM license server emulator with crypto manager."""
         self.logger = logging.getLogger(f"{__name__}.FlexLM")
         self.crypto = crypto_manager
-        self.server_socket = None
-        self.vendor_socket = None
+        self.server_socket: socket.socket | None = None
+        self.vendor_socket: socket.socket | None = None
         self.running = False
-        self.features = {}
-        self.active_licenses = {}
+        self.features: dict[str, Any] = {}
+        self.active_licenses: dict[str, Any] = {}
         self.vendor_keys = self._generate_vendor_keys()
         self.FLEXLM_PORT = 27000
         self.VENDOR_PORT = 27001
@@ -379,6 +399,8 @@ class FlexLMEmulator:
         """Accept FlexLM client connections."""
         while self.running:
             try:
+                if self.server_socket is None:
+                    break
                 client_socket, address = self.server_socket.accept()
                 self.logger.info("FlexLM client connected", extra={"address": address})
                 threading.Thread(target=self._handle_client, args=(client_socket, address), daemon=True).start()
@@ -386,7 +408,7 @@ class FlexLMEmulator:
                 if self.running:
                     self.logger.error("FlexLM connection error", extra={"error": str(e)})
 
-    def _handle_client(self, client_socket: socket.socket, address: tuple) -> None:
+    def _handle_client(self, client_socket: socket.socket, address: tuple[str, int]) -> None:
         """Handle FlexLM client requests."""
         try:
             while True:
@@ -405,7 +427,7 @@ class FlexLMEmulator:
         """Parse FlexLM protocol request."""
         try:
             text = data.decode("ascii", errors="ignore")
-            request = {
+            request: dict[str, object] = {
                 "type": "checkout",
                 "feature": "unknown",
                 "version": "1.0",
@@ -420,7 +442,8 @@ class FlexLMEmulator:
                         break
             return request
         except Exception:
-            return {"type": "unknown"}
+            result: dict[str, object] = {"type": "unknown"}
+            return result
 
     def _process_flexlm_request(self, request: dict[str, Any], client_ip: str) -> bytes:
         """Process FlexLM request and generate response."""
@@ -444,10 +467,8 @@ class FlexLMEmulator:
             self.logger.error("FlexLM request processing error", extra={"error": str(e)})
             return b"ERROR: Internal server error\n"
 
-    def _generate_vendor_keys(self) -> dict:
+    def _generate_vendor_keys(self) -> dict[str, Any]:
         """Generate vendor-specific encryption keys."""
-        import secrets
-
         return {
             "seed1": secrets.randbits(32),
             "seed2": secrets.randbits(32),
@@ -456,7 +477,7 @@ class FlexLMEmulator:
             "encryption_key": secrets.token_bytes(16),
         }
 
-    def add_feature(self, feature: dict) -> None:
+    def add_feature(self, feature: dict[str, Any]) -> None:
         """Add a licensed feature."""
         self.features[feature["name"]] = feature
 
@@ -468,15 +489,16 @@ class FlexLMEmulator:
             self.vendor_socket.bind(("127.0.0.1", self.VENDOR_PORT))
             self.vendor_socket.listen(5)
             self.logger.info("Vendor daemon started on port", extra={"self_vendor_port": self.VENDOR_PORT})
-            while self.running:
-                client_socket, addr = self.vendor_socket.accept()
+            vendor_sock = self.vendor_socket
+            while self.running and vendor_sock is not None:
+                client_socket, addr = vendor_sock.accept()
                 thread = threading.Thread(target=self._handle_vendor_request, args=(client_socket, addr))
                 thread.daemon = True
                 thread.start()
         except Exception as e:
             self.logger.error("Vendor daemon error", extra={"error": str(e)})
 
-    def _handle_vendor_request(self, client_socket: socket.socket, addr: tuple) -> None:
+    def _handle_vendor_request(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
         """Handle vendor-specific requests."""
         try:
             request_data = client_socket.recv(4096)
@@ -650,13 +672,13 @@ class HASPEmulator:
         self.HASP_SIGNATURE_CHECK_FAILED = 36
         self.memory_size = 65536
         self.dongle_memory = bytearray(self.memory_size)
-        self.feature_memory = {}
-        self.session_keys = {}
-        self.active_sessions = {}
-        self.next_handle = 1
-        self._initialize_real_hasp_memory()
+        self.feature_memory: dict[int, dict[str, Any]] = {}
+        self.session_keys: dict[int, bytes] = {}
+        self.active_sessions: dict[int, dict[str, Any]] = {}
+        self.next_handle = 100
         self.device_id = os.urandom(16)
         self.master_key = self._derive_master_key()
+        self._initialize_real_hasp_memory()
 
     def _derive_master_key(self) -> bytes:
         """Derive master encryption key from device ID."""
@@ -707,7 +729,7 @@ class HASPEmulator:
         end_marker_offset = feature_dir_base + len(default_features) * 16
         self.dongle_memory[end_marker_offset : end_marker_offset + 4] = b"\xff\xff\xff\xff"
 
-    def hasp_login(self, feature_id: int, vendor_code: bytes = None) -> int:
+    def hasp_login(self, feature_id: int, vendor_code: bytes | None = None) -> int:
         """HASP login operation with real authentication."""
         try:
             self.logger.info("HASP login", extra={"feature_id": feature_id})
@@ -903,7 +925,7 @@ class HASPEmulator:
                 data = struct.pack(f"<{len(features)}I", *features)
                 return (self.HASP_STATUS_OK, data)
             if query_type == 4:
-                return (self.HASP_STATUS_OK, self.dongle_memory[32:48])
+                return (self.HASP_STATUS_OK, bytes(self.dongle_memory[32:48]))
             if query_type == 5:
                 return (self.HASP_STATUS_OK, struct.pack("<Q", int(time.time())))
             return (self.HASP_INVALID_PARAMETER, b"")
@@ -1099,6 +1121,7 @@ class DatabaseManager:
             return license_entry
         except Exception as e:
             self.logger.error("License validation error", extra={"error": str(e)})
+            return None
 
     def log_operation(self, license_key: str, operation: str, client_ip: str, success: bool, details: str = "") -> None:
         """Log license operation."""
@@ -1248,11 +1271,6 @@ class HardwareFingerprintGenerator:
                 if line.startswith("VolumeSerialNumber="):
                     if serial := line.split("=")[1].strip():
                         return serial
-        try:
-            stat_info = os.statvfs("C:\\")
-            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
-        except Exception:
-            self.logger.debug("Exception caught in fallback path", exc_info=False)
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_linux(self) -> str:
@@ -1268,19 +1286,15 @@ class HardwareFingerprintGenerator:
                     parts = line.split("ata-")[1].split()[0]
                     return hashlib.sha256(parts.encode()).hexdigest()[:16]
         try:
-            stat_info = os.statvfs("/")
-            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
+            if hasattr(os, "statvfs"):
+                stat_info = os.statvfs("/")
+                return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
             self.logger.debug("Exception caught in fallback path", exc_info=False)
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
 
     def _get_disk_serial_darwin(self) -> str:
         """Get disk serial on macOS."""
-        import hashlib
-        import os
-        import shutil
-        import subprocess
-
         try:
             if diskutil_path := shutil.which("diskutil"):
                 result = subprocess.run(
@@ -1297,8 +1311,9 @@ class HardwareFingerprintGenerator:
         except Exception:
             self.logger.debug("Exception caught in fallback path", exc_info=False)
         try:
-            stat_info = os.statvfs("/")
-            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
+            if hasattr(os, "statvfs"):
+                stat_info = os.statvfs("/")
+                return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
             self.logger.debug("Exception caught in fallback path", exc_info=False)
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
@@ -1306,8 +1321,9 @@ class HardwareFingerprintGenerator:
     def _get_disk_serial_default(self) -> str:
         """Get disk serial for other systems."""
         try:
-            stat_info = os.statvfs("/")
-            return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
+            if hasattr(os, "statvfs"):
+                stat_info = os.statvfs("/")
+                return hashlib.sha256(f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()).hexdigest()[:16]
         except Exception:
             self.logger.debug("Exception caught in fallback path", exc_info=False)
         return hashlib.sha256(f"{platform.node()}{platform.system()}disk".encode()).hexdigest()[:16]
@@ -1327,9 +1343,9 @@ class HardwareFingerprintGenerator:
                         continue
                     addrs = netifaces.ifaddresses(iface)
                     if netifaces.AF_LINK in addrs:
-                        mac = addrs[netifaces.AF_LINK][0]["addr"]
-                        if mac and mac != "00:00:00:00:00:00":
-                            return mac.upper()
+                        mac_addr: str = str(addrs[netifaces.AF_LINK][0]["addr"])
+                        if mac_addr and mac_addr != "00:00:00:00:00:00":
+                            return mac_addr.upper()
             except ImportError:
                 self.logger.debug("Exception caught in fallback path", exc_info=False)
         except Exception:
@@ -1441,7 +1457,7 @@ class ProtocolAnalyzer:
         self.protocol_signatures = self._initialize_signatures()
         self.logger = logging.getLogger(f"{__name__}.ProtocolAnalyzer")
 
-    def _initialize_patterns(self) -> dict[str, dict]:
+    def _initialize_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize enhanced protocol detection patterns."""
         return {
             "flexlm": {"port": 27000, "signature": b"FLEXLM", "type": LicenseType.FLEXLM},
@@ -1604,18 +1620,31 @@ class ProtocolAnalyzer:
         parsed = {}
         with contextlib.suppress(ValueError, IndexError):
             if len(data) > 8:
-                if b"CHECKOUT" in data:
+                text = data.decode("utf-8", errors="ignore")
+                if "CHECKOUT" in text:
                     parsed["operation"] = "checkout"
+                if b"FEATURE=" in data:
                     feature_start = data.find(b"FEATURE=")
-                    if feature_start != -1:
-                        feature_end = data.find(b"\x00", feature_start)
-                        if feature_end != -1:
-                            parsed["feature"] = data[feature_start + 8 : feature_end].decode("utf-8", errors="ignore")
+                    feature_end = data.find(b"\x00", feature_start)
+                    if feature_end != -1:
+                        parsed["feature"] = data[feature_start + 8 : feature_end].decode("utf-8", errors="ignore")
+                elif "FEATURE " in text:
+                    parts = text.split()
+                    for i, part in enumerate(parts):
+                        if part == "FEATURE" and i + 1 < len(parts):
+                            parsed["feature"] = parts[i + 1]
+                            break
                 if b"VERSION=" in data:
                     ver_start = data.find(b"VERSION=")
                     ver_end = data.find(b"\x00", ver_start)
                     if ver_end != -1:
                         parsed["version"] = data[ver_start + 8 : ver_end].decode("utf-8", errors="ignore")
+                elif "VERSION " in text:
+                    parts = text.split()
+                    for i, part in enumerate(parts):
+                        if part == "VERSION" and i + 1 < len(parts):
+                            parsed["version"] = parts[i + 1]
+                            break
         return parsed
 
     def _parse_hasp_data(self, data: bytes) -> dict[str, Any]:
@@ -1654,8 +1683,8 @@ class BinaryKeyExtractor:
     def __init__(self) -> None:
         """Initialize the BinarySigningKeyExtractor with key and pattern caches."""
         self.logger = logging.getLogger(f"{__name__}.BinaryKeyExtractor")
-        self._key_cache = {}
-        self._pattern_cache = {}
+        self._key_cache: dict[str, bytes] = {}
+        self._pattern_cache: dict[str, Any] = {}
 
     def _extract_adobe_private_key_from_memory(self, binary_path: str) -> bytes | None:
         """Extract Adobe private key using sophisticated memory analysis and cryptographic patterns."""
@@ -1700,7 +1729,7 @@ class BinaryKeyExtractor:
 
     def _extract_key_from_adobe_process(self) -> bytes | None:
         """Extract Adobe signing key using sophisticated runtime analysis and memory forensics."""
-        adobe_process_map = {
+        adobe_process_map: dict[str, dict[str, int | float | str]] = {
             "Photoshop.exe": {"key_size": 2048, "algo": "RSA", "entropy_threshold": 7.8},
             "Illustrator.exe": {"key_size": 2048, "algo": "RSA", "entropy_threshold": 7.9},
             "AcroRd32.exe": {"key_size": 3072, "algo": "RSA", "entropy_threshold": 7.85},
@@ -1717,9 +1746,15 @@ class BinaryKeyExtractor:
                 proc_name = proc.info["name"]
                 if proc_name in adobe_process_map:
                     params = adobe_process_map[proc_name]
-                    if key := self._extract_key_via_entropy_analysis(proc.pid, params["entropy_threshold"], params["key_size"]):
+                    entropy_val = params["entropy_threshold"]
+                    entropy_threshold = float(entropy_val) if isinstance(entropy_val, (int, float)) else 7.8
+                    size_val = params["key_size"]
+                    key_size = int(size_val) if isinstance(size_val, (int, float)) else 2048
+                    algo_val = params["algo"]
+                    algo = str(algo_val) if algo_val else "RSA"
+                    if key := self._extract_key_via_entropy_analysis(proc.pid, entropy_threshold, key_size):
                         return key
-                    if key := self._extract_key_via_crypto_structure_detection(proc.pid, params["algo"], params["key_size"]):
+                    if key := self._extract_key_via_crypto_structure_detection(proc.pid, algo, key_size):
                         return key
                     if key := self._extract_key_via_memory_snapshots(proc.pid):
                         return key
@@ -1798,12 +1833,16 @@ class BinaryKeyExtractor:
                         data = bytes(buffer[: bytes_read.value])
                         for pattern in key_patterns:
                             offset = 0
+                            sig = bytes(pattern["signature"]) if isinstance(pattern["signature"], (bytes, bytearray)) else b""
+                            check_fn = pattern["offset_check"]
                             while offset < len(data):
-                                offset = data.find(pattern["signature"], offset)
+                                offset = data.find(sig, offset)
                                 if offset == -1:
                                     break
-                                if key := pattern["offset_check"](data, offset):
-                                    return key
+                                if callable(check_fn):
+                                    result = check_fn(data, offset)
+                                    if isinstance(result, bytes):
+                                        return result
                                 offset += 1
                         if key := self._detect_key_by_entropy(data, key_type):
                             return key
@@ -2057,7 +2096,7 @@ class BinaryKeyExtractor:
 
         if not data:
             return 0.0
-        freq = {}
+        freq: dict[int, int] = {}
         for byte in data:
             freq[byte] = freq.get(byte, 0) + 1
         entropy = 0.0
@@ -2838,7 +2877,7 @@ class BinaryKeyExtractor:
                                     priv_exp_data = data[priv_exp_start + 16 : priv_exp_start + 16 + d_top * 8]
                                     private_exp = int.from_bytes(priv_exp_data, "little")
                                     prime_start = priv_exp_start + 16 + d_top * 8
-                                    primes = []
+                                    primes: list[int] = []
                                     while prime_start < len(data) - 16 and len(primes) < 2:
                                         p_ptr = struct.unpack("<Q", data[prime_start : prime_start + 8])[0]
                                         if p_ptr & 18446462598732840960 == 0:
@@ -2968,16 +3007,17 @@ class BinaryKeyExtractor:
                 return decryptor.update(ciphertext) + decryptor.finalize()
         return None
 
-    def _extract_key_via_detours(self, pid: int, api_names: list[str]) -> None:
+    def _extract_key_via_detours(self, pid: int, api_names: list[str]) -> bytes | None:
         """Extract keys using Detours library for API hooking."""
-        return
+        return None
 
-    def _extract_key_linux_advanced(self, pid: int, key_type: str) -> Any:
+    def _extract_key_linux_advanced(self, pid: int, key_type: str) -> bytes | None:
         """Advanced key extraction for Linux systems."""
-        return self._extract_key_ptrace(pid, key_type)
+        result = self._extract_key_ptrace(pid, key_type)
+        return result if isinstance(result, bytes) else None
 
-    def _extract_key_from_process_memory(self, pid: int, key_type: str) -> Any:
-        if not win32api:
+    def _extract_key_from_process_memory(self, pid: int, key_type: str) -> bytes | None:
+        if not win32api or not win32con or not win32process:
             return self._extract_key_ctypes(pid, key_type)
         try:
             process_handle = win32api.OpenProcess(win32con.PROCESS_VM_READ | win32con.PROCESS_QUERY_INFORMATION, False, pid)
@@ -3004,10 +3044,7 @@ class BinaryKeyExtractor:
                                 end = data.find(b"-----END RSA PRIVATE KEY-----", start)
                                 if end != -1:
                                     key_data = data[start : end + 29]
-                                    from cryptography.hazmat.backends import default_backend
-                                    from cryptography.hazmat.primitives import serialization
-
-                                    return serialization.load_pem_private_key(key_data, password=None, backend=default_backend())
+                                    return key_data
                         elif b"0\x82" in data:
                             if key_type == "RSA_PRIVATE":
                                 idx = data.find(b"0\x82")
@@ -3016,10 +3053,7 @@ class BinaryKeyExtractor:
                                     if length < len(data) - idx:
                                         key_data = data[idx : idx + 4 + length]
                                         with contextlib.suppress(ValueError, TypeError):
-                                            from cryptography.hazmat.backends import default_backend
-                                            from cryptography.hazmat.primitives import serialization
-
-                                            return serialization.load_der_private_key(key_data, password=None, backend=default_backend())
+                                            return key_data
                                     idx = data.find(b"0\x82", idx + 1)
                 except (OSError, ValueError):
                     continue
@@ -3028,7 +3062,7 @@ class BinaryKeyExtractor:
             self.logger.debug("Key extraction from process  failed:", extra={"pid": pid, "e": e})
         return None
 
-    def _extract_key_ctypes(self, pid: int, key_type: str) -> Any:
+    def _extract_key_ctypes(self, pid: int, key_type: str) -> bytes | None:
         """Extract key using ctypes when pywin32 not available."""
         if platform.system() != "Windows":
             return None
@@ -3072,17 +3106,13 @@ class BinaryKeyExtractor:
                                 end = data.find(b"-----END RSA PRIVATE KEY-----", start)
                                 if end != -1:
                                     key_data = data[start : end + 29]
-                                    from cryptography.hazmat.backends import default_backend
-                                    from cryptography.hazmat.primitives import serialization
-
-                                    with contextlib.suppress(ValueError, TypeError):
-                                        return serialization.load_pem_private_key(key_data, password=None, backend=default_backend())
+                                    return key_data
                 address = mbi.BaseAddress + mbi.RegionSize
         finally:
             kernel32.CloseHandle(process_handle)
         return None
 
-    def _extract_key_ptrace(self, pid: int, key_type: str) -> Any:
+    def _extract_key_ptrace(self, pid: int, key_type: str) -> bytes | None:
         """Extract key from process memory on Linux/Mac using ptrace."""
         try:
             with open(f"/proc/{pid}/maps") as f:
@@ -3105,22 +3135,19 @@ class BinaryKeyExtractor:
                             key_end = data.find(b"-----END RSA PRIVATE KEY-----", key_start)
                             if key_end != -1:
                                 key_data = data[key_start : key_end + 29]
-                                from cryptography.hazmat.backends import default_backend
-                                from cryptography.hazmat.primitives import serialization
-
-                                return serialization.load_pem_private_key(key_data, password=None, backend=default_backend())
+                                return key_data
                     except (ValueError, TypeError):
                         continue
         except Exception as e:
             self.logger.debug("ptrace extraction failed:", extra={"e": e})
         return None
 
-    def extract_flexlm_keys(self, binary_path: str) -> dict:
+    def extract_flexlm_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract FLEXlm vendor keys and daemon info from protected binary."""
         import capstone
         import pefile
 
-        keys = {
+        keys: dict[str, Any] = {
             "vendor_keys": [],
             "daemon_name": None,
             "vendor_code": None,
@@ -3198,11 +3225,11 @@ class BinaryKeyExtractor:
             keys["vendor_code"] = path_hash[16:20].hex()
         return keys
 
-    def extract_hasp_keys(self, binary_path: str) -> dict:
+    def extract_hasp_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract HASP/Sentinel feature IDs and keys from protected binary."""
         import pefile
 
-        keys = {
+        keys: dict[str, Any] = {
             "feature_ids": [],
             "vendor_code": None,
             "hasp_keys": [],
@@ -3276,11 +3303,11 @@ class BinaryKeyExtractor:
             keys["feature_ids"] = [1]
         return keys
 
-    def extract_adobe_keys(self, binary_path: str) -> dict:
+    def extract_adobe_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract Adobe licensing keys and endpoints from Creative Cloud binaries."""
         import pefile
 
-        keys = {
+        keys: dict[str, Any] = {
             "public_keys": [],
             "api_endpoints": [],
             "client_id": None,
@@ -3345,9 +3372,11 @@ class BinaryKeyExtractor:
 
                 with open(binary_path, "rb") as f:
                     hashlib.sha256(f.read()).digest()
-                private_key = self._extract_adobe_private_key_from_memory(binary_path) or self._extract_key_from_adobe_process()
-                if not private_key:
+                private_key_bytes = self._extract_adobe_private_key_from_memory(binary_path) or self._extract_key_from_adobe_process()
+                if not private_key_bytes:
                     raise ExtractionError("Unable to extract Adobe signing key from binary or process")
+                from cryptography.hazmat.backends import default_backend
+                private_key = serialization.load_pem_private_key(private_key_bytes, password=None, backend=default_backend())
                 public_key = private_key.public_key()
                 pem = public_key.public_bytes(
                     encoding=serialization.Encoding.PEM,
@@ -3361,12 +3390,12 @@ class BinaryKeyExtractor:
             keys["api_endpoints"] = ["https://ims-na1.adobelogin.com"]
         return keys
 
-    def extract_validation_algorithm(self, binary_path: str) -> dict:
+    def extract_validation_algorithm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to understand license validation algorithm."""
         import capstone
         import pefile
 
-        algorithm = {"type": "unknown", "operations": [], "constants": [], "string_checks": []}
+        algorithm: dict[str, Any] = {"type": "unknown", "operations": [], "constants": [], "string_checks": []}
         try:
             pe = pefile.PE(binary_path)
             code_section = next((section for section in pe.sections if b".text" in section.Name), None)
@@ -3523,12 +3552,12 @@ class RuntimeKeyExtractor:
     def __init__(self) -> None:
         """Initialize the RuntimeKeyExtractor with process tracking and key storage."""
         self.logger = logging.getLogger(f"{__name__}.RuntimeKeyExtractor")
-        self.attached_processes = {}
-        self.extracted_keys = {}
+        self.attached_processes: dict[int, Any] = {}
+        self.extracted_keys: dict[int, dict[str, Any]] = {}
 
-    def attach_and_extract(self, process_id: int) -> dict:
+    def attach_and_extract(self, process_id: int) -> dict[str, Any]:
         """Attach to process and extract license keys."""
-        extracted = {"keys": [], "endpoints": [], "validation_functions": [], "memory_patterns": []}
+        extracted: dict[str, Any] = {"keys": [], "endpoints": [], "validation_functions": [], "memory_patterns": []}
         if platform.system() == "Windows":
             extracted |= self._attach_windows_process(process_id)
         else:
@@ -3536,13 +3565,13 @@ class RuntimeKeyExtractor:
         self.extracted_keys[process_id] = extracted
         return extracted
 
-    def _attach_windows_process(self, pid: int) -> dict:
+    def _attach_windows_process(self, pid: int) -> dict[str, Any]:
         """Attach to Windows process for key extraction."""
-        if not win32api:
+        if not win32api or not win32con or not win32process:
             return self._attach_windows_ctypes(pid)
         try:
             process_handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, False, pid)
-            extracted_data = {"keys": [], "endpoints": [], "breakpoint_hits": []}
+            extracted_data: dict[str, Any] = {"keys": [], "endpoints": [], "breakpoint_hits": []}
             modules = win32process.EnumProcessModules(process_handle)
             for module in modules:
                 try:
@@ -3567,7 +3596,7 @@ class RuntimeKeyExtractor:
             self.logger.error("Failed to attach to Windows process", extra={"pid": pid, "error": str(e)})
             return {}
 
-    def _attach_windows_ctypes(self, pid: int) -> dict:
+    def _attach_windows_ctypes(self, pid: int) -> dict[str, Any]:
         """Attach using ctypes when pywin32 not available."""
         kernel32 = ctypes.windll.kernel32
         extracted_data = {"keys": [], "endpoints": []}
@@ -3608,13 +3637,16 @@ class RuntimeKeyExtractor:
             kernel32.CloseHandle(process_handle)
         return extracted_data
 
-    def _attach_unix_process(self, pid: int) -> dict:
+    def _attach_unix_process(self, pid: int) -> dict[str, Any]:
         """Attach to Unix/Linux process for key extraction."""
-        extracted_data = {"keys": [], "endpoints": []}
+        extracted_data: dict[str, Any] = {"keys": [], "endpoints": []}
         try:
             import signal
 
-            os.kill(pid, signal.SIGSTOP)
+            sigstop = getattr(signal, "SIGSTOP", None)
+            sigcont = getattr(signal, "SIGCONT", None)
+            if sigstop is not None:
+                os.kill(pid, sigstop)
             with open(f"/proc/{pid}/mem", "rb") as mem, open(f"/proc/{pid}/maps") as maps:
                 for line in maps:
                     parts = line.split()
@@ -3633,7 +3665,8 @@ class RuntimeKeyExtractor:
                             extracted_data["endpoints"].extend(endpoints)
                         except (OSError, ValueError):
                             continue
-            os.kill(pid, signal.SIGCONT)
+            if sigcont is not None:
+                os.kill(pid, sigcont)
         except Exception as e:
             self.logger.error("Failed to attach to Unix process", extra={"pid": pid, "error": str(e)})
         return extracted_data
@@ -3809,13 +3842,13 @@ class RuntimeKeyExtractor:
             self.logger.error("Unix memory scan failed", extra={"error": str(e)})
         return keys
 
-    def hook_api_calls(self, process_id: int) -> dict:
+    def hook_api_calls(self, process_id: int) -> dict[str, Any]:
         """Install hooks for API calls to intercept license validation."""
         if platform.system() == "Windows":
             return self._hook_windows_apis(process_id)
         return self._hook_unix_apis(process_id)
 
-    def _hook_windows_apis(self, pid: int) -> dict:
+    def _hook_windows_apis(self, pid: int) -> dict[str, Any]:
         """Install hooks for Windows APIs for license interception using inline hooking and IAT patching."""
         hooked_data = {
             "registry_keys": [],
@@ -4119,9 +4152,9 @@ class RuntimeKeyExtractor:
                 results.append(deobfuscated)
         return results[0] if results else data
 
-    def _extract_xor_encoded_keys(self, data: bytes) -> list:
+    def _extract_xor_encoded_keys(self, data: bytes) -> list[dict[str, str]]:
         """Extract XOR-encoded license keys."""
-        keys = []
+        keys: list[dict[str, str]] = []
         xor_keys = [0, 19, 55, 66, 85, 105, 136, 170, 204, 255]
         for xor_key in xor_keys:
             decoded = bytes([b ^ xor_key for b in data])
@@ -4135,9 +4168,9 @@ class RuntimeKeyExtractor:
                     keys.append({"type": "obfuscated", "value": key, "encoding": f"xor_{xor_key:02x}"})
         return keys
 
-    def _extract_themida_constants(self, data: bytes) -> list:
+    def _extract_themida_constants(self, data: bytes) -> list[dict[str, str]]:
         """Extract Themida encrypted constants."""
-        keys = []
+        keys: list[dict[str, str]] = []
         marker = b"MZ\x90\x00"
         offset = 0
         while offset < len(data) - 32:
@@ -4153,9 +4186,9 @@ class RuntimeKeyExtractor:
             offset += 1
         return keys
 
-    def _extract_vmprotect_strings(self, data: bytes) -> list:
+    def _extract_vmprotect_strings(self, data: bytes) -> list[dict[str, str]]:
         """Extract VMProtect virtualized string references."""
-        keys = []
+        keys: list[dict[str, str]] = []
         offset = 0
         while offset < len(data) - 8:
             if data[offset] == 72 and data[offset + 1] == 141:
@@ -4241,7 +4274,7 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
+                from Crypto.Cipher import ARC4
 
                 cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
                 test_decrypt = cipher.decrypt(data[:100])
@@ -4319,9 +4352,9 @@ class RuntimeKeyExtractor:
         opcode_count = sum(bool(b in common_opcodes) for b in data[:50])
         return opcode_count > 10
 
-    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
+    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list[dict[str, Any]]:
         """Reconstruct VMProtect's virtualized Import Address Table."""
-        keys = []
+        keys: list[dict[str, Any]] = []
         try:
             import ctypes
 
@@ -4367,9 +4400,9 @@ class RuntimeKeyExtractor:
             self.logger.debug("IAT reconstruction failed:", extra={"e": e})
         return keys
 
-    def _extract_vm_strings(self, data: bytes) -> list:
+    def _extract_vm_strings(self, data: bytes) -> list[str]:
         """Extract strings from VM handler code."""
-        strings = []
+        strings: list[str] = []
         current_string = b""
         for i in range(len(data)):
             byte = data[i]
@@ -4404,9 +4437,9 @@ class RuntimeKeyExtractor:
             decrypted.append(data[i] ^ key[i % 4])
         return bytes(decrypted)
 
-    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
+    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list[dict[str, Any]]:
         """Extract Themida wrapped API information."""
-        wrapped_apis = []
+        wrapped_apis: list[dict[str, Any]] = []
         try:
             import ctypes
 
@@ -4460,7 +4493,7 @@ class RuntimeKeyExtractor:
         except (UnicodeDecodeError, AttributeError):
             return False
 
-    def _hook_inline_apis(self, process_handle: Any, kernel32: Any, hooked_data: dict) -> dict:
+    def _hook_inline_apis(self, process_handle: Any, kernel32: Any, hooked_data: dict[str, Any]) -> dict[str, Any]:
         """Install hooks for critical APIs using inline hooking technique."""
         try:
             apis_to_hook = {
@@ -4578,636 +4611,6 @@ class RuntimeKeyExtractor:
                 kernel32.CloseHandle(process_handle)
         return hooked_data
 
-    def _detect_memory_protection(self, process_handle: int) -> str | None:
-        """Detect memory protection scheme (VMProtect, Themida, etc.)."""
-        if platform.system() == "Windows":
-            import ctypes
-
-            import win32process
-
-            protection_signatures = {
-                "vmprotect": [b"VMProtect", b".vmp0", b".vmp1", b".vmp2"],
-                "themida": [b"Themida", b"WinLicense", b".themida", b".wlprot"],
-                "obsidium": [b"Obsidium", b".obsid"],
-                "asprotect": [b"ASProtect", b".aspr"],
-                "enigma": [b"Enigma", b".enigma1"],
-            }
-            try:
-                dos_header = ctypes.create_string_buffer(64)
-                win32process.ReadProcessMemory(process_handle, 4194304, dos_header, 64, None)
-                scan_buffer = ctypes.create_string_buffer(65536)
-                win32process.ReadProcessMemory(process_handle, 4194304, scan_buffer, 65536, None)
-                scan_data = scan_buffer.raw
-                for protection_name, signatures in protection_signatures.items():
-                    for sig in signatures:
-                        if sig in scan_data:
-                            return protection_name
-                pe_header_offset = int.from_bytes(dos_header.raw[60:64], "little")
-                if pe_header_offset > 0 and pe_header_offset < 4096:
-                    pe_buffer = ctypes.create_string_buffer(512)
-                    win32process.ReadProcessMemory(process_handle, 4194304 + pe_header_offset, pe_buffer, 512, None)
-                    num_sections = int.from_bytes(pe_buffer.raw[6:8], "little")
-                    section_header_offset = pe_header_offset + 248
-                    for i in range(min(num_sections, 10)):
-                        section_buffer = ctypes.create_string_buffer(40)
-                        win32process.ReadProcessMemory(
-                            process_handle,
-                            4194304 + section_header_offset + i * 40,
-                            section_buffer,
-                            40,
-                            None,
-                        )
-                        section_name = section_buffer.raw[:8].rstrip(b"\x00")
-                        if section_name in [b".vmp0", b".vmp1", b".vmp2"]:
-                            return "vmprotect"
-                        if section_name in [b".themida", b".winlic"]:
-                            return "themida"
-                        if section_name in [b".enigma1", b".enigma2"]:
-                            return "enigma"
-                        if section_name in [b".aspack", b".adata"]:
-                            return "asprotect"
-            except Exception as e:
-                self.logger.debug("Protection detection failed:", extra={"e": e})
-        return None
-
-    def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle specific memory protection schemes."""
-        if protection == "vmprotect":
-            return self._handle_vmprotect(process_handle, keys)
-        if protection == "themida":
-            return self._handle_themida(process_handle, keys)
-        if protection == "obsidium":
-            return self._handle_obsidium(process_handle, keys)
-        if protection == "asprotect":
-            return self._handle_asprotect(process_handle, keys)
-        if protection == "enigma":
-            return self._handle_enigma(process_handle, keys)
-        return keys
-
-    def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle VMProtect protected memory with VM unpacking."""
-        try:
-            import ctypes
-
-            import win32process
-
-            vmp_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(6)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 6, None) and (
-                        test_buffer.raw[:1] == b"h" and test_buffer.raw[5:6] == b"\xe8"
-                    ):
-                        vmp_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in vmp_sections[:10]:
-                try:
-                    vm_buffer = ctypes.create_string_buffer(4096)
-                    win32process.ReadProcessMemory(process_handle, section_addr, vm_buffer, 4096, None)
-                    data = vm_buffer.raw
-                    offset = 0
-                    while offset < len(data) - 10:
-                        if data[offset : offset + 2] == b"H\xb8":
-                            constant = int.from_bytes(data[offset + 2 : offset + 10], "little")
-                            if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append({
-                                    "type": "vmprotect_constant",
-                                    "value": hex(constant),
-                                    "address": section_addr + offset,
-                                })
-                        elif data[offset : offset + 2] == b"H\xc7":
-                            constant = int.from_bytes(data[offset + 3 : offset + 7], "little")
-                            if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append({
-                                    "type": "vmprotect_constant",
-                                    "value": hex(constant),
-                                    "address": section_addr + offset,
-                                })
-                        offset += 1
-                    strings = self._extract_vm_strings(data)
-                    for s in strings:
-                        if self._looks_like_license_string(s):
-                            keys["virtualized_keys"].append({"type": "vmprotect_string", "value": s, "address": section_addr})
-                except Exception as e:
-                    self.logger.debug("VMProtect handler extraction failed:", extra={"e": e})
-            iat_keys = self._reconstruct_vmprotect_iat(process_handle)
-            keys["virtualized_keys"].extend(iat_keys)
-        except Exception as e:
-            self.logger.error("VMProtect handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
-        try:
-            import ctypes
-
-            import win32process
-
-            if kernel32_base := ctypes.windll.kernel32.GetModuleHandleA(b"kernel32.dll"):
-                isdebuggerpresent = ctypes.windll.kernel32.GetProcAddress(kernel32_base, b"IsDebuggerPresent")
-                if isdebuggerpresent:
-                    patch_bytes = b"3\xc0\xc3"
-                    win32process.WriteProcessMemory(process_handle, isdebuggerpresent, patch_bytes, len(patch_bytes), None)
-            secure_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(16)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 16, None) and (
-                        b"SE_PROTECT" in test_buffer.raw or b"EMBED_DATA" in test_buffer.raw
-                    ):
-                        secure_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in secure_sections[:10]:
-                try:
-                    encrypted_buffer = ctypes.create_string_buffer(4096)
-                    win32process.ReadProcessMemory(process_handle, section_addr, encrypted_buffer, 4096, None)
-                    decrypted = self._decrypt_themida_section(encrypted_buffer.raw)
-                    extracted = self._extract_keys_from_memory(decrypted)
-                    for key_data in extracted:
-                        key_data["protection"] = "themida"
-                        keys["obfuscated_keys"].append(key_data)
-                except Exception as e:
-                    self.logger.debug("Themida section decryption failed:", extra={"e": e})
-            wrapped_apis = self._extract_themida_wrapped_apis(process_handle)
-            keys["virtualized_keys"].extend(wrapped_apis)
-        except Exception as e:
-            self.logger.error("Themida handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Obsidium protected memory."""
-        try:
-            import ctypes
-            import zlib
-
-            import win32process
-
-            obsidium_base = None
-            for addr in range(4194304, 2147483647, 65536):
-                try:
-                    test_buffer = ctypes.create_string_buffer(32)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 32, None) and (
-                        b"Obsidium" in test_buffer.raw or b"obsidium" in test_buffer.raw
-                    ):
-                        obsidium_base = addr
-                        break
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            if obsidium_base:
-                compressed_buffer = ctypes.create_string_buffer(65536)
-                win32process.ReadProcessMemory(process_handle, obsidium_base, compressed_buffer, 65536, None)
-                try:
-                    decompressed = zlib.decompress(compressed_buffer.raw[256:])
-                    extracted = self._extract_keys_from_memory(decompressed)
-                    for key_data in extracted:
-                        key_data["protection"] = "obsidium"
-                        keys["obfuscated_keys"].append(key_data)
-                except (zlib.error, ValueError, struct.error):
-                    extracted = self._extract_keys_from_memory(compressed_buffer.raw)
-                    for key_data in extracted:
-                        key_data["protection"] = "obsidium"
-                        keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("Obsidium handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle ASProtect protected memory."""
-        try:
-            import ctypes
-
-            import win32process
-
-            asprotect_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(16)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 16, None) and test_buffer.raw[:4] == b"ASPr":
-                        asprotect_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in asprotect_sections[:5]:
-                encrypted_buffer = ctypes.create_string_buffer(4096)
-                win32process.ReadProcessMemory(process_handle, section_addr, encrypted_buffer, 4096, None)
-                xor_key = section_addr >> 8 & 255
-                decrypted = bytes(b ^ xor_key for b in encrypted_buffer.raw)
-                extracted = self._extract_keys_from_memory(decrypted)
-                for key_data in extracted:
-                    key_data["protection"] = "asprotect"
-                    keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("ASProtect handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Enigma Protector protected memory."""
-        try:
-            import ctypes
-
-            import win32process
-
-            enigma_reg_addr = None
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(32)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 32, None) and (
-                        b"EnigmaProtector" in test_buffer.raw or b"REG_KEY" in test_buffer.raw
-                    ):
-                        enigma_reg_addr = addr
-                        break
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            if enigma_reg_addr:
-                reg_buffer = ctypes.create_string_buffer(4096)
-                win32process.ReadProcessMemory(process_handle, enigma_reg_addr, reg_buffer, 4096, None)
-                extracted = self._extract_keys_from_memory(reg_buffer.raw)
-                for key_data in extracted:
-                    key_data["protection"] = "enigma"
-                    keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("Enigma handling failed:", extra={"e": e})
-        return keys
-
-    def _is_obfuscated(self, data: bytes) -> bool:
-        """Check if memory data appears obfuscated."""
-        if len(data) < 100:
-            return False
-        entropy = self._calculate_entropy(data[:1000])
-        if entropy > 7.5:
-            return True
-        xor_patterns = [85, 170, 255, 0]
-        for pattern in xor_patterns:
-            test_data = bytes(b ^ pattern for b in data[:100])
-            if b"LICENSE" in test_data or b"ACTIVATION" in test_data:
-                return True
-        return b"\x00" in data[::2] and b"\x00" not in data[1::2]
-
-    def _deobfuscate_memory(self, data: bytes) -> bytes:
-        """Deobfuscate memory data using multiple techniques."""
-        results = []
-        for xor_key in [0, 85, 170, 255, 19, 55, 66, 105, 136, 204]:
-            deobfuscated = bytes(b ^ xor_key for b in data)
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        for key_len in [4, 8, 16]:
-            key = data[:key_len]
-            deobfuscated = bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        for rot in [1, 13, 47]:
-            deobfuscated = bytes(b + rot & 255 for b in data)
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        return results[0] if results else data
-
-    def _extract_xor_encoded_keys(self, data: bytes) -> list:
-        """Extract XOR-encoded license keys."""
-        keys = []
-        xor_keys = [0, 19, 55, 66, 85, 105, 136, 170, 204, 255]
-        for xor_key in xor_keys:
-            decoded = bytes([b ^ xor_key for b in data])
-            import re
-
-            key_pattern = b"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}"
-            matches = re.findall(key_pattern, decoded)
-            for match in matches:
-                key = match.decode("utf-8", errors="ignore")
-                if self._validate_product_key(key):
-                    keys.append({"type": "obfuscated", "value": key, "encoding": f"xor_{xor_key:02x}"})
-        return keys
-
-    def _extract_themida_constants(self, data: bytes) -> list:
-        """Extract Themida encrypted constants."""
-        keys = []
-        marker = b"MZ\x90\x00"
-        offset = 0
-        while offset < len(data) - 32:
-            if data[offset : offset + 4] == marker:
-                block = data[offset : offset + 32]
-                decrypted = self._decrypt_themida_block(block)
-                if decrypted and self._looks_like_license_data(decrypted):
-                    keys.append({
-                        "type": "obfuscated",
-                        "value": decrypted.decode("utf-8", errors="ignore"),
-                        "protection": "themida",
-                    })
-            offset += 1
-        return keys
-
-    def _extract_vmprotect_strings(self, data: bytes) -> list:
-        """Extract VMProtect virtualized string references."""
-        keys = []
-        offset = 0
-        while offset < len(data) - 8:
-            if data[offset] == 72 and data[offset + 1] == 141:
-                str_offset = int.from_bytes(data[offset + 3 : offset + 7], "little")
-                if 0 < str_offset < len(data) - 100:
-                    str_data = data[str_offset : str_offset + 100]
-                    null_pos = str_data.find(b"\x00")
-                    if null_pos > 0:
-                        potential_string = str_data[:null_pos]
-                        try:
-                            decoded = potential_string.decode("utf-8")
-                            if self._looks_like_license_string(decoded):
-                                keys.append({
-                                    "type": "virtualized",
-                                    "value": decoded,
-                                    "protection": "vmprotect",
-                                })
-                        except Exception as e:
-                            logger.warning("Error decoding potential license string: %s", e)
-            offset += 1
-        return keys
-
-    def _is_protected_region(self, mem_info: Any) -> bool:
-        """Check if memory region is protected."""
-        if hasattr(mem_info, "Protect"):
-            PAGE_EXECUTE_READWRITE = 64
-            PAGE_EXECUTE_WRITECOPY = 128
-            PAGE_NOACCESS = 1
-            if mem_info.Protect in [PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY]:
-                return True
-            if mem_info.Protect == PAGE_NOACCESS:
-                return True
-        return False
-
-    def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
-        """Unpack protected memory region."""
-        if data[:2] == b"UPX":
-            return self._unpack_upx(data)
-        if data[:4] == b"`\xe8\x00\x00":
-            return self._unpack_generic(data)
-        if self._is_encrypted_region(data):
-            return self._decrypt_region(process_handle, mem_info, data)
-        return data
-
-    def _unpack_upx(self, data: bytes) -> bytes:
-        """Unpack UPX compressed data."""
-        try:
-            import subprocess
-            import tempfile
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-                f.write(data)
-                temp_path = f.name
-            subprocess.run(["upx", "-d", temp_path], capture_output=True)
-            with open(temp_path, "rb") as f:
-                unpacked = f.read()
-            return unpacked
-        except (OSError, subprocess.SubprocessError):
-            return data
-
-    def _unpack_generic(self, data: bytes) -> bytes:
-        """Unpack binaries using generic unpacker for common packers."""
-        oep_patterns = [b"a\x8bD$", b"a\xff\xe0", b"a\xffd$"]
-        for pattern in oep_patterns:
-            offset = data.find(pattern)
-            if offset > 0:
-                return data[offset + len(pattern) :]
-        return data
-
-    def _decrypt_region(self, process_handle: Any, mem_info: Any, data: bytes) -> bytes:
-        """Decrypt encrypted memory region.
-
-        Args:
-            process_handle: Handle to the process being analyzed.
-            mem_info: Memory region information object.
-            data: Encrypted memory region data.
-
-        Returns:
-            Decrypted memory region data.
-
-        """
-        decrypted = data
-        possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
-        for key in possible_keys:
-            try:
-                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
-
-                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
-                test_decrypt = cipher.decrypt(data[:100])
-                if self._looks_like_code(test_decrypt):
-                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
-                    decrypted = cipher.decrypt(data)
-                    break
-            except Exception as e:
-                logger.warning("Error during decryption: %s", e)
-        return decrypted
-
-    def _is_encrypted_region(self, data: bytes) -> bool:
-        """Check if region appears encrypted."""
-        entropy = self._calculate_entropy(data[:1000] if len(data) > 1000 else data)
-        return entropy > 7.5
-
-    def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
-        import math
-
-        if not data:
-            return 0
-        freq = {}
-        for byte in data:
-            freq[byte] = freq.get(byte, 0) + 1
-        entropy = 0
-        data_len = len(data)
-        for count in freq.values():
-            if count > 0:
-                probability = count / data_len
-                entropy -= probability * math.log2(probability)
-        return entropy
-
-    def _looks_like_key_constant(self, constant: int) -> bool:
-        """Check if constant could be a license key component."""
-        if constant < 4096 or constant > 2147483647:
-            return False
-        hex_str = hex(constant)
-        return len(set(hex_str[2:])) >= 3
-
-    def _looks_like_license_string(self, s: str) -> bool:
-        """Check if string looks license-related."""
-        if len(s) < 5 or len(s) > 100:
-            return False
-        license_keywords = [
-            "license",
-            "key",
-            "serial",
-            "activation",
-            "product",
-            "registration",
-            "code",
-            "unlock",
-            "auth",
-        ]
-        s_lower = s.lower()
-        return any(keyword in s_lower for keyword in license_keywords)
-
-    def _looks_like_license_data(self, data: bytes) -> bool:
-        """Check if data looks like license information."""
-        try:
-            text = data.decode("utf-8", errors="ignore")
-            return self._looks_like_license_string(text)
-        except (UnicodeDecodeError, AttributeError):
-            return False
-
-    def _contains_license_patterns(self, data: bytes) -> bool:
-        """Check if data contains license-related patterns."""
-        patterns = [b"LICENSE", b"ACTIVATION", b"PRODUCT_KEY", b"SERIAL", b"REGISTRATION"]
-        return any(pattern in data for pattern in patterns)
-
-    def _looks_like_code(self, data: bytes) -> bool:
-        """Check if data looks like executable code."""
-        common_opcodes = [85, 137, 139, 72, 232, 233, 255]
-        opcode_count = sum(bool(b in common_opcodes) for b in data[:50])
-        return opcode_count > 10
-
-    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
-        """Reconstruct VMProtect's virtualized Import Address Table."""
-        keys = []
-        try:
-            import ctypes
-
-            import win32process
-
-            patterns = [b"\xff\x15", b"\xff%", b"H\xff\x15", b"H\xff%"]
-            for base_addr in range(4194304, 5242880, 4096):
-                try:
-                    scan_buffer = ctypes.create_string_buffer(4096)
-                    if win32process.ReadProcessMemory(process_handle, base_addr, scan_buffer, 4096, None):
-                        data = scan_buffer.raw
-                        for pattern in patterns:
-                            offset = 0
-                            while True:
-                                offset = data.find(pattern, offset)
-                                if offset == -1:
-                                    break
-                                if len(data) > offset + len(pattern) + 4:
-                                    indirect_addr = int.from_bytes(
-                                        data[offset + len(pattern) : offset + len(pattern) + 4],
-                                        "little",
-                                    )
-                                    try:
-                                        api_buffer = ctypes.create_string_buffer(256)
-                                        if win32process.ReadProcessMemory(process_handle, indirect_addr, api_buffer, 256, None):
-                                            api_data = api_buffer.raw
-                                            if self._looks_like_api_name(api_data):
-                                                api_name = api_data.split(b"\x00")[0].decode("utf-8", errors="ignore")
-                                                if "license" in api_name.lower() or "crypt" in api_name.lower():
-                                                    keys.append({
-                                                        "type": "virtualized",
-                                                        "value": api_name,
-                                                        "address": base_addr + offset,
-                                                        "iat_entry": indirect_addr,
-                                                    })
-                                    except Exception as e:
-                                        logger.warning("Error extracting API information: %s", e)
-                                offset += len(pattern)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-        except Exception as e:
-            self.logger.debug("IAT reconstruction failed:", extra={"e": e})
-        return keys
-
-    def _extract_vm_strings(self, data: bytes) -> list:
-        """Extract strings from VM handler code."""
-        strings = []
-        current_string = b""
-        for i in range(len(data)):
-            byte = data[i]
-            if 32 <= byte <= 126:
-                current_string += bytes([byte])
-            else:
-                if len(current_string) >= 5:
-                    try:
-                        decoded = current_string.decode("utf-8")
-                        strings.append(decoded)
-                    except Exception as e:
-                        logger.warning("Error decoding string: %s", e)
-                current_string = b""
-        return strings
-
-    def _decrypt_themida_section(self, data: bytes) -> bytes:
-        """Decrypt Themida encrypted section."""
-        key_seed = sum(data[:4]) & 255
-        decrypted = bytearray(len(data))
-        key = key_seed
-        for i in range(len(data)):
-            decrypted[i] = data[i] ^ key
-            key = key + 1 & 255
-        return bytes(decrypted)
-
-    def _decrypt_themida_block(self, block: bytes) -> bytes:
-        """Decrypt a Themida encrypted block."""
-        key = block[:4]
-        data = block[4:]
-        decrypted = bytearray()
-        for i in range(len(data)):
-            decrypted.append(data[i] ^ key[i % 4])
-        return bytes(decrypted)
-
-    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
-        """Extract Themida wrapped API information."""
-        wrapped_apis = []
-        try:
-            import ctypes
-
-            import win32process
-
-            thunk_pattern = b"h\x00\x00\x00\x00\xe9"
-            for addr in range(4194304, 5242880, 4096):
-                try:
-                    buffer = ctypes.create_string_buffer(4096)
-                    if win32process.ReadProcessMemory(process_handle, addr, buffer, 4096, None):
-                        data = buffer.raw
-                        offset = 0
-                        while True:
-                            offset = data.find(thunk_pattern, offset)
-                            if offset == -1:
-                                break
-                            api_addr = int.from_bytes(data[offset + 1 : offset + 5], "little")
-                            if api_addr > 4194304:
-                                wrapped_apis.append({
-                                    "type": "virtualized",
-                                    "value": f"wrapped_api_0x{api_addr:08x}",
-                                    "protection": "themida",
-                                    "thunk_addr": addr + offset,
-                                })
-                            offset += 6
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-        except Exception as e:
-            logger.warning("Error extracting wrapped APIs: %s", e)
-        return wrapped_apis
-
-    def _looks_like_api_name(self, data: bytes) -> bool:
-        """Check if data looks like an API name."""
-        try:
-            text = data[:50].split(b"\x00")[0].decode("ascii")
-            api_prefixes = [
-                "Create",
-                "Open",
-                "Read",
-                "Write",
-                "Get",
-                "Set",
-                "Reg",
-                "Crypt",
-                "Virtual",
-                "Load",
-                "Find",
-            ]
-            return any(text.startswith(prefix) for prefix in api_prefixes)
-        except (UnicodeDecodeError, AttributeError):
-            return False
-
     def _generate_hook_handler(self, api_name: str, original_addr: int) -> bytes:
         """Generate x64 assembly hook handler code for API interception."""
         handler_code = bytearray()
@@ -5276,7 +4679,7 @@ class RuntimeKeyExtractor:
         handler_code.extend([255, 224])
         return bytes(handler_code)
 
-    def _hook_unix_apis(self, pid: int) -> dict:
+    def _hook_unix_apis(self, pid: int) -> dict[str, Any]:
         """Intercept Unix system calls for license monitoring."""
         hooked_data = {"system_calls": [], "file_operations": [], "network_calls": []}
         try:
@@ -5295,635 +4698,33 @@ class RuntimeKeyExtractor:
             logger.warning("Error extracting system calls from hook data: %s", e)
         return hooked_data
 
-    def _detect_memory_protection(self, process_handle: int) -> str | None:
-        """Detect memory protection scheme (VMProtect, Themida, etc.)."""
-        if platform.system() == "Windows":
-            import ctypes
+    def _enumerate_memory_regions(self, process_handle: int) -> list[tuple[int, int]]:
+        """Enumerate readable memory regions of a process."""
+        import ctypes
+        from ctypes import wintypes
 
-            import win32process
+        regions: list[tuple[int, int]] = []
+        address = 0
+        kernel32 = ctypes.windll.kernel32
 
-            protection_signatures = {
-                "vmprotect": [b"VMProtect", b".vmp0", b".vmp1", b".vmp2"],
-                "themida": [b"Themida", b"WinLicense", b".themida", b".wlprot"],
-                "obsidium": [b"Obsidium", b".obsid"],
-                "asprotect": [b"ASProtect", b".aspr"],
-                "enigma": [b"Enigma", b".enigma1"],
-            }
-            try:
-                dos_header = ctypes.create_string_buffer(64)
-                win32process.ReadProcessMemory(process_handle, 4194304, dos_header, 64, None)
-                scan_buffer = ctypes.create_string_buffer(65536)
-                win32process.ReadProcessMemory(process_handle, 4194304, scan_buffer, 65536, None)
-                scan_data = scan_buffer.raw
-                for protection_name, signatures in protection_signatures.items():
-                    for sig in signatures:
-                        if sig in scan_data:
-                            return protection_name
-                pe_header_offset = int.from_bytes(dos_header.raw[60:64], "little")
-                if pe_header_offset > 0 and pe_header_offset < 4096:
-                    pe_buffer = ctypes.create_string_buffer(512)
-                    win32process.ReadProcessMemory(process_handle, 4194304 + pe_header_offset, pe_buffer, 512, None)
-                    num_sections = int.from_bytes(pe_buffer.raw[6:8], "little")
-                    section_header_offset = pe_header_offset + 248
-                    for i in range(min(num_sections, 10)):
-                        section_buffer = ctypes.create_string_buffer(40)
-                        win32process.ReadProcessMemory(
-                            process_handle,
-                            4194304 + section_header_offset + i * 40,
-                            section_buffer,
-                            40,
-                            None,
-                        )
-                        section_name = section_buffer.raw[:8].rstrip(b"\x00")
-                        if section_name in [b".vmp0", b".vmp1", b".vmp2"]:
-                            return "vmprotect"
-                        if section_name in [b".themida", b".winlic"]:
-                            return "themida"
-                        if section_name in [b".enigma1", b".enigma2"]:
-                            return "enigma"
-                        if section_name in [b".aspack", b".adata"]:
-                            return "asprotect"
-            except Exception as e:
-                self.logger.debug("Protection detection failed:", extra={"e": e})
-        return None
-
-    def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle specific memory protection schemes."""
-        if protection == "vmprotect":
-            return self._handle_vmprotect(process_handle, keys)
-        if protection == "themida":
-            return self._handle_themida(process_handle, keys)
-        if protection == "obsidium":
-            return self._handle_obsidium(process_handle, keys)
-        if protection == "asprotect":
-            return self._handle_asprotect(process_handle, keys)
-        if protection == "enigma":
-            return self._handle_enigma(process_handle, keys)
-        return keys
-
-    def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle VMProtect protected memory with VM unpacking."""
-        try:
-            import ctypes
-
-            import win32process
-
-            vmp_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(6)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 6, None) and (
-                        test_buffer.raw[:1] == b"h" and test_buffer.raw[5:6] == b"\xe8"
-                    ):
-                        vmp_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in vmp_sections[:10]:
-                try:
-                    vm_buffer = ctypes.create_string_buffer(4096)
-                    win32process.ReadProcessMemory(process_handle, section_addr, vm_buffer, 4096, None)
-                    data = vm_buffer.raw
-                    offset = 0
-                    while offset < len(data) - 10:
-                        if data[offset : offset + 2] == b"H\xb8":
-                            constant = int.from_bytes(data[offset + 2 : offset + 10], "little")
-                            if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append({
-                                    "type": "vmprotect_constant",
-                                    "value": hex(constant),
-                                    "address": section_addr + offset,
-                                })
-                        elif data[offset : offset + 2] == b"H\xc7":
-                            constant = int.from_bytes(data[offset + 3 : offset + 7], "little")
-                            if self._looks_like_key_constant(constant):
-                                keys["virtualized_keys"].append({
-                                    "type": "vmprotect_constant",
-                                    "value": hex(constant),
-                                    "address": section_addr + offset,
-                                })
-                        offset += 1
-                    strings = self._extract_vm_strings(data)
-                    for s in strings:
-                        if self._looks_like_license_string(s):
-                            keys["virtualized_keys"].append({"type": "vmprotect_string", "value": s, "address": section_addr})
-                except Exception as e:
-                    self.logger.debug("VMProtect handler extraction failed:", extra={"e": e})
-            iat_keys = self._reconstruct_vmprotect_iat(process_handle)
-            keys["virtualized_keys"].extend(iat_keys)
-        except Exception as e:
-            self.logger.error("VMProtect handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
-        try:
-            import ctypes
-
-            import win32process
-
-            if kernel32_base := ctypes.windll.kernel32.GetModuleHandleA(b"kernel32.dll"):
-                isdebuggerpresent = ctypes.windll.kernel32.GetProcAddress(kernel32_base, b"IsDebuggerPresent")
-                if isdebuggerpresent:
-                    patch_bytes = b"3\xc0\xc3"
-                    win32process.WriteProcessMemory(process_handle, isdebuggerpresent, patch_bytes, len(patch_bytes), None)
-            secure_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(16)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 16, None) and (
-                        b"SE_PROTECT" in test_buffer.raw or b"EMBED_DATA" in test_buffer.raw
-                    ):
-                        secure_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in secure_sections[:10]:
-                try:
-                    encrypted_buffer = ctypes.create_string_buffer(4096)
-                    win32process.ReadProcessMemory(process_handle, section_addr, encrypted_buffer, 4096, None)
-                    decrypted = self._decrypt_themida_section(encrypted_buffer.raw)
-                    extracted = self._extract_keys_from_memory(decrypted)
-                    for key_data in extracted:
-                        key_data["protection"] = "themida"
-                        keys["obfuscated_keys"].append(key_data)
-                except Exception as e:
-                    self.logger.debug("Themida section decryption failed:", extra={"e": e})
-            wrapped_apis = self._extract_themida_wrapped_apis(process_handle)
-            keys["virtualized_keys"].extend(wrapped_apis)
-        except Exception as e:
-            self.logger.error("Themida handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Obsidium protected memory."""
-        try:
-            import ctypes
-            import zlib
-
-            import win32process
-
-            obsidium_base = None
-            for addr in range(4194304, 2147483647, 65536):
-                try:
-                    test_buffer = ctypes.create_string_buffer(32)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 32, None) and (
-                        b"Obsidium" in test_buffer.raw or b"obsidium" in test_buffer.raw
-                    ):
-                        obsidium_base = addr
-                        break
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            if obsidium_base:
-                compressed_buffer = ctypes.create_string_buffer(65536)
-                win32process.ReadProcessMemory(process_handle, obsidium_base, compressed_buffer, 65536, None)
-                try:
-                    decompressed = zlib.decompress(compressed_buffer.raw[256:])
-                    extracted = self._extract_keys_from_memory(decompressed)
-                    for key_data in extracted:
-                        key_data["protection"] = "obsidium"
-                        keys["obfuscated_keys"].append(key_data)
-                except (zlib.error, ValueError, struct.error):
-                    extracted = self._extract_keys_from_memory(compressed_buffer.raw)
-                    for key_data in extracted:
-                        key_data["protection"] = "obsidium"
-                        keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("Obsidium handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle ASProtect protected memory."""
-        try:
-            import ctypes
-
-            import win32process
-
-            asprotect_sections = []
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(16)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 16, None) and test_buffer.raw[:4] == b"ASPr":
-                        asprotect_sections.append(addr)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            for section_addr in asprotect_sections[:5]:
-                encrypted_buffer = ctypes.create_string_buffer(4096)
-                win32process.ReadProcessMemory(process_handle, section_addr, encrypted_buffer, 4096, None)
-                xor_key = section_addr >> 8 & 255
-                decrypted = bytes(b ^ xor_key for b in encrypted_buffer.raw)
-                extracted = self._extract_keys_from_memory(decrypted)
-                for key_data in extracted:
-                    key_data["protection"] = "asprotect"
-                    keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("ASProtect handling failed:", extra={"e": e})
-        return keys
-
-    def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
-        """Handle Enigma Protector protected memory."""
-        try:
-            import ctypes
-
-            import win32process
-
-            enigma_reg_addr = None
-            for addr in range(4194304, 2147483647, 4096):
-                try:
-                    test_buffer = ctypes.create_string_buffer(32)
-                    if win32process.ReadProcessMemory(process_handle, addr, test_buffer, 32, None) and (
-                        b"EnigmaProtector" in test_buffer.raw or b"REG_KEY" in test_buffer.raw
-                    ):
-                        enigma_reg_addr = addr
-                        break
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-            if enigma_reg_addr:
-                reg_buffer = ctypes.create_string_buffer(4096)
-                win32process.ReadProcessMemory(process_handle, enigma_reg_addr, reg_buffer, 4096, None)
-                extracted = self._extract_keys_from_memory(reg_buffer.raw)
-                for key_data in extracted:
-                    key_data["protection"] = "enigma"
-                    keys["obfuscated_keys"].append(key_data)
-        except Exception as e:
-            self.logger.debug("Enigma handling failed:", extra={"e": e})
-        return keys
-
-    def _is_obfuscated(self, data: bytes) -> bool:
-        """Check if memory data appears obfuscated."""
-        if len(data) < 100:
-            return False
-        entropy = self._calculate_entropy(data[:1000])
-        if entropy > 7.5:
-            return True
-        xor_patterns = [85, 170, 255, 0]
-        for pattern in xor_patterns:
-            test_data = bytes(b ^ pattern for b in data[:100])
-            if b"LICENSE" in test_data or b"ACTIVATION" in test_data:
-                return True
-        return b"\x00" in data[::2] and b"\x00" not in data[1::2]
-
-    def _deobfuscate_memory(self, data: bytes) -> bytes:
-        """Deobfuscate memory data using multiple techniques."""
-        results = []
-        for xor_key in [0, 85, 170, 255, 19, 55, 66, 105, 136, 204]:
-            deobfuscated = bytes(b ^ xor_key for b in data)
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        for key_len in [4, 8, 16]:
-            key = data[:key_len]
-            deobfuscated = bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        for rot in [1, 13, 47]:
-            deobfuscated = bytes(b + rot & 255 for b in data)
-            if self._contains_license_patterns(deobfuscated):
-                results.append(deobfuscated)
-        return results[0] if results else data
-
-    def _extract_xor_encoded_keys(self, data: bytes) -> list:
-        """Extract XOR-encoded license keys."""
-        keys = []
-        xor_keys = [0, 19, 55, 66, 85, 105, 136, 170, 204, 255]
-        for xor_key in xor_keys:
-            decoded = bytes([b ^ xor_key for b in data])
-            import re
-
-            key_pattern = b"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}"
-            matches = re.findall(key_pattern, decoded)
-            for match in matches:
-                key = match.decode("utf-8", errors="ignore")
-                if self._validate_product_key(key):
-                    keys.append({"type": "obfuscated", "value": key, "encoding": f"xor_{xor_key:02x}"})
-        return keys
-
-    def _extract_themida_constants(self, data: bytes) -> list:
-        """Extract Themida encrypted constants."""
-        keys = []
-        marker = b"MZ\x90\x00"
-        offset = 0
-        while offset < len(data) - 32:
-            if data[offset : offset + 4] == marker:
-                block = data[offset : offset + 32]
-                decrypted = self._decrypt_themida_block(block)
-                if decrypted and self._looks_like_license_data(decrypted):
-                    keys.append({
-                        "type": "obfuscated",
-                        "value": decrypted.decode("utf-8", errors="ignore"),
-                        "protection": "themida",
-                    })
-            offset += 1
-        return keys
-
-    def _extract_vmprotect_strings(self, data: bytes) -> list:
-        """Extract VMProtect virtualized string references."""
-        keys = []
-        offset = 0
-        while offset < len(data) - 8:
-            if data[offset] == 72 and data[offset + 1] == 141:
-                str_offset = int.from_bytes(data[offset + 3 : offset + 7], "little")
-                if 0 < str_offset < len(data) - 100:
-                    str_data = data[str_offset : str_offset + 100]
-                    null_pos = str_data.find(b"\x00")
-                    if null_pos > 0:
-                        potential_string = str_data[:null_pos]
-                        try:
-                            decoded = potential_string.decode("utf-8")
-                            if self._looks_like_license_string(decoded):
-                                keys.append({
-                                    "type": "virtualized",
-                                    "value": decoded,
-                                    "protection": "vmprotect",
-                                })
-                        except Exception as e:
-                            logger.warning("Error decoding potential license string: %s", e)
-            offset += 1
-        return keys
-
-    def _is_protected_region(self, mem_info: Any) -> bool:
-        """Check if memory region is protected."""
-        if hasattr(mem_info, "Protect"):
-            PAGE_EXECUTE_READWRITE = 64
-            PAGE_EXECUTE_WRITECOPY = 128
-            PAGE_NOACCESS = 1
-            if mem_info.Protect in [PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY]:
-                return True
-            if mem_info.Protect == PAGE_NOACCESS:
-                return True
-        return False
-
-    def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
-        """Unpack protected memory region."""
-        if data[:2] == b"UPX":
-            return self._unpack_upx(data)
-        if data[:4] == b"`\xe8\x00\x00":
-            return self._unpack_generic(data)
-        if self._is_encrypted_region(data):
-            return self._decrypt_region(process_handle, mem_info, data)
-        return data
-
-    def _unpack_upx(self, data: bytes) -> bytes:
-        """Unpack UPX compressed data."""
-        try:
-            import subprocess
-            import tempfile
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-                f.write(data)
-                temp_path = f.name
-            subprocess.run(["upx", "-d", temp_path], capture_output=True)
-            with open(temp_path, "rb") as f:
-                unpacked = f.read()
-            return unpacked
-        except (OSError, subprocess.SubprocessError):
-            return data
-
-    def _unpack_generic(self, data: bytes) -> bytes:
-        """Unpack binaries using generic unpacker for common packers."""
-        oep_patterns = [b"a\x8bD$", b"a\xff\xe0", b"a\xffd$"]
-        for pattern in oep_patterns:
-            offset = data.find(pattern)
-            if offset > 0:
-                return data[offset + len(pattern) :]
-        return data
-
-    def _decrypt_region(self, process_handle: Any, mem_info: Any, data: bytes) -> bytes:
-        """Decrypt encrypted memory region.
-
-        Args:
-            process_handle: Handle to the process being analyzed.
-            mem_info: Memory region information object.
-            data: Encrypted memory region data.
-
-        Returns:
-            Decrypted memory region data.
-
-        """
-        decrypted = data
-        possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
-        for key in possible_keys:
-            try:
-                from Crypto.Cipher import ARC4  # noqa: S413 lgtm[py/weak-cryptographic-algorithm] RC4 required for analyzing legacy protection encryption
-
-                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
-                test_decrypt = cipher.decrypt(data[:100])
-                if self._looks_like_code(test_decrypt):
-                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
-                    decrypted = cipher.decrypt(data)
-                    break
-            except Exception as e:
-                logger.warning("Error during decryption: %s", e)
-        return decrypted
-
-    def _is_encrypted_region(self, data: bytes) -> bool:
-        """Check if region appears encrypted."""
-        entropy = self._calculate_entropy(data[:1000] if len(data) > 1000 else data)
-        return entropy > 7.5
-
-    def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
-        import math
-
-        if not data:
-            return 0
-        freq = {}
-        for byte in data:
-            freq[byte] = freq.get(byte, 0) + 1
-        entropy = 0
-        data_len = len(data)
-        for count in freq.values():
-            if count > 0:
-                probability = count / data_len
-                entropy -= probability * math.log2(probability)
-        return entropy
-
-    def _looks_like_key_constant(self, constant: int) -> bool:
-        """Check if constant could be a license key component."""
-        if constant < 4096 or constant > 2147483647:
-            return False
-        hex_str = hex(constant)
-        return len(set(hex_str[2:])) >= 3
-
-    def _looks_like_license_string(self, s: str) -> bool:
-        """Check if string looks license-related."""
-        if len(s) < 5 or len(s) > 100:
-            return False
-        license_keywords = [
-            "license",
-            "key",
-            "serial",
-            "activation",
-            "product",
-            "registration",
-            "code",
-            "unlock",
-            "auth",
-        ]
-        s_lower = s.lower()
-        return any(keyword in s_lower for keyword in license_keywords)
-
-    def _looks_like_license_data(self, data: bytes) -> bool:
-        """Check if data looks like license information."""
-        try:
-            text = data.decode("utf-8", errors="ignore")
-            return self._looks_like_license_string(text)
-        except (UnicodeDecodeError, AttributeError):
-            return False
-
-    def _contains_license_patterns(self, data: bytes) -> bool:
-        """Check if data contains license-related patterns."""
-        patterns = [b"LICENSE", b"ACTIVATION", b"PRODUCT_KEY", b"SERIAL", b"REGISTRATION"]
-        return any(pattern in data for pattern in patterns)
-
-    def _looks_like_code(self, data: bytes) -> bool:
-        """Check if data looks like executable code."""
-        common_opcodes = [85, 137, 139, 72, 232, 233, 255]
-        opcode_count = sum(bool(b in common_opcodes) for b in data[:50])
-        return opcode_count > 10
-
-    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
-        """Reconstruct VMProtect's virtualized Import Address Table."""
-        keys = []
-        try:
-            import ctypes
-
-            import win32process
-
-            patterns = [b"\xff\x15", b"\xff%", b"H\xff\x15", b"H\xff%"]
-            for base_addr in range(4194304, 5242880, 4096):
-                try:
-                    scan_buffer = ctypes.create_string_buffer(4096)
-                    if win32process.ReadProcessMemory(process_handle, base_addr, scan_buffer, 4096, None):
-                        data = scan_buffer.raw
-                        for pattern in patterns:
-                            offset = 0
-                            while True:
-                                offset = data.find(pattern, offset)
-                                if offset == -1:
-                                    break
-                                if len(data) > offset + len(pattern) + 4:
-                                    indirect_addr = int.from_bytes(
-                                        data[offset + len(pattern) : offset + len(pattern) + 4],
-                                        "little",
-                                    )
-                                    try:
-                                        api_buffer = ctypes.create_string_buffer(256)
-                                        if win32process.ReadProcessMemory(process_handle, indirect_addr, api_buffer, 256, None):
-                                            api_data = api_buffer.raw
-                                            if self._looks_like_api_name(api_data):
-                                                api_name = api_data.split(b"\x00")[0].decode("utf-8", errors="ignore")
-                                                if "license" in api_name.lower() or "crypt" in api_name.lower():
-                                                    keys.append({
-                                                        "type": "virtualized",
-                                                        "value": api_name,
-                                                        "address": base_addr + offset,
-                                                        "iat_entry": indirect_addr,
-                                                    })
-                                    except Exception as e:
-                                        logger.warning("Error extracting API information: %s", e)
-                                offset += len(pattern)
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-        except Exception as e:
-            self.logger.debug("IAT reconstruction failed:", extra={"e": e})
-        return keys
-
-    def _extract_vm_strings(self, data: bytes) -> list:
-        """Extract strings from VM handler code."""
-        strings = []
-        current_string = b""
-        for i in range(len(data)):
-            byte = data[i]
-            if 32 <= byte <= 126:
-                current_string += bytes([byte])
-            else:
-                if len(current_string) >= 5:
-                    try:
-                        decoded = current_string.decode("utf-8")
-                        strings.append(decoded)
-                    except Exception as e:
-                        logger.warning("Error decoding string: %s", e)
-                current_string = b""
-        return strings
-
-    def _decrypt_themida_section(self, data: bytes) -> bytes:
-        """Decrypt Themida encrypted section."""
-        key_seed = sum(data[:4]) & 255
-        decrypted = bytearray(len(data))
-        key = key_seed
-        for i in range(len(data)):
-            decrypted[i] = data[i] ^ key
-            key = key + 1 & 255
-        return bytes(decrypted)
-
-    def _decrypt_themida_block(self, block: bytes) -> bytes:
-        """Decrypt a Themida encrypted block."""
-        key = block[:4]
-        data = block[4:]
-        decrypted = bytearray()
-        for i in range(len(data)):
-            decrypted.append(data[i] ^ key[i % 4])
-        return bytes(decrypted)
-
-    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
-        """Extract Themida wrapped API information."""
-        wrapped_apis = []
-        try:
-            import ctypes
-
-            import win32process
-
-            thunk_pattern = b"h\x00\x00\x00\x00\xe9"
-            for addr in range(4194304, 5242880, 4096):
-                try:
-                    buffer = ctypes.create_string_buffer(4096)
-                    if win32process.ReadProcessMemory(process_handle, addr, buffer, 4096, None):
-                        data = buffer.raw
-                        offset = 0
-                        while True:
-                            offset = data.find(thunk_pattern, offset)
-                            if offset == -1:
-                                break
-                            api_addr = int.from_bytes(data[offset + 1 : offset + 5], "little")
-                            if api_addr > 4194304:
-                                wrapped_apis.append({
-                                    "type": "virtualized",
-                                    "value": f"wrapped_api_0x{api_addr:08x}",
-                                    "protection": "themida",
-                                    "thunk_addr": addr + offset,
-                                })
-                            offset += 6
-                except Exception as e:
-                    logger.warning("Error during memory analysis: %s", e)
-                    continue
-        except Exception as e:
-            logger.warning("Error extracting wrapped APIs: %s", e)
-        return wrapped_apis
-
-    def _looks_like_api_name(self, data: bytes) -> bool:
-        """Check if data looks like an API name."""
-        try:
-            text = data[:50].split(b"\x00")[0].decode("ascii")
-            api_prefixes = [
-                "Create",
-                "Open",
-                "Read",
-                "Write",
-                "Get",
-                "Set",
-                "Reg",
-                "Crypt",
-                "Virtual",
-                "Load",
-                "Find",
+        class MemoryBasicInformation(ctypes.Structure):
+            _fields_ = [
+                ("BaseAddress", ctypes.c_void_p),
+                ("AllocationBase", ctypes.c_void_p),
+                ("AllocationProtect", wintypes.DWORD),
+                ("RegionSize", ctypes.c_size_t),
+                ("State", wintypes.DWORD),
+                ("Protect", wintypes.DWORD),
+                ("Type", wintypes.DWORD),
             ]
-            return any(text.startswith(prefix) for prefix in api_prefixes)
-        except (UnicodeDecodeError, AttributeError):
-            return False
+
+        mbi = MemoryBasicInformation()
+        mbi_size = ctypes.sizeof(mbi)
+        while kernel32.VirtualQueryEx(process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), mbi_size):
+            if mbi.State == 4096 and mbi.Protect in [32, 64, 4, 2]:
+                regions.append((mbi.BaseAddress, mbi.RegionSize))
+            address = mbi.BaseAddress + mbi.RegionSize
+        return regions
 
 
 class FridaKeyExtractor:
@@ -5940,16 +4741,16 @@ class FridaKeyExtractor:
         else:
             self.available = True
 
-    def inject_extraction_script(self, process_name: str) -> dict:
+    def inject_extraction_script(self, process_name: str) -> dict[str, Any]:
         """Inject JavaScript extraction script into target process."""
-        if not self.available:
+        if not self.available or frida is None:
             return {"error": "Frida not available"}
         try:
             session = frida.attach(process_name)
             self.sessions[process_name] = session
             script_code = self._generate_extraction_script()
             script = session.create_script(script_code)
-            extracted_data = {"keys": [], "endpoints": [], "functions": []}
+            extracted_data: dict[str, list[Any]] = {"keys": [], "endpoints": [], "functions": []}
 
             def on_message(message: dict[str, Any], data: None) -> None:
                 if message["type"] == "send":
@@ -5974,7 +4775,7 @@ class FridaKeyExtractor:
         """Generate Frida JavaScript for key extraction."""
         return "\n        // Hook common license validation functions\n        var licenseModules = Process.enumerateModules().filter(function(m) {\n            return m.name.toLowerCase().includes('license') ||\n                   m.name.toLowerCase().includes('activation') ||\n                   m.name.toLowerCase().includes('auth');\n        });\n\n        // Hook GetProcAddress to catch dynamic function loading\n        var GetProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');\n        if (GetProcAddress) {\n            Interceptor.attach(GetProcAddress, {\n                onEnter: function(args) {\n                    var moduleName = args[0];\n                    var procName = args[1].readCString();\n\n                    if (procName && (\n                        procName.includes('License') ||\n                        procName.includes('Activation') ||\n                        procName.includes('Validate'))) {\n                        send({function: procName});\n                    }\n                },\n                onLeave: function(retval) {\n                    // Function pointer returned\n                }\n            });\n        }\n\n        // Hook registry access for license keys\n        var RegQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');\n        if (RegQueryValueEx) {\n            Interceptor.attach(RegQueryValueEx, {\n                onEnter: function(args) {\n                    this.valueName = args[1].readUtf16String();\n                    this.dataPtr = args[2];\n                },\n                onLeave: function(retval) {\n                    if (retval == 0 && this.valueName) {\n                        if (this.valueName.includes('License') ||\n                            this.valueName.includes('ProductKey')) {\n                            try {\n                                var data = this.dataPtr.readUtf16String();\n                                send({key: {type: 'registry', name: this.valueName, value: data}});\n                            } catch(e) {}\n                        }\n                    }\n                }\n            });\n        }\n\n        // Hook network functions for endpoints\n        var getaddrinfo = Module.findExportByName(null, 'getaddrinfo');\n        if (getaddrinfo) {\n            Interceptor.attach(getaddrinfo, {\n                onEnter: function(args) {\n                    var hostname = args[0].readCString();\n                    if (hostname && (\n                        hostname.includes('license') ||\n                        hostname.includes('activation') ||\n                        hostname.includes('auth'))) {\n                        send({endpoint: hostname});\n                    }\n                }\n            });\n        }\n\n        // Hook SSL_write to capture license data\n        var SSL_write = Module.findExportByName(null, 'SSL_write');\n        if (SSL_write) {\n            Interceptor.attach(SSL_write, {\n                onEnter: function(args) {\n                    var buf = args[1];\n                    var len = args[2].toInt32();\n                    var data = buf.readByteArray(len);\n\n                    // Check for license patterns in SSL data\n                    var str = String.fromCharCode.apply(null, new Uint8Array(data));\n                    if (str.includes('license') || str.includes('activation')) {\n                        // Extract product keys from data\n                        var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                        var matches = str.match(keyPattern);\n                        if (matches) {\n                            matches.forEach(function(key) {\n                                send({key: {type: 'product_key', value: key}});\n                            });\n                        }\n                    }\n                }\n            });\n        }\n\n        // Scan memory for keys\n        Process.enumerateRanges('r--').forEach(function(range) {\n            try {\n                var data = Memory.readByteArray(range.base, Math.min(range.size, 1024 * 1024));\n                var str = String.fromCharCode.apply(null, new Uint8Array(data));\n\n                // Look for product keys\n                var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                var matches = str.match(keyPattern);\n                if (matches) {\n                    matches.forEach(function(key) {\n                        send({key: {type: 'memory_key', value: key}});\n                    });\n                }\n\n                // Look for GUIDs\n                var guidPattern = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;\n                var guids = str.match(guidPattern);\n                if (guids) {\n                    guids.forEach(function(guid) {\n                        send({key: {type: 'guid', value: guid}});\n                    });\n                }\n            } catch(e) {}\n        });\n        "
 
-    def extract_flexlm_runtime(self, process: int) -> dict:
+    def extract_flexlm_runtime(self, process: int) -> dict[str, Any]:
         """Extract FLEXlm keys using Frida.
 
         Args:
@@ -6013,7 +4814,7 @@ class FridaKeyExtractor:
             self.logger.error("FLEXlm extraction failed:", extra={"e": e})
             return {}
 
-    def extract_hasp_runtime(self, process: int) -> dict:
+    def extract_hasp_runtime(self, process: int) -> dict[str, Any]:
         """Extract HASP/Sentinel keys using Frida.
 
         Args:
@@ -6052,7 +4853,7 @@ class FridaKeyExtractor:
             self.logger.error("HASP extraction failed:", extra={"e": e})
             return {}
 
-    def monitor_license_validation(self, process_name: str, duration: int = 10) -> dict:
+    def monitor_license_validation(self, process_name: str, duration: int = 10) -> dict[str, Any]:
         """Monitor a process for license validation activity."""
         if not self.available:
             return {}
@@ -6098,8 +4899,10 @@ class ProtocolStateMachine:
         """
         self.key_extractor = key_extractor
         self.logger = logging.getLogger(f"{__name__}.ProtocolStateMachine")
-        self.states = {}
-        self.current_state = {}
+        self.states: dict[str, Any] = {}
+        self.current_state: dict[str, Any] = {}
+        self.master_key: bytes = os.urandom(32)
+        self.hasp_memory_size: int = 4096
 
     def flexlm_handshake(self, binary_path: str, request_data: bytes) -> bytes:
         """Implement complete FLEXlm protocol handshake."""
@@ -6114,7 +4917,7 @@ class ProtocolStateMachine:
             return self._flexlm_heartbeat_response(keys)
         return self._flexlm_generic_response(keys, request_data)
 
-    def _flexlm_hello_response(self, keys: dict) -> bytes:
+    def _flexlm_hello_response(self, keys: dict[str, Any]) -> bytes:
         """Generate FLEXlm hello response."""
         response = bytearray()
         response.extend(struct.pack(">I", 184549376))
@@ -6129,7 +4932,7 @@ class ProtocolStateMachine:
         response.extend(struct.pack(">I", checksum))
         return bytes(response)
 
-    def _flexlm_vendor_response(self, keys: dict) -> bytes:
+    def _flexlm_vendor_response(self, keys: dict[str, Any]) -> bytes:
         """Generate vendor code response."""
         response = bytearray()
         response.extend(b"VENDOR_OK\x00")
@@ -6147,7 +4950,7 @@ class ProtocolStateMachine:
             response.extend(signature)
         return bytes(response)
 
-    def _flexlm_checkout_response(self, keys: dict, request: bytes) -> bytes:
+    def _flexlm_checkout_response(self, keys: dict[str, Any], request: bytes) -> bytes:
         """Generate license checkout response."""
         feature = b"default"
         version = b"1.0"
@@ -6163,6 +4966,10 @@ class ProtocolStateMachine:
                 version = request[version_start + 8 : version_end]
         response = bytearray()
         response.extend(b"CHECKOUT_OK\x00")
+        license_handle = struct.pack(">I", abs(hash(feature + version)) % 0xFFFFFFFF)
+        response.extend(license_handle)
+        license_serial = struct.pack(">Q", int(time.time() * 1000) & 0xFFFFFFFFFFFFFFFF)
+        response.extend(license_serial)
         response.extend(struct.pack(">H", len(feature)))
         response.extend(feature)
         response.extend(b"\x00")
@@ -6171,8 +4978,10 @@ class ProtocolStateMachine:
         response.extend(b"\x00")
         max_licenses = 65535
         response.extend(struct.pack(">I", max_licenses))
-        expiry = int(time.time()) + 365 * 24 * 3600 * 100
+        expiry = min(int(time.time()) + 365 * 24 * 3600 * 10, 4294967295)
         response.extend(struct.pack(">I", expiry))
+        host_id = hashlib.md5(feature + version + license_serial).digest()[:8]
+        response.extend(host_id)
         if keys.get("vendor_keys"):
             vendor_key = bytes.fromhex(keys["vendor_keys"][0])
             sig_data = feature + version + struct.pack(">I", expiry) + vendor_key
@@ -6189,7 +4998,7 @@ class ProtocolStateMachine:
             response.extend(sig)
         return bytes(response)
 
-    def _flexlm_heartbeat_response(self, keys: dict) -> bytes:
+    def _flexlm_heartbeat_response(self, keys: dict[str, Any]) -> bytes:
         """Generate heartbeat response."""
         response = bytearray()
         response.extend(b"HEARTBEAT_ACK\x00")
@@ -6198,7 +5007,7 @@ class ProtocolStateMachine:
         response.extend(struct.pack(">I", 300))
         return bytes(response)
 
-    def _flexlm_generic_response(self, keys: dict, request: bytes) -> bytes:
+    def _flexlm_generic_response(self, keys: dict[str, Any], request: bytes) -> bytes:
         """Generate generic FLEXlm response."""
         response = bytearray()
         response.extend(struct.pack(">I", 0))
@@ -6216,7 +5025,7 @@ class ProtocolStateMachine:
             response.extend(sig)
         return bytes(response)
 
-    def hasp_state_machine(self, binary_path: str, request_data: bytes, session_id: str = None) -> bytes:
+    def hasp_state_machine(self, binary_path: str, request_data: bytes, session_id: str | None = None) -> bytes:
         """Implement complete HASP/Sentinel protocol state machine."""
         keys = self.key_extractor.extract_hasp_keys(binary_path)
         try:
@@ -6244,7 +5053,7 @@ class ProtocolStateMachine:
             return self._hasp_binary_response(keys, request_data)
         return self._hasp_generic_response(keys, command, session_id)
 
-    def _hasp_login_response(self, keys: dict, session_id: str = None) -> bytes:
+    def _hasp_login_response(self, keys: dict[str, Any], session_id: str | None = None) -> bytes:
         """Generate HASP login response."""
         if not session_id:
             session_data = str(keys).encode() + os.urandom(16)
@@ -6254,34 +5063,34 @@ class ProtocolStateMachine:
             "features": keys.get("feature_ids", [1]),
             "timestamp": time.time(),
         }
-        root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(root, "status")
+        root = ET.Element("haspprotocol")
+        status = ET.SubElement(root, "status")
         status.text = "0"
-        status_msg = DefusedElementTree.SubElement(root, "statusmessage")
+        status_msg = ET.SubElement(root, "statusmessage")
         status_msg.text = "Login successful"
-        session_elem = DefusedElementTree.SubElement(root, "sessionid")
+        session_elem = ET.SubElement(root, "sessionid")
         session_elem.text = session_id
-        handle = DefusedElementTree.SubElement(root, "handle")
+        handle = ET.SubElement(root, "handle")
         handle_value = struct.unpack(">I", hashlib.sha256(session_id.encode()).digest()[:4])[0]
         handle.text = str(handle_value)
-        features_elem = DefusedElementTree.SubElement(root, "features")
+        features_elem = ET.SubElement(root, "features")
         for feature_id in keys.get("feature_ids", [1]):
-            feat = DefusedElementTree.SubElement(features_elem, "feature")
-            id_elem = DefusedElementTree.SubElement(feat, "id")
+            feat = ET.SubElement(features_elem, "feature")
+            id_elem = ET.SubElement(feat, "id")
             id_elem.text = str(feature_id)
-            enabled = DefusedElementTree.SubElement(feat, "enabled")
+            enabled = ET.SubElement(feat, "enabled")
             enabled.text = "true"
-            memory = DefusedElementTree.SubElement(feat, "memory_size")
+            memory = ET.SubElement(feat, "memory_size")
             memory.text = "4096"
-            lic_elem = DefusedElementTree.SubElement(feat, "license")
+            lic_elem = ET.SubElement(feat, "license")
             lic_elem.set("type", "perpetual")
             lic_elem.text = "valid"
-        vendor_elem = DefusedElementTree.SubElement(root, "vendor_code")
+        vendor_elem = ET.SubElement(root, "vendor_code")
         vendor_elem.text = keys.get("vendor_code", "0" * 32)
-        xml_str = DefusedElementTree.tostring(root, encoding="unicode")
+        xml_str = ET.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
-    def _hasp_encrypt_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
+    def _hasp_encrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str) -> bytes:
         """Handle HASP encryption request."""
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -6297,15 +5106,15 @@ class ProtocolStateMachine:
         pad_len = 16 - len(data) % 16
         padded_data = data + bytes([pad_len] * pad_len)
         encrypted = encryptor.update(padded_data) + encryptor.finalize()
-        response_root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(response_root, "status")
+        response_root = ET.Element("haspprotocol")
+        status = ET.SubElement(response_root, "status")
         status.text = "0"
-        encrypted_elem = DefusedElementTree.SubElement(response_root, "encrypted_data")
+        encrypted_elem = ET.SubElement(response_root, "encrypted_data")
         encrypted_elem.text = base64.b64encode(iv + encrypted).decode()
-        xml_str = DefusedElementTree.tostring(response_root, encoding="unicode")
+        xml_str = ET.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
-    def _hasp_binary_response(self, keys: dict, request_data: bytes) -> bytes:
+    def _hasp_binary_response(self, keys: dict[str, Any], request_data: bytes) -> bytes:
         """Handle binary HASP protocol."""
         response = bytearray()
         if len(request_data) >= 4:
@@ -6356,32 +5165,32 @@ class ProtocolStateMachine:
                 response.extend(struct.pack(">I", 0))
         return bytes(response)
 
-    def _hasp_generic_response(self, keys: dict, command: str, session_id: str) -> bytes:
+    def _hasp_generic_response(self, keys: dict[str, Any], command: str, session_id: str) -> bytes:
         """Generate generic HASP response."""
-        root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(root, "status")
+        root = ET.Element("haspprotocol")
+        status = ET.SubElement(root, "status")
         status.text = "0"
-        status_msg = DefusedElementTree.SubElement(root, "statusmessage")
+        status_msg = ET.SubElement(root, "statusmessage")
         status_msg.text = f"Command {command} executed successfully"
         if session_id:
-            session_elem = DefusedElementTree.SubElement(root, "sessionid")
+            session_elem = ET.SubElement(root, "sessionid")
             session_elem.text = session_id
-        xml_str = DefusedElementTree.tostring(root, encoding="unicode")
+        xml_str = ET.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_logout_response(self, session_id: str) -> bytes:
         """Handle HASP logout."""
         if session_id in self.current_state:
             del self.current_state[session_id]
-        root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(root, "status")
+        root = ET.Element("haspprotocol")
+        status = ET.SubElement(root, "status")
         status.text = "0"
-        status_msg = DefusedElementTree.SubElement(root, "statusmessage")
+        status_msg = ET.SubElement(root, "statusmessage")
         status_msg.text = "Logout successful"
-        xml_str = DefusedElementTree.tostring(root, encoding="unicode")
+        xml_str = ET.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
-    def _hasp_decrypt_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
+    def _hasp_decrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str) -> bytes:
         """Handle HASP decryption request."""
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -6400,15 +5209,15 @@ class ProtocolStateMachine:
         decrypted = decryptor.update(ciphertext) + decryptor.finalize()
         pad_len = decrypted[-1]
         data = decrypted[:-pad_len]
-        response_root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(response_root, "status")
+        response_root = ET.Element("haspprotocol")
+        status = ET.SubElement(response_root, "status")
         status.text = "0"
-        data_elem = DefusedElementTree.SubElement(response_root, "data")
+        data_elem = ET.SubElement(response_root, "data")
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = DefusedElementTree.tostring(response_root, encoding="unicode")
+        xml_str = ET.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
-    def _hasp_read_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
+    def _hasp_read_response(self, keys: dict[str, Any], request_data: bytes, session_id: str) -> bytes:
         """Handle HASP memory read."""
         root = DefusedElementTree.fromstring(request_data)
         offset_elem = root.find("offset")
@@ -6421,15 +5230,15 @@ class ProtocolStateMachine:
         for i, fid in enumerate(keys.get("feature_ids", [1])):
             memory[256 + i * 4 : 256 + i * 4 + 4] = struct.pack("<I", fid)
         data = memory[offset : offset + size]
-        response_root = DefusedElementTree.Element("haspprotocol")
-        status = DefusedElementTree.SubElement(response_root, "status")
+        response_root = ET.Element("haspprotocol")
+        status = ET.SubElement(response_root, "status")
         status.text = "0"
-        data_elem = DefusedElementTree.SubElement(response_root, "data")
+        data_elem = ET.SubElement(response_root, "data")
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = DefusedElementTree.tostring(response_root, encoding="unicode")
+        xml_str = ET.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
-    def _hasp_write_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
+    def _hasp_write_response(self, keys: dict[str, Any], request_data: bytes, session_id: str) -> bytes:
         """Handle HASP memory write with full protocol compliance."""
         write_offset = 0
         write_data = b""
@@ -6443,49 +5252,49 @@ class ProtocolStateMachine:
                 write_data = bytes.fromhex(data_elem.text.replace(" ", ""))
         except Exception as e:
             logger.warning("Error parsing HASP write request: %s", e)
-        response_root = DefusedElementTree.Element("haspprotocol")
+        response_root = ET.Element("haspprotocol")
         response_root.set("version", "1.0")
         from datetime import datetime
 
-        timestamp = DefusedElementTree.SubElement(response_root, "timestamp")
+        timestamp = ET.SubElement(response_root, "timestamp")
         timestamp.text = f"{datetime.utcnow().isoformat()}Z"
-        status = DefusedElementTree.SubElement(response_root, "status")
+        status = ET.SubElement(response_root, "status")
         status.text = "0"
-        status_msg = DefusedElementTree.SubElement(response_root, "statusmessage")
+        status_msg = ET.SubElement(response_root, "statusmessage")
         status_msg.text = "Memory write operation completed successfully"
-        write_info = DefusedElementTree.SubElement(response_root, "writeinfo")
-        offset_written = DefusedElementTree.SubElement(write_info, "offset")
+        write_info = ET.SubElement(response_root, "writeinfo")
+        offset_written = ET.SubElement(write_info, "offset")
         offset_written.text = str(write_offset)
-        bytes_written = DefusedElementTree.SubElement(write_info, "bytes_written")
+        bytes_written = ET.SubElement(write_info, "bytes_written")
         bytes_written.text = str(len(write_data))
-        checksum = DefusedElementTree.SubElement(write_info, "checksum")
+        checksum = ET.SubElement(write_info, "checksum")
         import zlib
 
         crc32_value = zlib.crc32(write_data) & 4294967295
         checksum.text = f"0x{crc32_value:08X}"
-        memory_state = DefusedElementTree.SubElement(response_root, "memory_state")
-        total_size = DefusedElementTree.SubElement(memory_state, "total_size")
+        memory_state = ET.SubElement(response_root, "memory_state")
+        total_size = ET.SubElement(memory_state, "total_size")
         total_size.text = str(self.hasp_memory_size)
-        used_size = DefusedElementTree.SubElement(memory_state, "used_size")
+        used_size = ET.SubElement(memory_state, "used_size")
         used_size.text = str(write_offset + len(write_data))
-        available = DefusedElementTree.SubElement(memory_state, "available")
+        available = ET.SubElement(memory_state, "available")
         available.text = str(max(0, self.hasp_memory_size - write_offset - len(write_data)))
-        session = DefusedElementTree.SubElement(response_root, "session")
-        session_valid = DefusedElementTree.SubElement(session, "valid")
+        session = ET.SubElement(response_root, "session")
+        session_valid = ET.SubElement(session, "valid")
         session_valid.text = "true"
-        session_id_elem = DefusedElementTree.SubElement(session, "id")
+        session_id_elem = ET.SubElement(session, "id")
         session_id_elem.text = session_id
-        xml_str = DefusedElementTree.tostring(response_root, encoding="unicode", method="xml")
+        xml_str = ET.tostring(response_root, encoding="unicode", method="xml")
         return f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n{xml_str}'.encode()
 
 
 class ProxyInterceptor:
     """Advanced proxy interceptor for license validation traffic with modification capabilities."""
 
-    def __init__(self, config: dict = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize proxy interceptor with binary analysis capabilities."""
         self.logger = logging.getLogger(f"{__name__}.ProxyInterceptor")
-        self.config = config or {}
+        self.config: dict[str, Any] = config or {}
         self.listen_port = self.config.get("proxy_port", 8888)
         self.ssl_port = self.config.get("ssl_proxy_port", 8443)
         self.transparent_mode = self.config.get("transparent", True)
@@ -6588,7 +5397,7 @@ class ProxyInterceptor:
             logger.warning("Error checking request body for license indicators: %s", e)
         return False
 
-    def _generate_bypass_response(self, request: Any, analysis: dict) -> dict:
+    def _generate_bypass_response(self, request: Any, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate appropriate bypass response based on protocol analysis.
 
         Args:
@@ -6616,7 +5425,7 @@ class ProxyInterceptor:
             return self._generate_xml_response(analysis)
         return self._generate_text_response(analysis)
 
-    def _generate_json_response(self, analysis: dict) -> dict:
+    def _generate_json_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate JSON license validation response based on protocol analysis."""
         import hashlib
         from datetime import datetime, timedelta
@@ -6654,7 +5463,7 @@ class ProxyInterceptor:
         response_data["signature"] = self._sign_response(response_data, license_hash)
         return {"content_type": "application/json", "status_code": 200, "body": response_data}
 
-    def _analyze_product_features(self, product_id: str, version: str) -> dict:
+    def _analyze_product_features(self, product_id: str, version: str) -> dict[str, Any]:
         """Analyze product and return appropriate feature flags."""
         try:
             major_version = int(version.split(".", maxsplit=1)[0]) if "." in version else int(version)
@@ -6691,7 +5500,7 @@ class ProxyInterceptor:
                 features["modules"].append("automation")
         return features
 
-    def _determine_license_type(self, parsed_data: dict) -> str:
+    def _determine_license_type(self, parsed_data: dict[str, Any]) -> str:
         """Determine license type from request data."""
         if "license_type" in parsed_data:
             return parsed_data["license_type"]
@@ -6708,7 +5517,7 @@ class ProxyInterceptor:
             return "subscription"
         return "perpetual"
 
-    def _sign_response(self, response_data: dict, license_hash: bytes) -> str:
+    def _sign_response(self, response_data: dict[str, Any], license_hash: bytes) -> str:
         """Generate cryptographic signature for response."""
         import hmac
 
@@ -6716,24 +5525,24 @@ class ProxyInterceptor:
         response_str = json.dumps(response_data, sort_keys=True)
         return hmac.new(signing_key, response_str.encode(), hashlib.sha256).hexdigest()
 
-    def _generate_xml_response(self, analysis: dict) -> dict:
+    def _generate_xml_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate XML license validation response based on protocol analysis."""
         from datetime import datetime, timedelta
 
         parsed_data = analysis.get("parsed_data", {})
         root_name = self._detect_xml_schema(parsed_data)
-        root = DefusedElementTree.Element(root_name)
+        root = ET.Element(root_name)
         if "namespace" in parsed_data:
             root.set("xmlns", parsed_data["namespace"])
         request_type = self._analyze_xml_request_type(parsed_data)
         if request_type == "validation":
-            status_elem = DefusedElementTree.SubElement(root, "Status")
+            status_elem = ET.SubElement(root, "Status")
             status_elem.text = "Valid"
-            licensed_elem = DefusedElementTree.SubElement(root, "Licensed")
+            licensed_elem = ET.SubElement(root, "Licensed")
             licensed_elem.text = "true"
-            activated_elem = DefusedElementTree.SubElement(root, "Activated")
+            activated_elem = ET.SubElement(root, "Activated")
             activated_elem.text = "true"
-            msg_elem = DefusedElementTree.SubElement(root, "Message")
+            msg_elem = ET.SubElement(root, "Message")
             msg_elem.text = "License validated successfully"
             license_data = parsed_data.get("license", {})
             if isinstance(license_data, dict):
@@ -6741,60 +5550,60 @@ class ProxyInterceptor:
             else:
                 days_valid = 365
             expiry_date = datetime.utcnow() + timedelta(days=days_valid)
-            expiry_elem = DefusedElementTree.SubElement(root, "ExpiryDate")
+            expiry_elem = ET.SubElement(root, "ExpiryDate")
             expiry_elem.text = expiry_date.isoformat()
-            remaining_elem = DefusedElementTree.SubElement(root, "RemainingDays")
+            remaining_elem = ET.SubElement(root, "RemainingDays")
             remaining_elem.text = str(days_valid)
-            type_elem = DefusedElementTree.SubElement(root, "LicenseType")
+            type_elem = ET.SubElement(root, "LicenseType")
             type_elem.text = self._determine_license_type_from_xml(parsed_data)
-            features_elem = DefusedElementTree.SubElement(root, "Features")
+            features_elem = ET.SubElement(root, "Features")
             feature_list = self._extract_xml_features(parsed_data)
             for feature in feature_list:
-                feat_elem = DefusedElementTree.SubElement(features_elem, feature.replace(" ", "_"))
+                feat_elem = ET.SubElement(features_elem, feature.replace(" ", "_"))
                 feat_elem.text = "true"
             if "hardware_id" in parsed_data:
-                hw_elem = DefusedElementTree.SubElement(root, "HardwareID")
+                hw_elem = ET.SubElement(root, "HardwareID")
                 hw_elem.text = str(parsed_data["hardware_id"])
-                hw_valid_elem = DefusedElementTree.SubElement(root, "HardwareValid")
+                hw_valid_elem = ET.SubElement(root, "HardwareValid")
                 hw_valid_elem.text = "true"
         elif request_type == "activation":
-            result_elem = DefusedElementTree.SubElement(root, "ActivationResult")
+            result_elem = ET.SubElement(root, "ActivationResult")
             result_elem.text = "Success"
             activation_data = str(parsed_data).encode()
             activation_hash = hashlib.sha256(activation_data + os.urandom(16)).hexdigest()
-            code_elem = DefusedElementTree.SubElement(root, "ActivationCode")
+            code_elem = ET.SubElement(root, "ActivationCode")
             code_elem.text = activation_hash.upper()[:32]
             if "installation_id" in parsed_data:
-                install_elem = DefusedElementTree.SubElement(root, "InstallationID")
+                install_elem = ET.SubElement(root, "InstallationID")
                 install_elem.text = str(parsed_data["installation_id"])
-            confirm_elem = DefusedElementTree.SubElement(root, "ConfirmationID")
+            confirm_elem = ET.SubElement(root, "ConfirmationID")
             confirm_data = activation_hash.encode() + b"CONFIRM"
             confirm_elem.text = hashlib.sha256(confirm_data).hexdigest().upper()[:48]
         elif request_type == "heartbeat":
-            status_elem = DefusedElementTree.SubElement(root, "HeartbeatStatus")
+            status_elem = ET.SubElement(root, "HeartbeatStatus")
             status_elem.text = "OK"
-            timestamp_elem = DefusedElementTree.SubElement(root, "ServerTime")
+            timestamp_elem = ET.SubElement(root, "ServerTime")
             timestamp_elem.text = datetime.utcnow().isoformat()
-            session_elem = DefusedElementTree.SubElement(root, "SessionValid")
+            session_elem = ET.SubElement(root, "SessionValid")
             session_elem.text = "true"
-            interval_elem = DefusedElementTree.SubElement(root, "NextHeartbeat")
+            interval_elem = ET.SubElement(root, "NextHeartbeat")
             interval_elem.text = "300"
         else:
-            success_elem = DefusedElementTree.SubElement(root, "Success")
+            success_elem = ET.SubElement(root, "Success")
             success_elem.text = "true"
-            status_elem = DefusedElementTree.SubElement(root, "Status")
+            status_elem = ET.SubElement(root, "Status")
             status_elem.text = "OK"
-            time_elem = DefusedElementTree.SubElement(root, "Timestamp")
+            time_elem = ET.SubElement(root, "Timestamp")
             time_elem.text = datetime.utcnow().isoformat()
         if self._requires_signature(parsed_data):
-            sig_elem = DefusedElementTree.SubElement(root, "Signature")
-            sig_data = DefusedElementTree.tostring(root, encoding="unicode")
+            sig_elem = ET.SubElement(root, "Signature")
+            sig_data = ET.tostring(root, encoding="unicode")
             sig_elem.text = hashlib.sha256(sig_data.encode()).hexdigest()
-        xml_str = DefusedElementTree.tostring(root, encoding="unicode", method="xml")
+        xml_str = ET.tostring(root, encoding="unicode", method="xml")
         xml_response = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
         return {"content_type": "application/xml", "status_code": 200, "body": xml_response}
 
-    def _detect_xml_schema(self, parsed_data: dict) -> str:
+    def _detect_xml_schema(self, parsed_data: dict[str, Any]) -> str:
         """Detect XML schema from parsed data."""
         if "root_element" in parsed_data:
             return parsed_data["root_element"]
@@ -6811,7 +5620,7 @@ class ProxyInterceptor:
             return "AuthenticationResponse"
         return "Response"
 
-    def _analyze_xml_request_type(self, parsed_data: dict) -> str:
+    def _analyze_xml_request_type(self, parsed_data: dict[str, Any]) -> str:
         """Analyze XML request to determine type."""
         data_str = str(parsed_data).lower()
         if any(x in data_str for x in ["validate", "verify", "check"]):
@@ -6824,7 +5633,7 @@ class ProxyInterceptor:
             return "authentication"
         return "generic"
 
-    def _determine_license_type_from_xml(self, parsed_data: dict) -> str:
+    def _determine_license_type_from_xml(self, parsed_data: dict[str, Any]) -> str:
         """Determine license type from XML data."""
         if "license_type" in parsed_data:
             return str(parsed_data["license_type"]).title()
@@ -6839,9 +5648,9 @@ class ProxyInterceptor:
             return "Floating"
         return "NodeLocked" if "node" in data_str else "Standard"
 
-    def _extract_xml_features(self, parsed_data: dict) -> list:
+    def _extract_xml_features(self, parsed_data: dict[str, Any]) -> list[str]:
         """Extract feature list from XML parsed data."""
-        features = []
+        features: list[str] = []
         if "features" in parsed_data:
             feat_data = parsed_data["features"]
             if isinstance(feat_data, list):
@@ -6867,14 +5676,14 @@ class ProxyInterceptor:
             features = ["Core", "Basic", "Standard"]
         return features
 
-    def _requires_signature(self, parsed_data: dict) -> bool:
+    def _requires_signature(self, parsed_data: dict[str, Any]) -> bool:
         """Check if XML response requires digital signature."""
         if "require_signature" in parsed_data:
             return bool(parsed_data["require_signature"])
         data_str = str(parsed_data).lower()
         return any(x in data_str for x in ["signature", "signed", "secure", "activation", "certificate", "auth"])
 
-    def _generate_text_response(self, analysis: dict) -> dict:
+    def _generate_text_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate plain text license validation response based on protocol analysis."""
         import hmac
         from datetime import datetime, timedelta
@@ -6962,7 +5771,7 @@ class ProxyInterceptor:
             response_text = "\n".join(response_lines)
         return {"content_type": "text/plain", "status_code": 200, "body": response_text}
 
-    def _generate_flexlm_response(self, analysis: dict) -> dict:
+    def _generate_flexlm_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate FLEXlm protocol response using binary analysis."""
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
@@ -6973,7 +5782,7 @@ class ProxyInterceptor:
             "body": response_data,
         }
 
-    def _get_target_binary(self, analysis: dict) -> str:
+    def _get_target_binary(self, analysis: dict[str, Any]) -> str:
         """Determine target binary from analysis or configuration."""
         parsed_data = analysis.get("parsed_data", {})
         binary_path = parsed_data.get("binary_path")
@@ -7045,7 +5854,7 @@ class ProxyInterceptor:
                 continue
         return os.path.join(str(Path.cwd()), "target.exe")
 
-    def _generate_hasp_response(self, analysis: dict) -> dict:
+    def _generate_hasp_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate HASP/Sentinel protocol response using binary analysis."""
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
@@ -7063,7 +5872,7 @@ class ProxyInterceptor:
                 logger.warning("Error parsing session ID from response: %s", e)
         return {"content_type": "text/xml", "status_code": 200, "body": response_data}
 
-    def _generate_kms_response(self, analysis: dict) -> dict:
+    def _generate_kms_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate Microsoft KMS protocol response."""
         import base64
         from datetime import datetime, timedelta
@@ -7096,7 +5905,7 @@ class ProxyInterceptor:
         key_segments[-1] = last_segment
         return "-".join(key_segments)
 
-    def _generate_adobe_response(self, analysis: dict) -> dict:
+    def _generate_adobe_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate Adobe licensing protocol response using binary analysis."""
         from datetime import datetime, timedelta
 
@@ -7208,43 +6017,7 @@ class ProxyInterceptor:
         }
         return {"content_type": "application/json", "status_code": 200, "body": response}
 
-    def _generate_kms_response(self, analysis: dict) -> dict:
-        """Generate Microsoft KMS protocol response using binary analysis."""
-        from datetime import datetime, timedelta
-
-        binary_path = self._get_target_binary(analysis)
-        if binary_path not in self.binary_cache:
-            self.binary_cache[binary_path] = self._extract_kms_data(binary_path)
-            self.stats["binaries_analyzed"] += 1
-        kms_data = self.binary_cache[binary_path]
-        parsed_data = analysis.get("parsed_data", {})
-        client_machine_id = parsed_data.get("client_machine_id", "")
-        application_id = parsed_data.get("application_id", "")
-        sku_id = parsed_data.get("sku_id", "")
-        kms_count = parsed_data.get("kms_count_requested", 25)
-        activation_id = str(uuid.uuid4())
-        confirmation_id = self._generate_kms_confirmation_id(client_machine_id, application_id, kms_data)
-        product_key = self._generate_kms_product_key_from_binary(kms_data, sku_id)
-        expiry_date = datetime.utcnow() + timedelta(days=180)
-        response = {
-            "activationId": activation_id,
-            "confirmationId": confirmation_id,
-            "productKey": product_key,
-            "status": "activated",
-            "expiryDate": expiry_date.isoformat(),
-            "remainingActivations": 999999,
-            "kmsHost": kms_data.get("kms_host", "kms.domain.local"),
-            "kmsPort": kms_data.get("kms_port", 1688),
-            "clientCount": max(kms_count, kms_data.get("min_clients", 25)),
-            "licenseStatus": 1,
-            "gracePeriodRemaining": 259200,
-            "applicationId": application_id or kms_data.get("app_id", ""),
-            "skuId": sku_id or kms_data.get("sku_id", ""),
-            "kmsProtocolVersion": kms_data.get("protocol_version", 6),
-        }
-        return {"content_type": "application/json", "status_code": 200, "body": response}
-
-    def _extract_kms_data(self, binary_path: str) -> dict:
+    def _extract_kms_data(self, binary_path: str) -> dict[str, Any]:
         """Extract KMS-specific data from Windows binary."""
         if not pefile:
             raise ExtractionError("pefile module not available for KMS extraction")
@@ -7350,7 +6123,7 @@ class ProxyInterceptor:
                                 return os.path.join(root, file)
         return None
 
-    def _extract_kms_from_registry(self) -> dict:
+    def _extract_kms_from_registry(self) -> dict[str, Any]:
         """Extract KMS data from Windows registry."""
         if platform.system() != "Windows" or not winreg:
             return {}
@@ -7452,7 +6225,7 @@ class ProxyInterceptor:
             logger.warning("Error determining KMS protocol version: %s", e)
         return None
 
-    def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict) -> str:
+    def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict[str, Any]) -> str:
         """Generate KMS confirmation ID using proper algorithm."""
         if client_machine_id:
             seed = client_machine_id + application_id
@@ -7466,7 +6239,7 @@ class ProxyInterceptor:
             confirmation_blocks.append(f"{block_num:06d}")
         return "-".join(confirmation_blocks)
 
-    def _generate_kms_product_key_from_binary(self, kms_data: dict, sku_id: str) -> str:
+    def _generate_kms_product_key_from_binary(self, kms_data: dict[str, Any], sku_id: str) -> str:
         """Generate KMS product key from binary analysis data."""
         if kms_data.get("gvlk_keys"):
             return kms_data["gvlk_keys"][0]
@@ -7523,7 +6296,7 @@ class ProxyInterceptor:
         self.logger.error("Binary not found:", extra={"binary_path": binary_path})
         return False
 
-    def analyze_binary_for_protection(self, binary_path: str) -> dict:
+    def analyze_binary_for_protection(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine protection type and extract keys."""
         if not os.path.exists(binary_path):
             return {"error": "Binary not found"}
@@ -7563,7 +6336,7 @@ class ProxyInterceptor:
         self.binary_cache[binary_path] = analysis
         return analysis
 
-    def _get_adobe_entitlements(self, subscription_type: str) -> dict:
+    def _get_adobe_entitlements(self, subscription_type: str) -> dict[str, Any]:
         """Get Adobe entitlements based on subscription type."""
         base_entitlements = {
             "storage": {"quota": 20 * 1024 * 1024 * 1024, "used": 0},
@@ -7624,12 +6397,12 @@ class ProxyInterceptor:
             return "annual"
         return "creative_cloud_all"
 
-    def _get_adobe_products(self, product_code: str) -> list:
+    def _get_adobe_products(self, product_code: str) -> list[str]:
         """Get list of Adobe products based on product code."""
         if not product_code:
             return ["all"]
         code_lower = product_code.lower()
-        products = []
+        products: list[str] = []
         if "all" in code_lower or "complete" in code_lower or "master" in code_lower:
             products = [
                 "photoshop",
@@ -7700,7 +6473,7 @@ class ProxyInterceptor:
         }
         return limits.get(subscription_type, 2)
 
-    async def modify_response(self, response_data: bytes, content_type: str = None) -> bytes:
+    async def modify_response(self, response_data: bytes, content_type: str | None = None) -> bytes:
         """Modify response data to ensure license validation succeeds."""
         try:
             if content_type and "json" in content_type:
@@ -7743,7 +6516,7 @@ class ProxyInterceptor:
             self.logger.error("Failed to modify response:", extra={"e": e})
             return response_data
 
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> dict[str, Any]:
         """Get interception statistics."""
         return {
             "proxy_stats": self.stats.copy(),
@@ -7757,10 +6530,10 @@ class ProxyInterceptor:
 class LicenseServerEmulator:
     """Run license server emulator class."""
 
-    def __init__(self, config: dict[str, Any] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize comprehensive license server emulator with all protection systems."""
         self.logger = logging.getLogger(f"{__name__}.Server")
-        self.config = {
+        self.config: dict[str, Any] = {
             "host": "127.0.0.1",
             "port": 8080,
             "ssl_enabled": False,
@@ -7903,7 +6676,7 @@ class LicenseServerEmulator:
                 "recommendations": self._get_bypass_recommendations(analysis),
             }
 
-    def _get_bypass_recommendations(self, analysis: dict) -> list[str]:
+    def _get_bypass_recommendations(self, analysis: dict[str, Any]) -> list[str]:
         """Get bypass recommendations based on protocol analysis."""
         recommendations = []
         protocol = analysis.get("protocol", LicenseType.CUSTOM)
@@ -8157,7 +6930,7 @@ class LicenseServerEmulator:
                 if self.dns_running:
                     self.logger.error("DNS server error:", extra={"e": e})
 
-    def _handle_dns_query(self, data: bytes, addr: tuple) -> None:
+    def _handle_dns_query(self, data: bytes, addr: tuple[str, int]) -> None:
         """Handle individual DNS query."""
         try:
             if len(data) < 12:
@@ -8313,7 +7086,7 @@ class LicenseServerEmulator:
         except Exception as e:
             self.logger.error("SSL server error on port :", extra={"port": port, "e": e})
 
-    def _handle_ssl_connection(self, client_socket: socket.socket, addr: tuple) -> None:
+    def _handle_ssl_connection(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
         """Handle individual SSL connection."""
         try:
             ssl_socket = self.ssl_context.wrap_socket(client_socket, server_side=True)
@@ -8432,7 +7205,7 @@ class LicenseServerInstance:
             if self.server_socket:
                 self.server_socket.close()
 
-    def _handle_client(self, client_socket: socket.socket, addr: tuple) -> None:
+    def _handle_client(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
         """Handle client connections."""
         try:
             if data := client_socket.recv(4096):
@@ -8496,7 +7269,7 @@ class LicenseClientInstance:
         self.socket = None
 
 
-def run_network_license_emulator(config: dict = None) -> None:
+def run_network_license_emulator(config: dict[str, Any] | None = None) -> None:
     """Compatibility function for running the network license emulator."""
     if config is None:
         config = {

@@ -1179,8 +1179,8 @@ def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) ->
         patterns = config.get("patterns", [])
         search_data = data.get("data", b"")
 
-        for _pattern in patterns:
-            if _pattern in search_data:
+        for pattern_ in patterns:
+            if pattern_ in search_data:
                 patterns_found += 1
 
         backend = "cpu"

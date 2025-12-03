@@ -64,7 +64,7 @@ class MemoryOptimizedBinaryLoader:
         self.logger = logging.getLogger(__name__)
         self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB chunks
         self.max_memory = self.config.get("max_memory", 1024 * 1024 * 1024)  # 1GB max
-        self.current_file: object | None = None
+        self.current_file: Any = None
         self.file_size = 0
         self.mapped_file: mmap.mmap | None = None
         self.section_cache: dict[str, bytes] = {}
@@ -223,7 +223,7 @@ class MemoryOptimizedBinaryLoader:
 
         try:
             process = psutil.Process(os.getpid())
-            return process.memory_info().rss
+            return int(process.memory_info().rss)
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error getting memory usage: %s", e)
             return 0
@@ -352,7 +352,7 @@ def run_memory_optimized_analysis(
             - anomalies: Detected anomalies and suspicious patterns
 
     """
-    results = {
+    results: dict[str, Any] = {
         "file_path": file_path,
         "analysis_type": analysis_type,
         "status": "pending",
@@ -383,13 +383,15 @@ def run_memory_optimized_analysis(
 
         # Calculate entropy for packing detection
         overall_entropy = loader.calculate_entropy()
-        results["entropy"]["overall"] = overall_entropy
-        results["entropy"]["bits_per_byte"] = overall_entropy
+        entropy_dict: dict[str, Any] = results["entropy"]
+        entropy_dict["overall"] = overall_entropy
+        entropy_dict["bits_per_byte"] = overall_entropy
 
         # Determine packed probability based on entropy
+        anomalies_list: list[Any] = results["anomalies"]
         if overall_entropy > 7.5:
             results["packed_probability"] = 0.95
-            results["anomalies"].append(
+            anomalies_list.append(
                 {
                     "type": "high_entropy",
                     "severity": "high",
@@ -398,7 +400,7 @@ def run_memory_optimized_analysis(
             )
         elif overall_entropy > 7.0:
             results["packed_probability"] = 0.75
-            results["anomalies"].append(
+            anomalies_list.append(
                 {
                     "type": "elevated_entropy",
                     "severity": "medium",
@@ -418,7 +420,7 @@ def run_memory_optimized_analysis(
 
             for offset, chunk in loader.iterate_file(chunk_size):
                 chunk_entropy = loader.calculate_entropy(chunk)
-                section_info = {
+                section_info: dict[str, Any] = {
                     "offset": offset,
                     "size": len(chunk),
                     "entropy": chunk_entropy,
@@ -446,7 +448,7 @@ def run_memory_optimized_analysis(
 
             # Check for section anomalies
             if suspicious_sections:
-                results["anomalies"].append(
+                anomalies_list.append(
                     {
                         "type": "suspicious_sections",
                         "severity": "medium",
@@ -458,7 +460,8 @@ def run_memory_optimized_analysis(
         # Perform entropy distribution analysis
         if analysis_type in ["full", "entropy"]:
             entropy_samples = []
-            sample_count = min(100, results["file_info"].get("file_size", 0) // chunk_size)
+            file_info_dict: dict[str, Any] = results["file_info"]
+            sample_count = min(100, file_info_dict.get("file_size", 0) // chunk_size)
 
             for i, (_offset, chunk) in enumerate(loader.iterate_file(chunk_size)):
                 if i >= sample_count:
@@ -468,22 +471,22 @@ def run_memory_optimized_analysis(
             if entropy_samples:
                 import statistics
 
-                results["entropy"]["mean"] = statistics.mean(entropy_samples)
-                results["entropy"]["stdev"] = statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
-                results["entropy"]["min"] = min(entropy_samples)
-                results["entropy"]["max"] = max(entropy_samples)
+                entropy_dict["mean"] = statistics.mean(entropy_samples)
+                entropy_dict["stdev"] = statistics.stdev(entropy_samples) if len(entropy_samples) > 1 else 0
+                entropy_dict["min"] = min(entropy_samples)
+                entropy_dict["max"] = max(entropy_samples)
 
                 # Detect entropy anomalies
-                if results["entropy"]["stdev"] < 0.5 and results["entropy"]["mean"] > 7.0:
-                    results["anomalies"].append(
+                if entropy_dict["stdev"] < 0.5 and entropy_dict["mean"] > 7.0:
+                    anomalies_list.append(
                         {
                             "type": "uniform_high_entropy",
                             "severity": "high",
                             "description": "Uniform high entropy across file indicates strong encryption/packing",
                         },
                     )
-                elif results["entropy"]["stdev"] > 2.5:
-                    results["anomalies"].append(
+                elif entropy_dict["stdev"] > 2.5:
+                    anomalies_list.append(
                         {
                             "type": "variable_entropy",
                             "severity": "low",
@@ -496,8 +499,9 @@ def run_memory_optimized_analysis(
 
         # Record performance metrics
         end_time = time.time()
-        results["performance"]["analysis_time"] = end_time - start_time
-        results["performance"]["memory_used"] = loader.get_memory_usage()
+        performance_dict: dict[str, Any] = results["performance"]
+        performance_dict["analysis_time"] = end_time - start_time
+        performance_dict["memory_used"] = loader.get_memory_usage()
         results["status"] = "completed"
 
     except Exception as e:

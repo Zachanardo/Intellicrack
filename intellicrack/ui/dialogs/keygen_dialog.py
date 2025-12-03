@@ -114,7 +114,7 @@ class KeygenWorker(QThread):
         count = self.kwargs.get("count", 10)
         keys = []
 
-        for _i in range(count):
+        for i in range(count):
             if self.should_stop:
                 break
 
@@ -128,14 +128,14 @@ class KeygenWorker(QThread):
                     custom_length=self.kwargs.get("custom_length"),
                     validation_check=False,  # Skip validation for batch to speed up
                 )
-                result["batch_id"] = _i + 1
+                result["batch_id"] = i + 1
                 keys.append(result)
-                self.batch_progress.emit(_i + 1, count)
+                self.batch_progress.emit(i + 1, count)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in keygen_dialog: %s", e)
                 keys.append(
                     {
-                        "batch_id": _i + 1,
+                        "batch_id": i + 1,
                         "key": "",
                         "error": str(e),
                         "algorithm": self.kwargs.get("algorithm", "auto"),
@@ -622,8 +622,8 @@ class KeygenDialog(BaseDialog):
 
             if analysis.get("detected_algorithms"):
                 text += "Detected Algorithms:\n"
-                for _algo in analysis["detected_algorithms"]:
-                    text += f"   {_algo}\n"
+                for algo in analysis["detected_algorithms"]:
+                    text += f"   {algo}\n"
                 text += "\n"
 
             if analysis.get("patterns_found"):
@@ -641,8 +641,8 @@ class KeygenDialog(BaseDialog):
 
             if analysis.get("string_analysis"):
                 text += "License-related Strings Found:\n"
-                for _string_type in analysis["string_analysis"]:
-                    text += f"   {_string_type}\n"
+                for string_type in analysis["string_analysis"]:
+                    text += f"   {string_type}\n"
                 text += "\n"
 
         return text
@@ -743,8 +743,8 @@ class KeygenDialog(BaseDialog):
 
             if validation.get("notes"):
                 text += "  Notes:\n"
-                for _note in validation["notes"]:
-                    text += f"     {_note}\n"
+                for note in validation["notes"]:
+                    text += f"     {note}\n"
             text += "\n"
 
         if "analysis" in result:
@@ -818,8 +818,8 @@ class KeygenDialog(BaseDialog):
                 content += f"# Confidence: {validation['confidence']:.1%}\n"
                 content += f"# Method: {validation['method']}\n"
                 if validation.get("notes"):
-                    for _note in validation["notes"]:
-                        content += f"# Note: {_note}\n"
+                    for note in validation["notes"]:
+                        content += f"# Note: {note}\n"
 
             # Save the file
             with open(file_path, "w", encoding="utf-8") as f:
@@ -1019,23 +1019,23 @@ class KeygenDialog(BaseDialog):
                     with open(file_path, "w", newline="", encoding="utf-8") as f:
                         writer = csv.writer(f)
                         writer.writerow(["ID", "Key", "Algorithm", "Format", "Status"])
-                        for _key_data in self.generated_keys:
+                        for key_data in self.generated_keys:
                             writer.writerow(
                                 [
-                                    _key_data.get("batch_id", ""),
-                                    _key_data.get("key", ""),
-                                    _key_data.get("algorithm", ""),
-                                    _key_data.get("format", ""),
-                                    "Error" if "error" in _key_data else "Generated",
+                                    key_data.get("batch_id", ""),
+                                    key_data.get("key", ""),
+                                    key_data.get("algorithm", ""),
+                                    key_data.get("format", ""),
+                                    "Error" if "error" in key_data else "Generated",
                                 ],
                             )
                 else:  # txt
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(f"License Keys Generated from: {os.path.basename(self.binary_path)}\n")
                         f.write("=" * 60 + "\n\n")
-                        for _key_data in self.generated_keys:
-                            if "error" not in _key_data:
-                                f.write(f"{_key_data.get('key', '')}\n")
+                        for key_data in self.generated_keys:
+                            if "error" not in key_data:
+                                f.write(f"{key_data.get('key', '')}\n")
 
                 self.status_label.setText(f"Keys exported to {os.path.basename(file_path)}")
 
@@ -1050,7 +1050,7 @@ class KeygenDialog(BaseDialog):
             QMessageBox.warning(self, "Warning", "Please enter some existing keys to analyze.")
             return
 
-        keys = [_key.strip() for _key in keys_text.split("\n") if _key.strip()]
+        keys = [key.strip() for key in keys_text.split("\n") if key.strip()]
 
         try:
             from ...utils.exploitation import analyze_existing_keys

@@ -69,9 +69,9 @@ def format_bytes(size: int, precision: int = 2) -> str:
         str: Formatted size string (e.g., "1.23 MB")
 
     """
-    for _unit in ["B", "KB", "MB", "GB", "TB"]:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if size < 1024.0:
-            return f"{size:.{precision}f} {_unit}"
+            return f"{size:.{precision}f} {unit}"
         size /= 1024.0
     return f"{size:.{precision}f} PB"
 
@@ -268,7 +268,7 @@ def is_valid_ip_address(ip: str) -> bool:
     if ipv4_pattern.match(ip):
         # Validate IPv4 octets
         octets = ip.split(".")
-        return all(0 <= int(_octet) <= 255 for _octet in octets)
+        return all(0 <= int(octet) <= 255 for octet in octets)
 
     return bool(ipv6_pattern.match(ip))
 

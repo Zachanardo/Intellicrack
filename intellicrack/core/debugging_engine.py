@@ -210,7 +210,13 @@ class LicenseDebugger:
         logger.debug("LicenseDebugger initialized.")
 
     def _init_license_patterns(self) -> list[bytes]:
-        """Initialize common license validation patterns."""
+        """Initialize common license validation patterns.
+
+        Returns:
+            list[bytes]: A list of byte patterns commonly found in license
+                validation code, including TEST, CMP instructions, API calls,
+                and registry/time check signatures.
+        """
         logger.debug("Initializing common license validation patterns.")
         patterns = [
             # Common license check patterns
@@ -239,7 +245,16 @@ class LicenseDebugger:
         return patterns
 
     def attach_to_process(self, process_id: int) -> bool:
-        """Attach debugger to a running process for license analysis."""
+        """Attach debugger to a running process for license analysis.
+
+        Args:
+            process_id: The Windows process ID to attach the debugger to.
+
+        Returns:
+            bool: True if attachment succeeded and debug loop started,
+                False if debug privilege was unavailable or DebugActiveProcess
+                failed.
+        """
         logger.info(f"Attempting to attach to process ID: {process_id}")
         try:
             # Enable debug privilege
@@ -279,7 +294,12 @@ class LicenseDebugger:
             return False
 
     def _enable_debug_privilege(self) -> bool:
-        """Enable SeDebugPrivilege for process debugging."""
+        """Enable SeDebugPrivilege for process debugging.
+
+        Returns:
+            bool: True if privilege was successfully enabled, False if
+                win32security API unavailable or privilege escalation failed.
+        """
         try:
             import win32api
             import win32security
@@ -464,7 +484,20 @@ class LicenseDebugger:
             return False
 
     def _set_hardware_breakpoint_on_thread(self, thread_id: int, address: int, dr_index: int, access_type: str, size: int) -> bool:
-        """Set hardware breakpoint on specific thread."""
+        """Set hardware breakpoint on specific thread.
+
+        Args:
+            thread_id: The Windows thread ID to set the breakpoint on.
+            address: The memory address to monitor with hardware breakpoint.
+            dr_index: The debug register index (0-3) to use.
+            access_type: Type of access to break on ("execute", "write", "io",
+                or "read_write").
+            size: The size in bytes to monitor (1, 2, 4, or 8).
+
+        Returns:
+            bool: True if hardware breakpoint was set successfully on the
+                thread, False if context retrieval or register update failed.
+        """
         try:
             # Get thread context
             context = self._get_thread_context(thread_id)
@@ -567,7 +600,16 @@ class LicenseDebugger:
             return False
 
     def _clear_hardware_breakpoint_on_thread(self, thread_id: int, dr_index: int) -> bool:
-        """Clear hardware breakpoint on specific thread."""
+        """Clear hardware breakpoint on specific thread.
+
+        Args:
+            thread_id: The Windows thread ID to clear the breakpoint from.
+            dr_index: The debug register index (0-3) to clear.
+
+        Returns:
+            bool: True if hardware breakpoint was cleared successfully,
+                False if context retrieval or register update failed.
+        """
         try:
             context = self._get_thread_context(thread_id)
             if not context:
@@ -618,7 +660,12 @@ class LicenseDebugger:
         ]
 
     def find_license_checks(self) -> list[int]:
-        """Scan process memory for potential license check locations."""
+        """Scan process memory for potential license check locations.
+
+        Returns:
+            list[int]: List of memory addresses where license validation
+                patterns were detected in the debugged process.
+        """
         found_checks = []
 
         try:
@@ -657,7 +704,20 @@ class LicenseDebugger:
             return []
 
     def hook_license_api(self, module_name: str, function_name: str, callback: Callable) -> bool:
-        """Install hook for Windows API licensing functions."""
+        """Install hook for Windows API licensing functions.
+
+        Args:
+            module_name: The Windows DLL module name (e.g., "kernel32",
+                "ntdll").
+            function_name: The exported function name to hook.
+            callback: Callable function to invoke when the API is called,
+                receives thread context and memory state.
+
+        Returns:
+            bool: True if hook was successfully installed, False if the
+                function address could not be resolved or breakpoint could
+                not be set.
+        """
         try:
             # Get module handle
             module = ctypes.WinDLL(module_name)
@@ -862,7 +922,16 @@ class LicenseDebugger:
                     self.set_breakpoint(api_addr, description=f"License API {api_name} imported by {dll_name}")
 
     def _analyze_dll_comprehensive(self, dll_base: int, dll_name: str) -> dict[str, Any]:
-        """Perform comprehensive DLL analysis for license detection."""
+        """Perform comprehensive DLL analysis for license detection.
+
+        Args:
+            dll_base: The base address of the loaded DLL in process memory.
+            dll_name: The name or path of the DLL file being analyzed.
+
+        Returns:
+            dict[str, Any]: Analysis results containing is_license_related,
+                suspicious_score, license_functions, and license_imports.
+        """
         analysis = {
             "is_license_related": False,
             "suspicious_score": 0.0,
@@ -981,7 +1050,17 @@ class LicenseDebugger:
         return analysis
 
     def _analyze_imports(self, dll_base: int, import_dir_rva: int, import_dir_size: int) -> dict[int, str]:
-        """Analyze import table for license-related APIs."""
+        """Analyze import table for license-related APIs.
+
+        Args:
+            dll_base: The base address of the DLL in process memory.
+            import_dir_rva: The relative virtual address of the import directory.
+            import_dir_size: The size of the import directory in bytes.
+
+        Returns:
+            dict[int, str]: Dictionary mapping memory addresses to license-related
+                API function names found in the import table.
+        """
         license_apis = {}
 
         # License-related API names
@@ -1089,7 +1168,17 @@ class LicenseDebugger:
         return license_apis
 
     def _analyze_exports(self, dll_base: int, export_dir_rva: int, export_dir_size: int) -> list[str]:
-        """Analyze export table for license validation functions."""
+        """Analyze export table for license validation functions.
+
+        Args:
+            dll_base: The base address of the DLL in process memory.
+            export_dir_rva: The relative virtual address of the export directory.
+            export_dir_size: The size of the export directory in bytes.
+
+        Returns:
+            list[str]: List of license-related function names found in the
+                DLL's export table.
+        """
         license_exports = []
 
         # Read export directory
@@ -1140,7 +1229,17 @@ class LicenseDebugger:
         return license_exports
 
     def _parse_sections(self, pe_header: bytes, nt_header_offset: int) -> list[dict[str, Any]]:
-        """Parse PE sections."""
+        """Parse PE sections.
+
+        Args:
+            pe_header: The complete PE header data as bytes.
+            nt_header_offset: The offset in pe_header where the NT header begins.
+
+        Returns:
+            list[dict[str, Any]]: List of parsed section headers containing
+                name, virtual_size, virtual_address, raw_size, raw_address,
+                and characteristics fields.
+        """
         sections = []
 
         # Get number of sections
@@ -1172,7 +1271,16 @@ class LicenseDebugger:
         return sections
 
     def _scan_code_patterns(self, code_data: bytes, base_address: int) -> list[int]:
-        """Scan code for license check patterns using advanced analysis."""
+        """Scan code for license check patterns using advanced analysis.
+
+        Args:
+            code_data: The raw code bytes to scan for license check patterns.
+            base_address: The base memory address of the scanned code region.
+
+        Returns:
+            list[int]: List of memory addresses where license validation
+                patterns were detected.
+        """
         found_addresses = []
 
         # Advanced x86/x64 patterns for license checks
@@ -1208,7 +1316,15 @@ class LicenseDebugger:
         return found_addresses
 
     def _extract_license_strings(self, data: bytes) -> list[str]:
-        """Extract license-related strings from data."""
+        """Extract license-related strings from data.
+
+        Args:
+            data: Raw binary data to scan for license-related strings.
+
+        Returns:
+            list[str]: List of extracted license-related strings found in
+                the data.
+        """
         license_strings = []
 
         # License-related string patterns
@@ -1254,7 +1370,16 @@ class LicenseDebugger:
         return license_strings
 
     def _extract_full_string(self, data: bytes, offset: int) -> str:
-        """Extract full null-terminated string from data."""
+        """Extract full null-terminated string from data.
+
+        Args:
+            data: Raw binary data containing the string.
+            offset: The offset within data where the string starts.
+
+        Returns:
+            str: The extracted string decoded from UTF-8 with error handling,
+                or empty string if extraction failed.
+        """
         # Find start of string
         start = offset
         while start > 0 and data[start - 1] >= 32 and data[start - 1] < 127:
@@ -1268,7 +1393,15 @@ class LicenseDebugger:
         return data[start:end].decode("ascii", errors="ignore") if end > start else ""
 
     def _detect_protection_signatures(self, dll_memory: bytes) -> list[str]:
-        """Detect known license protection signatures."""
+        """Detect known license protection signatures.
+
+        Args:
+            dll_memory: Raw binary data from a DLL loaded in process memory.
+
+        Returns:
+            list[str]: List of detected license protection system names
+                (e.g., "SafeNet HASP", "WibuCodeMeter", "Denuvo").
+        """
         protections = []
 
         # Known protection signatures
@@ -1298,7 +1431,16 @@ class LicenseDebugger:
         return protections
 
     def _read_memory(self, address: int, size: int) -> bytes | None:
-        """Read process memory."""
+        """Read process memory.
+
+        Args:
+            address: The virtual memory address to read from.
+            size: The number of bytes to read.
+
+        Returns:
+            bytes | None: The raw bytes read from process memory, or None if
+                no process is attached or read operation failed.
+        """
         if not self.process_handle:
             return None
 
@@ -1311,7 +1453,16 @@ class LicenseDebugger:
         return None
 
     def _write_memory(self, address: int, data: bytes) -> bool:
-        """Write to process memory."""
+        """Write to process memory.
+
+        Args:
+            address: The virtual memory address to write to.
+            data: The raw bytes to write to process memory.
+
+        Returns:
+            bool: True if write succeeded, False if process not attached or
+                write failed.
+        """
         if not self.process_handle:
             return False
 
@@ -1349,7 +1500,12 @@ class LicenseDebugger:
         return success and bytes_written.value == len(data)
 
     def _enumerate_memory_regions(self) -> list[dict[str, Any]]:
-        """Enumerate process memory regions."""
+        """Enumerate process memory regions.
+
+        Returns:
+            list[dict[str, Any]]: List of memory region information containing
+                base address, size, protection flags, and executable status.
+        """
         regions = []
 
         if not self.process_handle:
@@ -1678,7 +1834,18 @@ class LicenseDebugger:
         return None
 
     def _compare_values(self, left: int, operator: str, right: int) -> bool:
-        """Compare two values with given operator."""
+        """Compare two values with given operator.
+
+        Args:
+            left: The left-hand side numeric value to compare.
+            operator: The comparison operator ("==", "!=", "<", "<=", ">",
+                ">=").
+            right: The right-hand side numeric value to compare.
+
+        Returns:
+            bool: True if the comparison evaluates to true, False otherwise
+                or if operator is invalid.
+        """
         comparisons = {
             "==": lambda a, b: a == b,
             "!=": lambda a, b: a != b,
@@ -1691,7 +1858,11 @@ class LicenseDebugger:
         return comparisons[operator](left, right) if operator in comparisons else False
 
     def _restore_breakpoint_silently(self, bp: Breakpoint) -> None:
-        """Restore breakpoint without logging (for conditional breakpoints)."""
+        """Restore breakpoint without logging (for conditional breakpoints).
+
+        Args:
+            bp: The Breakpoint object to restore to process memory.
+        """
         try:
             # Restore original byte temporarily
             self._write_memory(bp.address, bp.original_byte)
@@ -1784,7 +1955,15 @@ class LicenseDebugger:
         return bool(self.kernel32.SetThreadContext(self.thread_handles[thread_id], ctypes.byref(context)))
 
     def _set_single_step(self, thread_id: int) -> bool:
-        """Enable single-step mode for thread."""
+        """Enable single-step mode for thread.
+
+        Args:
+            thread_id: The Windows thread ID to enable single-stepping on.
+
+        Returns:
+            bool: True if single-step mode was successfully enabled, False if
+                thread context could not be retrieved or updated.
+        """
         context = self._get_thread_context(thread_id)
         if not context:
             return False
@@ -1795,7 +1974,16 @@ class LicenseDebugger:
         return self._set_thread_context(thread_id, context)
 
     def _read_string(self, address: int, max_length: int = 260) -> str | None:
-        """Read null-terminated string from process memory."""
+        """Read null-terminated string from process memory.
+
+        Args:
+            address: The memory address to read the string from.
+            max_length: Maximum number of bytes to read (default 260).
+
+        Returns:
+            str | None: The decoded null-terminated string, or None if the
+                address is invalid or memory read failed.
+        """
         if not address:
             return None
 
@@ -1811,20 +1999,49 @@ class LicenseDebugger:
             return None
 
     def attach(self, process_id: int) -> bool:
-        """Alias for attach_to_process for compatibility."""
+        """Alias for attach_to_process for compatibility.
+
+        Args:
+            process_id: The Windows process ID to attach the debugger to.
+
+        Returns:
+            bool: True if attachment succeeded and debug loop started,
+                False otherwise.
+        """
         return self.attach_to_process(process_id)
 
     def continue_execution(self) -> bool:
-        """Continue execution after breakpoint or exception."""
+        """Continue execution after breakpoint or exception.
+
+        Returns:
+            bool: True if a process is attached and debugging is active.
+        """
         return bool(self.process_id and self.debugging)
 
     def single_step(self, thread_id: int | None = None) -> bool:
-        """Execute single instruction step."""
+        """Execute single instruction step.
+
+        Args:
+            thread_id: The thread ID to step through, or None to use main thread.
+
+        Returns:
+            bool: True if single-step was successfully enabled, False if
+                thread ID not found.
+        """
         target_thread = thread_id or self.main_thread_id
         return self._set_single_step(target_thread) if target_thread else False
 
     def get_registers(self, thread_id: int | None = None) -> dict[str, int] | None:
-        """Get CPU registers for thread."""
+        """Get CPU registers for thread.
+
+        Args:
+            thread_id: The thread ID to get registers from, or None to use
+                main thread.
+
+        Returns:
+            dict[str, int] | None: Dictionary mapping register names to their
+                current values, or None if thread not found.
+        """
         target_thread = thread_id or self.main_thread_id
         if not target_thread:
             return None
@@ -1860,7 +2077,17 @@ class LicenseDebugger:
             return None
 
     def set_registers(self, registers: dict[str, int], thread_id: int | None = None) -> bool:
-        """Set CPU registers for thread."""
+        """Set CPU registers for thread.
+
+        Args:
+            registers: Dictionary mapping register names to new values to set.
+            thread_id: The thread ID to update registers for, or None to use
+                main thread.
+
+        Returns:
+            bool: True if registers were successfully updated, False if thread
+                not found or context update failed.
+        """
         target_thread = thread_id or self.main_thread_id
         if not target_thread:
             return False
@@ -1877,11 +2104,28 @@ class LicenseDebugger:
         return self._set_thread_context(target_thread, context)
 
     def read_memory(self, address: int, size: int) -> bytes | None:
-        """Public alias for _read_memory."""
+        """Public alias for _read_memory.
+
+        Args:
+            address: The virtual memory address to read from.
+            size: The number of bytes to read.
+
+        Returns:
+            bytes | None: The raw bytes read from process memory, or None if
+                read failed.
+        """
         return self._read_memory(address, size)
 
     def write_memory(self, address: int, data: bytes) -> bool:
-        """Public alias for _write_memory."""
+        """Public alias for _write_memory.
+
+        Args:
+            address: The virtual memory address to write to.
+            data: The raw bytes to write to process memory.
+
+        Returns:
+            bool: True if write succeeded, False if write failed.
+        """
         return self._write_memory(address, data)
 
     def handle_exception(self, debug_event: object) -> int:
@@ -1897,7 +2141,12 @@ class LicenseDebugger:
         return self._handle_exception(debug_event)
 
     def bypass_anti_debug(self) -> bool:
-        """Bypass common anti-debugging techniques."""
+        """Bypass common anti-debugging techniques.
+
+        Returns:
+            bool: True if bypass techniques were successfully applied,
+                False if no process is attached or patching failed.
+        """
         if not self.process_handle:
             return False
 
@@ -1944,7 +2193,12 @@ class LicenseDebugger:
             return False
 
     def hide_debugger(self) -> bool:
-        """Hide debugger from detection."""
+        """Hide debugger from detection.
+
+        Returns:
+            bool: True if debugger hiding techniques were successfully applied,
+                False if no process is attached or patching failed.
+        """
         if not self.process_handle:
             return False
 
@@ -1988,8 +2242,13 @@ class LicenseDebugger:
     def bypass_output_debug_string(self) -> bool:
         """Bypass OutputDebugString anti-debugging detection.
 
-        Many protectors use OutputDebugString with special strings to detect debuggers.
-        They check if the debugger consumes the string or if it reaches the system handler.
+        Many protectors use OutputDebugString with special strings to detect
+        debuggers. They check if the debugger consumes the string or if it
+        reaches the system handler.
+
+        Returns:
+            bool: True if OutputDebugString bypass was successfully applied,
+                False if no process is attached.
         """
         if not self.process_handle:
             return False
@@ -2095,6 +2354,10 @@ class LicenseDebugger:
         2. Performance counter hooks - Control high-resolution timing
         3. GetTickCount manipulation - Control system tick counts
         4. Time acceleration/deceleration - Adjust time perception
+
+        Returns:
+            bool: True if timing attack mitigations were successfully applied,
+                False if no process is attached or patching failed.
         """
         if not self.process_handle:
             return False
@@ -2302,6 +2565,10 @@ class LicenseDebugger:
 
         Hides debugger threads from enumeration APIs that protectors use
         to detect the presence of debugging threads.
+
+        Returns:
+            bool: True if thread enumeration bypass was successfully applied,
+                False if no process is attached.
         """
         if not self.process_handle:
             return False
@@ -2824,7 +3091,12 @@ class LicenseDebugger:
             return trace_log
 
     def analyze_tls_callbacks(self) -> list[int]:
-        """Analyze Thread Local Storage callbacks."""
+        """Analyze Thread Local Storage callbacks.
+
+        Returns:
+            list[int]: List of memory addresses of detected TLS callbacks in
+                the debugged process.
+        """
         tls_callbacks = []
 
         if not self.process_handle:
@@ -3400,7 +3672,12 @@ class LicenseDebugger:
             return protection_info
 
     def parse_iat(self) -> dict[str, list[tuple[int, str]]]:
-        """Parse Import Address Table."""
+        """Parse Import Address Table.
+
+        Returns:
+            dict[str, list[tuple[int, str]]]: Dictionary mapping DLL names to
+                lists of (address, function_name) tuples for imported APIs.
+        """
         iat_entries = {}
 
         if not self.process_handle:
@@ -3430,7 +3707,12 @@ class LicenseDebugger:
         return iat_entries
 
     def parse_eat(self) -> list[tuple[int, str]]:
-        """Parse Export Address Table."""
+        """Parse Export Address Table.
+
+        Returns:
+            list[tuple[int, str]]: List of (address, function_name) tuples
+                for exported functions from the main module.
+        """
         eat_entries = []
 
         if not self.process_handle:
@@ -4041,7 +4323,16 @@ class LicenseDebugger:
             return b""
 
     def _try_keystone_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
-        """Try to use keystone assembler."""
+        """Try to use keystone assembler.
+
+        Args:
+            mnemonic: Instruction mnemonic (e.g., "mov", "jmp").
+            operands: Instruction operands (e.g., "rax, rbx").
+            arch: Architecture target ("x86" or "x64").
+
+        Returns:
+            bytes: Assembled machine code, or empty bytes if keystone unavailable.
+        """
         try:
             import keystone
 
@@ -4061,7 +4352,16 @@ class LicenseDebugger:
         return b""
 
     def _manual_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
-        """Manual encoding for common instructions."""
+        """Manual encoding for common instructions.
+
+        Args:
+            mnemonic: Instruction mnemonic (e.g., "mov", "jmp", "call").
+            operands: Instruction operands (e.g., "rax, rbx").
+            arch: Architecture target ("x86" or "x64").
+
+        Returns:
+            bytes: Manually encoded machine code bytes.
+        """
         mnemonic = mnemonic.lower()
         is_64bit = arch == "x64"
 
@@ -4096,16 +4396,38 @@ class LicenseDebugger:
         return b""
 
     def _encode_ret(self, operands: str) -> bytes:
-        """Encode RET instruction."""
+        """Encode RET instruction.
+
+        Args:
+            operands: Optional stack adjustment value (e.g., "4").
+
+        Returns:
+            bytes: Encoded RET instruction (with or without stack cleanup).
+        """
         return b"\xc2" + struct.pack("<H", int(operands, 0)) if operands else b"\xc3"
 
     def _encode_int(self, operands: str) -> bytes:
-        """Encode INT instruction."""
+        """Encode INT instruction.
+
+        Args:
+            operands: The interrupt number (e.g., "3" for INT3, "0x80").
+
+        Returns:
+            bytes: Encoded INT instruction.
+        """
         imm = int(operands, 0)
         return b"\xcc" if imm == 3 else b"\xcd" + bytes([imm])
 
     def _encode_push(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode PUSH instruction."""
+        """Encode PUSH instruction.
+
+        Args:
+            operands: Register name (e.g., "rax", "rcx") or immediate.
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded PUSH instruction.
+        """
         if operands in {"rax", "eax"}:
             return b"\x50"
         if operands in {"rcx", "ecx"}:
@@ -4140,7 +4462,15 @@ class LicenseDebugger:
         return b""
 
     def _encode_pop(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode POP instruction."""
+        """Encode POP instruction.
+
+        Args:
+            operands: Register name (e.g., "rax", "rcx").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded POP instruction.
+        """
         if operands in {"rax", "eax"}:
             return b"\x58"
         if operands in {"rcx", "ecx"}:
@@ -4165,7 +4495,15 @@ class LicenseDebugger:
         return b""
 
     def _encode_jmp(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode JMP instruction."""
+        """Encode JMP instruction.
+
+        Args:
+            operands: Target address or register (e.g., "0x400000", "rax").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded JMP instruction.
+        """
         if operands.startswith("0x") or operands.isdigit():
             # JMP to absolute address - need relative offset
             target = int(operands, 0)
@@ -4183,7 +4521,15 @@ class LicenseDebugger:
         return b"\xff\xe3" if operands in {"rbx", "ebx"} else b"\xeb\x00"
 
     def _encode_call(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode CALL instruction."""
+        """Encode CALL instruction.
+
+        Args:
+            operands: Target address or register (e.g., "0x400000", "rax").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded CALL instruction.
+        """
         if operands in {"rax", "eax"}:
             return b"\xff\xd0"  # CALL RAX/EAX
         if operands in {"rbx", "ebx"}:
@@ -4199,7 +4545,15 @@ class LicenseDebugger:
         return b"\xe8\x00\x00\x00\x00"
 
     def _encode_mov(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode MOV instruction."""
+        """Encode MOV instruction.
+
+        Args:
+            operands: Source and destination operands (e.g., "rax, rbx").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded MOV instruction.
+        """
         parts = [p.strip() for p in operands.split(",")]
         if len(parts) == 2:
             dst, src = parts
@@ -4244,7 +4598,15 @@ class LicenseDebugger:
         return b""
 
     def _encode_xor(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode XOR instruction."""
+        """Encode XOR instruction.
+
+        Args:
+            operands: Source and destination operands (e.g., "rax, rax").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded XOR instruction.
+        """
         parts = [p.strip() for p in operands.split(",")]
         if len(parts) == 2 and parts[0] == parts[1]:
             # XOR reg, reg (same register - zero it)
@@ -4264,7 +4626,15 @@ class LicenseDebugger:
         return b""
 
     def _encode_add(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode ADD instruction."""
+        """Encode ADD instruction.
+
+        Args:
+            operands: Source and destination operands (e.g., "rsp, 8").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded ADD instruction.
+        """
         parts = [p.strip() for p in operands.split(",")]
         if len(parts) == 2:
             dst, src = parts
@@ -4282,7 +4652,15 @@ class LicenseDebugger:
         return b""
 
     def _encode_sub(self, operands: str, is_64bit: bool) -> bytes:
-        """Encode SUB instruction."""
+        """Encode SUB instruction.
+
+        Args:
+            operands: Source and destination operands (e.g., "rsp, 8").
+            is_64bit: True for x64 architecture, False for x86.
+
+        Returns:
+            bytes: Encoded SUB instruction.
+        """
         parts = [p.strip() for p in operands.split(",")]
         if len(parts) == 2:
             dst, src = parts
@@ -4360,6 +4738,9 @@ class LicenseDebugger:
         Returns:
             Relative offset bytes
 
+        Raises:
+            ValueError: If offset is too large for the instruction size or
+                instruction_size is invalid.
         """
         # Calculate relative offset
         # Offset is calculated from the end of the instruction
@@ -4369,8 +4750,7 @@ class LicenseDebugger:
             # Short jump (8-bit offset)
             if -128 <= offset <= 127:
                 return struct.pack("b", offset)
-            else:
-                raise ValueError(f"Offset {offset} too large for short jump")
+            raise ValueError(f"Offset {offset} too large for short jump")
         elif instruction_size == 5:
             # Near jump (32-bit offset)
             if -2147483648 <= offset <= 2147483647:
@@ -5028,7 +5408,12 @@ class LicenseDebugger:
         return bytes(sled[:length])
 
     def detach(self) -> bool:
-        """Detach debugger from process."""
+        """Detach debugger from process.
+
+        Returns:
+            bool: True if detachment succeeded, False if no process
+                was attached.
+        """
         if not self.process_id:
             return False
 
@@ -5061,7 +5446,16 @@ class LicenseDebugger:
         return success
 
     def install_veh_handler(self, first_handler: bool = True) -> bool:
-        """Install Vectored Exception Handler for advanced exception handling."""
+        """Install Vectored Exception Handler for advanced exception handling.
+
+        Args:
+            first_handler: If True, install as first handler; if False,
+                install as last handler.
+
+        Returns:
+            bool: True if VEH handler was successfully installed, False if
+                installation failed.
+        """
         try:
             # Setup AddVectoredExceptionHandler
             self.kernel32.AddVectoredExceptionHandler.argtypes = [
@@ -5152,7 +5546,12 @@ class LicenseDebugger:
             return False
 
     def uninstall_veh_handler(self) -> bool:
-        """Remove installed VEH handler."""
+        """Remove installed VEH handler.
+
+        Returns:
+            bool: True if VEH handler was successfully removed, False if
+                no handler was installed or removal failed.
+        """
         if not self.veh_handle:
             return False
 
@@ -5373,23 +5772,45 @@ class LicenseDebugger:
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def register_exception_filter(self, exception_code: int, filter_func: Callable) -> None:
-        """Register a custom exception filter."""
+        """Register a custom exception filter.
+
+        Args:
+            exception_code: Windows exception code to filter (e.g., 0xC0000005).
+            filter_func: Callable that returns True to handle, False to pass on.
+        """
         self.exception_filters[exception_code] = filter_func
         logger.info(f"Registered exception filter for code 0x{exception_code:X}")
 
     def unregister_exception_filter(self, exception_code: int) -> None:
-        """Remove a registered exception filter."""
+        """Remove a registered exception filter.
+
+        Args:
+            exception_code: Windows exception code to unregister.
+        """
         if exception_code in self.exception_filters:
             del self.exception_filters[exception_code]
             logger.info(f"Unregistered exception filter for code 0x{exception_code:X}")
 
     def register_exception_callback(self, exception_code: int, callback: Callable) -> None:
-        """Register callback for specific exception type."""
+        """Register callback for specific exception type.
+
+        Args:
+            exception_code: Windows exception code to handle.
+            callback: Callable to invoke when exception occurs.
+        """
         self.exception_callbacks[exception_code] = callback
         logger.info(f"Registered exception callback for code 0x{exception_code:X}")
 
     def manipulate_veh_chain(self, new_position: int) -> bool:
-        """Manipulate position in VEH chain."""
+        """Manipulate position in VEH chain.
+
+        Args:
+            new_position: Position in handler chain (1 = first, 0 = last).
+
+        Returns:
+            bool: True if repositioning succeeded, False if VEH not installed
+                or repositioning failed.
+        """
         if not self.veh_handle:
             logger.error("No VEH handler installed")
             return False
@@ -5412,7 +5833,16 @@ class LicenseDebugger:
             return False
 
     def enable_single_stepping(self, thread_id: int | None = None) -> bool:
-        """Enable single-step mode for instruction tracing."""
+        """Enable single-step mode for instruction tracing.
+
+        Args:
+            thread_id: The thread ID to enable single-stepping on, or None for
+                main thread.
+
+        Returns:
+            bool: True if single-stepping was enabled, False if thread not
+                found or context update failed.
+        """
         target_thread = thread_id or self.main_thread_id
 
         if not target_thread:
@@ -5439,7 +5869,16 @@ class LicenseDebugger:
             return False
 
     def disable_single_stepping(self, thread_id: int | None = None) -> bool:
-        """Disable single-step mode."""
+        """Disable single-step mode.
+
+        Args:
+            thread_id: The thread ID to disable single-stepping on, or None
+                for main thread.
+
+        Returns:
+            bool: True if single-stepping was disabled, False if thread not
+                found or context update failed.
+        """
         target_thread = thread_id or self.main_thread_id
 
         if not target_thread:
@@ -5472,7 +5911,20 @@ class LicenseDebugger:
         callback: Callable | None = None,
         use_guard_page: bool = False,
     ) -> bool:
-        """Set memory access breakpoint using VEH and guard pages."""
+        """Set memory access breakpoint using VEH and guard pages.
+
+        Args:
+            address: The memory address to monitor.
+            size: The size of the region to monitor in bytes.
+            access_type: Type of access to break on ("read", "write", "io").
+            callback: Optional callable to invoke when breakpoint hits.
+            use_guard_page: If True, use guard page protection; else use
+                hardware debug registers.
+
+        Returns:
+            bool: True if memory breakpoint was successfully set, False
+                otherwise.
+        """
         try:
             if use_guard_page:
                 # Use guard page protection for memory breakpoint

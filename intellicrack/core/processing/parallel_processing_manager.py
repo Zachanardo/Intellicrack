@@ -245,8 +245,8 @@ class ParallelProcessingManager:
             self.result_queue = multiprocessing.Queue()
 
             # Add tasks to queue
-            for _task in self.tasks:
-                self.task_queue.put(_task)
+            for task in self.tasks:
+                self.task_queue.put(task)
 
             # Add sentinel tasks to signal workers to exit
             for __ in range(self.num_workers):
@@ -254,11 +254,11 @@ class ParallelProcessingManager:
 
             # Start workers
             self.workers = []
-            for _i in range(self.num_workers):
+            for i in range(self.num_workers):
                 worker = multiprocessing.Process(
                     target=self._worker_process,
                     args=(
-                        _i,
+                        i,
                         self.task_queue,
                         self.result_queue,
                         self.binary_path,
@@ -376,19 +376,19 @@ class ParallelProcessingManager:
 
         # Search for patterns
         matches = []
-        for _pattern in patterns:
+        for pattern in patterns:
             try:
-                pattern_bytes = _pattern.encode() if isinstance(_pattern, str) else _pattern
-                for _match in re.finditer(re.escape(pattern_bytes), chunk_data):
+                pattern_bytes = pattern.encode() if isinstance(pattern, str) else pattern
+                for match in re.finditer(re.escape(pattern_bytes), chunk_data):
                     matches.append(
                         {
-                            "pattern": _pattern,
-                            "position": chunk_start + _match.start(),
-                            "match": _match.group(),
+                            "pattern": pattern,
+                            "position": chunk_start + match.start(),
+                            "match": match.group(),
                         },
                     )
             except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("Error processing pattern %s: %s", _pattern, e)
+                logger.warning("Error processing pattern %s: %s", pattern, e)
 
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {"matches": matches, "patterns_found": len(matches)}
@@ -413,20 +413,20 @@ class ParallelProcessingManager:
 
         # Calculate entropy for sliding windows
         window_results = []
-        for _i in range(0, len(chunk_data) - window_size + 1, window_size // 2):  # 50% overlap
-            window_data = chunk_data[_i : _i + window_size]
+        for i in range(0, len(chunk_data) - window_size + 1, window_size // 2):  # 50% overlap
+            window_data = chunk_data[i : i + window_size]
             window_entropy = self._calculate_entropy(window_data)
 
             window_results.append(
                 {
-                    "offset": chunk_start + _i,
+                    "offset": chunk_start + i,
                     "size": len(window_data),
                     "entropy": window_entropy,
                 },
             )
 
         # Find high entropy regions
-        high_entropy_regions = [_w for _w in window_results if _w["entropy"] > 7.0]  # High entropy threshold
+        high_entropy_regions = [w for w in window_results if w["entropy"] > 7.0]  # High entropy threshold
 
         logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
@@ -445,7 +445,7 @@ class ParallelProcessingManager:
 
         counts = Counter(data)
         total = len(data)
-        return -sum((_count / total) * math.log2(_count / total) for _count in counts.values())
+        return -sum((count / total) * math.log2(count / total) for count in counts.values())
 
     def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
         """Process a section analysis task."""
@@ -461,7 +461,7 @@ class ParallelProcessingManager:
         try:
             pe = pefile.PE(binary_path)
 
-            section = next((_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None)
+            section = next((s for s in pe.sections if s.Name.decode().strip("\x00") == section_name), None)
             if not section:
                 return {"error": f"Section {section_name} not found"}
 
@@ -486,9 +486,9 @@ class ParallelProcessingManager:
                 # String extraction for this chunk
                 chunk_strings = []
                 current_string = b""
-                for _byte in chunk_data:
-                    if 32 <= _byte <= 126:  # Printable ASCII
-                        current_string += bytes([_byte])
+                for byte in chunk_data:
+                    if 32 <= byte <= 126:  # Printable ASCII
+                        current_string += bytes([byte])
                     else:
                         if len(current_string) >= min_length:
                             chunk_strings.append(current_string.decode("ascii"))
@@ -563,9 +563,9 @@ class ParallelProcessingManager:
             target_address = None
             try:
                 # Try to resolve function by name in symbols
-                for _sym in proj.loader.main_object.symbols:
-                    if _sym.name == target_function and _sym.type == "function":
-                        target_address = _sym.rebased_addr
+                for sym in proj.loader.main_object.symbols:
+                    if sym.name == target_function and sym.type == "function":
+                        target_address = sym.rebased_addr
                         break
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error resolving function address: {e!s}")
@@ -713,7 +713,7 @@ class ParallelProcessingManager:
                     worker_id, task, result = self.result_queue.get(timeout=1.0)
                 except queue.Empty:
                     # Check if all workers are still alive
-                    if not any(_worker.is_alive() for _worker in self.workers):
+                    if not any(worker.is_alive() for worker in self.workers):
                         self.logger.error("All workers have died")
                         break
                     continue
@@ -745,8 +745,8 @@ class ParallelProcessingManager:
                 tasks_remaining -= 1
 
             # Wait for workers to finish
-            for _worker in self.workers:
-                _worker.join(timeout=1.0)
+            for worker in self.workers:
+                worker.join(timeout=1.0)
 
             self.running = False
             self.logger.info("Collected results")
@@ -769,12 +769,12 @@ class ParallelProcessingManager:
 
         try:
             # Terminate workers
-            for _worker in self.workers:
-                _worker.terminate()
+            for worker in self.workers:
+                worker.terminate()
 
             # Wait for workers to terminate
-            for _worker in self.workers:
-                _worker.join(timeout=1.0)
+            for worker in self.workers:
+                worker.join(timeout=1.0)
 
             # Clear queues
             if self.task_queue:
@@ -834,16 +834,16 @@ class ParallelProcessingManager:
 
         # Add tasks for each chunk
         self.tasks = []
-        for _offset in range(0, file_size, chunk_size):
+        for offset in range(0, file_size, chunk_size):
             task = {
                 "id": len(self.tasks),
                 "type": "find_patterns",
                 "params": {
                     "patterns": patterns,
-                    "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size),
+                    "chunk_start": offset,
+                    "chunk_end": min(offset + chunk_size, file_size),
                 },
-                "description": f"Pattern search in chunk at offset {_offset}",
+                "description": f"Pattern search in chunk at offset {offset}",
             }
             self.tasks.append(task)
 
@@ -858,9 +858,9 @@ class ParallelProcessingManager:
         # Process and combine results
         all_matches = []
         if "find_patterns" in self.results["task_results"]:
-            for _result in self.results["task_results"]["find_patterns"]:
-                if _result.get("success", False) and "matches" in _result:
-                    all_matches.extend(_result["matches"])
+            for result in self.results["task_results"]["find_patterns"]:
+                if result.get("success", False) and "matches" in result:
+                    all_matches.extend(result["matches"])
 
         # Sort by position
         all_matches.sort(key=lambda x: x["position"])
@@ -891,16 +891,16 @@ class ParallelProcessingManager:
 
         # Add tasks for each chunk
         self.tasks = []
-        for _offset in range(0, file_size, chunk_size):
+        for offset in range(0, file_size, chunk_size):
             task = {
                 "id": len(self.tasks),
                 "type": "analyze_entropy",
                 "params": {
                     "window_size": window_size,
-                    "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size),
+                    "chunk_start": offset,
+                    "chunk_end": min(offset + chunk_size, file_size),
                 },
-                "description": f"Entropy analysis of chunk at offset {_offset}",
+                "description": f"Entropy analysis of chunk at offset {offset}",
             }
             self.tasks.append(task)
 
@@ -917,10 +917,10 @@ class ParallelProcessingManager:
         chunk_entropies = []
 
         if "analyze_entropy" in self.results["task_results"]:
-            for _result in self.results["task_results"]["analyze_entropy"]:
-                if _result.get("success", False):
-                    chunk_entropies.append((_result["chunk_entropy"], _result["chunk_size"]))
-                    all_windows.extend(_result.get("windows", []))
+            for result in self.results["task_results"]["analyze_entropy"]:
+                if result.get("success", False):
+                    chunk_entropies.append((result["chunk_entropy"], result["chunk_size"]))
+                    all_windows.extend(result.get("windows", []))
 
         # Sort windows by offset
         all_windows.sort(key=lambda x: x["offset"])
@@ -930,7 +930,7 @@ class ParallelProcessingManager:
         overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
 
         # Find high entropy regions
-        high_entropy_regions = [_w for _w in all_windows if _w["entropy"] > 7.0]
+        high_entropy_regions = [w for w in all_windows if w["entropy"] > 7.0]
 
         return {
             "overall_entropy": overall_entropy,

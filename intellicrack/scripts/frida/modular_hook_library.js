@@ -4265,8 +4265,8 @@ const modularHookLibrary = {
                     global.stalkerSessions.maxSessions = 5;
                 }
             } else if (metrics.cpu > 80 && global.stalkerSessions) {
-                         global.stalkerSessions.maxSessions = 1;
-                   }
+                global.stalkerSessions.maxSessions = 1;
+            }
         };
 
         // Start monitoring

@@ -199,8 +199,8 @@ class HelpDocumentationWidget(QWidget):
         layout.addWidget(self.tutorial_viewer)
 
         # Connect tutorial selection
-        for _i in range(self.tutorial_tabs.count()):
-            list_widget = self.tutorial_tabs.widget(_i)
+        for i in range(self.tutorial_tabs.count()):
+            list_widget = self.tutorial_tabs.widget(i)
             list_widget.itemClicked.connect(self.on_tutorial_selected)
 
         return widget
@@ -443,8 +443,8 @@ class HelpDocumentationWidget(QWidget):
             "7. Creating Your First Patch",
             "8. Using the AI Assistant",
         ]
-        for _tutorial in tutorials:
-            list_widget.addItem(_tutorial)
+        for tutorial in tutorials:
+            list_widget.addItem(tutorial)
 
     def populate_analysis_tutorials(self, list_widget: QListWidget) -> None:
         """Populate analysis tutorials in list widget.
@@ -465,8 +465,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Using Ghidra Integration",
             "10. Binary Similarity Search",
         ]
-        for _tutorial in tutorials:
-            list_widget.addItem(_tutorial)
+        for tutorial in tutorials:
+            list_widget.addItem(tutorial)
 
     def populate_patching_tutorials(self, list_widget: QListWidget) -> None:
         """Populate patching tutorials in list widget.
@@ -487,8 +487,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Creating Patch Scripts",
             "10. Verifying Patches",
         ]
-        for _tutorial in tutorials:
-            list_widget.addItem(_tutorial)
+        for tutorial in tutorials:
+            list_widget.addItem(tutorial)
 
     def populate_advanced_tutorials(self, list_widget: QListWidget) -> None:
         """Populate advanced tutorials in list widget.
@@ -509,8 +509,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Exploit Development",
             "10. Custom Report Templates",
         ]
-        for _tutorial in tutorials:
-            list_widget.addItem(_tutorial)
+        for tutorial in tutorials:
+            list_widget.addItem(tutorial)
 
     def populate_troubleshooting_tree(self) -> None:
         """Populate troubleshooting tree with common issues and categories."""
@@ -901,8 +901,8 @@ class HelpDocumentationWidget(QWidget):
         self.hide_all_tree_items(tree)
 
         # Then show matching items
-        for _i in range(tree.topLevelItemCount()):
-            item = tree.topLevelItem(_i)
+        for i in range(tree.topLevelItemCount()):
+            item = tree.topLevelItem(i)
             if self.search_tree_item(item, search_text):
                 item.setHidden(False)
                 item.setExpanded(True)
@@ -920,17 +920,17 @@ class HelpDocumentationWidget(QWidget):
         """
         # Check if this item matches
         matches = False
-        for _col in range(item.columnCount()):
-            if search_text in item.text(_col).lower():
+        for col in range(item.columnCount()):
+            if search_text in item.text(col).lower():
                 matches = True
-                item.setBackground(_col, Qt.GlobalColor.yellow)
+                item.setBackground(col, Qt.GlobalColor.yellow)
             else:
-                item.setBackground(_col, Qt.GlobalColor.transparent)
+                item.setBackground(col, Qt.GlobalColor.transparent)
 
         # Check children
         child_matches = False
-        for _i in range(item.childCount()):
-            child = item.child(_i)
+        for i in range(item.childCount()):
+            child = item.child(i)
             if self.search_tree_item(child, search_text):
                 child_matches = True
                 child.setHidden(False)
@@ -951,8 +951,8 @@ class HelpDocumentationWidget(QWidget):
             tree: Tree widget containing items to hide.
 
         """
-        for _i in range(tree.topLevelItemCount()):
-            self.hide_tree_item(tree.topLevelItem(_i))
+        for i in range(tree.topLevelItemCount()):
+            self.hide_tree_item(tree.topLevelItem(i))
 
     def hide_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively hide tree item and all descendants.
@@ -962,8 +962,8 @@ class HelpDocumentationWidget(QWidget):
 
         """
         item.setHidden(True)
-        for _i in range(item.childCount()):
-            self.hide_tree_item(item.child(_i))
+        for i in range(item.childCount()):
+            self.hide_tree_item(item.child(i))
 
     def show_all_tree_items(self, tree: QTreeWidget) -> None:
         """Show all items in a tree recursively.
@@ -972,8 +972,8 @@ class HelpDocumentationWidget(QWidget):
             tree: Tree widget containing items to show.
 
         """
-        for _i in range(tree.topLevelItemCount()):
-            self.show_tree_item(tree.topLevelItem(_i))
+        for i in range(tree.topLevelItemCount()):
+            self.show_tree_item(tree.topLevelItem(i))
 
     def show_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively show tree item and all descendants, clearing highlights.
@@ -983,7 +983,7 @@ class HelpDocumentationWidget(QWidget):
 
         """
         item.setHidden(False)
-        for _col in range(item.columnCount()):
-            item.setBackground(_col, Qt.GlobalColor.transparent)
-        for _i in range(item.childCount()):
-            self.show_tree_item(item.child(_i))
+        for col in range(item.columnCount()):
+            item.setBackground(col, Qt.GlobalColor.transparent)
+        for i in range(item.childCount()):
+            self.show_tree_item(item.child(i))

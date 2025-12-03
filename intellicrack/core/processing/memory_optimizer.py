@@ -551,10 +551,12 @@ class MemoryOptimizer:
                     leak_details.append(f"  {obj_type}: {count} objects, {size_mb:.1f}MB")
 
             # 5. Reference cycle detection
-            cycles = self._detect_reference_cycles()
+            cycles, referrers_found = self._detect_reference_cycles()
             if cycles > 0:
                 critical_issues.append(f"{cycles} reference cycles")
                 leak_details.append("Potential circular references detected")
+            if referrers_found > 0:
+                leak_details.append(f"{referrers_found} objects with excessive references (>10)")
 
             if app_leaks := self._check_application_leaks():
                 leak_details.extend(app_leaks)
@@ -642,21 +644,26 @@ class MemoryOptimizer:
             self.logger.debug("Error finding large objects: %s", e)
             return []
 
-    def _detect_reference_cycles(self) -> int:
-        """Detect potential reference cycles that could cause leaks."""
+    def _detect_reference_cycles(self) -> tuple[int, int]:
+        """Detect potential reference cycles that could cause leaks.
+
+        Returns:
+            Tuple of (cycle_count, referrers_found) where:
+                - cycle_count: Number of detected reference cycles
+                - referrers_found: Number of objects with excessive references (>10)
+
+        """
         try:
             cycle_count = 0
-
-            # Get objects with references
             referrers_found = 0
-            for obj in gc.get_objects()[:100]:  # Check first 100 objects
+
+            for obj in gc.get_objects()[:100]:
                 try:
                     referrers = gc.get_referrers(obj)
-                    if len(referrers) > 10:  # Objects with many referrers
+                    if len(referrers) > 10:
                         referrers_found += 1
 
-                        # Check for circular references
-                        for referrer in referrers[:5]:  # Check first 5 referrers
+                        for referrer in referrers[:5]:
                             try:
                                 if obj in gc.get_referrers(referrer):
                                     cycle_count += 1
@@ -667,11 +674,11 @@ class MemoryOptimizer:
                     logger.error("Error in memory_optimizer: %s", e)
                     continue
 
-            return cycle_count
+            return (cycle_count, referrers_found)
 
         except Exception as e:
             self.logger.debug("Error detecting reference cycles: %s", e)
-            return 0
+            return (0, 0)
 
     def _check_application_leaks(self) -> list[str]:
         """Check for application-specific memory leaks."""

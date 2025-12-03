@@ -1380,13 +1380,13 @@ class LLMConfigDialog(BaseDialog):
         if self.llm_manager:
             active_llm = self.llm_manager.active_backend
 
-            for _llm_id in self.llm_manager.get_available_llms():
-                item = QListWidgetItem(_llm_id)
-                if _llm_id == active_llm:
-                    item.setText(f"🟢 {_llm_id} (Active)")
+            for llm_id in self.llm_manager.get_available_llms():
+                item = QListWidgetItem(llm_id)
+                if llm_id == active_llm:
+                    item.setText(f"🟢 {llm_id} (Active)")
                 else:
-                    item.setText(f"⚪ {_llm_id}")
-                item.setData(Qt.UserRole, _llm_id)
+                    item.setText(f"⚪ {llm_id}")
+                item.setData(Qt.UserRole, llm_id)
                 self.models_list.addItem(item)
 
     def set_active_model(self) -> None:

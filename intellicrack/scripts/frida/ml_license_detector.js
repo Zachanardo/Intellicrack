@@ -1113,20 +1113,18 @@ const MlLicenseDetector = {
                 var actual = result.bypass.applied;
 
                 if (predicted === actual) {
-                                    correct++;
-                
-                                    if (actual) {
-                                        metrics.true_positives++;
-                                    } else {
-                                        metrics.true_negatives++;
-                                    }
-                                }
-                else if (predicted && !actual) {
-                                        metrics.false_positives++;
-                                    }
-                else {
-                                        metrics.false_negatives++;
-                                    }
+                    correct++;
+
+                    if (actual) {
+                        metrics.true_positives++;
+                    } else {
+                        metrics.true_negatives++;
+                    }
+                } else if (predicted && !actual) {
+                    metrics.false_positives++;
+                } else {
+                    metrics.false_negatives++;
+                }
             }
         }
 

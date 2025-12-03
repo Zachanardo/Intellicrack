@@ -47,6 +47,8 @@ try:
         rsa,
     )
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     from cryptography.x509 import NameOID, load_pem_x509_certificate
@@ -971,8 +973,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         return FallbackX509Certificate(cert_bytes)
 
     def load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> "FallbackRSAPrivateKey":
-        """Load PEM private key."""
-        # Parse PEM format (simplified)
+        """Load PEM private key with proper base64 decoding."""
         lines = data.decode() if isinstance(data, bytes) else data
         lines = lines.split("\n")
         key_data = ""
@@ -986,19 +987,29 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             elif in_key:
                 key_data += line.strip()
 
-        # Return a fallback key object
-        def _private_bytes(self, encoding: object, key_format: object, encryption: object) -> bytes | str:
+        decoded_key_bytes = base64.b64decode(key_data) if key_data else b""
+        key_size = len(decoded_key_bytes) * 8 // 4 if decoded_key_bytes else 2048
+
+        raw_data = data if isinstance(data, bytes) else data.encode()
+
+        def _private_bytes(
+            self: object, encoding: object, key_format: object, encryption: object
+        ) -> bytes:
             logger.debug(
                 "Fallback private_bytes called with: encoding=%s, format=%s, encryption=%s",
                 encoding,
                 key_format,
                 encryption,
             )
-            return data
+            return raw_data
 
-        def _public_key(self) -> object:
+        def _public_key(self: object) -> object:
             logger.debug("Fallback public_key called on %s", self)
-            return type("PublicKey", (), {})()
+            return type("PublicKey", (), {"key_size": key_size})()
+
+        def _sign(self: object, data_to_sign: bytes, padding: object, algorithm: object) -> bytes:
+            import hashlib
+            return hashlib.sha256(data_to_sign + decoded_key_bytes).digest()
 
         return type(
             "PrivateKey",
@@ -1006,7 +1017,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             {
                 "private_bytes": _private_bytes,
                 "public_key": _public_key,
-                "key_size": 2048,
+                "sign": _sign,
+                "key_size": key_size,
+                "_decoded_key": decoded_key_bytes,
             },
         )()
 
@@ -1231,10 +1244,12 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
 # Export all cryptography objects and availability flag
 __all__ = [
+    "AESGCM",
     "CRYPTOGRAPHY_VERSION",
     "Cipher",
     "Fernet",
     "HAS_CRYPTOGRAPHY",
+    "HKDF",
     "NameOID",
     "PBKDF2",
     "PBKDF2HMAC",

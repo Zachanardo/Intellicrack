@@ -934,30 +934,123 @@ class Radare2AdvancedPatcher:
 
             complete_hook = hook_code + jump_back
 
+            # Find code cave to place the hook code
+            hook_cave = self._find_code_cave(len(complete_hook))
+
+            # Write complete hook to code cave
+            self._write_bytes(hook_cave, complete_hook)
+
+            # Recalculate jump_to_hook to point to the code cave
+            if self.architecture in [Architecture.X86, Architecture.X86_64]:
+                prologue_offset = hook_cave - (func_address + 5)
+                if abs(prologue_offset) < 0x7FFFFFFF:
+                    jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
+                else:
+                    if self.bits == 64:
+                        jump_to_hook = b"\x48\xb8" + struct.pack("<Q", hook_cave)
+                        jump_to_hook += b"\xff\xe0"
+                    else:
+                        jump_to_hook = b"\xb8" + struct.pack("<I", hook_cave)
+                        jump_to_hook += b"\xff\xe0"
+            elif self.architecture == Architecture.ARM64:
+                prologue_offset = hook_cave - func_address
+                if abs(prologue_offset // 4) < 0x2000000:
+                    jump_to_hook = struct.pack("<I", 0x14000000 | ((prologue_offset // 4) & 0x3FFFFFF))
+                else:
+                    jump_to_hook = b"\x50\x00\x00\x58"
+                    jump_to_hook += b"\x00\x02\x1f\xd6"
+                    jump_to_hook += struct.pack("<Q", hook_cave)
+            elif self.architecture == Architecture.ARM:
+                prologue_offset = hook_cave - func_address - 8
+                if abs(prologue_offset // 4) < 0x1000000:
+                    jump_to_hook = struct.pack("<I", 0xEA000000 | ((prologue_offset // 4) & 0xFFFFFF))
+                else:
+                    jump_to_hook = b"\x04\xf0\x1f\xe5"
+                    jump_to_hook += struct.pack("<I", hook_cave)
+            elif self.architecture == Architecture.MIPS:
+                if (hook_cave & 0xF0000000) == (func_address & 0xF0000000):
+                    jump_to_hook = struct.pack(">I", 0x08000000 | ((hook_cave >> 2) & 0x3FFFFFF))
+                else:
+                    high = (hook_cave >> 16) & 0xFFFF
+                    low = hook_cave & 0xFFFF
+                    jump_to_hook = struct.pack(">I", 0x3C190000 | high)
+                    jump_to_hook += struct.pack(">I", 0x37390000 | low)
+                    jump_to_hook += struct.pack(">I", 0x03200008)
+                    jump_to_hook += struct.pack(">I", 0x00000000)
+            elif self.architecture == Architecture.PPC:
+                prologue_offset = hook_cave - func_address
+                if abs(prologue_offset) < 0x2000000:
+                    jump_to_hook = struct.pack(">I", 0x48000000 | (prologue_offset & 0x3FFFFFC))
+                else:
+                    high = (hook_cave >> 16) & 0xFFFF
+                    low = hook_cave & 0xFFFF
+                    jump_to_hook = struct.pack(">I", 0x3D800000 | high)
+                    jump_to_hook += struct.pack(">I", 0x618C0000 | low)
+                    jump_to_hook += struct.pack(">I", 0x7D8903A6)
+                    jump_to_hook += struct.pack(">I", 0x4E800420)
+            else:
+                # Fallback for unknown architectures - assume x86-like
+                prologue_offset = hook_cave - (func_address + 5)
+                if self.bits == 64:
+                    if abs(prologue_offset) < 0x7FFFFFFF:
+                        jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
+                    else:
+                        jump_to_hook = b"\x48\xb8" + struct.pack("<Q", hook_cave)
+                        jump_to_hook += b"\xff\xe0"
+                else:
+                    if abs(prologue_offset) < 0x7FFFFFFF:
+                        jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
+                    else:
+                        jump_to_hook = b"\xb8" + struct.pack("<I", hook_cave)
+                        jump_to_hook += b"\xff\xe0"
+
+            # Read original prologue bytes before overwriting
+            original = self.r2.cmdj(f"pxj {len(jump_to_hook)} @ {func_address}")
+            original_bytes = bytes(original) if original else b""
+
+            # Write jump_to_hook to function prologue to redirect to hook
+            self._write_bytes(func_address, jump_to_hook)
+
+            patch = PatchInfo(
+                type=PatchType.FUNCTION_HOOK,
+                address=func_address,
+                original_bytes=original_bytes,
+                patched_bytes=jump_to_hook,
+                description=f"Hooked function at {hex(func_address)}",
+                metadata={
+                    "preserve_original": preserve_original,
+                    "hook_size": len(hook_code),
+                    "hook_cave": hook_cave,
+                    "trampoline": trampoline,
+                    "complete_hook_size": len(complete_hook),
+                },
+            )
+            self.patches.append(patch)
+
         else:
             # Simple replacement
             complete_hook = hook_code
 
-        # Read original bytes
-        original = self.r2.cmdj(f"pxj {len(complete_hook)} @ {func_address}")
-        original_bytes = bytes(original)
+            # Read original bytes
+            original = self.r2.cmdj(f"pxj {len(complete_hook)} @ {func_address}")
+            original_bytes = bytes(original) if original else b""
 
-        patch = PatchInfo(
-            type=PatchType.FUNCTION_HOOK,
-            address=func_address,
-            original_bytes=original_bytes,
-            patched_bytes=complete_hook,
-            description=f"Hooked function at {hex(func_address)}",
-            metadata={
-                "preserve_original": preserve_original,
-                "hook_size": len(hook_code),
-                "trampoline": trampoline if preserve_original else None,
-            },
-        )
+            patch = PatchInfo(
+                type=PatchType.FUNCTION_HOOK,
+                address=func_address,
+                original_bytes=original_bytes,
+                patched_bytes=complete_hook,
+                description=f"Hooked function at {hex(func_address)}",
+                metadata={
+                    "preserve_original": preserve_original,
+                    "hook_size": len(hook_code),
+                    "trampoline": None,
+                },
+            )
 
-        # Apply patch
-        self._write_bytes(func_address, complete_hook)
-        self.patches.append(patch)
+            # Apply patch
+            self._write_bytes(func_address, complete_hook)
+            self.patches.append(patch)
 
         logger.info(f"Created function hook at {hex(func_address)}")
         return patch

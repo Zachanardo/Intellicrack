@@ -71,13 +71,13 @@ class ProtectionDetectionHandlers:
                 output += f"Error: {results['error']}\n"
             elif results.get("protections_found"):
                 output += f"Found {len(results['protections_found'])} commercial protections:\n\n"
-                for _protection in results["protections_found"]:
-                    confidence = results.get("confidence_scores", {}).get(_protection, 0.0)
-                    output += f" {_protection} (Confidence: {confidence:.1%})\n"
+                for protection in results["protections_found"]:
+                    confidence = results.get("confidence_scores", {}).get(protection, 0.0)
+                    output += f" {protection} (Confidence: {confidence:.1%})\n"
 
                 output += "\nDetection Indicators:\n"
-                for _indicator in results.get("indicators", []):
-                    output += f"  - {_indicator}\n"
+                for indicator in results.get("indicators", []):
+                    output += f"  - {indicator}\n"
             else:
                 output += "No commercial protections detected.\n"
 
@@ -105,8 +105,8 @@ class ProtectionDetectionHandlers:
 
             # Format output
             output = "=== Hardware Dongle Detection Results ===\n\n"
-            for _result in results:
-                output += f"{_result}\n"
+            for result in results:
+                output += f"{result}\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -144,8 +144,8 @@ class ProtectionDetectionHandlers:
 
                     if results.get("detection_methods"):
                         output += "\nDetection Methods:\n"
-                        for _method in results["detection_methods"]:
-                            output += f"  - {_method}\n"
+                        for method in results["detection_methods"]:
+                            output += f"  - {method}\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -183,13 +183,13 @@ class ProtectionDetectionHandlers:
 
                 if results.get("algorithms_found"):
                     output += "Hash Algorithms Found:\n"
-                    for _algo in results["algorithms_found"]:
-                        output += f"   {_algo}\n"
+                    for algo in results["algorithms_found"]:
+                        output += f"   {algo}\n"
 
                 if results.get("indicators"):
                     output += "\nDetection Indicators:\n"
-                    for _indicator in results["indicators"]:
-                        output += f"  - {_indicator}\n"
+                    for indicator in results["indicators"]:
+                        output += f"  - {indicator}\n"
             else:
                 output += "No checksum/integrity verification detected.\n"
 
@@ -229,13 +229,13 @@ class ProtectionDetectionHandlers:
 
                 if results.get("techniques"):
                     output += "Techniques Found:\n"
-                    for _technique in results["techniques"]:
-                        output += f"   {_technique}\n"
+                    for technique in results["techniques"]:
+                        output += f"   {technique}\n"
 
                 if results.get("indicators"):
                     output += "\nAPI Indicators:\n"
-                    for _indicator in results["indicators"]:
-                        output += f"  - {_indicator}\n"
+                    for indicator in results["indicators"]:
+                        output += f"  - {indicator}\n"
             else:
                 output += "No self-healing code detected.\n"
 
@@ -273,13 +273,13 @@ class ProtectionDetectionHandlers:
             )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for _method in results["methods_applied"]:
-                    output += f"   {_method}\n"
+                for method in results["methods_applied"]:
+                    output += f"   {method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
-                for _error in results["errors"]:
-                    output += f"  - {_error}\n"
+                for error in results["errors"]:
+                    output += f"  - {error}\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -315,13 +315,13 @@ class ProtectionDetectionHandlers:
             )
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for _method in results["methods_applied"]:
-                    output += f"   {_method}\n"
+                for method in results["methods_applied"]:
+                    output += f"   {method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
-                for _error in results["errors"]:
-                    output += f"  - {_error}\n"
+                for error in results["errors"]:
+                    output += f"  - {error}\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -355,20 +355,20 @@ class ProtectionDetectionHandlers:
             )
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"
-                for _dongle in results["emulated_dongles"]:
-                    output += f"   {_dongle}\n"
+                for dongle in results["emulated_dongles"]:
+                    output += f"   {dongle}\n"
                 output += "\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for _method in results["methods_applied"]:
-                    output += f"   {_method}\n"
+                for method in results["methods_applied"]:
+                    output += f"   {method}\n"
                 output += "\n"
 
             if results.get("errors"):
                 output += "Errors Encountered:\n"
-                for _error in results["errors"]:
-                    output += f"  - {_error}\n"
+                for error in results["errors"]:
+                    output += f"  - {error}\n"
 
             # Update the protection results text area
             if hasattr(self, "protection_results"):
@@ -400,8 +400,8 @@ class ProtectionDetectionHandlers:
             output = "=== Embedded/Encrypted Script Detection Results ===\n\n"
 
             if results:
-                for _result in results:
-                    output += f"{_result}\n"
+                for result in results:
+                    output += f"{result}\n"
             else:
                 output += "No results returned from script detection.\n"
 

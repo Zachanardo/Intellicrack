@@ -571,7 +571,13 @@ class FallbackConv2DLayer:
                                         conv_sum += inputs.data[input_idx] * self.kernel[f][kh][kw]
                                         kernel_positions += 1
 
-                        result: float = conv_sum + (self.bias[f] if self.bias else 0.0)
+                        total_kernel_size: int = self.kernel_size[0] * self.kernel_size[1]
+                        if self.padding == "same" and kernel_positions > 0 and kernel_positions < total_kernel_size:
+                            normalized_sum: float = conv_sum * (total_kernel_size / kernel_positions)
+                        else:
+                            normalized_sum = conv_sum
+
+                        result: float = normalized_sum + (self.bias[f] if self.bias else 0.0)
                         if self.activation == "relu":
                             result = max(0, result)
                         elif self.activation == "sigmoid":

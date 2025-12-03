@@ -650,23 +650,23 @@ class AITerminalChat:
             syntax = Syntax(code, language, theme="monokai", line_numbers=True)
             return syntax
 
-        # Replace code blocks with syntax-highlighted versions
-        parts = re.split(pattern, response, flags=re.DOTALL)
+        result_parts: list[str | Syntax] = []
+        last_end = 0
 
-        if len(parts) > 1:
-            # If we found code blocks, create a composite with alternating text and code
-            result_parts = []
-            for i, part in enumerate(parts):
-                if i % 3 == 0:  # Regular text parts
-                    if part.strip():
-                        result_parts.append(part)
-                elif i % 3 == 2:  # Code content parts
-                    lang = parts[i - 1] or "python"
-                    syntax = Syntax(part, lang, theme="monokai", line_numbers=True)
-                    result_parts.append(syntax)
+        for match in re.finditer(pattern, response, flags=re.DOTALL):
+            text_before = response[last_end : match.start()]
+            if text_before.strip():
+                result_parts.append(text_before)
 
-            # Return first part as text if available, or the syntax object
-            return result_parts[0] if result_parts else response
+            result_parts.append(replace_code_block(match))
+            last_end = match.end()
+
+        text_after = response[last_end:]
+        if text_after.strip():
+            result_parts.append(text_after)
+
+        if result_parts:
+            return result_parts[0]
 
         return response
 

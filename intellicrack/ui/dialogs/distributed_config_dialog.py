@@ -227,7 +227,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
         # Parse any custom patterns
         custom_patterns = []
         if self.custom_patterns_edit.text().strip():
-            custom_patterns = [_p.strip() for _p in self.custom_patterns_edit.text().split(",")]
+            custom_patterns = [p.strip() for p in self.custom_patterns_edit.text().split(",")]
 
         # Map backend selection to value
         backend_map = {

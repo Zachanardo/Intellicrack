@@ -52,9 +52,6 @@ class DateTimeEncoder(json.JSONEncoder):
         Returns:
             JSON-serializable string representation of the object.
 
-        Raises:
-            TypeError: If object type is not supported by JSON encoder.
-
         """
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
@@ -76,7 +73,12 @@ class SecurityEnforcement:
         logger.info("SecurityEnforcement: Initialization complete.")
 
     def _load_config(self) -> dict[str, Any]:
-        """Load security configuration from main IntellicrackConfig."""
+        """Load security configuration from main IntellicrackConfig.
+
+        Returns:
+            Security configuration dictionary with merged defaults if needed.
+
+        """
         logger.debug("SecurityEnforcement: Attempting to load security configuration from IntellicrackConfig.")
         try:
             from intellicrack.core.config_manager import IntellicrackConfig
@@ -118,7 +120,12 @@ class SecurityEnforcement:
             return self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Return default security configuration."""
+        """Return default security configuration.
+
+        Returns:
+            Default security configuration dictionary with standard policies.
+
+        """
         logger.debug("SecurityEnforcement: Providing default security configuration.")
         return {
             "security": {
@@ -147,7 +154,13 @@ class SecurityEnforcement:
         }
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> None:
-        """Deep merge override dict into base dict."""
+        """Deep merge override dict into base dict.
+
+        Args:
+            base: Dictionary to merge into (modified in-place).
+            override: Dictionary containing values to merge into base.
+
+        """
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
                 self._deep_merge(base[key], value)
@@ -439,9 +452,6 @@ def _secure_pickle_dumps(
     Returns:
         Serialized object as bytes.
 
-    Raises:
-        TypeError: If object cannot be serialized to either JSON or pickle.
-
     """
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.dumps.")
@@ -548,9 +558,6 @@ def _secure_pickle_loads(
     Returns:
         Deserialized object.
 
-    Raises:
-        TypeError: If data cannot be deserialized from either JSON or pickle.
-
     """
     if _security._bypass_security:
         logger.debug("Security bypass active for pickle.loads.")
@@ -592,9 +599,6 @@ class SecureHash:
             name: Hash algorithm name (e.g., 'sha256', 'md5').
             data: Initial data to hash (optional).
 
-        Raises:
-            ValueError: If algorithm name is invalid.
-
         """
         self.name = name
         allow_md5 = _security.security_config.get("hashing", {}).get("allow_md5_for_security", False)
@@ -613,6 +617,9 @@ class SecureHash:
 
         Args:
             data: Bytes to add to hash calculation.
+
+        Returns:
+            None.
 
         """
         return self._hash.update(data)
@@ -702,9 +709,6 @@ def _secure_hashlib_new(name: str, data: bytes = b"", **kwargs: object) -> objec
 
     Returns:
         Hash object.
-
-    Raises:
-        ValueError: If algorithm name is invalid.
 
     """
     if _security._bypass_security:
@@ -846,9 +850,6 @@ def secure_open(file: str | Path, mode: str = "r", *args: object, **kwargs: obje
 
     Returns:
         File object.
-
-    Raises:
-        SecurityError: If file validation fails.
 
     """
     logger.debug(f"Attempting to securely open file: {file} with mode: {mode}")
@@ -1001,7 +1002,13 @@ def initialize_security() -> None:
 
 
 def get_security_status() -> dict[str, Any]:
-    """Get current security enforcement status."""
+    """Get current security enforcement status.
+
+    Returns:
+        Dictionary containing security status with keys: 'initialized',
+        'bypass_enabled', 'config', and 'patches_applied'.
+
+    """
     logger.debug("Retrieving current security enforcement status.")
     # Return uninitialized status if not yet created
     if _security is None:

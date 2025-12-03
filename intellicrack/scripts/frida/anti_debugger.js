@@ -755,16 +755,19 @@ const antiDebugger = {
                     var milliseconds = args[0].toInt32();
                     var config = this.parent.parent.config;
 
-                    if (config.timingProtection.enabled &&
-                                            config.timingProtection.sleepManipulation && milliseconds > 1000) {
-                          args[0] = ptr(100); // Reduce to 100ms
-                          send({
-                              type: 'bypass',
-                              target: 'Sleep',
-                              action: 'long_sleep_reduced',
-                              original_ms: milliseconds,
-                              reduced_ms: 100,
-                          });
+                    if (
+                        config.timingProtection.enabled &&
+                        config.timingProtection.sleepManipulation &&
+                        milliseconds > 1000
+                    ) {
+                        args[0] = ptr(100); // Reduce to 100ms
+                        send({
+                            type: 'bypass',
+                            target: 'Sleep',
+                            action: 'long_sleep_reduced',
+                            original_ms: milliseconds,
+                            reduced_ms: 100,
+                        });
                     }
                 },
             });
@@ -779,16 +782,19 @@ const antiDebugger = {
                     var milliseconds = args[0].toInt32();
                     var config = this.parent.parent.config;
 
-                    if (config.timingProtection.enabled &&
-                                            config.timingProtection.sleepManipulation && milliseconds > 1000) {
-                          args[0] = ptr(100);
-                          send({
-                              type: 'bypass',
-                              target: 'SleepEx',
-                              action: 'long_sleep_reduced',
-                              original_ms: milliseconds,
-                              reduced_ms: 100,
-                          });
+                    if (
+                        config.timingProtection.enabled &&
+                        config.timingProtection.sleepManipulation &&
+                        milliseconds > 1000
+                    ) {
+                        args[0] = ptr(100);
+                        send({
+                            type: 'bypass',
+                            target: 'SleepEx',
+                            action: 'long_sleep_reduced',
+                            original_ms: milliseconds,
+                            reduced_ms: 100,
+                        });
                     }
                 },
             });
@@ -1698,19 +1704,22 @@ const antiDebugger = {
                         this.systemInfoLength = args[2].toInt32();
                     },
                     onLeave: function (retval) {
-                        if (retval.toInt32() === 0 &&
-                                                    this.systemInfo &&
-                                                    !this.systemInfo.isNull() && this.infoClass === 0x9d) {
-                              Memory.protect(this.systemInfo, this.systemInfoLength, 'rw-');
-                              for (var i = 0; i < this.systemInfoLength; i++) {
-                                  this.systemInfo.add(i).writeU8(0);
-                              }
-                              send({
-                                  type: 'bypass',
-                                  target: 'NtQuerySystemInformation',
-                                  action: 'hypervisor_info_spoofed',
-                                  info_class: this.infoClass,
-                              });
+                        if (
+                            retval.toInt32() === 0 &&
+                            this.systemInfo &&
+                            !this.systemInfo.isNull() &&
+                            this.infoClass === 0x9d
+                        ) {
+                            Memory.protect(this.systemInfo, this.systemInfoLength, 'rw-');
+                            for (var i = 0; i < this.systemInfoLength; i++) {
+                                this.systemInfo.add(i).writeU8(0);
+                            }
+                            send({
+                                type: 'bypass',
+                                target: 'NtQuerySystemInformation',
+                                action: 'hypervisor_info_spoofed',
+                                info_class: this.infoClass,
+                            });
                         }
                     },
                 });
@@ -2225,14 +2234,14 @@ const antiDebugger = {
                             }
                             // SystemSecureKernelDebuggerInformation = 0x23
                             else if (this.infoClass === 0x23 && this.infoLength >= 1) {
-                                       this.systemInfo.writeU8(0); // Disabled
-                                       send({
-                                           type: 'bypass',
-                                           target: 'NtQuerySystemInformation',
-                                           action: 'secure_kernel_debugger_spoofed',
-                                           result: 'disabled',
-                                       });
-                                 }
+                                this.systemInfo.writeU8(0); // Disabled
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQuerySystemInformation',
+                                    action: 'secure_kernel_debugger_spoofed',
+                                    result: 'disabled',
+                                });
+                            }
                         }
                     },
                 });

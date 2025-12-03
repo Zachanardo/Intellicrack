@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 class FileSelectionPage(QWizardPage):
     """First wizard page for file selection."""
 
-    def __init__(self, wizard: QWizard) -> None:
+    def __init__(self, wizard: "ProgramSelectorDialog") -> None:
         """Initialize the file selection page.
 
         Args:
@@ -66,7 +66,7 @@ class FileSelectionPage(QWizardPage):
 
         """
         super().__init__()
-        self.wizard: QWizard = wizard
+        self._wizard_instance: ProgramSelectorDialog = wizard
         self.file_path_edit: QLineEdit
         self.browse_btn: QPushButton
         self.setTitle("Select Program File")
@@ -100,10 +100,14 @@ class FileSelectionPage(QWizardPage):
         self.browse_btn.clicked.connect(self.browse_for_file)
         if HAS_PYQT:
             try:
-                self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
+                style = self.style()
+                if style is not None:
+                    self.browse_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
             except AttributeError:
                 with contextlib.suppress(AttributeError):
-                    self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                    style = self.style()
+                    if style is not None:
+                        self.browse_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -142,7 +146,7 @@ class FileSelectionPage(QWizardPage):
             return
 
         # Valid file selected
-        self.wizard.selected_program = file_path
+        self._wizard_instance.selected_program = file_path
         self.setCommitPage(True)
 
     def get_selected_file(self) -> str:
@@ -168,7 +172,7 @@ class FileSelectionPage(QWizardPage):
 class AnalysisPage(QWizardPage):
     """Second wizard page for displaying analysis results."""
 
-    def __init__(self, wizard: QWizard) -> None:
+    def __init__(self, wizard: "ProgramSelectorDialog") -> None:
         """Initialize the analysis page.
 
         Args:
@@ -176,7 +180,7 @@ class AnalysisPage(QWizardPage):
 
         """
         super().__init__()
-        self.wizard: QWizard = wizard
+        self._wizard_instance: ProgramSelectorDialog = wizard
         self.licensing_files: list[dict[str, Any]] = []
         self.program_info: QLabel
         self.licensing_tree: QTreeWidget
@@ -209,11 +213,13 @@ class AnalysisPage(QWizardPage):
         self.licensing_tree = QTreeWidget()
         self.licensing_tree.setHeaderLabels(["File", "Type", "Size", "Priority"])
         if HAS_PYQT:
-            self.licensing_tree.header().setStretchLastSection(False)
-            self.licensing_tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-            self.licensing_tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-            self.licensing_tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            header = self.licensing_tree.header()
+            if header is not None:
+                header.setStretchLastSection(False)
+                header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+                header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+                header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+                header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         self.licensing_tree.itemDoubleClicked.connect(self.open_licensing_file)
         licensing_layout.addWidget(self.licensing_tree)
@@ -225,9 +231,9 @@ class AnalysisPage(QWizardPage):
 
     def initializePage(self) -> None:
         """Initialize the page when it becomes active."""
-        if self.wizard.selected_program:
+        if self._wizard_instance.selected_program:
             # Update program info
-            file_path = Path(self.wizard.selected_program)
+            file_path = Path(self._wizard_instance.selected_program)
             self.program_info.setText(f"""
 <b>Program:</b> {file_path.name}<br>
 <b>Path:</b> {file_path}<br>
@@ -258,7 +264,7 @@ class AnalysisPage(QWizardPage):
                 return
 
             # Define licensing file patterns and their priorities
-            licensing_patterns = {
+            licensing_patterns: dict[str, dict[str, str | int]] = {
                 "license": {"priority": 1, "type": "License"},
                 "licence": {"priority": 1, "type": "License"},
                 "copying": {"priority": 2, "type": "Copyright"},
@@ -287,7 +293,7 @@ class AnalysisPage(QWizardPage):
                             }
                             self.licensing_files.append(file_info)
 
-                            self.add_licensing_file_to_tree(file_path, info["type"], info["priority"])
+                            self.add_licensing_file_to_tree(file_path, str(info["type"]), int(info["priority"]))
                             break
 
         except Exception as e:
@@ -312,21 +318,23 @@ class AnalysisPage(QWizardPage):
             item = QTreeWidgetItem([file_path.name, file_type, file_size, f"Priority {priority}"])
 
             # Store full path for opening
-            item.setData(0, Qt.UserRole, str(file_path))
+            item.setData(0, Qt.ItemDataRole.UserRole, str(file_path))
 
             if HAS_PYQT:
-                if file_type == "License":
-                    try:
-                        item.setIcon(
-                            0,
-                            self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
-                        )
-                    except AttributeError:
+                style = self.style()
+                if style is not None:
+                    if file_type == "License":
+                        try:
+                            item.setIcon(
+                                0,
+                                style.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView),
+                            )
+                        except AttributeError:
+                            with contextlib.suppress(AttributeError):
+                                item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
+                    else:
                         with contextlib.suppress(AttributeError):
-                            item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
-                else:
-                    with contextlib.suppress(AttributeError):
-                        item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+                            item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
 
             self.licensing_tree.addTopLevelItem(item)
 
@@ -376,7 +384,7 @@ class AnalysisPage(QWizardPage):
 
         """
         try:
-            file_path = item.data(0, Qt.UserRole)
+            file_path = item.data(0, Qt.ItemDataRole.UserRole)
             if file_path and os.path.exists(file_path):
                 if sys.platform.startswith("win"):
                     os.startfile(file_path)  # noqa: S606  # Legitimate program file opening for security research target selection
@@ -437,8 +445,8 @@ class ProgramSelectorDialog(QWizard):
         self.addPage(self.analysis_page)
 
         # Configure wizard
-        self.setWizardStyle(QWizard.ModernStyle)
-        self.setOption(QWizard.HaveHelpButton, False)
+        self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
+        self.setOption(QWizard.WizardOption.HaveHelpButton, False)
 
     def get_selected_program(self) -> str | None:
         """Get the selected program file path for compatibility with dashboard.
@@ -493,7 +501,7 @@ def show_program_selector(parent: QWidget | None = None) -> dict[str, Any] | Non
 
     """
     dialog = ProgramSelectorDialog(parent)
-    if dialog.exec() == QDialog.Accepted:
+    if dialog.exec() == QDialog.DialogCode.Accepted:
         return dialog.get_selected_program_data()
     return None
 

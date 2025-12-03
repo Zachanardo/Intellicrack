@@ -436,22 +436,33 @@ class SearchEngine:
 
     def _find_matches_in_chunk(
         self,
-        compiled_pattern: bytes | re.Pattern,
+        compiled_pattern: bytes | re.Pattern[str],
         chunk_data: bytes,
         chunk_offset: int,
         search_type: SearchType,
         whole_words: bool,
     ) -> list[SearchResult]:
         """Find all matches in a chunk of data."""
-        matches = []
-        _search_type = search_type  # Store for potential future use
+        matches: list[SearchResult] = []
+
+        case_sensitive = search_type != SearchType.TEXT
+        is_binary_search = search_type in (SearchType.HEX, SearchType.WILDCARD)
 
         try:
             if isinstance(compiled_pattern, bytes):
-                # Binary pattern search
+                if is_binary_search:
+                    search_data = chunk_data
+                    search_pattern = compiled_pattern
+                elif case_sensitive:
+                    search_data = chunk_data
+                    search_pattern = compiled_pattern
+                else:
+                    search_data = chunk_data.lower()
+                    search_pattern = compiled_pattern.lower()
+
                 pos = 0
                 while True:
-                    pos = chunk_data.find(compiled_pattern, pos)
+                    pos = search_data.find(search_pattern, pos)
                     if pos == -1:
                         break
 

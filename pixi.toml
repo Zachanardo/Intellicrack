@@ -10,40 +10,132 @@ preview = ["pixi-build"]
 [environments]
 
 [dependencies]
-python = "3.12.*"
-rust = ">=1.70"
-m2w64-toolchain = ">=5.3.0,<6"
-m2w64-binutils = ">=2.25.1,<3"
-nodejs = "*"
-git = "*"
-pip = "*"
-wheel = "*"
-setuptools = "*"
-pixi-pycharm = ">=0.0.10,<0.0.11"
-pytest = ">=9.0.1,<10"
-anyio = ">=4.11.0,<5"
-rich = ">=14.2.0,<15"
-mypy = ">=1.18.2,<2"
-types-requests = ">=2.32.4.20250913,<3"
-types-pyyaml = ">=6.0.12.20250915,<7"
+# Core Languages & Toolchains
+python = "3.12.*"  # Python interpreter version 3.12
+rust = ">=1.70"  # Rust compiler and toolchain
+m2w64-toolchain = ">=5.3.0,<6"  # MinGW-w64 compiler toolchain for Windows
+m2w64-binutils = ">=2.25.1,<3"  # Binary utilities for MinGW-w64
+nodejs = "*"  # Node.js JavaScript runtime for linters
+
+# Version Control & Package Management
+git = "*"  # Distributed version control system
+pip = "*"  # Python package installer
+wheel = "*"  # Python wheel package format
+setuptools = "*"  # Python package build system
+
+# IDE Integration
+pixi-pycharm = ">=0.0.10,<0.0.11"  # PyCharm IDE integration for pixi
+
+# Python Development Tools
+pytest = ">=9.0.1,<10"  # Python testing framework
+anyio = ">=4.11.0,<5"  # Async I/O library compatibility layer
+rich = ">=14.2.0,<15"  # Rich text and formatting for terminal output
+mypy = ">=1.18.2,<2"  # Static type checker for Python
+types-requests = ">=2.32.4.20250913,<3"  # Type stubs for requests library
+types-pyyaml = ">=6.0.12.20250915,<7"  # Type stubs for PyYAML library
+just = ">=1.43.1"  # Command runner and task automation tool
+
+# Rust Development Tools
+cargo-nextest = ">=0.9.106"  # Next-generation test runner for Rust
+cargo-insta = ">=1.44.3"  # Snapshot testing tool for Rust
+cargo-expand = ">=1.0.118"  # Expand Rust macros for debugging
+cargo-llvm-cov = ">=0.6.21"  # Code coverage reports using LLVM
+cargo-audit = ">=0.21.2"  # Security vulnerability scanner for Rust dependencies
+cargo-deny = ">=0.18.6"  # Dependency linting and policy enforcement for Rust
 
 [pypi-dependencies]
-intellicrack = { path = ".", editable = true }
-torch = "*"
-torchvision = "*"
-torchaudio = "*"
-angr = ">=9.2.185, <10"
-archinfo = ">=9.2.185, <10"
-claripy = ">=9.2.185, <10"
-cle = ">=9.2.185, <10"
-hypothesis = ">=6.148.3, <7"
-langgraph = ">=1.0.4, <2"
-langsmith = ">=0.4.49, <0.5"
-pydantic = ">=2.12.5, <3"
-pymdown-extensions = ">=10.17.2, <11"
-pyvex = ">=9.2.185, <10"
-sphinxcontrib-mermaid = ">=1.2.3, <2"
-transformers = ">=4.57.3, <5"
+intellicrack = { path = ".", editable = true }  # Editable install of Intellicrack for development
+
+# Build Tools
+build = "*"  # PEP 517 package builder
+
+# Code Quality & Linting
+black = "*"  # Opinionated Python code formatter
+pylint = "*"  # Comprehensive Python linter
+autopep8 = "*"  # Automatic PEP 8 code formatter
+flake8 = "*"  # Style guide enforcement tool
+ruff = "*"  # Fast Python linter written in Rust
+bandit = "*"  # Security vulnerability scanner for Python code
+vulture = "*"  # Dead code detector
+pyupgrade = "*"  # Automatically upgrade Python syntax for newer versions
+pydocstyle = "*"  # Docstring style checker
+sourcery = "*"  # AI-powered code reviewer and refactoring tool
+wemake-python-styleguide = "*"  # Strictest Python linter
+darglint = "*"  # Docstring argument checker
+pyroma = "*"  # Package quality checker
+mypy-extensions = "*"  # Extensions for mypy type checker
+dead = "*"  # Dead code and dependency detector
+pygount = "*"  # Source code line counter
+pytest-deadfixtures = "*"  # Pytest plugin to find unused fixtures
+pyright = "*"  # Microsoft's static type checker for Python
+monkeytype = "*"  # Automatic type annotation generator
+ty = "*"  # Fast type checker
+mccabe = "*"  # McCabe complexity checker
+xenon = "*"  # Code complexity monitoring tool
+safety = "*"  # Dependency vulnerability scanner
+yamllint = "*"  # YAML file linter
+
+# Testing & Coverage
+pytest-cov = "*"  # Coverage plugin for pytest
+pytest-mock = "*"  # Mocking plugin for pytest
+pytest-asyncio = "*"  # Async test support for pytest
+pytest-xdist = "*"  # Parallel test execution for pytest
+pytest-timeout = "*"  # Test timeout plugin for pytest
+pytest-qt = "*"  # Qt application testing plugin for pytest
+pytest-benchmark = "*"  # Benchmarking plugin for pytest
+pytest-html = "*"  # HTML report generation for pytest
+pytest-randomly = "*"  # Randomize test order to detect hidden dependencies
+pytest-sugar = "*"  # Enhanced pytest output with progress bar
+pytest-env = "*"  # Environment variable management for pytest
+pytest-instafail = "*"  # Show failures instantly during test runs
+hypothesis = "*"  # Property-based testing framework
+tox = "*"  # Test automation across multiple Python environments
+nox = "*"  # Flexible test automation tool
+coverage = "*"  # Code coverage measurement tool
+freezegun = "*"  # Time mocking library for tests
+responses = "*"  # HTTP request mocking library
+faker = "*"  # Fake data generator for tests
+
+# Code Metrics
+radon = "*"  # Code complexity and maintainability metrics
+
+# Documentation
+sphinx = "*"  # Documentation generator
+sphinx-rtd-theme = "*"  # Read the Docs theme for Sphinx
+sphinx-autodoc-typehints = "*"  # Type hints support for Sphinx autodoc
+sphinx-copybutton = "*"  # Copy button for code blocks in Sphinx docs
+sphinx-tabs = "*"  # Tabbed content support for Sphinx
+sphinxcontrib-mermaid = "*"  # Mermaid diagram support for Sphinx
+sphinx-autobuild = "*"  # Auto-rebuild Sphinx docs on file changes
+pdoc3 = "*"  # Auto-generate API documentation
+mkdocs-material = "*"  # Material Design theme for MkDocs
+pymdown-extensions = "*"  # Markdown extensions for documentation
+
+# Debugging & Profiling
+ipdb = "*"  # IPython-enabled debugger
+line-profiler = "*"  # Line-by-line profiling tool
+memory-profiler = "*"  # Memory usage profiler
+py-spy = "*"  # Sampling profiler for Python programs
+snakeviz = "*"  # Browser-based profiling visualization
+pyinstrument = "*"  # Statistical profiler with web UI
+scalene = "*"  # High-performance CPU/GPU/memory profiler
+
+# Development Utilities
+pre-commit = "*"  # Git pre-commit hook framework
+commitizen = "*"  # Standardized commit message tool
+bumpversion = "*"  # Version bumping tool
+pipdeptree = "*"  # Dependency tree visualization
+rope = "*"  # Python refactoring library
+astor = "*"  # AST manipulation and code generation
+yapf = "*"  # Google's Python code formatter
+pip-audit = "*"  # Audit Python packages for security vulnerabilities
+nodeenv = "*"  # Node.js virtual environment
+twine = "*"  # PyPI package uploader
+setuptools-scm = "*"  # Version management from git tags
+poetry = "*"  # Python dependency management and packaging
+pycallgraph2 = "*"  # Call graph visualization tool
+pre-commit-hooks = "*"  # Collection of pre-commit hooks
+detect-secrets = "*"  # Prevent secrets from being committed
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]

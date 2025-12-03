@@ -687,25 +687,31 @@ const QuantumCryptoHandler = {
         const lowerName = funcName.toLowerCase();
 
         // Verification functions - return success
-        if ((lowerName.includes('verify') || lowerName.includes('check')) && this.config.bypass.skip_verification) {
-              send({
-                  type: 'bypass',
-                  target: 'quantum_crypto_handler',
-                  action: 'verification_skipped',
-                  function: funcName,
-              });
-              retval.replace(ptr(0));
+        if (
+            (lowerName.includes('verify') || lowerName.includes('check')) &&
+            this.config.bypass.skip_verification
+        ) {
+            send({
+                type: 'bypass',
+                target: 'quantum_crypto_handler',
+                action: 'verification_skipped',
+                function: funcName,
+            });
+            retval.replace(ptr(0));
         }
 
         // Validation functions - return valid
-        if ((lowerName.includes('valid') || lowerName.includes('authenticate')) && this.config.bypass.return_success) {
-              send({
-                  type: 'bypass',
-                  target: 'quantum_crypto_handler',
-                  action: 'success_returned',
-                  function: funcName,
-              });
-              retval.replace(ptr(1));
+        if (
+            (lowerName.includes('valid') || lowerName.includes('authenticate')) &&
+            this.config.bypass.return_success
+        ) {
+            send({
+                type: 'bypass',
+                target: 'quantum_crypto_handler',
+                action: 'success_returned',
+                function: funcName,
+            });
+            retval.replace(ptr(1));
         }
 
         // Key comparison - return equal
@@ -1420,47 +1426,53 @@ const QuantumCryptoHandler = {
         switch (algo.name) {
             case 'CRYSTALS-Kyber':
                 if (lowerName.includes('decaps') && retval.toInt32() !== 0) {
-                      send({
-                          type: 'bypass',
-                          target: 'quantum_crypto_handler',
-                          action: 'kyber_decapsulation_bypass',
-                      });
-                      retval.replace(ptr(0));
+                    send({
+                        type: 'bypass',
+                        target: 'quantum_crypto_handler',
+                        action: 'kyber_decapsulation_bypass',
+                    });
+                    retval.replace(ptr(0));
                 }
                 break;
 
             case 'CRYSTALS-Dilithium':
                 if (lowerName.includes('verify') && retval.toInt32() !== 0) {
-                      send({
-                          type: 'bypass',
-                          target: 'quantum_crypto_handler',
-                          action: 'dilithium_verification_bypass',
-                      });
-                      retval.replace(ptr(0));
+                    send({
+                        type: 'bypass',
+                        target: 'quantum_crypto_handler',
+                        action: 'dilithium_verification_bypass',
+                    });
+                    retval.replace(ptr(0));
                 }
                 break;
 
             case 'SPHINCS+':
-                if ((lowerName.includes('verify') || lowerName.includes('open')) && retval.toInt32() !== 0) {
-                      send({
-                          type: 'bypass',
-                          target: 'quantum_crypto_handler',
-                          action: 'sphincs_verification_bypass',
-                      });
-                      retval.replace(ptr(0));
+                if (
+                    (lowerName.includes('verify') || lowerName.includes('open')) &&
+                    retval.toInt32() !== 0
+                ) {
+                    send({
+                        type: 'bypass',
+                        target: 'quantum_crypto_handler',
+                        action: 'sphincs_verification_bypass',
+                    });
+                    retval.replace(ptr(0));
                 }
                 break;
 
             default:
                 // Generic bypass
-                if ((lowerName.includes('verify') || lowerName.includes('check')) && retval.toInt32() !== 0) {
-                      send({
-                          type: 'bypass',
-                          target: 'quantum_crypto_handler',
-                          action: 'generic_bypass_applied',
-                          algorithm: algo.name,
-                      });
-                      retval.replace(ptr(0));
+                if (
+                    (lowerName.includes('verify') || lowerName.includes('check')) &&
+                    retval.toInt32() !== 0
+                ) {
+                    send({
+                        type: 'bypass',
+                        target: 'quantum_crypto_handler',
+                        action: 'generic_bypass_applied',
+                        algorithm: algo.name,
+                    });
+                    retval.replace(ptr(0));
                 }
         }
     },

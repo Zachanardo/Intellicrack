@@ -141,7 +141,7 @@ class StarForceDetector:
         except Exception as e:
             self.logger.debug(f"Failed to setup Windows API functions: {e}")
 
-    def _compile_yara_rules(self) -> any | None:
+    def _compile_yara_rules(self) -> object | None:
         """Compile YARA rules for StarForce signature detection."""
         if not YARA_AVAILABLE:
             return None

@@ -58,11 +58,17 @@ class HexCommand(ABC):
     """Abstract base class for hex editor commands."""
 
     def __init__(self, description: str, operation_type: OperationType) -> None:
-        """Initialize the HexCommand with description and operation type."""
-        self.description = description
-        self.operation_type = operation_type
-        self.timestamp = None
-        self.executed = False
+        """Initialize the HexCommand with description and operation type.
+
+        Args:
+            description: Text description of the command
+            operation_type: Type of operation (from OperationType enum)
+
+        """
+        self.description: str = description
+        self.operation_type: OperationType = operation_type
+        self.timestamp: float | None = None
+        self.executed: bool = False
 
     @abstractmethod
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
@@ -89,7 +95,7 @@ class HexCommand(ABC):
         """
 
     @abstractmethod
-    def get_affected_range(self) -> tuple:
+    def get_affected_range(self) -> tuple[int, int]:
         """Get the range of bytes affected by this command.
 
         Returns:
@@ -107,17 +113,25 @@ class HexCommand(ABC):
             True if commands can be merged
 
         """
-        _other = other  # Store for potential future use
-        return False
+        if self.operation_type != other.operation_type:
+            return False
+
+        self_range = self.get_affected_range()
+        other_range = other.get_affected_range()
+
+        self_end = self_range[1]
+        other_start = other_range[0]
+        proximity_threshold = 16
+
+        if abs(self_end - other_start) <= proximity_threshold:
+            return True
+        return abs(other_range[1] - self_range[0]) <= proximity_threshold
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge this command with another command.
 
         Args:
             other: Another command to merge with
-
-        Returns:
-            New merged command
 
         Raises:
             ValueError: If commands cannot be merged
@@ -133,15 +147,30 @@ class HexCommand(ABC):
 class ReplaceCommand(HexCommand):
     """Command for replacing bytes at a specific offset."""
 
-    def __init__(self, offset: int, new_data: bytes, old_data: bytes = None) -> None:
-        """Initialize the ReplaceCommand with offset and data."""
+    def __init__(self, offset: int, new_data: bytes, old_data: bytes | None = None) -> None:
+        """Initialize the ReplaceCommand with offset and data.
+
+        Args:
+            offset: Starting offset for replacement
+            new_data: New bytes to insert
+            old_data: Original bytes at this location (optional)
+
+        """
         super().__init__(f"Replace {len(new_data)} bytes at 0x{offset:X}", OperationType.REPLACE)
         self.offset = offset
         self.new_data = new_data
         self.old_data = old_data
 
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
-        """Execute the replace operation."""
+        """Execute the replace operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             # Store old data if not already stored
             if self.old_data is None:
@@ -158,7 +187,15 @@ class ReplaceCommand(HexCommand):
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
-        """Undo the replace operation."""
+        """Undo the replace operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if not self.executed or self.old_data is None:
                 return False
@@ -172,12 +209,25 @@ class ReplaceCommand(HexCommand):
             logger.error("Error undoing replace command: %s", e)
             return False
 
-    def get_affected_range(self) -> tuple:
-        """Get the affected byte range."""
+    def get_affected_range(self) -> tuple[int, int]:
+        """Get the affected byte range.
+
+        Returns:
+            Tuple of (start_offset, end_offset)
+
+        """
         return (self.offset, self.offset + len(self.new_data))
 
     def can_merge_with(self, other: "HexCommand") -> bool:
-        """Check if this command can be merged with a consecutive replace."""
+        """Check if this command can be merged with a consecutive replace.
+
+        Args:
+            other: Another command to check
+
+        Returns:
+            True if commands can be merged, False otherwise
+
+        """
         if not isinstance(other, ReplaceCommand):
             return False
 
@@ -186,15 +236,29 @@ class ReplaceCommand(HexCommand):
         return other.offset == this_end
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
-        """Merge with another replace command."""
+        """Merge with another replace command.
+
+        Args:
+            other: Another command to merge with
+
+        Returns:
+            New merged ReplaceCommand
+
+        Raises:
+            ValueError: If commands cannot be merged
+
+        """
         if not self.can_merge_with(other):
             error_msg = "Cannot merge non-adjacent replace commands"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
         # Combine the data
-        combined_new_data = self.new_data + other.new_data
-        combined_old_data = self.old_data + other.old_data if self.old_data and other.old_data else None
+        other_cmd = other if isinstance(other, ReplaceCommand) else None
+        if other_cmd is None:
+            raise ValueError("Cannot merge with non-ReplaceCommand")
+        combined_new_data = self.new_data + other_cmd.new_data
+        combined_old_data = self.old_data + other_cmd.old_data if self.old_data and other_cmd.old_data else None
 
         return ReplaceCommand(self.offset, combined_new_data, combined_old_data)
 
@@ -203,13 +267,27 @@ class InsertCommand(HexCommand):
     """Command for inserting bytes at a specific offset."""
 
     def __init__(self, offset: int, data: bytes) -> None:
-        """Initialize the InsertCommand with offset and data."""
+        """Initialize the InsertCommand with offset and data.
+
+        Args:
+            offset: Starting offset for insertion
+            data: Bytes to insert
+
+        """
         super().__init__(f"Insert {len(data)} bytes at 0x{offset:X}", OperationType.INSERT)
         self.offset = offset
         self.data = data
 
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
-        """Execute the insert operation."""
+        """Execute the insert operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             success = file_handler.insert(self.offset, self.data)
             if success:
@@ -221,7 +299,15 @@ class InsertCommand(HexCommand):
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
-        """Undo the insert operation."""
+        """Undo the insert operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if not self.executed:
                 return False
@@ -235,8 +321,13 @@ class InsertCommand(HexCommand):
             logger.error("Error undoing insert command: %s", e)
             return False
 
-    def get_affected_range(self) -> tuple:
-        """Get the affected byte range."""
+    def get_affected_range(self) -> tuple[int, int]:
+        """Get the affected byte range.
+
+        Returns:
+            Tuple of (start_offset, end_offset)
+
+        """
         return (self.offset, self.offset + len(self.data))
 
     def can_merge_with(self, other: "HexCommand") -> bool:
@@ -247,10 +338,10 @@ class InsertCommand(HexCommand):
         - The second command's offset is at the end of the first command's insertion
 
         Args:
-            other: Another command
+            other: Another command to check
 
         Returns:
-            True if commands can be merged
+            True if commands can be merged, False otherwise
 
         """
         if not isinstance(other, InsertCommand):
@@ -279,7 +370,10 @@ class InsertCommand(HexCommand):
             raise ValueError(error_msg)
 
         # Combine the data
-        combined_data = self.data + other.data
+        other_cmd = other if isinstance(other, InsertCommand) else None
+        if other_cmd is None:
+            raise ValueError("Cannot merge with non-InsertCommand")
+        combined_data = self.data + other_cmd.data
 
         # Create new merged command
         return InsertCommand(self.offset, combined_data)
@@ -288,15 +382,30 @@ class InsertCommand(HexCommand):
 class DeleteCommand(HexCommand):
     """Command for deleting bytes at a specific offset."""
 
-    def __init__(self, offset: int, length: int, deleted_data: bytes = None) -> None:
-        """Initialize the DeleteCommand with offset, length, and deleted data."""
+    def __init__(self, offset: int, length: int, deleted_data: bytes | None = None) -> None:
+        """Initialize the DeleteCommand with offset, length, and deleted data.
+
+        Args:
+            offset: Starting offset for deletion
+            length: Number of bytes to delete
+            deleted_data: Original bytes that were deleted (optional)
+
+        """
         super().__init__(f"Delete {length} bytes at 0x{offset:X}", OperationType.DELETE)
         self.offset = offset
         self.length = length
         self.deleted_data = deleted_data
 
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
-        """Execute the delete operation."""
+        """Execute the delete operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             # Store data being deleted if not already stored
             if self.deleted_data is None:
@@ -312,7 +421,15 @@ class DeleteCommand(HexCommand):
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
-        """Undo the delete operation."""
+        """Undo the delete operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if not self.executed or self.deleted_data is None:
                 return False
@@ -326,8 +443,13 @@ class DeleteCommand(HexCommand):
             logger.error("Error undoing delete command: %s", e)
             return False
 
-    def get_affected_range(self) -> tuple:
-        """Get the affected byte range."""
+    def get_affected_range(self) -> tuple[int, int]:
+        """Get the affected byte range.
+
+        Returns:
+            Tuple of (start_offset, end_offset)
+
+        """
         return (self.offset, self.offset + self.length)
 
     def can_merge_with(self, other: "HexCommand") -> bool:
@@ -378,23 +500,27 @@ class DeleteCommand(HexCommand):
             raise ValueError(error_msg)
 
         # Determine the range of the merged deletion
-        min_offset = min(self.offset, other.offset)
-        max_end = max(self.offset + self.length, other.offset + other.length)
+        other_cmd = other if isinstance(other, DeleteCommand) else None
+        if other_cmd is None:
+            raise ValueError("Cannot merge with non-DeleteCommand")
+
+        min_offset = min(self.offset, other_cmd.offset)
+        max_end = max(self.offset + self.length, other_cmd.offset + other_cmd.length)
         combined_length = max_end - min_offset
 
         # Combine deleted data if available
         combined_deleted_data = None
-        if self.deleted_data and other.deleted_data:
+        if self.deleted_data and other_cmd.deleted_data:
             # Need to properly combine the deleted data based on offsets
-            if self.offset <= other.offset:
+            if self.offset <= other_cmd.offset:
                 # This command comes first
-                if self.offset + self.length >= other.offset:
+                if self.offset + self.length >= other_cmd.offset:
                     # Overlapping or adjacent
-                    overlap_start = other.offset - self.offset
-                    overlap_length = min(self.length - overlap_start, other.length)
+                    overlap_start = other_cmd.offset - self.offset
+                    overlap_length = min(self.length - overlap_start, other_cmd.length)
                     # Take self.deleted_data and append non-overlapping part of other
-                    if other.offset + other.length > self.offset + self.length:
-                        extra_data = other.deleted_data[overlap_length:]
+                    if other_cmd.offset + other_cmd.length > self.offset + self.length:
+                        extra_data = other_cmd.deleted_data[overlap_length:]
                         combined_deleted_data = self.deleted_data + extra_data
                     else:
                         combined_deleted_data = self.deleted_data
@@ -402,16 +528,16 @@ class DeleteCommand(HexCommand):
                     # Gap between deletions - shouldn't happen if can_merge_with is correct
                     combined_deleted_data = None
             # Other command comes first
-            elif other.offset + other.length >= self.offset:
+            elif other_cmd.offset + other_cmd.length >= self.offset:
                 # Overlapping or adjacent
-                overlap_start = self.offset - other.offset
-                overlap_length = min(other.length - overlap_start, self.length)
+                overlap_start = self.offset - other_cmd.offset
+                overlap_length = min(other_cmd.length - overlap_start, self.length)
                 # Take other.deleted_data and append non-overlapping part of self
-                if self.offset + self.length > other.offset + other.length:
+                if self.offset + self.length > other_cmd.offset + other_cmd.length:
                     extra_data = self.deleted_data[overlap_length:]
-                    combined_deleted_data = other.deleted_data + extra_data
+                    combined_deleted_data = other_cmd.deleted_data + extra_data
                 else:
-                    combined_deleted_data = other.deleted_data
+                    combined_deleted_data = other_cmd.deleted_data
             else:
                 # Gap between deletions - shouldn't happen if can_merge_with is correct
                 combined_deleted_data = None
@@ -423,8 +549,16 @@ class DeleteCommand(HexCommand):
 class FillCommand(HexCommand):
     """Command for filling a range with a specific value."""
 
-    def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes = None) -> None:
-        """Initialize the FillCommand with offset, length, fill value, and old data."""
+    def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes | None = None) -> None:
+        """Initialize the FillCommand with offset, length, fill value, and old data.
+
+        Args:
+            offset: Starting offset for fill operation
+            length: Number of bytes to fill
+            fill_value: Byte value to fill with
+            old_data: Original bytes before fill (optional)
+
+        """
         super().__init__(f"Fill {length} bytes at 0x{offset:X} with 0x{fill_value:02X}", OperationType.FILL)
         self.offset = offset
         self.length = length
@@ -432,7 +566,15 @@ class FillCommand(HexCommand):
         self.old_data = old_data
 
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
-        """Execute the fill operation."""
+        """Execute the fill operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             # Store old data if not already stored
             if self.old_data is None:
@@ -456,7 +598,15 @@ class FillCommand(HexCommand):
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
-        """Undo the fill operation."""
+        """Undo the fill operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if not self.executed or self.old_data is None:
                 return False
@@ -470,16 +620,29 @@ class FillCommand(HexCommand):
             logger.error("Error undoing fill command: %s", e)
             return False
 
-    def get_affected_range(self) -> tuple:
-        """Get the affected byte range."""
+    def get_affected_range(self) -> tuple[int, int]:
+        """Get the affected byte range.
+
+        Returns:
+            Tuple of (start_offset, end_offset)
+
+        """
         return (self.offset, self.offset + self.length)
 
 
 class PasteCommand(HexCommand):
     """Command for pasting data at a specific offset."""
 
-    def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None) -> None:
-        """Initialize the PasteCommand with offset, data, insert mode, and old data."""
+    def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes | None = None) -> None:
+        """Initialize the PasteCommand with offset, data, insert mode, and old data.
+
+        Args:
+            offset: Starting offset for paste operation
+            data: Bytes to paste
+            insert_mode: True to insert, False to overwrite
+            old_data: Original bytes before paste (optional)
+
+        """
         mode_str = "insert" if insert_mode else "overwrite"
         super().__init__(f"Paste {len(data)} bytes at 0x{offset:X} ({mode_str})", OperationType.PASTE)
         self.offset = offset
@@ -488,7 +651,15 @@ class PasteCommand(HexCommand):
         self.old_data = old_data
 
     def execute(self, file_handler: "VirtualFileAccess") -> bool:
-        """Execute the paste operation."""
+        """Execute the paste operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if self.insert_mode:
                 # Insert mode - insert the data
@@ -509,7 +680,15 @@ class PasteCommand(HexCommand):
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
-        """Undo the paste operation."""
+        """Undo the paste operation.
+
+        Args:
+            file_handler: VirtualFileAccess instance for file operations
+
+        Returns:
+            True if operation succeeded, False otherwise
+
+        """
         try:
             if not self.executed:
                 return False
@@ -531,8 +710,13 @@ class PasteCommand(HexCommand):
             logger.error("Error undoing paste command: %s", e)
             return False
 
-    def get_affected_range(self) -> tuple:
-        """Get the affected byte range."""
+    def get_affected_range(self) -> tuple[int, int]:
+        """Get the affected byte range.
+
+        Returns:
+            Tuple of (start_offset, end_offset)
+
+        """
         return (self.offset, self.offset + len(self.data))
 
 
@@ -547,14 +731,19 @@ class CommandManager:
                         Defaults to sys.maxsize for virtually unlimited undo/redo.
 
         """
-        self.max_history = max_history
+        self.max_history: int = max_history
         self.command_history: list[HexCommand] = []
-        self.current_index = -1
-        self.file_handler = None
-        self.auto_merge = True
+        self.current_index: int = -1
+        self.file_handler: Any = None
+        self.auto_merge: bool = True
 
     def set_file_handler(self, file_handler: "VirtualFileAccess") -> None:
-        """Set the file handler for command execution."""
+        """Set the file handler for command execution.
+
+        Args:
+            file_handler: VirtualFileAccess instance to use for command execution
+
+        """
         self.file_handler = file_handler
 
     def execute_command(self, command: HexCommand) -> bool:
@@ -622,7 +811,7 @@ class CommandManager:
             True if successful, False otherwise
 
         """
-        if not self.can_undo():
+        if not self.can_undo() or self.file_handler is None:
             return False
 
         command = self.command_history[self.current_index]
@@ -640,7 +829,7 @@ class CommandManager:
             True if successful, False otherwise
 
         """
-        if not self.can_redo():
+        if not self.can_redo() or self.file_handler is None:
             return False
 
         command = self.command_history[self.current_index + 1]
@@ -652,11 +841,21 @@ class CommandManager:
         return False
 
     def can_undo(self) -> bool:
-        """Check if undo is possible."""
+        """Check if undo is possible.
+
+        Returns:
+            True if undo can be performed, False otherwise
+
+        """
         return self.current_index >= 0 and len(self.command_history) > 0
 
     def can_redo(self) -> bool:
-        """Check if redo is possible."""
+        """Check if redo is possible.
+
+        Returns:
+            True if redo can be performed, False otherwise
+
+        """
         return self.current_index < len(self.command_history) - 1
 
     def clear_history(self) -> None:
@@ -666,13 +865,23 @@ class CommandManager:
         logger.debug("Cleared command history")
 
     def get_undo_description(self) -> str | None:
-        """Get description of the command that would be undone."""
+        """Get description of the command that would be undone.
+
+        Returns:
+            Description string of the command to be undone, or None if no undo available
+
+        """
         if self.can_undo():
             return self.command_history[self.current_index].description
         return None
 
     def get_redo_description(self) -> str | None:
-        """Get description of the command that would be redone."""
+        """Get description of the command that would be redone.
+
+        Returns:
+            Description string of the command to be redone, or None if no redo available
+
+        """
         if self.can_redo():
             return self.command_history[self.current_index + 1].description
         return None
@@ -697,6 +906,11 @@ class CommandManager:
         ]
 
     def set_auto_merge(self, enabled: bool) -> None:
-        """Enable or disable automatic command merging."""
+        """Enable or disable automatic command merging.
+
+        Args:
+            enabled: True to enable auto-merging, False to disable
+
+        """
         self.auto_merge = enabled
         logger.debug(f"Auto-merge {'enabled' if enabled else 'disabled'}")

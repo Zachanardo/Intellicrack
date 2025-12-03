@@ -619,8 +619,8 @@ class ReportManagerDialog(BaseDialog):
             os.makedirs(self.reports_dir, exist_ok=True)
             return
 
-        for _item in os.listdir(self.reports_dir):
-            item_path = os.path.join(self.reports_dir, _item)
+        for item in os.listdir(self.reports_dir):
+            item_path = os.path.join(self.reports_dir, item)
 
             if os.path.isfile(item_path):
                 # Get file info
@@ -628,15 +628,15 @@ class ReportManagerDialog(BaseDialog):
 
                 # Determine report type from filename or content
                 report_type = "Unknown"
-                if "vulnerability" in _item.lower():
+                if "vulnerability" in item.lower():
                     report_type = "Vulnerability"
-                elif "license" in _item.lower():
+                elif "license" in item.lower():
                     report_type = "License"
-                elif "performance" in _item.lower():
+                elif "performance" in item.lower():
                     report_type = "Performance"
 
-                self.reports[_item] = {
-                    "name": _item,
+                self.reports[item] = {
+                    "name": item,
                     "path": item_path,
                     "type": report_type,
                     "created": datetime.fromtimestamp(stat.st_ctime),

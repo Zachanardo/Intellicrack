@@ -30,7 +30,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import msgpack
 
@@ -100,9 +100,9 @@ class BaseResult:
 class FunctionResult(BaseResult):
     """Function analysis result."""
 
-    address: int
-    name: str
-    size: int
+    address: int = 0
+    name: str = ""
+    size: int = 0
     return_type: str | None = None
     parameters: list[dict[str, Any]] = field(default_factory=list)
     calling_convention: str | None = None
@@ -122,8 +122,8 @@ class FunctionResult(BaseResult):
 class StringResult(BaseResult):
     """String discovery result."""
 
-    address: int
-    value: str
+    address: int = 0
+    value: str = ""
     encoding: str = "utf-8"
     length: int = 0
     references: list[int] = field(default_factory=list)
@@ -139,14 +139,14 @@ class StringResult(BaseResult):
 class CryptoResult(BaseResult):
     """Cryptographic operation result."""
 
-    address: int
-    algorithm: str
+    address: int = 0
+    algorithm: str = ""
     key_size: int | None = None
     mode: str | None = None
     key_location: int | None = None
     iv_location: int | None = None
     constants: list[int] = field(default_factory=list)
-    implementation_type: str = "unknown"  # "standard", "custom", "obfuscated"
+    implementation_type: str = "unknown"
     vulnerable: bool = False
     vulnerability_details: str | None = None
 
@@ -155,8 +155,8 @@ class CryptoResult(BaseResult):
 class LicenseCheckResult(BaseResult):
     """License validation detection result."""
 
-    address: int
-    check_type: str  # "serial", "hwid", "time", "network", "file"
+    address: int = 0
+    check_type: str = ""
     success_path: int | None = None
     failure_path: int | None = None
     validation_routine: int | None = None
@@ -171,14 +171,14 @@ class LicenseCheckResult(BaseResult):
 class ProtectionResult(BaseResult):
     """Protection scheme detection result."""
 
-    protection_type: str  # "packer", "protector", "obfuscator", "anti-debug"
-    name: str
+    protection_type: str = ""
+    name: str = ""
     version: str | None = None
     entry_point: int | None = None
     protected_sections: list[dict[str, Any]] = field(default_factory=list)
     unpacking_method: str | None = None
-    oep_address: int | None = None  # Original Entry Point
-    iat_address: int | None = None  # Import Address Table
+    oep_address: int | None = None
+    iat_address: int | None = None
     bypass_techniques: list[str] = field(default_factory=list)
     detection_signatures: list[str] = field(default_factory=list)
 
@@ -187,11 +187,11 @@ class ProtectionResult(BaseResult):
 class PatchResult(BaseResult):
     """Binary patch result."""
 
-    address: int
-    original_bytes: bytes
-    patched_bytes: bytes
-    patch_type: str  # "nop", "jump", "call", "data", "instruction"
-    description: str
+    address: int = 0
+    original_bytes: bytes = b""
+    patched_bytes: bytes = b""
+    patch_type: str = ""
+    description: str = ""
     reversible: bool = True
     dependencies: list[int] = field(default_factory=list)
     side_effects: list[str] = field(default_factory=list)
@@ -201,11 +201,11 @@ class PatchResult(BaseResult):
 class MemoryDumpResult(BaseResult):
     """Memory dump result."""
 
-    start_address: int
-    end_address: int
-    size: int
-    data: bytes
-    permissions: str  # "rwx", "r-x", "rw-", etc.
+    start_address: int = 0
+    end_address: int = 0
+    size: int = 0
+    data: bytes = b""
+    permissions: str = ""
     section_name: str | None = None
     is_executable: bool = False
     is_writable: bool = False
@@ -218,7 +218,7 @@ class MemoryDumpResult(BaseResult):
 class ControlFlowResult(BaseResult):
     """Control flow analysis result."""
 
-    function_address: int
+    function_address: int = 0
     basic_blocks: list[dict[str, int]] = field(default_factory=list)
     edges: list[tuple[int, int]] = field(default_factory=list)
     loops: list[list[int]] = field(default_factory=list)
@@ -232,6 +232,11 @@ class ControlFlowResult(BaseResult):
 
 class ResultSerializer:
     """Unified serialization handler for all result types."""
+
+    format: DataFormat
+    compression_enabled: bool
+    encryption_key: bytes | None
+    result_classes: dict[ResultType, type[BaseResult]]
 
     def __init__(self, format: DataFormat = DataFormat.MSGPACK) -> None:
         """Initialize serializer with specified format."""
@@ -325,7 +330,7 @@ class ResultSerializer:
         version = struct.pack("H", 1)
 
         # Serialize data to msgpack first
-        data_bytes = msgpack.packb(data, use_bin_type=True)
+        data_bytes = cast("bytes", msgpack.packb(data, use_bin_type=True))
         data_length = struct.pack("I", len(data_bytes))
 
         return header + version + data_length + data_bytes
@@ -351,12 +356,13 @@ class ResultSerializer:
         # Version-specific deserialization
         if version == 1:
             # Version 1: Basic msgpack
-            return msgpack.unpackb(data_bytes, raw=False)
-        if version == 2:
+            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False))
+        elif version == 2:
             # Version 2: msgpack with strict_map_key
-            return msgpack.unpackb(data_bytes, raw=False, strict_map_key=False)
-        # Version 3: msgpack with timestamp support
-        return msgpack.unpackb(data_bytes, raw=False, timestamp=3)
+            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False, strict_map_key=False))
+        else:
+            # Version 3: msgpack with timestamp support
+            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False, timestamp=3))
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""
@@ -368,7 +374,7 @@ class ResultSerializer:
         iv = get_random_bytes(16)
 
         # Create cipher
-        cipher = AES.new(self.encryption_key, AES.MODE_CBC, iv)
+        cipher = AES.new(cast("bytes", self.encryption_key), AES.MODE_CBC, iv)
 
         # Encrypt
         encrypted = cipher.encrypt(pad(data, AES.block_size))
@@ -385,7 +391,7 @@ class ResultSerializer:
         encrypted = data[16:]
 
         # Create cipher
-        cipher = AES.new(self.encryption_key, AES.MODE_CBC, iv)
+        cipher = AES.new(cast("bytes", self.encryption_key), AES.MODE_CBC, iv)
 
         return unpad(cipher.decrypt(encrypted), AES.block_size)
 
@@ -434,7 +440,7 @@ class ResultConverter:
     @staticmethod
     def ghidra_to_standard(ghidra_data: dict[str, Any]) -> list[BaseResult]:
         """Convert Ghidra output to standard format."""
-        results = []
+        results: list[BaseResult] = []
 
         # Convert functions
         for func in ghidra_data.get("functions", []):
@@ -455,7 +461,7 @@ class ResultConverter:
 
         # Convert strings
         for string in ghidra_data.get("strings", []):
-            result = StringResult(
+            result_str = StringResult(
                 id=hashlib.sha256(f"{string['address']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="ghidra",
@@ -465,14 +471,14 @@ class ResultConverter:
                 length=len(string["value"]),
                 references=string.get("xrefs", []),
             )
-            results.append(result)
+            results.append(result_str)
 
         return results
 
     @staticmethod
     def ida_to_standard(ida_data: dict[str, Any]) -> list[BaseResult]:
         """Convert IDA Pro output to standard format."""
-        results = []
+        results: list[BaseResult] = []
 
         # Convert functions
         for addr, func in ida_data.get("functions", {}).items():
@@ -493,7 +499,7 @@ class ResultConverter:
         # Convert structures
         for struct_name, struct_data in ida_data.get("structures", {}).items():
             # Store as metadata since we don't have a dedicated structure result
-            result = BaseResult(
+            result_base = BaseResult(
                 id=hashlib.sha256(struct_name.encode()).hexdigest(),
                 type=ResultType.STRUCTURE,
                 source_tool="ida_pro",
@@ -504,14 +510,14 @@ class ResultConverter:
                     "members": struct_data.get("members", []),
                 },
             )
-            results.append(result)
+            results.append(result_base)
 
         return results
 
     @staticmethod
     def radare2_to_standard(r2_data: dict[str, Any]) -> list[BaseResult]:
         """Convert Radare2 output to standard format."""
-        results = []
+        results: list[BaseResult] = []
 
         # Convert functions from aflj output
         for func in r2_data.get("functions", []):
@@ -530,7 +536,7 @@ class ResultConverter:
 
         # Convert strings from izj output
         for string in r2_data.get("strings", []):
-            result = StringResult(
+            result_str = StringResult(
                 id=hashlib.sha256(f"{string['vaddr']}".encode()).hexdigest(),
                 type=ResultType.STRING,
                 source_tool="radare2",
@@ -540,7 +546,7 @@ class ResultConverter:
                 length=string["length"],
                 encoding=string.get("type", "ascii"),
             )
-            results.append(result)
+            results.append(result_str)
 
         return results
 
@@ -586,7 +592,7 @@ class ResultConverter:
     @staticmethod
     def standard_to_json(results: list[BaseResult]) -> str:
         """Convert standard results to JSON for export."""
-        export_data = {
+        export_data: dict[str, Any] = {
             "version": "1.0",
             "timestamp": datetime.now().isoformat(),
             "results": [r.to_dict() for r in results],
@@ -598,8 +604,11 @@ class ResultConverter:
             result_type = result.type.value
             source_tool = result.source_tool
 
-            export_data["summary"]["by_type"][result_type] = export_data["summary"]["by_type"].get(result_type, 0) + 1
+            summary_dict = cast("dict[str, Any]", export_data["summary"])
+            by_type_dict = cast("dict[str, int]", summary_dict["by_type"])
+            by_tool_dict = cast("dict[str, int]", summary_dict["by_tool"])
 
-            export_data["summary"]["by_tool"][source_tool] = export_data["summary"]["by_tool"].get(source_tool, 0) + 1
+            by_type_dict[result_type] = by_type_dict.get(result_type, 0) + 1
+            by_tool_dict[source_tool] = by_tool_dict.get(source_tool, 0) + 1
 
         return json.dumps(export_data, indent=2, cls=CustomJSONEncoder)

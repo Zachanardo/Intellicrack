@@ -314,18 +314,18 @@ You are the autonomous expert - take complete ownership of binary analysis chall
     def _format_tools_description(self) -> str:
         """Format tools description for the prompt."""
         categories = {}
-        for _tool in self.tools.values():
-            if _tool.category not in categories:
-                categories[_tool.category] = []
-            categories[_tool.category].append(_tool)
+        for tool in self.tools.values():
+            if tool.category not in categories:
+                categories[tool.category] = []
+            categories[tool.category].append(tool)
 
         description = ""
         for category, tools in categories.items():
             description += f"\n### {category.value.title()} Tools\n\n"
-            for _tool in tools:
-                description += f"**{_tool.name}** - {_tool.description}\n"
-                if _tool.example:
-                    description += f"   Example: `{_tool.example}`\n"
+            for tool in tools:
+                description += f"**{tool.name}** - {tool.description}\n"
+                if tool.example:
+                    description += f"   Example: `{tool.example}`\n"
                 description += "\n"
 
         return description
@@ -355,13 +355,13 @@ You are the autonomous expert - take complete ownership of binary analysis chall
         message_lower = message.lower()
 
         # Check for _specific intents
-        if any(_word in message_lower for _word in ["analyze", "scan", "check", "examine"]):
+        if any(word in message_lower for word in ["analyze", "scan", "check", "examine"]):
             return {"type": "analysis", "focus": self._extract_focus(message)}
-        if any(_word in message_lower for _word in ["patch", "bypass", "crack", "remove"]):
+        if any(word in message_lower for word in ["patch", "bypass", "crack", "remove"]):
             return {"type": "patching", "target": self._extract_target(message)}
-        if any(_word in message_lower for _word in ["help", "explain", "what", "how"]):
+        if any(word in message_lower for word in ["help", "explain", "what", "how"]):
             return {"type": "explanation", "topic": self._extract_topic(message)}
-        if any(_word in message_lower for _word in ["network", "protocol", "communication"]):
+        if any(word in message_lower for word in ["network", "protocol", "communication"]):
             return {"type": "network", "aspect": self._extract_aspect(message)}
         return {"type": "general", "content": message}
 
@@ -956,15 +956,15 @@ What security aspect interests you?"""
             license_keywords = ["license", "serial", "key", "activation", "trial", "demo", "expire"]
             found_patterns = []
 
-            for _pattern in patterns:
-                pattern_str = str(_pattern).lower()
-                if any(_keyword in pattern_str for _keyword in license_keywords):
-                    found_patterns.append(_pattern)
+            for pattern in patterns:
+                pattern_str = str(pattern).lower()
+                if any(keyword in pattern_str for keyword in license_keywords):
+                    found_patterns.append(pattern)
 
-            for _string in strings:
-                string_str = str(_string).lower()
-                if any(_keyword in string_str for _keyword in license_keywords):
-                    found_patterns.append(_string)
+            for string in strings:
+                string_str = str(string).lower()
+                if any(keyword in string_str for keyword in license_keywords):
+                    found_patterns.append(string)
 
             analysis = {
                 "analysis_type": "license_pattern_analysis",
@@ -974,11 +974,11 @@ What security aspect interests you?"""
                 "patterns_found": found_patterns[:10],
             }
             # Determine license type based on patterns
-            if any("trial" in str(_p).lower() for _p in found_patterns):
+            if any("trial" in str(p).lower() for p in found_patterns):
                 analysis["license_type"] = "trial_based"
-            elif any("serial" in str(_p).lower() for _p in found_patterns):
+            elif any("serial" in str(p).lower() for p in found_patterns):
                 analysis["license_type"] = "serial_based"
-            elif any("activation" in str(_p).lower() for _p in found_patterns):
+            elif any("activation" in str(p).lower() for p in found_patterns):
                 analysis["license_type"] = "activation_based"
 
             # Add bypass suggestions

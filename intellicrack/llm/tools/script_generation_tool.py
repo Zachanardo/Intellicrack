@@ -16,7 +16,10 @@ logger = get_logger(__name__)
 class ScriptGenerationTool:
     """LLM tool for generating analysis scripts"""
 
-    def __init__(self):
+    frida_templates: dict[str, str]
+    ghidra_templates: dict[str, str]
+
+    def __init__(self) -> None:
         """Initialize the script generation tool.
 
         Sets up the AI-powered script generation system for creating Frida
@@ -204,19 +207,19 @@ deobfuscate_strings()''',
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute script generation"""
-        script_type = kwargs.get("script_type")
-        target = kwargs.get("target")
-        task = kwargs.get("task")
-        protection_info = kwargs.get("protection_info", {})
-        custom_requirements = kwargs.get("custom_requirements", [])
+        script_type = kwargs.get("script_type", "")
+        target = kwargs.get("target", "")
+        task = kwargs.get("task", "")
+        protection_info: dict[str, Any] = kwargs.get("protection_info", {})
+        custom_requirements: list[str] = kwargs.get("custom_requirements", [])
 
         try:
             if script_type == "frida":
-                script = self._generate_frida_script(target, task, protection_info, custom_requirements)
+                script = self._generate_frida_script(str(target), str(task), protection_info, custom_requirements)
             elif script_type == "ghidra":
-                script = self._generate_ghidra_script(target, task, protection_info, custom_requirements)
+                script = self._generate_ghidra_script(str(target), str(task), protection_info, custom_requirements)
             else:
                 return {"success": False, "error": f"Unknown script type: {script_type}"}
 
@@ -233,7 +236,7 @@ deobfuscate_strings()''',
             logger.error(f"Script generation error: {e}")
             return {"success": False, "error": str(e)}
 
-    def _generate_frida_script(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_script(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida script"""
         task_lower = task.lower()
 
@@ -251,7 +254,7 @@ deobfuscate_strings()''',
         else:
             return self._generate_frida_custom(target, task, protection_info, requirements)
 
-    def _generate_frida_hook(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_hook(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida hook script based on detected protections"""
         script_parts = [f"// Frida Hook Script for {target}", f"// Task: {task}"]
 
@@ -337,7 +340,7 @@ if (targetModule) {{
 
         return "\n".join(script_parts)
 
-    def _generate_frida_trace(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_trace(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida trace script based on protection analysis"""
         script_parts = [f"// Frida Trace Script for {target}", f"// Task: {task}"]
 
@@ -440,7 +443,7 @@ if (targetModule) {{
 
         return "\n".join(script_parts)
 
-    def _get_apis_to_trace(self, protection_info: dict) -> list[tuple]:
+    def _get_apis_to_trace(self, protection_info: dict[str, Any]) -> list[tuple[str, str]]:
         """Get list of APIs to trace based on protection info"""
         # Base APIs always traced
         base_apis = [
@@ -466,7 +469,7 @@ if (targetModule) {{
 
         return base_apis
 
-    def _generate_frida_bypass(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_bypass(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida bypass script"""
         script_parts = [f"// Frida Bypass Script for {target}", f"// Task: {task}\n"]
 
@@ -596,7 +599,7 @@ Interceptor.attach(targetAddr, {
 
         return "\n".join(script_parts)
 
-    def _generate_frida_patch(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_patch(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida memory patch script"""
         script_parts = [f"// Frida Memory Patch Script for {target}"]
 
@@ -673,7 +676,7 @@ Interceptor.attach(targetAddr, {
 
         return "\n".join(script_parts)
 
-    def _generate_frida_custom(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_frida_custom(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate custom Frida script"""
         script_parts = []
 
@@ -753,7 +756,7 @@ Process.enumerateModules().forEach(function(module) {{
 
         return "\n".join(script_parts)
 
-    def _generate_ghidra_script(self, target: str, task: str, protection_info: dict, requirements: list[str]) -> str:
+    def _generate_ghidra_script(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Ghidra script"""
         # Import here to avoid circular imports
         from ...scripting.ghidra_generator import GhidraScriptGenerator
@@ -771,13 +774,13 @@ Process.enumerateModules().forEach(function(module) {{
 
         # Generate script based on task
         if "analyze" in task.lower():
-            return generator.generate_analysis_script(context)
+            return str(generator.generate_analysis_script(context))
         elif "patch" in task.lower():
-            return generator.generate_patch_script(context)
+            return str(generator.generate_patch_script(context))
         elif "deobfuscate" in task.lower():
-            return generator.generate_deobfuscation_script(context)
+            return str(generator.generate_deobfuscation_script(context))
         else:
-            return generator.generate_custom_script(context)
+            return str(generator.generate_custom_script(context))
 
     def _generate_packer_hooks(self, protection_type: str) -> str:
         """Generate hooks specific to packers/protectors"""
@@ -1309,7 +1312,7 @@ Process.enumerateModules().forEach(function(module) {{
     }});
 }});"""
 
-    def _get_target_functions_from_protection(self, protection_info: dict) -> str:
+    def _get_target_functions_from_protection(self, protection_info: dict[str, Any]) -> str:
         """Get JavaScript array of target function names based on protection info"""
         target_funcs = ["check", "verify", "validate", "license", "trial", "serial"]
 

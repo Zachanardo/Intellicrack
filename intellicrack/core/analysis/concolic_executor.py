@@ -1409,8 +1409,8 @@ class ConcolicExecutionEngine:
                 m.add_hook(target_address, self._target_hook)
 
             if avoid_addresses is not None:
-                for _addr in avoid_addresses:
-                    m.add_hook(_addr, self._avoid_hook)
+                for addr in avoid_addresses:
+                    m.add_hook(addr, self._avoid_hook)
 
             # Add path exploration plugin
             class PathExplorationPlugin(Plugin):
@@ -1494,7 +1494,7 @@ class ConcolicExecutionEngine:
                         {
                             "id": state_id,
                             "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                            "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
+                            "argv": [arg.hex() if isinstance(arg, bytes) else str(arg) for arg in argv_data],
                             "termination_reason": state.termination_reason,
                         },
                     )
@@ -1644,7 +1644,7 @@ class ConcolicExecutionEngine:
                     if isinstance(license_check_address, int)
                     else license_check_address,
                     "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                    "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
+                    "argv": [arg.hex() if isinstance(arg, bytes) else str(arg) for arg in argv_data],
                     "description": "Found input that bypasses license check",
                 }
             return {
@@ -1677,10 +1677,10 @@ class ConcolicExecutionEngine:
                 return None
 
             # Look for license-related functions in exports
-            for _func in binary.exported_functions:
-                func_name = _func.name.lower()
-                if any(_pattern in func_name for _pattern in ["licen", "valid", "check", "auth"]):
-                    return _func.address
+            for func in binary.exported_functions:
+                func_name = func.name.lower()
+                if any(pattern_ in func_name for pattern_ in ["licen", "valid", "check", "auth"]):
+                    return func.address
 
             # Look for license-related strings in binary
             try:
@@ -1688,8 +1688,8 @@ class ConcolicExecutionEngine:
                     binary_data = f.read()
 
                 license_patterns = [b"license", b"valid", b"key", b"auth", b"check"]
-                for _pattern in license_patterns:
-                    if matches := list(re.finditer(_pattern, binary_data, re.IGNORECASE)):
+                for pattern in license_patterns:
+                    if matches := list(re.finditer(pattern, binary_data, re.IGNORECASE)):
                         # Found license-related string - estimate function address
                         string_offset = matches[0].start()
                         # Heuristic: look for potential function boundaries before the string

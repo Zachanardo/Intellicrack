@@ -8,15 +8,10 @@
   },
   "content": {
     "type": "analysis",
-    "findings": [
-      "test"
-    ],
+    "findings": ["test"],
     "summary": {
       "total_sections": 2,
-      "sections": [
-        "type",
-        "findings"
-      ],
+      "sections": ["type", "findings"],
       "data_types": {
         "type": "str",
         "findings": "list"

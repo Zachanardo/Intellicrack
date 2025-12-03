@@ -56,8 +56,6 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
         - error: Error message if capture failed (optional)
         - suggestion: Installation suggestion for missing dependencies (optional)
 
-    Raises:
-        Exception: On packet capture errors (returned in error dictionary).
 
     Notes:
         - Automatically detects license-related keywords in packet payloads
@@ -83,10 +81,6 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
             Args:
                 packet: Scapy packet object to process and analyze.
 
-            Raises:
-                AttributeError: If packet lacks expected attributes.
-                UnicodeDecodeError: If payload contains non-UTF8 data.
-                TypeError: If payload type is unexpected.
 
             """
             packet_info = {
@@ -236,9 +230,6 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
         - unique_conversations: Count of unique conversations
         - top_talkers: Top 10 conversation partners by packet count
 
-    Raises:
-        FileNotFoundError: If PCAP file does not exist.
-        Exception: On PyShark analysis errors.
 
     """
     try:
@@ -505,9 +496,6 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
         - bytes_per_second: Average byte rate
         - total_port_scans: Count of port scan attempts
 
-    Raises:
-        FileNotFoundError: If PCAP file does not exist.
-        Exception: On dpkt parsing errors.
 
     """
     try:

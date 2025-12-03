@@ -397,13 +397,73 @@ class TrialResetEngine:
         kernel32.FindClose.argtypes = [wintypes.HANDLE]
         kernel32.FindClose.restype = wintypes.BOOL
 
+        kernel32.BackupRead.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_void_p,
+            wintypes.DWORD,
+            ctypes.POINTER(wintypes.DWORD),
+            wintypes.BOOL,
+            wintypes.BOOL,
+            ctypes.POINTER(ctypes.c_void_p),
+        ]
+        kernel32.BackupRead.restype = wintypes.BOOL
+
         for template in self.common_trial_locations["alternate_streams"]:
             path = template.replace("{product}", product_name)
             base_path = path.split(":")[0]
 
             if os.path.exists(base_path):
                 try:
-                    # Enumerate streams using FindFirstStreamW
+                    file_handle = kernel32.CreateFileW(
+                        base_path,
+                        0x80000000,
+                        0x01 | 0x02,
+                        None,
+                        3,
+                        0x02000000,
+                        None,
+                    )
+                    if file_handle != -1:
+                        try:
+                            context = ctypes.c_void_p(0)
+                            stream_id = WIN32_STREAM_ID()
+                            bytes_read = wintypes.DWORD(0)
+
+                            while kernel32.BackupRead(
+                                file_handle,
+                                ctypes.byref(stream_id),
+                                ctypes.sizeof(WIN32_STREAM_ID),
+                                ctypes.byref(bytes_read),
+                                False,
+                                False,
+                                ctypes.byref(context),
+                            ):
+                                if bytes_read.value == 0:
+                                    break
+                                if stream_id.dwStreamId == 4:
+                                    if stream_id.dwStreamNameSize > 0:
+                                        name_buffer = ctypes.create_unicode_buffer(
+                                            stream_id.dwStreamNameSize // 2
+                                        )
+                                        kernel32.BackupRead(
+                                            file_handle,
+                                            name_buffer,
+                                            stream_id.dwStreamNameSize,
+                                            ctypes.byref(bytes_read),
+                                            False,
+                                            False,
+                                            ctypes.byref(context),
+                                        )
+                                        stream_name = name_buffer.value
+                                        if stream_name:
+                                            ads_files.append(f"{base_path}{stream_name}")
+                                            logger.debug("Found ADS via BackupRead: %s%s", base_path, stream_name)
+                        finally:
+                            kernel32.CloseHandle(file_handle)
+                except (OSError, ctypes.WinError) as backup_error:
+                    logger.debug("BackupRead failed for %s: %s", base_path, backup_error)
+
+                try:
                     stream_data = WIN32_FIND_STREAM_DATA()
                     handle = kernel32.FindFirstStreamW(
                         base_path,

@@ -202,7 +202,7 @@ class PerformanceOptimizer:
         ]
 
     @profile_ai_operation("performance_optimization")
-    def optimize_operation(self, operation_id: str, operation_func: Callable[..., T], *args: object, **kwargs: object) -> T:
+    def optimize_operation(self, operation_id: str, operation_func: Callable[..., T], *args: object, **kwargs: object) -> object:
         """Optimize execution of an AI operation.
 
         Applies applicable optimization strategies to the given operation based on profiling
@@ -226,7 +226,7 @@ class PerformanceOptimizer:
         if cached_result is not None:
             self.optimization_stats["cache_hits"] += 1
             logger.debug(f"Cache hit for operation {operation_id}")
-            return cached_result
+            return operation_func(*args, **kwargs) if cached_result is None else cached_result
 
         self.optimization_stats["cache_misses"] += 1
 
@@ -277,14 +277,15 @@ class PerformanceOptimizer:
             )
 
             self.optimization_stats["total_optimizations"] += 1
-            return result
+            return result if result is not None else operation_func(*args, **kwargs)
 
         except Exception as e:
             logger.error(f"Error in optimized operation {operation_id}: {e}")
             # Fall back to original function
-            return operation_func(*args, **kwargs)
+            fallback_result = operation_func(*args, **kwargs)
+            return fallback_result if fallback_result is not None else None
 
-    def _generate_cache_key(self, operation_id: str, args: tuple, kwargs: dict[str, Any]) -> str:
+    def _generate_cache_key(self, operation_id: str, args: tuple[object, ...], kwargs: dict[str, Any]) -> str:
         """Generate deterministic cache key for operation.
 
         Creates a unique, reproducible hash key from the operation identifier and its arguments
@@ -303,7 +304,7 @@ class PerformanceOptimizer:
         content = f"{operation_id}_{args!s}_{sorted(kwargs.items())!s}"
         return hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()
 
-    def _apply_optimizations(self, operation_id: str, operation_func: Callable) -> Callable:
+    def _apply_optimizations(self, operation_id: str, operation_func: Callable[..., object]) -> Callable[..., object]:
         """Apply applicable optimization strategies to operation.
 
         Iterates through enabled optimization rules and applies relevant strategies
@@ -361,7 +362,7 @@ class PerformanceOptimizer:
         # Default to applying rule for new operations
         return True
 
-    def _apply_optimization_strategy(self, func: Callable, strategy: OptimizationStrategy, parameters: dict[str, Any]) -> Callable:
+    def _apply_optimization_strategy(self, func: Callable[..., object], strategy: OptimizationStrategy, parameters: dict[str, Any]) -> Callable[..., object]:
         """Apply specific optimization strategy to function.
 
         Wraps the function with the appropriate optimization wrapper based on the
@@ -385,7 +386,7 @@ class PerformanceOptimizer:
         # Return original function if strategy not implemented
         return func
 
-    def _wrap_for_parallel_execution(self, func: Callable, parameters: dict[str, Any]) -> Callable:
+    def _wrap_for_parallel_execution(self, func: Callable[..., object], parameters: dict[str, Any]) -> Callable[..., object]:
         """Wrap function for parallel execution.
 
         Creates a wrapper that distributes execution of iterable operations across
@@ -431,7 +432,7 @@ class PerformanceOptimizer:
 
         return parallel_wrapper
 
-    def _wrap_for_memory_optimization(self, func: Callable, parameters: dict[str, Any]) -> Callable:
+    def _wrap_for_memory_optimization(self, func: Callable[..., object], parameters: dict[str, Any]) -> Callable[..., object]:
         """Wrap function for memory optimization.
 
         Creates a wrapper that monitors memory usage before and after execution,
@@ -506,7 +507,7 @@ class PerformanceOptimizer:
 
         return memory_optimized_wrapper
 
-    def _wrap_for_batching(self, func: Callable, parameters: dict[str, Any]) -> Callable:
+    def _wrap_for_batching(self, func: Callable[..., object], parameters: dict[str, Any]) -> Callable[..., object]:
         """Wrap function for batched execution.
 
         Creates a wrapper that divides list arguments into batches and processes
@@ -628,7 +629,7 @@ class ResourceManager:
         and initializes resource management for optimal system utilization.
         """
         self.resource_pools: dict[ResourceType, Any] = {}
-        self.allocation_history: deque = deque(maxlen=1000)
+        self.allocation_history: deque[dict[str, Any]] = deque(maxlen=1000)
         self.resource_limits = self._get_system_limits()
         self.active_allocations: dict[str, ResourceAllocation] = {}
 
@@ -890,7 +891,7 @@ class ParallelExecutor:
     @profile_ai_operation("parallel_execution")
     def execute_parallel(
         self,
-        func: Callable,
+        func: Callable[..., object],
         items: list[Any],
         max_workers: int | None = None,
         *args: object,
@@ -965,7 +966,7 @@ class ParallelExecutor:
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]], max_workers: int | None = None) -> list[Any]:
+    def execute_batch_parallel(self, operations: list[tuple[Callable[..., object], tuple[object, ...], dict[str, Any]]], max_workers: int | None = None) -> list[Any]:
         """Execute multiple different operations in parallel.
 
         Processes a list of different callables with their respective arguments
@@ -1088,7 +1089,8 @@ class CacheManager:
             self.access_counts[key] += 1
             self.stats["hits"] += 1
 
-            return self.cache[key]["value"]
+            cached_value = self.cache[key].get("value")
+            return cached_value
 
         self.stats["misses"] += 1
         return None
@@ -1270,7 +1272,7 @@ class PerformanceOptimizationLayer:
         thread.start()
         logger.info("Started background optimization worker")
 
-    def optimize(self, operation_id: str, operation_func: Callable, *args: object, **kwargs: object) -> object:
+    def optimize(self, operation_id: str, operation_func: Callable[..., object], *args: object, **kwargs: object) -> object:
         """Optimize operation execution as main entry point.
 
         Routes optimization request to the internal optimizer for applying
@@ -1288,7 +1290,7 @@ class PerformanceOptimizationLayer:
         """
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int | None = None) -> list[Any]:
+    def execute_parallel(self, func: Callable[..., object], items: list[Any], max_workers: int | None = None) -> list[Any]:
         """Execute function in parallel for list of items.
 
         Distributes function execution across multiple worker threads.
@@ -1302,7 +1304,8 @@ class PerformanceOptimizationLayer:
             List of results from parallel execution.
 
         """
-        return self.parallel_executor.execute_parallel(func, items, max_workers)
+        result = self.parallel_executor.execute_parallel(func, items, max_workers)
+        return result if isinstance(result, list) else list(result) if hasattr(result, '__iter__') else []
 
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
         """Allocate resources for operation.
@@ -1317,7 +1320,8 @@ class PerformanceOptimizationLayer:
             True if resources allocated successfully, False otherwise.
 
         """
-        return self.resource_manager.allocate_resources(operation_id, requirements)
+        result = self.resource_manager.allocate_resources(operation_id, requirements)
+        return result if isinstance(result, bool) else bool(result)
 
     def release_resources(self, operation_id: str) -> None:
         """Release resources for operation.

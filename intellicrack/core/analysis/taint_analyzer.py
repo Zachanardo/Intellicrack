@@ -868,12 +868,12 @@ class TaintAnalysisEngine:
         """
         )
 
-        for _source in self.taint_sources:
+        for source in self.taint_sources:
             html += f"""
                 <tr>
-                    <td>{_source["type"]}</td>
-                    <td>{_source["location"]}</td>
-                    <td>{_source["description"]}</td>
+                    <td>{source["type"]}</td>
+                    <td>{source["location"]}</td>
+                    <td>{source["description"]}</td>
                 </tr>
             """
 
@@ -885,12 +885,12 @@ class TaintAnalysisEngine:
                 <tr><th>Type</th><th>Location</th><th>Description</th></tr>
         """
 
-        for _sink in self.taint_sinks:
+        for sink in self.taint_sinks:
             html += f"""
                 <tr>
-                    <td>{_sink["type"]}</td>
-                    <td>{_sink["location"]}</td>
-                    <td>{_sink["description"]}</td>
+                    <td>{sink["type"]}</td>
+                    <td>{sink["location"]}</td>
+                    <td>{sink["description"]}</td>
                 </tr>
             """
 
@@ -907,19 +907,19 @@ class TaintAnalysisEngine:
                 <tr><th>Address</th><th>Instruction</th><th>Status</th></tr>
             """
 
-            for _step in path:
-                status_class = _step["taint_status"]
-                status_text = _step["taint_status"].capitalize()
+            for step in path:
+                status_class = step["taint_status"]
+                status_text = step["taint_status"].capitalize()
 
                 if status_class == "source":
-                    status_text += f" ({_step['source']['type']})"
+                    status_text += f" ({step['source']['type']})"
                 elif status_class == "sink":
-                    status_text += f" ({_step['sink']['type']})"
+                    status_text += f" ({step['sink']['type']})"
 
                 html += f"""
                 <tr>
-                    <td>0x{_step["address"]:x}</td>
-                    <td>{_step["instruction"]}</td>
+                    <td>0x{step["address"]:x}</td>
+                    <td>{step["instruction"]}</td>
                     <td class="{status_class}">{status_text}</td>
                 </tr>
                 """
@@ -960,14 +960,14 @@ class TaintAnalysisEngine:
             "sources_by_type": self._count_by_type(self.taint_sources),
             "sinks_by_type": self._count_by_type(self.taint_sinks),
             "average_path_length": self._calculate_average_path_length(),
-            "total_instructions": sum(len(_path) for _path in self.taint_propagation),
+            "total_instructions": sum(len(path) for path in self.taint_propagation),
         }
 
     def _count_by_type(self, items: list[dict[str, Any]]) -> dict[str, int]:
         """Count items by type."""
         counts = {}
-        for _item in items:
-            item_type = _item.get("type", "unknown")
+        for item in items:
+            item_type = item.get("type", "unknown")
             counts[item_type] = counts.get(item_type, 0) + 1
         return counts
 
@@ -976,7 +976,7 @@ class TaintAnalysisEngine:
         if not self.taint_propagation:
             return 0.0
 
-        total_length = sum(len(_path) for _path in self.taint_propagation)
+        total_length = sum(len(path) for path in self.taint_propagation)
         return total_length / len(self.taint_propagation)
 
     def _build_data_flow_graph(self, instructions: list[dict[str, Any]], cfg: dict[int, list[int]]) -> dict[int, dict[str, Any]]:

@@ -81,7 +81,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
         func_name = func.__qualname__
 
         # Skip logging for certain problematic functions
-        if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
+        if any(skip in func_name for skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
             return func(*args, **kwargs)
 
         try:
@@ -133,7 +133,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             func_name = func.__qualname__
 
             # Skip logging for certain problematic functions
-            if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
+            if any(skip in func_name for skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
                 return await func(*args, **kwargs)
 
             try:

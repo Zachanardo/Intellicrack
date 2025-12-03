@@ -458,7 +458,7 @@ const BinaryPatcherTests = {
         };
 
         try {
-            const {cloudNative} = BinaryPatcherAdvanced.distributedProtection;
+            const { cloudNative } = BinaryPatcherAdvanced.distributedProtection;
 
             // Test container detection
             const runtime = cloudNative.detectContainerRuntime();
@@ -495,7 +495,7 @@ const BinaryPatcherTests = {
         };
 
         try {
-            const {blockchain} = BinaryPatcherAdvanced.distributedProtection;
+            const { blockchain } = BinaryPatcherAdvanced.distributedProtection;
 
             // Test Web3 detection
             const provider = blockchain.detectWeb3Provider();

@@ -55,7 +55,7 @@ class OptimizationRule:
     action: str  # "log", "gc", "cache_clear", "custom"
     enabled: bool = True
     cooldown_seconds: int = 60
-    custom_handler: Callable | None = None
+    custom_handler: Callable[[str, str, float], None] | None = None
     last_triggered: datetime | None = None
 
 
@@ -175,7 +175,7 @@ class OptimizationManager:
                     self._create_rule_handler(rule),
                 )
 
-    def _create_rule_handler(self, rule: OptimizationRule) -> Callable:
+    def _create_rule_handler(self, rule: OptimizationRule) -> Callable[[str, str, float], None]:
         """Create handler for optimization rule."""
 
         def handler(metric_name: str, level: str, value: float) -> None:
@@ -393,8 +393,13 @@ class OptimizationManager:
 
             logger.debug(f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
 
-            memory_load_data = [{f"key_{i}": f"value_{i}" * 100} for i in range(1000)]
-            # Measure before optimization
+            memory_load_data: list[dict[str, str]] = [
+                {f"key_{i}": f"value_{i}" * 100} for i in range(1000)
+            ]
+            load_data_size = sum(
+                len(str(k)) + len(str(v)) for d in memory_load_data for k, v in d.items()
+            )
+
             before_memory = process.memory_info().rss
             before_objects = len(gc.get_objects())
 
@@ -423,9 +428,10 @@ class OptimizationManager:
                 "memory_efficiency_mb_per_second": memory_efficiency,
                 "baseline_memory_mb": baseline_memory / 1024 / 1024,
                 "final_memory_mb": after_memory / 1024 / 1024,
+                "test_load_size_bytes": load_data_size,
             }
         except Exception as e:
-            logger.warning(f"Error during performance benchmark: {e}")
+            logger.warning("Error during performance benchmark: %s", e)
             return {
                 "optimization_time_seconds": 0.0,
                 "memory_saved_mb": 0.0,
@@ -433,6 +439,7 @@ class OptimizationManager:
                 "memory_efficiency_mb_per_second": 0.0,
                 "baseline_memory_mb": 0.0,
                 "final_memory_mb": 0.0,
+                "test_load_size_bytes": 0,
             }
 
     def export_config(self, file_path: Path) -> None:

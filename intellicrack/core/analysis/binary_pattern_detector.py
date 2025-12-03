@@ -185,7 +185,7 @@ class BinaryPatternDetector:
         self.add_pattern(
             BinaryPattern(
                 pattern_bytes=bytes.fromhex("55 8B EC 53 8B 5D 08 56 8B 75 0C 57 8B 7D 10 85 F6 75 09"),
-                mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"),
+                mask=bytes.fromhex("FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"),
                 name="steam_ceg_drm_validation",
                 category="licensing",
                 match_type=PatternMatchType.EXACT,

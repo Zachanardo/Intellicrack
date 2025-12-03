@@ -105,7 +105,14 @@ CONFIDENCE_MULTIPLIERS = {
 
 
 def get_severity_from_score(score: float) -> SeverityLevel:
-    """Convert numeric score to severity level."""
+    """Convert numeric score to severity level.
+
+    Args:
+        score: Numeric severity score (typically 0.0-10.0).
+
+    Returns:
+        SeverityLevel enum corresponding to the score.
+    """
     if score >= 9.0:
         return SeverityLevel.CRITICAL
     if score >= 7.0:
@@ -116,7 +123,14 @@ def get_severity_from_score(score: float) -> SeverityLevel:
 
 
 def get_threat_from_score(score: float) -> ThreatLevel:
-    """Convert numeric score to threat level."""
+    """Convert numeric score to threat level.
+
+    Args:
+        score: Numeric threat score (typically 0.0-10.0).
+
+    Returns:
+        ThreatLevel enum corresponding to the score.
+    """
     if score >= 8.0:
         return ThreatLevel.IMMINENT
     if score >= 6.0:
@@ -127,7 +141,16 @@ def get_threat_from_score(score: float) -> ThreatLevel:
 
 
 def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel) -> float:
-    """Calculate overall risk score from severity, threat, and confidence."""
+    """Calculate overall risk score from severity, threat, and confidence.
+
+    Args:
+        severity: SeverityLevel of the vulnerability or finding.
+        threat: ThreatLevel of the threat.
+        confidence: ConfidenceLevel in the analysis results.
+
+    Returns:
+        Calculated risk score combining all three factors.
+    """
     severity_score = SEVERITY_SCORES.get(severity, 1.0)
     threat_score = THREAT_SCORES.get(threat, 0.0)
     confidence_multiplier = CONFIDENCE_MULTIPLIERS.get(confidence, 0.5)
@@ -138,12 +161,26 @@ def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel, confidenc
 
 
 def get_severity_color(severity: SeverityLevel) -> str:
-    """Get color code for severity level."""
+    """Get color code for severity level.
+
+    Args:
+        severity: SeverityLevel to get color for.
+
+    Returns:
+        Hex color code string for the severity level.
+    """
     return SEVERITY_COLORS.get(severity, "#808080")
 
 
 def format_severity_report(findings: list[dict[str, Any]]) -> str:
-    """Format a list of findings into a severity report."""
+    """Format a list of findings into a severity report.
+
+    Args:
+        findings: List of finding dictionaries with 'severity' key.
+
+    Returns:
+        Formatted string report grouped and sorted by severity.
+    """
     if not findings:
         return "No findings to report."
 
@@ -185,7 +222,14 @@ def format_severity_report(findings: list[dict[str, Any]]) -> str:
 
 
 def aggregate_severity_stats(findings: list[dict[str, Any]]) -> dict[str, Any]:
-    """Aggregate severity statistics from findings."""
+    """Aggregate severity statistics from findings.
+
+    Args:
+        findings: List of finding dictionaries to aggregate statistics from.
+
+    Returns:
+        Dictionary with aggregated severity statistics including by_severity, risk_distribution, and average_risk_score.
+    """
     stats: dict[str, Any] = {
         "total_findings": len(findings),
         "by_severity": {},
@@ -226,7 +270,14 @@ def aggregate_severity_stats(findings: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def prioritize_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Sort findings by priority (risk score)."""
+    """Sort findings by priority (risk score).
+
+    Args:
+        findings: List of finding dictionaries to prioritize.
+
+    Returns:
+        Sorted list of findings ordered by risk score (highest risk first).
+    """
 
     def get_priority_score(finding: dict[str, Any]) -> float:
         severity = finding.get("severity", SeverityLevel.INFO)

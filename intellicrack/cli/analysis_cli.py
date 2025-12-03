@@ -82,7 +82,7 @@ class AnalysisCLI:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        results = {
+        results: dict[str, Any] = {
             "timestamp": datetime.datetime.now().isoformat(),
             "target_file": file_path,
             "file_hash": self._calculate_hash(file_path),
@@ -97,7 +97,9 @@ class AnalysisCLI:
 
         # Detect file type
         file_type = detect_file_type(file_path)
-        results["metadata"]["file_type"] = file_type
+        metadata = results["metadata"]
+        if isinstance(metadata, dict):
+            metadata["file_type"] = file_type
         self.logger.info(f"Detected file type: {file_type}")
 
         # Binary analysis
@@ -105,35 +107,44 @@ class AnalysisCLI:
             self.logger.info("Performing binary analysis...")
             try:
                 binary_results = self.binary_analyzer.analyze(file_path)
-                results["findings"].extend(self._format_findings(binary_results, "Binary Analysis"))
-                results["metadata"]["binary_analysis"] = binary_results
+                findings = results["findings"]
+                if isinstance(findings, list):
+                    findings.extend(self._format_findings(binary_results, "Binary Analysis"))
+                metadata = results["metadata"]
+                if isinstance(metadata, dict):
+                    metadata["binary_analysis"] = binary_results
             except Exception as e:
                 self.logger.error(f"Binary analysis failed: {e}")
-                results["findings"].append(
-                    {
-                        "type": "error",
-                        "description": f"Binary analysis failed: {e!s}",
-                        "impact": "high",
-                    },
-                )
+                findings = results["findings"]
+                if isinstance(findings, list):
+                    findings.append(
+                        {
+                            "type": "error",
+                            "description": f"Binary analysis failed: {e!s}",
+                            "impact": "high",
+                        },
+                    )
 
         # Protection analysis
         if options.get("protection_analysis", True):
             self.logger.info("Analyzing protection mechanisms...")
             try:
-                protections = self.protection_analyzer.analyze_protections(file_path)
+                protections = self.protection_analyzer.analyze(file_path)
                 results["protections"] = protections
 
                 # Add findings based on protections
-                for p in protections:
-                    if p.get("status") == "enabled":
-                        results["findings"].append(
-                            {
-                                "type": "protection",
-                                "description": f"{p['type']} protection detected",
-                                "impact": "medium",
-                            },
-                        )
+                if isinstance(protections, dict):
+                    for key, value in protections.items():
+                        if isinstance(value, dict) and value.get("status") == "enabled":
+                            findings = results["findings"]
+                            if isinstance(findings, list):
+                                findings.append(
+                                    {
+                                        "type": "protection",
+                                        "description": f"{key} protection detected",
+                                        "impact": "medium",
+                                    },
+                                )
             except Exception as e:
                 self.logger.error(f"Protection analysis failed: {e}")
 
@@ -147,9 +158,11 @@ class AnalysisCLI:
                 # Generate recommendations based on vulnerabilities
                 for v in vulnerabilities:
                     if v.get("severity") in ["critical", "high"]:
-                        results["recommendations"].append(
-                            f"Address {v['type']} vulnerability: {v.get('recommendation', 'Apply security patch')}",
-                        )
+                        recommendations = results["recommendations"]
+                        if isinstance(recommendations, list):
+                            recommendations.append(
+                                f"Address {v['type']} vulnerability: {v.get('recommendation', 'Apply security patch')}",
+                            )
             except Exception as e:
                 self.logger.error(f"Vulnerability scanning failed: {e}")
 
@@ -159,18 +172,23 @@ class AnalysisCLI:
             try:
                 pe_analyzer = PEAnalyzer()
                 pe_results = pe_analyzer.analyze(file_path)
-                results["metadata"]["pe_analysis"] = pe_results
+                metadata = results["metadata"]
+                if isinstance(metadata, dict):
+                    metadata["pe_analysis"] = pe_results
 
                 # Check for suspicious imports
                 if "imports" in pe_results:
-                    if suspicious_apis := self._check_suspicious_apis(pe_results["imports"]):
-                        results["findings"].append(
-                            {
-                                "type": "suspicious_api",
-                                "description": f"Suspicious API calls detected: {', '.join(suspicious_apis)}",
-                                "impact": "medium",
-                            },
-                        )
+                    suspicious_apis = self._check_suspicious_apis(pe_results["imports"])
+                    if suspicious_apis:
+                        findings = results["findings"]
+                        if isinstance(findings, list):
+                            findings.append(
+                                {
+                                    "type": "suspicious_api",
+                                    "description": f"Suspicious API calls detected: {', '.join(suspicious_apis)}",
+                                    "impact": "medium",
+                                },
+                            )
             except Exception as e:
                 self.logger.error(f"PE analysis failed: {e}")
 
@@ -178,15 +196,19 @@ class AnalysisCLI:
         if file_type == "ELF" and options.get("elf_analysis", True):
             self.logger.info("Performing ELF-specific analysis...")
             try:
-                elf_analyzer = ELFAnalyzer()
-                elf_results = elf_analyzer.analyze(file_path)
-                results["metadata"]["elf_analysis"] = elf_results
+                elf_analyzer = ELFAnalyzer(file_path)
+                elf_results = elf_analyzer.analyze()
+                metadata = results["metadata"]
+                if isinstance(metadata, dict):
+                    metadata["elf_analysis"] = elf_results
 
                 # Check for security features
                 if "security_features" in elf_results:
                     for feature, enabled in elf_results["security_features"].items():
                         if not enabled:
-                            results["recommendations"].append(f"Enable {feature} for improved security")
+                            recommendations = results["recommendations"]
+                            if isinstance(recommendations, list):
+                                recommendations.append(f"Enable {feature} for improved security")
             except Exception as e:
                 self.logger.error(f"ELF analysis failed: {e}")
 
@@ -195,17 +217,22 @@ class AnalysisCLI:
             self.logger.info("Extracting strings...")
             try:
                 strings = self._extract_strings(file_path)
-                results["metadata"]["strings_count"] = len(strings)
+                metadata = results["metadata"]
+                if isinstance(metadata, dict):
+                    metadata["strings_count"] = len(strings)
 
-                if interesting := self._find_interesting_strings(strings):
-                    results["findings"].append(
-                        {
-                            "type": "interesting_strings",
-                            "description": f"Found {len(interesting)} interesting strings",
-                            "impact": "low",
-                            "details": interesting[:10],  # Limit to first 10
-                        },
-                    )
+                interesting = self._find_interesting_strings(strings)
+                if interesting:
+                    findings = results["findings"]
+                    if isinstance(findings, list):
+                        findings.append(
+                            {
+                                "type": "interesting_strings",
+                                "description": f"Found {len(interesting)} interesting strings",
+                                "impact": "low",
+                                "details": interesting[:10],
+                            },
+                        )
             except Exception as e:
                 self.logger.error(f"String extraction failed: {e}")
 
@@ -222,7 +249,7 @@ class AnalysisCLI:
 
     def _format_findings(self, data: dict[str, Any], source: str) -> list[dict[str, Any]]:
         """Format findings from analysis data."""
-        findings = []
+        findings: list[dict[str, Any]] = []
 
         if isinstance(data, dict):
             findings.extend(
@@ -341,7 +368,7 @@ class AnalysisCLI:
 
         return interesting
 
-    def generate_report(self, results: dict[str, Any], format: str, output_file: str = None) -> str:
+    def generate_report(self, results: dict[str, Any], format: str, output_file: str | None = None) -> str:
         """Generate analysis report."""
         self.logger.info(f"Generating {format} report...")
 
@@ -352,7 +379,7 @@ class AnalysisCLI:
 
     def run_batch_analysis(self, file_list: list[str], options: dict[str, Any]) -> list[dict[str, Any]]:
         """Run analysis on multiple files."""
-        results = []
+        results: list[dict[str, Any]] = []
 
         for file_path in file_list:
             try:
@@ -451,14 +478,12 @@ def main() -> None:
                 sys.exit(1)
 
             # Collect files
-            file_list = []
+            file_list: list[str] = []
             for ext in args.extensions:
                 if args.recursive:
-                    file_list.extend(target_dir.rglob(f"*{ext}"))
+                    file_list.extend(str(f) for f in target_dir.rglob(f"*{ext}"))
                 else:
-                    file_list.extend(target_dir.glob(f"*{ext}"))
-
-            file_list = [str(f) for f in file_list]
+                    file_list.extend(str(f) for f in target_dir.glob(f"*{ext}"))
 
             if not file_list:
                 print(f"No files found with extensions: {args.extensions}", file=sys.stderr)
@@ -487,13 +512,13 @@ def main() -> None:
                 sys.exit(1)
 
             # Run analysis
-            results = cli.analyze_binary(args.target, options)
+            result = cli.analyze_binary(args.target, options)
 
             if args.json_output:
-                print(json.dumps(results, indent=2))
+                print(json.dumps(result, indent=2))
             else:
                 # Generate report
-                report_path = cli.generate_report(results, args.format, args.output)
+                report_path = cli.generate_report(result, args.format, args.output)
                 print(f"Analysis complete. Report saved to: {report_path}")
 
     except KeyboardInterrupt:

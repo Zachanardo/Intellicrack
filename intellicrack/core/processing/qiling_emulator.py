@@ -869,9 +869,9 @@ class QilingEmulator:
             to the given memory addresses in the emulated process.
 
             """
-            for _patch in patches:
-                addr = _patch["address"]
-                data = _patch["bytes"]
+            for patch in patches:
+                addr = patch["address"]
+                data = patch["bytes"]
                 ql.mem.write(addr, data)
                 self.logger.info(f"Applied patch at {hex(addr)}: {data.hex()}")
 

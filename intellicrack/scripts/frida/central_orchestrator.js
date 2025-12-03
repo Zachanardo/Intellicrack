@@ -831,20 +831,23 @@ const CentralOrchestrator = {
         var behavioral = this.config.automation.behavioral;
 
         // Registry to time bomb
-        if (behavioral.registryToTime &&
-                    this.scriptInstances.registry &&
-                    this.scriptInstances.registry.stats.bypasses > 0 && !this.scriptInstances.timeBomb) {
-              send({
-                  type: 'info',
-                  target: 'central_orchestrator',
-                  action: 'behavioral_rule_triggered',
-                  rule: 'registry_to_time',
-                  enabled_script: 'timeBomb',
-              });
-              this.automationQueue.push({
-                  type: 'enableScript',
-                  script: 'timeBomb',
-              });
+        if (
+            behavioral.registryToTime &&
+            this.scriptInstances.registry &&
+            this.scriptInstances.registry.stats.bypasses > 0 &&
+            !this.scriptInstances.timeBomb
+        ) {
+            send({
+                type: 'info',
+                target: 'central_orchestrator',
+                action: 'behavioral_rule_triggered',
+                rule: 'registry_to_time',
+                enabled_script: 'timeBomb',
+            });
+            this.automationQueue.push({
+                type: 'enableScript',
+                script: 'timeBomb',
+            });
         }
 
         // Network to certificate
@@ -876,30 +879,39 @@ const CentralOrchestrator = {
         }
 
         // TPM to hardware
-        if (behavioral.tpmToHardware && this.detectedProtections.includes('hardware') && !this.scriptInstances.tpmEmulator) {
-              send({
-                  type: 'info',
-                  target: 'central_orchestrator',
-                  action: 'behavioral_rule_triggered',
-                  rule: 'tpm_to_hardware',
-                  enabled_script: 'tpmEmulator',
-              });
-              this.automationQueue.push({
-                  type: 'enableScript',
-                  script: 'tpmEmulator',
-              });
+        if (
+            behavioral.tpmToHardware &&
+            this.detectedProtections.includes('hardware') &&
+            !this.scriptInstances.tpmEmulator
+        ) {
+            send({
+                type: 'info',
+                target: 'central_orchestrator',
+                action: 'behavioral_rule_triggered',
+                rule: 'tpm_to_hardware',
+                enabled_script: 'tpmEmulator',
+            });
+            this.automationQueue.push({
+                type: 'enableScript',
+                script: 'tpmEmulator',
+            });
         }
     },
 
     // Check automation rules
     checkAutomationRules: function (scriptName, event, details) {
         // Script-specific rules
-        if (scriptName === 'registry' && event === 'success' && (details && details.includes('license'))) {
-              this.automationQueue.push({
-                  type: 'coordinate',
-                  scripts: ['registry', 'timeBomb'],
-                  action: 'syncLicense',
-              });
+        if (
+            scriptName === 'registry' &&
+            event === 'success' &&
+            details &&
+            details.includes('license')
+        ) {
+            this.automationQueue.push({
+                type: 'coordinate',
+                scripts: ['registry', 'timeBomb'],
+                action: 'syncLicense',
+            });
         }
 
         // Chain reactions
@@ -1454,21 +1466,21 @@ const CentralOrchestrator = {
                                 };
 
                                 // Inject bypass configuration into container
-                                if (containerConfig.imageRef && (args[4] && !args[4].isNull())) {
-                                      var envVarsPtr = args[4];
-                                      var bypassEnvs = [
-                                          'LICENSE_SERVER=127.0.0.1',
-                                          'SKIP_LICENSE_CHECK=1',
-                                          'OFFLINE_MODE=true',
-                                          'BYPASS_ACTIVATION=1',
-                                      ];
-                                
-                                      bypassEnvs.forEach(function (env) {
-                                          // Inject environment variable into container config
-                                          var envPtr = Memory.allocUtf8String(env);
-                                          envVarsPtr.writePointer(envPtr);
-                                          envVarsPtr = envVarsPtr.add(Process.pointerSize);
-                                      });
+                                if (containerConfig.imageRef && args[4] && !args[4].isNull()) {
+                                    var envVarsPtr = args[4];
+                                    var bypassEnvs = [
+                                        'LICENSE_SERVER=127.0.0.1',
+                                        'SKIP_LICENSE_CHECK=1',
+                                        'OFFLINE_MODE=true',
+                                        'BYPASS_ACTIVATION=1',
+                                    ];
+
+                                    bypassEnvs.forEach(function (env) {
+                                        // Inject environment variable into container config
+                                        var envPtr = Memory.allocUtf8String(env);
+                                        envVarsPtr.writePointer(envPtr);
+                                        envVarsPtr = envVarsPtr.add(Process.pointerSize);
+                                    });
                                 }
 
                                 send({
@@ -1932,13 +1944,16 @@ const CentralOrchestrator = {
                                                     });
 
                                                     // Spoof success for segmented networks
-                                                    if (apiName.includes('Recv') && (buffer &&
-                                                                                                                !buffer.isNull() &&
-                                                                                                                length > 0)) {
-                                                          var validResponse =
-                                                              'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{"status":"authorized"}';
-                                                          buffer.writeUtf8String(validResponse);
-                                                          this.context.rax = validResponse.length;
+                                                    if (
+                                                        apiName.includes('Recv') &&
+                                                        buffer &&
+                                                        !buffer.isNull() &&
+                                                        length > 0
+                                                    ) {
+                                                        var validResponse =
+                                                            'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{"status":"authorized"}';
+                                                        buffer.writeUtf8String(validResponse);
+                                                        this.context.rax = validResponse.length;
                                                     }
                                                 }
                                             }
@@ -2541,7 +2556,9 @@ const CentralOrchestrator = {
                                         index: i,
                                         address: args[i].toString(),
                                         is_null: args[i].isNull(),
-                                        potential_dimensions: args[i].isNull() ? 0 : args[i].readU32(),
+                                        potential_dimensions: args[i].isNull()
+                                            ? 0
+                                            : args[i].readU32(),
                                     });
                                 } catch (e) {
                                     // Use e to provide detailed cryptographic matrix analysis error information

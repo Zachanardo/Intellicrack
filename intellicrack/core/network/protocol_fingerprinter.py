@@ -516,10 +516,10 @@ class ProtocolFingerprinter:
             result = {}
             offset = 0
 
-            for _field in header_format:
-                field_name = _field["name"]
-                field_type = _field["type"]
-                field_length = _field["length"]
+            for field in header_format:
+                field_name = field["name"]
+                field_type = field["type"]
+                field_length = field["length"]
 
                 if offset + field_length > len(packet_data):
                     return None
@@ -619,11 +619,11 @@ class ProtocolFingerprinter:
             # Find similar packets
             similar_packets = []
 
-            for _sample in self.traffic_samples:
-                if _sample["data"] != packet_data:  # Skip self
-                    similarity = self._calculate_similarity(packet_data, _sample["data"])
+            for sample in self.traffic_samples:
+                if sample["data"] != packet_data:  # Skip self
+                    similarity = self._calculate_similarity(packet_data, sample["data"])
                     if similarity > 0.7:
-                        similar_packets.append(_sample)
+                        similar_packets.append(sample)
 
             if len(similar_packets) < 3:
                 return False
@@ -685,7 +685,7 @@ class ProtocolFingerprinter:
         if min_len == 0:
             return 0.0
 
-        common_bytes = sum(bool(data1[_i] == data2[_i]) for _i in range(min_len))
+        common_bytes = sum(bool(data1[i] == data2[i]) for i in range(min_len))
         return common_bytes / max_len
 
     def _extract_common_patterns(self, samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -699,15 +699,15 @@ class ProtocolFingerprinter:
 
         """
         # Extract common prefix
-        min_len = min(len(_sample["data"]) for _sample in samples)
+        min_len = min(len(sample["data"]) for sample in samples)
 
         if min_len < 4:
             return []
 
         # Find longest common prefix
         prefix_len = 0
-        for _i in range(min_len):
-            byte_values = {_sample["data"][_i] for _sample in samples}
+        for i in range(min_len):
+            byte_values = {sample["data"][i] for sample in samples}
             if len(byte_values) == 1:
                 prefix_len += 1
             else:

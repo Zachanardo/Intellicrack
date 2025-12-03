@@ -87,7 +87,11 @@ class DashboardEvent:
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
+        """Convert dashboard event to dictionary for JSON serialization.
+
+        Returns:
+            dict[str, Any]: Dictionary with event data ready for JSON serialization.
+        """
         return {
             "event_type": self.event_type.value,
             "timestamp": self.timestamp.isoformat(),
@@ -117,7 +121,11 @@ class AnalysisMetrics:
     warnings_count: int = 0
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
+        """Convert analysis metrics to dictionary for JSON serialization.
+
+        Returns:
+            dict[str, Any]: Dictionary with analysis metrics data.
+        """
         return {
             "total_functions_analyzed": self.total_functions_analyzed,
             "total_vulnerabilities_found": self.total_vulnerabilities_found,
@@ -147,13 +155,13 @@ class RealTimeDashboard:
         self.config = config or {}
 
         # Event management
-        self.events: deque = deque(maxlen=self.config.get("max_events", 1000))
-        self.event_callbacks: list[Callable] = []
+        self.events: deque[DashboardEvent] = deque(maxlen=self.config.get("max_events", 1000))
+        self.event_callbacks: list[Callable[[DashboardEvent], None]] = []
         self.events_lock = threading.Lock()
 
         # Metrics tracking
         self.metrics = AnalysisMetrics()
-        self.metrics_history: deque = deque(maxlen=self.config.get("metrics_history", 100))
+        self.metrics_history: deque[dict[str, Any]] = deque(maxlen=self.config.get("metrics_history", 100))
         self.metrics_lock = threading.Lock()
 
         # Analysis state
@@ -163,12 +171,12 @@ class RealTimeDashboard:
 
         # WebSocket connections
         self.websocket_clients: set[WebSocketServerProtocol] = set()
-        self.websocket_server = None
-        self.websocket_thread = None
+        self.websocket_server: Any = None
+        self.websocket_thread: threading.Thread | None = None
 
         # Flask app for HTTP API
-        self.flask_app = None
-        self.flask_thread = None
+        self.flask_app: Flask | None = None
+        self.flask_thread: threading.Thread | None = None
 
         # Update intervals
         self.update_interval = self.config.get("update_interval", 1.0)
@@ -219,7 +227,7 @@ class RealTimeDashboard:
         if self.websocket_clients:
             asyncio.run_coroutine_threadsafe(self._broadcast_event(event), self.websocket_loop)
 
-    def register_callback(self, callback: Callable) -> None:
+    def register_callback(self, callback: Callable[[DashboardEvent], None]) -> None:
         """Register event callback.
 
         Args:
@@ -457,7 +465,7 @@ class RealTimeDashboard:
             Summary dictionary
 
         """
-        summary = {
+        summary: dict[str, Any] = {
             "functions_count": len(results.get("functions", [])),
             "vulnerabilities_count": len(results.get("vulnerabilities", [])),
             "protections_count": len(results.get("protections", [])),
@@ -484,9 +492,14 @@ class RealTimeDashboard:
             return
 
         async def handle_client(websocket: WebSocketServerProtocol, path: str) -> None:
-            """Handle WebSocket client connection."""
+            """Handle WebSocket client connection.
+
+            Args:
+                websocket: The WebSocket connection from the client.
+                path: The connection path requested by the client.
+            """
             self.websocket_clients.add(websocket)
-            self.logger.info(f"WebSocket client connected: {websocket.remote_address}")
+            self.logger.info(f"WebSocket client connected: {websocket.remote_address!s}")
 
             try:
                 # Send initial state
@@ -500,7 +513,7 @@ class RealTimeDashboard:
                         if data.get("type") == "ping":
                             await websocket.send(json.dumps({"type": "pong"}))
                     except json.JSONDecodeError:
-                        self.logger.warning(f"Invalid WebSocket message: {message}")
+                        self.logger.warning(f"Invalid WebSocket message: {message!s}")
 
             except websockets.exceptions.ConnectionClosed:
                 self.logger.info(f"WebSocket client disconnected: {websocket.remote_address}")
@@ -556,48 +569,80 @@ class RealTimeDashboard:
             return
 
         self.flask_app = Flask(__name__)
+        assert self.flask_app is not None
         CORS(self.flask_app)  # Enable CORS for web clients
 
         @self.flask_app.route("/api/state")
-        def get_state() -> object:
-            """Get dashboard state endpoint."""
+        def get_state() -> Any:
+            """Get dashboard state endpoint.
+
+            Returns:
+                object: JSON response containing the current dashboard state.
+            """
             return jsonify(self.get_dashboard_state())
 
         @self.flask_app.route("/dashboard")
-        def dashboard_view() -> object:
-            """Render dashboard view using render_template."""
+        def dashboard_view() -> Any:
+            """Render dashboard view using render_template.
+
+            Returns:
+                object: Rendered HTML dashboard template with state data.
+            """
             # Use render_template that was imported
             dashboard_state = self.get_dashboard_state()
             return render_template("dashboard.html", title="Intellicrack Dashboard", dashboard_state=dashboard_state)
 
         @self.flask_app.route("/api/events")
-        def get_events() -> object:
-            """Get recent events endpoint."""
+        def get_events() -> Any:
+            """Get recent events endpoint.
+
+            Returns:
+                object: JSON response containing recent dashboard events.
+            """
             limit = request.args.get("limit", 100, type=int)
             with self.events_lock:
                 events = [e.to_dict() for e in list(self.events)[-limit:]]
             return jsonify(events)
 
         @self.flask_app.route("/api/metrics")
-        def get_metrics() -> object:
-            """Get current metrics endpoint."""
+        def get_metrics() -> Any:
+            """Get current metrics endpoint.
+
+            Returns:
+                object: JSON response containing current analysis metrics.
+            """
             with self.metrics_lock:
                 return jsonify(self.metrics.to_dict())
 
         @self.flask_app.route("/api/metrics/history")
-        def get_metrics_history() -> object:
-            """Get metrics history endpoint."""
+        def get_metrics_history() -> Any:
+            """Get metrics history endpoint.
+
+            Returns:
+                object: JSON response containing metrics history data.
+            """
             return jsonify(self.get_metrics_history())
 
         @self.flask_app.route("/api/analyses/active")
-        def get_active_analyses() -> object:
-            """Get active analyses endpoint."""
+        def get_active_analyses() -> Any:
+            """Get active analyses endpoint.
+
+            Returns:
+                object: JSON response containing list of active analyses.
+            """
             with self.state_lock:
                 return jsonify(list(self.active_analyses.values()))
 
         @self.flask_app.route("/api/results/<analysis_id>")
-        def get_results(analysis_id: str) -> object:
-            """Get analysis results endpoint."""
+        def get_results(analysis_id: str) -> Any:
+            """Get analysis results endpoint.
+
+            Args:
+                analysis_id: The unique identifier for the analysis.
+
+            Returns:
+                object: JSON response containing analysis results or error.
+            """
             with self.state_lock:
                 if analysis_id in self.analysis_results:
                     return jsonify(self.analysis_results[analysis_id])
@@ -606,7 +651,9 @@ class RealTimeDashboard:
         def run_flask() -> None:
             """Run Flask server."""
             port = self.config.get("http_port", 5000)
-            self.flask_app.run(host="localhost", port=port, debug=False, use_reloader=False)
+            app = self.flask_app
+            assert app is not None
+            app.run(host="localhost", port=port, debug=False, use_reloader=False)
 
         self.flask_thread = threading.Thread(target=run_flask, daemon=True)
         self.flask_thread.start()

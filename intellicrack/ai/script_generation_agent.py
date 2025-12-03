@@ -34,8 +34,6 @@ from typing import TYPE_CHECKING, Any, Protocol
 import lief
 import pefile
 
-from intellicrack.utils.project_paths import get_project_root
-
 from ..core.analysis.frida_script_manager import FridaScriptManager, ScriptResult
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
@@ -229,7 +227,14 @@ class AIAgent:
             return self._error_result(f"Workflow error: {e!s}")
 
     def _parse_request(self, request: str) -> TaskRequest:
-        """Parse user request into structured task."""
+        """Parse user request into structured task.
+
+        Args:
+            request: Description.
+
+        Returns:
+            Description of return value.
+        """
         request_lower = request.lower()
 
         binary_path = self._extract_binary_path(request)
@@ -368,7 +373,14 @@ class AIAgent:
             return {"name": "unknown", "size": 0, "type": "unknown"}
 
     def _extract_strings(self, binary_path: str) -> list[str]:
-        """Extract strings from binary for analysis."""
+        """Extract strings from binary for analysis.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         strings = []
         try:
             if not self._validate_binary_path(binary_path):
@@ -406,7 +418,14 @@ class AIAgent:
         return strings_data if isinstance(strings_data, list) else []
 
     def _filter_license_related_strings(self, all_strings: list) -> list[str]:
-        """Filter strings for license-related content based on keywords."""
+        """Filter strings for license-related content based on keywords.
+
+        Args:
+            all_strings: Description.
+
+        Returns:
+            Description of return value.
+        """
         license_keywords = [
             "license",
             "trial",
@@ -444,12 +463,27 @@ class AIAgent:
         return string_entry if isinstance(string_entry, str) else ""
 
     def _contains_license_keyword(self, string_value: str, keywords: list[str]) -> bool:
-        """Check if string contains any license-related keyword."""
+        """Check if string contains any license-related keyword.
+
+        Args:
+            string_value: Description.
+            keywords: Description.
+
+        Returns:
+            Description of return value.
+        """
         string_lower = string_value.lower()
         return any(keyword in string_lower for keyword in keywords)
 
     def _validate_binary_path(self, binary_path: str) -> bool:
-        """Validate binary path for security."""
+        """Validate binary path for security.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         if not binary_path or not Path(binary_path).is_absolute():
             logger.warning("Invalid binary path provided: %s", binary_path)
             return False
@@ -477,7 +511,20 @@ class AIAgent:
         return True
 
     def _extract_strings_with_command(self, binary_path: str, license_related: list[str]) -> list[str]:
-        """Extract strings using subprocess command."""
+        """Extract strings using subprocess command.
+
+        Args:
+            binary_path: Description.
+            license_related: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            OSError: Description.
+            ValueError: Description.
+            ValueError: Description.
+        """
         import shutil
         import subprocess
 
@@ -511,11 +558,27 @@ class AIAgent:
         return strings
 
     def _extract_strings_from_file(self, binary_path: str, license_related: list[str]) -> list[str]:
-        """Extract strings by reading file directly."""
+        """Extract strings by reading file directly.
+
+        Args:
+            binary_path: Description.
+            license_related: Description.
+
+        Returns:
+            Description of return value.
+        """
         return self._process_binary_data(data, license_related) if (data := self._read_binary_data(binary_path)) else []
 
     def _process_binary_data(self, data: bytes, license_related: list[str]) -> list[str]:
-        """Process binary data to extract strings."""
+        """Process binary data to extract strings.
+
+        Args:
+            data: Description.
+            license_related: Description.
+
+        Returns:
+            Description of return value.
+        """
         strings = []
         current_string = ""
         for byte in data:
@@ -528,7 +591,14 @@ class AIAgent:
         return strings
 
     def _read_binary_data(self, binary_path: str) -> bytes:
-        """Read binary data from file."""
+        """Read binary data from file.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         data = None
         try:
             from .ai_file_tools import get_ai_file_tools
@@ -560,11 +630,26 @@ class AIAgent:
         return data or b""
 
     def _filter_license_strings(self, all_strings: list[str], license_related: list[str]) -> list[str]:
-        """Filter strings for license-related content."""
+        """Filter strings for license-related content.
+
+        Args:
+            all_strings: Description.
+            license_related: Description.
+
+        Returns:
+            Description of return value.
+        """
         return [string.strip() for string in all_strings if any(keyword.lower() in string.lower() for keyword in license_related)]
 
     def _analyze_functions(self, binary_path: str) -> list[dict[str, Any]]:
-        """Analyze functions in the binary."""
+        """Analyze functions in the binary.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         functions = []
         try:
             if not Path(binary_path).exists():
@@ -590,7 +675,15 @@ class AIAgent:
         return functions
 
     def _process_function_entries(self, functions_data: list, binary_path: str) -> list[dict[str, Any]]:
-        """Process function entries and classify them."""
+        """Process function entries and classify them.
+
+        Args:
+            functions_data: Description.
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         functions = []
         for func_entry in functions_data:
             if isinstance(func_entry, dict):
@@ -599,7 +692,15 @@ class AIAgent:
         return functions
 
     def _create_function_info(self, func_entry: dict, binary_path: str) -> dict[str, Any]:
-        """Create function information dictionary with type classification."""
+        """Create function information dictionary with type classification.
+
+        Args:
+            func_entry: Description.
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         func_name = func_entry.get("name", "").lower()
         func_addr = func_entry.get("address", 0)
         func_type = self._classify_function_type(func_name)
@@ -613,7 +714,14 @@ class AIAgent:
         }
 
     def _classify_function_type(self, func_name: str) -> str:
-        """Classify function type based on name keywords."""
+        """Classify function type based on name keywords.
+
+        Args:
+            func_name: Description.
+
+        Returns:
+            Description of return value.
+        """
         license_keywords = [
             "license",
             "serial",
@@ -642,11 +750,26 @@ class AIAgent:
         return "trial_check" if self._contains_any_keyword(func_name, trial_keywords) else "unknown"
 
     def _contains_any_keyword(self, text: str, keywords: list[str]) -> bool:
-        """Check if text contains any of the keywords."""
+        """Check if text contains any of the keywords.
+
+        Args:
+            text: Description.
+            keywords: Description.
+
+        Returns:
+            Description of return value.
+        """
         return any(keyword in text for keyword in keywords)
 
     def _analyze_imports(self, binary_path: str) -> list[str]:
-        """Analyze imported functions."""
+        """Analyze imported functions.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         imports = []
         try:
             if not self._validate_import_binary_path(binary_path):
@@ -671,7 +794,14 @@ class AIAgent:
         return imports
 
     def _validate_import_binary_path(self, binary_path: str) -> bool:
-        """Validate binary path for import analysis."""
+        """Validate binary path for import analysis.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         if not Path(binary_path).is_absolute():
             logger.warning(f"Binary path is not absolute: {binary_path}")
             return False
@@ -681,7 +811,14 @@ class AIAgent:
         return True
 
     def _process_import_entries(self, imports_data: list) -> list[str]:
-        """Process import entries from analysis data."""
+        """Process import entries from analysis data.
+
+        Args:
+            imports_data: Description.
+
+        Returns:
+            Description of return value.
+        """
         imports = []
         for import_entry in imports_data:
             if import_string := self._format_import_entry(import_entry):
@@ -708,7 +845,14 @@ class AIAgent:
         return ""
 
     def _detect_protections(self, binary_path: str) -> list[dict[str, Any]]:
-        """Detect protection mechanisms."""
+        """Detect protection mechanisms.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         protections = []
         try:
             if not Path(binary_path).exists():
@@ -755,7 +899,14 @@ class AIAgent:
         return protections
 
     def _check_network_activity(self, binary_path: str) -> dict[str, Any]:
-        """Perform comprehensive network activity detection through binary analysis."""
+        """Perform comprehensive network activity detection through binary analysis.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             # Verify binary exists
             if not Path(binary_path).exists():
@@ -844,7 +995,14 @@ class AIAgent:
             return {"has_network": False, "endpoints": [], "protocols": [], "error": str(e)}
 
     def _analyze_network_imports(self, binary_path: str) -> list[str]:
-        """Analyze import table for network-related APIs."""
+        """Analyze import table for network-related APIs.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             network_apis = []
 
@@ -862,7 +1020,14 @@ class AIAgent:
             return []
 
     def _analyze_pe_imports(self, binary_path: str) -> list[str]:
-        """Analyze PE files for network-related imports."""
+        """Analyze PE files for network-related imports.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             import pefile
 
@@ -921,7 +1086,14 @@ class AIAgent:
         return function_imports
 
     def _analyze_elf_imports(self, binary_path: str) -> list[str]:
-        """Analyze ELF files for network-related imports."""
+        """Analyze ELF files for network-related imports.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             import lief
 
@@ -949,7 +1121,11 @@ class AIAgent:
         return []
 
     def _get_network_api_patterns(self) -> list[str]:
-        """Return common network API patterns."""
+        """Return common network API patterns.
+
+        Returns:
+            Description of return value.
+        """
         return [
             "ws2_32.dll",
             "wininet.dll",
@@ -973,7 +1149,11 @@ class AIAgent:
         ]
 
     def _get_network_symbols(self) -> list[str]:
-        """Return common network-related symbols for ELF analysis."""
+        """Return common network-related symbols for ELF analysis.
+
+        Returns:
+            Description of return value.
+        """
         return [
             "socket",
             "connect",
@@ -994,7 +1174,14 @@ class AIAgent:
         ]
 
     def _analyze_network_strings(self, binary_path: str) -> dict[str, Any]:
-        """Analyze strings for network-related content."""
+        """Analyze strings for network-related content.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             result = {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
@@ -1112,7 +1299,14 @@ class AIAgent:
                 result["count"] += 1
 
     def _analyze_network_code_patterns(self, binary_path: str) -> dict[str, Any]:
-        """Analyze code patterns for network functionality."""
+        """Analyze code patterns for network functionality.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             result = {"found": False, "apis": []}
 
@@ -1155,7 +1349,14 @@ class AIAgent:
             return {"found": False, "apis": []}
 
     def _analyze_binary_format_networking(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary format specific networking features."""
+        """Analyze binary format specific networking features.
+
+        Args:
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             result = {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
             file_ext = Path(binary_path).suffix.lower()
@@ -1171,7 +1372,16 @@ class AIAgent:
             return {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
 
     def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]) -> None:
-        """Analyze PE-specific networking features."""
+        """Analyze PE-specific networking features.
+
+        Args:
+            binary_path: Description.
+            result: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             import pefile
 
@@ -1195,7 +1405,16 @@ class AIAgent:
             logger.debug(f"PE analysis failed: {e}")
 
     def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]) -> None:
-        """Analyze ELF-specific networking features."""
+        """Analyze ELF-specific networking features.
+
+        Args:
+            binary_path: Description.
+            result: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             import lief
 
@@ -1236,14 +1455,29 @@ class AIAgent:
         return "net" in name.lower() or "socket" in name.lower()
 
     def _elf_lib_protocol(self, lib_name: str) -> str | None:
-        """Map a library name to a protocol indicator when relevant."""
+        """Map a library name to a protocol indicator when relevant.
+
+        Args:
+            lib_name: Description.
+
+        Returns:
+            Description of return value.
+        """
         lib_l = (lib_name or "").lower()
         if "ssl" in lib_l:
             return "HTTPS"
         return "HTTP" if "crypto" in lib_l or "curl" in lib_l else None
 
     def _generate_initial_scripts(self, analysis: dict[str, Any]) -> list[GeneratedScript]:
-        """Generate initial scripts based on analysis."""
+        """Generate initial scripts based on analysis.
+
+        Args:
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         scripts = []
 
         try:
@@ -1269,7 +1503,16 @@ class AIAgent:
         return scripts
 
     def _iterative_refinement(self, script: GeneratedScript, analysis: dict[str, Any]) -> GeneratedScript | None:
-        """Test and refine the script iteratively until it works."""
+        """Test and refine the script iteratively until it works.
+
+        Args:
+            script: Description.
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         current_script = script
         self.iteration_count = 0
 
@@ -1313,7 +1556,16 @@ class AIAgent:
         return None
 
     def _test_in_qemu(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
-        """Test script in QEMU environment using real VM execution."""
+        """Test script in QEMU environment using real VM execution.
+
+        Args:
+            script: Description.
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         self._log_to_user("Preparing QEMU test environment...")
 
         # Use analysis data to configure test environment
@@ -1391,7 +1643,16 @@ class AIAgent:
             )
 
     def _test_in_sandbox(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
-        """Test script in sandbox environment using real sandboxing."""
+        """Test script in sandbox environment using real sandboxing.
+
+        Args:
+            script: Description.
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         binary_path = analysis.get("binary_path", "unknown")
         network_activity = analysis.get("network_activity", {})
         has_network = network_activity.get("has_network", False)
@@ -1407,7 +1668,20 @@ class AIAgent:
             return self._fallback_execution(script, binary_path)
 
     def _test_in_windows_sandbox(self, script: GeneratedScript, binary_path: str, has_network: bool) -> ExecutionResult:
-        """Test script in Windows Sandbox."""
+        """Test script in Windows Sandbox.
+
+        Args:
+            script: Description.
+            binary_path: Description.
+            has_network: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            ValueError: Description.
+            ValueError: Description.
+        """
         import shutil
         import subprocess
         import tempfile
@@ -1444,7 +1718,20 @@ class AIAgent:
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
     def _test_in_linux_firejail(self, script: GeneratedScript, binary_path: str, has_network: bool) -> ExecutionResult:
-        """Test script in Linux Firejail."""
+        """Test script in Linux Firejail.
+
+        Args:
+            script: Description.
+            binary_path: Description.
+            has_network: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            ValueError: Description.
+            ValueError: Description.
+        """
         import shutil
         import subprocess
         import tempfile
@@ -1472,7 +1759,16 @@ class AIAgent:
             return self._parse_sandbox_result(result, binary_path, runtime_ms)
 
     def _create_windows_sandbox_config(self, temp_dir: str, binary_path: str, has_network: bool) -> str:
-        """Create Windows Sandbox configuration."""
+        """Create Windows Sandbox configuration.
+
+        Args:
+            temp_dir: Description.
+            binary_path: Description.
+            has_network: Description.
+
+        Returns:
+            Description of return value.
+        """
         return f"""
 <Configuration>
     <VGpu>Disable</VGpu>
@@ -1491,7 +1787,17 @@ class AIAgent:
 """
 
     def _create_firejail_command(self, temp_dir: str, script_path: Path, sandboxed_binary: str, has_network: bool) -> list[str]:
-        """Create Firejail command."""
+        """Create Firejail command.
+
+        Args:
+            temp_dir: Description.
+            script_path: Description.
+            sandboxed_binary: Description.
+            has_network: Description.
+
+        Returns:
+            Description of return value.
+        """
         # Use full path to firejail to avoid partial executable path
         firejail_path = shutil.which("firejail") or "firejail"
         cmd = [firejail_path, "--quiet"]
@@ -1511,7 +1817,16 @@ class AIAgent:
         return cmd
 
     def _parse_sandbox_result(self, result: subprocess.CompletedProcess, binary_path: str, runtime_ms: int) -> ExecutionResult:
-        """Parse sandbox execution result."""
+        """Parse sandbox execution result.
+
+        Args:
+            result: Description.
+            binary_path: Description.
+            runtime_ms: Description.
+
+        Returns:
+            Description of return value.
+        """
         success = result.returncode == 0
         output = result.stdout
         error = result.stderr
@@ -1528,7 +1843,20 @@ class AIAgent:
         )
 
     def _fallback_execution(self, script: GeneratedScript, binary_path: str) -> ExecutionResult:
-        """Fallback execution in restricted environment."""
+        """Fallback execution in restricted environment.
+
+        Args:
+            script: Description.
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            Exception: Description.
+            ValueError: Description.
+            ValueError: Description.
+        """
         import subprocess
         import tempfile
         from pathlib import Path
@@ -1576,7 +1904,16 @@ class AIAgent:
             )
 
     def _test_direct(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
-        """Test script directly (high risk)."""
+        """Test script directly (high risk).
+
+        Args:
+            script: Description.
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
 
@@ -1634,7 +1971,16 @@ class AIAgent:
         return ExecutionResult(success=True, output=result_output, error="", exit_code=0, runtime_ms=120)
 
     def _verify_bypass(self, validation_result: ExecutionResult, analysis: dict[str, Any]) -> bool:
-        """Verify that the script actually bypassed the protection."""
+        """Verify that the script actually bypassed the protection.
+
+        Args:
+            validation_result: Description.
+            analysis: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         if not validation_result.success:
             return False
 
@@ -1702,7 +2048,11 @@ class AIAgent:
         validation_result: ExecutionResult,
         analysis: dict[str, Any],
     ) -> GeneratedScript | None:
-        """Refine the script based on test results and analysis."""
+        """Refine the script based on test results and analysis.
+
+        Returns:
+            Description of return value.
+        """
         try:
             protections = analysis.get("protections", [])
             binary_path = analysis.get("binary_path", "unknown")
@@ -1743,7 +2093,11 @@ class AIAgent:
         validation_result: ExecutionResult,
         content: str,
     ) -> tuple[str, list[str]]:
-        """Apply refinements based on test failures."""
+        """Apply refinements based on test failures.
+
+        Returns:
+            Description of return value.
+        """
         refinement_notes = []
 
         if "protection mechanism detected" in validation_result.error.lower():
@@ -1767,7 +2121,16 @@ class AIAgent:
         return content, refinement_notes
 
     def _apply_protection_refinements(self, script: GeneratedScript, protections: list[dict], content: str) -> list[str]:
-        """Apply protection-specific refinements."""
+        """Apply protection-specific refinements.
+
+        Args:
+            script: Description.
+            protections: Description.
+            content: Description.
+
+        Returns:
+            Description of return value.
+        """
         refinement_notes = []
 
         for protection in protections:
@@ -1788,7 +2151,16 @@ class AIAgent:
         return refinement_notes
 
     def _apply_general_refinements(self, script: GeneratedScript, binary_info: dict, content: str) -> list[str]:
-        """Apply general refinements."""
+        """Apply general refinements.
+
+        Args:
+            script: Description.
+            binary_info: Description.
+            content: Description.
+
+        Returns:
+            Description of return value.
+        """
         refinement_notes = []
 
         # Add error handling if missing
@@ -1811,7 +2183,11 @@ class AIAgent:
         return refinement_notes
 
     def _get_license_bypass_code(self) -> str:
-        """Get license bypass code."""
+        """Get license bypass code.
+
+        Returns:
+            Description of return value.
+        """
         return """
         // Target license check
         Interceptor.attach(Module.findExportByName(null, 'strcmp'), {
@@ -1828,7 +2204,11 @@ class AIAgent:
 """
 
     def _get_time_bypass_code(self) -> str:
-        """Get time bypass code."""
+        """Get time bypass code.
+
+        Returns:
+            Description of return value.
+        """
         return """
         // Bypass trial timer
         Interceptor.attach(Module.findExportByName(null, 'GetSystemTime'), {
@@ -1840,7 +2220,17 @@ class AIAgent:
 """
 
     def _create_refined_script(self, original: GeneratedScript, content: str, notes: list[str], binary_path: str) -> GeneratedScript | None:
-        """Create refined script with updated metadata."""
+        """Create refined script with updated metadata.
+
+        Args:
+            original: Description.
+            content: Description.
+            notes: Description.
+            binary_path: Description.
+
+        Returns:
+            Description of return value.
+        """
         refined_script = GeneratedScript(
             metadata=original.metadata,
             content=content,
@@ -1863,7 +2253,14 @@ class AIAgent:
         return refined_script
 
     def _deploy_scripts(self, scripts: list[GeneratedScript]) -> list[dict[str, Any]]:
-        """Deploy scripts with appropriate safety measures."""
+        """Deploy scripts with appropriate safety measures.
+
+        Args:
+            scripts: Description.
+
+        Returns:
+            Description of return value.
+        """
         deployment_results = []
 
         for script in scripts:
@@ -1906,7 +2303,14 @@ class AIAgent:
         return deployment_results
 
     def _get_user_confirmation(self, script: GeneratedScript) -> bool:
-        """Get user confirmation for script deployment."""
+        """Get user confirmation for script deployment.
+
+        Args:
+            script: Description.
+
+        Returns:
+            Description of return value.
+        """
         if self.cli_interface:
             # CLI confirmation
             self.cli_interface.print_info(f"Generated {script.metadata.script_type.value} script:")
@@ -1920,7 +2324,14 @@ class AIAgent:
         return True
 
     def _log_to_user(self, message: str) -> None:
-        """Log progress to user via CLI or UI."""
+        """Log progress to user via CLI or UI.
+
+        Args:
+            message: Description.
+
+        Returns:
+            Description of return value.
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
 
@@ -1935,7 +2346,14 @@ class AIAgent:
         )
 
     def _error_result(self, message: str) -> dict[str, Any]:
-        """Return error result and save to file."""
+        """Return error result and save to file.
+
+        Args:
+            message: Description.
+
+        Returns:
+            Description of return value.
+        """
         self._log_to_user(f"ERROR: {message}")
         result = {
             "status": "error",
@@ -1957,7 +2375,15 @@ class AIAgent:
         return result
 
     def _test_script_in_qemu(self, script: str, target_binary: str) -> ExecutionResult:
-        """Test script in QEMU virtual environment."""
+        """Test script in QEMU virtual environment.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             if self._use_qemu_manager(script):
                 return self._execute_with_qemu_manager(script, target_binary)
@@ -1976,11 +2402,26 @@ class AIAgent:
             )
 
     def _use_qemu_manager(self, script: str) -> bool:
-        """Check if QEMU manager is available for script execution."""
+        """Check if QEMU manager is available for script execution.
+
+        Args:
+            script: Description.
+
+        Returns:
+            Description of return value.
+        """
         return hasattr(self, "qemu_manager") and self.qemu_manager
 
     def _execute_with_qemu_manager(self, script: str, target_binary: str) -> ExecutionResult:
-        """Execute script using QEMU manager."""
+        """Execute script using QEMU manager.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+
+        Returns:
+            Description of return value.
+        """
         result = self.qemu_manager.validate_script_in_vm(script, target_binary)
         return ExecutionResult(
             success=result.get("success", False),
@@ -1991,7 +2432,15 @@ class AIAgent:
         )
 
     def _execute_in_temp_environment(self, script: str, target_binary: str) -> ExecutionResult:
-        """Execute script in a temporary environment."""
+        """Execute script in a temporary environment.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+
+        Returns:
+            Description of return value.
+        """
         import tempfile
         import time
 
@@ -2005,7 +2454,16 @@ class AIAgent:
             return self._fallback_analysis(script, target_binary)
 
     def _prepare_test_files(self, script: str, target_binary: str, temp_dir: str) -> tuple[Path, Path]:
-        """Prepare script and target binary files for testing."""
+        """Prepare script and target binary files for testing.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+            temp_dir: Description.
+
+        Returns:
+            Description of return value.
+        """
         import shutil
         from pathlib import Path
 
@@ -2021,7 +2479,18 @@ class AIAgent:
         return script_path, target_path
 
     def _attempt_execution(self, script: str, target_binary: str, target_path: Path, temp_dir: str, start_time: float) -> ExecutionResult:
-        """Attempt to execute the script using multiple approaches."""
+        """Attempt to execute the script using multiple approaches.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+            target_path: Description.
+            temp_dir: Description.
+            start_time: Description.
+
+        Returns:
+            Description of return value.
+        """
         success, output_lines, error_msg = False, [], ""
 
         try:
@@ -2041,7 +2510,19 @@ class AIAgent:
         )
 
     def _try_qemu_emulation(self, target_path: Path, temp_dir: str) -> tuple[bool, list[str]]:
-        """Try QEMU user-mode emulation."""
+        """Try QEMU user-mode emulation.
+
+        Args:
+            target_path: Description.
+            temp_dir: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            ValueError: Description.
+            ValueError: Description.
+        """
         import os
         import subprocess
 
@@ -2074,7 +2555,16 @@ class AIAgent:
         return success, output_lines
 
     def _try_native_execution(self, script: str, target_binary: str, temp_dir: str) -> tuple[bool, list[str], str]:
-        """Try native script execution."""
+        """Try native script execution.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+            temp_dir: Description.
+
+        Returns:
+            Description of return value.
+        """
         success, output_lines, error_msg = False, [], ""
         try:
             if script.lower().startswith("java"):
@@ -2123,7 +2613,16 @@ class AIAgent:
             return False, output_lines
 
     def _prepare_frida_script(self, script: str, temp_dir: str, output_lines: list[str]) -> str:
-        """Prepare Frida script for execution (library or custom)."""
+        """Prepare Frida script for execution (library or custom).
+
+        Args:
+            script: Description.
+            temp_dir: Description.
+            output_lines: Description.
+
+        Returns:
+            Description of return value.
+        """
         if script in self.frida_manager.scripts:
             logger.info(f"Executing library script: {script}")
             output_lines.append(f"Executing library script: {script}")
@@ -2136,7 +2635,15 @@ class AIAgent:
         return str(script_path)
 
     def _validate_frida_target(self, target_binary: str, output_lines: list[str]) -> bool:
-        """Validate target binary exists for Frida execution."""
+        """Validate target binary exists for Frida execution.
+
+        Args:
+            target_binary: Description.
+            output_lines: Description.
+
+        Returns:
+            Description of return value.
+        """
         if not os.path.exists(target_binary):
             error_msg = f"Target binary not found: {target_binary}"
             logger.error(error_msg)
@@ -2212,7 +2719,17 @@ class AIAgent:
             self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
 
     def _append_frida_script_output(self, output: str, output_lines: list[str], max_lines: int, prefix: str = "Script Output:") -> None:
-        """Append Frida script output with line limit."""
+        """Append Frida script output with line limit.
+
+        Args:
+            output: Description.
+            output_lines: Description.
+            max_lines: Description.
+            prefix: Description.
+
+        Returns:
+            Description of return value.
+        """
         output_lines.append(f"\n{prefix}")
         lines = output.split("\n")
         output_lines.extend(f"   {line}" for line in lines[:max_lines])
@@ -2282,7 +2799,15 @@ class AIAgent:
             return False, output_lines
 
     def _validate_library_script(self, script_name: str, output_lines: list[str]) -> bool:
-        """Validate that library script exists."""
+        """Validate that library script exists.
+
+        Args:
+            script_name: Description.
+            output_lines: Description.
+
+        Returns:
+            Description of return value.
+        """
         if script_name not in self.frida_manager.scripts:
             available = ", ".join(self.frida_manager.scripts.keys())
             error_msg = f"Script '{script_name}' not found. Available: {available}"
@@ -2292,7 +2817,17 @@ class AIAgent:
         return True
 
     def _log_library_script_execution(self, script_name: str, target_binary: str, mode: str, output_lines: list[str]) -> None:
-        """Log library script execution details."""
+        """Log library script execution details.
+
+        Args:
+            script_name: Description.
+            target_binary: Description.
+            mode: Description.
+            output_lines: Description.
+
+        Returns:
+            Description of return value.
+        """
         logger.info(f"Executing library script '{script_name}' against {target_binary}")
         output_lines.append(f"Executing: {script_name}")
         output_lines.extend((f"Target: {Path(target_binary).name}", f"Mode: {mode}"))
@@ -2358,7 +2893,15 @@ class AIAgent:
             self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
 
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
-        """Validate generic script."""
+        """Validate generic script.
+
+        Args:
+            target_binary: Description.
+            temp_dir: Description.
+
+        Returns:
+            Description of return value.
+        """
         success = True
         output_lines = [
             "Script syntax validation successful",
@@ -2377,7 +2920,11 @@ class AIAgent:
         output_lines: list[str],
         success: bool,
     ) -> str:
-        """Generate comprehensive output for execution results."""
+        """Generate comprehensive output for execution results.
+
+        Returns:
+            Description of return value.
+        """
         return "\n".join(
             [
                 "=== Real QEMU/VM Testing Results ===",
@@ -2393,7 +2940,15 @@ class AIAgent:
         )
 
     def _fallback_analysis(self, script: str, target_binary: str) -> ExecutionResult:
-        """Fallback to script analysis if execution fails."""
+        """Fallback to script analysis if execution fails.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             analysis_output = self._analyze_script_content(script, target_binary)
             return ExecutionResult(
@@ -2413,7 +2968,15 @@ class AIAgent:
             )
 
     def _analyze_script_content(self, script: str, target_binary: str) -> list[str]:
-        """Analyze script content for fallback analysis."""
+        """Analyze script content for fallback analysis.
+
+        Args:
+            script: Description.
+            target_binary: Description.
+
+        Returns:
+            Description of return value.
+        """
         analysis_output = [
             "=== Script Analysis Results (No VM Available) ===",
             f"Target binary: {target_binary}",
@@ -2437,7 +3000,15 @@ class AIAgent:
         return analysis_output
 
     def execute_autonomous_task(self, task_config: dict[str, Any]) -> dict[str, Any]:
-        """Execute an autonomous task based on configuration."""
+        """Execute an autonomous task based on configuration.
+
+        Args:
+            task_config: Description.
+            Any]: Description.
+
+        Returns:
+            Description of return value.
+        """
         try:
             logger.info(f"Starting autonomous task: {task_config.get('type', 'unknown')}")
 
@@ -2486,7 +3057,11 @@ class AIAgent:
             return self._error_result(f"Task execution failed: {e!s}")
 
     def get_status(self) -> dict[str, Any]:
-        """Get current workflow status."""
+        """Get current workflow status.
+
+        Returns:
+            Description of return value.
+        """
         return {
             "state": self.workflow_state.value,
             "current_task": self.current_task.binary_path if self.current_task else None,
@@ -2497,11 +3072,30 @@ class AIAgent:
         }
 
     def get_conversation_history(self) -> list[dict[str, Any]]:
-        """Get conversation history."""
+        """Get conversation history.
+
+        Returns:
+            Description of return value.
+        """
         return self.conversation_history.copy()
 
     def save_session_data(self, output_path: str | None = None) -> str:
-        """Save complete session data to JSON file."""
+        """Save complete session data to JSON file.
+
+        Args:
+            output_path: Description.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            Exception: Description.
+            OSError: Description.
+            RuntimeError: Description.
+            TypeError: Description.
+            ValueError: Description.
+            RuntimeError: Description.
+        """
         try:
             session_data = {
                 "agent_id": self.agent_id,
@@ -2550,7 +3144,17 @@ class AIAgent:
     # ==================== VM Lifecycle Management ====================
 
     def _initialize_qemu_manager(self) -> None:
-        """Initialize QEMU manager with proper configuration."""
+        """Initialize QEMU manager with proper configuration.
+
+        Returns:
+            Description of return value.
+
+        Raises:
+            Exception: Description.
+            ImportError: Description.
+            RuntimeError: Description.
+            RuntimeError: Description.
+        """
         try:
             from .qemu_manager import QEMUManager
 
@@ -2915,7 +3519,11 @@ class AIAgent:
             return False
 
     def _cleanup_all_vms(self) -> None:
-        """Clean up all active VMs."""
+        """Clean up all active VMs.
+
+        Returns:
+            Description of return value.
+        """
         vm_ids = list(self._active_vms.keys())  # Copy to avoid modification during iteration
 
         for vm_id in vm_ids:
@@ -3035,7 +3643,11 @@ class AIAgent:
             return secrets.randbelow(16384) + 49152
 
     def __del__(self) -> None:
-        """Cleanup on deletion."""
+        """Cleanup on deletion.
+
+        Returns:
+            Description of return value.
+        """
         try:
             self._cleanup_all_vms()
         except Exception as e:

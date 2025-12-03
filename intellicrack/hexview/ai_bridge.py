@@ -1096,7 +1096,6 @@ class AIBinaryBridge:
 
     def _parse_analysis_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
         """Parse the AI response for binary analysis."""
-        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find("{")
@@ -1111,19 +1110,30 @@ class AIBinaryBridge:
 
             # Add base offset to all pattern offsets
             if "patterns" in result:
-                for _pattern in result["patterns"]:
-                    if "start_offset" in _pattern:
-                        _pattern["start_offset"] += offset
-                    if "end_offset" in _pattern:
-                        _pattern["end_offset"] += offset
+                for pattern_ in result["patterns"]:
+                    if "start_offset" in pattern_:
+                        pattern_["start_offset"] += offset
+                    if "end_offset" in pattern_:
+                        pattern_["end_offset"] += offset
 
-            # Add base offset to all anomaly offsets
             if "anomalies" in result:
-                for _anomaly in result["anomalies"]:
-                    if "start_offset" in _anomaly:
-                        _anomaly["start_offset"] += offset
-                    if "end_offset" in _anomaly:
-                        _anomaly["end_offset"] += offset
+                for anomaly in result["anomalies"]:
+                    if "start_offset" in anomaly:
+                        anomaly["start_offset"] += offset
+                    if "end_offset" in anomaly:
+                        anomaly["end_offset"] += offset
+
+            if "patterns" in result and binary_data:
+                for pattern in result["patterns"]:
+                    if "hex_pattern" in pattern and "start_offset" in pattern:
+                        rel_offset = pattern["start_offset"] - offset
+                        if 0 <= rel_offset < len(binary_data):
+                            try:
+                                expected = bytes.fromhex(pattern["hex_pattern"].replace(" ", ""))
+                                actual = binary_data[rel_offset : rel_offset + len(expected)]
+                                pattern["validated"] = actual == expected
+                            except (ValueError, IndexError):
+                                pattern["validated"] = False
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
@@ -1139,7 +1149,6 @@ class AIBinaryBridge:
 
     def _parse_edit_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
         """Parse the AI response for edit suggestions."""
-        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find("{")
@@ -1171,6 +1180,15 @@ class AIBinaryBridge:
                     logger.error("Value error in ai_bridge: %s", e)
                     result["new_bytes_raw"] = b""
 
+            if binary_data and "original_bytes_raw" in result and "offset" in result:
+                edit_offset = result.get("offset", 0)
+                original_raw = result.get("original_bytes_raw", b"")
+                if 0 <= edit_offset < len(binary_data) and original_raw:
+                    actual_bytes = binary_data[edit_offset : edit_offset + len(original_raw)]
+                    result["bytes_match"] = actual_bytes == original_raw
+                    if not result["bytes_match"]:
+                        result["actual_bytes"] = actual_bytes.hex()
+
             return result
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error parsing edit response: %s", e)
@@ -1187,9 +1205,7 @@ class AIBinaryBridge:
 
     def _parse_pattern_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
         """Parse the AI response for pattern identification."""
-        _binary_data = binary_data  # Store for potential future use
         try:
-            # Extract JSON from response
             json_start = response.find("{")
             json_end = response.rfind("}") + 1
 
@@ -1197,17 +1213,27 @@ class AIBinaryBridge:
                 json_str = response[json_start:json_end]
                 result = json.loads(json_str)
             else:
-                # Fallback: try to parse the whole response
                 result = json.loads(response)
 
             patterns = result.get("identified_patterns", [])
 
-            # Add base offset to all pattern offsets
-            for _pattern in patterns:
-                if "start_offset" in _pattern:
-                    _pattern["start_offset"] += offset
-                if "end_offset" in _pattern:
-                    _pattern["end_offset"] += offset
+            for pattern_ in patterns:
+                if "start_offset" in pattern_:
+                    pattern_["start_offset"] += offset
+                if "end_offset" in pattern_:
+                    pattern_["end_offset"] += offset
+
+            if binary_data:
+                for pattern in patterns:
+                    if "hex_bytes" in pattern and "start_offset" in pattern:
+                        rel_start = pattern["start_offset"] - offset
+                        if 0 <= rel_start < len(binary_data):
+                            try:
+                                expected = bytes.fromhex(pattern["hex_bytes"].replace(" ", ""))
+                                actual = binary_data[rel_start : rel_start + len(expected)]
+                                pattern["validated"] = actual == expected
+                            except (ValueError, IndexError):
+                                pattern["validated"] = False
 
             return patterns
         except (OSError, ValueError, RuntimeError) as e:
@@ -1216,9 +1242,7 @@ class AIBinaryBridge:
 
     def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
         """Parse the AI response for semantic search."""
-        _binary_data = binary_data  # Store for potential future use
         try:
-            # Extract JSON from response
             json_start = response.find("{")
             json_end = response.rfind("}") + 1
 
@@ -1226,17 +1250,23 @@ class AIBinaryBridge:
                 json_str = response[json_start:json_end]
                 result = json.loads(json_str)
             else:
-                # Fallback: try to parse the whole response
                 result = json.loads(response)
 
             matches = result.get("matches", [])
 
-            # Add base offset to all match offsets
-            for _match in matches:
-                if "start_offset" in _match:
-                    _match["start_offset"] += offset
-                if "end_offset" in _match:
-                    _match["end_offset"] += offset
+            for match_ in matches:
+                if "start_offset" in match_:
+                    match_["start_offset"] += offset
+                if "end_offset" in match_:
+                    match_["end_offset"] += offset
+
+            if binary_data:
+                for match in matches:
+                    if "start_offset" in match and "end_offset" in match:
+                        rel_start = match["start_offset"] - offset
+                        rel_end = match["end_offset"] - offset
+                        if 0 <= rel_start < len(binary_data) and rel_end <= len(binary_data):
+                            match["matched_bytes"] = binary_data[rel_start:rel_end].hex()
 
             return matches
         except (OSError, ValueError, RuntimeError) as e:
@@ -1516,18 +1546,18 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
         results = []
 
         with open(file_path, "rb") as f:
-            for _offset in range(start_offset, start_offset + max_size, chunk_size):
+            for offset in range(start_offset, start_offset + max_size, chunk_size):
                 # Read a chunk
-                f.seek(_offset)
-                data = f.read(min(chunk_size, start_offset + max_size - _offset))
+                f.seek(offset)
+                data = f.read(min(chunk_size, start_offset + max_size - offset))
 
                 # Search for pattern
                 chunk_results = ai_bridge.search_binary_semantic(data, pattern_description, 0, len(data))
 
                 # Adjust offsets to be relative to file
-                for _result in chunk_results:
-                    _result["start_offset"] += _offset
-                    _result["end_offset"] += _offset
+                for result in chunk_results:
+                    result["start_offset"] += offset
+                    result["end_offset"] += offset
 
                 results.extend(chunk_results)
 

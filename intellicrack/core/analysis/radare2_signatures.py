@@ -952,6 +952,20 @@ class R2SignatureAnalyzer:
                     vuln_info["r2_analysis"]["imports_dangerous_functions"] = True
                     vuln_info["risk_level"] = "high"
 
+                # Use dangerous_calls cross-reference data to identify vulnerable call sites
+                if dangerous_calls:
+                    func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
+                    if func_addr_hex in dangerous_calls or str(func_addr) in dangerous_calls:
+                        call_sites: list[str] = []
+                        for line in dangerous_calls.split("\n"):
+                            if func_addr_hex in line or str(func_addr) in line:
+                                call_sites.append(line.strip())
+                        if call_sites:
+                            vuln_info["r2_analysis"]["dangerous_call_sites"] = call_sites
+                            vuln_info["r2_analysis"]["calls_unsafe_functions"] = True
+                            if vuln_info["risk_level"] == "low":
+                                vuln_info["risk_level"] = "medium"
+
                 # Check for format string vulnerabilities
                 if "call sym.imp.printf" in func_asm and "%s" in func_asm and ("mov" in func_asm and "rdi" in func_asm):
                     vuln_info["r2_analysis"]["format_string_risk"] = True
@@ -1047,17 +1061,80 @@ class R2SignatureAnalyzer:
 
             # Use r2 to check if function matches custom patterns
             try:
-                # Get function info
+                # Get function info and parse for size/complexity weighting
                 func_info = r2.run_command(f"afij @ {func_addr}")
+                func_size = 0
+                func_complexity = 0
+
+                try:
+                    import json as json_module
+                    func_info_data = json_module.loads(func_info) if func_info.strip() else []
+                    if func_info_data and isinstance(func_info_data, list) and len(func_info_data) > 0:
+                        fi = func_info_data[0]
+                        func_size = fi.get("size", 0)
+                        func_complexity = fi.get("cc", 0)  # cyclomatic complexity
+                except (ValueError, KeyError, IndexError):
+                    pass
+
+                # Calculate confidence weight based on function size and complexity
+                size_weight = min(1.0, func_size / 500) if func_size > 0 else 0.5
+                complexity_weight = min(1.0, func_complexity / 10) if func_complexity > 0 else 0.5
+                confidence_modifier = (size_weight + complexity_weight) / 2
 
                 # Check if function contains custom signature matches
                 if custom_sig_matches and str(func_addr) in custom_sig_matches:
+                    weighted_confidence = min(0.98, 0.9 * (0.8 + 0.4 * confidence_modifier))
                     pattern_match = {
                         "function": func,
                         "pattern_name": "r2_custom_signature",
                         "pattern": "Binary signature match",
-                        "confidence": 0.9,
+                        "confidence": weighted_confidence,
                         "r2_signature": True,
+                        "func_size": func_size,
+                        "func_complexity": func_complexity,
+                    }
+                    custom_matches.append(pattern_match)
+
+                # Cross-reference xor_pattern and cmp_pattern with function addresses
+                # to detect license check patterns
+                func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
+                xor_in_func = False
+                cmp_in_func = False
+
+                if xor_pattern and (func_addr_hex in xor_pattern or str(func_addr) in xor_pattern):
+                    xor_in_func = True
+                if cmp_pattern and (func_addr_hex in cmp_pattern or str(func_addr) in cmp_pattern):
+                    cmp_in_func = True
+
+                if xor_in_func and cmp_in_func:
+                    weighted_confidence = min(0.95, 0.85 * (0.8 + 0.4 * confidence_modifier))
+                    pattern_match = {
+                        "function": func,
+                        "pattern_name": "xor_cmp_license_check",
+                        "pattern": "XOR+CMP validation pattern (license check signature)",
+                        "confidence": weighted_confidence,
+                        "r2_analysis": {
+                            "xor_pattern_match": True,
+                            "cmp_pattern_match": True,
+                            "likely_license_validation": True,
+                            "func_size": func_size,
+                            "func_complexity": func_complexity,
+                        },
+                    }
+                    custom_matches.append(pattern_match)
+                elif xor_in_func or cmp_in_func:
+                    weighted_confidence = min(0.80, 0.65 * (0.8 + 0.4 * confidence_modifier))
+                    pattern_match = {
+                        "function": func,
+                        "pattern_name": "partial_license_check",
+                        "pattern": "Partial validation pattern detected",
+                        "confidence": weighted_confidence,
+                        "r2_analysis": {
+                            "xor_pattern_match": xor_in_func,
+                            "cmp_pattern_match": cmp_in_func,
+                            "func_size": func_size,
+                            "func_complexity": func_complexity,
+                        },
                     }
                     custom_matches.append(pattern_match)
 
@@ -1066,24 +1143,25 @@ class R2SignatureAnalyzer:
 
                 # Check for license validation patterns
                 if "xor eax, eax" in func_asm and "test" in func_asm and "jz" in func_asm:
-                    # Common pattern: xor eax,eax; test; jz (check and branch)
+                    weighted_confidence = min(0.85, 0.7 * (0.8 + 0.4 * confidence_modifier))
                     pattern_match = {
                         "function": func,
                         "pattern_name": "validation_check_pattern",
                         "pattern": "XOR-TEST-JZ validation pattern",
-                        "confidence": 0.7,
-                        "r2_analysis": {"validation_pattern": True},
+                        "confidence": weighted_confidence,
+                        "r2_analysis": {"validation_pattern": True, "func_size": func_size, "func_complexity": func_complexity},
                     }
                     custom_matches.append(pattern_match)
 
                 # Check for time-based patterns
                 if "call" in func_asm and "time" in func_asm and "cmp" in func_asm:
+                    weighted_confidence = min(0.90, 0.8 * (0.8 + 0.4 * confidence_modifier))
                     pattern_match = {
                         "function": func,
                         "pattern_name": "time_check_pattern",
                         "pattern": "Time comparison pattern",
-                        "confidence": 0.8,
-                        "r2_analysis": {"time_check": True},
+                        "confidence": weighted_confidence,
+                        "r2_analysis": {"time_check": True, "func_size": func_size, "func_complexity": func_complexity},
                     }
                     custom_matches.append(pattern_match)
 

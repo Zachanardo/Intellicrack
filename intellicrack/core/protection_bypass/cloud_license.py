@@ -37,16 +37,42 @@ import time
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+
+if TYPE_CHECKING:
+    import jwt
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
+    from mitmproxy import http
+    from mitmproxy.addons import anticache
+    from mitmproxy.options import Options
+    from mitmproxy.tools.dump import DumpMaster
+else:
+    jwt: Any = None
+    x509: Any = None
+    default_backend: Any = None
+    hashes: Any = None
+    serialization: Any = None
+    rsa: Any = None
+    NameOID: Any = None
+    http: Any = None
+    anticache: Any = None
+    Options: Any = None
+    DumpMaster: Any = None
+
+JWT_AVAILABLE = False
+CRYPTOGRAPHY_AVAILABLE = False
+MITMPROXY_AVAILABLE = False
 
 try:
     import jwt
-
     JWT_AVAILABLE = True
 except ImportError:
-    JWT_AVAILABLE = False
-    jwt = None
+    pass
 
 try:
     from cryptography import x509
@@ -57,13 +83,7 @@ try:
 
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
-    CRYPTOGRAPHY_AVAILABLE = False
-    x509 = None
-    default_backend = None
-    hashes = None
-    serialization = None
-    rsa = None
-    NameOID = None
+    pass
 
 try:
     from mitmproxy import http
@@ -73,11 +93,7 @@ try:
 
     MITMPROXY_AVAILABLE = True
 except ImportError:
-    MITMPROXY_AVAILABLE = False
-    http = None
-    anticache = None
-    Options = None
-    DumpMaster = None
+    pass
 
 from intellicrack.utils.logger import get_logger
 
@@ -137,10 +153,10 @@ class TLSInterceptor:
 
         self.target_host = target_host
         self.target_port = target_port
-        self.certificate = None
-        self.private_key = None
-        self.ca_cert = None
-        self.ca_key = None
+        self.certificate: Any = None
+        self.private_key: Any = None
+        self.ca_cert: Any = None
+        self.ca_key: Any = None
         self.backend = default_backend()
         self._init_ca()
 
@@ -217,7 +233,7 @@ class TLSInterceptor:
                     )
                 )
 
-    def generate_certificate(self, hostname: str) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    def generate_certificate(self, hostname: str) -> tuple[Any, Any]:
         """Generate a signed TLS certificate for intercepting the target hostname.
 
         Args:
@@ -314,9 +330,9 @@ class ProtocolStateMachine:
         """
         self.protocol_type = protocol_type
         self.state = LicenseState.INITIAL
-        self.session_data = {}
-        self.tokens = {}
-        self.transitions = {}
+        self.session_data: dict[str, Any] = {}
+        self.tokens: dict[str, dict[str, Any]] = {}
+        self.transitions: dict[LicenseState, list[LicenseState]] = {}
         self._init_transitions()
 
     def _init_transitions(self) -> None:
@@ -364,7 +380,7 @@ class ProtocolStateMachine:
             "expires_at": time.time() + 3600,
         }
 
-    def get_token(self, token_type: str) -> str | None:
+    def get_token(self, token_type: str) -> Any | None:
         """Retrieve a stored token if not expired.
 
         Args:
@@ -416,8 +432,8 @@ class ResponseSynthesizer:
             raise ImportError("cryptography library is required for response synthesis. Install with: pip install cryptography")
 
         self.backend = default_backend()
-        self.rsa_keys = {}
-        self.templates = {}
+        self.rsa_keys: dict[str, Any] = {}
+        self.templates: dict[ProtocolType, dict[str, Any]] = {}
         self._init_templates()
 
     def _init_templates(self) -> None:
@@ -462,7 +478,7 @@ class ResponseSynthesizer:
             },
         }
 
-    def get_rsa_key(self, key_id: str = "default") -> rsa.RSAPrivateKey:
+    def get_rsa_key(self, key_id: str = "default") -> Any:
         """Get or generate an RSA private key for JWT signing.
 
         Args:
@@ -506,7 +522,7 @@ class ResponseSynthesizer:
             payload["exp"] = int(time.time()) + 3600
 
         if algorithm.startswith("RS") or not algorithm.startswith("HS"):
-            key = self.get_rsa_key(key_id)
+            key: Any = self.get_rsa_key(key_id)
         else:
             key = os.urandom(32)
         return jwt.encode(payload, key, algorithm=algorithm)
@@ -675,7 +691,7 @@ class ResponseSynthesizer:
             "refresh_token": base64.b64encode(os.urandom(32)).decode(),
         }
 
-    def synthesize_rest_response(self, endpoint: str, method: str, request_data: dict) -> dict[str, Any]:
+    def synthesize_rest_response(self, endpoint: str, method: str, request_data: dict[str, Any]) -> dict[str, Any]:
         """Synthesize REST API license validation response.
 
         Args:
@@ -736,7 +752,7 @@ class ResponseSynthesizer:
         if template_key and template_key in self.templates[ProtocolType.SOAP]:
             template = self.templates[ProtocolType.SOAP][template_key]
             expiry_date = (datetime.utcnow() + timedelta(days=365)).isoformat()
-            return template.format(expiry_date=expiry_date)
+            return str(template).format(expiry_date=expiry_date)
 
         return """<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -772,7 +788,7 @@ class ResponseSynthesizer:
 
         return self._encode_protobuf(response_data)
 
-    def _encode_protobuf(self, data: dict) -> bytes:
+    def _encode_protobuf(self, data: dict[str, Any]) -> bytes:
         """Encode dictionary to protobuf binary format.
 
         Args:
@@ -916,7 +932,7 @@ class MITMProxyAddon:
         self.state_machine = state_machine
         self.synthesizer = synthesizer
         self.request_count = 0
-        self.intercepted_requests = []
+        self.intercepted_requests: list[dict[str, Any]] = []
 
     def request(self, flow: http.HTTPFlow) -> None:
         """Handle intercepted HTTP request.
@@ -966,7 +982,7 @@ class MITMProxyAddon:
             logger.info(f"Modifying response for {url} (rule match: {should_modify})")
             self._synthesize_response(flow)
 
-    def _check_block_rules(self, url: str, method: str, headers: dict) -> bool:
+    def _check_block_rules(self, url: str, method: str, headers: dict[str, Any]) -> bool:
         """Check if request should be blocked.
 
         Args:
@@ -1055,9 +1071,12 @@ class MITMProxyAddon:
             )
             self.state_machine.transition(LicenseState.ACTIVE)
 
-    def _get_request_json(self, flow: http.HTTPFlow) -> dict:
+    def _get_request_json(self, flow: http.HTTPFlow) -> dict[Any, Any]:
         try:
-            return json.loads(flow.request.text)
+            result = json.loads(flow.request.text)
+            if isinstance(result, dict):
+                return result
+            return {}
         except Exception:
             return {}
 
@@ -1067,13 +1086,13 @@ class CloudLicenseProtocolHandler:
 
     def __init__(self) -> None:
         """Initialize cloud license protocol handler with all components."""
-        self.tls_interceptor = None
-        self.state_machines = {}
+        self.tls_interceptor: TLSInterceptor | None = None
+        self.state_machines: dict[str, ProtocolStateMachine] = {}
         self.synthesizer = ResponseSynthesizer()
-        self.mitm_proxy = None
-        self.proxy_thread = None
+        self.mitm_proxy: Any = None
+        self.proxy_thread: threading.Thread | None = None
         self.running = False
-        self.intercept_rules = {}
+        self.intercept_rules: dict[str, Any] = {}
 
     def start_interception(
         self,
@@ -1097,19 +1116,21 @@ class CloudLicenseProtocolHandler:
         if self.running:
             return {"success": False, "error": "Interception already running"}
 
-        self.tls_interceptor = TLSInterceptor(target_host, target_port)
+        tls_interceptor = TLSInterceptor(target_host, target_port)
+        self.tls_interceptor = tls_interceptor
 
         state_machine = ProtocolStateMachine(protocol_type)
         self.state_machines[target_host] = state_machine
 
         self._configure_intercept_rules(target_host, protocol_type)
 
-        self.proxy_thread = threading.Thread(
+        thread = threading.Thread(
             target=self._run_mitmproxy,
             args=(listen_port, state_machine),
             daemon=True,
         )
-        self.proxy_thread.start()
+        thread.start()
+        self.proxy_thread = thread
 
         self.running = True
 
@@ -1117,7 +1138,7 @@ class CloudLicenseProtocolHandler:
             "success": True,
             "listen_port": listen_port,
             "target": f"{target_host}:{target_port}",
-            "ca_cert": str(self.tls_interceptor.get_ca_cert_path()),
+            "ca_cert": str(tls_interceptor.get_ca_cert_path()),
             "status": "running",
             "protocol": protocol_type.value,
         }
@@ -1241,7 +1262,7 @@ class CloudLicenseProtocolHandler:
             "license_id": self.synthesizer._generate_uuid(),
         }
 
-    def synthesize_license_response(self, protocol: ProtocolType, endpoint: str, request_data: object) -> object:
+    def synthesize_license_response(self, protocol: ProtocolType, endpoint: str, request_data: Any) -> Any:
         """Synthesize license validation response based on protocol type.
 
         Args:
@@ -1254,11 +1275,11 @@ class CloudLicenseProtocolHandler:
 
         """
         if protocol == ProtocolType.HTTP_REST:
-            return self.synthesizer.synthesize_rest_response(endpoint, "POST", request_data)
+            return self.synthesizer.synthesize_rest_response(endpoint, "POST", request_data if isinstance(request_data, dict) else {})
         if protocol == ProtocolType.SOAP:
             return self.synthesizer.synthesize_soap_response(endpoint, str(request_data))
         if protocol == ProtocolType.GRPC:
-            return self.synthesizer.synthesize_grpc_response(endpoint, request_data)
+            return self.synthesizer.synthesize_grpc_response(endpoint, request_data if isinstance(request_data, bytes) else b"")
         if protocol == ProtocolType.WEBSOCKET:
             return self.synthesizer.synthesize_websocket_frame("license_valid")
         return {"success": True, "status": "active"}
@@ -1270,19 +1291,20 @@ class CloudLicenseProtocolHandler:
             Statistics dictionary
 
         """
-        stats = {
-            "running": self.running,
-            "active_sessions": len(self.state_machines),
-            "protocols": {},
-        }
-
+        protocols: dict[str, dict[str, Any]] = {}
         for host, sm in self.state_machines.items():
-            stats["protocols"][host] = {
+            protocols[host] = {
                 "protocol": sm.protocol_type.value,
                 "state": sm.state.value,
                 "tokens": len(sm.tokens),
                 "session_data_keys": list(sm.session_data.keys()),
             }
+
+        stats: dict[str, Any] = {
+            "running": self.running,
+            "active_sessions": len(self.state_machines),
+            "protocols": protocols,
+        }
 
         return stats
 
@@ -1294,7 +1316,7 @@ class CloudLicenseBypass:
         """Initialize cloud license protocol handler with all components."""
         self.protocol_handler = CloudLicenseProtocolHandler()
         self.synthesizer = ResponseSynthesizer()
-        self.active_bypasses = {}
+        self.active_bypasses: dict[str, dict[str, Any]] = {}
 
     def bypass_azure_ad(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Azure AD authentication for license validation.

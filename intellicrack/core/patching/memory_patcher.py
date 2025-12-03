@@ -22,7 +22,7 @@ import datetime
 import os
 import sys
 from pathlib import Path
-from typing import Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 
@@ -65,193 +65,86 @@ print("[DEBUG memory_patcher] logger obtained OK")
 sys.stdout.flush()
 
 
-def _create_dword_type(ctypes: object) -> type:
+def _create_dword_type(ctypes_module: object) -> type:
     """Create Windows DWORD type implementation.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
-        DWORD class derived from ctypes.c_uint32.
+        DWORD type (c_uint32).
+
+    Note:
+        Returns ctypes.c_uint32 directly. Value masking is handled
+        automatically by ctypes (32-bit unsigned wrapping).
 
     """
-
-    class DWORD(ctypes.c_uint32):
-        """Real Windows DWORD type implementation."""
-
-        def __init__(self, value: int = 0) -> None:
-            """Initialize DWORD with proper value handling.
-
-            Args:
-                value: Initial DWORD value (default 0).
-
-            """
-            super().__init__(value)
-
-        @property
-        def value(self) -> int:
-            """Get the DWORD value.
-
-            Returns:
-                The current DWORD value as an integer.
-
-            """
-            return super().value
-
-        @value.setter
-        def value(self, val: int) -> None:
-            """Set the DWORD value with bounds checking.
-
-            Args:
-                val: New DWORD value to set.
-
-            """
-            if val < 0:
-                val = 0
-            elif val > 0xFFFFFFFF:
-                val = 0xFFFFFFFF
-            super().__setattr__("value", val)
-
-        def __str__(self) -> str:
-            return f"DWORD(0x{self.value:08X})"
-
-        def __repr__(self) -> str:
-            return f"DWORD({self.value})"
-
-    return DWORD
+    return ctypes_module.c_uint32  # type: ignore[return-value]
 
 
-def _create_bool_type(ctypes: object) -> type:
+def _create_bool_type(ctypes_module: object) -> type:
     """Create Windows BOOL type implementation.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
-        BOOL class derived from ctypes.c_int32.
+        BOOL type (c_int32).
+
+    Note:
+        Returns ctypes.c_int32 directly. Boolean conversion is handled
+        by checking if value != 0.
 
     """
-
-    class BOOL(ctypes.c_int32):
-        """Real Windows BOOL type implementation."""
-
-        def __init__(self, value: int = 0) -> None:
-            """Initialize BOOL with proper value handling.
-
-            Args:
-                value: Initial BOOL value (default 0, falsey).
-
-            """
-            super().__init__(1 if value else 0)
-
-        @property
-        def value(self) -> bool:
-            """Get the BOOL value.
-
-            Returns:
-                The current BOOL value as a boolean.
-
-            """
-            return bool(super().value)
-
-        @value.setter
-        def value(self, val: int) -> None:
-            """Set the BOOL value.
-
-            Args:
-                val: New BOOL value to set.
-
-            """
-            super().__setattr__("value", 1 if val else 0)
-
-        def __bool__(self) -> bool:
-            return bool(super().value)
-
-        def __str__(self) -> str:
-            return f"BOOL({'TRUE' if self.value else 'FALSE'})"
-
-        def __repr__(self) -> str:
-            return f"BOOL({self.value})"
-
-    return BOOL
+    return ctypes_module.c_int32  # type: ignore[return-value]
 
 
-def _create_word_type(ctypes: object) -> type:
+def _create_word_type(ctypes_module: object) -> type:
     """Create Windows WORD type implementation.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
-        WORD class derived from ctypes.c_uint16.
+        WORD type (c_uint16).
+
+    Note:
+        Returns ctypes.c_uint16 directly. Value masking is handled
+        automatically by ctypes (16-bit unsigned wrapping).
 
     """
-
-    class WORD(ctypes.c_uint16):
-        """Real Windows WORD type implementation."""
-
-        def __init__(self, value: int = 0) -> None:
-            """Initialize WORD with proper value handling.
-
-            Args:
-                value: Initial WORD value (default 0).
-
-            """
-            super().__init__(value & 0xFFFF)
-
-        def __str__(self) -> str:
-            return f"WORD(0x{self.value:04X})"
-
-        def __repr__(self) -> str:
-            return f"WORD({self.value})"
-
-    return WORD
+    return ctypes_module.c_uint16  # type: ignore[return-value]
 
 
-def _create_byte_type(ctypes: object) -> type:
+def _create_byte_type(ctypes_module: object) -> type:
     """Create Windows BYTE type implementation.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
-        BYTE class derived from ctypes.c_uint8.
+        BYTE type (c_uint8).
+
+    Note:
+        Returns ctypes.c_uint8 directly. Value masking is handled
+        automatically by ctypes (8-bit unsigned wrapping).
 
     """
-
-    class BYTE(ctypes.c_uint8):
-        """Real Windows BYTE type implementation."""
-
-        def __init__(self, value: int = 0) -> None:
-            """Initialize BYTE with proper value handling.
-
-            Args:
-                value: Initial BYTE value (default 0).
-
-            """
-            super().__init__(value & 0xFF)
-
-        def __str__(self) -> str:
-            return f"BYTE(0x{self.value:02X})"
-
-        def __repr__(self) -> str:
-            return f"BYTE({self.value})"
-
-    return BYTE
+    return ctypes_module.c_uint8  # type: ignore[return-value]
 
 
-def _create_handle_types(ctypes: object) -> tuple[type, type, type, type]:
+def _create_handle_types(ctypes_module: object) -> tuple[type, type, type, type]:
     """Create Windows HANDLE and related types.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
         Tuple of (HANDLE, HWND, HDC, HINSTANCE) classes.
 
     """
 
-    class HANDLE(ctypes.c_void_p):
+    class HANDLE(ctypes_module.c_void_p):  # type: ignore[name-defined]
         """Real Windows HANDLE type implementation."""
 
         def __init__(self, value: int | None = None) -> None:
@@ -270,7 +163,11 @@ def _create_handle_types(ctypes: object) -> tuple[type, type, type, type]:
                 True if handle is valid, False otherwise.
 
             """
-            return self.value is not None and self.value not in (0, -1)
+            if self.value is None or self.value == 0:
+                return False
+            INVALID_HANDLE_VALUE_32 = 0xFFFFFFFF
+            INVALID_HANDLE_VALUE_64 = 0xFFFFFFFFFFFFFFFF
+            return self.value not in (-1, INVALID_HANDLE_VALUE_32, INVALID_HANDLE_VALUE_64)
 
         def __bool__(self) -> bool:
             return self.is_valid()
@@ -311,18 +208,18 @@ def _create_handle_types(ctypes: object) -> tuple[type, type, type, type]:
     return HANDLE, HWND, HDC, HINSTANCE
 
 
-def _create_pointer_types(ctypes: object) -> tuple[type, type, type]:
+def _create_pointer_types(ctypes_module: object) -> tuple[type, type, type]:
     """Create Windows pointer types.
 
     Args:
-        ctypes: The ctypes module for type definitions.
+        ctypes_module: The ctypes module for type definitions.
 
     Returns:
         Tuple of (LPVOID, SIZE_T, ULONG_PTR) classes.
 
     """
 
-    class LPVOID(ctypes.c_void_p):
+    class LPVOID(ctypes_module.c_void_p):  # type: ignore[name-defined]
         """Real Windows LPVOID type implementation."""
 
         def __str__(self) -> str:
@@ -331,7 +228,7 @@ def _create_pointer_types(ctypes: object) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"LPVOID({self.value})"
 
-    class SIZE_T(ctypes.c_size_t):  # noqa: N801
+    class SIZE_T(ctypes_module.c_size_t):  # type: ignore[name-defined]  # noqa: N801
         """Real Windows SIZE_T type implementation."""
 
         def __str__(self) -> str:
@@ -340,7 +237,7 @@ def _create_pointer_types(ctypes: object) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"SIZE_T({self.value})"
 
-    class ULONG_PTR(ctypes.c_void_p):  # noqa: N801
+    class ULONG_PTR(ctypes_module.c_void_p):  # type: ignore[name-defined]  # noqa: N801
         """Real Windows ULONG_PTR type implementation."""
 
         def __str__(self) -> str:
@@ -617,11 +514,11 @@ if __name__ == "__main__":
 
     # Handle patches format conversion
     patches_formatted = []
-    for _patch in app.potential_patches:
+    for patch in app.potential_patches:
         patch_dict = {
-            "address": _patch.get("address", 0),
-            "new_bytes": list(_patch.get("new_bytes", b"")) if isinstance(_patch.get("new_bytes"), bytes) else _patch.get("new_bytes", []),
-            "description": _patch.get("description", "Unknown patch"),
+            "address": patch.get("address", 0),
+            "new_bytes": list(patch.get("new_bytes", b"")) if isinstance(patch.get("new_bytes"), bytes) else patch.get("new_bytes", []),
+            "description": patch.get("description", "Unknown patch"),
         }
         patches_formatted.append(patch_dict)
 
@@ -712,8 +609,8 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
         app.update_output.emit(log_message(f"[Memory Patch] Found {len(protections)} protection(s): {', '.join(protections)}"))
 
         msg = "The following protections were detected:\\n\\n"
-        for _p in protections:
-            msg += f" {_p}\\n"
+        for p in protections:
+            msg += f" {p}\\n"
         msg += "\\nMemory patching is recommended for this binary.\\n"
         msg += "This will create a launcher that patches the program in memory.\\n\\n"
         msg += "Continue with memory patching setup?"

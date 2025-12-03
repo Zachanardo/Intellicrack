@@ -1256,7 +1256,7 @@ const CertificatePinningBypass = {
     bypassNSURLSession: function () {
         try {
             // Hook NSURLSessionDelegate methods
-            const {NSURLSessionDelegate} = ObjC.protocols;
+            const { NSURLSessionDelegate } = ObjC.protocols;
 
             if (NSURLSessionDelegate) {
                 // Hook didReceiveChallenge method
@@ -1328,7 +1328,7 @@ const CertificatePinningBypass = {
         }
         try {
             // Hook NSURLConnection delegate methods
-            const {NSURLConnectionDelegate} = ObjC.protocols;
+            const { NSURLConnectionDelegate } = ObjC.protocols;
 
             if (NSURLConnectionDelegate) {
                 const originalCanAuthenticateAgainstProtectionSpace =
@@ -2347,8 +2347,7 @@ const CertificatePinningBypass = {
                         original_error: boringSslError
                             ? boringSslError.toString()
                             : 'No error object',
-                        stack_trace_available:
-                            !!(boringSslError && boringSslError.stack),
+                        stack_trace_available: !!(boringSslError && boringSslError.stack),
                     },
                 });
             }
@@ -3983,7 +3982,7 @@ Object.assign(CertificatePinningBypass, {
             // Hook iOS DoH implementations
             if (ObjC.available) {
                 try {
-                    const {NSURLSessionDohDelegate} = ObjC.classes;
+                    const { NSURLSessionDohDelegate } = ObjC.classes;
                     if (NSURLSessionDohDelegate) {
                         const validateCaaRecords =
                             NSURLSessionDohDelegate['- validateCaaRecords:forHostname:'];
@@ -4029,7 +4028,7 @@ Object.assign(CertificatePinningBypass, {
 
                     // Implement fallback CAA bypass mechanism
                     try {
-                        const {NSURLRequest} = ObjC.classes;
+                        const { NSURLRequest } = ObjC.classes;
                         if (NSURLRequest) {
                             const originalInit = NSURLRequest['- init'];
                             Interceptor.replace(
@@ -7706,7 +7705,7 @@ Object.assign(CertificatePinningBypass, {
             // Hook iOS DNSSEC CAA implementations
             if (ObjC.available) {
                 try {
-                    const {DNSSECValidator} = ObjC.classes;
+                    const { DNSSECValidator } = ObjC.classes;
                     if (DNSSECValidator) {
                         const validateCaaRecords =
                             DNSSECValidator['- validateCaaRecords:withSignatures:forDomain:'];

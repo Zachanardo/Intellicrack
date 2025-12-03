@@ -362,7 +362,7 @@ class TrainingThread(QThread):
             metrics_history = []
             epoch_accuracy = 0.0
 
-            for _epoch in range(self.config.epochs):
+            for epoch in range(self.config.epochs):
                 if self.should_stop:
                     break
 
@@ -375,7 +375,7 @@ class TrainingThread(QThread):
                 epoch_start_time = time.time()
 
                 # Real training implementation with actual data processing
-                progress = int((_epoch + 1) / self.config.epochs * 100)
+                progress = int((epoch + 1) / self.config.epochs * 100)
 
                 # Initialize real metrics for this epoch
                 epoch_loss = 0.0
@@ -399,7 +399,7 @@ class TrainingThread(QThread):
 
                             # Real batch processing with gradient computation
                             try:
-                                batch_loss, batch_acc = self._process_training_batch(batch_data, _epoch)
+                                batch_loss, batch_acc = self._process_training_batch(batch_data, epoch)
                                 epoch_loss += batch_loss
                                 epoch_accuracy += batch_acc
                                 samples_processed += len(batch_data)
@@ -420,7 +420,7 @@ class TrainingThread(QThread):
                         synthetic_batches = 10
                         for _ in range(synthetic_batches):
                             synthetic_data = self._generate_synthetic_training_data()
-                            batch_loss, batch_acc = self._process_training_batch(synthetic_data, _epoch)
+                            batch_loss, batch_acc = self._process_training_batch(synthetic_data, epoch)
                             epoch_loss += batch_loss
                             epoch_accuracy += batch_acc
                             samples_processed += len(synthetic_data)
@@ -431,7 +431,7 @@ class TrainingThread(QThread):
                         val_accuracy = epoch_accuracy * 0.95  # Validation typically lower accuracy
 
                 except Exception as training_error:
-                    self.log_message.emit(f"Training epoch {_epoch + 1} error: {training_error}")
+                    self.log_message.emit(f"Training epoch {epoch + 1} error: {training_error}")
 
                     # Use adaptive error recovery with real historical data
                     if metrics_history:
@@ -481,7 +481,7 @@ class TrainingThread(QThread):
                 epoch_duration = time.time() - epoch_start_time
 
                 metrics = {
-                    "epoch": _epoch + 1,
+                    "epoch": epoch + 1,
                     "accuracy": float(epoch_accuracy),
                     "loss": float(epoch_loss),
                     "val_accuracy": float(val_accuracy),
@@ -500,10 +500,10 @@ class TrainingThread(QThread):
 
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
-                self.log_message.emit(f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {epoch_accuracy:.4f}")
+                self.log_message.emit(f"Epoch {epoch + 1}/{self.config.epochs} - Accuracy: {epoch_accuracy:.4f}")
 
                 # Early stopping based on validation performance
-                if self.config.use_early_stopping and _epoch > 20 and metrics["val_loss"] > metrics["loss"] * 1.5:
+                if self.config.use_early_stopping and epoch > 20 and metrics["val_loss"] > metrics["loss"] * 1.5:
                     self.log_message.emit("Early stopping triggered")
                     break
 

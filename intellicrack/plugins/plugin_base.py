@@ -75,7 +75,11 @@ class PluginMetadata:
         self.capabilities = capabilities or []
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert metadata to dictionary format."""
+        """Convert metadata to dictionary format.
+
+        Returns:
+            dict[str, Any]: Dictionary representation of the plugin metadata.
+        """
         return {
             "name": self.name,
             "version": self.version,
@@ -124,11 +128,19 @@ class PluginConfigManager:
         self.config[key] = value
 
     def update(self, updates: dict[str, Any]) -> None:
-        """Update multiple configuration values."""
+        """Update multiple configuration values.
+
+        Args:
+            updates: Dictionary of configuration key-value pairs to update.
+        """
         self.config.update(updates)
 
     def to_dict(self) -> dict[str, Any]:
-        """Return configuration as dictionary."""
+        """Return configuration as dictionary.
+
+        Returns:
+            dict[str, Any]: A copy of the configuration dictionary.
+        """
         return self.config.copy()
 
 
@@ -191,7 +203,8 @@ class BasePlugin(ABC):
             return False, f"File is not readable: {binary_path}"
 
         # Check file size against config
-        max_size = self.config_manager.get("max_file_size", 100 * 1024 * 1024)  # 100MB default
+        max_size_obj = self.config_manager.get("max_file_size", 100 * 1024 * 1024)  # 100MB default
+        max_size: int = max_size_obj if isinstance(max_size_obj, int) else 100 * 1024 * 1024
         try:
             file_size = os.path.getsize(binary_path)
             if file_size > max_size:
@@ -265,11 +278,12 @@ def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") 
     return info
 
 
-def create_register_function(plugin_class: type[BasePlugin]) -> Callable[[], BasePlugin]:
+def create_register_function(plugin_class: type[BasePlugin], metadata: PluginMetadata | None = None) -> Callable[[], BasePlugin]:
     """Create a standard register function for a plugin class.
 
     Args:
         plugin_class: Plugin class to register
+        metadata: Plugin metadata. If not provided, creates minimal metadata.
 
     Returns:
         Register function that instantiates and returns the plugin
@@ -283,7 +297,14 @@ def create_register_function(plugin_class: type[BasePlugin]) -> Callable[[], Bas
             Instance of the registered plugin class
 
         """
-        return plugin_class()
+        plugin_metadata = metadata or PluginMetadata(
+            name="",
+            version="",
+            author="",
+            description="",
+            categories=[],
+        )
+        return plugin_class(metadata=plugin_metadata)
 
     return register
 

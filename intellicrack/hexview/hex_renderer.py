@@ -41,7 +41,12 @@ class ViewMode(Enum):
 
     @classmethod
     def names(cls) -> list[str]:
-        """Get a list of all view mode names."""
+        """Get a list of all view mode names.
+
+        Returns:
+            List of capitalized view mode names.
+
+        """
         return [mode.name.capitalize() for mode in cls]
 
 
@@ -59,7 +64,15 @@ class HexViewRenderer:
         show_ascii: bool = True,
         show_address: bool = True,
     ) -> None:
-        """Initialize the HexViewRenderer with display configuration."""
+        """Initialize the HexViewRenderer with display configuration.
+
+        Args:
+            bytes_per_row: Number of bytes to display per row.
+            group_size: Number of bytes to group together (1, 2, 4, or 8).
+            show_ascii: Whether to show ASCII representation.
+            show_address: Whether to show address/offset column.
+
+        """
         self.bytes_per_row = bytes_per_row
         self.group_size = group_size
         self.show_ascii = show_ascii
@@ -278,10 +291,10 @@ class HexViewRenderer:
         # For binary view, we might want fewer bytes per row due to display width
         bytes_per_binary_row = min(self.bytes_per_row, 8)
 
-        for _i in range(0, len(data), bytes_per_binary_row):
+        for i in range(0, len(data), bytes_per_binary_row):
             # Extract the chunk for this row
-            chunk = data[_i : _i + bytes_per_binary_row]
-            line_offset = offset + _i
+            chunk = data[i : i + bytes_per_binary_row]
+            line_offset = offset + i
 
             # Start with the address/offset
             line = f"{line_offset:08X}: " if self.show_address else ""
@@ -351,7 +364,17 @@ class HexViewRenderer:
         return "\n".join(result)
 
     def _format_field_value(self, data: bytes, field_type: str, count: int) -> str:
-        """Format a field value based on its type and count."""
+        """Format a field value based on its type and count.
+
+        Args:
+            data: Binary data to format.
+            field_type: Data type specification (uint8, uint16, uint32, etc.).
+            count: Number of elements if array type.
+
+        Returns:
+            Formatted string representation of the field value.
+
+        """
         try:
             if count > 1:
                 # Handle array types

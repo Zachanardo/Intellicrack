@@ -453,7 +453,12 @@ class HexViewerWidget(QAbstractScrollArea):
             self.horizontalScrollBar().setRange(0, 0)
 
     def handle_scroll(self, value: int) -> None:
-        """Handle scrollbar value changes."""
+        """Handle scrollbar value changes.
+
+        Args:
+            value: New scrollbar value.
+
+        """
         if not self.file_handler:
             return
 
@@ -467,7 +472,12 @@ class HexViewerWidget(QAbstractScrollArea):
         self.offset_changed.emit(self.current_offset)
 
     def paintEvent(self, event: QPaintEvent) -> None:
-        """Handle paint events for the viewport."""
+        """Handle paint events for the viewport.
+
+        Args:
+            event: Paint event to process.
+
+        """
         # This is handled by viewportPaintEvent
         super().paintEvent(event)
 
@@ -487,7 +497,12 @@ class HexViewerWidget(QAbstractScrollArea):
         return super().viewportEvent(event)
 
     def viewportPaintEvent(self, event: QPaintEvent) -> None:
-        """Paint the hex view to the viewport."""
+        """Paint the hex view to the viewport.
+
+        Args:
+            event: Paint event specifying region to paint.
+
+        """
         # Create painter
         painter = QPainter(self.viewport())
 
@@ -676,7 +691,13 @@ class HexViewerWidget(QAbstractScrollArea):
             painter.drawText(10, 80, f"Error in rendering: {str(e)[:50]}...")
 
     def draw_header(self, painter: QPainter, h_scroll: int) -> None:
-        """Draw the header with column labels."""
+        """Draw the header with column labels.
+
+        Args:
+            painter: QPainter instance for drawing.
+            h_scroll: Horizontal scroll offset value.
+
+        """
         # Draw header background
         header_rect = QRect(0, 0, self.viewport().width() + h_scroll, self.header_height)
         painter.fillRect(header_rect, self.header_bg_color)
@@ -758,7 +779,15 @@ class HexViewerWidget(QAbstractScrollArea):
         painter.drawLine(0, self.header_height - 1, self.viewport().width() + h_scroll, self.header_height - 1)
 
     def draw_hex_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
-        """Draw a row in hex view mode."""
+        """Draw a row in hex view mode.
+
+        Args:
+            painter: QPainter instance for drawing.
+            data: Binary data to display.
+            offset: Current byte offset in the file.
+            y: Y-coordinate for drawing.
+
+        """
         try:
             # Add debug logging
             if not data:
@@ -852,7 +881,15 @@ class HexViewerWidget(QAbstractScrollArea):
             x += self.char_width
 
     def draw_decimal_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
-        """Draw a row in decimal view mode."""
+        """Draw a row in decimal view mode.
+
+        Args:
+            painter: QPainter instance for drawing.
+            data: Binary data to display.
+            offset: Current byte offset in the file.
+            y: Y-coordinate for drawing.
+
+        """
         # Draw row address
         addr_rect = QRect(0, y, self.address_width, self.char_height)
         painter.fillRect(addr_rect, self.address_bg_color)
@@ -883,7 +920,15 @@ class HexViewerWidget(QAbstractScrollArea):
             x += 4 * self.char_width  # 3 chars + space
 
     def draw_binary_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
-        """Draw a row in binary view mode."""
+        """Draw a row in binary view mode.
+
+        Args:
+            painter: QPainter instance for drawing.
+            data: Binary data to display.
+            offset: Current byte offset in the file.
+            y: Y-coordinate for drawing.
+
+        """
         # Draw row address
         addr_rect = QRect(0, y, self.address_width, self.char_height)
         painter.fillRect(addr_rect, self.address_bg_color)
@@ -922,7 +967,17 @@ class HexViewerWidget(QAbstractScrollArea):
         width: int,
         highlights: list[HexHighlight],
     ) -> None:
-        """Draw highlights for a specific byte."""
+        """Draw highlights for a specific byte.
+
+        Args:
+            painter: QPainter instance for drawing.
+            byte_offset: Byte offset in the file.
+            x: X-coordinate for drawing.
+            y: Y-coordinate for drawing.
+            width: Width of the highlight area.
+            highlights: List of HexHighlight objects to apply.
+
+        """
         # Check if the byte is selected
         is_selected = self.selection_start >= 0 and self.selection_end >= 0 and self.selection_start <= byte_offset < self.selection_end
 
@@ -1434,7 +1489,12 @@ class HexViewerWidget(QAbstractScrollArea):
         self.viewport().update()
 
     def show_context_menu(self, pos: QPoint) -> None:
-        """Show the context menu."""
+        """Show the context menu.
+
+        Args:
+            pos: Position where context menu should appear.
+
+        """
         if not self.file_handler:
             return
 
@@ -2004,7 +2064,12 @@ class HexViewerWidget(QAbstractScrollArea):
             self.edit_selection(edited_data)
 
     def resizeEvent(self, event: QResizeEvent) -> None:
-        """Handle resize events."""
+        """Handle resize events.
+
+        Args:
+            event: Resize event to process.
+
+        """
         super().resizeEvent(event)
         self.update_scrollbars()
 
@@ -2013,6 +2078,9 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Args:
             event: Key press event to handle.
+
+        Returns:
+            None.
 
         """
         if not self.file_handler:
@@ -2059,7 +2127,13 @@ class HexViewerWidget(QAbstractScrollArea):
         return None
 
     def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifier) -> None:
-        """Handle navigation key events with modifier key support."""
+        """Handle navigation key events with modifier key support.
+
+        Args:
+            key: Qt key code for the navigation key pressed.
+            modifiers: Qt keyboard modifiers indicating which modifier keys are pressed.
+
+        """
         file_size = self.file_handler.get_file_size()
         ctrl_pressed = bool(modifiers & Qt.ControlModifier)
         shift_pressed = bool(modifiers & Qt.ShiftModifier)
@@ -2140,6 +2214,9 @@ class HexViewerWidget(QAbstractScrollArea):
         Args:
             event: Mouse press event to handle.
 
+        Returns:
+            None.
+
         """
         if not self.file_handler or event.button() != Qt.LeftButton:
             return super().mousePressEvent(event)
@@ -2165,6 +2242,9 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Args:
             event: Mouse move event to handle.
+
+        Returns:
+            None.
 
         """
         if not self.file_handler or not (event.buttons() & Qt.LeftButton):

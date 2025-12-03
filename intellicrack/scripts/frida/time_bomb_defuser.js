@@ -922,7 +922,7 @@ var TimeBombDefuser = {
         for (var i = 0; i < backtrace.length; i++) {
             var module = Process.findModuleByAddress(backtrace[i]);
             if (module && this.isLicenseModule(module.name)) {
-                  return true;
+                return true;
             }
         }
 

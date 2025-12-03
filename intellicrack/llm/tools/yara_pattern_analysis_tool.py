@@ -225,7 +225,7 @@ class YARAPatternAnalysisTool:
 
     def _assess_security_findings(self, matches: list[Any]) -> dict[str, Any]:
         """Assess security implications of pattern matches"""
-        assessment = {
+        assessment: dict[str, Any] = {
             "overall_threat_level": "low",
             "protection_complexity": "basic",
             "anti_analysis_present": False,
@@ -233,17 +233,16 @@ class YARAPatternAnalysisTool:
             "packing_indicators": False,
             "licensing_indicators": False,
             "security_score": 0.0,
+            "high_confidence_matches": 0,
             "findings_summary": [],
         }
 
         if not matches:
             return assessment
 
-        # Calculate scores and indicators
-        total_score = 0.0
-        high_confidence_matches = 0
+        total_score: float = 0.0
 
-        protection_categories = {
+        protection_categories: dict[str, int] = {
             "ANTI_DEBUG": 0,
             "ANTI_VM": 0,
             "PACKER": 0,
@@ -253,9 +252,8 @@ class YARAPatternAnalysisTool:
         }
 
         for match in matches:
-            # Score based on confidence and severity
             if match.confidence >= 0.8:
-                high_confidence_matches += 1
+                assessment["high_confidence_matches"] += 1
                 total_score += 2.0
             elif match.confidence >= 0.6:
                 total_score += 1.5

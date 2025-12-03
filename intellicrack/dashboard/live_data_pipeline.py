@@ -23,7 +23,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -53,7 +53,11 @@ class DataEvent:
     correlation_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert pipeline event to dictionary representation.
+
+        Returns:
+            dict[str, Any]: Dictionary representation of the event with all fields.
+        """
         return {
             "timestamp": self.timestamp,
             "source": self.source,
@@ -79,22 +83,22 @@ class LiveDataPipeline:
         self.logger = logger
 
         # Event queues by priority
-        self.event_queues = {priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority}
+        self.event_queues: dict[DataPriority, queue.PriorityQueue[tuple[float, DataEvent]]] = {priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority}
 
         # Buffering configuration
         self.buffer_size = self.config.get("buffer_size", 100)
         self.buffer_timeout = self.config.get("buffer_timeout", 0.1)  # seconds
-        self.event_buffer = []
+        self.event_buffer: list[DataEvent] = []
         self.buffer_lock = threading.Lock()
 
         # Throttling configuration
         self.throttle_rate = self.config.get("throttle_rate", 100)  # events per second
         self.throttle_window = 1.0  # seconds
-        self.event_timestamps = deque(maxlen=self.throttle_rate)
+        self.event_timestamps: deque[float] = deque(maxlen=self.throttle_rate)
 
         # Aggregation
         self.aggregation_window = self.config.get("aggregation_window", 5.0)  # seconds
-        self.aggregators = defaultdict(lambda: defaultdict(list))
+        self.aggregators: dict[str, dict[str, list[DataEvent]]] = defaultdict(lambda: defaultdict(list))
         self.aggregation_lock = threading.Lock()
 
         # Metrics
@@ -113,14 +117,14 @@ class LiveDataPipeline:
         self._init_database()
 
         # WebSocket connections
-        self.websocket_connections = set()
+        self.websocket_connections: set[object] = set()
         self.websocket_lock = threading.Lock()
 
         # Processing threads
-        self.processing_thread = None
-        self.flush_thread = None
-        self.aggregation_thread = None
-        self.metrics_thread = None
+        self.processing_thread: threading.Thread | None = None
+        self.flush_thread: threading.Thread | None = None
+        self.aggregation_thread: threading.Thread | None = None
+        self.metrics_thread: threading.Thread | None = None
         self.running = False
 
         # Alert thresholds
@@ -134,8 +138,8 @@ class LiveDataPipeline:
         )
 
         # Callbacks
-        self.event_callbacks = []
-        self.alert_callbacks = []
+        self.event_callbacks: list[Callable[[list[DataEvent]], Any]] = []
+        self.alert_callbacks: list[Callable[[dict[str, Any]], Any]] = []
 
         # Sequence ID counter
         self.sequence_counter = 0
@@ -191,16 +195,20 @@ class LiveDataPipeline:
 
         # Start processing threads
         self.processing_thread = threading.Thread(target=self._process_events, daemon=True)
-        self.processing_thread.start()
+        if self.processing_thread is not None:
+            self.processing_thread.start()
 
         self.flush_thread = threading.Thread(target=self._flush_buffer_periodically, daemon=True)
-        self.flush_thread.start()
+        if self.flush_thread is not None:
+            self.flush_thread.start()
 
         self.aggregation_thread = threading.Thread(target=self._aggregate_data, daemon=True)
-        self.aggregation_thread.start()
+        if self.aggregation_thread is not None:
+            self.aggregation_thread.start()
 
         self.metrics_thread = threading.Thread(target=self._update_metrics, daemon=True)
-        self.metrics_thread.start()
+        if self.metrics_thread is not None:
+            self.metrics_thread.start()
 
         self.logger.info("Live data pipeline started")
 
@@ -264,20 +272,26 @@ class LiveDataPipeline:
                 self.event_queues[priority].put_nowait((event.timestamp, event))
 
                 with self.metrics_lock:
-                    self.metrics["events_buffered"] += 1
+                    events_buffered = self.metrics["events_buffered"]
+                    if isinstance(events_buffered, (int, float)):
+                        self.metrics["events_buffered"] = events_buffered + 1
 
             except queue.Full:
                 # Queue is full, drop low-priority events
                 if priority == DataPriority.LOW:
                     with self.metrics_lock:
-                        self.metrics["events_dropped"] += 1
+                        events_dropped = self.metrics["events_dropped"]
+                        if isinstance(events_dropped, (int, float)):
+                            self.metrics["events_dropped"] = events_dropped + 1
                     self.logger.warning(f"Dropped low-priority event from {source}")
                 else:
                     # Force add high-priority events
                     self.event_queues[priority].put((event.timestamp, event))
         else:
             with self.metrics_lock:
-                self.metrics["events_dropped"] += 1
+                events_dropped = self.metrics["events_dropped"]
+                if isinstance(events_dropped, (int, float)):
+                    self.metrics["events_dropped"] = events_dropped + 1
 
     def _should_throttle(self, event: DataEvent) -> bool:
         """Check if event should be throttled.
@@ -343,8 +357,12 @@ class LiveDataPipeline:
         # Update metrics
         latency = time.time() - event.timestamp
         with self.metrics_lock:
-            self.metrics["events_processed"] += 1
-            self.metrics["avg_latency"] = self.metrics["avg_latency"] * 0.9 + latency * 0.1  # Exponential moving average
+            events_processed = self.metrics["events_processed"]
+            avg_latency = self.metrics["avg_latency"]
+            if isinstance(events_processed, (int, float)):
+                self.metrics["events_processed"] = events_processed + 1
+            if isinstance(avg_latency, (int, float)):
+                self.metrics["avg_latency"] = avg_latency * 0.9 + latency * 0.1
 
         # Check for alerts
         self._check_alerts(event, latency)
@@ -426,7 +444,7 @@ class LiveDataPipeline:
 
         """
         # Extract numeric values from events
-        numeric_values = []
+        numeric_values: list[int | float] = []
         for event in events:
             numeric_values.extend(value for _key, value in event.data.items() if isinstance(value, (int, float)))
         aggregated = {
@@ -466,10 +484,13 @@ class LiveDataPipeline:
         while self.running:
             with self.metrics_lock:
                 # Calculate throughput
-                self.metrics["throughput"] = self.metrics["events_processed"] / max(
-                    1,
-                    time.time() - self.metrics.get("start_time", time.time()),
-                )
+                events_processed = self.metrics["events_processed"]
+                start_time = self.metrics.get("start_time", time.time())
+                if isinstance(events_processed, (int, float)) and isinstance(start_time, (int, float)):
+                    self.metrics["throughput"] = events_processed / max(
+                        1,
+                        time.time() - start_time,
+                    )
 
                 # Update queue sizes
                 self.metrics["queue_sizes"] = {priority.name: self.event_queues[priority].qsize() for priority in DataPriority}
@@ -559,11 +580,12 @@ class LiveDataPipeline:
                 return
 
             message_json = json.dumps(message)
-            disconnected = set()
+            disconnected: set[object] = set()
 
             for connection in self.websocket_connections:
                 try:
-                    asyncio.run_coroutine_threadsafe(connection.send(message_json), asyncio.get_event_loop())
+                    ws_connection = cast("Any", connection)
+                    asyncio.run_coroutine_threadsafe(ws_connection.send(message_json), asyncio.get_event_loop())
                 except Exception as e:
                     self.logger.error(f"Error sending to WebSocket: {e}")
                     disconnected.add(connection)
@@ -648,7 +670,7 @@ class LiveDataPipeline:
         with self.websocket_lock:
             self.websocket_connections.discard(connection)
 
-    def register_event_callback(self, callback: Callable) -> None:
+    def register_event_callback(self, callback: Callable[[list[DataEvent]], Any]) -> None:
         """Register event callback.
 
         Args:
@@ -657,7 +679,7 @@ class LiveDataPipeline:
         """
         self.event_callbacks.append(callback)
 
-    def register_alert_callback(self, callback: Callable) -> None:
+    def register_alert_callback(self, callback: Callable[[dict[str, Any]], Any]) -> None:
         """Register alert callback.
 
         Args:
@@ -694,7 +716,7 @@ class LiveDataPipeline:
                 FROM events
                 WHERE timestamp >= ? AND timestamp <= ?
             """
-            params = [start_time, end_time]
+            params: list[float | str] = [start_time, end_time]
 
             if source:
                 query += " AND source = ?"
@@ -749,7 +771,7 @@ class LiveDataPipeline:
                 FROM metrics
                 WHERE timestamp >= ? AND timestamp <= ?
             """
-            params = [start_time, end_time]
+            params: list[float | str] = [start_time, end_time]
 
             if metric_name:
                 query += " AND metric_name = ?"

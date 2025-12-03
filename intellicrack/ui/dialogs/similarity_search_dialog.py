@@ -359,7 +359,7 @@ class BinarySimilaritySearchDialog(QDialog):
         # If multiple patterns, ask which one to apply
         pattern_to_apply = None
         if len(patterns) > 1:
-            pattern_items = [f"Pattern {_i + 1}" for _i in range(len(patterns))]
+            pattern_items = [f"Pattern {i + 1}" for i in range(len(patterns))]
             pattern_index, ok = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
 
             if ok and pattern_index:

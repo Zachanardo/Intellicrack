@@ -76,7 +76,18 @@ class LicenseSnapshot:
         self.current_snapshot: dict[str, Any] | None = None
 
     def capture_full_snapshot(self, name: str) -> dict[str, Any]:
-        """Capture comprehensive system state for license analysis."""
+        """Capture comprehensive system state for license analysis.
+
+        Args:
+            name: Identifier for the snapshot.
+
+        Returns:
+            Dictionary containing complete system state snapshot with keys for
+            system_info, processes, registry, files, services, network,
+            certificates, environment, loaded_dlls, mutexes, drivers, and
+            scheduled_tasks.
+
+        """
         print(f"Capturing system snapshot: {name}")
 
         snapshot = {
@@ -102,13 +113,20 @@ class LicenseSnapshot:
         return snapshot
 
     def _capture_system_info(self) -> dict[str, Any]:
-        """Capture system hardware and software information."""
-        info = {}
+        """Capture system hardware and software information.
+
+        Returns:
+            Dictionary containing system information including hostname,
+            username, OS version, processor, volume serial numbers, MAC
+            address, and BIOS details.
+
+        """
+        info: dict[str, Any] = {}
 
         try:
             info["hostname"] = os.environ.get("COMPUTERNAME", "")
             info["username"] = os.environ.get("USERNAME", "")
-            info["os_version"] = win32api.GetVersionEx()
+            info["os_version"] = list(win32api.GetVersionEx())
             info["processor"] = os.environ.get("PROCESSOR_IDENTIFIER", "")
 
             # Get volume serial numbers (often used in HWID)
@@ -153,7 +171,14 @@ class LicenseSnapshot:
         return info
 
     def _capture_process_state(self) -> list[dict[str, Any]]:
-        """Capture running processes with license-relevant metadata."""
+        """Capture running processes with license-relevant metadata.
+
+        Returns:
+            List of dictionaries containing process information including PID,
+            name, executable path, command line, creation time, executable
+            hash/size, and any license-related modules.
+
+        """
         processes = []
 
         for proc in psutil.process_iter(["pid", "name", "exe", "cmdline", "create_time"]):
@@ -201,8 +226,15 @@ class LicenseSnapshot:
         return processes
 
     def _capture_registry_state(self) -> dict[str, Any]:
-        """Capture registry keys related to licensing."""
-        registry_data = {}
+        """Capture registry keys related to licensing.
+
+        Returns:
+            Dictionary containing registry data organized by hive (HKLM, HKCU,
+            HKCR) with registry keys and values related to licensing and
+            software registration.
+
+        """
+        registry_data: dict[str, dict[str, Any]] = {}
 
         for hive_name, hive in [
             ("HKLM", winreg.HKEY_LOCAL_MACHINE),
@@ -227,11 +259,22 @@ class LicenseSnapshot:
         return registry_data
 
     def _read_registry_key_recursive(self, hive: int, path: str, max_depth: int = 2) -> dict[str, Any]:
-        """Recursively read registry key and its values."""
+        """Recursively read registry key and its values.
+
+        Args:
+            hive: Registry hive handle (e.g., HKEY_LOCAL_MACHINE).
+            path: Full path to the registry key.
+            max_depth: Maximum recursion depth for reading subkeys.
+
+        Returns:
+            Dictionary with 'values' and 'subkeys' keys containing registry
+            data, or empty dict if key doesn't exist or maximum depth reached.
+
+        """
         if max_depth <= 0:
             return {}
 
-        result = {"values": {}, "subkeys": {}}
+        result: dict[str, dict[str, Any]] = {"values": {}, "subkeys": {}}
 
         try:
             with winreg.OpenKey(hive, path, 0, winreg.KEY_READ) as key:
@@ -271,7 +314,13 @@ class LicenseSnapshot:
         return result if (result["values"] or result["subkeys"]) else {}
 
     def _find_license_registry_keys(self) -> dict[str, Any]:
-        """Search for license-specific registry keys."""
+        """Search for license-specific registry keys.
+
+        Returns:
+            Dictionary with registry paths as keys and their data as values
+            for keys matching license-related search terms.
+
+        """
         license_keys = {}
         search_terms = ["license", "serial", "activation", "registration", "trial", "demo", "eval"]
 
@@ -313,8 +362,15 @@ class LicenseSnapshot:
         return license_keys
 
     def _capture_file_state(self) -> dict[str, Any]:
-        """Capture license-related files and their metadata."""
-        file_data = {"license_files": [], "config_files": [], "database_files": []}
+        """Capture license-related files and their metadata.
+
+        Returns:
+            Dictionary with 'license_files', 'config_files', and
+            'database_files' keys containing lists of file information
+            dictionaries with path, size, timestamps, and SHA256 hash.
+
+        """
+        file_data: dict[str, list[dict[str, Any]]] = {"license_files": [], "config_files": [], "database_files": []}
 
         for location in self.COMMON_LICENSE_FILE_LOCATIONS:
             if not os.path.exists(location):
@@ -359,7 +415,14 @@ class LicenseSnapshot:
         return file_data
 
     def _capture_service_state(self) -> list[dict[str, Any]]:
-        """Capture Windows services that might be license-related."""
+        """Capture Windows services that might be license-related.
+
+        Returns:
+            List of dictionaries containing service information including
+            name, display name, status, binary path, and start type for
+            license-related services.
+
+        """
         services = []
         license_keywords = [
             "license",
@@ -408,8 +471,15 @@ class LicenseSnapshot:
         return services
 
     def _capture_network_state(self) -> dict[str, Any]:
-        """Capture network connections that might be license-related."""
-        network_data = {"connections": [], "listening_ports": []}
+        """Capture network connections that might be license-related.
+
+        Returns:
+            Dictionary with 'connections' and 'listening_ports' keys
+            containing network connection and port listening information for
+            license-related communication ports.
+
+        """
+        network_data: dict[str, list[dict[str, Any]]] = {"connections": [], "listening_ports": []}
 
         try:
             for conn in psutil.net_connections():
@@ -435,7 +505,14 @@ class LicenseSnapshot:
         return network_data
 
     def _capture_certificates(self) -> list[dict[str, Any]]:
-        """Capture installed certificates that might be used for licensing."""
+        """Capture installed certificates that might be used for licensing.
+
+        Returns:
+            List of dictionaries containing certificate information including
+            store name, subject, and issuer for non-standard certificates
+            that might be related to software licensing.
+
+        """
         certificates = []
 
         try:
@@ -480,13 +557,25 @@ class LicenseSnapshot:
         return certificates
 
     def _capture_environment(self) -> dict[str, str]:
-        """Capture environment variables that might contain license info."""
+        """Capture environment variables that might contain license info.
+
+        Returns:
+            Dictionary of environment variables with names matching
+            license-related keywords.
+
+        """
         license_vars = ["LICENSE", "SERIAL", "KEY", "ACTIVATION", "FLEXLM", "HASP", "SENTINEL"]
 
         return {key: value for key, value in os.environ.items() if any(var in key.upper() for var in license_vars)}
 
     def _capture_loaded_dlls(self) -> dict[str, list[str]]:
-        """Capture loaded DLLs for each process."""
+        """Capture loaded DLLs for each process.
+
+        Returns:
+            Dictionary with process identifiers as keys and lists of DLL paths
+            as values for license-related modules found in processes.
+
+        """
         dll_data = {}
 
         for proc in psutil.process_iter(["pid", "name"]):
@@ -512,7 +601,12 @@ class LicenseSnapshot:
         return dll_data
 
     def _capture_system_mutexes(self) -> list[str]:
-        """Capture system-wide mutexes that might be license-related."""
+        """Capture system-wide mutexes that might be license-related.
+
+        Returns:
+            List of mutex names that match license-related keywords.
+
+        """
         mutexes = []
 
         try:
@@ -552,7 +646,14 @@ class LicenseSnapshot:
         return mutexes
 
     def _capture_drivers(self) -> list[dict[str, Any]]:
-        """Capture loaded drivers that might be protection-related."""
+        """Capture loaded drivers that might be protection-related.
+
+        Returns:
+            List of dictionaries containing driver information including
+            module name, display name, path, and state for known protection
+            drivers.
+
+        """
         drivers = []
 
         try:
@@ -564,11 +665,12 @@ class LicenseSnapshot:
                 import csv
                 import io
 
-                reader = csv.DictReader(io.StringIO(result.stdout))
+                reader: csv.DictReader[str] = csv.DictReader(io.StringIO(result.stdout))
 
                 for row in reader:
-                    driver_name = row.get("Display Name", "").lower()
-                    module_name = row.get("Module Name", "").lower()
+                    row_data: dict[str, Any] = row
+                    driver_name = row_data.get("Display Name", "").lower()
+                    module_name = row_data.get("Module Name", "").lower()
 
                     # Check for protection/license drivers
                     if any(
@@ -576,10 +678,10 @@ class LicenseSnapshot:
                     ):
                         drivers.append(
                             {
-                                "name": row.get("Module Name", ""),
-                                "display_name": row.get("Display Name", ""),
-                                "path": row.get("Path", ""),
-                                "state": row.get("State", ""),
+                                "name": row_data.get("Module Name", ""),
+                                "display_name": row_data.get("Display Name", ""),
+                                "path": row_data.get("Path", ""),
+                                "state": row_data.get("State", ""),
                             },
                         )
         except OSError as e:
@@ -588,7 +690,14 @@ class LicenseSnapshot:
         return drivers
 
     def _capture_scheduled_tasks(self) -> list[dict[str, Any]]:
-        """Capture scheduled tasks that might be license-related."""
+        """Capture scheduled tasks that might be license-related.
+
+        Returns:
+            List of dictionaries containing scheduled task information
+            including task name, next run time, status, and command for
+            license-related scheduled tasks.
+
+        """
         tasks = []
 
         try:
@@ -605,19 +714,20 @@ class LicenseSnapshot:
                 import csv
                 import io
 
-                reader = csv.DictReader(io.StringIO(result.stdout))
+                reader: csv.DictReader[str] = csv.DictReader(io.StringIO(result.stdout))
 
                 for row in reader:
-                    task_name = row.get("TaskName", "").lower()
+                    row_data: dict[str, Any] = row
+                    task_name = row_data.get("TaskName", "").lower()
 
                     # Check for license-related tasks
                     if any(lic in task_name for lic in ["license", "activation", "update", "check", "verify"]):
                         tasks.append(
                             {
-                                "name": row.get("TaskName", ""),
-                                "next_run": row.get("Next Run Time", ""),
-                                "status": row.get("Status", ""),
-                                "command": row.get("Task To Run", ""),
+                                "name": row_data.get("TaskName", ""),
+                                "next_run": row_data.get("Next Run Time", ""),
+                                "status": row_data.get("Status", ""),
+                                "command": row_data.get("Task To Run", ""),
                             },
                         )
         except OSError as e:
@@ -626,7 +736,16 @@ class LicenseSnapshot:
         return tasks
 
     def _hash_file(self, filepath: str) -> str:
-        """Calculate SHA256 hash of a file."""
+        """Calculate SHA256 hash of a file.
+
+        Args:
+            filepath: Full path to the file to hash.
+
+        Returns:
+            Hexadecimal SHA256 hash string of the file, or empty string if
+            file cannot be read.
+
+        """
         try:
             sha256_hash = hashlib.sha256()
             with open(filepath, "rb") as f:
@@ -637,14 +756,26 @@ class LicenseSnapshot:
             return ""
 
     def compare_snapshots(self, snapshot1_name: str, snapshot2_name: str) -> dict[str, Any]:
-        """Compare two snapshots to identify changes."""
+        """Compare two snapshots to identify changes.
+
+        Args:
+            snapshot1_name: Identifier of the first snapshot.
+            snapshot2_name: Identifier of the second snapshot.
+
+        Returns:
+            Dictionary containing differences between snapshots with keys for
+            new_processes, terminated_processes, new_registry_keys,
+            modified_registry_values, new_files, modified_files,
+            new_services, new_connections, and environment_changes.
+
+        """
         if snapshot1_name not in self.snapshots or snapshot2_name not in self.snapshots:
             return {"error": "One or both snapshots not found"}
 
         snap1 = self.snapshots[snapshot1_name]
         snap2 = self.snapshots[snapshot2_name]
 
-        differences = {
+        differences: dict[str, Any] = {
             "new_processes": [],
             "terminated_processes": [],
             "new_registry_keys": [],
@@ -720,7 +851,16 @@ class LicenseSnapshot:
         return differences
 
     def export_snapshot(self, snapshot_name: str, filepath: str) -> bool:
-        """Export snapshot to JSON file."""
+        """Export snapshot to JSON file.
+
+        Args:
+            snapshot_name: Identifier of the snapshot to export.
+            filepath: Path where the snapshot JSON file will be written.
+
+        Returns:
+            True if export was successful, False otherwise.
+
+        """
         if snapshot_name not in self.snapshots:
             return False
 
@@ -732,13 +872,23 @@ class LicenseSnapshot:
             return False
 
     def import_snapshot(self, filepath: str) -> str | None:
-        """Import snapshot from JSON file."""
+        """Import snapshot from JSON file.
+
+        Args:
+            filepath: Path to the JSON file containing snapshot data.
+
+        Returns:
+            The snapshot identifier (name) if import was successful, None
+            otherwise.
+
+        """
         try:
             with open(filepath) as f:
                 snapshot = json.load(f)
 
-            name = snapshot.get("name", f"imported_{int(time.time())}")
-            self.snapshots[name] = snapshot
+            snapshot_dict: dict[str, Any] = snapshot if isinstance(snapshot, dict) else {}
+            name: str = snapshot_dict.get("name", f"imported_{int(time.time())}")
+            self.snapshots[name] = snapshot_dict
             return name
         except Exception:
             return None

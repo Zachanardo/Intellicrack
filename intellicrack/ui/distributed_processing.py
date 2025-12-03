@@ -19,12 +19,13 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import concurrent.futures
 import hashlib
+import math
 import os
 import threading
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import capstone
 import pefile
@@ -33,11 +34,21 @@ import yara
 from intellicrack.utils.logger import logger
 
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
 try:
-    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
+    from PyQt6.QtCore import (
+        QObject as _QObject,
+        QThread as _QThread,
+        QTimer,
+        pyqtSignal as _pyqtSignal,
+    )
+    from PyQt6.QtGui import QCloseEvent
     from PyQt6.QtWidgets import (
         QComboBox,
-        QDialog,
+        QDialog as _QDialog,
         QGridLayout,
         QGroupBox,
         QHBoxLayout,
@@ -47,16 +58,38 @@ try:
         QSpinBox,
         QTextEdit,
         QVBoxLayout,
-        QWidget,
+        QWidget as _QWidget,
     )
 
     HAS_PYQT6 = True
+    QObject = _QObject
+    QThread = _QThread
+    QDialog = _QDialog
+    QWidget = _QWidget
+    pyqtSignal = _pyqtSignal
+
 except ImportError:
     logger.warning("PyQt6 not available for distributed processing UI")
     HAS_PYQT6 = False
 
+    # Fallback event class when PyQt6 not available
+    class QCloseEvent:  # type: ignore[no-redef]
+        """Fallback close event class."""
+
+        def __init__(self) -> None:
+            """Initialize close event."""
+            self._accepted = False
+
+        def accept(self) -> None:
+            """Accept the close event."""
+            self._accepted = True
+
+        def ignore(self) -> None:
+            """Ignore the close event."""
+            self._accepted = False
+
     # Fallback base classes with full functionality
-    class QObject:
+    class QObject:  # type: ignore[no-redef]
         """Fully functional fallback for PyQt6.QtCore.QObject using native Python.
 
         Provides signal/slot mechanism and object hierarchy management
@@ -66,43 +99,83 @@ except ImportError:
 
         def __init__(self) -> None:
             """Initialize the SignalTracker with empty signals and slots dictionaries."""
-            self._signals = {}
-            self._slots = {}
-            self._parent = None
-            self._children = []
-            self._properties = {}
+            self._signals: dict[str, object] = {}
+            self._slots: dict[str, object] = {}
+            self._parent: object | None = None
+            self._children: list[object] = []
+            self._properties: dict[str, object] = {}
 
-        def setParent(self, parent: object) -> None:
-            """Set parent object for hierarchy management."""
-            if self._parent:
-                self._parent._children.remove(self)
+        def setParent(self, parent: object | None) -> None:
+            """Set parent object for hierarchy management.
+
+            Args:
+                parent: Parent object for hierarchy management.
+
+            """
+            if self._parent is not None:
+                parent_obj = self._parent
+                if hasattr(parent_obj, "_children"):
+                    children = parent_obj._children
+                    if isinstance(children, list):
+                        children.remove(self)
             self._parent = parent
-            if parent:
-                parent._children.append(self)
+            if parent is not None:
+                if hasattr(parent, "_children"):
+                    children = parent._children
+                    if isinstance(children, list):
+                        children.append(self)
 
-        def parent(self) -> object:
-            """Get parent object in hierarchy."""
+        def parent(self) -> object | None:
+            """Get parent object in hierarchy.
+
+            Returns:
+                Parent object in the hierarchy, or None if no parent.
+
+            """
             return self._parent
 
         def children(self) -> list[object]:
-            """Get list of child objects."""
+            """Get list of child objects.
+
+            Returns:
+                Copy of list containing all child objects.
+
+            """
             return self._children.copy()
 
         def setProperty(self, name: str, value: object) -> None:
-            """Set property value by name."""
+            """Set property value by name.
+
+            Args:
+                name: Property name to set.
+                value: Property value to assign.
+
+            """
             self._properties[name] = value
 
         def property(self, name: str) -> object:
-            """Get property value by name."""
+            """Get property value by name.
+
+            Args:
+                name: Property name to retrieve.
+
+            Returns:
+                Property value, or None if property does not exist.
+
+            """
             return self._properties.get(name)
 
         def deleteLater(self) -> None:
             """Mark object for deletion and clean up hierarchy."""
-            if self._parent:
-                self._parent._children.remove(self)
+            if self._parent is not None:
+                parent_obj = self._parent
+                if hasattr(parent_obj, "_children"):
+                    children = parent_obj._children
+                    if isinstance(children, list):
+                        children.remove(self)
             self._children.clear()
 
-    class QThread(threading.Thread):
+    class QThread(threading.Thread):  # type: ignore[no-redef]
         """Fully functional threading implementation fallback for PyQt6.QtCore.QThread.
 
         Provides complete threading functionality using Python's native
@@ -123,13 +196,26 @@ except ImportError:
             super().start()
 
         def wait(self, timeout_ms: int | None = None) -> bool:
-            """Wait for thread completion with optional timeout in milliseconds."""
+            """Wait for thread completion with optional timeout in milliseconds.
+
+            Args:
+                timeout_ms: Timeout in milliseconds, or None for indefinite wait.
+
+            Returns:
+                True if thread completed, False if timeout was reached.
+
+            """
             timeout = timeout_ms / 1000.0 if timeout_ms else None
             self.join(timeout)
             return not self.is_alive()
 
         def isRunning(self) -> bool:
-            """Check if thread is currently running."""
+            """Check if thread is currently running.
+
+            Returns:
+                True if thread is running, False otherwise.
+
+            """
             return self._running and self.is_alive()
 
         def requestInterruption(self) -> None:
@@ -137,7 +223,12 @@ except ImportError:
             self._stop_event.set()
 
         def isInterruptionRequested(self) -> bool:
-            """Check if thread interruption has been requested."""
+            """Check if thread interruption has been requested.
+
+            Returns:
+                True if interruption was requested, False otherwise.
+
+            """
             return self._stop_event.is_set()
 
         def quit(self) -> None:
@@ -149,7 +240,7 @@ except ImportError:
             """Thread execution method to be overridden in subclass."""
             # Override in subclass
 
-    class QDialog:
+    class QDialog:  # type: ignore[no-redef]
         """Fully functional dialog implementation fallback for PyQt6.QtWidgets.QDialog.
 
         Provides dialog management and event handling through console
@@ -157,7 +248,12 @@ except ImportError:
         """
 
         def __init__(self, parent: object | None = None) -> None:
-            """Initialize the VisibilityController with an optional parent and set visibility to False."""
+            """Initialize the VisibilityController with an optional parent and set visibility to False.
+
+            Args:
+                parent: Optional parent object for hierarchy management.
+
+            """
             self._parent = parent
             self._visible = False
             self._modal = False
@@ -177,7 +273,12 @@ except ImportError:
             logger.info(f"Dialog '{self._title}' hidden")
 
         def exec(self) -> int:
-            """Execute modal dialog and return result."""
+            """Execute modal dialog and return result.
+
+            Returns:
+                Dialog result code (0 for rejection, 1 for acceptance).
+
+            """
             self._modal = True
             self._visible = True
             logger.info(f"Modal dialog '{self._title}' executing")
@@ -194,15 +295,32 @@ except ImportError:
             self.hide()
 
         def setWindowTitle(self, title: str) -> None:
-            """Set dialog window title."""
+            """Set dialog window title.
+
+            Args:
+                title: Window title to set.
+
+            """
             self._title = title
 
         def resize(self, width: int, height: int) -> None:
-            """Resize dialog to specified dimensions."""
+            """Resize dialog to specified dimensions.
+
+            Args:
+                width: Width in pixels.
+                height: Height in pixels.
+
+            """
             self._size = (width, height)
 
         def move(self, x: int, y: int) -> None:
-            """Move dialog to specified position."""
+            """Move dialog to specified position.
+
+            Args:
+                x: X coordinate of top-left corner.
+                y: Y coordinate of top-left corner.
+
+            """
             self._position = (x, y)
 
         def raise_(self) -> None:
@@ -214,10 +332,15 @@ except ImportError:
             logger.debug(f"Activating dialog '{self._title}'")
 
         def closeEvent(self, event: object) -> None:
-            """Handle close event to be overridden in subclass."""
+            """Handle close event to be overridden in subclass.
+
+            Args:
+                event: Close event object to be handled.
+
+            """
             # Override in subclass
 
-    class QWidget:
+    class QWidget:  # type: ignore[no-redef]
         """Fully functional widget implementation fallback for PyQt6.QtWidgets.QWidget.
 
         Provides widget hierarchy and property management for console-based
@@ -225,80 +348,168 @@ except ImportError:
         """
 
         def __init__(self, parent: object | None = None) -> None:
-            """Initialize the ChildManager with an optional parent and empty children list."""
+            """Initialize the ChildManager with an optional parent and empty children list.
+
+            Args:
+                parent: Optional parent object for hierarchy management.
+
+            """
+            self._parent: object | None = parent
+            self._children: list[object] = []
+            self._visible: bool = True
+            self._enabled: bool = True
+            self._geometry: tuple[int, int, int, int] = (0, 0, 100, 100)
+            self._layout: object | None = None
+            self._style_sheet: str = ""
+            self._object_name: str = ""
+
+            if parent is not None:
+                if hasattr(parent, "_children"):
+                    children = parent._children
+                    if isinstance(children, list):
+                        children.append(self)
+
+        def setParent(self, parent: object | None) -> None:
+            """Set parent widget for hierarchy management.
+
+            Args:
+                parent: Parent object for hierarchy management.
+
+            """
+            if self._parent is not None:
+                parent_obj = self._parent
+                if hasattr(parent_obj, "_children"):
+                    children = parent_obj._children
+                    if isinstance(children, list):
+                        children.remove(self)
             self._parent = parent
-            self._children = []
-            self._visible = True
-            self._enabled = True
-            self._geometry = (0, 0, 100, 100)
-            self._layout = None
-            self._style_sheet = ""
-            self._object_name = ""
+            if parent is not None:
+                if hasattr(parent, "_children"):
+                    children = parent._children
+                    if isinstance(children, list):
+                        children.append(self)
 
-            if parent:
-                parent._children.append(self)
+        def parent(self) -> object | None:
+            """Get parent widget in hierarchy.
 
-        def setParent(self, parent: object) -> None:
-            """Set parent widget for hierarchy management."""
-            if self._parent:
-                self._parent._children.remove(self)
-            self._parent = parent
-            if parent:
-                parent._children.append(self)
+            Returns:
+                Parent object in hierarchy, or None if no parent.
 
-        def parent(self) -> object:
-            """Get parent widget in hierarchy."""
+            """
             return self._parent
 
         def children(self) -> list[object]:
-            """Get list of child widgets."""
+            """Get list of child widgets.
+
+            Returns:
+                Copy of list containing all child widgets.
+
+            """
             return self._children.copy()
 
         def setVisible(self, visible: bool) -> None:
-            """Set widget visibility state."""
+            """Set widget visibility state.
+
+            Args:
+                visible: True to show widget, False to hide.
+
+            """
             self._visible = visible
 
         def isVisible(self) -> bool:
-            """Check if widget is visible."""
+            """Check if widget is visible.
+
+            Returns:
+                True if widget is visible, False otherwise.
+
+            """
             return self._visible
 
         def setEnabled(self, enabled: bool) -> None:
-            """Set widget enabled state and propagate to children."""
+            """Set widget enabled state and propagate to children.
+
+            Args:
+                enabled: True to enable widget and children, False to disable.
+
+            """
             self._enabled = enabled
             for child in self._children:
                 if hasattr(child, "setEnabled"):
                     child.setEnabled(enabled)
 
         def isEnabled(self) -> bool:
-            """Check if widget is enabled."""
+            """Check if widget is enabled.
+
+            Returns:
+                True if widget is enabled, False otherwise.
+
+            """
             return self._enabled
 
         def setGeometry(self, x: int, y: int, width: int, height: int) -> None:
-            """Set widget geometry with position and dimensions."""
+            """Set widget geometry with position and dimensions.
+
+            Args:
+                x: X coordinate of top-left corner.
+                y: Y coordinate of top-left corner.
+                width: Width in pixels.
+                height: Height in pixels.
+
+            """
             self._geometry = (x, y, width, height)
 
         def geometry(self) -> tuple[int, int, int, int]:
-            """Get widget geometry tuple."""
+            """Get widget geometry tuple.
+
+            Returns:
+                Tuple of (x, y, width, height) coordinates.
+
+            """
             return self._geometry
 
         def setLayout(self, layout: object) -> None:
-            """Set widget layout manager."""
+            """Set widget layout manager.
+
+            Args:
+                layout: Layout object to assign to widget.
+
+            """
             self._layout = layout
 
         def layout(self) -> object:
-            """Get widget layout manager."""
+            """Get widget layout manager.
+
+            Returns:
+                Layout object assigned to widget, or None if not set.
+
+            """
             return self._layout
 
         def setStyleSheet(self, style: str) -> None:
-            """Set widget style sheet for appearance."""
+            """Set widget style sheet for appearance.
+
+            Args:
+                style: Style sheet string for widget styling.
+
+            """
             self._style_sheet = style
 
         def setObjectName(self, name: str) -> None:
-            """Set widget object name for identification."""
+            """Set widget object name for identification.
+
+            Args:
+                name: Object name for widget identification.
+
+            """
             self._object_name = name
 
         def objectName(self) -> str:
-            """Get widget object name."""
+            """Get widget object name.
+
+            Returns:
+                Object name assigned to widget, or empty string if not set.
+
+            """
             return self._object_name
 
         def update(self) -> None:
@@ -309,7 +520,7 @@ except ImportError:
             """Repaint widget display in console mode."""
             logger.debug(f"Widget {self._object_name} repainted")
 
-    class pyqtSignal:  # noqa: N801
+    class pyqtSignal:  # type: ignore[no-redef]  # noqa: N801
         """Fully functional signal implementation for PyQt6 compatibility.
 
         Provides complete signal/slot mechanism using Python's native
@@ -323,10 +534,10 @@ except ImportError:
                 *types: Type signatures for the signal parameters
 
             """
-            self.types = types
-            self.slots = []
-            self._blocked = False
-            self._mutex = threading.RLock()
+            self.types: tuple[object, ...] = types
+            self.slots: list[Callable[..., None]] = []
+            self._blocked: bool = False
+            self._mutex: threading.RLock = threading.RLock()
 
         def connect(self, slot: object) -> None:
             """Connect a slot function to this signal.
@@ -336,7 +547,7 @@ except ImportError:
 
             """
             with self._mutex:
-                if slot not in self.slots:
+                if callable(slot) and slot not in self.slots:
                     self.slots.append(slot)
 
         def disconnect(self, slot: object | None = None) -> None:
@@ -349,7 +560,7 @@ except ImportError:
             with self._mutex:
                 if slot is None:
                     self.slots.clear()
-                elif slot in self.slots:
+                elif callable(slot) and slot in self.slots:
                     self.slots.remove(slot)
 
         def emit(self, *args: object) -> None:
@@ -380,8 +591,17 @@ except ImportError:
             """
             self._blocked = blocked
 
-        def __get__(self, obj: object, objtype: object | None = None) -> object:
-            """Support for use as a descriptor in classes."""
+        def __get__(self, obj: object | None, objtype: object | None = None) -> object:
+            """Support for use as a descriptor in classes.
+
+            Args:
+                obj: Instance accessing the descriptor, or None if accessed from class.
+                objtype: Type of the instance, or None if accessed from instance.
+
+            Returns:
+                Either the descriptor itself (if accessed from class) or a bound signal.
+
+            """
             if obj is None:
                 return self
 
@@ -390,35 +610,58 @@ except ImportError:
             # Cache it on the instance to maintain connections
             if not hasattr(obj, "_bound_signals"):
                 obj._bound_signals = {}
-            obj._bound_signals[id(self)] = bound_signal
+            bound_signals = obj._bound_signals
+            if isinstance(bound_signals, dict):
+                bound_signals[id(self)] = bound_signal
             return bound_signal
 
     class BoundSignal:
         """Bound signal for specific object instance."""
 
         def __init__(self, signal: object, instance: object) -> None:
-            """Initialize the BoundSignal with a signal and instance."""
-            self.signal = signal
-            self.instance = instance
-            self.slots = []
-            self._mutex = threading.RLock()
+            """Initialize the BoundSignal with a signal and instance.
+
+            Args:
+                signal: Signal object to bind.
+                instance: Instance object that owns this bound signal.
+
+            """
+            self.signal: object = signal
+            self.instance: object = instance
+            self.slots: list[Callable[..., None]] = []
+            self._mutex: threading.RLock = threading.RLock()
 
         def connect(self, slot: object) -> None:
-            """Connect slot to bound signal instance."""
+            """Connect slot to bound signal instance.
+
+            Args:
+                slot: Callable to invoke when signal is emitted.
+
+            """
             with self._mutex:
-                if slot not in self.slots:
+                if callable(slot) and slot not in self.slots:
                     self.slots.append(slot)
 
         def disconnect(self, slot: object | None = None) -> None:
-            """Disconnect slot from bound signal instance."""
+            """Disconnect slot from bound signal instance.
+
+            Args:
+                slot: Specific slot to disconnect, or None to disconnect all.
+
+            """
             with self._mutex:
                 if slot is None:
                     self.slots.clear()
-                elif slot in self.slots:
+                elif callable(slot) and slot in self.slots:
                     self.slots.remove(slot)
 
         def emit(self, *args: object) -> None:
-            """Emit bound signal with arguments to connected slots."""
+            """Emit bound signal with arguments to connected slots.
+
+            Args:
+                *args: Arguments to pass to connected slots.
+
+            """
             if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
 
@@ -598,8 +841,10 @@ class DistributedWorkerThread(QThread):
             Analysis results
 
         """
-        binary_path = task.parameters.get("binary_path")
-        if (not binary_path or not os.path.exists(binary_path)) and (binary_path and not os.path.exists(binary_path)):
+        binary_path: str | None = task.parameters.get("binary_path")
+        if binary_path is None or not isinstance(binary_path, str):
+            binary_path = "./test_binary.exe"
+        if not os.path.exists(binary_path):
             os.makedirs(os.path.dirname(binary_path) or ".", exist_ok=True)
             # Create minimal PE header for testing
             with open(binary_path, "wb") as f:
@@ -609,7 +854,7 @@ class DistributedWorkerThread(QThread):
                 f.write(b"\x64\x86" + b"\x00" * 18)  # Minimal COFF header
                 f.write(b"\x0b\x02" + b"\x00" * 238)  # Minimal optional header
 
-        results = {
+        results: dict[str, Any] = {
             "binary_path": binary_path,
             "analysis_steps": [],
             "sections": [],
@@ -728,14 +973,14 @@ class DistributedWorkerThread(QThread):
             return 0.0
 
         entropy = 0.0
-        freq = {}
+        freq: dict[int, int] = {}
         for byte in data:
             freq[byte] = freq.get(byte, 0) + 1
 
         for count in freq.values():
             if count > 0:
                 p = count / len(data)
-                entropy -= p * (p and p * p.bit_length())
+                entropy -= p * math.log2(p)
 
         return min(entropy, 8.0)
 
@@ -850,11 +1095,22 @@ class DistributedWorkerThread(QThread):
         Returns:
             Cracking results
 
+        Raises:
+            Exception: When task is cancelled during processing.
+
         """
-        hash_value = task.parameters.get("hash", "")
-        hash_type = task.parameters.get("hash_type", "md5")
-        wordlist_path = task.parameters.get("wordlist", "")
-        max_attempts = task.parameters.get("max_attempts", 10000)
+        hash_value: Any = task.parameters.get("hash", "")
+        if not isinstance(hash_value, str):
+            hash_value = str(hash_value) if hash_value else ""
+        hash_type: Any = task.parameters.get("hash_type", "md5")
+        if not isinstance(hash_type, str):
+            hash_type = str(hash_type) if hash_type else "md5"
+        wordlist_path: Any = task.parameters.get("wordlist", "")
+        if not isinstance(wordlist_path, str):
+            wordlist_path = str(wordlist_path) if wordlist_path else ""
+        max_attempts: Any = task.parameters.get("max_attempts", 10000)
+        if not isinstance(max_attempts, int):
+            max_attempts = int(max_attempts) if max_attempts else 10000
 
         if not hash_value:
             # Generate test hash for demonstration using secure random data
@@ -948,10 +1204,10 @@ class DistributedWorkerThread(QThread):
             List of common password patterns for dictionary attack testing
 
         """
-        passwords = []
+        passwords: list[str] = []
 
         # Common base passwords
-        bases = ["password", "admin", "user", "test", "demo", "login", "pass"]
+        bases: list[str] = ["password", "admin", "user", "test", "demo", "login", "pass"]
 
         # Common patterns
         for base in bases:
@@ -984,7 +1240,7 @@ class DistributedWorkerThread(QThread):
 
         return passwords
 
-    def _check_password(self, password: str, target_hash: str, hash_func: object) -> tuple[str, bool]:
+    def _check_password(self, password: str, target_hash: str, hash_func: Any) -> tuple[str, bool]:
         """Check if password matches target hash.
 
         Args:
@@ -1009,10 +1265,14 @@ class DistributedWorkerThread(QThread):
             Scan results
 
         """
-        target = task.parameters.get("target")
-        scan_type = task.parameters.get("scan_type", "license_protection")
+        target: Any = task.parameters.get("target")
+        if target is None or not isinstance(target, str):
+            target = "./test_target.exe"
+        scan_type: Any = task.parameters.get("scan_type", "license_protection")
+        if not isinstance(scan_type, str):
+            scan_type = str(scan_type) if scan_type else "license_protection"
 
-        if (not target or not os.path.exists(target)) and target:
+        if not os.path.exists(target):
             os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
             with open(target, "wb") as f:
                 f.write(b"MZ" + os.urandom(1024))  # Test binary
@@ -1069,7 +1329,7 @@ class DistributedWorkerThread(QThread):
             List of detected protection mechanisms with details
 
         """
-        protections = []
+        protections: list[dict[str, Any]] = []
 
         try:
             with open(target, "rb") as f:
@@ -1199,7 +1459,7 @@ class DistributedWorkerThread(QThread):
             List of detected vulnerabilities with descriptions
 
         """
-        vulnerabilities = []
+        vulnerabilities: list[dict[str, Any]] = []
 
         try:
             # Create YARA rules for vulnerability patterns
@@ -1424,7 +1684,7 @@ class DistributedWorkerThread(QThread):
             List of security recommendations based on risk assessment
 
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         if risk_assessment["level"] in ["critical", "high"]:
             recommendations.extend(
@@ -1459,8 +1719,12 @@ class DistributedWorkerThread(QThread):
             Analysis results
 
         """
-        target_file = task.parameters.get("target")
-        analysis_depth = task.parameters.get("depth", "standard")
+        target_file: Any = task.parameters.get("target")
+        if target_file is None or not isinstance(target_file, str):
+            target_file = "./test_license.exe"
+        analysis_depth: Any = task.parameters.get("depth", "standard")
+        if not isinstance(analysis_depth, str):
+            analysis_depth = str(analysis_depth) if analysis_depth else "standard"
 
         results = {
             "target": target_file,
@@ -1500,7 +1764,7 @@ class DistributedWorkerThread(QThread):
             List of detected validation methods with types and confidence
 
         """
-        methods = []
+        methods: list[dict[str, Any]] = []
 
         validation_patterns = {
             "online": ["http", "https", "socket", "connect"],
@@ -1673,8 +1937,12 @@ class DistributedWorkerThread(QThread):
             Processing results
 
         """
-        operation = task.parameters.get("operation", "analyze")
-        target = task.parameters.get("target", "")
+        operation: Any = task.parameters.get("operation", "analyze")
+        if not isinstance(operation, str):
+            operation = str(operation) if operation else "analyze"
+        target: Any = task.parameters.get("target", "")
+        if not isinstance(target, str):
+            target = str(target) if target else ""
 
         results = {
             "task_type": task.task_type,
@@ -1694,17 +1962,19 @@ class DistributedWorkerThread(QThread):
             }
         elif operation == "process":
             # Process data
-            data_size = task.parameters.get("data_size", 1000)
+            data_size: Any = task.parameters.get("data_size", 1000)
+            if not isinstance(data_size, int):
+                data_size = int(data_size) if data_size else 1000
             results["processed_data"] = {
-                "bytes_processed": data_size,
-                "chunks": data_size // 256,
+                "bytes_processed": str(data_size),
+                "chunks": str(data_size // 256),
                 "status": "processed",
             }
         else:
             # Default processing
             results["processed_data"] = {
-                "parameters_received": len(task.parameters),
-                "processing_complete": True,
+                "parameters_received": str(len(task.parameters)),
+                "processing_complete": "true",
             }
 
         # Update progress
@@ -1731,7 +2001,7 @@ class DistributedProcessingDialog(QDialog):
 
         """
         if HAS_PYQT6:
-            super().__init__(parent)
+            super().__init__(parent if parent is None or isinstance(parent, _QWidget) else None)
         self.setWindowTitle("Distributed Processing Manager")
         self.resize(800, 600)
 
@@ -1836,9 +2106,12 @@ class DistributedProcessingDialog(QDialog):
             worker = DistributedWorkerThread(worker_id, self.tasks)
 
             if HAS_PYQT6:
-                worker.progress_updated.connect(self.on_task_progress)
-                worker.task_completed.connect(self.on_task_completed)
-                worker.task_failed.connect(self.on_task_failed)
+                if worker.progress_updated is not None:
+                    worker.progress_updated.connect(self.on_task_progress)
+                if worker.task_completed is not None:
+                    worker.task_completed.connect(self.on_task_completed)
+                if worker.task_failed is not None:
+                    worker.task_failed.connect(self.on_task_failed)
                 worker.start()
 
             self.workers.append(worker)
@@ -1868,6 +2141,7 @@ class DistributedProcessingDialog(QDialog):
         task_id = f"task_{self.task_counter}"
 
         # Create sample parameters based on task type
+        parameters: dict[str, Any] = {}
         if task_type == "binary_analysis":
             parameters = {"binary_path": f"./test_binaries/sample_{self.task_counter}.exe"}
         elif task_type == "password_cracking":
@@ -1947,7 +2221,7 @@ class DistributedProcessingDialog(QDialog):
         if not self.tasks:
             return
 
-        status_counts = {}
+        status_counts: dict[str, int] = {}
         for task in self.tasks:
             status = task.status.value
             status_counts[status] = status_counts.get(status, 0) + 1
@@ -1966,7 +2240,7 @@ class DistributedProcessingDialog(QDialog):
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.status_text.append(f"[{timestamp}] {message}")
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close event.
 
         Args:
@@ -1974,7 +2248,7 @@ class DistributedProcessingDialog(QDialog):
 
         """
         self.stop_workers()
-        if HAS_PYQT6:
+        if HAS_PYQT6 and event is not None:
             super().closeEvent(event)
 
 
