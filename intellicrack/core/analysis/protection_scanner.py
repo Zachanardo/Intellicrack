@@ -1245,7 +1245,13 @@ class EnhancedProtectionScanner:
         """Initialize the EnhancedProtectionScanner with various analysis components."""
         self.signature_extractor = DynamicSignatureExtractor()
         self.binary_analyzer = BinaryAnalyzer()
-        self.yara_engine = YaraPatternEngine()
+
+        try:
+            self.yara_engine = YaraPatternEngine()
+        except ImportError:
+            logger.warning("YaraPatternEngine not available - continuing without YARA support")
+            self.yara_engine = None
+
         self.binary_detector = BinaryPatternDetector()
         self.vmprotect_detector = VMProtectDetector()
 

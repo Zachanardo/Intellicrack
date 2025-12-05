@@ -934,7 +934,7 @@ class MITMProxyAddon:
         self.request_count = 0
         self.intercepted_requests: list[dict[str, Any]] = []
 
-    def request(self, flow: http.HTTPFlow) -> None:
+    def request(self, flow: "http.HTTPFlow") -> None:
         """Handle intercepted HTTP request.
 
         Args:
@@ -969,7 +969,7 @@ class MITMProxyAddon:
             }
         )
 
-    def response(self, flow: http.HTTPFlow) -> None:
+    def response(self, flow: "http.HTTPFlow") -> None:
         """Handle intercepted HTTP response.
 
         Args:

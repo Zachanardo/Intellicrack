@@ -192,9 +192,8 @@ format-ruff:
 
 # Detect dead code with vulture and output sorted findings
 vulture:
-    @echo "Running Vulture dead code detector..."
-    pixi run vulture intellicrack/ tests/ 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "vulture_findings.txt" -Encoding utf8
-    @echo "Vulture findings written to vulture_findings.txt (sorted by file, descending)"
+    @echo "[Vulture] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run vulture intellicrack/ tests/ 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/vulture_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/vulture_findings.txt' -Encoding utf8 }; Write-Host "[Vulture] $cnt findings"
 
 # Upgrade Python syntax to newer versions
 pyupgrade:
@@ -208,9 +207,8 @@ sourcery:
 
 # Check docstring validity with darglint and output sorted findings
 darglint:
-    @echo "Running Darglint docstring checker..."
-    pixi run darglint intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "darglint_findings.txt" -Encoding utf8
-    @echo "Darglint findings written to darglint_findings.txt (sorted by file, descending)"
+    @echo "[Darglint] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run darglint intellicrack tests 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\S+' -or $_ -match '^\s+\S+\.py:' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.py)') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/darglint_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/darglint_findings.txt' -Encoding utf8 }; Write-Host "[Darglint] $cnt findings"
 
 # Check code line statistics with pygount
 pygount:
@@ -223,33 +221,53 @@ pyroma:
 
 # Detect dead code and output sorted findings
 dead:
-    @echo "Running dead code detector..."
-    pixi run dead --files="intellicrack/.*\.py" --files="tests/.*\.py" 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "dead_findings.txt" -Encoding utf8
-    @echo "Dead code findings written to dead_findings.txt (sorted by file, descending)"
+    @echo "[Dead Code] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run dead 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match 'is never read, defined in' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match 'defined in (\S+\.py):\d+') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/dead_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/dead_findings.txt' -Encoding utf8 }; Write-Host "[Dead Code] $cnt findings"
 
 # Run type checking with ty and output sorted findings
 ty:
-    @echo "Running Ty type checker..."
-    pixi run ty check intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "ty_findings.txt" -Encoding utf8
-    @echo "Ty findings written to ty_findings.txt (sorted by file, descending)"
+    @echo "[Ty Type] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run ty check intellicrack tests 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:\d+:' -or $_ -match 'error\[' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.py)') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/ty_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/ty_findings.txt' -Encoding utf8 }; Write-Host "[Ty Type] $cnt findings"
 
 # Run type checking with pyright and output sorted findings
 pyright:
-    @echo "Running Pyright type checker..."
-    pixi run pyright intellicrack tests 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\s*[a-zA-Z]:\\.*\.py:\d+:\d+' } } | Group-Object { ($_ -split ':')[0].Trim() } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "pyright_findings.txt" -Encoding utf8
-    @echo "Pyright findings written to pyright_findings.txt (sorted by file, descending)"
+    @echo "[Pyright] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run pyright intellicrack tests 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\s*\S+\.py:\d+:\d+' -or $_ -match '^\s*[a-zA-Z]:\\.*\.py:\d+:\d+' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.py)') { $matches[1] } else { $_.Trim() -split ':' | Select-Object -First 1 } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/pyright_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/pyright_findings.txt' -Encoding utf8 }; Write-Host "[Pyright] $cnt findings"
 
 # Run type checking with mypy and output sorted findings
 mypy:
-    @echo "Running Mypy type checker..."
-    Remove-Item -Path "mypy_findings.txt" -ErrorAction SilentlyContinue; $output = pixi run mypy intellicrack tests 2>&1 | Out-String; $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "mypy_findings.txt" -Encoding utf8
-    @echo "Mypy findings written to mypy_findings.txt (sorted by file, descending)"
+    @echo "[Mypy] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run mypy intellicrack tests 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' -or $_ -match '^[a-zA-Z]:\\.*\.py:\d+:' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/mypy_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/mypy_findings.txt' -Encoding utf8 }; Write-Host "[Mypy] $cnt findings"
 
 # Security linting with bandit and output sorted findings
 bandit:
-    @echo "Running Bandit security linter..."
-    pixi run bandit -r intellicrack/ tests/ -c pyproject.toml 2>&1 | Out-String | ForEach-Object { $_ -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:' } } | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath "bandit_findings.txt" -Encoding utf8
-    @echo "Bandit findings written to bandit_findings.txt (sorted by file, descending)"
+    @echo "[Bandit Security] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run bandit -r intellicrack/ tests/ -c pyproject.toml 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match 'Location:.*\.py:\d+' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.py):\d+') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/bandit_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/bandit_findings.txt' -Encoding utf8 }; Write-Host "[Bandit Security] $cnt findings"
+
+# Run ruff linter and output sorted findings
+ruff:
+    @echo "[Ruff Linter] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run ruff check intellicrack/ tests/ --output-format=concise 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.py:\d+:\d+:' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/ruff_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/ruff_findings.txt' -Encoding utf8 }; Write-Host "[Ruff Linter] $cnt findings"
+
+# Run ruff format check (no output file)
+ruff-fmt:
+    @echo "[Ruff Format] Running..."
+    $output = pixi run ruff format --check intellicrack/ tests/ 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match 'Would reformat:' -or ($_ -match '^\S+\.py$' -and $_ -notmatch '^(All checked|[0-9]+ files)') }; $cnt = @($lines).Count; Write-Host "[Ruff Format] $cnt findings"
+
+# Run clippy and output sorted findings
+clippy:
+    @echo "[Rust Clippy] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = cargo clippy --manifest-path intellicrack-launcher/Cargo.toml --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::nursery 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '-->\s*\S+\.rs:\d+:\d+' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.rs):\d+:\d+') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/clippy_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/clippy_findings.txt' -Encoding utf8 }; Write-Host "[Rust Clippy] $cnt findings"
+
+# Run markdownlint and output sorted findings
+mdlint:
+    @echo "[Markdown Lint] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run markdownlint "**/*.md" --ignore node_modules --ignore .venv* --ignore .pixi --ignore build --ignore dist --ignore tools 2>&1 | Out-String; $lines = $output -split "`n" | Where-Object { $_ -match '^\S+\.md:\d+' -or $_ -match 'MD\d{3}' }; $cnt = @($lines).Count; if ($cnt -gt 0) { $lines | Group-Object { if ($_ -match '(\S+\.md)') { $matches[1] } else { $_ } } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/markdownlint_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/markdownlint_findings.txt' -Encoding utf8 }; Write-Host "[Markdown Lint] $cnt findings"
+
+# Run yamllint and output sorted findings
+yamllint:
+    @echo "[YAML Lint] Running..."
+    if (!(Test-Path 'reports')) { New-Item -ItemType Directory -Path 'reports' -Force | Out-Null }; $output = pixi run yamllint . 2>&1 | Out-String; $currentFile = ""; $groupedOutput = @(); $output -split "`n" | ForEach-Object { if ($_ -match '^(\.[\\/].+)$') { $currentFile = $matches[1].Trim() } elseif ($_ -match '^\s+\d+:\d+' -and $currentFile) { $groupedOutput += "${currentFile}:$($_.Trim())" } }; $cnt = @($groupedOutput).Count; if ($cnt -gt 0) { $groupedOutput | Group-Object { ($_ -split ':')[0] } | Sort-Object Count -Descending | ForEach-Object { "$($_.Count) findings in $($_.Name)"; $_.Group } | Out-File -FilePath 'reports/yamllint_findings.txt' -Encoding utf8 } else { 'No findings.' | Out-File -FilePath 'reports/yamllint_findings.txt' -Encoding utf8 }; Write-Host "[YAML Lint] $cnt findings"
 
 # Lint JavaScript files with ESLint
 lint-js:
@@ -420,3 +438,10 @@ scan:
 docs-linkcheck:
     pixi run sphinx-build -b linkcheck docs/source docs/build/linkcheck
     Write-Output "Link check results in docs/build/linkcheck/output.txt"
+
+
+# ==================== COMPREHENSIVE REPORTS ====================
+
+# Run all linting tools in PARALLEL
+[parallel]
+run-all-tools: ruff ruff-fmt vulture darglint dead ty pyright mypy bandit clippy mdlint yamllint

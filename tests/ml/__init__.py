@@ -1,1 +1,1 @@
-"""ML module tests."""
+"""Machine Learning tests for Intellicrack neural networks."""

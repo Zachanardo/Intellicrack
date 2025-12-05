@@ -7,7 +7,14 @@
       "Bash(cargo search:*)",
       "Bash(pixi run ruff check --select ANN,D:*)",
       "Bash(pixi run mypy --strict:*)",
-      "Bash(pixi run ruff check:*)"
+      "Bash(pixi run ruff check:*)",
+      "mcp__serena__find_symbol",
+      "mcp__serena__find_referencing_symbols",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__initial_instructions",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__think_about_collected_information",
+      "mcp__serena__think_about_task_adherence"
     ],
     "deny": [],
     "ask": []
@@ -21,6 +28,11 @@
     "context7",
     "e2b",
     "MCPControl"
+  ],
+  "disabledMcpjsonServers": [
+    "github",
+    "puppeteer",
+    "zen"
   ],
   "hooks": {
     "PostToolUse": [

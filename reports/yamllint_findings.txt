@@ -1,0 +1,54 @@
+﻿8 findings in .\.serena\project.yml
+.\.serena\project.yml:1:85      error    wrong new line character: expected \n  (new-lines)
+.\.serena\project.yml:41:82     error    trailing spaces  (trailing-spaces)
+.\.serena\project.yml:51:121    warning  line too long (125 > 120 characters)  (line-length)
+.\.serena\project.yml:52:121    warning  line too long (137 > 120 characters)  (line-length)
+.\.serena\project.yml:53:121    warning  line too long (146 > 120 characters)  (line-length)
+.\.serena\project.yml:63:121    warning  line too long (125 > 120 characters)  (line-length)
+.\.serena\project.yml:64:121    warning  line too long (146 > 120 characters)  (line-length)
+.\.serena\project.yml:75:121    warning  line too long (123 > 120 characters)  (line-length)
+7 findings in .\.github\workflows\claude-type-fix-oauth.yml
+.\.github\workflows\claude-type-fix-oauth.yml:1:51      error    wrong new line character: expected \n  (new-lines)
+.\.github\workflows\claude-type-fix-oauth.yml:90:121    warning  line too long (144 > 120 characters)  (line-length)
+.\.github\workflows\claude-type-fix-oauth.yml:191:1     error    syntax error: could not find expected ':' (syntax)
+.\.github\workflows\claude-type-fix-oauth.yml:443:121   warning  line too long (126 > 120 characters)  (line-length)
+.\.github\workflows\claude-type-fix-oauth.yml:452:121   warning  line too long (123 > 120 characters)  (line-length)
+.\.github\workflows\claude-type-fix-oauth.yml:462:121   warning  line too long (141 > 120 characters)  (line-length)
+.\.github\workflows\claude-type-fix-oauth.yml:513:121   warning  line too long (122 > 120 characters)  (line-length)
+5 findings in .\.sourcery.yaml
+.\.sourcery.yaml:1:56      error    wrong new line character: expected \n  (new-lines)
+.\.sourcery.yaml:15:1      error    wrong indentation: expected 2 but found 0  (indentation)
+.\.sourcery.yaml:33:3      error    wrong indentation: expected 4 but found 2  (indentation)
+.\.sourcery.yaml:36:3      error    wrong indentation: expected 4 but found 2  (indentation)
+.\.sourcery.yaml:39:121    warning  line too long (168 > 120 characters)  (line-length)
+4 findings in .\.github\workflows\claude-code-review.yml
+.\.github\workflows\claude-code-review.yml:1:25      error    wrong new line character: expected \n  (new-lines)
+.\.github\workflows\claude-code-review.yml:50:121    warning  line too long (127 > 120 characters)  (line-length)
+.\.github\workflows\claude-code-review.yml:56:121    warning  line too long (183 > 120 characters)  (line-length)
+.\.github\workflows\claude-code-review.yml:57:1      error    too many blank lines (1 > 0)  (empty-lines)
+4 findings in .\.github\workflows\claude.yml
+.\.github\workflows\claude.yml:1:18      error    wrong new line character: expected \n  (new-lines)
+.\.github\workflows\claude.yml:19:121    warning  line too long (136 > 120 characters)  (line-length)
+.\.github\workflows\claude.yml:43:121    warning  line too long (157 > 120 characters)  (line-length)
+.\.github\workflows\claude.yml:50:1      error    too many blank lines (1 > 0)  (empty-lines)
+3 findings in .\config\startup_optimization.yaml
+.\config\startup_optimization.yaml:1:54      error    wrong new line character: expected \n  (new-lines)
+.\config\startup_optimization.yaml:62:1      warning  comment not indented like content  (comments-indentation)
+.\config\startup_optimization.yaml:79:85     error    no new line character at the end of file  (new-line-at-end-of-file)
+3 findings in .\.github\workflows\ci.yml
+.\.github\workflows\ci.yml:1:9       error    wrong new line character: expected \n  (new-lines)
+.\.github\workflows\ci.yml:45:121    warning  line too long (130 > 120 characters)  (line-length)
+.\.github\workflows\ci.yml:269:121   warning  line too long (138 > 120 characters)  (line-length)
+2 findings in .\.github\workflows\qodana_code_quality.yml
+.\.github\workflows\qodana_code_quality.yml:1:13      error    wrong new line character: expected \n  (new-lines)
+.\.github\workflows\qodana_code_quality.yml:20:121    warning  line too long (125 > 120 characters)  (line-length)
+2 findings in .\.pre-commit-config.yaml
+.\.pre-commit-config.yaml:32:121    warning  line too long (165 > 120 characters)  (line-length)
+.\.pre-commit-config.yaml:49:121    warning  line too long (123 > 120 characters)  (line-length)
+2 findings in .\qodana.yaml
+.\qodana.yaml:1:117     error    wrong new line character: expected \n  (new-lines)
+.\qodana.yaml:10:34     error    no new line character at the end of file  (new-line-at-end-of-file)
+1 findings in .\.github\workflows\python-ci.yml
+.\.github\workflows\python-ci.yml:44:121    warning  line too long (121 > 120 characters)  (line-length)
+1 findings in .\.yamllint
+.\.yamllint:1:17      error    wrong new line character: expected \n  (new-lines)

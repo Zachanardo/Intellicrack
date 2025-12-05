@@ -41,7 +41,7 @@ cargo-insta = ">=1.44.3"  # Snapshot testing tool for Rust
 cargo-expand = ">=1.0.118"  # Expand Rust macros for debugging
 cargo-llvm-cov = ">=0.6.21"  # Code coverage reports using LLVM
 cargo-audit = ">=0.21.2"  # Security vulnerability scanner for Rust dependencies
-cargo-deny = ">=0.18.6"  # Dependency linting and policy enforcement for Rust
+cargo-deny = ">=0.18.8"  # Dependency linting and policy enforcement for Rust
 
 [pypi-dependencies]
 intellicrack = { path = ".", editable = true }  # Editable install of Intellicrack for development

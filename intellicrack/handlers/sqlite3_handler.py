@@ -54,7 +54,7 @@ try:
 
     HAS_SQLITE3 = True
     HAS_SQLITE = True  # Alias for compatibility
-    SQLITE3_VERSION = sqlite3.version
+    SQLITE3_VERSION = sqlite3.sqlite_version
 
 except ImportError as e:
     logger.error("SQLite3 not available, using fallback implementations: %s", e)

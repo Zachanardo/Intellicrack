@@ -19,6 +19,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from intellicrack.utils.logger import logger
 
 
@@ -169,33 +171,33 @@ try:
     try:
         from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
     except ImportError:
-        QPrintDialog = None  # type: ignore[misc,assignment]
-        QPrinter = None  # type: ignore[misc,assignment]
+        globals()["QPrintDialog"] = None
+        globals()["QPrinter"] = None
 
     try:
         from PyQt6.QtWebEngineWidgets import QWebEngineView
     except ImportError:
-        QWebEngineView = None
+        globals()["QWebEngineView"] = None
 
     try:
         from PyQt6.QtPdf import QPdfDocument
     except ImportError:
-        QPdfDocument = None  # type: ignore[misc,assignment]
+        globals()["QPdfDocument"] = None
 
     try:
         from PyQt6.QtPdfWidgets import QPdfView
     except ImportError:
-        QPdfView = None  # type: ignore[misc,assignment]
+        globals()["QPdfView"] = None
 
     try:
         from PyQt6.QtTest import QTest
     except ImportError:
-        QTest = None  # type: ignore[misc,assignment]
+        globals()["QTest"] = None
 
     try:
         from PyQt6.QtOpenGLWidgets import QOpenGLWidget
     except ImportError:
-        QOpenGLWidget = None  # type: ignore[misc,assignment]
+        globals()["QOpenGLWidget"] = None
 
     # Verify critical Qt model classes are available
     _ = QAbstractTableModel.__name__  # Used for table model implementations
@@ -580,6 +582,7 @@ except ImportError as e:
 
             Cleans up all instances and clears the event queue.
             """
+            _ = self._destroyed
             FallbackWidget._running = False
 
             for instance in list(FallbackWidget._instances):
@@ -744,7 +747,7 @@ except ImportError as e:
 
             threading.Timer(0.1, cleanup).start()
 
-        def startTimer(self, interval_ms: int, callback: object, single_shot: bool = False) -> int:
+        def startTimer(self, interval_ms: int, callback: object, *, single_shot: bool = False) -> int:
             """Start a timer.
 
             Args:
@@ -797,7 +800,7 @@ except ImportError as e:
 
             if os.environ.get("INTELLICRACK_LOG_FILE"):
                 try:
-                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
+                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] CRITICAL: {title}: {message}\n")
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
@@ -823,7 +826,7 @@ except ImportError as e:
 
             if os.environ.get("INTELLICRACK_LOG_FILE"):
                 try:
-                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
+                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] WARNING: {title}: {message}\n")
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
@@ -849,7 +852,7 @@ except ImportError as e:
 
             if os.environ.get("INTELLICRACK_LOG_FILE"):
                 try:
-                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
+                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] INFO: {title}: {message}\n")
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
@@ -875,7 +878,7 @@ except ImportError as e:
 
             if os.environ.get("INTELLICRACK_LOG_FILE"):
                 try:
-                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a") as f:
+                    with open(os.environ["INTELLICRACK_LOG_FILE"], "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] QUESTION: {title}: {message}\n")
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
@@ -891,7 +894,7 @@ except ImportError as e:
     class FallbackQt:
         """Production-ready Qt namespace emulation for headless environments."""
 
-        _enum_values: dict[str, int] = {
+        _enum_values: ClassVar[dict[str, int]] = {
             "AlignLeft": 0x0001,
             "AlignRight": 0x0002,
             "AlignHCenter": 0x0004,
@@ -1008,7 +1011,7 @@ except ImportError as e:
     class FallbackQtEnum:
         """Production-ready Qt enumeration emulation with real values."""
 
-        _enum_mappings: dict[str, dict[str, int]] = {
+        _enum_mappings: ClassVar[dict[str, dict[str, int]]] = {
             "ItemDataRole": {
                 "DisplayRole": 0,
                 "DecorationRole": 1,
@@ -1259,232 +1262,68 @@ except ImportError as e:
             """
             return 0xFFFFFFFF
 
+    def _set_qt_globals(names: list[str], value: object) -> None:
+        glb = globals()
+        for name in names:
+            glb[name] = value
+
     # Fallback classes for headless mode to prevent TypeError: NoneType takes no arguments
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
-        PYQT_VERSION_STR = "Fallback"
-        QAbstractItemModel = FallbackWidget  # type: ignore[misc,assignment]
-        QAbstractItemView = FallbackWidget  # type: ignore[misc,assignment]
-        QAbstractScrollArea = FallbackWidget  # type: ignore[misc,assignment]
-        QAction = FallbackWidget  # type: ignore[misc,assignment]
-        QApplication = FallbackWidget  # type: ignore[misc,assignment]
-        QBrush = FallbackWidget  # type: ignore[misc,assignment]
-        QBuffer = FallbackWidget  # type: ignore[misc,assignment]
-        QButtonGroup = FallbackWidget  # type: ignore[misc,assignment]
-        QCheckBox = FallbackWidget  # type: ignore[misc,assignment]
-        QCloseEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QColor = FallbackWidget  # type: ignore[misc,assignment]
-        QColorDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QComboBox = FallbackWidget  # type: ignore[misc,assignment]
-        QCoreApplication = FallbackWidget  # type: ignore[misc,assignment]
-        QDateTime = FallbackWidget  # type: ignore[misc,assignment]
-        QDesktopServices = FallbackWidget  # type: ignore[misc,assignment]
-        QDialog = FallbackWidget  # type: ignore[misc,assignment]
+        globals()["PYQT_VERSION_STR"] = "Fallback"
+        _set_qt_globals([
+            "QAbstractItemModel", "QAbstractItemView", "QAbstractScrollArea",
+            "QAction", "QApplication", "QBrush", "QBuffer", "QButtonGroup",
+            "QCheckBox", "QCloseEvent", "QColor", "QColorDialog", "QComboBox",
+            "QCoreApplication", "QDateTime", "QDesktopServices", "QDialog",
+        ], FallbackWidget)
     else:
-        # Null object pattern for all PyQt6 classes when not available (non-testing)
-        PYQT_VERSION_STR = None  # type: ignore[assignment]
-        QAbstractItemModel = None  # type: ignore[misc,assignment]
-        QAbstractItemView = None  # type: ignore[misc,assignment]
-        QAbstractScrollArea = None  # type: ignore[misc,assignment]
-        QAction = None  # type: ignore[misc,assignment]
-        QApplication = None  # type: ignore[misc,assignment]
-        QBrush = None  # type: ignore[misc,assignment]
-        QBuffer = None  # type: ignore[misc,assignment]
-        QButtonGroup = None  # type: ignore[misc,assignment]
-        QCheckBox = None  # type: ignore[misc,assignment]
-        QCloseEvent = None  # type: ignore[misc,assignment]
-        QColor = FallbackWidget  # type: ignore[misc,assignment]
-        QColorDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QComboBox = FallbackWidget  # type: ignore[misc,assignment]
-        QCoreApplication = FallbackWidget  # type: ignore[misc,assignment]
-        QDateTime = FallbackWidget  # type: ignore[misc,assignment]
-        QDesktopServices = FallbackWidget  # type: ignore[misc,assignment]
-        QDialog = FallbackWidget  # type: ignore[misc,assignment]
+        globals()["PYQT_VERSION_STR"] = None
+        _set_qt_globals([
+            "QAbstractItemModel", "QAbstractItemView", "QAbstractScrollArea",
+            "QAction", "QApplication", "QBrush", "QBuffer", "QButtonGroup",
+            "QCheckBox", "QCloseEvent",
+        ], None)
+        _set_qt_globals([
+            "QColor", "QColorDialog", "QComboBox", "QCoreApplication",
+            "QDateTime", "QDesktopServices", "QDialog",
+        ], FallbackWidget)
     # Continue testing mode assignment for remaining Qt classes
+    _qt_classes_batch2 = [
+        "QDialogButtonBox", "QDoubleSpinBox", "QDragEnterEvent", "QDragLeaveEvent",
+        "QDropEvent", "QFileDialog", "QFileIconProvider", "QFileInfo",
+        "QFileSystemWatcher", "QFont", "QFontDatabase", "QFontMetrics",
+        "QFormLayout", "QFrame", "QGraphicsView", "QGridLayout", "QGroupBox",
+        "QHBoxLayout", "QHeaderView", "QIODevice", "QIcon", "QImage",
+        "QInputDialog", "QKeyEvent", "QKeySequence", "QLabel", "QLineEdit",
+        "QListView", "QListWidget", "QListWidgetItem", "QMainWindow", "QMenu",
+        "QMenuBar", "QMessageBox", "QMetaObject", "QModelIndex", "QMouseEvent",
+        "QObject", "QOpenGLContext", "QOpenGLWidget", "QPaintEvent", "QPainter",
+        "QPalette", "QPdfDocument", "QPdfView", "QPen", "QPixmap", "QPlainTextEdit",
+        "QPoint", "QPrintDialog", "QPrinter", "QProcess", "QProgressBar",
+        "QProgressDialog", "QPushButton", "QRadioButton", "QRect",
+        "QRegularExpression", "QResizeEvent", "QRunnable", "QShortcut",
+        "QScrollArea", "QScrollBar", "QSize", "QSizePolicy", "QSlider",
+        "QSpacerItem", "QSpinBox", "QSplashScreen", "QSplitter", "QStackedWidget",
+        "QStandardItem", "QStandardItemModel", "QStatusBar", "QStyle", "QSurfaceFormat",
+    ]
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
-        QDialogButtonBox = FallbackWidget  # type: ignore[misc,assignment]
-        QDoubleSpinBox = FallbackWidget  # type: ignore[misc,assignment]
-        QDragEnterEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QDragLeaveEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QDropEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QFileDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QFileIconProvider = FallbackWidget  # type: ignore[misc,assignment]
-        QFileInfo = FallbackWidget  # type: ignore[misc,assignment]
-        QFileSystemWatcher = FallbackWidget  # type: ignore[misc,assignment]
-        QFont = FallbackWidget  # type: ignore[misc,assignment]
-        QFontDatabase = FallbackWidget  # type: ignore[misc,assignment]
-        QFontMetrics = FallbackWidget  # type: ignore[misc,assignment]
-        QFormLayout = FallbackWidget  # type: ignore[misc,assignment]
-        QFrame = FallbackWidget  # type: ignore[misc,assignment]
-        QGraphicsView = FallbackWidget  # type: ignore[misc,assignment]
-        QGridLayout = FallbackWidget  # type: ignore[misc,assignment]
-        QGroupBox = FallbackWidget  # type: ignore[misc,assignment]
-        QHBoxLayout = FallbackWidget  # type: ignore[misc,assignment]
-        QHeaderView = FallbackWidget  # type: ignore[misc,assignment]
-        QIODevice = FallbackWidget  # type: ignore[misc,assignment]
-        QIcon = FallbackWidget  # type: ignore[misc,assignment]
-        QImage = FallbackWidget  # type: ignore[misc,assignment]
-        QInputDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QKeyEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QKeySequence = FallbackWidget  # type: ignore[misc,assignment]
-        QLabel = FallbackWidget  # type: ignore[misc,assignment]
-        QLineEdit = FallbackWidget  # type: ignore[misc,assignment]
-        QListView = FallbackWidget  # type: ignore[misc,assignment]
-        QListWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QListWidgetItem = FallbackWidget  # type: ignore[misc,assignment]
-        QMainWindow = FallbackWidget  # type: ignore[misc,assignment]
-        QMenu = FallbackWidget  # type: ignore[misc,assignment]
-        QMenuBar = FallbackWidget  # type: ignore[misc,assignment]
-        QMessageBox = FallbackWidget  # type: ignore[misc,assignment]
-        QMetaObject = FallbackWidget  # type: ignore[misc,assignment]
-        QModelIndex = FallbackWidget  # type: ignore[misc,assignment]
-        QMouseEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QObject = FallbackWidget  # type: ignore[misc,assignment]
-        QOpenGLContext = FallbackWidget  # type: ignore[misc,assignment]
-        QOpenGLWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QPaintEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QPainter = FallbackWidget  # type: ignore[misc,assignment]
-        QPalette = FallbackWidget  # type: ignore[misc,assignment]
-        QPdfDocument = FallbackWidget  # type: ignore[misc,assignment]
-        QPdfView = FallbackWidget  # type: ignore[misc,assignment]
-        QPen = FallbackWidget  # type: ignore[misc,assignment]
-        QPixmap = FallbackWidget  # type: ignore[misc,assignment]
-        QPlainTextEdit = FallbackWidget  # type: ignore[misc,assignment]
-        QPoint = FallbackWidget  # type: ignore[misc,assignment]
-        QPrintDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QPrinter = FallbackWidget  # type: ignore[misc,assignment]
-        QProcess = FallbackWidget  # type: ignore[misc,assignment]
-        QProgressBar = FallbackWidget  # type: ignore[misc,assignment]
-        QProgressDialog = FallbackWidget  # type: ignore[misc,assignment]
-        QPushButton = FallbackWidget  # type: ignore[misc,assignment]
-        QT_VERSION_STR = "Fallback"
-        QRadioButton = FallbackWidget  # type: ignore[misc,assignment]
-        QRect = FallbackWidget  # type: ignore[misc,assignment]
-        QRegularExpression = FallbackWidget  # type: ignore[misc,assignment]
-        QResizeEvent = FallbackWidget  # type: ignore[misc,assignment]
-        QRunnable = FallbackWidget  # type: ignore[misc,assignment]
-        QShortcut = FallbackWidget  # type: ignore[misc,assignment]
-        QScrollArea = FallbackWidget  # type: ignore[misc,assignment]
-        QScrollBar = FallbackWidget  # type: ignore[misc,assignment]
-        QSize = FallbackWidget  # type: ignore[misc,assignment]
-        QSizePolicy = FallbackWidget  # type: ignore[misc,assignment]
-        QSlider = FallbackWidget  # type: ignore[misc,assignment]
-        QSpacerItem = FallbackWidget  # type: ignore[misc,assignment]
-        QSpinBox = FallbackWidget  # type: ignore[misc,assignment]
-        QSplashScreen = FallbackWidget  # type: ignore[misc,assignment]
-        QSplitter = FallbackWidget  # type: ignore[misc,assignment]
-        QStackedWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QStandardItem = FallbackWidget  # type: ignore[misc,assignment]
-        QStandardItemModel = FallbackWidget  # type: ignore[misc,assignment]
-        QStatusBar = FallbackWidget  # type: ignore[misc,assignment]
-        QStyle = FallbackWidget  # type: ignore[misc,assignment]
-        QSurfaceFormat = FallbackWidget  # type: ignore[misc,assignment]
+        _set_qt_globals(_qt_classes_batch2, FallbackWidget)
+        globals()["QT_VERSION_STR"] = "Fallback"
     else:
-        QDialogButtonBox = None  # type: ignore[misc,assignment]
-        QDoubleSpinBox = None  # type: ignore[misc,assignment]
-        QDragEnterEvent = None  # type: ignore[misc,assignment]
-        QDragLeaveEvent = None  # type: ignore[misc,assignment]
-        QDropEvent = None  # type: ignore[misc,assignment]
-        QFileDialog = None  # type: ignore[misc,assignment]
-        QFileIconProvider = None  # type: ignore[misc,assignment]
-        QFileInfo = None  # type: ignore[misc,assignment]
-        QFileSystemWatcher = None  # type: ignore[misc,assignment]
-        QFont = None  # type: ignore[misc,assignment]
-        QFontDatabase = None  # type: ignore[misc,assignment]
-        QFontMetrics = None  # type: ignore[misc,assignment]
-        QFormLayout = None  # type: ignore[misc,assignment]
-        QFrame = None  # type: ignore[misc,assignment]
-        QGraphicsView = None  # type: ignore[misc,assignment]
-        QGridLayout = None  # type: ignore[misc,assignment]
-        QGroupBox = None  # type: ignore[misc,assignment]
-        QHBoxLayout = None  # type: ignore[misc,assignment]
-        QHeaderView = None  # type: ignore[misc,assignment]
-        QIODevice = None  # type: ignore[misc,assignment]
-        QIcon = None  # type: ignore[misc,assignment]
-        QImage = None  # type: ignore[misc,assignment]
-        QInputDialog = None  # type: ignore[misc,assignment]
-        QKeyEvent = None  # type: ignore[misc,assignment]
-        QKeySequence = None  # type: ignore[misc,assignment]
-        QLabel = None  # type: ignore[misc,assignment]
-        QLineEdit = None  # type: ignore[misc,assignment]
-        QListView = None  # type: ignore[misc,assignment]
-        QListWidget = None  # type: ignore[misc,assignment]
-        QListWidgetItem = None  # type: ignore[misc,assignment]
-        QMainWindow = None  # type: ignore[misc,assignment]
-        QMenu = None  # type: ignore[misc,assignment]
-        QMenuBar = None  # type: ignore[misc,assignment]
-        QMessageBox = None  # type: ignore[misc,assignment]
-        QMetaObject = None  # type: ignore[misc,assignment]
-        QModelIndex = None  # type: ignore[misc,assignment]
-        QMouseEvent = None  # type: ignore[misc,assignment]
-        QObject = None  # type: ignore[misc,assignment]
-        QOpenGLContext = None  # type: ignore[misc,assignment]
-        QOpenGLWidget = None  # type: ignore[misc,assignment]
-        QPaintEvent = None  # type: ignore[misc,assignment]
-        QPainter = None  # type: ignore[misc,assignment]
-        QPalette = None  # type: ignore[misc,assignment]
-        QPdfDocument = None  # type: ignore[misc,assignment]
-        QPdfView = None  # type: ignore[misc,assignment]
-        QPen = None  # type: ignore[misc,assignment]
-        QPixmap = None  # type: ignore[misc,assignment]
-        QPlainTextEdit = None  # type: ignore[misc,assignment]
-        QPoint = None  # type: ignore[misc,assignment]
-        QPrintDialog = None  # type: ignore[misc,assignment]
-        QPrinter = None  # type: ignore[misc,assignment]
-        QProcess = None  # type: ignore[misc,assignment]
-        QProgressBar = None  # type: ignore[misc,assignment]
-        QProgressDialog = None  # type: ignore[misc,assignment]
-        QPushButton = None  # type: ignore[misc,assignment]
-        QT_VERSION_STR = None  # type: ignore[assignment]
-        QRadioButton = None  # type: ignore[misc,assignment]
-        QRect = None  # type: ignore[misc,assignment]
-        QRegularExpression = None  # type: ignore[misc,assignment]
-        QResizeEvent = None  # type: ignore[misc,assignment]
-        QRunnable = None  # type: ignore[misc,assignment]
-        QShortcut = None  # type: ignore[misc,assignment]
-        QScrollArea = None  # type: ignore[misc,assignment]
-        QScrollBar = None  # type: ignore[misc,assignment]
-        QSize = None  # type: ignore[misc,assignment]
-        QSizePolicy = None  # type: ignore[misc,assignment]
-        QSlider = None  # type: ignore[misc,assignment]
-        QSpacerItem = None  # type: ignore[misc,assignment]
-        QSpinBox = None  # type: ignore[misc,assignment]
-        QSplashScreen = None  # type: ignore[misc,assignment]
-        QSplitter = None  # type: ignore[misc,assignment]
-        QStackedWidget = None  # type: ignore[misc,assignment]
-        QStandardItem = None  # type: ignore[misc,assignment]
-        QStandardItemModel = None  # type: ignore[misc,assignment]
-        QStatusBar = None  # type: ignore[misc,assignment]
-        QStyle = None  # type: ignore[misc,assignment]
-        QSurfaceFormat = None  # type: ignore[misc,assignment]
+        _set_qt_globals(_qt_classes_batch2, None)
+        globals()["QT_VERSION_STR"] = None
     # Finish testing mode assignment for final Qt classes
+    _qt_classes_batch3 = [
+        "QSyntaxHighlighter", "QTabWidget", "QTableView", "QTableWidget",
+        "QTableWidgetItem", "QTest", "QTextBrowser", "QTextCharFormat",
+        "QTextCursor", "QTextDocument", "QTextEdit", "QTextFormat",
+        "QThread", "QThreadPool", "QTimer", "QToolBar", "QTreeView",
+        "QTreeWidget", "QTreeWidgetItem", "QUrl", "QVariant", "QVBoxLayout",
+        "QWebEngineView", "QWidget", "QWizard", "QWizardPage",
+    ]
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
-        QSyntaxHighlighter = FallbackWidget  # type: ignore[misc,assignment]
-        QTabWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QTableView = FallbackWidget  # type: ignore[misc,assignment]
-        QTableWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QTableWidgetItem = FallbackWidget  # type: ignore[misc,assignment]
-        QTest = FallbackWidget  # type: ignore[misc,assignment]
-        QTextBrowser = FallbackWidget  # type: ignore[misc,assignment]
-        QTextCharFormat = FallbackWidget  # type: ignore[misc,assignment]
-        QTextCursor = FallbackWidget  # type: ignore[misc,assignment]
-        QTextDocument = FallbackWidget  # type: ignore[misc,assignment]
-        QTextEdit = FallbackWidget  # type: ignore[misc,assignment]
-        QTextFormat = FallbackWidget  # type: ignore[misc,assignment]
-        QThread = FallbackWidget  # type: ignore[misc,assignment]
-        QThreadPool = FallbackWidget  # type: ignore[misc,assignment]
-        QTimer = FallbackWidget  # type: ignore[misc,assignment]
-        QToolBar = FallbackWidget  # type: ignore[misc,assignment]
-        QTreeView = FallbackWidget  # type: ignore[misc,assignment]
-        QTreeWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QTreeWidgetItem = FallbackWidget  # type: ignore[misc,assignment]
-        QUrl = FallbackWidget  # type: ignore[misc,assignment]
-        QVariant = FallbackWidget  # type: ignore[misc,assignment]
-        QVBoxLayout = FallbackWidget  # type: ignore[misc,assignment]
-        QWebEngineView = FallbackWidget
-        QWidget = FallbackWidget  # type: ignore[misc,assignment]
-        QWizard = FallbackWidget  # type: ignore[misc,assignment]
-        QWizardPage = FallbackWidget  # type: ignore[misc,assignment]
-        Qt = FallbackQt()  # type: ignore[misc,assignment]
+        _set_qt_globals(_qt_classes_batch3, FallbackWidget)
+        globals()["Qt"] = FallbackQt()
 
         class FallbackSignal:
             """Production-ready signal implementation for headless environments."""
@@ -1586,7 +1425,7 @@ except ImportError as e:
             """
             return FallbackSignal(*types, **kwargs)
 
-        pyqtSignal = fallback_pyqtSignal  # type: ignore[misc,assignment]
+        globals()["pyqtSignal"] = fallback_pyqtSignal
 
         def fallback_pyqtSlot(*types: object, **kwargs: object) -> object:
             """Production-ready pyqtSlot decorator for headless environments.
@@ -1613,11 +1452,12 @@ except ImportError as e:
                     object: The wrapped function.
 
                 """
-                func._pyqt_slot = True
-                func._slot_types = types
-                func._slot_result = kwargs.get("result")
+                func_any = cast("Any", func)
+                func_any._pyqt_slot = True
+                func_any._slot_types = types
+                func_any._slot_result = kwargs.get("result")
                 func_name = getattr(func, "__name__", str(func))
-                func._slot_name = kwargs.get("name", func_name)
+                func_any._slot_name = kwargs.get("name", func_name)
 
                 def wrapper(*args: object, **kw: object) -> Any:
                     """Execute the slot function with logging and type checking.
@@ -1652,27 +1492,28 @@ except ImportError as e:
                         logger.error(f"Slot {slot_name} error: {e}")
                         raise
 
-                wrapper._pyqt_slot = True
-                wrapper._slot_types = types
+                wrapper_any = cast("Any", wrapper)
+                wrapper_any._pyqt_slot = True
+                wrapper_any._slot_types = types
                 slot_result = getattr(func, "_slot_result", None)
-                wrapper._slot_result = slot_result
+                wrapper_any._slot_result = slot_result
                 slot_name = getattr(func, "_slot_name", str(func))
-                wrapper._slot_name = slot_name
+                wrapper_any._slot_name = slot_name
 
                 return cast("F", wrapper)
 
             return decorator
 
-        pyqtSlot = fallback_pyqtSlot  # type: ignore[assignment]
+        globals()["pyqtSlot"] = fallback_pyqtSlot
 
-        def qRgba(r: int, g: int, b: int, a: int = 255) -> int:  # type: ignore[misc]
+        def qRgba(r: int, g: int, b: int, a: int) -> int:
             """Production-ready RGBA color value creation for headless environments.
 
             Args:
                 r: Red component (0-255).
                 g: Green component (0-255).
                 b: Blue component (0-255).
-                a: Alpha component (0-255), default 255.
+                a: Alpha component (0-255).
 
             Returns:
                 int: The RGBA color value as a 32-bit integer.
@@ -1685,33 +1526,8 @@ except ImportError as e:
 
             return (a << 24) | (r << 16) | (g << 8) | b
     else:
-        QSyntaxHighlighter = None  # type: ignore[misc,assignment]
-        QTabWidget = None  # type: ignore[misc,assignment]
-        QTableView = None  # type: ignore[misc,assignment]
-        QTableWidget = None  # type: ignore[misc,assignment]
-        QTableWidgetItem = None  # type: ignore[misc,assignment]
-        QTest = None  # type: ignore[misc,assignment]
-        QTextBrowser = None  # type: ignore[misc,assignment]
-        QTextCharFormat = None  # type: ignore[misc,assignment]
-        QTextCursor = None  # type: ignore[misc,assignment]
-        QTextDocument = None  # type: ignore[misc,assignment]
-        QTextEdit = None  # type: ignore[misc,assignment]
-        QTextFormat = None  # type: ignore[misc,assignment]
-        QThread = None  # type: ignore[misc,assignment]
-        QThreadPool = None  # type: ignore[misc,assignment]
-        QTimer = None  # type: ignore[misc,assignment]
-        QToolBar = None  # type: ignore[misc,assignment]
-        QTreeView = None  # type: ignore[misc,assignment]
-        QTreeWidget = None  # type: ignore[misc,assignment]
-        QTreeWidgetItem = None  # type: ignore[misc,assignment]
-        QUrl = None  # type: ignore[misc,assignment]
-        QVariant = None  # type: ignore[misc,assignment]
-        QVBoxLayout = None  # type: ignore[misc,assignment]
-        QWebEngineView = None
-        QWidget = None  # type: ignore[misc,assignment]
-        QWizard = None  # type: ignore[misc,assignment]
-        QWizardPage = None  # type: ignore[misc,assignment]
-        Qt = None  # type: ignore[misc,assignment]
+        _set_qt_globals(_qt_classes_batch3, None)
+        globals()["Qt"] = None
 
         def fallback_pyqtSignal_null(*args: object, **kwargs: object) -> object:
             """Fallback pyqtSignal implementation for minimal PyQt6 compatibility.
@@ -1726,7 +1542,7 @@ except ImportError as e:
             """
             return lambda: None
 
-        pyqtSignal = fallback_pyqtSignal_null  # type: ignore[misc,assignment]
+        globals()["pyqtSignal"] = fallback_pyqtSignal_null
 
         def fallback_pyqtSlot_null(*args: object, **kwargs: object) -> object:
             """Fallback pyqtSlot decorator for minimal PyQt6 compatibility.
@@ -1741,7 +1557,7 @@ except ImportError as e:
             """
             return lambda x: x
 
-        pyqtSlot = fallback_pyqtSlot_null  # type: ignore[assignment]
+        globals()["pyqtSlot"] = fallback_pyqtSlot_null
 
         q_rgba: None = None
 

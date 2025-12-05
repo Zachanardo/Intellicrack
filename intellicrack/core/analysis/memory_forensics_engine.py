@@ -19,10 +19,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from ...core.config_manager import get_config
 from ...utils.logger import get_logger
 
 
 logger = get_logger(__name__)
+_config = get_config()
 
 try:
     import volatility3
@@ -185,11 +187,10 @@ class MemoryForensicsEngine:
         """Initialize the memory forensics engine with cache configuration and plugin detection."""
         self.logger = logging.getLogger("IntellicrackLogger.MemoryForensics")
 
-        # Set up cache directory
         if cache_directory:
             self.cache_directory = Path(cache_directory)
         else:
-            self.cache_directory = Path("./cache/memory_forensics")
+            self.cache_directory = _config.get_cache_dir() / "memory_forensics"
 
         self.cache_directory.mkdir(parents=True, exist_ok=True)
 

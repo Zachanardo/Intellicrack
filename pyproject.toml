@@ -85,7 +85,7 @@ dependencies = [
   # Web & HTTP
   "aiohttp>=3.13.1,<4",
   "requests>=2.32.5,<3",
-  "urllib3>=2.5.0,<3",
+  "urllib3>=2.6.0,<3",
   "defusedxml>=0.7.1,<0.8",
   "xmltodict",
   "boto3",
@@ -424,6 +424,12 @@ norecursedirs = [
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+  "benchmark: Performance benchmark tests",
+  "slow: Slow running tests",
+  "integration: Integration tests",
+  "unit: Unit tests",
+]
 
 [tool.pytest-deadfixtures]
 show_count = true
@@ -1104,6 +1110,22 @@ fixable = ["ALL"]
 
 # Allow unused variables when they start with underscore
 dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"intellicrack/core/analysis/angr_enhancements.py" = [
+  "N803",     # Windows API parameter names intentionally match SDK documentation
+  "ARG002",   # Unused args in Windows API hooks are intentional (hook signatures)
+  "G004",     # Logging f-strings are acceptable in analysis code
+  "PLR2004",  # Magic values are Windows API constants with clear context
+  "PLR1702",  # Nested blocks in complex API analysis logic
+]
+"intellicrack/handlers/pyqt6_handler.py" = [
+  "N802",     # Function names match PyQt6 API naming (e.g., qRgba, setValue)
+  "N816",     # Variable names match PyQt6 API naming (e.g., pyqtSlot, pyqtSignal)
+  "ARG001",   # Unused function args in fallback implementations match PyQt6 signatures
+  "ARG002",   # Unused method args in fallback implementations match PyQt6 signatures
+  "PLR0904",  # FallbackWidget needs many public methods to mimic Qt widget API
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 50

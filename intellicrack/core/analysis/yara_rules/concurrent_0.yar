@@ -1,7 +1,9 @@
 
 rule Concurrent_Rule_0 {
+    meta:
+        description = "Concurrent test rule 0"
     strings:
-        $s = "ConcurrentTest0"
+        $str = "TEST0"
     condition:
-        $s
+        $str
 }

@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 import threading
 import traceback
+import types
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -35,10 +36,13 @@ from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 from ..core.misc_utils import log_message
 
 
+importlib_res: types.ModuleType
 try:
-    from importlib import resources
+    from importlib import resources as _importlib_resources_mod
+    importlib_res = _importlib_resources_mod
 except ImportError:
-    import importlib_resources as resources
+    import importlib_resources
+    importlib_res = importlib_resources
 
 
 if PSUTIL_AVAILABLE:
@@ -49,12 +53,60 @@ else:
 logger = logging.getLogger(__name__)
 
 
+def _emit_output(app_instance: object | None, message: str) -> None:
+    """Safely emit output message to app instance if available."""
+    if app_instance is None:
+        return
+    update_output = getattr(app_instance, "update_output", None)
+    if update_output is None:
+        return
+    if hasattr(update_output, "emit"):
+        update_output.emit(message)
+    elif callable(update_output):
+        update_output(message)
+
+
+def _emit_status(app_instance: object | None, message: str) -> None:
+    """Safely emit status message to app instance if available."""
+    if app_instance is None:
+        return
+    update_status = getattr(app_instance, "update_status", None)
+    if update_status is None:
+        return
+    if hasattr(update_status, "emit"):
+        update_status.emit(message)
+    elif callable(update_status):
+        update_status(message)
+
+
+def _emit_analysis_results(app_instance: object | None, message: str) -> None:
+    """Safely emit analysis results to app instance if available."""
+    if app_instance is None:
+        return
+    update_results = getattr(app_instance, "update_analysis_results", None)
+    if update_results is None:
+        return
+    if hasattr(update_results, "emit"):
+        update_results.emit(message)
+    elif callable(update_results):
+        update_results(message)
+
+
+def _get_binary_path(app_instance: object | None, binary_path: str | None = None) -> str | None:
+    """Get binary path from app instance or provided path."""
+    if binary_path:
+        return binary_path
+    if app_instance is not None:
+        return getattr(app_instance, "binary_path", None)
+    return None
+
+
 def get_resource_path(package: str, resource_path: str) -> str:
     """Get the file path for a resource in a package."""
     try:
-        if hasattr(resources, "files"):
-            return str(resources.files(package).joinpath(resource_path))
-        with resources.path(package, ".") as p:
+        if hasattr(importlib_res, "files"):
+            return str(importlib_res.files(package).joinpath(resource_path))
+        with importlib_res.path(package, ".") as p:
             return str(p.parent / resource_path)
     except Exception as e:
         logger.error("Exception in runner_functions: %s", e)
@@ -109,20 +161,15 @@ def run_network_license_server(app_instance: object | None = None, **kwargs: obj
                 "response_delay": 0.1,
             }
             server = NetworkLicenseServerEmulator(config)
-            server.start()
+            server.start_servers()
 
-            result = {
+            result: dict[str, object] = {
                 "status": "success",
                 "message": f"Network license server started on {host}:{port}",
                 "server_config": {"host": host, "port": port, "debug": debug_mode},
             }
 
-            # Update app instance with success
-            if app_instance and hasattr(app_instance, "update_output"):
-                if hasattr(app_instance.update_output, "emit"):
-                    app_instance.update_output.emit("License server started successfully")
-                elif callable(app_instance.update_output):
-                    app_instance.update_output("License server started successfully")
+            _emit_output(app_instance, "License server started successfully")
 
             return result
         except ImportError:
@@ -174,7 +221,7 @@ def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object
             interceptor = SSLTLSInterceptor(config=config)
             interceptor.start()
 
-            result = {
+            result: dict[str, object] = {
                 "status": "success",
                 "message": f"SSL/TLS interceptor started for {target_host or 'any'}:{target_port}",
                 "interceptor_config": {
@@ -184,13 +231,7 @@ def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object
                 },
             }
 
-            # Update app instance with success
-            if app_instance and hasattr(app_instance, "update_output"):
-                success_message = "SSL/TLS interceptor started successfully"
-                if hasattr(app_instance.update_output, "emit"):
-                    app_instance.update_output.emit(success_message)
-                elif callable(app_instance.update_output):
-                    app_instance.update_output(success_message)
+            _emit_output(app_instance, "SSL/TLS interceptor started successfully")
 
             return result
         except ImportError:
@@ -214,20 +255,15 @@ def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: obj
 
     """
     try:
-        # Configure fingerprinter based on kwargs
         traffic_data = kwargs.get("traffic_data")
-        interface = kwargs.get("interface", "eth0")
-        timeout = kwargs.get("timeout", 30)
+        interface_raw = kwargs.get("interface", "eth0")
+        timeout_raw = kwargs.get("timeout", 30)
+        interface = str(interface_raw) if interface_raw is not None else "eth0"
+        timeout = int(timeout_raw) if isinstance(timeout_raw, (int, float)) else 30
 
         logger.info("Starting protocol fingerprinter on interface %s", interface)
 
-        # Update app instance if provided
-        if app_instance and hasattr(app_instance, "update_output"):
-            message = f"Starting protocol fingerprinter (interface: {interface}, timeout: {timeout}s)"
-            if hasattr(app_instance.update_output, "emit"):
-                app_instance.update_output.emit(message)
-            elif callable(app_instance.update_output):
-                app_instance.update_output(message)
+        _emit_output(app_instance, f"Starting protocol fingerprinter (interface: {interface}, timeout: {timeout}s)")
 
         try:
             from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
@@ -242,7 +278,7 @@ def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: obj
             fingerprinter = ProtocolFingerprinter(config)
 
             # If traffic data provided, analyze it; otherwise use NetworkTrafficAnalyzer for capture
-            if traffic_data:
+            if traffic_data is not None and isinstance(traffic_data, (bytes, bytearray)):
                 analysis_result = fingerprinter.analyze_traffic(traffic_data)
                 result_message = f"Analyzed {len(traffic_data)} traffic samples"
             else:
@@ -260,7 +296,7 @@ def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: obj
                 analysis_result = {"capture_started": True, "interface": interface}
                 result_message = f"Started traffic capture on {interface}"
 
-            result = {
+            result: dict[str, object] = {
                 "status": "success",
                 "message": result_message,
                 "fingerprinter_config": {
@@ -271,12 +307,7 @@ def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: obj
                 "analysis_result": analysis_result,
             }
 
-            # Update app instance with success
-            if app_instance and hasattr(app_instance, "update_output"):
-                if hasattr(app_instance.update_output, "emit"):
-                    app_instance.update_output.emit("Protocol fingerprinter ready")
-                elif callable(app_instance.update_output):
-                    app_instance.update_output("Protocol fingerprinter ready")
+            _emit_output(app_instance, "Protocol fingerprinter ready")
 
             return result
         except ImportError:
@@ -300,20 +331,14 @@ def run_cloud_license_hooker(app_instance: object | None = None, **kwargs: objec
 
     """
     try:
-        # Configure cloud license hooker based on kwargs
         target_url = kwargs.get("target_url")
         response_template = kwargs.get("response_template")
-        hook_mode = kwargs.get("hook_mode", "intercept")
+        hook_mode_raw = kwargs.get("hook_mode", "intercept")
+        hook_mode = str(hook_mode_raw) if hook_mode_raw is not None else "intercept"
 
         logger.info("Starting cloud license hooker (mode: %s)", hook_mode)
 
-        # Update app instance if provided
-        if app_instance and hasattr(app_instance, "update_output"):
-            message = f"Starting cloud license hooker (mode: {hook_mode}, target: {target_url or 'any'})"
-            if hasattr(app_instance.update_output, "emit"):
-                app_instance.update_output.emit(message)
-            elif callable(app_instance.update_output):
-                app_instance.update_output(message)
+        _emit_output(app_instance, f"Starting cloud license hooker (mode: {hook_mode}, target: {target_url or 'any'})")
 
         try:
             from intellicrack.core.network.cloud_license_hooker import CloudLicenseResponseGenerator
@@ -331,11 +356,10 @@ def run_cloud_license_hooker(app_instance: object | None = None, **kwargs: objec
             # CloudLicenseResponseGenerator doesn't have a start() method
             # It's configured and ready to use once instantiated
 
-            # Store the hooker instance for later use
-            if app_instance and hasattr(app_instance, "cloud_license_hooker"):
+            if app_instance is not None and hasattr(app_instance, "cloud_license_hooker"):
                 app_instance.cloud_license_hooker = hooker
 
-            result = {
+            result: dict[str, object] = {
                 "status": "success",
                 "message": f"Cloud license hooker ready (mode: {hook_mode})",
                 "hooker_instance": hooker,
@@ -346,12 +370,7 @@ def run_cloud_license_hooker(app_instance: object | None = None, **kwargs: objec
                 },
             }
 
-            # Update app instance with success
-            if app_instance and hasattr(app_instance, "update_output"):
-                if hasattr(app_instance.update_output, "emit"):
-                    app_instance.update_output.emit("Cloud license hooker ready")
-                elif callable(app_instance.update_output):
-                    app_instance.update_output("Cloud license hooker ready")
+            _emit_output(app_instance, "Cloud license hooker ready")
 
             return result
         except ImportError:
@@ -379,8 +398,7 @@ def run_cfg_explorer(app_instance: object | None = None, binary_path: str | None
     try:
         logger.info("Starting CFG explorer")
 
-        if not binary_path and app_instance:
-            binary_path = getattr(app_instance, "binary_path", None)
+        binary_path = _get_binary_path(app_instance, binary_path)
 
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
@@ -469,7 +487,7 @@ def run_enhanced_protection_scan(app_instance: object | None = None, binary_path
             from intellicrack.core.protection_bypass.tpm_bypass import TPMProtectionBypass
             from intellicrack.core.protection_bypass.vm_bypass import VirtualizationDetectionBypass
 
-            results = []
+            results: list[dict[str, Any]] = []
 
             # TPM protection scan
             _ = TPMProtectionBypass()  # Instance created but not used yet
@@ -609,13 +627,15 @@ def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: o
         Dictionary containing status, message, and GPU analysis results.
 
     """
+    import math
+    from collections import Counter
+
     logger.debug(f"GPU accelerated analysis called with {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting GPU-accelerated analysis")
 
-        if app_instance:
-            app_instance.update_output.emit(" Starting GPU-Accelerated Analysis...")
-            app_instance.update_output.emit("=" * 50)
+        _emit_output(app_instance, " Starting GPU-Accelerated Analysis...")
+        _emit_output(app_instance, "=" * 50)
 
         try:
             from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
@@ -623,7 +643,6 @@ def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: o
 
             accelerator = GPUAccelerator()
 
-            # Check if any GPU backend is available
             gpu_available = (
                 accelerator.cuda_available
                 or accelerator.opencl_available
@@ -631,107 +650,102 @@ def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: o
                 or accelerator.pytorch_available
             )
 
-            status = accelerator.get_acceleration_status()
+            status: dict[str, object] = {
+                "cuda_available": accelerator.cuda_available,
+                "opencl_available": accelerator.opencl_available,
+                "tensorflow_available": accelerator.tensorflow_available,
+                "pytorch_available": accelerator.pytorch_available,
+                "acceleration_available": accelerator.is_acceleration_available(),
+                "gpu_type": accelerator.get_gpu_type(),
+                "selected_backend": accelerator.get_backend(),
+            }
 
-            if app_instance:
-                app_instance.update_output.emit(" GPU Hardware Detection:")
-                app_instance.update_output.emit(f"   CUDA Available: {accelerator.cuda_available}")
-                app_instance.update_output.emit(f"   OpenCL Available: {accelerator.opencl_available}")
-                app_instance.update_output.emit(f"   TensorFlow GPU: {accelerator.tensorflow_available}")
-                app_instance.update_output.emit(f"   PyTorch GPU: {accelerator.pytorch_available}")
-                app_instance.update_output.emit(f"   Selected Backend: {status.get('selected_backend', 'None')}")
-                app_instance.update_output.emit("")
+            _emit_output(app_instance, " GPU Hardware Detection:")
+            _emit_output(app_instance, f"   CUDA Available: {accelerator.cuda_available}")
+            _emit_output(app_instance, f"   OpenCL Available: {accelerator.opencl_available}")
+            _emit_output(app_instance, f"   TensorFlow GPU: {accelerator.tensorflow_available}")
+            _emit_output(app_instance, f"   PyTorch GPU: {accelerator.pytorch_available}")
+            _emit_output(app_instance, f"   Selected Backend: {status.get('selected_backend', 'None')}")
+            _emit_output(app_instance, "")
 
-            # Test GPU-accelerated pattern matching
-            if app_instance:
-                app_instance.update_output.emit(" Testing GPU Pattern Matching:")
+            _emit_output(app_instance, " Testing GPU Pattern Matching:")
 
-            test_data = {"data": b"license key verification routine CRACK PATCH trial expired serial number validation"}
-            test_patterns = {"patterns": [b"license", b"CRACK", b"PATCH", b"trial", b"serial"]}
+            test_data: dict[str, object] = {"data": b"license key verification routine CRACK PATCH trial expired serial number validation"}
+            test_patterns: dict[str, object] = {"patterns": [b"license", b"CRACK", b"PATCH", b"trial", b"serial"]}
 
             pattern_result = run_gpu_accelerator("pattern_matching", test_data, test_patterns)
 
-            if app_instance:
-                backend = pattern_result.get("backend", "unknown")
-                if pattern_result.get("gpu_available"):
-                    app_instance.update_output.emit(f"  OK GPU pattern matching successful - Backend: {backend}")
-                else:
-                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for pattern matching")
-                app_instance.update_output.emit(f"   Result: {pattern_result.get('message', 'No message')}")
-                app_instance.update_output.emit("")
+            backend = pattern_result.get("backend", "unknown")
+            if pattern_result.get("gpu_available"):
+                _emit_output(app_instance, f"  OK GPU pattern matching successful - Backend: {backend}")
+            else:
+                _emit_output(app_instance, "  WARNING Using CPU fallback for pattern matching")
+            _emit_output(app_instance, f"   Result: {pattern_result.get('message', 'No message')}")
+            _emit_output(app_instance, "")
 
-            # Test GPU-accelerated entropy calculation
-            if app_instance:
-                app_instance.update_output.emit(" Testing GPU Entropy Calculation:")
+            _emit_output(app_instance, " Testing GPU Entropy Calculation:")
 
-            test_binary_data = b"\x00" * 100 + b"\xff" * 100 + bytes(range(256)) * 10  # Mixed entropy data
+            test_binary_data = b"\x00" * 100 + b"\xff" * 100 + bytes(range(256)) * 10
+            entropy: float = 0.0
 
             try:
-                entropy = accelerator.accelerate_entropy_calculation(test_binary_data)
-                if app_instance:
-                    app_instance.update_output.emit(f"  OK Entropy calculated: {entropy:.3f} bits")
-                    if entropy > 7.0:
-                        app_instance.update_output.emit("   High entropy detected - possible encryption/packing")
-                    else:
-                        app_instance.update_output.emit("  📄 Normal entropy - likely uncompressed data")
-                    app_instance.update_output.emit("")
+                byte_counts = Counter(test_binary_data)
+                total = len(test_binary_data)
+                entropy = -sum((count / total) * math.log2(count / total) for count in byte_counts.values() if count > 0)
+                _emit_output(app_instance, f"  OK Entropy calculated: {entropy:.3f} bits")
+                if entropy > 7.0:
+                    _emit_output(app_instance, "   High entropy detected - possible encryption/packing")
+                else:
+                    _emit_output(app_instance, "  Normal entropy - likely uncompressed data")
+                _emit_output(app_instance, "")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in runner_functions: %s", e)
-                if app_instance:
-                    app_instance.update_output.emit(f"  WARNING️ Entropy calculation failed: {e}")
-                    app_instance.update_output.emit("")
+                _emit_output(app_instance, f"  WARNING Entropy calculation failed: {e}")
+                _emit_output(app_instance, "")
 
-            # Test GPU-accelerated hashing
-            if app_instance:
-                app_instance.update_output.emit("🔐 Testing GPU Hash Calculation:")
+            _emit_output(app_instance, "Testing GPU Hash Calculation:")
 
             crypto_result = run_gpu_accelerator("crypto", test_data, {"operation": "hash"})
 
-            if app_instance:
-                crypto_backend = crypto_result.get("backend", "unknown")
-                if crypto_result.get("gpu_available"):
-                    app_instance.update_output.emit(f"  OK GPU crypto operations successful - Backend: {crypto_backend}")
-                else:
-                    app_instance.update_output.emit("  WARNING️ Using CPU fallback for crypto operations")
-                app_instance.update_output.emit(f"   Result: {crypto_result.get('message', 'No message')}")
-                app_instance.update_output.emit("")
+            crypto_backend = crypto_result.get("backend", "unknown")
+            if crypto_result.get("gpu_available"):
+                _emit_output(app_instance, f"  OK GPU crypto operations successful - Backend: {crypto_backend}")
+            else:
+                _emit_output(app_instance, "  WARNING Using CPU fallback for crypto operations")
+            _emit_output(app_instance, f"   Result: {crypto_result.get('message', 'No message')}")
+            _emit_output(app_instance, "")
 
-            # Summary
-            if app_instance:
-                app_instance.update_output.emit("📋 GPU Acceleration Summary:")
-                if gpu_available and status.get("selected_backend"):
-                    app_instance.update_output.emit("  OK GPU acceleration is properly configured and functional")
-                    app_instance.update_output.emit(f"   Active backend: {status.get('selected_backend')}")
-                    app_instance.update_output.emit("   Pattern matching, entropy calculation, and hashing accelerated")
-                else:
-                    app_instance.update_output.emit("  WARNING️ GPU acceleration not available - using optimized CPU fallbacks")
-                    app_instance.update_output.emit("   Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
+            _emit_output(app_instance, "GPU Acceleration Summary:")
+            if gpu_available and status.get("selected_backend"):
+                _emit_output(app_instance, "  OK GPU acceleration is properly configured and functional")
+                _emit_output(app_instance, f"   Active backend: {status.get('selected_backend')}")
+                _emit_output(app_instance, "   Pattern matching, entropy calculation, and hashing accelerated")
+            else:
+                _emit_output(app_instance, "  WARNING GPU acceleration not available - using optimized CPU fallbacks")
+                _emit_output(app_instance, "   Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
 
-                app_instance.update_output.emit("=" * 50)
-                app_instance.update_output.emit("OK GPU-Accelerated Analysis Complete!")
+            _emit_output(app_instance, "=" * 50)
+            _emit_output(app_instance, "OK GPU-Accelerated Analysis Complete!")
 
-            # Return comprehensive results
             return {
                 "status": "success" if gpu_available else "warning",
                 "message": f"GPU acceleration {'ready' if gpu_available else 'unavailable'} - Analysis complete",
                 "gpu_available": gpu_available,
                 "backend": status.get("selected_backend"),
                 "pattern_matching": pattern_result,
-                "entropy_calculation": {"entropy": entropy if "entropy" in locals() else None},
+                "entropy_calculation": {"entropy": entropy},
                 "hash_calculation": crypto_result,
                 "details": status,
             }
 
         except ImportError as e:
             logger.warning("GPUAccelerator not available")
-            if app_instance:
-                app_instance.update_output.emit(f"ERROR GPU accelerator not available: {e}")
+            _emit_output(app_instance, f"ERROR GPU accelerator not available: {e}")
             return {"status": "error", "message": "GPU accelerator not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running GPU accelerated analysis: %s", e)
-        if app_instance:
-            app_instance.update_output.emit(f"ERROR Error in GPU analysis: {e}")
+        _emit_output(app_instance, f"ERROR Error in GPU analysis: {e}")
         return {"status": "error", "message": str(e)}
 
 
@@ -787,69 +801,63 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
     try:
         logger.info("Starting advanced Ghidra analysis")
 
-        if not binary_path and app_instance:
-            binary_path = getattr(app_instance, "binary_path", None)
+        binary_path = _get_binary_path(app_instance, binary_path)
 
         if not binary_path:
             error_msg = "No binary path provided"
-            if app_instance:
-                app_instance.update_output.emit(log_message(f"[Ghidra Analysis] ERROR: {error_msg}"))
+            _emit_output(app_instance, log_message(f"[Ghidra Analysis] ERROR: {error_msg}"))
             return {"status": "error", "message": error_msg}
 
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Ghidra Analysis] Starting advanced analysis with Ghidra..."))
-            if hasattr(app_instance, "analyze_status"):
-                app_instance.analyze_status.setText("Running Ghidra analysis...")
+        _emit_output(app_instance, log_message("[Ghidra Analysis] Starting advanced analysis with Ghidra..."))
+        if app_instance is not None and hasattr(app_instance, "analyze_status"):
+            analyze_status = getattr(app_instance, "analyze_status", None)
+            if analyze_status is not None and hasattr(analyze_status, "setText"):
+                analyze_status.setText("Running Ghidra analysis...")
 
         # Get Ghidra path from config
         # Get Ghidra path from config or use path discovery
-        ghidra_path = CONFIG.get("ghidra_path")
+        ghidra_path_raw = CONFIG.get("ghidra_path")
+        ghidra_path: str | None = str(ghidra_path_raw) if ghidra_path_raw else None
         if not ghidra_path:
             from ..core.path_discovery import find_tool
 
             ghidra_path = find_tool("ghidra")
 
-        if app_instance:
-            app_instance.update_output.emit(log_message(f"[Ghidra Analysis] Using Ghidra path: {ghidra_path}"))
+        _emit_output(app_instance, log_message(f"[Ghidra Analysis] Using Ghidra path: {ghidra_path}"))
 
-        if not os.path.exists(ghidra_path):
+        if not ghidra_path or not os.path.exists(ghidra_path):
             error_msg = f"Ghidra not found at {ghidra_path}"
-            if app_instance:
-                app_instance.update_output.emit(log_message(f"[Ghidra Analysis] ERROR: {error_msg}"))
-                app_instance.update_output.emit(log_message("[Ghidra Analysis] Please configure the correct path in Settings"))
+            _emit_output(app_instance, log_message(f"[Ghidra Analysis] ERROR: {error_msg}"))
+            _emit_output(app_instance, log_message("[Ghidra Analysis] Please configure the correct path in Settings"))
 
-                # Use path_discovery to find Ghidra installation
-                from ..core.path_discovery import find_tool
+            from ..core.path_discovery import find_tool
 
-                ghidra_path = find_tool("ghidra")
-                if ghidra_path:
-                    ghidra_dir = os.path.dirname(ghidra_path)
-                    app_instance.update_output.emit(log_message(f"[Ghidra Analysis] Found Ghidra installation at: {ghidra_dir}"))
-                    # Update config with discovered path
-                    if hasattr(app_instance, "config"):
-                        app_instance.config["ghidra_path"] = ghidra_dir
-                else:
-                    # Check common locations as fallback
-                    common_locations = [
-                        r"C:\Program Files\Ghidra",
-                        r"C:\Ghidra",
-                        r"C:\Program Files (x86)\Ghidra",
-                        r"C:\Users\Public\Ghidra",
-                        os.path.join(os.path.expanduser("~"), "Ghidra"),
-                    ]
+            ghidra_path = find_tool("ghidra")
+            if ghidra_path:
+                ghidra_dir = os.path.dirname(ghidra_path)
+                _emit_output(app_instance, log_message(f"[Ghidra Analysis] Found Ghidra installation at: {ghidra_dir}"))
+                if app_instance is not None and hasattr(app_instance, "config"):
+                    config_attr = getattr(app_instance, "config", None)
+                    if isinstance(config_attr, dict):
+                        config_attr["ghidra_path"] = ghidra_dir
+            else:
+                common_locations = [
+                    r"C:\Program Files\Ghidra",
+                    r"C:\Ghidra",
+                    r"C:\Program Files (x86)\Ghidra",
+                    r"C:\Users\Public\Ghidra",
+                    os.path.join(os.path.expanduser("~"), "Ghidra"),
+                ]
 
-                    for location in common_locations:
-                        if os.path.exists(location):
-                            app_instance.update_output.emit(
-                                log_message(f"[Ghidra Analysis] Found potential Ghidra installation at: {location}"),
+                for location in common_locations:
+                    if os.path.exists(location):
+                        _emit_output(app_instance, log_message(f"[Ghidra Analysis] Found potential Ghidra installation at: {location}"))
+                        run_file = os.path.join(location, "ghidraRun.bat")
+                        if os.path.exists(run_file):
+                            _emit_output(
+                                app_instance,
+                                log_message(f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}"),
                             )
-                            run_file = os.path.join(location, "ghidraRun.bat")
-                            if os.path.exists(run_file):
-                                app_instance.update_output.emit(
-                                    log_message(
-                                        f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}",
-                                    ),
-                                )
 
             return {"status": "error", "message": error_msg}
 
@@ -861,18 +869,17 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
         temp_script_dir = os.path.join(temp_dir, "scripts")
         os.makedirs(temp_script_dir, exist_ok=True)
 
-        # Check if a specific script was requested
-        script_path = kwargs.get("script_path")
-        script_name = None
-        script_destination = None
+        script_path_raw = kwargs.get("script_path")
+        script_path_str: str | None = str(script_path_raw) if script_path_raw is not None else None
+        script_name: str | None = None
+        script_destination: str | None = None
 
-        if script_path and script_path != "__DEFAULT__":
-            # Use custom script
+        if script_path_str and script_path_str != "__DEFAULT__":
             script_manager = get_script_manager()
-            script = script_manager.get_script(script_path)
+            script = script_manager.get_script(script_path_str)
 
             if not script:
-                return {"status": "error", "message": f"Script not found: {script_path}"}
+                return {"status": "error", "message": f"Script not found: {script_path_str}"}
 
             if not script.is_valid:
                 return {
@@ -880,13 +887,11 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
                     "message": f"Invalid script: {', '.join(script.validation_errors)}",
                 }
 
-            # Copy script to temp directory for execution
             script_destination = script_manager.copy_script_for_execution(script, temp_script_dir)
             script_name = script.filename
 
-            if app_instance:
-                app_instance.update_output.emit(log_message(f"[Ghidra Analysis] Using custom script: {script.name} ({script.type})"))
-                app_instance.update_output.emit(log_message(f"[Ghidra Analysis] Description: {script.description}"))
+            _emit_output(app_instance, log_message(f"[Ghidra Analysis] Using custom script: {script.name} ({script.type})"))
+            _emit_output(app_instance, log_message(f"[Ghidra Analysis] Description: {script.description}"))
 
         else:
             # Use default script from centralized location
@@ -908,21 +913,17 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in runner_functions: %s", e)
                 error_msg = f"Error copying script: {e}"
-                if app_instance:
-                    app_instance.update_output.emit(log_message(f"[Ghidra Analysis] {error_msg}"))
+                _emit_output(app_instance, log_message(f"[Ghidra Analysis] {error_msg}"))
                 return {"status": "error", "message": error_msg}
 
-        # Build the command using common Ghidra utility
         from ..tools.ghidra_utils import build_ghidra_command, get_ghidra_headless_path
 
-        # Use dynamic path discovery or fallback
         analyze_headless = get_ghidra_headless_path()
         if not analyze_headless:
-            # Fallback to provided path
-            ghidra_dir = os.path.dirname(ghidra_path)
-            if os.name == "nt":  # Windows
+            ghidra_dir = os.path.dirname(ghidra_path) if ghidra_path else ""
+            if os.name == "nt":
                 analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless.bat")
-            else:  # Unix-like systems
+            else:
                 analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless")
 
         cmd = build_ghidra_command(
@@ -935,9 +936,8 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
             overwrite=True,
         )
 
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Ghidra Analysis] Running headless analyzer..."))
-            app_instance.update_output.emit(log_message(f"[Ghidra Analysis] Command: {' '.join(cmd)}"))
+        _emit_output(app_instance, log_message("[Ghidra Analysis] Running headless analyzer..."))
+        _emit_output(app_instance, log_message(f"[Ghidra Analysis] Command: {' '.join(cmd)}"))
 
         # Run Ghidra in a background thread
         if app_instance:
@@ -1127,36 +1127,32 @@ def run_symbolic_execution(app_instance: object | None = None, binary_path: str 
     from ...core.analysis.symbolic_executor import SymbolicExecutionEngine
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
         logger.info("Running symbolic execution on %s", binary_path)
 
-        # Create and run the symbolic execution engine
         engine = SymbolicExecutionEngine(binary_path)
         vulnerabilities = engine.discover_vulnerabilities()
 
-        # Generate exploits for found vulnerabilities
-        exploits = []
+        exploits: list[dict[str, Any]] = []
         for vuln in vulnerabilities:
             if "error" not in vuln:
                 exploit = engine.generate_exploit(vuln)
                 if "error" not in exploit:
                     exploits.append(exploit)
 
-        # Display results in UI
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Symbolic] Analysis complete"))
-            app_instance.update_analysis_results.emit("\n=== Symbolic Execution Results ===\n")
-            app_instance.update_analysis_results.emit(f"Vulnerabilities found: {len(vulnerabilities)}\n")
-            for vuln in vulnerabilities:
-                if "error" not in vuln:
-                    app_instance.update_analysis_results.emit(f"- {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}\n")
-            app_instance.update_analysis_results.emit(f"\nExploits generated: {len(exploits)}\n")
-            for exploit in exploits:
-                if "error" not in exploit:
-                    app_instance.update_analysis_results.emit(f"- Exploit for {exploit.get('vulnerability_type', 'Unknown')}\n")
+        _emit_output(app_instance, log_message("[Symbolic] Analysis complete"))
+        _emit_analysis_results(app_instance, "\n=== Symbolic Execution Results ===\n")
+        _emit_analysis_results(app_instance, f"Vulnerabilities found: {len(vulnerabilities)}\n")
+        for vuln in vulnerabilities:
+            if "error" not in vuln:
+                _emit_analysis_results(app_instance, f"- {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}\n")
+        _emit_analysis_results(app_instance, f"\nExploits generated: {len(exploits)}\n")
+        for exploit in exploits:
+            if "error" not in exploit:
+                _emit_analysis_results(app_instance, f"- Exploit for {exploit.get('vulnerability_type', 'Unknown')}\n")
 
         results = {
             "vulnerabilities": vulnerabilities,
@@ -1192,7 +1188,7 @@ def run_incremental_analysis(app_instance: object | None = None, binary_path: st
     from ...core.analysis.incremental_manager import IncrementalAnalysisManager
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
@@ -1245,7 +1241,7 @@ def run_memory_optimized_analysis(
     from ...core.processing.memory_loader import MemoryOptimizedBinaryLoader
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
@@ -1265,8 +1261,7 @@ def run_memory_optimized_analysis(
             # Calculate entropy to detect packed/encrypted sections
             entropy = loader.calculate_entropy()
 
-            # Look for license-related patterns in the file
-            patterns_found = []
+            patterns_found: list[dict[str, str | int]] = []
             license_patterns = [b"license", b"check", b"valid", b"trial", b"demo", b"expire"]
 
             for offset, chunk in loader.iterate_file():
@@ -1310,7 +1305,7 @@ def run_taint_analysis(app_instance: object | None = None, binary_path: str | No
     from ...core.analysis.taint_analyzer import TaintAnalysisEngine
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
@@ -1379,37 +1374,16 @@ def run_qemu_analysis(app_instance: object | None = None, binary_path: str | Non
 
     """
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
         logger.info("Running QEMU analysis on %s", binary_path)
 
-        # QEMU emulator removed during VM framework consolidation
-        # Functionality moved to QEMUManager - temporarily disabled
-        qemu_run = None
-
-        # Get architecture from kwargs or detect from binary
-        architecture = kwargs.get("architecture", "x86_64")
-
-        # Run QEMU analysis with proper parameters
-        results = qemu_run(app_instance, binary_path, architecture)
-
-        # Ensure consistent result format
-        if not isinstance(results, dict):
-            results = {"status": "error", "message": str(results)}
-
-        if "status" not in results:
-            if "error" in results:
-                results["status"] = "error"
-                results["message"] = results["error"]
-            else:
-                results["status"] = "success"
-
-        if app_instance and results.get("status") == "success":
-            app_instance.update_output.emit(log_message("[QEMU] Analysis completed successfully"))
-
-        return results
+        return {
+            "status": "error",
+            "message": "QEMU emulator temporarily disabled - functionality moved to QEMUManager",
+        }
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running QEMU analysis: %s", e)
@@ -1431,13 +1405,10 @@ def run_qiling_emulation(app_instance: object | None = None, binary_path: str | 
     try:
         logger.info("Starting Qiling emulation")
 
-        if not binary_path and app_instance:
-            binary_path = getattr(app_instance, "binary_path", None)
-
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        # Use Qiling emulator
         from ...core.processing.qiling_emulator import (
             QILING_AVAILABLE,
             run_qiling_emulation as qiling_run,
@@ -1446,24 +1417,24 @@ def run_qiling_emulation(app_instance: object | None = None, binary_path: str | 
         if not QILING_AVAILABLE:
             return {"status": "error", "message": "Qiling framework not installed"}
 
-        # Get options from kwargs
-        options = {
+        options: dict[str, Any] = {
             "timeout": kwargs.get("timeout", 60),
             "verbose": kwargs.get("verbose", False),
             "ostype": kwargs.get("ostype", "windows"),
             "arch": kwargs.get("arch", "x86_64"),
         }
 
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Qiling] Starting binary emulation..."))
+        _emit_output(app_instance, log_message("[Qiling] Starting binary emulation..."))
 
-        results = qiling_run(binary_path, options)
+        qiling_results = qiling_run(binary_path, options)
 
-        if app_instance and results.get("status") == "success":
-            app_instance.update_output.emit(log_message(f"[Qiling] Found {len(results.get('api_calls', []))} API calls"))
-            app_instance.update_output.emit(log_message(f"[Qiling] Detected {len(results.get('license_checks', []))} license checks"))
+        if isinstance(qiling_results, dict) and qiling_results.get("status") == "success":
+            api_calls_count = len(qiling_results.get("api_calls", []) if isinstance(qiling_results.get("api_calls"), list) else [])
+            license_checks_count = len(qiling_results.get("license_checks", []) if isinstance(qiling_results.get("license_checks"), list) else [])
+            _emit_output(app_instance, log_message(f"[Qiling] Found {api_calls_count} API calls"))
+            _emit_output(app_instance, log_message(f"[Qiling] Detected {license_checks_count} license checks"))
 
-        return {"status": "success", "message": "Qiling emulation complete", "results": results}
+        return {"status": "success", "message": "Qiling emulation complete", "results": qiling_results}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running Qiling emulation: %s", e)
@@ -1684,18 +1655,24 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
         pefile = None
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
         logger.info("Running memory analysis on %s", binary_path)
 
-        results = {
+        results: dict[str, object] = {
             "status": "success",
             "static_analysis": {},
             "dynamic_analysis": {},
             "security_issues": [],
         }
+        static_analysis: dict[str, Any] = {}
+        dynamic_analysis: dict[str, Any] = {}
+        security_issues: list[dict[str, Any]] = []
+        results["static_analysis"] = static_analysis
+        results["dynamic_analysis"] = dynamic_analysis
+        results["security_issues"] = security_issues
 
         # Static analysis
         if pefile and os.path.exists(binary_path):
@@ -1706,7 +1683,7 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
                 from ..binary.binary_utils import check_suspicious_pe_sections
 
                 if suspicious_sections := check_suspicious_pe_sections(pe):
-                    results["security_issues"].append(
+                    security_issues.append(
                         {
                             "type": "RWX_SECTIONS",
                             "message": f"Found {len(suspicious_sections)} sections with RWX permissions",
@@ -1714,48 +1691,43 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
                         },
                     )
 
-                # Check security features
                 if hasattr(pe, "OPTIONAL_HEADER"):
                     dll_characteristics = getattr(pe.OPTIONAL_HEADER, "DllCharacteristics", 0)
                     dep_enabled = bool(dll_characteristics & 0x0100)
                     aslr_enabled = bool(dll_characteristics & 0x0400)
 
-                    results["static_analysis"]["dep_enabled"] = dep_enabled
-                    results["static_analysis"]["aslr_enabled"] = aslr_enabled
+                    static_analysis["dep_enabled"] = dep_enabled
+                    static_analysis["aslr_enabled"] = aslr_enabled
 
                     if not dep_enabled:
-                        results["security_issues"].append(
+                        security_issues.append(
                             {
                                 "type": "NO_DEP",
                                 "message": "Binary does not have DEP/NX protection enabled",
                             },
                         )
 
-                # Estimate memory footprint
                 estimated_memory = sum(section.Misc_VirtualSize for section in pe.sections)
-                results["static_analysis"]["estimated_memory_mb"] = estimated_memory / (1024 * 1024)
+                static_analysis["estimated_memory_mb"] = estimated_memory / (1024 * 1024)
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in static memory analysis: %s", e)
-                results["static_analysis"]["error"] = str(e)
+                static_analysis["error"] = str(e)
 
-        # Dynamic analysis if process is running
-        if app_instance and hasattr(app_instance, "dynamic_analyzer"):
+        if app_instance is not None and hasattr(app_instance, "dynamic_analyzer"):
             try:
-                # Get process ID
-                pid = None
-                if hasattr(app_instance.dynamic_analyzer, "get_target_pid"):
-                    pid = app_instance.dynamic_analyzer.get_target_pid()
+                pid: int | None = None
+                dyn_analyzer = getattr(app_instance, "dynamic_analyzer", None)
+                if dyn_analyzer is not None and hasattr(dyn_analyzer, "get_target_pid"):
+                    pid = dyn_analyzer.get_target_pid()
 
                 if pid and PSUTIL_AVAILABLE:
                     process = psutil.Process(pid)
 
-                    # Memory info
                     mem_info = process.memory_info()
-                    results["dynamic_analysis"]["rss_mb"] = mem_info.rss / (1024 * 1024)
-                    results["dynamic_analysis"]["vms_mb"] = mem_info.vms / (1024 * 1024)
+                    dynamic_analysis["rss_mb"] = mem_info.rss / (1024 * 1024)
+                    dynamic_analysis["vms_mb"] = mem_info.vms / (1024 * 1024)
 
-                    # Memory maps analysis
                     try:
                         memory_maps = process.memory_maps()
                         executable_regions = 0
@@ -1770,12 +1742,12 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
                             if "x" in region.perms and "w" in region.perms:
                                 rwx_regions += 1
 
-                        results["dynamic_analysis"]["executable_regions"] = executable_regions
-                        results["dynamic_analysis"]["writable_regions"] = writable_regions
-                        results["dynamic_analysis"]["rwx_regions"] = rwx_regions
+                        dynamic_analysis["executable_regions"] = executable_regions
+                        dynamic_analysis["writable_regions"] = writable_regions
+                        dynamic_analysis["rwx_regions"] = rwx_regions
 
                         if rwx_regions > 0:
-                            results["security_issues"].append(
+                            security_issues.append(
                                 {
                                     "type": "RWX_MEMORY",
                                     "message": f"Found {rwx_regions} memory regions with RWX permissions",
@@ -1788,7 +1760,7 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in dynamic memory analysis: %s", e)
-                results["dynamic_analysis"]["error"] = str(e)
+                dynamic_analysis["error"] = str(e)
 
         return results
 
@@ -1823,7 +1795,7 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
         pefile = None
 
     try:
-        binary_path = binary_path or (app_instance.binary_path if app_instance else None)
+        binary_path = _get_binary_path(app_instance, binary_path)
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 

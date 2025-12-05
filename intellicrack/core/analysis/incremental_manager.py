@@ -32,7 +32,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+from intellicrack.core.config_manager import get_config
 from intellicrack.utils.logger import logger
+
+
+_config = get_config()
 
 
 """
@@ -187,8 +191,8 @@ class IncrementalAnalysisManager:
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.IncrementalAnalysis")
 
-        # Set default configuration
-        self.cache_dir = Path(self.config.get("cache_dir", "./cache/incremental"))
+        default_cache = _config.get_cache_dir() / "incremental"
+        self.cache_dir = Path(self.config.get("cache_dir", str(default_cache)))
         self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB chunks
         self.max_cache_size = self.config.get("max_cache_size", 100)  # 100 files
         self.enable_compression = self.config.get("enable_compression", True)

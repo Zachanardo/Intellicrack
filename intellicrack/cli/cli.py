@@ -24,7 +24,12 @@ import sys
 import threading
 import time
 import types
-from typing import NoReturn
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, NoReturn, TypeVar, cast
+
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
@@ -59,20 +64,31 @@ except ImportError as e:
     MODERN_CONFIG_AVAILABLE = False
 
 # Basic imports (with fallbacks for missing components)
-try:
-    from intellicrack.core.exploitation import Architecture, PayloadEngine, PayloadTemplates, PayloadType
-except ImportError as e:
-    logger.error("Import error in cli: %s", e)
-    PayloadEngine = None
-    PayloadTemplates = None
-    Architecture = None
-    PayloadType = None
+PayloadEngine: Any = None
+PayloadTemplates: Any = None
+Architecture: Any = None
+PayloadType: Any = None
+PayloadResultHandler: Any = None
 
 try:
-    from intellicrack.utils.exploitation.payload_result_handler import PayloadResultHandler
+    from intellicrack.core.exploitation import Architecture as _Architecture
+    Architecture = _Architecture
+except ImportError as e:
+    logger.debug("Architecture import not available: %s", e)
+
+try:
+    from intellicrack.core.exploitation.bypass_engine import BypassEngine
+    PayloadEngine = BypassEngine
+    PayloadTemplates = None
+    PayloadType = None
+except ImportError as e:
+    logger.debug("BypassEngine import not available: %s", e)
+
+try:
+    from intellicrack.utils.exploitation.payload_result_handler import PayloadResultHandler as _PayloadResultHandler
+    PayloadResultHandler = _PayloadResultHandler
 except ImportError as e:
     logger.error("Import error in cli: %s", e)
-    PayloadResultHandler = None
 
 
 # Import licensing protection analysis modules
@@ -98,9 +114,43 @@ except ImportError as e:
 # Initialize logger before it's used
 logger = logging.getLogger("IntellicrackLogger.CLI")
 
-# Since advanced modules are available, no need for fallback classes
+
+def _typed_decorator[F: Callable[..., Any]](func: F) -> F:
+    """Preserve function type through untyped click decorators."""
+    return func
 
 
+def typed_group(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+    """Typed wrapper for click.group()."""
+    def decorator(f: F) -> F:
+        return cast("F", click.group(*args, **kwargs)(f))
+    return decorator
+
+
+def typed_command(group: Any, name: str | None = None, **kwargs: Any) -> Callable[[F], F]:
+    """Typed wrapper for group.command()."""
+    def decorator(f: F) -> F:
+        return cast("F", group.command(name, **kwargs)(f))
+    return decorator
+
+
+def typed_option(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+    """Typed wrapper for click.option()."""
+    def decorator(f: F) -> F:
+        wrapped: F = click.option(*args, **kwargs)(f)
+        return wrapped
+    return decorator
+
+
+def typed_argument(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+    """Typed wrapper for click.argument()."""
+    def decorator(f: F) -> F:
+        wrapped: F = click.argument(*args, **kwargs)(f)
+        return wrapped
+    return decorator
+
+
+@_typed_decorator
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output", envvar="INTELLICRACK_VERBOSE")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET")
@@ -123,6 +173,7 @@ def cli(verbose: bool, quiet: bool) -> None:
             logging.getLogger(__name__).warning("Failed to load configuration: %s", e)
 
 
+@_typed_decorator
 @cli.command("scan")
 @click.argument("binary_path")
 @click.option("--vulns", is_flag=True, help="Perform vulnerability scan")
@@ -135,9 +186,10 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool) -> No
 
         if vulns:
             click.echo("Performing vulnerability scan...")
-            from intellicrack.core.analysis.vulnerability_engine import run_vulnerability_scan
+            from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
-            result = run_vulnerability_scan(binary_path)
+            vulnerabilities_list = AdvancedVulnerabilityEngine.scan_binary(binary_path)
+            result: dict[str, Any] = {"success": True, "vulnerabilities": vulnerabilities_list}
 
             if result.get("success"):
                 vulnerabilities = result.get("vulnerabilities", [])
@@ -199,6 +251,7 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool) -> No
         sys.exit(1)
 
 
+@_typed_decorator
 @cli.command("strings")
 @click.argument("binary_path")
 @click.option("--min-length", "-n", default=4, help="Minimum string length")
@@ -220,8 +273,8 @@ def strings(binary_path: str, min_length: int, encoding: str, output: str | None
 
         cli_analyzer = AnalysisCLI()
 
-        if strings_result := cli_analyzer._extract_strings(binary_path, min_length=min_length, encoding=encoding):
-            extracted_strings = strings_result.get("strings", [])
+        extracted_strings = cli_analyzer._extract_strings(binary_path, min_length=min_length)
+        if extracted_strings:
 
             # Apply filter if provided
             if filter_pattern:
@@ -251,11 +304,13 @@ def strings(binary_path: str, min_length: int, encoding: str, output: str | None
         sys.exit(1)
 
 
+@_typed_decorator
 @cli.group()
 def payload() -> None:
     """Payload generation commands."""
 
 
+@_typed_decorator
 @payload.command("generate")
 @click.option(
     "--type",
@@ -295,7 +350,7 @@ def generate(
     architecture: str,
     lhost: str | None,
     lport: int | None,
-    encoding: tuple,
+    encoding: tuple[str, ...],
     output: str | None,
     output_format: str,
 ) -> None:
@@ -314,7 +369,7 @@ def generate(
             "process_info": {},
         }
 
-        options = {
+        options: dict[str, Any] = {
             "output_format": output_format,
         }
 
@@ -378,6 +433,7 @@ def generate(
         sys.exit(1)
 
 
+@_typed_decorator
 @payload.command()
 @click.option(
     "--category",
@@ -417,6 +473,7 @@ def list_templates(category: str | None) -> None:
         sys.exit(1)
 
 
+@_typed_decorator
 @payload.command()
 @click.argument("category")
 @click.argument("template_name")
@@ -430,7 +487,7 @@ def list_templates(category: str | None) -> None:
 )
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
-def from_template(category: str, template_name: str, architecture: str, param: tuple, output: str | None) -> None:
+def from_template(category: str, template_name: str, architecture: str, param: tuple[str, ...], output: str | None) -> None:
     """Generate payload from template."""
     try:
         engine = PayloadEngine()
@@ -508,6 +565,7 @@ def from_template(category: str, template_name: str, architecture: str, param: t
         sys.exit(1)
 
 
+@_typed_decorator
 @cli.command()
 @click.argument("target")
 @click.option(
@@ -526,7 +584,7 @@ def exploit_target(target: str, exploit_type: str, payload_data: str | None, out
         click.echo(f"Exploiting target: {target}")
         click.echo(f"Exploit type: {exploit_type}")
 
-        result = exploit(target, exploit_type, payload_data)
+        result = exploit(target, exploit_type, payload_data or "")
 
         if result["success"]:
             click.echo("Exploitation successful!")
@@ -602,7 +660,9 @@ def _handle_gpu_acceleration(binary_path: str) -> None:
     try:
         from intellicrack.utils.gpu_benchmark import run_gpu_accelerated_analysis
 
-        gpu_result = run_gpu_accelerated_analysis(binary_path)
+        with open(binary_path, "rb") as f:
+            binary_data = f.read()
+        gpu_result = run_gpu_accelerated_analysis(None, binary_data)
         if gpu_result.get("success"):
             click.echo(f"GPU analysis completed in {gpu_result.get('execution_time', 0):.2f}s")
         else:
@@ -632,33 +692,37 @@ def _handle_symbolic_execution(binary_path: str, symbolic_execution: bool, conco
         from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 
         engine = SymbolicExecutionEngine(binary_path)
-        exec_result = engine.analyze(binary_path, mode=execution_type)
-        if exec_result.get("success"):
-            click.echo(f"{execution_type.capitalize()} execution completed")
+        vulnerabilities = engine.discover_vulnerabilities()
+        if vulnerabilities:
+            click.echo(f"{execution_type.capitalize()} execution completed - found {len(vulnerabilities)} issues")
+        else:
+            click.echo(f"{execution_type.capitalize()} execution completed - no issues found")
     except ImportError:
         click.echo(f"{execution_type.capitalize()} execution engine not available")
 
 
-def _perform_analysis(mode: str, binary_path: str, output: str | None, verbose: bool, no_ai: bool, deep: bool) -> dict:
+def _perform_analysis(mode: str, binary_path: str, output: str | None, verbose: bool, no_ai: bool, deep: bool) -> dict[str, Any]:
     """Perform the main analysis based on mode."""
     if mode == "comprehensive":
         from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
 
-        return run_comprehensive_analysis(binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai)
+        result = run_comprehensive_analysis(binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai)
+        return dict(result) if result else {}
     if mode == "vulnerability":
         from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
-        engine = AdvancedVulnerabilityEngine()
-        return engine.run_vulnerability_scan(binary_path)
+        vulnerabilities = AdvancedVulnerabilityEngine.scan_binary(binary_path)
+        return {"success": True, "vulnerabilities": vulnerabilities}
     if mode == "protection":
         from intellicrack.core.protection_analyzer import ProtectionAnalyzer
 
         analyzer = ProtectionAnalyzer()
-        return analyzer.analyze_protections(binary_path)
-    return analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+        return analyzer.analyze(binary_path)
+    result = analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+    return dict(result) if result else {}
 
 
-def _display_basic_results(result: dict) -> None:
+def _display_basic_results(result: dict[str, Any]) -> None:
     """Display basic analysis results."""
     click.echo(f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
     click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
@@ -683,7 +747,7 @@ def _display_basic_results(result: dict) -> None:
             click.echo(f"  - {vuln}")
 
 
-def _display_ai_integration_results(result: dict) -> None:
+def _display_ai_integration_results(result: dict[str, Any]) -> None:
     """Display AI integration results."""
     if "ai_integration" not in result:
         return
@@ -722,6 +786,7 @@ def _display_ai_integration_results(result: dict) -> None:
         click.echo(f"\nWARNING️  AI integration failed: {ai_error}")
 
 
+@_typed_decorator
 @cli.command("analyze")
 @click.argument("binary_path")
 @click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
@@ -764,8 +829,9 @@ def analyze(
             """Update progress for current analysis step."""
             if step in progress_manager.task_ids:
                 task_id = progress_manager.task_ids[step]
-                if progress_manager.progress:
-                    progress_manager.progress.update(
+                prog = getattr(progress_manager, "progress", None)
+                if prog is not None:
+                    prog.update(
                         task_id,
                         completed=int(progress * 100),
                         description=f"{step}: {message}" if message else step,
@@ -832,6 +898,7 @@ def analyze(
         sys.exit(1)
 
 
+@_typed_decorator
 @cli.command("basic-analyze")
 @click.argument("binary_path")
 @click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
@@ -933,6 +1000,7 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
         sys.exit(1)
 
 
+@_typed_decorator
 @cli.command()
 @click.argument("binary_path")
 @click.option("--offset", "-o", type=str, help="Patch offset (hex)")
@@ -1007,6 +1075,7 @@ def patch(
 # =============================================================================
 
 
+@_typed_decorator
 @cli.group()
 def advanced() -> None:
     """Advanced exploitation commands."""
@@ -1015,11 +1084,13 @@ def advanced() -> None:
         sys.exit(1)
 
 
+@_typed_decorator
 @advanced.group()
 def advanced_payload() -> None:
     """Advanced payload generation commands."""
 
 
+@_typed_decorator
 @advanced_payload.command()
 @click.option(
     "--type",
@@ -1091,11 +1162,13 @@ def advanced_generate(
         sys.exit(1)
 
 
+@_typed_decorator
 @advanced.group()
 def research() -> None:
     """Vulnerability research commands."""
 
 
+@_typed_decorator
 @research.command()
 @click.argument("target_path")
 @click.option(
@@ -1124,6 +1197,8 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             click.echo(f"Target file not found: {target_path}", err=True)
             sys.exit(1)
 
+        result: dict[str, Any] | None = {}
+
         if use_ai:
             # Use AI-guided analysis
             ai_researcher = LicensingProtectionAnalyzer()
@@ -1132,34 +1207,34 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             # Set timeout for the analysis
             import platform
             import signal
-
             try:
-                if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
+                alarm_func = getattr(signal, "alarm", None)
+                sigalrm = getattr(signal, "SIGALRM", None)
+                if platform.system() != "Windows" and sigalrm is not None and alarm_func is not None:
 
                     def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
                         logger.warning("AI analysis timeout handler: signal %s, frame %s", signum, frame)
                         raise TimeoutError(f"Analysis timed out after {timeout} seconds")
 
-                    signal.signal(signal.SIGALRM, timeout_handler)
-                    signal.alarm(timeout)
+                    signal.signal(sigalrm, timeout_handler)
+                    alarm_func(timeout)
 
                     try:
                         result = ai_researcher.analyze_licensing_protection(target_path)
                     finally:
-                        if hasattr(signal, "alarm"):
-                            signal.alarm(0)  # Cancel the alarm
+                        alarm_func(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
                     result = ai_researcher.analyze_licensing_protection(target_path)
             except (AttributeError, OSError) as e:
                 logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support - use threading for timeout
-                exception_holder = [None]
+                exception_holder: list[BaseException | None] = [None]
                 result = None
 
                 def run_analysis() -> None:
+                    nonlocal result
                     try:
-                        nonlocal result
                         result = ai_researcher.analyze_licensing_protection(target_path)
                     except (
                         OSError,
@@ -1171,9 +1246,9 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         TypeError,
                         ConnectionError,
                         TimeoutError,
-                    ) as e:
-                        logger.error("Error in cli: %s", e)
-                        exception_holder[0] = e
+                    ) as exc:
+                        logger.error("Error in cli: %s", exc)
+                        exception_holder[0] = exc
 
                 thread = threading.Thread(target=run_analysis)
                 thread.daemon = True
@@ -1187,11 +1262,9 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         "error": f"Analysis timed out after {timeout} seconds",
                     }
                 elif exception_holder[0] is not None:
-                    exception_to_raise = exception_holder[0]
-                    if exception_to_raise is not None:
-                        raise RuntimeError("Analysis failed in thread") from exception_to_raise
+                    raise RuntimeError("Analysis failed in thread") from exception_holder[0]
 
-            if result["success"]:
+            if result is not None and result["success"]:
                 click.echo("OK AI analysis completed!")
 
                 # Show risk assessment
@@ -1229,7 +1302,9 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             import signal
 
             try:
-                if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
+                alarm_func = getattr(signal, "alarm", None)
+                sigalrm = getattr(signal, "SIGALRM", None)
+                if platform.system() != "Windows" and sigalrm is not None and alarm_func is not None:
 
                     def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
                         logger.warning(
@@ -1239,23 +1314,22 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         )
                         raise TimeoutError(f"Analysis timed out after {timeout} seconds")
 
-                    signal.signal(signal.SIGALRM, timeout_handler)
-                    signal.alarm(timeout)
+                    signal.signal(sigalrm, timeout_handler)
+                    alarm_func(timeout)
 
                     try:
-                        result = analyzer.analyze_binary(target_path=target_path)
+                        result = analyzer.analyze(target_path)
                     finally:
-                        if hasattr(signal, "alarm"):
-                            signal.alarm(0)  # Cancel the alarm
+                        alarm_func(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
-                    result = analyzer.analyze_binary(target_path=target_path)
+                    result = analyzer.analyze(target_path)
             except (AttributeError, OSError) as e:
                 logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support
-                result = analyzer.analyze_binary(target_path=target_path)
+                result = analyzer.analyze(target_path)
 
-            if result["success"]:
+            if result.get("success"):
                 protections = result.get("protections", [])
                 click.echo(f"OK Analysis completed - {len(protections)} protections found")
 
@@ -1275,7 +1349,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         click.echo(f"   {type_name} - {description}")
 
         # Save results if output specified
-        if output and result["success"]:
+        if output and result is not None and result.get("success"):
             os.makedirs(output, exist_ok=True)
             result_file = os.path.join(output, f"analysis_results_{int(time.time())}.json")
 
@@ -1465,6 +1539,7 @@ def ai_generate(
 
         # Generate scripts
         click.echo("\n Starting AI script generation...")
+        bar: Any
         with click.progressbar(length=100, label="Generating") as bar:
             result = agent.process_request(script_request)
             bar.update(100)
@@ -1511,12 +1586,12 @@ def ai_generate(
 
                 # Save script
                 try:
-                    from intellicrack.ai.ai_script_generator import AIScriptGenerator
+                    save_dir_path = Path(output or "intellicrack/intellicrack/scripts/ai_generated")
+                    save_dir_path.mkdir(parents=True, exist_ok=True)
 
-                    generator = AIScriptGenerator()
-
-                    save_dir = output or "intellicrack/intellicrack/scripts/ai_generated"
-                    saved_path = generator.save_script(script, save_dir)
+                    script_filename = f"{script_name}.js"
+                    saved_path = save_dir_path / script_filename
+                    saved_path.write_text(script.content, encoding="utf-8")
 
                     click.echo(f" Saved: {saved_path}")
 
@@ -1687,6 +1762,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         click.echo(f"Task submitted with ID: {task_id}")
 
         # Track real analysis task progress
+        bar: Any
         with click.progressbar(length=100, label="Analyzing") as bar:
             last_progress = 0
             while True:
@@ -1709,7 +1785,8 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         click.echo("OK Analysis complete!")
 
         # Get actual analysis results from orchestrator
-        analysis_results = orchestrator.get_task_results(task_id)
+        task_status = orchestrator.get_task_status(task_id)
+        analysis_results = task_status.get("result") if task_status else None
         if not analysis_results:
             # Fallback: perform basic binary analysis if orchestrator doesn't have results
             binary_name = os.path.basename(binary_path)
@@ -1857,10 +1934,12 @@ def autonomous(
 
                 if save_all:
                     try:
-                        from intellicrack.ai.ai_script_generator import AIScriptGenerator
+                        save_dir_path = Path("intellicrack/intellicrack/scripts/autonomous")
+                        save_dir_path.mkdir(parents=True, exist_ok=True)
 
-                        generator = AIScriptGenerator()
-                        saved_path = generator.save_script(script, "intellicrack/intellicrack/scripts/autonomous")
+                        script_filename = f"autonomous_{script_type}_{int(time.time())}.js"
+                        saved_path = save_dir_path / script_filename
+                        saved_path.write_text(script.content, encoding="utf-8")
                         click.echo(f"      Saved: {saved_path}")
                     except (
                         OSError,
@@ -1930,13 +2009,17 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
             click.echo(" Including UI conversation history in session data...")
             # Try to get UI history if available
             try:
-                from intellicrack.ui.main_app import get_conversation_history
+                import intellicrack.ui.main_app as main_app_module
 
-                if ui_history := get_conversation_history():
-                    save_options["ui_conversation_history"] = ui_history
-                    click.echo(f"  Added {len(ui_history)} UI conversation entries")
+                get_history_func = getattr(main_app_module, "get_conversation_history", None)
+                if get_history_func is not None:
+                    if ui_history := get_history_func():
+                        save_options["ui_conversation_history"] = ui_history
+                        click.echo(f"  Added {len(ui_history)} UI conversation entries")
+                    else:
+                        click.echo("  No UI conversation history available")
                 else:
-                    click.echo("  No UI conversation history available")
+                    click.echo("  UI conversation history function not available")
             except ImportError:
                 click.echo("  UI module not available, skipping UI history")
             except Exception as e:
@@ -1966,8 +2049,10 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
         # Show session summary
         history = agent.get_conversation_history()
         click.echo(f" Conversation entries: {len(history)}")
-        click.echo(f"📄 Scripts generated: {len(agent.generated_scripts)}")
-        click.echo(f"🧪 Tests run: {len(agent.test_results)}")
+        generated_scripts = getattr(agent, "generated_scripts", [])
+        click.echo(f"📄 Scripts generated: {len(generated_scripts)}")
+        test_results = getattr(agent, "test_results", [])
+        click.echo(f"🧪 Tests run: {len(test_results)}")
 
     except (
         OSError,
@@ -2000,9 +2085,12 @@ def reset(confirm: bool) -> None:
 
         # Initialize and reset agent
         agent = AIAgent()
-        agent.reset()
-
-        click.echo("OK AI agent reset successfully")
+        reset_func = getattr(agent, "reset", None)
+        if reset_func is not None:
+            reset_func()
+            click.echo("OK AI agent reset successfully")
+        else:
+            click.echo("OK AI agent re-initialized (no reset method available)")
         click.echo("    Conversation history cleared")
         click.echo("    Generated scripts cleared")
         click.echo("    Test results cleared")
@@ -2064,6 +2152,7 @@ def task(
             task_config["script"] = script
 
         # Execute task
+        bar: Any
         with click.progressbar(length=100, label="Processing") as bar:
             result = agent.execute_autonomous_task(task_config)
             bar.update(100)
@@ -2171,9 +2260,6 @@ def frida_list(category: str | None, verbose: bool) -> None:
                 if config.parameters:
                     click.echo(f"    Parameters: {', '.join(config.parameters.keys())}")
 
-                if config.example_usage:
-                    click.echo(f"    Example: {config.example_usage}")
-
                 click.echo()
 
         click.echo("\n Use 'intellicrack frida info <script_name>' for details")
@@ -2213,13 +2299,10 @@ def frida_info(script_name: str) -> None:
             for param_name, param_desc in config.parameters.items():
                 click.echo(f"   {param_name}: {param_desc}")
 
-        if config.example_usage:
-            click.echo(f"\nExample Usage:\n  {config.example_usage}")
-
-        if config.script_path.exists():
-            size_kb = config.script_path.stat().st_size / 1024
+        if config.path.exists():
+            size_kb = config.path.stat().st_size / 1024
             click.echo(f"\nScript Size: {size_kb:.2f} KB")
-            click.echo(f"Script Path: {config.script_path}")
+            click.echo(f"Script Path: {config.path}")
 
         click.echo()
 
@@ -2295,37 +2378,50 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
         # Display results
         if result.success:
             click.echo("OK Execution successful!")
-            click.echo(f"⏱️  Execution time: {result.execution_time_ms}ms")
+            execution_time_ms = (result.end_time - result.start_time) * 1000
+            click.echo(f"⏱️  Execution time: {execution_time_ms:.0f}ms")
 
-            if result.output:
+            if result.messages:
                 click.echo("\n Script Output:")
-                click.echo(result.output)
+                for msg in result.messages[:10]:
+                    msg_type = msg.get("type", "log")
+                    payload = msg.get("payload", str(msg))
+                    click.echo(f"  [{msg_type}] {payload}")
+                if len(result.messages) > 10:
+                    click.echo(f"  ... and {len(result.messages) - 10} more messages")
 
-            if result.hooks_triggered:
-                click.echo(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
+            hooks_triggered = result.data.get("hooks_triggered", [])
+            if hooks_triggered:
+                click.echo(f"\n🎣 Hooks triggered: {hooks_triggered}")
 
-            if result.data_collected:
-                click.echo(f"\n Data collected: {len(result.data_collected)} items")
+            if result.data:
+                data_items = list(result.data.items())
+                click.echo(f"\n Data collected: {len(data_items)} items")
 
                 # Show sample of collected data
-                for i, data_item in enumerate(list(result.data_collected)[:5]):
-                    click.echo(f"  [{i + 1}] {data_item}")
+                for i, (key, value) in enumerate(data_items[:5]):
+                    click.echo(f"  [{i + 1}] {key}: {value}")
 
-                if len(result.data_collected) > 5:
-                    click.echo(f"  ... and {len(result.data_collected) - 5} more items")
+                if len(data_items) > 5:
+                    click.echo(f"  ... and {len(data_items) - 5} more items")
 
             # Save results if output path specified
             if output:
-                manager.export_results([result], output_path=output)
+                output_path = Path(output)
+                manager.export_results(result.script_name, output_path)
                 click.echo(f"\n Results saved to: {output}")
 
             click.echo()
         else:
-            click.echo(f"FAIL Execution failed: {result.error}")
+            error_msg = result.errors[0] if result.errors else "Unknown error"
+            click.echo(f"FAIL Execution failed: {error_msg}")
 
-            if result.output:
+            if result.messages:
                 click.echo("\n📋 Partial output:")
-                click.echo(result.output)
+                for msg in result.messages[:5]:
+                    msg_type = msg.get("type", "log")
+                    payload = msg.get("payload", str(msg))
+                    click.echo(f"  [{msg_type}] {payload}")
 
             sys.exit(1)
 
@@ -2781,21 +2877,31 @@ cli.add_command(cert_test, name="ct")
 cli.add_command(cert_rollback, name="cr")
 
 
-def main() -> None:
+def main() -> int:
     """Run main entry point for CLI."""
     # Check for --gui flag in command line arguments
     if "--gui" in sys.argv:
         # Remove --gui from argv before passing to click
         sys.argv.remove("--gui")
         # Launch GUI interface
-        from intellicrack.ui.main_app import main as gui_main
+        try:
+            import intellicrack.ui.main_app as main_app_module
 
-        return gui_main()
+            gui_main = getattr(main_app_module, "main", None)
+            if gui_main is not None:
+                gui_main()
+            else:
+                click.echo("GUI main function not available", err=True)
+                return 1
+        except ImportError as e:
+            click.echo(f"Failed to import GUI module: {e}", err=True)
+            return 1
+        return 0
 
     # Otherwise run CLI
     cli()  # pylint: disable=E1120
-    return None
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main() or 0)
+    sys.exit(main())

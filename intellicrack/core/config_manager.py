@@ -442,7 +442,7 @@ class IntellicrackConfig:
         try:
             with temp_file.open("w", encoding="utf-8") as f, self._config_lock:
                 json.dump(self._config, f, indent=2, sort_keys=True)
-            temp_file.rename(self.config_file)
+            temp_file.replace(self.config_file)
             self.logger.info(f"IntellicrackConfig: Configuration saved successfully to {self.config_file}.")
         except Exception as e:
             self.logger.exception(f"IntellicrackConfig: Failed to save configuration to {self.config_file}: {e}")

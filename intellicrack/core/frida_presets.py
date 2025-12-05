@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
+
 """
 Frida Preset Configurations for Common Protected Software
 
@@ -409,7 +412,7 @@ WIZARD_CONFIGS = {
 }
 
 # Quick templates for specific scenarios
-QUICK_TEMPLATES = {
+QUICK_TEMPLATES: dict[str, dict[str, Any]] = {
     "trial_reset": {
         "scripts": ["time_bomb_defuser", "registry_monitor"],
         "options": {"reset_trial": True, "freeze_time": True},
@@ -432,7 +435,7 @@ QUICK_TEMPLATES = {
 }
 
 
-def get_preset_by_software(software_name: str) -> dict:
+def get_preset_by_software(software_name: str) -> dict[str, Any]:
     """Get preset configuration by software name (fuzzy matching).
 
     Searches through FRIDA_PRESETS dictionary to find a matching
@@ -475,15 +478,15 @@ def get_preset_by_software(software_name: str) -> dict:
         if software_lower in preset_name.lower():
             return preset_config
 
-        # Check target field
-        if "target" in preset_config and software_lower in preset_config["target"].lower():
+        target_value = preset_config.get("target")
+        if isinstance(target_value, str) and software_lower in target_value.lower():
             return preset_config
 
     # Default to minimal bypass
     return FRIDA_PRESETS["Minimal Bypass"]
 
 
-def get_wizard_config(mode: str = "balanced") -> dict:
+def get_wizard_config(mode: str = "balanced") -> dict[str, Any]:
     """Get wizard configuration by mode.
 
     Retrieves predefined wizard configuration based on the selected
@@ -525,7 +528,7 @@ def get_wizard_config(mode: str = "balanced") -> dict:
     return WIZARD_CONFIGS.get(mode, WIZARD_CONFIGS["balanced"])
 
 
-def get_scripts_for_protection(protection_type: str) -> list:
+def get_scripts_for_protection(protection_type: str) -> list[str]:
     """Get recommended scripts for a specific protection type.
 
     Returns a list of script names that are effective against
@@ -566,7 +569,7 @@ def get_scripts_for_protection(protection_type: str) -> list:
         Space: O(1)
 
     """
-    script_map = {
+    script_map: dict[str, list[str]] = {
         "LICENSE": ["cloud_licensing_bypass", "registry_monitor"],
         "CLOUD": ["cloud_licensing_bypass", "telemetry_blocker"],
         "TIME": ["time_bomb_defuser"],
@@ -592,7 +595,7 @@ class FridaPresets:
     """
 
     @staticmethod
-    def get_all_presets() -> dict:
+    def get_all_presets() -> dict[str, dict[str, Any]]:
         """Get all available Frida presets.
 
         Returns:
@@ -619,7 +622,7 @@ class FridaPresets:
         return FRIDA_PRESETS.copy()
 
     @staticmethod
-    def get_preset(name: str) -> dict | None:
+    def get_preset(name: str) -> dict[str, Any] | None:
         """Get specific preset by exact name.
 
         Args:
@@ -641,7 +644,7 @@ class FridaPresets:
         return FRIDA_PRESETS.get(name)
 
     @staticmethod
-    def get_preset_by_software(software_name: str) -> dict:
+    def get_preset_by_software(software_name: str) -> dict[str, Any]:
         """Get preset configuration by software name (fuzzy matching).
 
         Searches through FRIDA_PRESETS dictionary to find a matching
@@ -674,7 +677,7 @@ class FridaPresets:
         return get_preset_by_software(software_name)
 
     @staticmethod
-    def get_wizard_configs() -> dict:
+    def get_wizard_configs() -> dict[str, dict[str, Any]]:
         """Get all wizard configurations.
 
         Returns:
@@ -697,7 +700,7 @@ class FridaPresets:
         return WIZARD_CONFIGS.copy()
 
     @staticmethod
-    def get_wizard_config(mode: str = "balanced") -> dict:
+    def get_wizard_config(mode: str = "balanced") -> dict[str, Any]:
         """Get wizard configuration by mode.
 
         Retrieves predefined wizard configuration based on the selected
@@ -735,7 +738,7 @@ class FridaPresets:
         return get_wizard_config(mode)
 
     @staticmethod
-    def get_quick_templates() -> dict:
+    def get_quick_templates() -> dict[str, dict[str, Any]]:
         """Get all quick templates for specific scenarios.
 
         Returns:
@@ -757,7 +760,7 @@ class FridaPresets:
         return QUICK_TEMPLATES.copy()
 
     @staticmethod
-    def get_quick_template(template_name: str) -> dict | None:
+    def get_quick_template(template_name: str) -> dict[str, Any] | None:
         """Get specific quick template by name.
 
         Args:
@@ -780,7 +783,7 @@ class FridaPresets:
         return QUICK_TEMPLATES.get(template_name)
 
     @staticmethod
-    def get_scripts_for_protection(protection_type: str) -> list:
+    def get_scripts_for_protection(protection_type: str) -> list[str]:
         """Get recommended scripts for a specific protection type.
 
         Returns a list of script names that are effective against

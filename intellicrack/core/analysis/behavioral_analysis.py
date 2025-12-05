@@ -1376,6 +1376,8 @@ class AntiAnalysisDetector:
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
+        import math
+
         if not data:
             return 0.0
 
@@ -1389,7 +1391,7 @@ class AntiAnalysisDetector:
         for count in frequency.values():
             if count > 0:
                 probability = count / data_len
-                entropy -= probability * ((probability and probability * 2) or 0)
+                entropy -= probability * math.log2(probability)
 
         return entropy
 
