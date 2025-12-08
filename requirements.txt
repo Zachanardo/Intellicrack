@@ -128,7 +128,7 @@ frida_tools==14.5.0
 frozenlist==1.8.0
 fsspec==2025.10.0
 future==1.0.0
-gast==0.6.0
+gast==0.7.0
 gevent==25.9.1
 ghidra_bridge==1.0.0
 ghp_import==2.1.0
