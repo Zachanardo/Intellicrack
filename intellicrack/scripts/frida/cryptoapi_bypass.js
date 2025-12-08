@@ -43,7 +43,7 @@ if (!crypt32) {
                     const pPolicyPara = args[2];
                     const pPolicyStatus = args[3];
 
-                    let policyOID = pszPolicyOID.toInt32();
+                    const policyOID = pszPolicyOID.toInt32();
                     if (policyOID > 0 && policyOID < 100) {
                         log(`CertVerifyCertificateChainPolicy: Policy=${policyOID}`);
                     } else {
@@ -294,7 +294,7 @@ if (bcrypt) {
                     );
                     this.hKey = hKey;
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const status = retval.toInt32();
 
                     if (status !== 0) {
@@ -325,7 +325,7 @@ if (bcrypt) {
 
                     this.cbInput = cbInput;
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const status = retval.toInt32();
                     if (status !== 0) {
                         log(
@@ -344,34 +344,28 @@ if (bcrypt) {
 }
 
 rpc.exports = {
-    getCryptoAPIActivity: function () {
-        return activity;
-    },
-    getCertificateChains: function () {
-        return chains;
-    },
-    clearLogs: function () {
+    getCryptoAPIActivity: () => activity,
+    getCertificateChains: () => chains,
+    clearLogs: () => {
         activity.length = 0;
         chains.length = 0;
         log('Activity logs cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: true,
-            library: 'CryptoAPI (crypt32.dll)',
-            hooksInstalled: [
-                'CertVerifyCertificateChainPolicy',
-                'CertGetCertificateChain',
-                'CertFreeCertificateChain',
-                'CertCreateCertificateChainEngine',
-                'BCryptVerifySignature',
-                'BCryptHashData',
-            ],
-            chainBypassCount: chains.length,
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: true,
+        library: 'CryptoAPI (crypt32.dll)',
+        hooksInstalled: [
+            'CertVerifyCertificateChainPolicy',
+            'CertGetCertificateChain',
+            'CertFreeCertificateChain',
+            'CertCreateCertificateChainEngine',
+            'BCryptVerifySignature',
+            'BCryptHashData',
+        ],
+        chainBypassCount: chains.length,
+    }),
+    testBypass: () => {
         log('Testing CryptoAPI bypass functionality');
         return {
             success: true,

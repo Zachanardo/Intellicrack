@@ -201,7 +201,7 @@ if (!sspicli) {
         );
         if (AcceptSecurityContext) {
             Interceptor.attach(AcceptSecurityContext, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const phCredential = args[0];
                     const phContext = args[1];
                     const pInput = args[2];
@@ -220,7 +220,7 @@ if (!sspicli) {
                         `AcceptSecurityContext: Modified flags 0x${originalFlags.toString(16)} -> 0x${modifiedFlags.toString(16)}`
                     );
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const result = retval.toInt32();
                     log(`AcceptSecurityContext: Returned 0x${result.toString(16)}`);
                 },
@@ -238,7 +238,7 @@ if (!sspicli) {
                 onEnter: function (args) {
                     this.phContext = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const result = retval.toInt32();
                     if (result !== SEC_E_OK) {
                         log(
@@ -260,7 +260,7 @@ if (!sspicli) {
                 onEnter: function (args) {
                     this.phContext = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const result = retval.toInt32();
                     if (result !== SEC_E_OK) {
                         log(
@@ -284,10 +284,10 @@ if (!sspicli) {
             );
             if (SslCrackCertificate) {
                 Interceptor.attach(SslCrackCertificate, {
-                    onEnter: function (args) {
+                    onEnter: args => {
                         log('SslCrackCertificate called');
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         if (retval.toInt32() === 0) {
                             log('SslCrackCertificate: Failed, forcing success');
                             retval.replace(ptr(1));
@@ -303,39 +303,31 @@ if (!sspicli) {
 }
 
 rpc.exports = {
-    getSchannelSessions: function () {
-        return sessions;
-    },
-    getCertificateInfo: function () {
-        return certificates;
-    },
-    getActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getSchannelSessions: () => sessions,
+    getCertificateInfo: () => certificates,
+    getActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         sessions.length = 0;
         certificates.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: true,
-            library: 'Schannel (sspicli.dll/secur32.dll)',
-            hooksInstalled: [
-                'InitializeSecurityContext',
-                'QueryContextAttributes',
-                'AcceptSecurityContext',
-                'EncryptMessage',
-                'DecryptMessage',
-                'SslCrackCertificate',
-            ],
-            sessionCount: sessions.length,
-            certificateCount: certificates.length,
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: true,
+        library: 'Schannel (sspicli.dll/secur32.dll)',
+        hooksInstalled: [
+            'InitializeSecurityContext',
+            'QueryContextAttributes',
+            'AcceptSecurityContext',
+            'EncryptMessage',
+            'DecryptMessage',
+            'SslCrackCertificate',
+        ],
+        sessionCount: sessions.length,
+        certificateCount: certificates.length,
+    }),
+    testBypass: () => {
         log('Testing Schannel bypass functionality');
         return {
             success: true,

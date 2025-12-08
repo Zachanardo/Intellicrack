@@ -52,7 +52,7 @@ function findOpenSSLModule() {
         'boringssl.dll',
     ];
 
-    for (let name of possible_names) {
+    for (const name of possible_names) {
         try {
             const module = Process.findModuleByName(name);
             if (module) {
@@ -186,7 +186,7 @@ if (!openssl_module) {
         );
         if (SSL_CTX_set_cert_verify_callback) {
             const always_succeed_callback = new NativeCallback(
-                function (x509_ctx, arg) {
+                (x509_ctx, arg) => {
                     log('Custom verify callback invoked - returning success (1)');
                     return 1;
                 },
@@ -228,7 +228,7 @@ if (!openssl_module) {
         );
         if (SSL_CTX_load_verify_locations) {
             Interceptor.attach(SSL_CTX_load_verify_locations, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const ctx = args[0];
                     const CAfile = args[1];
                     const CApath = args[2];
@@ -252,7 +252,7 @@ if (!openssl_module) {
                         `SSL_CTX_load_verify_locations: CAfile="${cafile_str}", CApath="${capath_str}"`
                     );
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const result = retval.toInt32();
                     if (result === 0) {
                         log('SSL_CTX_load_verify_locations: Failed originally, forcing success');
@@ -316,7 +316,7 @@ if (!openssl_module) {
                 onEnter: function (args) {
                     this.ctx = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const error = retval.toInt32();
                     if (error !== X509_V_OK) {
                         log(
@@ -339,7 +339,7 @@ if (!openssl_module) {
         );
         if (SSL_CTX_set_verify_depth) {
             Interceptor.attach(SSL_CTX_set_verify_depth, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const ctx = args[0];
                     const depth = args[1].toInt32();
 
@@ -360,7 +360,7 @@ if (!openssl_module) {
         );
         if (SSL_set_verify_depth) {
             Interceptor.attach(SSL_set_verify_depth, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const ssl = args[0];
                     const depth = args[1].toInt32();
 
@@ -382,7 +382,7 @@ if (!openssl_module) {
             );
             if (SSL_set_custom_verify) {
                 const boringssl_always_succeed = new NativeCallback(
-                    function (ssl, out_alert) {
+                    (ssl, out_alert) => {
                         log(
                             'BoringSSL custom verify callback invoked - returning ssl_verify_ok (1)'
                         );
@@ -393,7 +393,7 @@ if (!openssl_module) {
                 );
 
                 Interceptor.attach(SSL_set_custom_verify, {
-                    onEnter: function (args) {
+                    onEnter: args => {
                         const ssl = args[0];
                         const mode = args[1].toInt32();
                         const callback = args[2];
@@ -417,7 +417,7 @@ if (!openssl_module) {
             );
             if (SSL_CTX_set_custom_verify) {
                 const boringssl_ctx_always_succeed = new NativeCallback(
-                    function (ssl, out_alert) {
+                    (ssl, out_alert) => {
                         log(
                             'BoringSSL CTX custom verify callback invoked - returning ssl_verify_ok (1)'
                         );
@@ -428,7 +428,7 @@ if (!openssl_module) {
                 );
 
                 Interceptor.attach(SSL_CTX_set_custom_verify, {
-                    onEnter: function (args) {
+                    onEnter: args => {
                         const ctx = args[0];
                         const mode = args[1].toInt32();
                         const callback = args[2];
@@ -486,33 +486,25 @@ if (!openssl_module) {
 }
 
 rpc.exports = {
-    getOpenSSLConnections: function () {
-        return connections;
-    },
-    getCertificateChains: function () {
-        return certificates;
-    },
-    getActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getOpenSSLConnections: () => connections,
+    getCertificateChains: () => certificates,
+    getActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         connections.length = 0;
         certificates.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: true,
-            library: openssl_module ? openssl_module.name : 'Unknown',
-            variant: is_boringssl ? 'BoringSSL' : 'OpenSSL',
-            moduleBase: openssl_module ? openssl_module.base.toString() : 'N/A',
-            connectionCount: connections.length,
-            certificateBypassCount: certificates.length,
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: true,
+        library: openssl_module ? openssl_module.name : 'Unknown',
+        variant: is_boringssl ? 'BoringSSL' : 'OpenSSL',
+        moduleBase: openssl_module ? openssl_module.base.toString() : 'N/A',
+        connectionCount: connections.length,
+        certificateBypassCount: certificates.length,
+    }),
+    testBypass: () => {
         log('Testing OpenSSL bypass functionality');
         return {
             success: openssl_module !== null,

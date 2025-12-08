@@ -114,7 +114,7 @@ if (ObjC.available) {
     try {
         const SSLHandshake = Module.findExportByName('Security', 'SSLHandshake');
         if (SSLHandshake) {
-            let handshakeCallCount = {};
+            const handshakeCallCount = {};
 
             Interceptor.attach(SSLHandshake, {
                 onEnter: function (args) {
@@ -172,10 +172,10 @@ if (ObjC.available) {
             );
             if (tls_helper_create_peer_trust) {
                 Interceptor.attach(tls_helper_create_peer_trust, {
-                    onEnter: function (args) {
+                    onEnter: args => {
                         log('tls_helper_create_peer_trust: Intercepted');
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         if (!retval.isNull()) {
                             log(
                                 'tls_helper_create_peer_trust: Returning NULL to bypass trust evaluation'
@@ -245,7 +245,7 @@ if (ObjC.available) {
                 if (originalDidReceiveChallenge) {
                     const hookBlock = ObjC.Block.implement({
                         types: originalDidReceiveChallenge.types,
-                        implementation: function (session, challenge, completionHandler) {
+                        implementation: (session, challenge, completionHandler) => {
                             const challengeObj = new ObjC.Object(challenge);
                             const authMethod = challengeObj
                                 .protectionSpace()
@@ -299,7 +299,7 @@ if (ObjC.available) {
             Interceptor.attach(
                 NSURLConnection['+ sendSynchronousRequest:returningResponse:error:'].implementation,
                 {
-                    onEnter: function (args) {
+                    onEnter: args => {
                         const request = new ObjC.Object(args[2]);
                         const url = request.URL().absoluteString().toString();
                         log(`NSURLConnection: Synchronous request to ${url}`);
@@ -336,7 +336,7 @@ if (ObjC.available) {
                 onEnter: function (args) {
                     this.trust = args[0];
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const count = retval.toInt32();
                     if (count > 0) {
                         log(`SecTrustGetCertificateCount: ${count} certificate(s) in chain`);
@@ -357,40 +357,32 @@ if (ObjC.available) {
 }
 
 rpc.exports = {
-    getPinnedCertificates: function () {
-        return pinnedCerts;
-    },
-    getTLSSessions: function () {
-        return tlsSessions;
-    },
-    getActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getPinnedCertificates: () => pinnedCerts,
+    getTLSSessions: () => tlsSessions,
+    getActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         pinnedCerts.length = 0;
         tlsSessions.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: ObjC.available,
-            platform: 'iOS',
-            bypassMethods: [
-                'SSLSetSessionOption',
-                'SecTrustEvaluate',
-                'SSLHandshake',
-                'tls_helper_create_peer_trust',
-                'AFSecurityPolicy',
-                'NSURLSession',
-                'NSURLConnection',
-            ],
-            pinnedCertCount: pinnedCerts.length,
-            tlsSessionCount: tlsSessions.length,
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: ObjC.available,
+        platform: 'iOS',
+        bypassMethods: [
+            'SSLSetSessionOption',
+            'SecTrustEvaluate',
+            'SSLHandshake',
+            'tls_helper_create_peer_trust',
+            'AFSecurityPolicy',
+            'NSURLSession',
+            'NSURLConnection',
+        ],
+        pinnedCertCount: pinnedCerts.length,
+        tlsSessionCount: tlsSessions.length,
+    }),
+    testBypass: () => {
         if (!ObjC.available) {
             return {
                 success: false,

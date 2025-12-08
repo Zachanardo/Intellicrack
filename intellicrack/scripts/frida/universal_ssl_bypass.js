@@ -52,9 +52,9 @@ function detectTLSLibraries() {
 
     const modules = Process.enumerateModules();
 
-    for (let [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
-        for (let signature of signatures) {
-            const module = modules.find((m) => m.name.toLowerCase() === signature.toLowerCase());
+    for (const [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
+        for (const signature of signatures) {
+            const module = modules.find(m => m.name.toLowerCase() === signature.toLowerCase());
             if (module) {
                 const detectionInfo = {
                     type: libType,
@@ -163,15 +163,15 @@ function activateGenericBypass() {
 
     let hooksInstalled = 0;
 
-    Process.enumerateModules().forEach(function (module) {
+    Process.enumerateModules().forEach(module => {
         try {
             const exports = module.enumerateExports();
-            exports.forEach(function (exp) {
+            exports.forEach(exp => {
                 if (exp.type === 'function') {
                     const { name } = exp;
 
                     const isLikelyCertFunc = commonValidationPatterns.some(
-                        (pattern) =>
+                        pattern =>
                             name.includes(pattern) &&
                             (name.includes('cert') ||
                                 name.includes('Cert') ||
@@ -224,20 +224,20 @@ function activateGenericBypass() {
 function monitorNewModules() {
     log('Starting runtime module monitoring...');
 
-    const loadedModules = new Set(Process.enumerateModules().map((m) => m.name.toLowerCase()));
+    const loadedModules = new Set(Process.enumerateModules().map(m => m.name.toLowerCase()));
 
-    setInterval(function () {
+    setInterval(() => {
         const currentModules = Process.enumerateModules();
 
-        currentModules.forEach(function (module) {
+        currentModules.forEach(module => {
             const moduleName = module.name.toLowerCase();
 
             if (!loadedModules.has(moduleName)) {
                 loadedModules.add(moduleName);
                 log(`New module loaded: ${module.name}`);
 
-                for (let [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
-                    if (signatures.some((sig) => sig.toLowerCase() === moduleName)) {
+                for (const [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
+                    if (signatures.some(sig => sig.toLowerCase() === moduleName)) {
                         log(`Newly loaded module is TLS library: ${libType}`);
                         const detectionInfo = {
                             type: libType,
@@ -295,14 +295,14 @@ function initialize() {
         log('No specific TLS libraries found - activating generic bypass');
         activateGenericBypass();
     } else {
-        detected.forEach(function (lib) {
+        detected.forEach(lib => {
             activateBypassForLibrary(lib.type);
         });
     }
 
     monitorNewModules();
 
-    setTimeout(function () {
+    setTimeout(() => {
         performSelfTest();
     }, 1000);
 
@@ -311,33 +311,23 @@ function initialize() {
 }
 
 rpc.exports = {
-    getDetectedLibraries: function () {
-        return detectedLibraries;
-    },
-    getActiveBypass: function () {
-        return activeBypasses;
-    },
-    getAllCertificates: function () {
-        return allCertificates;
-    },
-    getBypassStatus: function () {
-        return {
-            active: true,
-            detectedLibraryCount: detectedLibraries.length,
-            activeBypassCount: activeBypasses.length,
-            detectedLibraries: detectedLibraries.map((lib) => lib.type),
-            activeBypasses: activeBypasses,
-            platform: Java.available ? 'Android' : ObjC.available ? 'iOS' : 'Desktop',
-        };
-    },
-    testBypass: function () {
-        return performSelfTest();
-    },
-    forceGenericBypass: function () {
+    getDetectedLibraries: () => detectedLibraries,
+    getActiveBypass: () => activeBypasses,
+    getAllCertificates: () => allCertificates,
+    getBypassStatus: () => ({
+        active: true,
+        detectedLibraryCount: detectedLibraries.length,
+        activeBypassCount: activeBypasses.length,
+        detectedLibraries: detectedLibraries.map(lib => lib.type),
+        activeBypasses: activeBypasses,
+        platform: Java.available ? 'Android' : ObjC.available ? 'iOS' : 'Desktop',
+    }),
+    testBypass: () => performSelfTest(),
+    forceGenericBypass: () => {
         log('Forcing generic bypass activation (manual override)');
         return activateGenericBypass();
     },
-    rescan: function () {
+    rescan: () => {
         log('Rescanning for TLS libraries (manual trigger)');
         const detected = detectTLSLibraries();
         return {
@@ -346,10 +336,8 @@ rpc.exports = {
             libraries: detected,
         };
     },
-    getActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         allCertificates.length = 0;
         log('Activity logs cleared');

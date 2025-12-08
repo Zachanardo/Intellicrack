@@ -26,14 +26,14 @@ if (!Java.available) {
 } else {
     log('Java runtime detected - initializing Android certificate pinning bypass');
 
-    Java.perform(function () {
+    Java.perform(() => {
         try {
             const OkHttpCertificatePinner = Java.use('okhttp3.CertificatePinner');
 
             OkHttpCertificatePinner.check.overload(
                 'java.lang.String',
                 'java.util.List'
-            ).implementation = function (hostname, peerCertificates) {
+            ).implementation = (hostname, peerCertificates) => {
                 log(`OkHttp3 CertificatePinner.check: Bypassing for hostname="${hostname}"`);
 
                 const certCount = peerCertificates.size();
@@ -67,14 +67,14 @@ if (!Java.available) {
         try {
             const TrustManagerImpl = Java.use('com.android.org.conscrypt.TrustManagerImpl');
 
-            TrustManagerImpl.verifyChain.implementation = function (
+            TrustManagerImpl.verifyChain.implementation = (
                 untrustedChain,
                 trustAnchorChain,
                 host,
                 clientAuth,
                 ocspData,
                 tlsSctData
-            ) {
+            ) => {
                 log(`TrustManagerImpl.verifyChain: Bypassing for host="${host}"`);
 
                 const chainInfo = {
@@ -104,7 +104,7 @@ if (!Java.available) {
                 'android.security.net.config.NetworkSecurityTrustManager'
             );
 
-            NetworkSecurityTrustManager.checkPins.implementation = function (pins) {
+            NetworkSecurityTrustManager.checkPins.implementation = pins => {
                 log('NetworkSecurityTrustManager.checkPins: Bypassing pin check');
                 send({ type: 'network_security_bypass' });
                 return;
@@ -124,7 +124,7 @@ if (!Java.available) {
             const emptyArray = Java.array('Ljava.security.cert.X509Certificate;', []);
 
             Java.choose('javax.net.ssl.X509TrustManager', {
-                onMatch: function (instance) {
+                onMatch: instance => {
                     try {
                         const className = instance.$className;
                         log(`Found X509TrustManager implementation: ${className}`);
@@ -134,7 +134,7 @@ if (!Java.available) {
                             instance.checkServerTrusted.overload(
                                 '[Ljava.security.cert.X509Certificate;',
                                 'java.lang.String'
-                            ).implementation = function (chain, authType) {
+                            ).implementation = (chain, authType) => {
                                 log(
                                     `X509TrustManager.checkServerTrusted: Bypassing for class="${className}", authType="${authType}"`
                                 );
@@ -169,7 +169,7 @@ if (!Java.available) {
                                 '[Ljava.security.cert.X509Certificate;',
                                 'java.lang.String',
                                 'java.lang.String'
-                            ).implementation = function (chain, authType, host) {
+                            ).implementation = (chain, authType, host) => {
                                 log(
                                     `X509TrustManager.checkServerTrusted (with host): Bypassing for host="${host}"`
                                 );
@@ -181,7 +181,7 @@ if (!Java.available) {
                         logError('Failed to hook X509TrustManager instance: ' + e.message);
                     }
                 },
-                onComplete: function () {
+                onComplete: () => {
                     log('Completed X509TrustManager enumeration and hooking');
                 },
             });
@@ -204,16 +204,15 @@ if (!Java.available) {
                 name: 'com.intellicrack.CustomTrustManager',
                 implements: [X509TrustManager],
                 methods: {
-                    checkClientTrusted: function (chain, authType) {
+                    checkClientTrusted: (chain, authType) => {
                         log('CustomTrustManager.checkClientTrusted: Accepting all');
                     },
-                    checkServerTrusted: function (chain, authType) {
+                    checkServerTrusted: (chain, authType) => {
                         log('CustomTrustManager.checkServerTrusted: Accepting all certificates');
                         send({ type: 'custom_trust_manager_bypass', authType: authType });
                     },
-                    getAcceptedIssuers: function () {
-                        return Java.array('Ljava.security.cert.X509Certificate;', []);
-                    },
+                    getAcceptedIssuers: () =>
+                        Java.array('Ljava.security.cert.X509Certificate;', []),
                 },
             });
 
@@ -239,7 +238,7 @@ if (!Java.available) {
         try {
             const WebViewClient = Java.use('android.webkit.WebViewClient');
 
-            WebViewClient.onReceivedSslError.implementation = function (view, handler, error) {
+            WebViewClient.onReceivedSslError.implementation = (view, handler, error) => {
                 log('WebViewClient.onReceivedSslError: Auto-proceeding through SSL error');
 
                 const errorInfo = {
@@ -266,7 +265,7 @@ if (!Java.available) {
             const HostnameVerifier = Java.use('javax.net.ssl.HostnameVerifier');
 
             Java.choose('javax.net.ssl.HostnameVerifier', {
-                onMatch: function (instance) {
+                onMatch: instance => {
                     try {
                         const className = instance.$className;
                         log(`Found HostnameVerifier implementation: ${className}`);
@@ -275,7 +274,7 @@ if (!Java.available) {
                             instance.verify.overload(
                                 'java.lang.String',
                                 'javax.net.ssl.SSLSession'
-                            ).implementation = function (hostname, session) {
+                            ).implementation = (hostname, session) => {
                                 log(
                                     `HostnameVerifier.verify: Auto-verifying hostname="${hostname}"`
                                 );
@@ -287,7 +286,7 @@ if (!Java.available) {
                         logError('Failed to hook HostnameVerifier instance: ' + e.message);
                     }
                 },
-                onComplete: function () {
+                onComplete: () => {
                     log('Completed HostnameVerifier enumeration and hooking');
                 },
             });
@@ -298,7 +297,7 @@ if (!Java.available) {
         try {
             const PinningTrustManager = Java.use('appcelerator.https.PinningTrustManager');
 
-            PinningTrustManager.checkServerTrusted.implementation = function (chain, authType) {
+            PinningTrustManager.checkServerTrusted.implementation = (chain, authType) => {
                 log('Appcelerator PinningTrustManager: Bypassing');
                 send({ type: 'appcelerator_bypass' });
                 return;
@@ -319,41 +318,33 @@ if (!Java.available) {
 }
 
 rpc.exports = {
-    getPinnedCertificates: function () {
-        return pinnedCerts;
-    },
-    getBypassedConnections: function () {
-        return bypassedConnections;
-    },
-    getActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getPinnedCertificates: () => pinnedCerts,
+    getBypassedConnections: () => bypassedConnections,
+    getActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         pinnedCerts.length = 0;
         bypassedConnections.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: Java.available,
-            platform: 'Android',
-            bypassMethods: [
-                'OkHttp3 CertificatePinner',
-                'TrustManagerImpl',
-                'NetworkSecurityTrustManager',
-                'X509TrustManager',
-                'SSLContext',
-                'WebViewClient',
-                'HostnameVerifier',
-                'Appcelerator',
-            ],
-            pinnedCertCount: pinnedCerts.length,
-            bypassedConnectionCount: bypassedConnections.length,
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: Java.available,
+        platform: 'Android',
+        bypassMethods: [
+            'OkHttp3 CertificatePinner',
+            'TrustManagerImpl',
+            'NetworkSecurityTrustManager',
+            'X509TrustManager',
+            'SSLContext',
+            'WebViewClient',
+            'HostnameVerifier',
+            'Appcelerator',
+        ],
+        pinnedCertCount: pinnedCerts.length,
+        bypassedConnectionCount: bypassedConnections.length,
+    }),
+    testBypass: () => {
         if (!Java.available) {
             return {
                 success: false,

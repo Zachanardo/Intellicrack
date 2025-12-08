@@ -76,7 +76,7 @@ if (!winhttp) {
         const WinHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (WinHttpSendRequest) {
             Interceptor.attach(WinHttpSendRequest, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const hRequest = args[0];
                     const lpszHeaders = args[1];
                     const dwHeadersLength = args[2].toInt32();
@@ -106,7 +106,7 @@ if (!winhttp) {
                     log(`WinHttpSendRequest called - Headers: ${headers.substring(0, 200)}`);
                     send({ type: 'https_request', data: requestInfo });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() === 0) {
                         log('WinHttpSendRequest: Failed originally, forcing success');
                         retval.replace(ptr(1));
@@ -135,7 +135,7 @@ if (!winhttp) {
                     log(`WinHttpReceiveResponse called - hRequest: ${hRequest}`);
                     this.hRequest = hRequest;
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     const success = retval.toInt32() !== 0;
                     if (!success) {
                         const lastError = ptr(kernel32.GetLastError());
@@ -194,33 +194,29 @@ try {
 }
 
 rpc.exports = {
-    getWinHttpActivity: function () {
-        return activity;
-    },
-    clearLogs: function () {
+    getWinHttpActivity: () => activity,
+    clearLogs: () => {
         activity.length = 0;
         log('Activity log cleared');
         return true;
     },
-    getBypassStatus: function () {
-        return {
-            active: true,
-            library: 'winhttp.dll',
-            hooksInstalled: [
-                'WinHttpSetOption',
-                'WinHttpSendRequest',
-                'WinHttpReceiveResponse',
-                'WinHttpQueryOption',
-            ],
-            bypassFlags: {
-                SECURITY_FLAG_IGNORE_UNKNOWN_CA: true,
-                SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE: true,
-                SECURITY_FLAG_IGNORE_CERT_CN_INVALID: true,
-                SECURITY_FLAG_IGNORE_CERT_DATE_INVALID: true,
-            },
-        };
-    },
-    testBypass: function () {
+    getBypassStatus: () => ({
+        active: true,
+        library: 'winhttp.dll',
+        hooksInstalled: [
+            'WinHttpSetOption',
+            'WinHttpSendRequest',
+            'WinHttpReceiveResponse',
+            'WinHttpQueryOption',
+        ],
+        bypassFlags: {
+            SECURITY_FLAG_IGNORE_UNKNOWN_CA: true,
+            SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE: true,
+            SECURITY_FLAG_IGNORE_CERT_CN_INVALID: true,
+            SECURITY_FLAG_IGNORE_CERT_DATE_INVALID: true,
+        },
+    }),
+    testBypass: () => {
         log('Testing WinHTTP bypass functionality');
         return {
             success: true,
