@@ -455,7 +455,7 @@ snowballstemmer==3.0.1
 sortedcontainers==2.4.0
 soupsieve==2.8
 sourcery==1.40.0
-sphinx==8.2.3
+sphinx==9.0.4
 sphinx_autobuild==2025.8.25
 sphinx_autodoc_typehints==3.5.2
 sphinx_copybutton==0.5.2
