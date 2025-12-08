@@ -275,7 +275,7 @@ onemkl_sycl_rng==2025.2.0
 onemkl_sycl_sparse==2025.2.0
 onnx==1.19.1
 onnxruntime==1.23.2
-openai==2.8.1
+openai==2.9.0
 openvino==2025.3.0
 openvino_telemetry==2025.2.0
 opt_einsum==3.4.0
