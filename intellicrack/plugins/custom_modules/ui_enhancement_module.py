@@ -247,6 +247,74 @@ class RealTimeChart:
 
         self.canvas.draw()
 
+    def clear_data(self) -> None:
+        """Clear all data points and reset the chart display.
+
+        Removes all stored data points and redraws the chart with
+        an empty canvas, ready for new data collection.
+
+        """
+        self.data_points.clear()
+        self.axis.clear()
+        self.axis.set_title(self.title, color="white", fontsize=12)
+        self.axis.set_xlabel("Time", color="white")
+        self.axis.set_ylabel("Value", color="white")
+        self.axis.grid(True, alpha=0.3, color="white")
+        self.axis.tick_params(colors="white")
+        self.axis.spines["bottom"].set_color("white")
+        self.axis.spines["top"].set_color("white")
+        self.axis.spines["left"].set_color("white")
+        self.axis.spines["right"].set_color("white")
+        self.canvas.draw()
+
+    def update_pie_data(self, labels: list[str], values: list[float], title: str) -> None:
+        """Update the chart with pie chart data for distribution visualization.
+
+        Renders a pie chart showing the distribution of categories such as
+        protection types or bypass success rates.
+
+        Args:
+            labels: List of category labels for each pie slice.
+            values: List of numeric values corresponding to each label.
+            title: Title to display above the pie chart.
+
+        """
+        if not labels or not values or len(labels) != len(values):
+            self.clear_data()
+            return
+
+        total = sum(values)
+        if total == 0:
+            self.clear_data()
+            return
+
+        self.axis.clear()
+
+        colors = [
+            "#00ff41", "#ff4444", "#ffaa00", "#00aaff",
+            "#ff00ff", "#00ffff", "#ffff00", "#ff8800",
+            "#88ff00", "#0088ff", "#ff0088", "#8800ff"
+        ]
+        slice_colors = [colors[i % len(colors)] for i in range(len(labels))]
+
+        _wedges, _texts, autotexts = self.axis.pie(
+            values,
+            labels=labels,
+            colors=slice_colors,
+            autopct=lambda pct: f"{pct:.1f}%" if pct > 5 else "",
+            startangle=90,
+            textprops={"color": "white", "fontsize": 9},
+            wedgeprops={"edgecolor": "#2d2d2d", "linewidth": 1}
+        )
+
+        for autotext in autotexts:
+            autotext.set_color("white")
+            autotext.set_fontweight("bold")
+
+        self.axis.set_title(title, color="white", fontsize=12, fontweight="bold")
+        self.title = title
+        self.canvas.draw()
+
 
 class LogViewer:
     """Enhanced log viewer with filtering and search."""

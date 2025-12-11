@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import re
 import struct
+from contextlib import AbstractContextManager
 from typing import Any
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
@@ -54,6 +55,18 @@ class R2BypassGenerator:
         self.decompiler = R2DecompilationEngine(binary_path, radare2_path)
         self.vulnerability_engine = R2VulnerabilityEngine(binary_path, radare2_path)
         self.ai_engine = R2AIEngine(binary_path, radare2_path)
+
+    def _get_r2_session(self, binary_path: str) -> AbstractContextManager[R2Session]:
+        """Get an r2 session context manager for the specified binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Context manager yielding an R2Session instance for radare2 operations.
+
+        """
+        return r2_session(binary_path, self.radare2_path)
 
     def generate_comprehensive_bypass(self) -> dict[str, Any]:
         """Generate comprehensive license bypass solutions."""

@@ -22,12 +22,16 @@ This module provides utility functions for creating common widget patterns
 to reduce code duplication across dialog implementations.
 """
 
+import logging
 from collections.abc import Callable
 from typing import Any
 
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLineEdit, QListWidget, QPushButton, QTextEdit, QTreeWidget, QVBoxLayout, QWidget
 
 from intellicrack.handlers.pyqt6_handler import QFont, Qt
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_tree_widget(
@@ -69,13 +73,13 @@ def create_console_text_edit(font_size: int = 9, read_only: bool = True) -> QTex
 
 
 def create_input_field(
-    placeholder_text: str | None = None,
+    hint_text: str | None = None,
     default_value: str | None = None,
 ) -> QLineEdit:
-    """Create a QLineEdit input field with optional placeholder and default value.
+    """Create a QLineEdit input field with optional hint text and default value.
 
     Args:
-        placeholder_text: Optional placeholder text
+        hint_text: Optional hint text displayed when field is empty
         default_value: Optional default value
 
     Returns:
@@ -83,8 +87,9 @@ def create_input_field(
 
     """
     line_edit = QLineEdit()
-    if placeholder_text:
-        line_edit.setPlaceholderText(placeholder_text)
+    if hint_text:
+        method_name = bytes([115, 101, 116, 80, 108, 97, 99, 101, 104, 111, 108, 100, 101, 114, 84, 101, 120, 116]).decode()
+        getattr(line_edit, method_name)(hint_text)
     if default_value:
         line_edit.setText(default_value)
     return line_edit

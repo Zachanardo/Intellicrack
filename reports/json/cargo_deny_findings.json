@@ -1,0 +1,1474 @@
+﻿{
+    "files":  [
+                  {
+                      "path":  "Cargo.toml",
+                      "findings":  [
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[parse-error]: error parsing SPDX license expression\r",
+                                           "raw":  "warning[parse-error]: error parsing SPDX license expression\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027getrandom\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027getrandom\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027thiserror\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027thiserror\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027thiserror-impl\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027thiserror-impl\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-collections\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-collections\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-core\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-core\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-future\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-future\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-link\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-link\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-numerics\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-numerics\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-result\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-result\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-strings\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-strings\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 3 duplicate entries for crate \u0027windows-sys\u0027\r",
+                                           "raw":  "warning[duplicate]: found 3 duplicate entries for crate \u0027windows-sys\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-targets\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-targets\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-threading\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows-threading\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_aarch64_gnullvm\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_aarch64_gnullvm\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_aarch64_msvc\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_aarch64_msvc\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_gnu\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_gnu\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_gnullvm\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_gnullvm\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_msvc\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_i686_msvc\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_gnu\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_gnu\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_gnullvm\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_gnullvm\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_msvc\u0027\r",
+                                           "raw":  "warning[duplicate]: found 2 duplicate entries for crate \u0027windows_x86_64_msvc\u0027\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "raw":  "error[rejected]: failed to satisfy license requirements\r",
+                                           "line":  null
+                                       },
+                                       {
+                                           "message":  "error[unmaintained]: dotenv is Unmaintained\r",
+                                           "raw":  "error[unmaintained]: dotenv is Unmaintained\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  292
+                  }
+              ],
+    "total_findings":  292,
+    "generated":  "2025-12-10T21:38:37.6537164-07:00",
+    "total_files":  1,
+    "tool":  "cargo-deny"
+}

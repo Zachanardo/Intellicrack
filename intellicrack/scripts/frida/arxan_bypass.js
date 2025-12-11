@@ -45,16 +45,7 @@ const ArxanBypass = {
 
         const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
         if (isDebuggerPresent) {
-            Interceptor.replace(
-                isDebuggerPresent,
-                new NativeCallback(
-                    function () {
-                        return 0;
-                    },
-                    'int',
-                    []
-                )
-            );
+            Interceptor.replace(isDebuggerPresent, new NativeCallback(() => 0, 'int', []));
             this.hooks.installed++;
             this.log('info', 'Bypassed IsDebuggerPresent');
         }
@@ -126,8 +117,8 @@ const ArxanBypass = {
             Interceptor.replace(
                 outputDebugString,
                 new NativeCallback(
-                    function (lpOutputString) {
-                        return;
+                    _lpOutputString => {
+
                     },
                     'void',
                     ['pointer']
@@ -150,7 +141,7 @@ const ArxanBypass = {
                 this.log('info', 'Patched PEB.BeingDebugged flag');
             }
         } catch (e) {
-            this.log('debug', 'Could not patch PEB directly: ' + e.message);
+            this.log('debug', `Could not patch PEB directly: ${e.message}`);
         }
 
         this.log('info', 'Anti-debugging bypass complete');
@@ -163,13 +154,12 @@ const ArxanBypass = {
         if (cryptHashData) {
             Interceptor.replace(
                 cryptHashData,
-                new NativeCallback(
-                    function (hHash, pbData, dwDataLen, dwFlags) {
-                        return 1;
-                    },
-                    'int',
-                    ['pointer', 'pointer', 'uint', 'uint']
-                )
+                new NativeCallback((_hHash, _pbData, _dwDataLen, _dwFlags) => 1, 'int', [
+                    'pointer',
+                    'pointer',
+                    'uint',
+                    'uint',
+                ])
             );
             this.hooks.installed++;
             this.log('info', 'Bypassed CryptHashData');
@@ -183,9 +173,7 @@ const ArxanBypass = {
             Interceptor.replace(
                 cryptVerifySignature,
                 new NativeCallback(
-                    function (hHash, pbSignature, dwSigLen, hPubKey, sDescription, dwFlags) {
-                        return 1;
-                    },
+                    (_hHash, _pbSignature, _dwSigLen, _hPubKey, _sDescription, _dwFlags) => 1,
                     'int',
                     ['pointer', 'pointer', 'uint', 'pointer', 'pointer', 'uint']
                 )
@@ -198,13 +186,11 @@ const ArxanBypass = {
         if (winVerifyTrust) {
             Interceptor.replace(
                 winVerifyTrust,
-                new NativeCallback(
-                    function (hwnd, pgActionID, pWVTData) {
-                        return 0;
-                    },
-                    'int',
-                    ['pointer', 'pointer', 'pointer']
-                )
+                new NativeCallback((_hwnd, _pgActionID, _pWVTData) => 0, 'int', [
+                    'pointer',
+                    'pointer',
+                    'pointer',
+                ])
             );
             this.hooks.installed++;
             this.log('info', 'Bypassed WinVerifyTrust');
@@ -259,7 +245,7 @@ const ArxanBypass = {
                     this.headerSum = args[2];
                     this.checkSum = args[3];
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     if (this.headerSum && !this.headerSum.isNull()) {
                         this.headerSum.writeU32(0x12345678);
                     }
@@ -293,24 +279,18 @@ const ArxanBypass = {
         const modules = Process.enumerateModules();
         let foundLicenseFuncs = 0;
 
-        modules.forEach((module) => {
+        modules.forEach(module => {
             try {
                 const exports = module.enumerateExports();
 
-                exports.forEach((exp) => {
+                exports.forEach(exp => {
                     const lowerName = exp.name.toLowerCase();
 
-                    if (licensePatterns.some((pattern) => lowerName.includes(pattern))) {
+                    if (licensePatterns.some(pattern => lowerName.includes(pattern))) {
                         try {
                             Interceptor.replace(
                                 exp.address,
-                                new NativeCallback(
-                                    function () {
-                                        return 1;
-                                    },
-                                    'int',
-                                    []
-                                )
+                                new NativeCallback(() => 1, 'int', [])
                             );
 
                             foundLicenseFuncs++;
@@ -340,7 +320,7 @@ const ArxanBypass = {
                     this.data = args[3];
                 },
                 onLeave: function (retval) {
-                    if (this.valueName && this.valueName.toLowerCase().includes('license')) {
+                    if (this.valueName?.toLowerCase().includes('license')) {
                         if (this.data && !this.data.isNull()) {
                             this.data.writeUtf8String('BYPASSED-LICENSE-KEY-ARXAN');
                         }
@@ -366,7 +346,7 @@ const ArxanBypass = {
                     this.size = args[1];
                     this.newProtect = args[2];
                 },
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(1);
                 },
             });
@@ -377,7 +357,7 @@ const ArxanBypass = {
         const readProcessMemory = Module.findExportByName('kernel32.dll', 'ReadProcessMemory');
         if (readProcessMemory) {
             Interceptor.attach(readProcessMemory, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(1);
                 },
             });
@@ -392,13 +372,7 @@ const ArxanBypass = {
         if (setUnhandledExceptionFilter) {
             Interceptor.replace(
                 setUnhandledExceptionFilter,
-                new NativeCallback(
-                    function (lpTopLevelExceptionFilter) {
-                        return ptr(0);
-                    },
-                    'pointer',
-                    ['pointer']
-                )
+                new NativeCallback(_lpTopLevelExceptionFilter => ptr(0), 'pointer', ['pointer'])
             );
             this.hooks.installed++;
             this.log('info', 'Bypassed SetUnhandledExceptionFilter');
@@ -413,9 +387,9 @@ const ArxanBypass = {
                         this.shouldBlock = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     if (this.shouldBlock) {
-                        return;
+
                     }
                 },
             });
@@ -425,16 +399,10 @@ const ArxanBypass = {
 
         const getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
         if (getTickCount) {
-            let baseTime = Date.now();
+            const baseTime = Date.now();
             Interceptor.replace(
                 getTickCount,
-                new NativeCallback(
-                    function () {
-                        return Date.now() - baseTime;
-                    },
-                    'uint',
-                    []
-                )
+                new NativeCallback(() => Date.now() - baseTime, 'uint', [])
             );
             this.hooks.installed++;
             this.log('debug', 'Normalized GetTickCount');
@@ -446,7 +414,7 @@ const ArxanBypass = {
         );
         if (queryPerformanceCounter) {
             Interceptor.attach(queryPerformanceCounter, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(1);
                 },
             });
@@ -463,11 +431,11 @@ const ArxanBypass = {
         const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryA');
         if (loadLibrary) {
             Interceptor.attach(loadLibrary, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const moduleName = args[0].readUtf8String();
                     ArxanBypass.log('debug', `LoadLibraryA: ${moduleName}`);
 
-                    if (moduleName && moduleName.toLowerCase().includes('arxan')) {
+                    if (moduleName?.toLowerCase().includes('arxan')) {
                         ArxanBypass.log('warn', `Detected Arxan module load: ${moduleName}`);
                     }
                 },
@@ -478,11 +446,11 @@ const ArxanBypass = {
         const loadLibraryW = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
         if (loadLibraryW) {
             Interceptor.attach(loadLibraryW, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const moduleName = args[0].readUtf16String();
                     ArxanBypass.log('debug', `LoadLibraryW: ${moduleName}`);
 
-                    if (moduleName && moduleName.toLowerCase().includes('arxan')) {
+                    if (moduleName?.toLowerCase().includes('arxan')) {
                         ArxanBypass.log('warn', `Detected Arxan module load: ${moduleName}`);
                     }
                 },
@@ -499,7 +467,7 @@ const ArxanBypass = {
         const modules = Process.enumerateModules();
         let patchCount = 0;
 
-        modules.forEach((module) => {
+        modules.forEach(module => {
             if (
                 module.name.toLowerCase().includes('arxan') ||
                 module.name.toLowerCase().includes('guardit') ||
@@ -511,7 +479,7 @@ const ArxanBypass = {
                     const crc32Pattern = '33 ?? 8A ?? 8B ?? C1 E8 08';
                     const matches = Memory.scanSync(module.base, module.size, crc32Pattern);
 
-                    matches.forEach((match) => {
+                    matches.forEach(match => {
                         try {
                             Memory.protect(match.address, 16, 'rwx');
                             match.address.writeByteArray([0xb8, 0x01, 0x00, 0x00, 0x00, 0xc3]);

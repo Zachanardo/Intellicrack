@@ -595,3 +595,155 @@ class BaseDialog(QDialog):
             if widget.isEnabled() and widget.focusPolicy() != Qt.FocusPolicy.NoFocus:
                 widget.setFocus()
                 break
+
+    def create_template_widget(self, title: str, templates: list[str]) -> QWidget:
+        """Create a template selection widget with list and details panel.
+
+        Args:
+            title: Title for the template group box.
+            templates: List of template names to display.
+
+        Returns:
+            QWidget containing the template selection interface with list and details.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import QGroupBox, QHBoxLayout, QListWidget, QListWidgetItem, QTextEdit, QVBoxLayout
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        template_group = QGroupBox(title)
+        template_layout = QHBoxLayout(template_group)
+
+        self.template_list = QListWidget()
+        self.template_list.setMinimumWidth(200)
+        for template_name in templates:
+            item = QListWidgetItem(template_name)
+            self.template_list.addItem(item)
+        self.template_list.itemSelectionChanged.connect(self.on_template_selected)
+        template_layout.addWidget(self.template_list)
+
+        details_layout = QVBoxLayout()
+
+        self.template_details = QTextEdit()
+        self.template_details.setReadOnly(True)
+        self.template_details.setText("")
+        details_layout.addWidget(self.template_details)
+
+        button_layout = QHBoxLayout()
+
+        self.use_template_btn = QPushButton("Use Template")
+        self.use_template_btn.setEnabled(False)
+        self.use_template_btn.clicked.connect(self.use_template)
+        button_layout.addWidget(self.use_template_btn)
+
+        self.edit_template_btn = QPushButton("Edit Template")
+        self.edit_template_btn.setEnabled(False)
+        self.edit_template_btn.clicked.connect(self.edit_template)
+        button_layout.addWidget(self.edit_template_btn)
+
+        self.create_template_btn = QPushButton("Create New")
+        self.create_template_btn.clicked.connect(self.create_template)
+        button_layout.addWidget(self.create_template_btn)
+
+        button_layout.addStretch()
+        details_layout.addLayout(button_layout)
+        template_layout.addLayout(details_layout)
+
+        layout.addWidget(template_group)
+        return widget
+
+    def on_template_selected(self) -> None:
+        """Handle template selection - override in subclasses."""
+        pass
+
+    def use_template(self) -> None:
+        """Use the selected template - override in subclasses."""
+        pass
+
+    def edit_template(self) -> None:
+        """Edit the selected template - override in subclasses."""
+        pass
+
+    def create_template(self) -> None:
+        """Create a new template - override in subclasses."""
+        pass
+
+    def setup_header(
+        self,
+        layout: QVBoxLayout,
+        show_label: bool = True,
+        extra_buttons: list[tuple[str, Callable[[], None]]] | None = None,
+    ) -> None:
+        """Set up the dialog header with binary selection and optional extra buttons.
+
+        Creates a standardized header layout with a binary path selector,
+        browse button, and any additional custom buttons specified.
+
+        Args:
+            layout: The parent layout to add the header to.
+            show_label: Whether to show the "Binary:" label (default True).
+            extra_buttons: Optional list of tuples (button_text, callback) for
+                additional buttons to add to the header.
+        """
+        from intellicrack.handlers.pyqt6_handler import QLineEdit
+
+        header_layout = QHBoxLayout()
+
+        if show_label:
+            binary_label = QLabel("Binary:")
+            header_layout.addWidget(binary_label)
+
+        self.binary_path_edit = QLineEdit()
+        self.binary_path_edit.setReadOnly(True)
+
+        if hasattr(self, "binary_path") and self.binary_path:
+            self.binary_path_edit.setText(str(self.binary_path))
+        else:
+            self.binary_path_edit.setText("")
+            self.binary_path_edit.setStyleSheet(
+                "QLineEdit { color: #888888; font-style: italic; }"
+            )
+
+        header_layout.addWidget(self.binary_path_edit, 1)
+
+        browse_btn = QPushButton("Browse...")
+        browse_btn.setToolTip("Select a binary file for analysis")
+        browse_btn.clicked.connect(self._browse_binary)
+        header_layout.addWidget(browse_btn)
+
+        if extra_buttons:
+            for button_text, callback in extra_buttons:
+                extra_btn = QPushButton(button_text)
+                extra_btn.clicked.connect(callback)
+                header_layout.addWidget(extra_btn)
+
+        layout.addLayout(header_layout)
+
+    def _browse_binary(self) -> None:
+        """Open a file dialog to select a binary file for analysis."""
+        from intellicrack.handlers.pyqt6_handler import QFileDialog
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Binary File",
+            "",
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*.*)",
+        )
+
+        if file_path:
+            if hasattr(self, "binary_path_edit"):
+                self.binary_path_edit.setText(file_path)
+
+            self.binary_path = file_path
+
+            if hasattr(self, "on_binary_selected"):
+                self.on_binary_selected(file_path)
+
+    def on_binary_selected(self, file_path: str) -> None:
+        """Handle binary file selection - override in subclasses.
+
+        Args:
+            file_path: Path to the selected binary file.
+        """
+        self.logger.debug(f"Binary selected: {file_path}")

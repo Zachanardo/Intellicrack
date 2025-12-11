@@ -1,0 +1,2462 @@
+﻿{
+    "files":  [
+                  {
+                      "path":  "src\\process_manager.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\process_manager.rs:17:1\r",
+                                           "message":  "  --\u003e src\\process_manager.rs:17:1\r",
+                                           "line":  "17"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:129:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:129:5\r",
+                                           "line":  "129"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:145:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:145:5\r",
+                                           "line":  "145"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:164:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:164:5\r",
+                                           "line":  "164"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:185:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:185:5\r",
+                                           "line":  "185"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\process_manager.rs:212:28\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:212:28\r",
+                                           "line":  "212"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:203:5\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "22",
+                                           "raw":  "   --\u003e src\\process_manager.rs:207:22\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:207:22\r",
+                                           "line":  "207"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:345:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:345:5\r",
+                                           "line":  "345"
+                                       },
+                                       {
+                                           "column":  "33",
+                                           "raw":  "   --\u003e src\\process_manager.rs:388:33\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:388:33\r",
+                                           "line":  "388"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:424:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:424:5\r",
+                                           "line":  "424"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:424:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:424:5\r",
+                                           "line":  "424"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\process_manager.rs:539:29\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:539:29\r",
+                                           "line":  "539"
+                                       },
+                                       {
+                                           "column":  "35",
+                                           "raw":  "   --\u003e src\\process_manager.rs:553:35\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:553:35\r",
+                                           "line":  "553"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:582:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:582:5\r",
+                                           "line":  "582"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\process_manager.rs:583:29\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:583:29\r",
+                                           "line":  "583"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:582:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:582:5\r",
+                                           "line":  "582"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\process_manager.rs:592:17\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:592:17\r",
+                                           "line":  "592"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\process_manager.rs:595:13\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:595:13\r",
+                                           "line":  "595"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:600:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:600:5\r",
+                                           "line":  "600"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\process_manager.rs:601:25\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:601:25\r",
+                                           "line":  "601"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:606:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:606:5\r",
+                                           "line":  "606"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\process_manager.rs:607:25\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:607:25\r",
+                                           "line":  "607"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:611:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:611:5\r",
+                                           "line":  "611"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\process_manager.rs:613:29\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:613:29\r",
+                                           "line":  "613"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:611:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:611:5\r",
+                                           "line":  "611"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\process_manager.rs:629:17\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:629:17\r",
+                                           "line":  "629"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:634:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:634:5\r",
+                                           "line":  "634"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\process_manager.rs:635:29\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:635:29\r",
+                                           "line":  "635"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:669:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:669:5\r",
+                                           "line":  "669"
+                                       },
+                                       {
+                                           "column":  "37",
+                                           "raw":  "   --\u003e src\\process_manager.rs:674:37\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:674:37\r",
+                                           "line":  "674"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:669:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:669:5\r",
+                                           "line":  "669"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:718:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:718:5\r",
+                                           "line":  "718"
+                                       },
+                                       {
+                                           "column":  "21",
+                                           "raw":  "   --\u003e src\\process_manager.rs:719:21\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:719:21\r",
+                                           "line":  "719"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:732:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:732:5\r",
+                                           "line":  "732"
+                                       },
+                                       {
+                                           "column":  "23",
+                                           "raw":  "   --\u003e src\\process_manager.rs:733:23\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:733:23\r",
+                                           "line":  "733"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:756:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:756:5\r",
+                                           "line":  "756"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\process_manager.rs:759:28\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:759:28\r",
+                                           "line":  "759"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:756:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:756:5\r",
+                                           "line":  "756"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:802:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:802:5\r",
+                                           "line":  "802"
+                                       },
+                                       {
+                                           "column":  "11",
+                                           "raw":  "   --\u003e src\\process_manager.rs:803:11\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:803:11\r",
+                                           "line":  "803"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:807:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:807:5\r",
+                                           "line":  "807"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\process_manager.rs:808:25\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:808:25\r",
+                                           "line":  "808"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\process_manager.rs:1153:25\r",
+                                           "message":  "    --\u003e src\\process_manager.rs:1153:25\r",
+                                           "line":  "1153"
+                                       },
+                                       {
+                                           "column":  "32",
+                                           "raw":  "    --\u003e src\\process_manager.rs:1157:32\r",
+                                           "message":  "    --\u003e src\\process_manager.rs:1157:32\r",
+                                           "line":  "1157"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\process_manager.rs:1165:25\r",
+                                           "message":  "    --\u003e src\\process_manager.rs:1165:25\r",
+                                           "line":  "1165"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "    --\u003e src\\process_manager.rs:1169:29\r",
+                                           "message":  "    --\u003e src\\process_manager.rs:1169:29\r",
+                                           "line":  "1169"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\process_manager.rs:1198:9\r",
+                                           "message":  "    --\u003e src\\process_manager.rs:1198:9\r",
+                                           "line":  "1198"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_manager.rs:185:5\r",
+                                           "message":  "   --\u003e src\\process_manager.rs:185:5\r",
+                                           "line":  "185"
+                                       }
+                                   ],
+                      "count":  51
+                  },
+                  {
+                      "path":  "src\\dependencies.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\dependencies.rs:37:1\r",
+                                           "message":  "  --\u003e src\\dependencies.rs:37:1\r",
+                                           "line":  "37"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\dependencies.rs:48:1\r",
+                                           "message":  "  --\u003e src\\dependencies.rs:48:1\r",
+                                           "line":  "48"
+                                       },
+                                       {
+                                           "column":  "14",
+                                           "raw":  "   --\u003e src\\dependencies.rs:103:14\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:103:14\r",
+                                           "line":  "103"
+                                       },
+                                       {
+                                           "column":  "41",
+                                           "raw":  "   --\u003e src\\dependencies.rs:103:41\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:103:41\r",
+                                           "line":  "103"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:121:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:121:5\r",
+                                           "line":  "121"
+                                       },
+                                       {
+                                           "column":  "21",
+                                           "raw":  "   --\u003e src\\dependencies.rs:326:21\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:326:21\r",
+                                           "line":  "326"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\dependencies.rs:580:28\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:580:28\r",
+                                           "line":  "580"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:645:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:645:5\r",
+                                           "line":  "645"
+                                       },
+                                       {
+                                           "column":  "36",
+                                           "raw":  "   --\u003e src\\dependencies.rs:757:36\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:757:36\r",
+                                           "line":  "757"
+                                       },
+                                       {
+                                           "column":  "35",
+                                           "raw":  "   --\u003e src\\dependencies.rs:758:35\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:758:35\r",
+                                           "line":  "758"
+                                       },
+                                       {
+                                           "column":  "35",
+                                           "raw":  "   --\u003e src\\dependencies.rs:759:35\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:759:35\r",
+                                           "line":  "759"
+                                       },
+                                       {
+                                           "column":  "41",
+                                           "raw":  "   --\u003e src\\dependencies.rs:760:41\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:760:41\r",
+                                           "line":  "760"
+                                       },
+                                       {
+                                           "column":  "57",
+                                           "raw":  "   --\u003e src\\dependencies.rs:760:57\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:760:57\r",
+                                           "line":  "760"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:809:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:809:5\r",
+                                           "line":  "809"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:822:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:822:5\r",
+                                           "line":  "822"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:840:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:840:5\r",
+                                           "line":  "840"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:858:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:858:5\r",
+                                           "line":  "858"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:871:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:871:5\r",
+                                           "line":  "871"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\dependencies.rs:1435:25\r",
+                                           "message":  "    --\u003e src\\dependencies.rs:1435:25\r",
+                                           "line":  "1435"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\dependencies.rs:1445:25\r",
+                                           "message":  "    --\u003e src\\dependencies.rs:1445:25\r",
+                                           "line":  "1445"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\dependencies.rs:1457:25\r",
+                                           "message":  "    --\u003e src\\dependencies.rs:1457:25\r",
+                                           "line":  "1457"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\dependencies.rs:1469:25\r",
+                                           "message":  "    --\u003e src\\dependencies.rs:1469:25\r",
+                                           "line":  "1469"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "    --\u003e src\\dependencies.rs:1478:25\r",
+                                           "message":  "    --\u003e src\\dependencies.rs:1478:25\r",
+                                           "line":  "1478"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:160:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:160:5\r",
+                                           "line":  "160"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:226:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:226:5\r",
+                                           "line":  "226"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:306:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:306:5\r",
+                                           "line":  "306"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:383:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:383:5\r",
+                                           "line":  "383"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:420:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:420:5\r",
+                                           "line":  "420"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:493:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:493:5\r",
+                                           "line":  "493"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:590:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:590:5\r",
+                                           "line":  "590"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\dependencies.rs:645:5\r",
+                                           "message":  "   --\u003e src\\dependencies.rs:645:5\r",
+                                           "line":  "645"
+                                       }
+                                   ],
+                      "count":  31
+                  },
+                  {
+                      "path":  "src\\environment.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "59",
+                                           "raw":  "  --\u003e src\\environment.rs:25:59\r",
+                                           "message":  "  --\u003e src\\environment.rs:25:59\r",
+                                           "line":  "25"
+                                       },
+                                       {
+                                           "column":  "68",
+                                           "raw":  "  --\u003e src\\environment.rs:25:68\r",
+                                           "message":  "  --\u003e src\\environment.rs:25:68\r",
+                                           "line":  "25"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\environment.rs:26:5\r",
+                                           "message":  "  --\u003e src\\environment.rs:26:5\r",
+                                           "line":  "26"
+                                       },
+                                       {
+                                           "column":  "55",
+                                           "raw":  "  --\u003e src\\environment.rs:26:55\r",
+                                           "message":  "  --\u003e src\\environment.rs:26:55\r",
+                                           "line":  "26"
+                                       },
+                                       {
+                                           "column":  "60",
+                                           "raw":  "  --\u003e src\\environment.rs:43:60\r",
+                                           "message":  "  --\u003e src\\environment.rs:43:60\r",
+                                           "line":  "43"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\environment.rs:66:5\r",
+                                           "message":  "  --\u003e src\\environment.rs:66:5\r",
+                                           "line":  "66"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:105:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:105:5\r",
+                                           "line":  "105"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\environment.rs:131:34\r",
+                                           "message":  "   --\u003e src\\environment.rs:131:34\r",
+                                           "line":  "131"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:131:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:131:5\r",
+                                           "line":  "131"
+                                       },
+                                       {
+                                           "column":  "33",
+                                           "raw":  "   --\u003e src\\environment.rs:150:33\r",
+                                           "message":  "   --\u003e src\\environment.rs:150:33\r",
+                                           "line":  "150"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:150:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:150:5\r",
+                                           "line":  "150"
+                                       },
+                                       {
+                                           "column":  "35",
+                                           "raw":  "   --\u003e src\\environment.rs:163:35\r",
+                                           "message":  "   --\u003e src\\environment.rs:163:35\r",
+                                           "line":  "163"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:163:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:163:5\r",
+                                           "line":  "163"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:200:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:200:5\r",
+                                           "line":  "200"
+                                       },
+                                       {
+                                           "column":  "43",
+                                           "raw":  "   --\u003e src\\environment.rs:281:43\r",
+                                           "message":  "   --\u003e src\\environment.rs:281:43\r",
+                                           "line":  "281"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:281:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:281:5\r",
+                                           "line":  "281"
+                                       },
+                                       {
+                                           "column":  "62",
+                                           "raw":  "   --\u003e src\\environment.rs:324:62\r",
+                                           "message":  "   --\u003e src\\environment.rs:324:62\r",
+                                           "line":  "324"
+                                       },
+                                       {
+                                           "column":  "66",
+                                           "raw":  "   --\u003e src\\environment.rs:324:66\r",
+                                           "message":  "   --\u003e src\\environment.rs:324:66\r",
+                                           "line":  "324"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\environment.rs:348:28\r",
+                                           "message":  "   --\u003e src\\environment.rs:348:28\r",
+                                           "line":  "348"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:348:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:348:5\r",
+                                           "line":  "348"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\environment.rs:393:34\r",
+                                           "message":  "   --\u003e src\\environment.rs:393:34\r",
+                                           "line":  "393"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:393:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:393:5\r",
+                                           "line":  "393"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:495:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:495:5\r",
+                                           "line":  "495"
+                                       },
+                                       {
+                                           "column":  "37",
+                                           "raw":  "   --\u003e src\\environment.rs:515:37\r",
+                                           "message":  "   --\u003e src\\environment.rs:515:37\r",
+                                           "line":  "515"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:515:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:515:5\r",
+                                           "line":  "515"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:534:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:534:5\r",
+                                           "line":  "534"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\environment.rs:549:5\r",
+                                           "message":  "   --\u003e src\\environment.rs:549:5\r",
+                                           "line":  "549"
+                                       }
+                                   ],
+                      "count":  27
+                  },
+                  {
+                      "path":  "src\\python_integration.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\python_integration.rs:29:5\r",
+                                           "message":  "  --\u003e src\\python_integration.rs:29:5\r",
+                                           "line":  "29"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:148:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:148:5\r",
+                                           "line":  "148"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\python_integration.rs:161:28\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:161:28\r",
+                                           "line":  "161"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:161:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:161:5\r",
+                                           "line":  "161"
+                                       },
+                                       {
+                                           "column":  "40",
+                                           "raw":  "   --\u003e src\\python_integration.rs:183:40\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:183:40\r",
+                                           "line":  "183"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\python_integration.rs:203:34\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:203:34\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\python_integration.rs:209:13\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:209:13\r",
+                                           "line":  "209"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\python_integration.rs:222:17\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:222:17\r",
+                                           "line":  "222"
+                                       },
+                                       {
+                                           "column":  "18",
+                                           "raw":  "   --\u003e src\\python_integration.rs:230:18\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:230:18\r",
+                                           "line":  "230"
+                                       },
+                                       {
+                                           "column":  "40",
+                                           "raw":  "   --\u003e src\\python_integration.rs:234:40\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:234:40\r",
+                                           "line":  "234"
+                                       },
+                                       {
+                                           "column":  "23",
+                                           "raw":  "   --\u003e src\\python_integration.rs:257:23\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:257:23\r",
+                                           "line":  "257"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\python_integration.rs:290:17\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:290:17\r",
+                                           "line":  "290"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\python_integration.rs:299:34\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:299:34\r",
+                                           "line":  "299"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:299:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:299:5\r",
+                                           "line":  "299"
+                                       },
+                                       {
+                                           "column":  "36",
+                                           "raw":  "   --\u003e src\\python_integration.rs:312:36\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:312:36\r",
+                                           "line":  "312"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:362:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:362:5\r",
+                                           "line":  "362"
+                                       },
+                                       {
+                                           "column":  "65",
+                                           "raw":  "   --\u003e src\\python_integration.rs:367:65\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:367:65\r",
+                                           "line":  "367"
+                                       },
+                                       {
+                                           "column":  "69",
+                                           "raw":  "   --\u003e src\\python_integration.rs:404:69\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:404:69\r",
+                                           "line":  "404"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:494:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:494:5\r",
+                                           "line":  "494"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:540:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:540:5\r",
+                                           "line":  "540"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:551:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:551:5\r",
+                                           "line":  "551"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\python_integration.rs:564:5\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:564:5\r",
+                                           "line":  "564"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\python_integration.rs:161:28\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:161:28\r",
+                                           "line":  "161"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\python_integration.rs:795:9\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:795:9\r",
+                                           "line":  "795"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\python_integration.rs:852:9\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:852:9\r",
+                                           "line":  "852"
+                                       },
+                                       {
+                                           "column":  "27",
+                                           "raw":  "   --\u003e src\\python_integration.rs:896:27\r",
+                                           "message":  "   --\u003e src\\python_integration.rs:896:27\r",
+                                           "line":  "896"
+                                       }
+                                   ],
+                      "count":  26
+                  },
+                  {
+                      "path":  "src\\diagnostics.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\diagnostics.rs:63:5\r",
+                                           "message":  "  --\u003e src\\diagnostics.rs:63:5\r",
+                                           "line":  "63"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:190:29\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:190:29\r",
+                                           "line":  "190"
+                                       },
+                                       {
+                                           "column":  "18",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:415:18\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:415:18\r",
+                                           "line":  "415"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:471:5\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:471:5\r",
+                                           "line":  "471"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:492:5\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:492:5\r",
+                                           "line":  "492"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:545:5\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:545:5\r",
+                                           "line":  "545"
+                                       },
+                                       {
+                                           "column":  "40",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:701:40\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:701:40\r",
+                                           "line":  "701"
+                                       },
+                                       {
+                                           "column":  "58",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:720:58\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:720:58\r",
+                                           "line":  "720"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:762:5\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:762:5\r",
+                                           "line":  "762"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:793:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:793:9\r",
+                                           "line":  "793"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:794:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:794:9\r",
+                                           "line":  "794"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:795:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:795:9\r",
+                                           "line":  "795"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:796:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:796:9\r",
+                                           "line":  "796"
+                                       },
+                                       {
+                                           "column":  "62",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:804:62\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:804:62\r",
+                                           "line":  "804"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:809:13\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:809:13\r",
+                                           "line":  "809"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:846:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:846:9\r",
+                                           "line":  "846"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:847:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:847:9\r",
+                                           "line":  "847"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:883:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:883:9\r",
+                                           "line":  "883"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:925:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:925:9\r",
+                                           "line":  "925"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:926:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:926:9\r",
+                                           "line":  "926"
+                                       },
+                                       {
+                                           "column":  "30",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:984:30\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:984:30\r",
+                                           "line":  "984"
+                                       },
+                                       {
+                                           "column":  "23",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:984:23\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:984:23\r",
+                                           "line":  "984"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\diagnostics.rs:990:9\r",
+                                           "message":  "   --\u003e src\\diagnostics.rs:990:9\r",
+                                           "line":  "990"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\diagnostics.rs:1273:9\r",
+                                           "message":  "    --\u003e src\\diagnostics.rs:1273:9\r",
+                                           "line":  "1273"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\diagnostics.rs:1321:9\r",
+                                           "message":  "    --\u003e src\\diagnostics.rs:1321:9\r",
+                                           "line":  "1321"
+                                       }
+                                   ],
+                      "count":  25
+                  },
+                  {
+                      "path":  "benches\\startup_optimization_benchmarks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "17",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:36:17\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:36:17\r",
+                                           "line":  "36"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  " --\u003e benches\\startup_optimization_benchmarks.rs:8:19\r",
+                                           "message":  " --\u003e benches\\startup_optimization_benchmarks.rs:8:19\r",
+                                           "line":  "8"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:16:19\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:16:19\r",
+                                           "line":  "16"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:21:19\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:21:19\r",
+                                           "line":  "21"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:36:17\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:36:17\r",
+                                           "line":  "36"
+                                       },
+                                       {
+                                           "column":  "14",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:38:14\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:38:14\r",
+                                           "line":  "38"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:38:17\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:38:17\r",
+                                           "line":  "38"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:48:19\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:48:19\r",
+                                           "line":  "48"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:57:19\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:57:19\r",
+                                           "line":  "57"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:93:13\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:93:13\r",
+                                           "line":  "93"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "  --\u003e benches\\startup_optimization_benchmarks.rs:95:13\r",
+                                           "message":  "  --\u003e benches\\startup_optimization_benchmarks.rs:95:13\r",
+                                           "line":  "95"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:105:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:105:13\r",
+                                           "line":  "105"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:107:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:107:13\r",
+                                           "line":  "107"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:116:19\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:116:19\r",
+                                           "line":  "116"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:127:19\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:127:19\r",
+                                           "line":  "127"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:133:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:133:13\r",
+                                           "line":  "133"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:135:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:135:13\r",
+                                           "line":  "135"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:167:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:167:13\r",
+                                           "line":  "167"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:169:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:169:13\r",
+                                           "line":  "169"
+                                       },
+                                       {
+                                           "column":  "22",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:181:22\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:181:22\r",
+                                           "line":  "181"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:188:25\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:188:25\r",
+                                           "line":  "188"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:206:19\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:206:19\r",
+                                           "line":  "206"
+                                       },
+                                       {
+                                           "column":  "19",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:217:19\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:217:19\r",
+                                           "line":  "217"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:223:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:223:13\r",
+                                           "line":  "223"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\startup_optimization_benchmarks.rs:225:13\r",
+                                           "message":  "   --\u003e benches\\startup_optimization_benchmarks.rs:225:13\r",
+                                           "line":  "225"
+                                       }
+                                   ],
+                      "count":  25
+                  },
+                  {
+                      "path":  "src\\tensorflow_validator.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:237:29\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:237:29\r",
+                                           "line":  "237"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\tensorflow_validator.rs:11:5\r",
+                                           "message":  "  --\u003e src\\tensorflow_validator.rs:11:5\r",
+                                           "line":  "11"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\tensorflow_validator.rs:11:5\r",
+                                           "message":  "  --\u003e src\\tensorflow_validator.rs:11:5\r",
+                                           "line":  "11"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:363:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:363:5\r",
+                                           "line":  "363"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:590:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:590:5\r",
+                                           "line":  "590"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:175:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:175:5\r",
+                                           "line":  "175"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:202:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:202:5\r",
+                                           "line":  "202"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:250:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:250:5\r",
+                                           "line":  "250"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:363:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:363:5\r",
+                                           "line":  "363"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:481:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:481:5\r",
+                                           "line":  "481"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:590:5\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:590:5\r",
+                                           "line":  "590"
+                                       },
+                                       {
+                                           "column":  "45",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:774:45\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:774:45\r",
+                                           "line":  "774"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:792:9\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:792:9\r",
+                                           "line":  "792"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:817:9\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:817:9\r",
+                                           "line":  "817"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:838:9\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:838:9\r",
+                                           "line":  "838"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:859:9\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:859:9\r",
+                                           "line":  "859"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:877:13\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:877:13\r",
+                                           "line":  "877"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\tensorflow_validator.rs:941:25\r",
+                                           "message":  "   --\u003e src\\tensorflow_validator.rs:941:25\r",
+                                           "line":  "941"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\tensorflow_validator.rs:1056:9\r",
+                                           "message":  "    --\u003e src\\tensorflow_validator.rs:1056:9\r",
+                                           "line":  "1056"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\tensorflow_validator.rs:1084:9\r",
+                                           "message":  "    --\u003e src\\tensorflow_validator.rs:1084:9\r",
+                                           "line":  "1084"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "    --\u003e src\\tensorflow_validator.rs:1127:9\r",
+                                           "message":  "    --\u003e src\\tensorflow_validator.rs:1127:9\r",
+                                           "line":  "1127"
+                                       }
+                                   ],
+                      "count":  21
+                  },
+                  {
+                      "path":  "src\\tool_discovery.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "10",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:466:10\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:466:10\r",
+                                           "line":  "466"
+                                       },
+                                       {
+                                           "column":  "48",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:103:48\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:103:48\r",
+                                           "line":  "103"
+                                       },
+                                       {
+                                           "column":  "23",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:114:23\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:114:23\r",
+                                           "line":  "114"
+                                       },
+                                       {
+                                           "column":  "15",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:123:15\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:123:15\r",
+                                           "line":  "123"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:124:12\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:124:12\r",
+                                           "line":  "124"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:159:12\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:159:12\r",
+                                           "line":  "159"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:164:12\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:164:12\r",
+                                           "line":  "164"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:232:1\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:232:1\r",
+                                           "line":  "232"
+                                       },
+                                       {
+                                           "column":  "7",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:359:7\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:359:7\r",
+                                           "line":  "359"
+                                       },
+                                       {
+                                           "column":  "37",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:402:37\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:402:37\r",
+                                           "line":  "402"
+                                       },
+                                       {
+                                           "column":  "23",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:432:23\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:432:23\r",
+                                           "line":  "432"
+                                       },
+                                       {
+                                           "column":  "24",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:535:24\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:535:24\r",
+                                           "line":  "535"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:575:34\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:575:34\r",
+                                           "line":  "575"
+                                       },
+                                       {
+                                           "column":  "27",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:577:27\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:577:27\r",
+                                           "line":  "577"
+                                       },
+                                       {
+                                           "column":  "34",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:583:34\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:583:34\r",
+                                           "line":  "583"
+                                       },
+                                       {
+                                           "column":  "27",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:585:27\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:585:27\r",
+                                           "line":  "585"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:842:1\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:842:1\r",
+                                           "line":  "842"
+                                       },
+                                       {
+                                           "column":  "26",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:917:26\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:917:26\r",
+                                           "line":  "917"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\tool_discovery.rs:930:5\r",
+                                           "message":  "   --\u003e src\\tool_discovery.rs:930:5\r",
+                                           "line":  "930"
+                                       }
+                                   ],
+                      "count":  19
+                  },
+                  {
+                      "path":  "src\\preflight_checks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "30",
+                                           "raw":  "  --\u003e src\\preflight_checks.rs:23:30\r",
+                                           "message":  "  --\u003e src\\preflight_checks.rs:23:30\r",
+                                           "line":  "23"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "  --\u003e src\\preflight_checks.rs:74:9\r",
+                                           "message":  "  --\u003e src\\preflight_checks.rs:74:9\r",
+                                           "line":  "74"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:252:1\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:252:1\r",
+                                           "line":  "252"
+                                       },
+                                       {
+                                           "column":  "48",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:260:48\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:260:48\r",
+                                           "line":  "260"
+                                       },
+                                       {
+                                           "column":  "52",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:260:52\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:260:52\r",
+                                           "line":  "260"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:293:1\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:293:1\r",
+                                           "line":  "293"
+                                       },
+                                       {
+                                           "column":  "44",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:301:44\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:301:44\r",
+                                           "line":  "301"
+                                       },
+                                       {
+                                           "column":  "48",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:301:48\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:301:48\r",
+                                           "line":  "301"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:309:9\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:309:9\r",
+                                           "line":  "309"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:346:13\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:346:13\r",
+                                           "line":  "346"
+                                       },
+                                       {
+                                           "column":  "31",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:346:31\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:346:31\r",
+                                           "line":  "346"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:354:13\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:354:13\r",
+                                           "line":  "354"
+                                       },
+                                       {
+                                           "column":  "31",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:354:31\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:354:31\r",
+                                           "line":  "354"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:401:1\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:401:1\r",
+                                           "line":  "401"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:411:5\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:411:5\r",
+                                           "line":  "411"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:417:5\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:417:5\r",
+                                           "line":  "417"
+                                       },
+                                       {
+                                           "column":  "31",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:346:31\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:346:31\r",
+                                           "line":  "346"
+                                       },
+                                       {
+                                           "column":  "18",
+                                           "raw":  "   --\u003e src\\preflight_checks.rs:489:18\r",
+                                           "message":  "   --\u003e src\\preflight_checks.rs:489:18\r",
+                                           "line":  "489"
+                                       }
+                                   ],
+                      "count":  18
+                  },
+                  {
+                      "path":  "src\\lib.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "51",
+                                           "raw":  "   --\u003e src\\lib.rs:301:51\r",
+                                           "message":  "   --\u003e src\\lib.rs:301:51\r",
+                                           "line":  "301"
+                                       },
+                                       {
+                                           "column":  "51",
+                                           "raw":  "   --\u003e src\\lib.rs:301:51\r",
+                                           "message":  "   --\u003e src\\lib.rs:301:51\r",
+                                           "line":  "301"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\lib.rs:72:5\r",
+                                           "message":  "  --\u003e src\\lib.rs:72:5\r",
+                                           "line":  "72"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\lib.rs:100:5\r",
+                                           "message":  "   --\u003e src\\lib.rs:100:5\r",
+                                           "line":  "100"
+                                       },
+                                       {
+                                           "column":  "37",
+                                           "raw":  "   --\u003e src\\lib.rs:140:37\r",
+                                           "message":  "   --\u003e src\\lib.rs:140:37\r",
+                                           "line":  "140"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:171:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:171:17\r",
+                                           "line":  "171"
+                                       },
+                                       {
+                                           "column":  "39",
+                                           "raw":  "   --\u003e src\\lib.rs:205:39\r",
+                                           "message":  "   --\u003e src\\lib.rs:205:39\r",
+                                           "line":  "205"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\lib.rs:196:13\r",
+                                           "message":  "   --\u003e src\\lib.rs:196:13\r",
+                                           "line":  "196"
+                                       },
+                                       {
+                                           "column":  "39",
+                                           "raw":  "   --\u003e src\\lib.rs:267:39\r",
+                                           "message":  "   --\u003e src\\lib.rs:267:39\r",
+                                           "line":  "267"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:314:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:314:17\r",
+                                           "line":  "314"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:316:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:316:17\r",
+                                           "line":  "316"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:321:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:321:17\r",
+                                           "line":  "321"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\lib.rs:322:28\r",
+                                           "message":  "   --\u003e src\\lib.rs:322:28\r",
+                                           "line":  "322"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:333:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:333:17\r",
+                                           "line":  "333"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:339:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:339:17\r",
+                                           "line":  "339"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\lib.rs:357:17\r",
+                                           "message":  "   --\u003e src\\lib.rs:357:17\r",
+                                           "line":  "357"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\lib.rs:365:1\r",
+                                           "message":  "   --\u003e src\\lib.rs:365:1\r",
+                                           "line":  "365"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\lib.rs:100:5\r",
+                                           "message":  "   --\u003e src\\lib.rs:100:5\r",
+                                           "line":  "100"
+                                       }
+                                   ],
+                      "count":  18
+                  },
+                  {
+                      "path":  "tests\\integration.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e tests\\integration.rs:481:1\r",
+                                           "message":  "   --\u003e tests\\integration.rs:481:1\r",
+                                           "line":  "481"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "  --\u003e tests\\integration.rs:76:17\r",
+                                           "message":  "  --\u003e tests\\integration.rs:76:17\r",
+                                           "line":  "76"
+                                       },
+                                       {
+                                           "column":  "21",
+                                           "raw":  "   --\u003e tests\\integration.rs:102:21\r",
+                                           "message":  "   --\u003e tests\\integration.rs:102:21\r",
+                                           "line":  "102"
+                                       },
+                                       {
+                                           "column":  "21",
+                                           "raw":  "   --\u003e tests\\integration.rs:102:21\r",
+                                           "message":  "   --\u003e tests\\integration.rs:102:21\r",
+                                           "line":  "102"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e tests\\integration.rs:106:29\r",
+                                           "message":  "   --\u003e tests\\integration.rs:106:29\r",
+                                           "line":  "106"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e tests\\integration.rs:107:13\r",
+                                           "message":  "   --\u003e tests\\integration.rs:107:13\r",
+                                           "line":  "107"
+                                       },
+                                       {
+                                           "column":  "20",
+                                           "raw":  "   --\u003e tests\\integration.rs:136:20\r",
+                                           "message":  "   --\u003e tests\\integration.rs:136:20\r",
+                                           "line":  "136"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\integration.rs:305:5\r",
+                                           "message":  "   --\u003e tests\\integration.rs:305:5\r",
+                                           "line":  "305"
+                                       },
+                                       {
+                                           "column":  "31",
+                                           "raw":  "   --\u003e tests\\integration.rs:333:31\r",
+                                           "message":  "   --\u003e tests\\integration.rs:333:31\r",
+                                           "line":  "333"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\integration.rs:380:5\r",
+                                           "message":  "   --\u003e tests\\integration.rs:380:5\r",
+                                           "line":  "380"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e tests\\integration.rs:433:9\r",
+                                           "message":  "   --\u003e tests\\integration.rs:433:9\r",
+                                           "line":  "433"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\integration.rs:432:5\r",
+                                           "message":  "   --\u003e tests\\integration.rs:432:5\r",
+                                           "line":  "432"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e tests\\integration.rs:474:13\r",
+                                           "message":  "   --\u003e tests\\integration.rs:474:13\r",
+                                           "line":  "474"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\integration.rs:503:5\r",
+                                           "message":  "   --\u003e tests\\integration.rs:503:5\r",
+                                           "line":  "503"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e tests\\integration.rs:526:25\r",
+                                           "message":  "   --\u003e tests\\integration.rs:526:25\r",
+                                           "line":  "526"
+                                       }
+                                   ],
+                      "count":  15
+                  },
+                  {
+                      "path":  "src\\process_optimization.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "58",
+                                           "raw":  " --\u003e src\\process_optimization.rs:8:58\r",
+                                           "message":  " --\u003e src\\process_optimization.rs:8:58\r",
+                                           "line":  "8"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:100:12\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:100:12\r",
+                                           "line":  "100"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:100:5\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:100:5\r",
+                                           "line":  "100"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:133:1\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:133:1\r",
+                                           "line":  "133"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:159:1\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:159:1\r",
+                                           "line":  "159"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:170:13\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:170:13\r",
+                                           "line":  "170"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:191:13\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:191:13\r",
+                                           "line":  "191"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:191:13\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:191:13\r",
+                                           "line":  "191"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:192:13\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:192:13\r",
+                                           "line":  "192"
+                                       },
+                                       {
+                                           "column":  "26",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:206:26\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:206:26\r",
+                                           "line":  "206"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:295:1\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:295:1\r",
+                                           "line":  "295"
+                                       },
+                                       {
+                                           "column":  "53",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:322:53\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:322:53\r",
+                                           "line":  "322"
+                                       },
+                                       {
+                                           "column":  "38",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:345:38\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:345:38\r",
+                                           "line":  "345"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e src\\process_optimization.rs:377:1\r",
+                                           "message":  "   --\u003e src\\process_optimization.rs:377:1\r",
+                                           "line":  "377"
+                                       }
+                                   ],
+                      "count":  14
+                  },
+                  {
+                      "path":  "src\\flask_validator.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:203:29\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:203:29\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\flask_validator.rs:11:5\r",
+                                           "message":  "  --\u003e src\\flask_validator.rs:11:5\r",
+                                           "line":  "11"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\flask_validator.rs:11:5\r",
+                                           "message":  "  --\u003e src\\flask_validator.rs:11:5\r",
+                                           "line":  "11"
+                                       },
+                                       {
+                                           "column":  "45",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:550:45\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:550:45\r",
+                                           "line":  "550"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:568:9\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:568:9\r",
+                                           "line":  "568"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:590:9\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:590:9\r",
+                                           "line":  "590"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:610:9\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:610:9\r",
+                                           "line":  "610"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:627:13\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:627:13\r",
+                                           "line":  "627"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:682:25\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:682:25\r",
+                                           "line":  "682"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:141:5\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:141:5\r",
+                                           "line":  "141"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:168:5\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:168:5\r",
+                                           "line":  "168"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:216:5\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:216:5\r",
+                                           "line":  "216"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:304:5\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:304:5\r",
+                                           "line":  "304"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\flask_validator.rs:384:5\r",
+                                           "message":  "   --\u003e src\\flask_validator.rs:384:5\r",
+                                           "line":  "384"
+                                       }
+                                   ],
+                      "count":  14
+                  },
+                  {
+                      "path":  "src\\security.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "64",
+                                           "raw":  "   --\u003e src\\security.rs:933:64\r",
+                                           "message":  "   --\u003e src\\security.rs:933:64\r",
+                                           "line":  "933"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\security.rs:11:1\r",
+                                           "message":  "  --\u003e src\\security.rs:11:1\r",
+                                           "line":  "11"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\security.rs:62:5\r",
+                                           "message":  "  --\u003e src\\security.rs:62:5\r",
+                                           "line":  "62"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\security.rs:72:5\r",
+                                           "message":  "  --\u003e src\\security.rs:72:5\r",
+                                           "line":  "72"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\security.rs:189:5\r",
+                                           "message":  "   --\u003e src\\security.rs:189:5\r",
+                                           "line":  "189"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\security.rs:203:5\r",
+                                           "message":  "   --\u003e src\\security.rs:203:5\r",
+                                           "line":  "203"
+                                       },
+                                       {
+                                           "column":  "43",
+                                           "raw":  "   --\u003e src\\security.rs:251:43\r",
+                                           "message":  "   --\u003e src\\security.rs:251:43\r",
+                                           "line":  "251"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e src\\security.rs:255:12\r",
+                                           "message":  "   --\u003e src\\security.rs:255:12\r",
+                                           "line":  "255"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\security.rs:328:5\r",
+                                           "message":  "   --\u003e src\\security.rs:328:5\r",
+                                           "line":  "328"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\security.rs:352:17\r",
+                                           "message":  "   --\u003e src\\security.rs:352:17\r",
+                                           "line":  "352"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\security.rs:373:17\r",
+                                           "message":  "   --\u003e src\\security.rs:373:17\r",
+                                           "line":  "373"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\security.rs:394:5\r",
+                                           "message":  "   --\u003e src\\security.rs:394:5\r",
+                                           "line":  "394"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e src\\security.rs:420:17\r",
+                                           "message":  "   --\u003e src\\security.rs:420:17\r",
+                                           "line":  "420"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\security.rs:431:5\r",
+                                           "message":  "   --\u003e src\\security.rs:431:5\r",
+                                           "line":  "431"
+                                       }
+                                   ],
+                      "count":  14
+                  },
+                  {
+                      "path":  "tests\\preflight_checks_tests.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "1",
+                                           "raw":  " --\u003e tests\\preflight_checks_tests.rs:4:1\r",
+                                           "message":  " --\u003e tests\\preflight_checks_tests.rs:4:1\r",
+                                           "line":  "4"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:105:1\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:105:1\r",
+                                           "line":  "105"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e tests\\preflight_checks_tests.rs:8:5\r",
+                                           "message":  "  --\u003e tests\\preflight_checks_tests.rs:8:5\r",
+                                           "line":  "8"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e tests\\preflight_checks_tests.rs:21:5\r",
+                                           "message":  "  --\u003e tests\\preflight_checks_tests.rs:21:5\r",
+                                           "line":  "21"
+                                       },
+                                       {
+                                           "column":  "32",
+                                           "raw":  "  --\u003e tests\\preflight_checks_tests.rs:52:32\r",
+                                           "message":  "  --\u003e tests\\preflight_checks_tests.rs:52:32\r",
+                                           "line":  "52"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:97:5\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:97:5\r",
+                                           "line":  "97"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:141:25\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:141:25\r",
+                                           "line":  "141"
+                                       },
+                                       {
+                                           "column":  "12",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:155:12\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:155:12\r",
+                                           "line":  "155"
+                                       },
+                                       {
+                                           "column":  "29",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:157:29\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:157:29\r",
+                                           "line":  "157"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:179:5\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:179:5\r",
+                                           "line":  "179"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e tests\\preflight_checks_tests.rs:180:5\r",
+                                           "message":  "   --\u003e tests\\preflight_checks_tests.rs:180:5\r",
+                                           "line":  "180"
+                                       }
+                                   ],
+                      "count":  11
+                  },
+                  {
+                      "path":  "src\\startup_checks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\startup_checks.rs:91:5\r",
+                                           "message":  "  --\u003e src\\startup_checks.rs:91:5\r",
+                                           "line":  "91"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\startup_checks.rs:97:5\r",
+                                           "message":  "  --\u003e src\\startup_checks.rs:97:5\r",
+                                           "line":  "97"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:172:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:172:5\r",
+                                           "line":  "172"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:372:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:372:5\r",
+                                           "line":  "372"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:665:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:665:5\r",
+                                           "line":  "665"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:809:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:809:5\r",
+                                           "line":  "809"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:937:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:937:5\r",
+                                           "line":  "937"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\startup_checks.rs:942:5\r",
+                                           "message":  "   --\u003e src\\startup_checks.rs:942:5\r",
+                                           "line":  "942"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "    --\u003e src\\startup_checks.rs:1020:5\r",
+                                           "message":  "    --\u003e src\\startup_checks.rs:1020:5\r",
+                                           "line":  "1020"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "    --\u003e src\\startup_checks.rs:1592:13\r",
+                                           "message":  "    --\u003e src\\startup_checks.rs:1592:13\r",
+                                           "line":  "1592"
+                                       }
+                                   ],
+                      "count":  10
+                  },
+                  {
+                      "path":  "benches\\process_benchmarks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "53",
+                                           "raw":  "  --\u003e benches\\process_benchmarks.rs:96:53\r",
+                                           "message":  "  --\u003e benches\\process_benchmarks.rs:96:53\r",
+                                           "line":  "96"
+                                       },
+                                       {
+                                           "column":  "41",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:171:41\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:171:41\r",
+                                           "line":  "171"
+                                       },
+                                       {
+                                           "column":  "33",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:211:33\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:211:33\r",
+                                           "line":  "211"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:245:5\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:245:5\r",
+                                           "line":  "245"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:246:5\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:246:5\r",
+                                           "line":  "246"
+                                       },
+                                       {
+                                           "column":  "14",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:350:14\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:350:14\r",
+                                           "line":  "350"
+                                       },
+                                       {
+                                           "column":  "33",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:411:33\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:411:33\r",
+                                           "line":  "411"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:413:13\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:413:13\r",
+                                           "line":  "413"
+                                       },
+                                       {
+                                           "column":  "61",
+                                           "raw":  "   --\u003e benches\\process_benchmarks.rs:438:61\r",
+                                           "message":  "   --\u003e benches\\process_benchmarks.rs:438:61\r",
+                                           "line":  "438"
+                                       }
+                                   ],
+                      "count":  9
+                  },
+                  {
+                      "path":  "src\\gil_safety.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\gil_safety.rs:21:5\r",
+                                           "message":  "  --\u003e src\\gil_safety.rs:21:5\r",
+                                           "line":  "21"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\gil_safety.rs:41:5\r",
+                                           "message":  "  --\u003e src\\gil_safety.rs:41:5\r",
+                                           "line":  "41"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\gil_safety.rs:73:5\r",
+                                           "message":  "  --\u003e src\\gil_safety.rs:73:5\r",
+                                           "line":  "73"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\gil_safety.rs:146:5\r",
+                                           "message":  "   --\u003e src\\gil_safety.rs:146:5\r",
+                                           "line":  "146"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\gil_safety.rs:175:5\r",
+                                           "message":  "   --\u003e src\\gil_safety.rs:175:5\r",
+                                           "line":  "175"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\gil_safety.rs:502:13\r",
+                                           "message":  "   --\u003e src\\gil_safety.rs:502:13\r",
+                                           "line":  "502"
+                                       },
+                                       {
+                                           "column":  "25",
+                                           "raw":  "   --\u003e src\\gil_safety.rs:547:25\r",
+                                           "message":  "   --\u003e src\\gil_safety.rs:547:25\r",
+                                           "line":  "547"
+                                       }
+                                   ],
+                      "count":  7
+                  },
+                  {
+                      "path":  "src\\platform.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "35",
+                                           "raw":  "  --\u003e src\\platform.rs:47:35\r",
+                                           "message":  "  --\u003e src\\platform.rs:47:35\r",
+                                           "line":  "47"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e src\\platform.rs:60:5\r",
+                                           "message":  "  --\u003e src\\platform.rs:60:5\r",
+                                           "line":  "60"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\platform.rs:116:5\r",
+                                           "message":  "   --\u003e src\\platform.rs:116:5\r",
+                                           "line":  "116"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\platform.rs:261:5\r",
+                                           "message":  "   --\u003e src\\platform.rs:261:5\r",
+                                           "line":  "261"
+                                       },
+                                       {
+                                           "column":  "5",
+                                           "raw":  "   --\u003e src\\platform.rs:340:5\r",
+                                           "message":  "   --\u003e src\\platform.rs:340:5\r",
+                                           "line":  "340"
+                                       },
+                                       {
+                                           "column":  "28",
+                                           "raw":  "   --\u003e src\\platform.rs:651:28\r",
+                                           "message":  "   --\u003e src\\platform.rs:651:28\r",
+                                           "line":  "651"
+                                       }
+                                   ],
+                      "count":  6
+                  },
+                  {
+                      "path":  "benches\\dependency_benchmarks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "21",
+                                           "raw":  "   --\u003e benches\\dependency_benchmarks.rs:175:21\r",
+                                           "message":  "   --\u003e benches\\dependency_benchmarks.rs:175:21\r",
+                                           "line":  "175"
+                                       },
+                                       {
+                                           "column":  "27",
+                                           "raw":  "   --\u003e benches\\dependency_benchmarks.rs:180:27\r",
+                                           "message":  "   --\u003e benches\\dependency_benchmarks.rs:180:27\r",
+                                           "line":  "180"
+                                       },
+                                       {
+                                           "column":  "86",
+                                           "raw":  "   --\u003e benches\\dependency_benchmarks.rs:232:86\r",
+                                           "message":  "   --\u003e benches\\dependency_benchmarks.rs:232:86\r",
+                                           "line":  "232"
+                                       },
+                                       {
+                                           "column":  "24",
+                                           "raw":  "   --\u003e benches\\dependency_benchmarks.rs:258:24\r",
+                                           "message":  "   --\u003e benches\\dependency_benchmarks.rs:258:24\r",
+                                           "line":  "258"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e benches\\dependency_benchmarks.rs:260:13\r",
+                                           "message":  "   --\u003e benches\\dependency_benchmarks.rs:260:13\r",
+                                           "line":  "260"
+                                       }
+                                   ],
+                      "count":  5
+                  },
+                  {
+                      "path":  "benches\\performance_benchmarks.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e benches\\performance_benchmarks.rs:116:9\r",
+                                           "message":  "   --\u003e benches\\performance_benchmarks.rs:116:9\r",
+                                           "line":  "116"
+                                       },
+                                       {
+                                           "column":  "78",
+                                           "raw":  "   --\u003e benches\\performance_benchmarks.rs:180:78\r",
+                                           "message":  "   --\u003e benches\\performance_benchmarks.rs:180:78\r",
+                                           "line":  "180"
+                                       },
+                                       {
+                                           "column":  "17",
+                                           "raw":  "   --\u003e benches\\performance_benchmarks.rs:179:17\r",
+                                           "message":  "   --\u003e benches\\performance_benchmarks.rs:179:17\r",
+                                           "line":  "179"
+                                       },
+                                       {
+                                           "column":  "18",
+                                           "raw":  "   --\u003e benches\\performance_benchmarks.rs:190:18\r",
+                                           "message":  "   --\u003e benches\\performance_benchmarks.rs:190:18\r",
+                                           "line":  "190"
+                                       }
+                                   ],
+                      "count":  4
+                  },
+                  {
+                      "path":  "src\\main.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "7",
+                                           "raw":  "  --\u003e src\\main.rs:21:7\r",
+                                           "message":  "  --\u003e src\\main.rs:21:7\r",
+                                           "line":  "21"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "  --\u003e src\\main.rs:39:9\r",
+                                           "message":  "  --\u003e src\\main.rs:39:9\r",
+                                           "line":  "39"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "   --\u003e src\\main.rs:123:13\r",
+                                           "message":  "   --\u003e src\\main.rs:123:13\r",
+                                           "line":  "123"
+                                       },
+                                       {
+                                           "column":  "9",
+                                           "raw":  "   --\u003e src\\main.rs:148:9\r",
+                                           "message":  "   --\u003e src\\main.rs:148:9\r",
+                                           "line":  "148"
+                                       }
+                                   ],
+                      "count":  4
+                  },
+                  {
+                      "path":  "tests\\process_optimization_tests.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e tests\\process_optimization_tests.rs:78:5\r",
+                                           "message":  "  --\u003e tests\\process_optimization_tests.rs:78:5\r",
+                                           "line":  "78"
+                                       },
+                                       {
+                                           "column":  "83",
+                                           "raw":  "   --\u003e tests\\process_optimization_tests.rs:105:83\r",
+                                           "message":  "   --\u003e tests\\process_optimization_tests.rs:105:83\r",
+                                           "line":  "105"
+                                       },
+                                       {
+                                           "column":  "76",
+                                           "raw":  "   --\u003e tests\\process_optimization_tests.rs:105:76\r",
+                                           "message":  "   --\u003e tests\\process_optimization_tests.rs:105:76\r",
+                                           "line":  "105"
+                                       },
+                                       {
+                                           "column":  "32",
+                                           "raw":  "   --\u003e tests\\process_optimization_tests.rs:127:32\r",
+                                           "message":  "   --\u003e tests\\process_optimization_tests.rs:127:32\r",
+                                           "line":  "127"
+                                       }
+                                   ],
+                      "count":  4
+                  },
+                  {
+                      "path":  "tests\\tool_discovery_tests.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "5",
+                                           "raw":  "  --\u003e tests\\tool_discovery_tests.rs:70:5\r",
+                                           "message":  "  --\u003e tests\\tool_discovery_tests.rs:70:5\r",
+                                           "line":  "70"
+                                       },
+                                       {
+                                           "column":  "13",
+                                           "raw":  "  --\u003e tests\\tool_discovery_tests.rs:91:13\r",
+                                           "message":  "  --\u003e tests\\tool_discovery_tests.rs:91:13\r",
+                                           "line":  "91"
+                                       },
+                                       {
+                                           "column":  "27",
+                                           "raw":  "   --\u003e tests\\tool_discovery_tests.rs:139:27\r",
+                                           "message":  "   --\u003e tests\\tool_discovery_tests.rs:139:27\r",
+                                           "line":  "139"
+                                       }
+                                   ],
+                      "count":  3
+                  },
+                  {
+                      "path":  "src\\intel_gpu.rs",
+                      "findings":  [
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\intel_gpu.rs:27:1\r",
+                                           "message":  "  --\u003e src\\intel_gpu.rs:27:1\r",
+                                           "line":  "27"
+                                       },
+                                       {
+                                           "column":  "1",
+                                           "raw":  "  --\u003e src\\intel_gpu.rs:47:1\r",
+                                           "message":  "  --\u003e src\\intel_gpu.rs:47:1\r",
+                                           "line":  "47"
+                                       },
+                                       {
+                                           "column":  "8",
+                                           "raw":  "  --\u003e src\\intel_gpu.rs:74:8\r",
+                                           "message":  "  --\u003e src\\intel_gpu.rs:74:8\r",
+                                           "line":  "74"
+                                       }
+                                   ],
+                      "count":  3
+                  }
+              ],
+    "total_findings":  384,
+    "generated":  "2025-12-10T21:39:14.5778128-07:00",
+    "total_files":  25,
+    "tool":  "clippy"
+}

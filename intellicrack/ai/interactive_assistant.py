@@ -23,6 +23,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -69,13 +70,38 @@ class IntellicrackAIAssistant:
         self.cli_interface = cli_interface
         self.file_tools = get_ai_file_tools(cli_interface)
         self.tools = self._initialize_tools()
-        self.context = {
+        self.context: dict[str, Any] = {
             "current_binary": None,
             "analysis_results": {},
             "suggested_patches": [],
             "workflow_state": "idle",
         }
-        self.conversation_history = []
+        self.conversation_history: list[dict[str, Any]] = []
+        self.action_log: list[dict[str, Any]] = []
+
+    def _log_action(self, message: str) -> None:
+        """Log an action performed by the AI assistant.
+
+        Args:
+            message: Description of the action being performed
+
+        """
+        import contextlib
+        from datetime import datetime, timezone
+
+        log_entry = {
+            "timestamp": datetime.now(tz=UTC).isoformat(),
+            "message": message,
+            "binary": self.context.get("current_binary"),
+            "workflow_state": self.context.get("workflow_state", "idle"),
+        }
+        self.action_log.append(log_entry)
+
+        logger.info("AI Action: %s", message)
+
+        if self.cli_interface and hasattr(self.cli_interface, "print_info"):
+            with contextlib.suppress(AttributeError, TypeError):
+                self.cli_interface.print_info(message)
 
     def _initialize_tools(self) -> dict[str, Tool]:
         """Initialize all available tools."""

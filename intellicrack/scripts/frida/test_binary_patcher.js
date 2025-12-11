@@ -503,7 +503,7 @@ const BinaryPatcherTests = {
             test.web3Provider = {
                 detected: provider !== null,
                 type: provider ? provider.constructor.name : 'none',
-                isMetaMask: provider && provider.isMetaMask,
+                isMetaMask: provider?.isMetaMask,
                 timestamp: Date.now(),
             };
 
@@ -640,12 +640,12 @@ const BinaryPatcherTests = {
                 passed: this.testResults.passed,
                 failed: this.testResults.failed,
                 skipped: this.testResults.skipped,
-                passRate: passRate + '%',
+                passRate: `${passRate}%`,
             },
         });
 
         // Report individual test results
-        this.testResults.tests.forEach((test) => {
+        this.testResults.tests.forEach(test => {
             send({
                 type: test.status === 'passed' ? 'success' : 'error',
                 target: 'binary_patcher_tests',
@@ -660,7 +660,7 @@ const BinaryPatcherTests = {
 };
 
 // Auto-run tests
-setTimeout(function () {
+setTimeout(() => {
     BinaryPatcherTests.runAllTests();
 }, 500);
 

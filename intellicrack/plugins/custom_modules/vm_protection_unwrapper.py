@@ -949,6 +949,78 @@ class VMAnalyzer:
 
         return end_offset
 
+    def _classify_section(self, section_data: bytes) -> str:
+        """Classify a VM section based on its content characteristics.
+
+        Analyzes the entropy, byte distribution, and instruction patterns
+        to determine what type of content a VM section contains.
+
+        Args:
+            section_data: Raw bytes of the VM section to classify.
+
+        Returns:
+            String classification of the section type:
+            - 'encrypted': High entropy, likely encrypted data
+            - 'code': Contains recognizable instruction patterns
+            - 'data': Structured data with low entropy
+            - 'handler_table': Contains VM handler addresses
+            - 'string_pool': Contains string data
+            - 'padding': Mostly null or repeated bytes
+            - 'unknown': Cannot determine type
+
+        """
+        if not section_data or len(section_data) < 16:
+            return "unknown"
+
+        entropy = self._calculate_entropy(section_data)
+        printable_ratio = sum(1 for b in section_data if 32 <= b <= 126) / len(section_data)
+        null_ratio = section_data.count(0) / len(section_data)
+
+        if null_ratio > 0.8:
+            return "padding"
+
+        if entropy > 7.5:
+            return "encrypted"
+
+        if entropy > 6.5 and printable_ratio < 0.3:
+            return "encrypted"
+
+        if printable_ratio > 0.7:
+            return "string_pool"
+
+        x86_prologue_patterns = [
+            b"\x55\x8b\xec",
+            b"\x55\x89\xe5",
+            b"\x53\x56\x57",
+            b"\x60",
+            b"\x9c",
+        ]
+
+        for pattern in x86_prologue_patterns:
+            if pattern in section_data[:64]:
+                return "code"
+
+        instruction_indicators = [0x55, 0x8B, 0x89, 0xE8, 0xE9, 0x74, 0x75, 0x0F, 0x90]
+        instruction_count = sum(1 for b in section_data[:256] if b in instruction_indicators)
+
+        if instruction_count > 20:
+            return "code"
+
+        if len(section_data) >= 64:
+            potential_addresses = []
+            for i in range(0, min(len(section_data) - 4, 256), 4):
+                addr = int.from_bytes(section_data[i:i + 4], "little")
+                if 0x400000 <= addr <= 0x7FFFFFFF:
+                    potential_addresses.append(addr)
+
+            if len(potential_addresses) >= 8:
+                return "handler_table"
+
+        if 4.0 <= entropy <= 6.5 and printable_ratio < 0.5:
+            return "data"
+
+        return "unknown"
+
 
 class VMProtectionUnwrapper:
     """Run VM protection unwrapper."""

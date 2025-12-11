@@ -2,15 +2,19 @@
 
 import base64
 import json
+import logging
 import secrets
 import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 from cryptography.hazmat.backends import default_backend
+
+
+logger = logging.getLogger(__name__)
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ECPrivateKey, RSAPrivateKey, ec, rsa
 
@@ -816,6 +820,516 @@ class SubscriptionValidationBypass:
             },
         }
 
+    def _check_registry_subscription(self, product_name: str) -> dict[str, Any]:
+        """Check Windows Registry for subscription license data and activation status.
+
+        Args:
+            product_name: Name of the product to check registry entries for.
+
+        Returns:
+            Dictionary containing registry-based subscription information with keys:
+            - found: Whether registry entries were detected
+            - paths: List of registry paths containing license data
+            - license_type: Detected license type from registry
+            - expiration: License expiration if found
+            - bypass_method: Recommended bypass approach
+
+        """
+        import platform
+        import winreg
+
+        result: dict[str, Any] = {
+            "found": False,
+            "paths": [],
+            "license_type": None,
+            "expiration": None,
+            "bypass_method": None,
+            "registry_values": {},
+        }
+
+        if platform.system() != "Windows":
+            result["error"] = "Registry check only available on Windows"
+            return result
+
+        product_lower = product_name.lower()
+        registry_patterns: dict[str, list[str]] = {
+            "adobe": [
+                r"SOFTWARE\Adobe\Registration",
+                r"SOFTWARE\Adobe\Adobe Creative Cloud",
+                r"SOFTWARE\WOW6432Node\Adobe\Registration",
+            ],
+            "microsoft": [
+                r"SOFTWARE\Microsoft\Office",
+                r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
+                r"SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform",
+            ],
+            "autodesk": [
+                r"SOFTWARE\Autodesk\AdLM",
+                r"SOFTWARE\Autodesk\AutoCAD",
+            ],
+            "jetbrains": [
+                r"SOFTWARE\JetBrains",
+            ],
+        }
+
+        target_paths: list[str] = []
+        for vendor, paths in registry_patterns.items():
+            if vendor in product_lower:
+                target_paths.extend(paths)
+
+        if not target_paths:
+            target_paths = [
+                rf"SOFTWARE\{product_name}",
+                rf"SOFTWARE\WOW6432Node\{product_name}",
+            ]
+
+        license_keywords = ["license", "serial", "activation", "subscription", "expir", "valid"]
+
+        for reg_path in target_paths:
+            for hive in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
+                try:
+                    with winreg.OpenKey(hive, reg_path, 0, winreg.KEY_READ) as key:
+                        result["found"] = True
+                        result["paths"].append(f"{hive}\\{reg_path}")
+
+                        idx = 0
+                        while True:
+                            try:
+                                name, value, _ = winreg.EnumValue(key, idx)
+                                name_lower = name.lower()
+
+                                for keyword in license_keywords:
+                                    if keyword in name_lower:
+                                        result["registry_values"][name] = str(value)[:100]
+                                        if "type" in name_lower or "license" in name_lower:
+                                            result["license_type"] = str(value)
+                                        if "expir" in name_lower or "valid" in name_lower:
+                                            result["expiration"] = str(value)
+                                        break
+
+                                idx += 1
+                            except OSError:
+                                break
+                except FileNotFoundError:
+                    continue
+                except PermissionError:
+                    continue
+                except Exception:
+                    continue
+
+        if result["found"]:
+            result["bypass_method"] = {
+                "technique": "Registry Value Modification",
+                "description": "Modify license validation registry keys to indicate valid subscription",
+                "target_values": list(result["registry_values"].keys()),
+                "confidence": 0.75,
+            }
+
+        return result
+
+    def _check_local_server_config(self, product_name: str) -> dict[str, Any]:
+        """Detect local license server configurations for network-based licensing.
+
+        Args:
+            product_name: Name of the product to check for local server config.
+
+        Returns:
+            Dictionary containing local server configuration information with keys:
+            - found: Whether local server config was detected
+            - server_type: Type of license server (FlexLM, RLM, etc.)
+            - config_files: List of configuration file paths found
+            - server_endpoints: Detected server endpoints
+            - bypass_method: Recommended bypass approach
+
+        """
+        import os
+        from pathlib import Path
+
+        result: dict[str, Any] = {
+            "found": False,
+            "server_type": None,
+            "config_files": [],
+            "server_endpoints": [],
+            "environment_vars": {},
+            "bypass_method": None,
+        }
+
+        license_env_vars = [
+            "LM_LICENSE_FILE",
+            "FLEXLM_LICENSE_FILE",
+            "RLM_LICENSE",
+            "ADSKFLEX_LICENSE_FILE",
+            "MLM_LICENSE_FILE",
+            "VENDOR_LICENSE_FILE",
+            "LSHOST",
+            "LSFORCEHOST",
+        ]
+
+        for env_var in license_env_vars:
+            value = os.environ.get(env_var)
+            if value:
+                result["found"] = True
+                result["environment_vars"][env_var] = value
+                if "@" in value:
+                    parts = value.split("@")
+                    if len(parts) >= 2:
+                        result["server_endpoints"].append(parts[1])
+
+        product_lower = product_name.lower()
+        config_patterns: dict[str, tuple[str, list[str]]] = {
+            "flexlm": (
+                "FlexLM/FlexNet",
+                ["*.lic", "license.dat", "flexlm.lic", "*_license.dat"],
+            ),
+            "rlm": (
+                "RLM (Reprise License Manager)",
+                ["*.lic", "*.set", "rlm.opt"],
+            ),
+            "sentinel": (
+                "Sentinel/HASP",
+                ["*.v2c", "*.c2v", "hasp_*.ini"],
+            ),
+            "codemeter": (
+                "CodeMeter",
+                ["*.wbc", "codemeter.ini"],
+            ),
+        }
+
+        product_specific_patterns: list[str] = [
+            f"{product_lower}.lic",
+            f"{product_lower}_license.dat",
+            f"{product_lower}.v2c",
+            f"*{product_lower}*.lic",
+        ]
+
+        search_dirs: list[Path] = []
+        if os.name == "nt":
+            search_dirs.extend([
+                Path(os.environ.get("PROGRAMDATA", "C:\\ProgramData")),
+                Path(os.environ.get("PROGRAMFILES", "C:\\Program Files")),
+                Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)")),
+                Path(os.environ.get("APPDATA", "")),
+                Path(os.environ.get("LOCALAPPDATA", "")),
+            ])
+            product_dir = Path(os.environ.get("PROGRAMDATA", "C:\\ProgramData")) / product_name
+            if product_dir.exists():
+                search_dirs.insert(0, product_dir)
+        else:
+            search_dirs.extend([
+                Path("/opt"),
+                Path("/usr/local"),
+                Path.home() / ".local",
+                Path("/var/lib"),
+            ])
+            product_dir = Path("/opt") / product_lower
+            if product_dir.exists():
+                search_dirs.insert(0, product_dir)
+
+        for base_dir in search_dirs:
+            if not base_dir.exists():
+                continue
+
+            for pattern in product_specific_patterns:
+                try:
+                    for config_file in base_dir.rglob(pattern):
+                        if config_file.is_file():
+                            result["found"] = True
+                            result["config_files"].append(str(config_file))
+                            result["product_specific"] = True
+                except (OSError, PermissionError):
+                    pass
+
+            for _server_type, (server_name, patterns) in config_patterns.items():
+                for pattern in patterns:
+                    try:
+                        for config_file in base_dir.rglob(pattern):
+                            if config_file.is_file():
+                                result["found"] = True
+                                result["config_files"].append(str(config_file))
+                                if result["server_type"] is None:
+                                    result["server_type"] = server_name
+
+                                try:
+                                    content = config_file.read_text(errors="ignore")[:4096]
+                                    for line in content.split("\n"):
+                                        line = line.strip()
+                                        if line.startswith("SERVER") or line.startswith("DAEMON"):
+                                            parts = line.split()
+                                            if len(parts) >= 2:
+                                                result["server_endpoints"].append(parts[1])
+                                        elif "@" in line and "=" not in line[:20]:
+                                            for word in line.split():
+                                                if "@" in word:
+                                                    host = word.split("@")[-1].strip()
+                                                    if host and host not in result["server_endpoints"]:
+                                                        result["server_endpoints"].append(host)
+                                except Exception:
+                                    continue
+                    except Exception:
+                        continue
+
+        common_ports = [27000, 27001, 5053, 8090, 22350, 1947]
+        if result["server_endpoints"]:
+            result["detected_ports"] = common_ports
+
+        if result["found"]:
+            if result["server_type"] and "flexlm" in result["server_type"].lower():
+                result["bypass_method"] = {
+                    "technique": "Local License Server Emulation",
+                    "description": "Emulate FlexLM license server responses for checkout requests",
+                    "server_type": result["server_type"],
+                    "steps": [
+                        "Parse license file format to extract feature requirements",
+                        "Start local server on standard port",
+                        "Respond to CHECKOUT requests with valid license grants",
+                        "Handle HEARTBEAT and CHECKIN messages",
+                    ],
+                    "confidence": 0.80,
+                }
+            else:
+                result["bypass_method"] = {
+                    "technique": "License Server Redirect",
+                    "description": "Redirect license server requests to local emulator",
+                    "server_type": result.get("server_type", "Unknown"),
+                    "confidence": 0.70,
+                }
+
+        return result
+
+    def _check_oauth_tokens(self, product_name: str) -> dict[str, Any]:
+        """Analyze stored OAuth tokens and session data for subscription validation.
+
+        Args:
+            product_name: Name of the product to check OAuth tokens for.
+
+        Returns:
+            Dictionary containing OAuth token analysis with keys:
+            - found: Whether OAuth tokens were detected
+            - token_locations: Paths where tokens are stored
+            - token_type: Type of OAuth token detected
+            - bypass_method: Recommended bypass approach
+
+        """
+        import os
+        from pathlib import Path
+
+        result: dict[str, Any] = {
+            "found": False,
+            "token_locations": [],
+            "token_type": None,
+            "token_details": [],
+            "bypass_method": None,
+        }
+
+        product_lower = product_name.lower()
+
+        token_patterns: dict[str, list[str]] = {
+            "adobe": [
+                "Adobe/CoreSync/CoreSync.bundle",
+                "Adobe/OOBE/opm.db",
+                "Adobe/Creative Cloud/*",
+            ],
+            "microsoft": [
+                "Microsoft/Credentials/*",
+                "Microsoft/Office/*/Identities/*",
+                "Microsoft/Azure/*",
+            ],
+            "jetbrains": [
+                "JetBrains/*/options/other.xml",
+                "JetBrains/*/.idea/*",
+            ],
+            "autodesk": [
+                "Autodesk/Web Services/LoginState.xml",
+                "Autodesk/ADUT/*",
+            ],
+        }
+
+        base_paths: list[Path] = []
+        if os.name == "nt":
+            appdata = os.environ.get("APPDATA", "")
+            localappdata = os.environ.get("LOCALAPPDATA", "")
+            if appdata:
+                base_paths.append(Path(appdata))
+            if localappdata:
+                base_paths.append(Path(localappdata))
+        else:
+            base_paths.extend([
+                Path.home() / ".config",
+                Path.home() / "Library/Application Support",
+                Path.home() / ".local/share",
+            ])
+
+        matched_vendor: str | None = None
+        for vendor in token_patterns:
+            if vendor in product_lower:
+                matched_vendor = vendor
+                break
+
+        patterns_to_check = token_patterns.get(matched_vendor, []) if matched_vendor else []
+        if not patterns_to_check:
+            patterns_to_check = [f"*{product_name}*/*", f"*{product_lower}*/*"]
+
+        token_file_names = ["token", "auth", "session", "credentials", "oauth", "jwt"]
+
+        for base_path in base_paths:
+            if not base_path.exists():
+                continue
+
+            for pattern in patterns_to_check:
+                try:
+                    for match in base_path.glob(pattern):
+                        if match.is_file():
+                            name_lower = match.name.lower()
+                            if any(tf in name_lower for tf in token_file_names):
+                                result["found"] = True
+                                result["token_locations"].append(str(match))
+                                try:
+                                    size = match.stat().st_size
+                                    result["token_details"].append({
+                                        "path": str(match),
+                                        "size": size,
+                                        "name": match.name,
+                                    })
+                                except Exception:
+                                    pass
+                except Exception:
+                    continue
+
+            for token_name in token_file_names:
+                try:
+                    for match in base_path.rglob(f"*{token_name}*"):
+                        if match.is_file() and product_lower in str(match).lower():
+                            result["found"] = True
+                            if str(match) not in result["token_locations"]:
+                                result["token_locations"].append(str(match))
+                except Exception:
+                    continue
+
+        if result["found"]:
+            result["token_type"] = "OAuth 2.0 / JWT"
+            result["bypass_method"] = {
+                "technique": "Token Injection / Modification",
+                "description": "Inject forged OAuth tokens with extended validity and enterprise tier claims",
+                "steps": [
+                    "Decode existing JWT tokens to understand claim structure",
+                    "Generate new tokens with modified subscription claims",
+                    "Replace stored tokens with forged versions",
+                    "Optionally intercept token refresh to maintain bypass",
+                ],
+                "confidence": 0.85,
+            }
+
+        return result
+
+    def _check_floating_license(self, product_name: str) -> dict[str, Any]:
+        """Detect floating license server configurations and network license pools.
+
+        Args:
+            product_name: Name of the product to check for floating license config.
+
+        Returns:
+            Dictionary containing floating license information with keys:
+            - found: Whether floating license config was detected
+            - pool_type: Type of license pool detected
+            - server_info: Information about license server
+            - bypass_method: Recommended bypass approach
+
+        """
+        import os
+        import socket
+
+        result: dict[str, Any] = {
+            "found": False,
+            "pool_type": None,
+            "server_info": {},
+            "features_detected": [],
+            "bypass_method": None,
+        }
+
+        license_ports: dict[str, list[int]] = {
+            "FlexLM": [27000, 27001, 27002, 27003, 27004, 27005],
+            "RLM": [5053, 5054],
+            "HASP": [1947],
+            "CodeMeter": [22350],
+            "DSLS": [4085],
+        }
+
+        localhost_variants = ["127.0.0.1", "localhost", socket.gethostname()]
+
+        for server_type, ports in license_ports.items():
+            for port in ports:
+                for host in localhost_variants:
+                    try:
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(0.5)
+                        conn_result = sock.connect_ex((host, port))
+                        sock.close()
+
+                        if conn_result == 0:
+                            result["found"] = True
+                            result["pool_type"] = server_type
+                            result["server_info"] = {
+                                "host": host,
+                                "port": port,
+                                "protocol": server_type,
+                            }
+                            break
+                    except Exception:
+                        continue
+
+                if result["found"]:
+                    break
+            if result["found"]:
+                break
+
+        floating_env_vars = [
+            "FLEXLM_HOST",
+            "RLM_HOST",
+            "LSHOST",
+            "LSFORCEHOST",
+            "DSLS_HOST",
+        ]
+
+        for env_var in floating_env_vars:
+            value = os.environ.get(env_var)
+            if value:
+                result["found"] = True
+                if "server_info" not in result or not result["server_info"]:
+                    result["server_info"] = {}
+                result["server_info"]["environment_host"] = value
+                if not result["pool_type"]:
+                    if "FLEX" in env_var:
+                        result["pool_type"] = "FlexLM"
+                    elif "RLM" in env_var:
+                        result["pool_type"] = "RLM"
+
+        if result["found"]:
+            if result["pool_type"] == "FlexLM":
+                result["bypass_method"] = {
+                    "technique": "Floating License Pool Emulation",
+                    "description": "Emulate FlexLM server to provide unlimited floating licenses",
+                    "protocol_details": {
+                        "vendor_daemon": True,
+                        "feature_checkout": True,
+                        "concurrent_licenses": 9999,
+                    },
+                    "steps": [
+                        "Intercept license checkout requests",
+                        "Return valid license grant responses",
+                        "Maintain session heartbeats",
+                        "Report unlimited available licenses",
+                    ],
+                    "confidence": 0.80,
+                }
+            else:
+                result["bypass_method"] = {
+                    "technique": f"{result['pool_type']} License Emulation",
+                    "description": f"Emulate {result['pool_type']} license server responses",
+                    "confidence": 0.70,
+                }
+
+        return result
+
     def detect_subscription_type(self, product_name: str) -> SubscriptionType:
         """Analyze product name for keywords (office, adobe, salesforce) to classify subscription model, defaulting to CLOUD_BASED for all products."""
         product_name.lower()
@@ -832,3 +1346,114 @@ class SubscriptionValidationBypass:
             subscription_type = self.detect_subscription_type(product_name)
 
         return True
+
+    def stop_local_server(self) -> bool:
+        """Stop any active local license server emulation.
+
+        Terminates running local license server threads, closes network sockets,
+        shuts down HTTP servers, and cleans up any hosts file modifications made
+        for license server redirection.
+
+        Returns:
+            True if server was successfully stopped or no server was running,
+            False if an error occurred during shutdown.
+
+        """
+        stopped_successfully = True
+
+        if hasattr(self, "_local_server_thread") and self._local_server_thread is not None:
+            try:
+                if hasattr(self._local_server_thread, "is_alive") and self._local_server_thread.is_alive():
+                    if hasattr(self, "_server_stop_event") and self._server_stop_event is not None:
+                        self._server_stop_event.set()
+                    if hasattr(self._local_server_thread, "join"):
+                        self._local_server_thread.join(timeout=5.0)
+                        if self._local_server_thread.is_alive():
+                            stopped_successfully = False
+                self._local_server_thread = None
+            except (RuntimeError, AttributeError):
+                stopped_successfully = False
+
+        if hasattr(self, "_local_server_socket") and self._local_server_socket is not None:
+            try:
+                self._local_server_socket.close()
+            except OSError:
+                pass
+            finally:
+                self._local_server_socket = None
+
+        if hasattr(self, "_http_server") and self._http_server is not None:
+            try:
+                self._http_server.shutdown()
+            except (OSError, RuntimeError):
+                pass
+            finally:
+                self._http_server = None
+
+        if hasattr(self, "_tcp_server") and self._tcp_server is not None:
+            try:
+                self._tcp_server.shutdown()
+            except (OSError, RuntimeError):
+                pass
+            finally:
+                self._tcp_server = None
+
+        if hasattr(self, "_flexlm_emulator") and self._flexlm_emulator is not None:
+            try:
+                if hasattr(self._flexlm_emulator, "stop"):
+                    self._flexlm_emulator.stop()
+            except (OSError, RuntimeError):
+                pass
+            finally:
+                self._flexlm_emulator = None
+
+        self._cleanup_hosts_file_entries()
+
+        if hasattr(self, "_server_stop_event") and self._server_stop_event is not None:
+            self._server_stop_event = None
+
+        return stopped_successfully
+
+    def _cleanup_hosts_file_entries(self) -> None:
+        """Remove any temporary hosts file entries added for license server redirection.
+
+        Reads the system hosts file, filters out any entries that were added by
+        this bypass system (tracked in _added_hosts_entries), and writes the
+        cleaned content back.
+
+        """
+        if not hasattr(self, "_added_hosts_entries") or not self._added_hosts_entries:
+            return
+
+        import platform
+
+        if platform.system() == "Windows":
+            hosts_path = r"C:\Windows\System32\drivers\etc\hosts"
+        else:
+            hosts_path = "/etc/hosts"
+
+        try:
+            with open(hosts_path, encoding="utf-8") as f:
+                lines = f.readlines()
+
+            filtered_lines = []
+            for line in lines:
+                should_keep = True
+                for entry in self._added_hosts_entries:
+                    if entry in line:
+                        should_keep = False
+                        break
+                if should_keep:
+                    filtered_lines.append(line)
+
+            if len(filtered_lines) < len(lines):
+                try:
+                    with open(hosts_path, "w", encoding="utf-8") as f:
+                        f.writelines(filtered_lines)
+                except PermissionError:
+                    pass
+
+            self._added_hosts_entries = []
+
+        except (OSError, PermissionError, FileNotFoundError):
+            pass

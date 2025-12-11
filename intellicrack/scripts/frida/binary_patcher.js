@@ -141,7 +141,7 @@ const BinaryPatcher = {
             this.dependencies.memoryDumper = MemoryDumper;
 
             // Initialize each dependency
-            Object.values(this.dependencies).forEach((dep) => {
+            Object.values(this.dependencies).forEach(dep => {
                 if (dep && typeof dep.initialize === 'function') {
                     dep.initialize();
                 }
@@ -200,7 +200,7 @@ const BinaryPatcher = {
             },
 
             // Atomic patch operations
-            atomicPatch: function (address, bytes) {
+            atomicPatch: (address, bytes) => {
                 const sync = BinaryPatcher.patchingEngine.threadSync;
                 sync.acquireLock(address);
 
@@ -214,7 +214,7 @@ const BinaryPatcher = {
                     const currentThread = Process.getCurrentThreadId();
                     const suspendedThreads = [];
 
-                    threads.forEach((thread) => {
+                    threads.forEach(thread => {
                         if (thread.id !== currentThread) {
                             try {
                                 Process.suspendThread(thread.id);
@@ -223,7 +223,7 @@ const BinaryPatcher = {
                                 // Thread might have terminated
                                 send({
                                     type: 'debug',
-                                    message: 'Thread suspension failed: ' + e.message,
+                                    message: `Thread suspension failed: ${e.message}`,
                                     threadId: thread.id,
                                 });
                             }
@@ -236,14 +236,14 @@ const BinaryPatcher = {
                     Memory.protect(address, bytes.length, 'r-x');
 
                     // Resume threads
-                    suspendedThreads.forEach((threadId) => {
+                    suspendedThreads.forEach(threadId => {
                         try {
                             Process.resumeThread(threadId);
                         } catch (e) {
                             // Thread might have terminated
                             send({
                                 type: 'debug',
-                                message: 'Thread resume failed: ' + e.message,
+                                message: `Thread resume failed: ${e.message}`,
                                 threadId: threadId,
                             });
                         }
@@ -259,7 +259,7 @@ const BinaryPatcher = {
             hotPatch: function (module, offset, patchData) {
                 const moduleBase = Module.findBaseAddress(module);
                 if (!moduleBase) {
-                    throw new Error('Module not found: ' + module);
+                    throw new Error(`Module not found: ${module}`);
                 }
 
                 const targetAddress = moduleBase.add(offset);
@@ -344,7 +344,7 @@ const BinaryPatcher = {
                 name: 'x86-64',
 
                 // Generate NOP sled of specified size
-                generateNop: function (size) {
+                generateNop: size => {
                     const nops = {
                         1: [0x90],
                         2: [0x66, 0x90],
@@ -411,7 +411,7 @@ const BinaryPatcher = {
                 },
 
                 // Generate RET instruction
-                generateRet: function (popBytes = 0) {
+                generateRet: (popBytes = 0) => {
                     if (popBytes === 0) {
                         return [0xc3]; // RET
                     }
@@ -443,18 +443,16 @@ const BinaryPatcher = {
                 },
 
                 // Helper functions
-                int32ToBytes: function (value) {
-                    return [
-                        value & 0xff,
-                        (value >> 8) & 0xff,
-                        (value >> 16) & 0xff,
-                        (value >> 24) & 0xff,
-                    ];
-                },
+                int32ToBytes: value => [
+                    value & 0xff,
+                    (value >> 8) & 0xff,
+                    (value >> 16) & 0xff,
+                    (value >> 24) & 0xff,
+                ],
 
                 int64ToBytes: function (value) {
                     const low = value & 0xffffffff;
-                    const high = (value >> 32) & 0xffffffff;
+                    const high = (value >> 0) & 0xffffffff;
                     return [...this.int32ToBytes(low), ...this.int32ToBytes(high)];
                 },
             },
@@ -464,7 +462,7 @@ const BinaryPatcher = {
                 name: 'ARM64',
 
                 // Generate NOP instruction
-                generateNop: function (count = 1) {
+                generateNop: (count = 1) => {
                     const nop = [0x1f, 0x20, 0x03, 0xd5]; // NOP
                     const result = [];
                     for (let i = 0; i < count; i++) {
@@ -515,14 +513,12 @@ const BinaryPatcher = {
                     return bytes;
                 },
 
-                int32ToBytes: function (value) {
-                    return [
-                        value & 0xff,
-                        (value >> 8) & 0xff,
-                        (value >> 16) & 0xff,
-                        (value >> 24) & 0xff,
-                    ];
-                },
+                int32ToBytes: value => [
+                    value & 0xff,
+                    (value >> 8) & 0xff,
+                    (value >> 16) & 0xff,
+                    (value >> 24) & 0xff,
+                ],
             },
 
             // WebAssembly bytecode patching
@@ -530,17 +526,15 @@ const BinaryPatcher = {
                 name: 'WebAssembly',
 
                 // Patch WASM function to return constant
-                patchFunction: function (_funcIndex, returnValue) {
-                    return [0x41, returnValue, 0x0f];
-                },
+                patchFunction: (_funcIndex, returnValue) => [0x41, returnValue, 0x0f],
 
                 // Generate NOP in WASM
-                generateNop: function () {
+                generateNop: () => {
                     return [0x01]; // nop
                 },
 
                 // Skip instruction
-                generateSkip: function () {
+                generateSkip: () => {
                     return [0x0c, 0x00]; // br 0 (branch to next)
                 },
             },
@@ -550,7 +544,7 @@ const BinaryPatcher = {
                 name: 'JVM Bytecode',
 
                 // Patch method to return constant
-                patchReturn: function (value) {
+                patchReturn: value => {
                     const bytes = [];
 
                     if (value === 0) {
@@ -568,7 +562,7 @@ const BinaryPatcher = {
                 },
 
                 // Generate NOP
-                generateNop: function () {
+                generateNop: () => {
                     return [0x00]; // nop
                 },
             },
@@ -599,7 +593,7 @@ const BinaryPatcher = {
                     };
                 },
 
-                parseDosHeader: function (buffer) {
+                parseDosHeader: buffer => {
                     const view = new DataView(buffer);
                     return {
                         e_magic: view.getUint16(0, true),
@@ -607,7 +601,7 @@ const BinaryPatcher = {
                     };
                 },
 
-                parseNtHeaders: function (buffer, offset) {
+                parseNtHeaders: (buffer, offset) => {
                     const view = new DataView(buffer);
                     const signature = view.getUint32(offset, true);
 
@@ -665,11 +659,11 @@ const BinaryPatcher = {
                     return sections;
                 },
 
-                readString: function (buffer, offset, maxLength) {
+                readString: (buffer, offset, maxLength) => {
                     let str = '';
                     for (let i = 0; i < maxLength; i++) {
                         const byte = buffer[offset + i];
-                        if (byte === 0) break;
+                        if (byte === 0) { break; }
                         str += String.fromCharCode(byte);
                     }
                     return str;
@@ -694,7 +688,7 @@ const BinaryPatcher = {
                             continue;
                         }
 
-                        let word = view.getUint16(i, true);
+                        const word = view.getUint16(i, true);
                         checksum = (checksum & 0xffff) + word + (checksum >> 16);
                         if (checksum > 0xffff) {
                             checksum = (checksum & 0xffff) + (checksum >> 16);
@@ -730,7 +724,7 @@ const BinaryPatcher = {
                     return true;
                 },
 
-                rvaToOffset: function (rva, sections) {
+                rvaToOffset: (rva, sections) => {
                     for (const section of sections) {
                         if (
                             rva >= section.VirtualAddress &&
@@ -747,7 +741,7 @@ const BinaryPatcher = {
             elf: {
                 name: 'ELF/ELF64',
 
-                parseHeaders: function (buffer) {
+                parseHeaders: buffer => {
                     const view = new DataView(buffer);
 
                     const ident = {
@@ -805,7 +799,7 @@ const BinaryPatcher = {
             macho: {
                 name: 'Mach-O',
 
-                parseHeaders: function (buffer) {
+                parseHeaders: buffer => {
                     const view = new DataView(buffer);
                     const magic = view.getUint32(0, false);
 
@@ -855,7 +849,7 @@ const BinaryPatcher = {
     initializeSignaturePreservation: function () {
         this.signaturePreservation = {
             // Maintain PE Authenticode signatures
-            preserveAuthenticode: function (buffer, patches) {
+            preserveAuthenticode: (buffer, patches) => {
                 const { pe } = BinaryPatcher.formatHandlers;
                 const headers = pe.parseHeaders(buffer);
                 const view = new DataView(buffer);
@@ -874,13 +868,13 @@ const BinaryPatcher = {
                     end: secDirRva + secDirSize,
                 };
 
-                const filteredPatches = patches.filter((patch) => {
+                const filteredPatches = patches.filter(patch => {
                     const { offset } = patch;
                     return offset < signedRange.start || offset >= signedRange.end;
                 });
 
                 // Apply filtered patches
-                filteredPatches.forEach((patch) => {
+                filteredPatches.forEach(patch => {
                     const { offset, data } = patch;
 
                     for (let i = 0; i < data.length; i++) {
@@ -899,14 +893,14 @@ const BinaryPatcher = {
                 const checksums = new Map();
 
                 // Save original checksums
-                checksumLocations.forEach((loc) => {
+                checksumLocations.forEach(loc => {
                     const view = new DataView(buffer);
                     const value = view.getUint32(loc.offset, loc.littleEndian);
                     checksums.set(loc.offset, value);
                 });
 
                 // Recalculate checksums after patching
-                checksumLocations.forEach((loc) => {
+                checksumLocations.forEach(loc => {
                     const checksum = this.calculateChecksum(
                         buffer,
                         loc.start,
@@ -952,7 +946,7 @@ const BinaryPatcher = {
                 return (crc ^ 0xffffffff) >>> 0;
             },
 
-            sum32: function (buffer, start, end) {
+            sum32: (buffer, start, end) => {
                 let sum = 0;
                 for (let i = start; i < end; i++) {
                     sum = (sum + buffer[i]) >>> 0;
@@ -960,7 +954,7 @@ const BinaryPatcher = {
                 return sum;
             },
 
-            xor32: function (buffer, start, end) {
+            xor32: (buffer, start, end) => {
                 let xor = 0;
                 for (let i = start; i < end; i++) {
                     xor ^= buffer[i];
@@ -1038,14 +1032,14 @@ const BinaryPatcher = {
                     return variants;
                 },
 
-                substituteRegisters: function (bytes) {
+                substituteRegisters: bytes => {
                     // Intelligent register substitution
                     const substituted = [...bytes];
                     const regMap = {
-                        0x00: 0x03, // EAX -> EBX
-                        0x01: 0x02, // ECX -> EDX
-                        0x03: 0x00, // EBX -> EAX
-                        0x02: 0x01, // EDX -> ECX
+                        0: 0x03, // EAX -> EBX
+                        1: 0x02, // ECX -> EDX
+                        3: 0x00, // EBX -> EAX
+                        2: 0x01, // EDX -> ECX
                     };
 
                     for (let i = 0; i < substituted.length - 1; i++) {
@@ -1075,7 +1069,7 @@ const BinaryPatcher = {
                     return substituted;
                 },
 
-                addJunkInstructions: function (bytes) {
+                addJunkInstructions: bytes => {
                     const result = [];
                     const junkPatterns = [
                         [0x90], // NOP
@@ -1099,13 +1093,13 @@ const BinaryPatcher = {
                     return result;
                 },
 
-                reorderInstructions: function (bytes) {
+                reorderInstructions: bytes => {
                     // Analyze and reorder independent instructions
                     // This is a simplified version
                     return bytes;
                 },
 
-                useConditionalExecution: function (bytes) {
+                useConditionalExecution: bytes => {
                     // ARM conditional execution
                     return bytes;
                 },
@@ -1114,7 +1108,7 @@ const BinaryPatcher = {
             // Stealth patching techniques
             stealth: {
                 // Time-delayed patches
-                delayedPatch: function (target, patchData, delay) {
+                delayedPatch: (target, patchData, delay) => {
                     setTimeout(() => {
                         BinaryPatcher.patchingEngine.hotPatch(
                             target.module,
@@ -1125,7 +1119,7 @@ const BinaryPatcher = {
                 },
 
                 // Environment-triggered patches
-                conditionalPatch: function (target, patchData, condition) {
+                conditionalPatch: (target, patchData, condition) => {
                     const checkCondition = () => {
                         if (condition()) {
                             BinaryPatcher.patchingEngine.hotPatch(
@@ -1142,7 +1136,7 @@ const BinaryPatcher = {
                 },
 
                 // Hide patches from memory scanners
-                hidePatch: function (address, size) {
+                hidePatch: (address, size) => {
                     // Hook memory reading functions
                     const readFuncs = [
                         'ReadProcessMemory',
@@ -1151,11 +1145,11 @@ const BinaryPatcher = {
                         'memmove',
                     ];
 
-                    readFuncs.forEach((funcName) => {
+                    readFuncs.forEach(funcName => {
                         const func = Module.findExportByName(null, funcName);
                         if (func) {
                             Interceptor.attach(func, {
-                                onEnter: function (args) {
+                                onEnter: args => {
                                     const targetAddr = args[1];
                                     const targetSize = args[2].toInt32();
 
@@ -1235,7 +1229,7 @@ const BinaryPatcher = {
                 },
 
                 getAvailableWorker: function () {
-                    return this.workerPool.find((w) => !w.busy);
+                    return this.workerPool.find(w => !w.busy);
                 },
 
                 executeTask: function (worker, task) {
@@ -1315,7 +1309,7 @@ const BinaryPatcher = {
                     }
                 },
 
-                hasSIMD: function () {
+                hasSIMD: () => {
                     try {
                         // Check for SSE2/AVX support on x86
                         if (Process.arch === 'x64' || Process.arch === 'ia32') {
@@ -1329,32 +1323,30 @@ const BinaryPatcher = {
                         // No SIMD support
                         send({
                             type: 'debug',
-                            message: 'SIMD check failed: ' + e.message,
+                            message: `SIMD check failed: ${e.message}`,
                             arch: Process.arch,
                         });
                     }
                     return false;
                 },
 
-                simdXor: function (data) {
+                simdXor: data => {
                     // Implement SIMD XOR
                     // This would use native SIMD instructions
                     return data;
                 },
 
-                simdAnd: function (data) {
+                simdAnd: data => {
                     // Implement SIMD AND
                     return data;
                 },
 
-                simdOr: function (data) {
+                simdOr: data => {
                     // Implement SIMD OR
                     return data;
                 },
 
-                fallbackOperation: function (_operation, data) {
-                    return data;
-                },
+                fallbackOperation: (_operation, data) => data,
             },
         };
     },
@@ -1433,7 +1425,7 @@ const BinaryPatcher = {
 
             // Update tags
             if (patch.tags) {
-                patch.tags.forEach((tag) => {
+                patch.tags.forEach(tag => {
                     if (!this.tags.has(tag)) {
                         this.tags.set(tag, new Set());
                     }
@@ -1458,7 +1450,7 @@ const BinaryPatcher = {
                 if (criteria.tags) {
                     const patchTags = new Set(patch.tags || []);
                     const searchTags = new Set(criteria.tags);
-                    const intersection = new Set([...patchTags].filter((x) => searchTags.has(x)));
+                    const intersection = new Set([...patchTags].filter(x => searchTags.has(x)));
                     if (intersection.size === 0) {
                         match = false;
                     }
@@ -1533,7 +1525,7 @@ const BinaryPatcher = {
         coordinatePatch: function (patchData) {
             const tasks = [];
 
-            this.nodes.forEach((node) => {
+            this.nodes.forEach(node => {
                 if (node.status === 'active') {
                     tasks.push(this.sendPatchToNode(node, patchData));
                 }
@@ -1543,8 +1535,8 @@ const BinaryPatcher = {
         },
 
         // Send patch to specific node
-        sendPatchToNode: function (node, patchData) {
-            return new Promise((resolve, reject) => {
+        sendPatchToNode: (node, patchData) =>
+            new Promise((resolve, reject) => {
                 try {
                     const result = BinaryPatcher.patchingEngine.hotPatch(
                         patchData.module,
@@ -1564,14 +1556,11 @@ const BinaryPatcher = {
                         error: e.message,
                     });
                 }
-            });
-        },
+            }),
     },
 
     // === HELPER FUNCTIONS ===
-    generatePatchId: function () {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    },
+    generatePatchId: () => Date.now().toString(36) + Math.random().toString(36).substr(2, 9),
 
     updatePerformanceMetrics: function (patchTime, success) {
         const metrics = this.state.performanceMetrics;
@@ -1629,7 +1618,7 @@ const BinaryPatcher = {
             } else if (arch === 'arm64') {
                 patchData = this.architectures.arm64.generateReturn(1);
             } else {
-                throw new Error('Unsupported architecture: ' + arch);
+                throw new Error(`Unsupported architecture: ${arch}`);
             }
 
             // Apply patch with anti-detection
@@ -1703,7 +1692,7 @@ const BinaryPatcher = {
     // Export patch database
     exportPatches: function () {
         const patches = [];
-        this.state.patches.forEach((patch) => {
+        this.state.patches.forEach(patch => {
             patches.push({
                 id: patch.id,
                 module: patch.module,
@@ -1721,7 +1710,7 @@ const BinaryPatcher = {
     importPatches: function (jsonData) {
         try {
             const patches = JSON.parse(jsonData);
-            patches.forEach((patch) => {
+            patches.forEach(patch => {
                 patch.data = new Uint8Array(patch.data);
                 patch.address = Module.findBaseAddress(patch.module).add(patch.offset);
                 this.state.patches.set(patch.id, patch);
@@ -1744,7 +1733,7 @@ const BinaryPatcher = {
 };
 
 // Auto-initialize on load
-setTimeout(function () {
+setTimeout(() => {
     BinaryPatcher.initialize();
     send({
         type: 'status',

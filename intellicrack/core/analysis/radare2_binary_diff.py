@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import Any
 
 
 try:
@@ -670,6 +670,24 @@ class R2BinaryDiff:
                 self.r2_secondary.quit()
             except Exception as e:
                 self.logger.warning(f"Error closing secondary r2 session: {e}")
+
+    def close(self) -> None:
+        """Close radare2 sessions and release resources.
+
+        This method provides an alias for cleanup() to match common resource
+        management patterns. It safely closes all radare2 sessions.
+        """
+        self.cleanup()
+
+    def compare(self) -> dict[str, Any]:
+        """Perform comprehensive binary comparison.
+
+        Returns:
+            Dictionary containing comparison results including function diffs,
+            string diffs, import diffs, and metadata about both binaries.
+
+        """
+        return self.get_comprehensive_diff()
 
 
 def compare_binaries(primary_path: str, secondary_path: str) -> dict:

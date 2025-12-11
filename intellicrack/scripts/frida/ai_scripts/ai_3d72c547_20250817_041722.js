@@ -12,12 +12,12 @@ const CreateFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
 
 if (CreateFileW) {
     Interceptor.attach(CreateFileW, {
-        onEnter: function (args) {
+        onEnter: args => {
             const filename = args[0].readUtf16String();
             const accessMode = args[1].toInt32();
 
             // Check for license-related file access
-            if (filename && filename.toLowerCase().includes('license')) {
+            if (filename?.toLowerCase().includes('license')) {
                 send({
                     type: 'license_file_access',
                     filename: filename,
@@ -27,7 +27,7 @@ if (CreateFileW) {
             }
 
             // Log all file accesses
-            send('[CreateFileW] ' + filename);
+            send(`[CreateFileW] ${filename}`);
         },
         onLeave: function (retval) {
             // Handle value can be used for further monitoring
@@ -41,12 +41,12 @@ const CreateFileA = Module.findExportByName('kernel32.dll', 'CreateFileA');
 
 if (CreateFileA) {
     Interceptor.attach(CreateFileA, {
-        onEnter: function (args) {
+        onEnter: args => {
             const filename = args[0].readCString();
             const accessMode = args[1].toInt32();
 
             // Check for license-related file access
-            if (filename && filename.toLowerCase().includes('license')) {
+            if (filename?.toLowerCase().includes('license')) {
                 send({
                     type: 'license_file_access',
                     filename: filename,
@@ -56,7 +56,7 @@ if (CreateFileA) {
             }
 
             // Log all file accesses
-            send('[CreateFileA] ' + filename);
+            send(`[CreateFileA] ${filename}`);
         },
         onLeave: function (retval) {
             // Handle value can be used for further monitoring

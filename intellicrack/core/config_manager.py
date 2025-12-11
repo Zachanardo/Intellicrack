@@ -26,6 +26,7 @@ import logging
 import os
 import threading
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -465,6 +466,78 @@ class IntellicrackConfig:
                 )
             return expanded
         return value
+
+    def upgrade_config(self) -> None:
+        """Public method to trigger configuration upgrade if needed.
+
+        Exposes config upgrade functionality for external callers like
+        font_manager that need to trigger migration.
+
+        """
+        self.logger.info("IntellicrackConfig: upgrade_config() called - checking for upgrades.")
+        self._upgrade_config_if_needed()
+
+    def save(self) -> None:
+        """Public method to save configuration to disk.
+
+        Exposes save functionality for external callers that need to
+        explicitly persist configuration changes.
+
+        """
+        self.logger.debug("IntellicrackConfig: save() called - persisting configuration.")
+        self._save_config()
+
+    def save_config(self) -> None:
+        """Public alias for _save_config for API compatibility.
+
+        Provides a consistent interface matching the expected method name
+        in METHOD_IMPLEMENTATION_CHECKLIST.md and external callers.
+
+        """
+        self.logger.debug("IntellicrackConfig: save_config() called.")
+        self._save_config()
+
+    def get_api_endpoint(self, provider: str) -> str | None:
+        """Get API endpoint URL for a specific AI provider.
+
+        Retrieves the configured API endpoint for AI model providers like
+        OpenAI, Anthropic, Google, OpenRouter, and LM Studio.
+
+        Args:
+            provider: Provider name (openai, anthropic, google, openrouter, lmstudio)
+
+        Returns:
+            Configured endpoint URL or None if not set
+
+        """
+        provider_lower = provider.lower().strip()
+
+        endpoint_mappings: dict[str, tuple[str, ...]] = {
+            "openai": ("ai", "providers", "openai", "endpoint"),
+            "anthropic": ("ai", "providers", "anthropic", "endpoint"),
+            "google": ("ai", "providers", "google", "endpoint"),
+            "openrouter": ("ai", "providers", "openrouter", "endpoint"),
+            "lmstudio": ("ai", "providers", "lmstudio", "endpoint"),
+        }
+
+        if provider_lower not in endpoint_mappings:
+            self.logger.warning(f"Unknown API provider: {provider}")
+            return None
+
+        keys = endpoint_mappings[provider_lower]
+        value: Any = self._config
+
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                self.logger.debug(f"API endpoint not configured for provider: {provider}")
+                return None
+
+        if isinstance(value, str) and value:
+            return value
+
+        return None
 
     def _upgrade_config_if_needed(self) -> None:
         """Perform configuration upgrades based on version.

@@ -1403,3 +1403,59 @@ class HexViewerDialog(QDialog):
 
                 # Add to list
                 self.search_list.addItem(item)
+
+    def setup_synchronized_scrolling(self) -> None:
+        """Set up synchronized scrolling between all viewers in comparison mode.
+
+        This method connects scroll signals between all viewers so that scrolling
+        one viewer automatically scrolls all others to maintain synchronized views
+        during file comparison operations.
+        """
+        if not hasattr(self, "viewers") or len(self.viewers) < 2:
+            logger.debug("Cannot setup synchronized scrolling: fewer than 2 viewers")
+            return
+
+        for viewer in self.viewers:
+            try:
+                viewer.vertical_scroll_bar.valueChanged.disconnect()
+                viewer.horizontal_scroll_bar.valueChanged.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+
+        for viewer in self.viewers:
+            self._connect_viewer_scroll_signals(viewer)
+
+        logger.debug("Synchronized scrolling enabled for %d viewers", len(self.viewers))
+
+    def _connect_viewer_scroll_signals(self, source_viewer: HexViewerWidget) -> None:
+        """Connect scroll signals for a single viewer to synchronize with others.
+
+        Args:
+            source_viewer: The viewer whose scroll signals should be connected.
+        """
+        def sync_vertical_scroll(value: int) -> None:
+            if not getattr(self, "sync_scrolling", True):
+                return
+            for target_viewer in self.viewers:
+                if target_viewer is not source_viewer:
+                    if hasattr(target_viewer, "vertical_scroll_bar"):
+                        target_viewer.vertical_scroll_bar.blockSignals(True)
+                        target_viewer.vertical_scroll_bar.setValue(value)
+                        target_viewer.vertical_scroll_bar.blockSignals(False)
+                        target_viewer.viewport().update()
+
+        def sync_horizontal_scroll(value: int) -> None:
+            if not getattr(self, "sync_scrolling", True):
+                return
+            for target_viewer in self.viewers:
+                if target_viewer is not source_viewer:
+                    if hasattr(target_viewer, "horizontal_scroll_bar"):
+                        target_viewer.horizontal_scroll_bar.blockSignals(True)
+                        target_viewer.horizontal_scroll_bar.setValue(value)
+                        target_viewer.horizontal_scroll_bar.blockSignals(False)
+                        target_viewer.viewport().update()
+
+        if hasattr(source_viewer, "vertical_scroll_bar"):
+            source_viewer.vertical_scroll_bar.valueChanged.connect(sync_vertical_scroll)
+        if hasattr(source_viewer, "horizontal_scroll_bar"):
+            source_viewer.horizontal_scroll_bar.valueChanged.connect(sync_horizontal_scroll)

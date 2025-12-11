@@ -131,12 +131,12 @@ const antiDebugger = {
         });
 
         // Hook IsDebuggerPresent
-        var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
-        if (isDebuggerPresent) {
+      const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+      if (isDebuggerPresent) {
             Interceptor.replace(
                 isDebuggerPresent,
                 new NativeCallback(
-                    function () {
+                    () => {
                         send({
                             type: 'bypass',
                             target: 'IsDebuggerPresent',
@@ -150,20 +150,20 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['IsDebuggerPresent'] = true;
+            this.hooksInstalled.IsDebuggerPresent = true;
         }
 
         // Hook CheckRemoteDebuggerPresent
-        var checkRemoteDebugger = Module.findExportByName(
-            'kernel32.dll',
-            'CheckRemoteDebuggerPresent'
-        );
-        if (checkRemoteDebugger) {
+      const checkRemoteDebugger = Module.findExportByName(
+        'kernel32.dll',
+        'CheckRemoteDebuggerPresent'
+      );
+      if (checkRemoteDebugger) {
             Interceptor.attach(checkRemoteDebugger, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0) {
                         // Set pbDebuggerPresent to FALSE
-                        var pbDebugger = this.context.rdx; // Second parameter
+                      const pbDebugger = this.context.rdx; // Second parameter
                         if (pbDebugger && !pbDebugger.isNull()) {
                             pbDebugger.writeU8(0); // FALSE
                             send({
@@ -177,7 +177,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['CheckRemoteDebuggerPresent'] = true;
+            this.hooksInstalled.CheckRemoteDebuggerPresent = true;
         }
     },
 
@@ -190,8 +190,8 @@ const antiDebugger = {
         });
 
         // Hook NtQueryInformationProcess for debug flags
-        var ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
-        if (ntQueryInfo) {
+      const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
+      if (ntQueryInfo) {
             Interceptor.attach(ntQueryInfo, {
                 onEnter: function (args) {
                     this.processHandle = args[0];
@@ -251,7 +251,7 @@ const antiDebugger = {
                             if (this.infoClass >= 60 && this.infoClass <= 70) {
                                 // Zero out potentially debug-related info
                                 Memory.protect(this.processInfo, this.processInfoLength, 'rw-');
-                                for (var i = 0; i < this.processInfoLength; i++) {
+                                for (let i = 0; i < this.processInfoLength; i++) {
                                     this.processInfo.add(i).writeU8(0);
                                 }
                                 send({
@@ -266,18 +266,18 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtQueryInformationProcess'] = true;
+            this.hooksInstalled.NtQueryInformationProcess = true;
         }
 
         // Hook NtSetInformationThread (hide from debugger)
-        var ntSetInfoThread = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
-        if (ntSetInfoThread) {
+      const ntSetInfoThread = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
+      if (ntSetInfoThread) {
             Interceptor.attach(ntSetInfoThread, {
                 onEnter: function (args) {
-                    var threadHandle = args[0];
-                    var infoClass = args[1].toInt32();
+                  const threadHandle = args[0];
+                  const infoClass = args[1].toInt32();
 
-                    // Log thread handle for debugging purposes
+                  // Log thread handle for debugging purposes
                     send({
                         type: 'debug',
                         target: 'NtSetInformationThread',
@@ -299,17 +299,17 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtSetInformationThread'] = true;
+            this.hooksInstalled.NtSetInformationThread = true;
         }
 
         // Hook NtCreateThreadEx for thread creation monitoring
-        var ntCreateThreadEx = Module.findExportByName('ntdll.dll', 'NtCreateThreadEx');
-        if (ntCreateThreadEx) {
+      const ntCreateThreadEx = Module.findExportByName('ntdll.dll', 'NtCreateThreadEx');
+      if (ntCreateThreadEx) {
             Interceptor.attach(ntCreateThreadEx, {
-                onEnter: function (args) {
-                    var threadHandle = args[0];
-                    var desiredAccess = args[1];
-                    send({
+                onEnter: args => {
+                  const threadHandle = args[0];
+                  const desiredAccess = args[1];
+                  send({
                         type: 'info',
                         target: 'NtCreateThreadEx',
                         message: 'Thread creation detected - monitoring for debug threads',
@@ -319,7 +319,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtCreateThreadEx'] = true;
+            this.hooksInstalled.NtCreateThreadEx = true;
         }
     },
 
@@ -332,55 +332,55 @@ const antiDebugger = {
         });
 
         // Hook OutputDebugString functions
-        var outputDebugStringA = Module.findExportByName('kernel32.dll', 'OutputDebugStringA');
-        if (outputDebugStringA) {
+      const outputDebugStringA = Module.findExportByName('kernel32.dll', 'OutputDebugStringA');
+      if (outputDebugStringA) {
             Interceptor.replace(
                 outputDebugStringA,
                 new NativeCallback(
-                    function (lpOutputString) {
+                    lpOutputString => {
                         // Log suppressed debug output for analysis
-                        var debugMessage = Memory.readUtf8String(lpOutputString);
-                        send({
+                      const debugMessage = Memory.readUtf8String(lpOutputString);
+                      send({
                             type: 'debug_suppressed',
                             target: 'OutputDebugStringA',
                             message: debugMessage,
                         });
-                        return;
+
                     },
                     'void',
                     ['pointer']
                 )
             );
 
-            this.hooksInstalled['OutputDebugStringA'] = true;
+            this.hooksInstalled.OutputDebugStringA = true;
         }
 
-        var outputDebugStringW = Module.findExportByName('kernel32.dll', 'OutputDebugStringW');
-        if (outputDebugStringW) {
+      const outputDebugStringW = Module.findExportByName('kernel32.dll', 'OutputDebugStringW');
+      if (outputDebugStringW) {
             Interceptor.replace(
                 outputDebugStringW,
                 new NativeCallback(
-                    function (lpOutputString) {
+                    lpOutputString => {
                         // Log suppressed debug output for analysis
-                        var debugMessage = Memory.readUtf16String(lpOutputString);
-                        send({
+                      const debugMessage = Memory.readUtf16String(lpOutputString);
+                      send({
                             type: 'debug_suppressed',
                             target: 'OutputDebugStringW',
                             message: debugMessage,
                         });
-                        return;
+
                     },
                     'void',
                     ['pointer']
                 )
             );
 
-            this.hooksInstalled['OutputDebugStringW'] = true;
+            this.hooksInstalled.OutputDebugStringW = true;
         }
     },
 
     // === PEB MANIPULATION ===
-    manipulatePebFlags: function () {
+    manipulatePebFlags: () => {
         send({
             type: 'info',
             message: 'Manipulating PEB debug flags',
@@ -391,11 +391,11 @@ const antiDebugger = {
         setTimeout(() => {
             try {
                 // Get PEB address from TEB
-                var teb =
-                    Process.getCurrentThread().context.gs_base ||
-                    Process.getCurrentThread().context.fs_base;
-                if (teb && !teb.isNull()) {
-                    var peb = teb.add(0x60).readPointer(); // PEB offset in TEB
+              const teb =
+                Process.getCurrentThread().context.gs_base ||
+                Process.getCurrentThread().context.fs_base;
+              if (teb && !teb.isNull()) {
+                  const peb = teb.add(0x60).readPointer(); // PEB offset in TEB
 
                     if (peb && !peb.isNull()) {
                         // Clear BeingDebugged flag (offset 0x02)
@@ -405,8 +405,8 @@ const antiDebugger = {
                         peb.add(0x68).writeU32(0);
 
                         // Clear heap flags (offset 0x18 -> heap -> flags)
-                        var processHeap = peb.add(0x18).readPointer();
-                        if (processHeap && !processHeap.isNull()) {
+                      const processHeap = peb.add(0x18).readPointer();
+                      if (processHeap && !processHeap.isNull()) {
                             processHeap.add(0x40).writeU32(0x02); // Clear debug heap flags
                             processHeap.add(0x44).writeU32(0x00); // Clear force flags
                         }
@@ -439,12 +439,12 @@ const antiDebugger = {
         });
 
         // Hook GetThreadContext to clear debug registers
-        var getThreadContext = Module.findExportByName('kernel32.dll', 'GetThreadContext');
-        if (getThreadContext) {
+      const getThreadContext = Module.findExportByName('kernel32.dll', 'GetThreadContext');
+      if (getThreadContext) {
             Interceptor.attach(getThreadContext, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0) {
-                        var context = this.context.rdx; // CONTEXT pointer
+                      const context = this.context.rdx; // CONTEXT pointer
                         if (context && !context.isNull()) {
                             this.clearDebugRegisters(context);
                         }
@@ -453,28 +453,34 @@ const antiDebugger = {
 
                 clearDebugRegisters: function (context) {
                     try {
-                        var config = this.parent.parent.config;
-                        if (config.hardwareBreakpoints.enabled) {
+                      const config = this.parent.parent.config;
+                      if (config.hardwareBreakpoints.enabled) {
                             // CONTEXT structure offsets for debug registers (x64)
-                            var dr0Offset = 0x90;
-                            var dr1Offset = 0x98;
-                            var dr2Offset = 0xa0;
-                            var dr3Offset = 0xa8;
-                            var dr6Offset = 0xb0;
-                            var dr7Offset = 0xb8;
+                          const dr0Offset = 0x90;
+                          const dr1Offset = 0x98;
+                          const dr2Offset = 0xa0;
+                          const dr3Offset = 0xa8;
+                          const dr6Offset = 0xb0;
+                          const dr7Offset = 0xb8;
 
-                            if (config.hardwareBreakpoints.clearDr0)
+                          if (config.hardwareBreakpoints.clearDr0) {
                                 context.add(dr0Offset).writeU64(0);
-                            if (config.hardwareBreakpoints.clearDr1)
+                            }
+                            if (config.hardwareBreakpoints.clearDr1) {
                                 context.add(dr1Offset).writeU64(0);
-                            if (config.hardwareBreakpoints.clearDr2)
+                            }
+                            if (config.hardwareBreakpoints.clearDr2) {
                                 context.add(dr2Offset).writeU64(0);
-                            if (config.hardwareBreakpoints.clearDr3)
+                            }
+                            if (config.hardwareBreakpoints.clearDr3) {
                                 context.add(dr3Offset).writeU64(0);
-                            if (config.hardwareBreakpoints.clearDr6)
+                            }
+                            if (config.hardwareBreakpoints.clearDr6) {
                                 context.add(dr6Offset).writeU64(0);
-                            if (config.hardwareBreakpoints.clearDr7)
+                            }
+                            if (config.hardwareBreakpoints.clearDr7) {
                                 context.add(dr7Offset).writeU64(0);
+                            }
 
                             send({
                                 type: 'bypass',
@@ -488,21 +494,21 @@ const antiDebugger = {
                         send({
                             type: 'warning',
                             target: 'GetThreadContext',
-                            message: 'Failed to clear debug registers: ' + error.message,
+                            message: `Failed to clear debug registers: ${error.message}`,
                         });
                     }
                 },
             });
 
-            this.hooksInstalled['GetThreadContext'] = true;
+            this.hooksInstalled.GetThreadContext = true;
         }
 
         // Hook SetThreadContext to prevent hardware breakpoint setting
-        var setThreadContext = Module.findExportByName('kernel32.dll', 'SetThreadContext');
-        if (setThreadContext) {
+      const setThreadContext = Module.findExportByName('kernel32.dll', 'SetThreadContext');
+      if (setThreadContext) {
             Interceptor.attach(setThreadContext, {
                 onEnter: function (args) {
-                    var context = args[1]; // CONTEXT pointer
+                  const context = args[1]; // CONTEXT pointer
                     if (context && !context.isNull()) {
                         this.preventHardwareBreakpoints(context);
                     }
@@ -510,12 +516,12 @@ const antiDebugger = {
 
                 preventHardwareBreakpoints: function (context) {
                     try {
-                        var config = this.parent.parent.config;
-                        if (config.hardwareBreakpoints.enabled) {
+                      const config = this.parent.parent.config;
+                      if (config.hardwareBreakpoints.enabled) {
                             // Check if any debug registers are being set
-                            var dr7 = context.add(0xb8).readU64();
+                          const dr7 = context.add(0xb8).readU64();
 
-                            if (dr7.toNumber() !== 0) {
+                          if (dr7.toNumber() !== 0) {
                                 // Clear all debug registers to prevent hardware breakpoints
                                 context.add(0x90).writeU64(0); // DR0
                                 context.add(0x98).writeU64(0); // DR1
@@ -545,22 +551,22 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['SetThreadContext'] = true;
+            this.hooksInstalled.SetThreadContext = true;
         }
 
         // Hook NtGetContextThread (native version)
-        var ntGetContextThread = Module.findExportByName('ntdll.dll', 'NtGetContextThread');
-        if (ntGetContextThread) {
+      const ntGetContextThread = Module.findExportByName('ntdll.dll', 'NtGetContextThread');
+      if (ntGetContextThread) {
             Interceptor.attach(ntGetContextThread, {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
                         // STATUS_SUCCESS
-                        var context = this.context.rdx;
-                        if (context && !context.isNull()) {
+                      const context = this.context.rdx;
+                      if (context && !context.isNull()) {
                             // Clear debug registers in native context as well
                             try {
-                                var config = this.parent.parent.config;
-                                if (config.hardwareBreakpoints.enabled) {
+                              const config = this.parent.parent.config;
+                              if (config.hardwareBreakpoints.enabled) {
                                     context.add(0x90).writeU64(0); // DR0
                                     context.add(0x98).writeU64(0); // DR1
                                     context.add(0xa0).writeU64(0); // DR2
@@ -573,7 +579,7 @@ const antiDebugger = {
                                 send({
                                     type: 'debug',
                                     target: 'ContinueDebugEvent_context_clear',
-                                    message: 'Context read-only: ' + error.message,
+                                    message: `Context read-only: ${error.message}`,
                                 });
                             }
                         }
@@ -581,7 +587,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtGetContextThread'] = true;
+            this.hooksInstalled.NtGetContextThread = true;
         }
     },
 
@@ -608,12 +614,12 @@ const antiDebugger = {
 
     hookRdtscTiming: function () {
         // Search for RDTSC instructions and hook them
-        var modules = Process.enumerateModules();
+      const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
+      for (let i = 0; i < modules.length; i++) {
+          const module = modules[i];
 
-            // Skip system modules
+          // Skip system modules
             if (
                 module.name.toLowerCase().includes('ntdll') ||
                 module.name.toLowerCase().includes('kernel32')
@@ -623,41 +629,40 @@ const antiDebugger = {
 
             try {
                 // RDTSC instruction: 0x0F 0x31
-                var rdtscPattern = '0f 31';
-                var matches = Memory.scanSync(module.base, module.size, rdtscPattern);
+              const rdtscPattern = '0f 31';
+              const matches = Memory.scanSync(module.base, module.size, rdtscPattern);
 
-                for (var j = 0; j < Math.min(matches.length, 10); j++) {
+              for (let j = 0; j < Math.min(matches.length, 10); j++) {
                     this.hookRdtscInstruction(matches[j].address, module.name);
                 }
 
                 if (matches.length > 0) {
-                    this.hooksInstalled['RDTSC_' + module.name] = matches.length;
+                    this.hooksInstalled[`RDTSC_${module.name}`] = matches.length;
                 }
             } catch (error) {
                 send({
                     type: 'warning',
                     target: 'hookRdtscInstructions',
-                    message: 'Failed to hook RDTSC in module ' + module.name + ': ' + error.message,
+                    message: `Failed to hook RDTSC in module ${module.name}: ${error.message}`,
                 });
-                continue;
             }
         }
     },
 
-    hookRdtscInstruction: function (address, moduleName) {
+    hookRdtscInstruction: (address, moduleName) => {
         try {
             Interceptor.attach(address, {
                 onLeave: function (retval) {
-                    var config = this.parent.parent.config;
-                    if (config.timingProtection.enabled && config.timingProtection.rdtscSpoofing) {
+                  const config = this.parent.parent.config;
+                  if (config.timingProtection.enabled && config.timingProtection.rdtscSpoofing) {
                         // Store original timing value for analysis
-                        var originalValue = retval.toNumber();
+                      const originalValue = retval.toNumber();
 
-                        // Provide consistent timing to prevent timing-based detection
-                        var baseTime = 0x123456789abc;
-                        var currentTime = baseTime + (Date.now() % 1000000) * 1000;
+                      // Provide consistent timing to prevent timing-based detection
+                      const baseTime = 0x123456789abc;
+                      const currentTime = baseTime + (Date.now() % 1000000) * 1000;
 
-                        send({
+                      send({
                             type: 'timing_spoofed',
                             target: 'RDTSC',
                             original: originalValue,
@@ -665,7 +670,7 @@ const antiDebugger = {
                         });
 
                         this.context.eax = ptr(currentTime & 0xffffffff);
-                        this.context.edx = ptr((currentTime >>> 32) & 0xffffffff);
+                        this.context.edx = ptr((currentTime >>> 0) & 0xffffffff);
 
                         send({
                             type: 'bypass',
@@ -682,31 +687,31 @@ const antiDebugger = {
             send({
                 type: 'warning',
                 target: 'hookRdtscInstruction',
-                message: 'Failed to hook RDTSC at ' + address + ': ' + error.message,
+                message: `Failed to hook RDTSC at ${address}: ${error.message}`,
             });
         }
     },
 
     hookPerformanceCounters: function () {
-        var queryPerformanceCounter = Module.findExportByName(
-            'kernel32.dll',
-            'QueryPerformanceCounter'
-        );
-        if (queryPerformanceCounter) {
+      const queryPerformanceCounter = Module.findExportByName(
+        'kernel32.dll',
+        'QueryPerformanceCounter'
+      );
+      if (queryPerformanceCounter) {
             Interceptor.attach(queryPerformanceCounter, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0) {
-                        var counterPtr = this.context.rcx;
-                        if (counterPtr && !counterPtr.isNull()) {
-                            var config = this.parent.parent.config;
-                            if (
+                      const counterPtr = this.context.rcx;
+                      if (counterPtr && !counterPtr.isNull()) {
+                          const config = this.parent.parent.config;
+                          if (
                                 config.timingProtection.enabled &&
                                 config.timingProtection.performanceCounterSpoofing
                             ) {
                                 // Provide consistent performance counter values
-                                var currentCounter =
-                                    this.parent.parent.basePerformanceCounter + Date.now() * 10000;
-                                counterPtr.writeU64(currentCounter);
+                              const currentCounter =
+                                this.parent.parent.basePerformanceCounter + Date.now() * 10000;
+                              counterPtr.writeU64(currentCounter);
 
                                 send({
                                     type: 'bypass',
@@ -720,18 +725,18 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['QueryPerformanceCounter'] = true;
+            this.hooksInstalled.QueryPerformanceCounter = true;
         }
 
-        var queryPerformanceFrequency = Module.findExportByName(
-            'kernel32.dll',
-            'QueryPerformanceFrequency'
-        );
-        if (queryPerformanceFrequency) {
+      const queryPerformanceFrequency = Module.findExportByName(
+        'kernel32.dll',
+        'QueryPerformanceFrequency'
+      );
+      if (queryPerformanceFrequency) {
             Interceptor.replace(
                 queryPerformanceFrequency,
                 new NativeCallback(
-                    function (lpFrequency) {
+                    lpFrequency => {
                         if (lpFrequency && !lpFrequency.isNull()) {
                             lpFrequency.writeU64(10000000); // Standard 10MHz frequency
                             return 1; // TRUE
@@ -743,19 +748,19 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['QueryPerformanceFrequency'] = true;
+            this.hooksInstalled.QueryPerformanceFrequency = true;
         }
     },
 
     hookSleepFunctions: function () {
-        var sleep = Module.findExportByName('kernel32.dll', 'Sleep');
-        if (sleep) {
+      const sleep = Module.findExportByName('kernel32.dll', 'Sleep');
+      if (sleep) {
             Interceptor.attach(sleep, {
                 onEnter: function (args) {
-                    var milliseconds = args[0].toInt32();
-                    var config = this.parent.parent.config;
+                  const milliseconds = args[0].toInt32();
+                  const config = this.parent.parent.config;
 
-                    if (
+                  if (
                         config.timingProtection.enabled &&
                         config.timingProtection.sleepManipulation &&
                         milliseconds > 1000
@@ -772,17 +777,17 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['Sleep'] = true;
+            this.hooksInstalled.Sleep = true;
         }
 
-        var sleepEx = Module.findExportByName('kernel32.dll', 'SleepEx');
-        if (sleepEx) {
+      const sleepEx = Module.findExportByName('kernel32.dll', 'SleepEx');
+      if (sleepEx) {
             Interceptor.attach(sleepEx, {
                 onEnter: function (args) {
-                    var milliseconds = args[0].toInt32();
-                    var config = this.parent.parent.config;
+                  const milliseconds = args[0].toInt32();
+                  const config = this.parent.parent.config;
 
-                    if (
+                  if (
                         config.timingProtection.enabled &&
                         config.timingProtection.sleepManipulation &&
                         milliseconds > 1000
@@ -799,26 +804,26 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['SleepEx'] = true;
+            this.hooksInstalled.SleepEx = true;
         }
     },
 
     hookTickCountFunctions: function () {
-        var getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
-        if (getTickCount) {
-            var baseTickCount = Date.now();
+      const getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
+      if (getTickCount) {
+          const baseTickCount = Date.now();
 
-            Interceptor.replace(
+          Interceptor.replace(
                 getTickCount,
                 new NativeCallback(
                     function () {
-                        var config = this.parent.config;
-                        if (
+                      const config = this.parent.config;
+                      if (
                             config.timingProtection.enabled &&
                             config.timingProtection.consistentTiming
                         ) {
-                            var elapsed = Date.now() - baseTickCount;
-                            return elapsed;
+                          const elapsed = Date.now() - baseTickCount;
+                          return elapsed;
                         }
                         return Date.now() - baseTickCount; // Normal behavior
                     },
@@ -827,24 +832,24 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['GetTickCount'] = true;
+            this.hooksInstalled.GetTickCount = true;
         }
 
-        var getTickCount64 = Module.findExportByName('kernel32.dll', 'GetTickCount64');
-        if (getTickCount64) {
-            var baseTickCount64 = Date.now();
+      const getTickCount64 = Module.findExportByName('kernel32.dll', 'GetTickCount64');
+      if (getTickCount64) {
+          const baseTickCount64 = Date.now();
 
-            Interceptor.replace(
+          Interceptor.replace(
                 getTickCount64,
                 new NativeCallback(
                     function () {
-                        var config = this.parent.config;
-                        if (
+                      const config = this.parent.config;
+                      if (
                             config.timingProtection.enabled &&
                             config.timingProtection.consistentTiming
                         ) {
-                            var elapsed = Date.now() - baseTickCount64;
-                            return elapsed;
+                          const elapsed = Date.now() - baseTickCount64;
+                          return elapsed;
                         }
                         return Date.now() - baseTickCount64;
                     },
@@ -853,7 +858,7 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['GetTickCount64'] = true;
+            this.hooksInstalled.GetTickCount64 = true;
         }
     },
 
@@ -879,21 +884,21 @@ const antiDebugger = {
     },
 
     hookProcessNameQueries: function () {
-        var getModuleFileName = Module.findExportByName('kernel32.dll', 'GetModuleFileNameW');
-        if (getModuleFileName) {
+      const getModuleFileName = Module.findExportByName('kernel32.dll', 'GetModuleFileNameW');
+      if (getModuleFileName) {
             Interceptor.attach(getModuleFileName, {
                 onLeave: function (retval) {
                     if (retval.toInt32() > 0) {
-                        var filename = this.context.rdx; // lpFilename
-                        var config = this.parent.parent.config;
+                      const filename = this.context.rdx; // lpFilename
+                      const config = this.parent.parent.config;
 
-                        if (
+                      if (
                             filename &&
                             !filename.isNull() &&
                             config.processInfo.spoofParentProcess
                         ) {
-                            var spoofedPath = 'C:\\Windows\\' + config.processInfo.spoofProcessName;
-                            filename.writeUtf16String(spoofedPath);
+                          const spoofedPath = `C:\\Windows\\${config.processInfo.spoofProcessName}`;
+                          filename.writeUtf16String(spoofedPath);
                             send({
                                 type: 'bypass',
                                 target: 'GetModuleFileNameW',
@@ -905,22 +910,22 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['GetModuleFileNameW'] = true;
+            this.hooksInstalled.GetModuleFileNameW = true;
         }
     },
 
     hookParentProcessQueries: function () {
-        var createToolhelp32Snapshot = Module.findExportByName(
-            'kernel32.dll',
-            'CreateToolhelp32Snapshot'
-        );
-        if (createToolhelp32Snapshot) {
+      const createToolhelp32Snapshot = Module.findExportByName(
+        'kernel32.dll',
+        'CreateToolhelp32Snapshot'
+      );
+      if (createToolhelp32Snapshot) {
             Interceptor.attach(createToolhelp32Snapshot, {
                 onEnter: function (args) {
-                    var flags = args[0].toInt32();
+                  const flags = args[0].toInt32();
 
-                    // TH32CS_SNAPPROCESS = 0x00000002
-                    if (flags & 0x00000002) {
+                  // TH32CS_SNAPPROCESS = 0x00000002
+                    if (flags && 0x00000002) {
                         send({
                             type: 'info',
                             target: 'CreateToolhelp32Snapshot',
@@ -932,15 +937,15 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['CreateToolhelp32Snapshot'] = true;
+            this.hooksInstalled.CreateToolhelp32Snapshot = true;
         }
 
-        var process32First = Module.findExportByName('kernel32.dll', 'Process32FirstW');
-        if (process32First) {
+      const process32First = Module.findExportByName('kernel32.dll', 'Process32FirstW');
+      if (process32First) {
             Interceptor.attach(process32First, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0 && this.isProcessSnapshot) {
-                        var processEntry = this.context.rdx; // PROCESSENTRY32W
+                      const processEntry = this.context.rdx; // PROCESSENTRY32W
                         if (processEntry && !processEntry.isNull()) {
                             this.spoofProcessEntry(processEntry);
                         }
@@ -949,12 +954,12 @@ const antiDebugger = {
 
                 spoofProcessEntry: function (processEntry) {
                     try {
-                        var config = this.parent.parent.config;
-                        if (config.processInfo.spoofParentProcess) {
+                      const config = this.parent.parent.config;
+                      if (config.processInfo.spoofParentProcess) {
                             // PROCESSENTRY32W structure offsets
-                            var th32ProcessID = processEntry.add(8).readU32(); // Process ID
-                            var th32ParentProcessID = processEntry.add(24); // Parent Process ID offset
-                            var szExeFile = processEntry.add(44); // Executable file name offset
+                          const th32ProcessID = processEntry.add(8).readU32(); // Process ID
+                          const th32ParentProcessID = processEntry.add(24); // Parent Process ID offset
+                          const szExeFile = processEntry.add(44); // Executable file name offset
 
                             // Check if this is our process
                             if (th32ProcessID === this.parent.parent.processId) {
@@ -977,29 +982,29 @@ const antiDebugger = {
                         send({
                             type: 'error',
                             target: 'PEB_manipulation',
-                            message: 'Process entry manipulation failed: ' + error.message,
+                            message: `Process entry manipulation failed: ${error.message}`,
                         });
                     }
                 },
             });
 
-            this.hooksInstalled['Process32FirstW'] = true;
+            this.hooksInstalled.Process32FirstW = true;
         }
     },
 
     hookCommandLineQueries: function () {
-        var getCommandLine = Module.findExportByName('kernel32.dll', 'GetCommandLineW');
-        if (getCommandLine) {
+      const getCommandLine = Module.findExportByName('kernel32.dll', 'GetCommandLineW');
+      if (getCommandLine) {
             Interceptor.replace(
                 getCommandLine,
                 new NativeCallback(
                     function () {
-                        var config = this.parent.config;
-                        if (config.processInfo.spoofParentProcess) {
-                            var spoofedCmdLine = Memory.allocUtf16String(
-                                config.processInfo.spoofCommandLine
-                            );
-                            send({
+                      const config = this.parent.config;
+                      if (config.processInfo.spoofParentProcess) {
+                          const spoofedCmdLine = Memory.allocUtf16String(
+                            config.processInfo.spoofCommandLine
+                          );
+                          send({
                                 type: 'bypass',
                                 target: 'GetCommandLineW',
                                 action: 'command_line_spoofed',
@@ -1015,19 +1020,19 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['GetCommandLineW'] = true;
+            this.hooksInstalled.GetCommandLineW = true;
         }
     },
 
     hookPrivilegeQueries: function () {
-        var openProcessToken = Module.findExportByName('advapi32.dll', 'OpenProcessToken');
-        if (openProcessToken) {
+      const openProcessToken = Module.findExportByName('advapi32.dll', 'OpenProcessToken');
+      if (openProcessToken) {
             Interceptor.attach(openProcessToken, {
                 onEnter: function (args) {
-                    var desiredAccess = args[1].toInt32();
+                  const desiredAccess = args[1].toInt32();
 
-                    // TOKEN_QUERY = 0x0008
-                    if (desiredAccess & 0x0008) {
+                  // TOKEN_QUERY = 0x0008
+                    if (desiredAccess && 0x0008) {
                         send({
                             type: 'info',
                             target: 'OpenProcessToken',
@@ -1039,16 +1044,16 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['OpenProcessToken'] = true;
+            this.hooksInstalled.OpenProcessToken = true;
         }
 
-        var getTokenInformation = Module.findExportByName('advapi32.dll', 'GetTokenInformation');
-        if (getTokenInformation) {
+      const getTokenInformation = Module.findExportByName('advapi32.dll', 'GetTokenInformation');
+      if (getTokenInformation) {
             Interceptor.attach(getTokenInformation, {
                 onEnter: function (args) {
-                    var tokenInfoClass = args[1].toInt32();
+                  const tokenInfoClass = args[1].toInt32();
 
-                    // TokenPrivileges = 3
+                  // TokenPrivileges = 3
                     if (tokenInfoClass === 3) {
                         send({
                             type: 'info',
@@ -1062,8 +1067,8 @@ const antiDebugger = {
 
                 onLeave: function (retval) {
                     if (this.isPrivilegeQuery && retval.toInt32() !== 0) {
-                        var config = this.parent.parent.config;
-                        if (config.processInfo.hideDebugPrivileges) {
+                      const config = this.parent.parent.config;
+                      if (config.processInfo.hideDebugPrivileges) {
                             // Could modify privilege information here to hide debug privileges
                             send({
                                 type: 'bypass',
@@ -1075,7 +1080,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['GetTokenInformation'] = true;
+            this.hooksInstalled.GetTokenInformation = true;
         }
     },
 
@@ -1095,18 +1100,18 @@ const antiDebugger = {
 
     hookSingleStepDetection: function () {
         // Hook exception dispatching to catch single-step exceptions
-        var ntRaiseException = Module.findExportByName('ntdll.dll', 'NtRaiseException');
-        if (ntRaiseException) {
+      const ntRaiseException = Module.findExportByName('ntdll.dll', 'NtRaiseException');
+      if (ntRaiseException) {
             Interceptor.attach(ntRaiseException, {
                 onEnter: function (args) {
-                    var exceptionRecord = args[0];
-                    if (exceptionRecord && !exceptionRecord.isNull()) {
-                        var exceptionCode = exceptionRecord.readU32();
+                  const exceptionRecord = args[0];
+                  if (exceptionRecord && !exceptionRecord.isNull()) {
+                      const exceptionCode = exceptionRecord.readU32();
 
-                        // EXCEPTION_SINGLE_STEP = 0x80000004
+                      // EXCEPTION_SINGLE_STEP = 0x80000004
                         if (exceptionCode === 0x80000004) {
-                            var config = this.parent.parent.config;
-                            if (
+                          const config = this.parent.parent.config;
+                          if (
                                 config.threadProtection.enabled &&
                                 config.threadProtection.protectSingleStep
                             ) {
@@ -1123,29 +1128,29 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtRaiseException'] = true;
+            this.hooksInstalled.NtRaiseException = true;
         }
     },
 
     hookTrapFlagManipulation: function () {
         // Monitor EFLAGS/RFLAGS manipulation
-        var ntSetContextThread = Module.findExportByName('ntdll.dll', 'NtSetContextThread');
-        if (ntSetContextThread) {
+      const ntSetContextThread = Module.findExportByName('ntdll.dll', 'NtSetContextThread');
+      if (ntSetContextThread) {
             Interceptor.attach(ntSetContextThread, {
                 onEnter: function (args) {
-                    var context = args[1];
-                    if (context && !context.isNull()) {
-                        var config = this.parent.parent.config;
-                        if (
+                  const context = args[1];
+                  if (context && !context.isNull()) {
+                      const config = this.parent.parent.config;
+                      if (
                             config.threadProtection.enabled &&
                             config.threadProtection.spoofTrapFlag
                         ) {
                             // Check for trap flag (bit 8 in EFLAGS/RFLAGS)
-                            var contextFlags = context.readU32();
-                            if (contextFlags & 0x10) {
+                          const contextFlags = context.readU32();
+                          if (contextFlags && 0x10) {
                                 // CONTEXT_CONTROL
-                                var eflags = context.add(0x44).readU32(); // EFLAGS offset in CONTEXT
-                                if (eflags & 0x100) {
+                              const eflags = context.add(0x44).readU32(); // EFLAGS offset in CONTEXT
+                                if (eflags && 0x100) {
                                     // Trap flag set
                                     context.add(0x44).writeU32(eflags & ~0x100); // Clear trap flag
                                     send({
@@ -1161,18 +1166,18 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtSetContextThread'] = true;
+            this.hooksInstalled.NtSetContextThread = true;
         }
     },
 
     hookDebuggerThreadDetection: function () {
         // Hook thread enumeration to hide debugger threads
-        var thread32First = Module.findExportByName('kernel32.dll', 'Thread32First');
-        if (thread32First) {
+      const thread32First = Module.findExportByName('kernel32.dll', 'Thread32First');
+      if (thread32First) {
             Interceptor.attach(thread32First, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0) {
-                        var threadEntry = this.context.rdx; // THREADENTRY32
+                      const threadEntry = this.context.rdx; // THREADENTRY32
                         if (threadEntry && !threadEntry.isNull()) {
                             // Could filter out threads that belong to debugger processes
                             send({
@@ -1185,7 +1190,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['Thread32First'] = true;
+            this.hooksInstalled.Thread32First = true;
         }
     },
 
@@ -1208,17 +1213,17 @@ const antiDebugger = {
     },
 
     hookVectoredExceptionHandlers: function () {
-        var addVectoredExceptionHandler = Module.findExportByName(
-            'kernel32.dll',
-            'AddVectoredExceptionHandler'
-        );
-        if (addVectoredExceptionHandler) {
+      const addVectoredExceptionHandler = Module.findExportByName(
+        'kernel32.dll',
+        'AddVectoredExceptionHandler'
+      );
+      if (addVectoredExceptionHandler) {
             Interceptor.attach(addVectoredExceptionHandler, {
                 onEnter: function (args) {
-                    var first = args[0].toInt32();
-                    var handler = args[1];
+                  const first = args[0].toInt32();
+                  const handler = args[1];
 
-                    send({
+                  send({
                         type: 'info',
                         target: 'AddVectoredExceptionHandler',
                         message: 'Vectored exception handler registered',
@@ -1226,8 +1231,8 @@ const antiDebugger = {
                         handler_address: handler.toString(),
                     });
 
-                    var config = this.parent.parent.config;
-                    if (config.exceptionHandling.bypassVectoredHandlers) {
+                  const config = this.parent.parent.config;
+                  if (config.exceptionHandling.bypassVectoredHandlers) {
                         // Could potentially hook or modify the handler
                         this.monitorHandler = true;
                     }
@@ -1245,47 +1250,47 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['AddVectoredExceptionHandler'] = true;
+            this.hooksInstalled.AddVectoredExceptionHandler = true;
         }
     },
 
     hookUnhandledExceptionFilters: function () {
-        var setUnhandledExceptionFilter = Module.findExportByName(
-            'kernel32.dll',
-            'SetUnhandledExceptionFilter'
-        );
-        if (setUnhandledExceptionFilter) {
+      const setUnhandledExceptionFilter = Module.findExportByName(
+        'kernel32.dll',
+        'SetUnhandledExceptionFilter'
+      );
+      if (setUnhandledExceptionFilter) {
             Interceptor.attach(setUnhandledExceptionFilter, {
                 onEnter: function (args) {
-                    var lpTopLevelExceptionFilter = args[0];
+                  const lpTopLevelExceptionFilter = args[0];
 
-                    send({
+                  send({
                         type: 'bypass',
                         target: 'anti_debugger',
                         action: 'unhandled_exception_filter_set',
                         filter_address: lpTopLevelExceptionFilter.toString(),
                     });
 
-                    var config = this.parent.parent.config;
-                    if (config.exceptionHandling.spoofUnhandledExceptions) {
+                  const config = this.parent.parent.config;
+                  if (config.exceptionHandling.spoofUnhandledExceptions) {
                         // Could replace with our own handler
                         this.spoofFilter = true;
                     }
                 },
             });
 
-            this.hooksInstalled['SetUnhandledExceptionFilter'] = true;
+            this.hooksInstalled.SetUnhandledExceptionFilter = true;
         }
     },
 
     hookDebugBreaks: function () {
         // Hook software breakpoint instruction (INT 3)
-        var debugBreak = Module.findExportByName('kernel32.dll', 'DebugBreak');
-        if (debugBreak) {
+      const debugBreak = Module.findExportByName('kernel32.dll', 'DebugBreak');
+      if (debugBreak) {
             Interceptor.replace(
                 debugBreak,
                 new NativeCallback(
-                    function () {
+                    () => {
                         send({
                             type: 'bypass',
                             target: 'DebugBreak',
@@ -1298,16 +1303,16 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['DebugBreak'] = true;
+            this.hooksInstalled.DebugBreak = true;
         }
 
         // Hook debug break for other processes
-        var debugBreakProcess = Module.findExportByName('kernel32.dll', 'DebugBreakProcess');
-        if (debugBreakProcess) {
+      const debugBreakProcess = Module.findExportByName('kernel32.dll', 'DebugBreakProcess');
+      if (debugBreakProcess) {
             Interceptor.replace(
                 debugBreakProcess,
                 new NativeCallback(
-                    function (process) {
+                    process => {
                         send({
                             type: 'bypass',
                             target: 'DebugBreakProcess',
@@ -1321,7 +1326,7 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['DebugBreakProcess'] = true;
+            this.hooksInstalled.DebugBreakProcess = true;
         }
     },
 
@@ -1344,10 +1349,10 @@ const antiDebugger = {
     },
 
     hookDebugObjectCreation: function () {
-        var ntCreateDebugObject = Module.findExportByName('ntdll.dll', 'NtCreateDebugObject');
-        if (ntCreateDebugObject) {
+      const ntCreateDebugObject = Module.findExportByName('ntdll.dll', 'NtCreateDebugObject');
+      if (ntCreateDebugObject) {
             Interceptor.attach(ntCreateDebugObject, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() === 0) {
                         // STATUS_SUCCESS
                         send({
@@ -1360,13 +1365,13 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtCreateDebugObject'] = true;
+            this.hooksInstalled.NtCreateDebugObject = true;
         }
 
-        var ntDebugActiveProcess = Module.findExportByName('ntdll.dll', 'NtDebugActiveProcess');
-        if (ntDebugActiveProcess) {
+      const ntDebugActiveProcess = Module.findExportByName('ntdll.dll', 'NtDebugActiveProcess');
+      if (ntDebugActiveProcess) {
             Interceptor.attach(ntDebugActiveProcess, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     send({
                         type: 'bypass',
                         target: 'anti_debugger',
@@ -1376,17 +1381,17 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['NtDebugActiveProcess'] = true;
+            this.hooksInstalled.NtDebugActiveProcess = true;
         }
     },
 
     hookDebugEventHandling: function () {
-        var waitForDebugEvent = Module.findExportByName('kernel32.dll', 'WaitForDebugEvent');
-        if (waitForDebugEvent) {
+      const waitForDebugEvent = Module.findExportByName('kernel32.dll', 'WaitForDebugEvent');
+      if (waitForDebugEvent) {
             Interceptor.replace(
                 waitForDebugEvent,
                 new NativeCallback(
-                    function (lpDebugEvent, dwMilliseconds) {
+                    (lpDebugEvent, dwMilliseconds) => {
                         send({
                             type: 'bypass',
                             target: 'anti_debugger',
@@ -1401,15 +1406,15 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['WaitForDebugEvent'] = true;
+            this.hooksInstalled.WaitForDebugEvent = true;
         }
 
-        var continueDebugEvent = Module.findExportByName('kernel32.dll', 'ContinueDebugEvent');
-        if (continueDebugEvent) {
+      const continueDebugEvent = Module.findExportByName('kernel32.dll', 'ContinueDebugEvent');
+      if (continueDebugEvent) {
             Interceptor.replace(
                 continueDebugEvent,
                 new NativeCallback(
-                    function (dwProcessId, dwThreadId, dwContinueStatus) {
+                    (dwProcessId, dwThreadId, dwContinueStatus) => {
                         send({
                             type: 'bypass',
                             target: 'anti_debugger',
@@ -1425,17 +1430,17 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['ContinueDebugEvent'] = true;
+            this.hooksInstalled.ContinueDebugEvent = true;
         }
     },
 
     hookProcessDebugging: function () {
-        var debugActiveProcess = Module.findExportByName('kernel32.dll', 'DebugActiveProcess');
-        if (debugActiveProcess) {
+      const debugActiveProcess = Module.findExportByName('kernel32.dll', 'DebugActiveProcess');
+      if (debugActiveProcess) {
             Interceptor.replace(
                 debugActiveProcess,
                 new NativeCallback(
-                    function (dwProcessId) {
+                    dwProcessId => {
                         send({
                             type: 'bypass',
                             target: 'anti_debugger',
@@ -1449,18 +1454,18 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['DebugActiveProcess'] = true;
+            this.hooksInstalled.DebugActiveProcess = true;
         }
 
-        var debugActiveProcessStop = Module.findExportByName(
-            'kernel32.dll',
-            'DebugActiveProcessStop'
-        );
-        if (debugActiveProcessStop) {
+      const debugActiveProcessStop = Module.findExportByName(
+        'kernel32.dll',
+        'DebugActiveProcessStop'
+      );
+      if (debugActiveProcessStop) {
             Interceptor.replace(
                 debugActiveProcessStop,
                 new NativeCallback(
-                    function (dwProcessId) {
+                    dwProcessId => {
                         send({
                             type: 'bypass',
                             target: 'anti_debugger',
@@ -1474,7 +1479,7 @@ const antiDebugger = {
                 )
             );
 
-            this.hooksInstalled['DebugActiveProcessStop'] = true;
+            this.hooksInstalled.DebugActiveProcessStop = true;
         }
     },
 
@@ -1497,22 +1502,22 @@ const antiDebugger = {
     },
 
     hookNamedPipes: function () {
-        var createNamedPipe = Module.findExportByName('kernel32.dll', 'CreateNamedPipeW');
-        if (createNamedPipe) {
+      const createNamedPipe = Module.findExportByName('kernel32.dll', 'CreateNamedPipeW');
+      if (createNamedPipe) {
             Interceptor.attach(createNamedPipe, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
-                        var pipeName = args[0].readUtf16String();
+                      const pipeName = args[0].readUtf16String();
 
-                        // Check for debugger-related pipe names
-                        var debuggerPipes = [
-                            '\\\\.\\\pipe\\dbg',
-                            '\\\\.\\\pipe\\debug',
-                            '\\\\.\\\pipe\\windbg',
-                        ];
+                      // Check for debugger-related pipe names
+                      const debuggerPipes = [
+                        '\\\\.\\pipe\\dbg',
+                        '\\\\.\\pipe\\debug',
+                        '\\\\.\\pipe\\windbg',
+                      ];
 
-                        if (
-                            debuggerPipes.some((name) =>
+                      if (
+                            debuggerPipes.some(name =>
                                 pipeName.toLowerCase().includes(name.toLowerCase())
                             )
                         ) {
@@ -1534,25 +1539,23 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['CreateNamedPipeW'] = true;
+            this.hooksInstalled.CreateNamedPipeW = true;
         }
     },
 
     hookSharedMemory: function () {
-        var createFileMapping = Module.findExportByName('kernel32.dll', 'CreateFileMappingW');
-        if (createFileMapping) {
+      const createFileMapping = Module.findExportByName('kernel32.dll', 'CreateFileMappingW');
+      if (createFileMapping) {
             Interceptor.attach(createFileMapping, {
                 onEnter: function (args) {
                     if (args[4] && !args[4].isNull()) {
-                        var mappingName = args[4].readUtf16String();
+                      const mappingName = args[4].readUtf16String();
 
-                        // Check for debugger-related mapping names
-                        var debuggerMappings = ['dbg_', 'debug_', 'windbg_'];
+                      // Check for debugger-related mapping names
+                      const debuggerMappings = ['dbg_', 'debug_', 'windbg_'];
 
-                        if (
-                            debuggerMappings.some((name) =>
-                                mappingName.toLowerCase().includes(name)
-                            )
+                      if (
+                            debuggerMappings.some(name => mappingName.toLowerCase().includes(name))
                         ) {
                             send({
                                 type: 'bypass',
@@ -1572,22 +1575,22 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['CreateFileMappingW'] = true;
+            this.hooksInstalled.CreateFileMappingW = true;
         }
     },
 
     hookDebuggerRegistry: function () {
-        var regOpenKeyEx = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
-        if (regOpenKeyEx) {
+      const regOpenKeyEx = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
+      if (regOpenKeyEx) {
             Interceptor.attach(regOpenKeyEx, {
                 onEnter: function (args) {
                     if (args[1] && !args[1].isNull()) {
-                        var keyName = args[1].readUtf16String();
+                      const keyName = args[1].readUtf16String();
 
-                        // Check for debugger-related registry keys
-                        var debuggerKeys = ['windbg', 'debugger', 'aedebug'];
+                      // Check for debugger-related registry keys
+                      const debuggerKeys = ['windbg', 'debugger', 'aedebug'];
 
-                        if (debuggerKeys.some((name) => keyName.toLowerCase().includes(name))) {
+                      if (debuggerKeys.some(name => keyName.toLowerCase().includes(name))) {
                             send({
                                 type: 'bypass',
                                 target: 'anti_debugger',
@@ -1606,7 +1609,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['RegOpenKeyExW'] = true;
+            this.hooksInstalled.RegOpenKeyExW = true;
         }
     },
 
@@ -1619,13 +1622,13 @@ const antiDebugger = {
         });
 
         // Hook memory allocation with PAGE_NOACCESS
-        var virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
-        if (virtualAlloc) {
+      const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
+      if (virtualAlloc) {
             Interceptor.attach(virtualAlloc, {
-                onEnter: function (args) {
-                    var protect = args[3].toInt32();
+                onEnter: args => {
+                  const protect = args[3].toInt32();
 
-                    // PAGE_NOACCESS = 0x01 (could be used for anti-debug)
+                  // PAGE_NOACCESS = 0x01 (could be used for anti-debug)
                     if (protect === 0x01) {
                         send({
                             type: 'info',
@@ -1637,17 +1640,17 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['VirtualAlloc_Protection'] = true;
+            this.hooksInstalled.VirtualAlloc_Protection = true;
         }
 
         // Hook memory protection changes
-        var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
-        if (virtualProtect) {
+      const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
+      if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
-                onEnter: function (args) {
-                    var newProtect = args[2].toInt32();
+                onEnter: args => {
+                  const newProtect = args[2].toInt32();
 
-                    // Detect potential anti-debug memory tricks
+                  // Detect potential anti-debug memory tricks
                     if (newProtect === 0x01) {
                         // PAGE_NOACCESS
                         send({
@@ -1660,7 +1663,7 @@ const antiDebugger = {
                 },
             });
 
-            this.hooksInstalled['VirtualProtect_Protection'] = true;
+            this.hooksInstalled.VirtualProtect_Protection = true;
         }
     },
 
@@ -1692,11 +1695,11 @@ const antiDebugger = {
 
         // Hook CPUID instruction results for hypervisor detection
         try {
-            var ntQuerySystemInformation = Module.findExportByName(
-                'ntdll.dll',
-                'NtQuerySystemInformation'
-            );
-            if (ntQuerySystemInformation) {
+          const ntQuerySystemInformation = Module.findExportByName(
+            'ntdll.dll',
+            'NtQuerySystemInformation'
+          );
+          if (ntQuerySystemInformation) {
                 Interceptor.attach(ntQuerySystemInformation, {
                     onEnter: function (args) {
                         this.infoClass = args[0].toInt32();
@@ -1711,7 +1714,7 @@ const antiDebugger = {
                             this.infoClass === 0x9d
                         ) {
                             Memory.protect(this.systemInfo, this.systemInfoLength, 'rw-');
-                            for (var i = 0; i < this.systemInfoLength; i++) {
+                            for (let i = 0; i < this.systemInfoLength; i++) {
                                 this.systemInfo.add(i).writeU8(0);
                             }
                             send({
@@ -1723,46 +1726,46 @@ const antiDebugger = {
                         }
                     },
                 });
-                this.hooksInstalled['NtQuerySystemInformation_Hypervisor'] = true;
+                this.hooksInstalled.NtQuerySystemInformation_Hypervisor = true;
             }
 
             // Hook VirtualBox/VMware specific detection APIs
-            var virtualBoxApis = [
-                { module: 'kernel32.dll', func: 'LoadLibraryA' },
-                { module: 'kernel32.dll', func: 'LoadLibraryW' },
-                { module: 'kernel32.dll', func: 'GetModuleHandleA' },
-                { module: 'kernel32.dll', func: 'GetModuleHandleW' },
-            ];
+          const virtualBoxApis = [
+            {module: 'kernel32.dll', func: 'LoadLibraryA'},
+            {module: 'kernel32.dll', func: 'LoadLibraryW'},
+            {module: 'kernel32.dll', func: 'GetModuleHandleA'},
+            {module: 'kernel32.dll', func: 'GetModuleHandleW'},
+          ];
 
-            for (var api of virtualBoxApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of virtualBoxApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     Interceptor.attach(addr, {
                         onEnter: function (args) {
                             if (args[0] && !args[0].isNull()) {
-                                var libraryName = '';
-                                try {
+                              let libraryName = '';
+                              try {
                                     libraryName =
                                         args[0].readUtf8String() || args[0].readUtf16String() || '';
                                 } catch (error) {
                                     send({
                                         type: 'error',
                                         target: 'VM_API_hook',
-                                        message: 'Library name read failed: ' + error.message,
+                                        message: `Library name read failed: ${error.message}`,
                                     });
                                     return;
                                 }
 
-                                var vmLibraries = [
-                                    'vboxhook',
-                                    'sbiedll',
-                                    'dbghelp',
-                                    'vmware',
-                                    'vmmemctl',
-                                    'VBoxService',
-                                ];
+                              const vmLibraries = [
+                                'vboxhook',
+                                'sbiedll',
+                                'dbghelp',
+                                'vmware',
+                                'vmmemctl',
+                                'VBoxService',
+                              ];
 
-                                for (var vmLib of vmLibraries) {
+                              for (let vmLib of vmLibraries) {
                                     if (libraryName.toLowerCase().includes(vmLib.toLowerCase())) {
                                         send({
                                             type: 'bypass',
@@ -1783,13 +1786,13 @@ const antiDebugger = {
                             }
                         },
                     });
-                    this.hooksInstalled[api.func + '_VM'] = true;
+                    this.hooksInstalled[`${api.func}_VM`] = true;
                 }
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'Hypervisor detection bypass failed: ' + e.message,
+                message: `Hypervisor detection bypass failed: ${e.message}`,
             });
         }
     },
@@ -1804,22 +1807,22 @@ const antiDebugger = {
 
         try {
             // Hook ETW event writing APIs
-            var etwApis = [
-                { module: 'ntdll.dll', func: 'EtwEventWrite' },
-                { module: 'ntdll.dll', func: 'EtwEventWriteTransfer' },
-                { module: 'ntdll.dll', func: 'EtwEventWriteString' },
-                { module: 'ntdll.dll', func: 'EtwEventWriteEx' },
-                { module: 'kernelbase.dll', func: 'EventWrite' },
-                { module: 'kernelbase.dll', func: 'EventWriteTransfer' },
-            ];
+          const etwApis = [
+            {module: 'ntdll.dll', func: 'EtwEventWrite'},
+            {module: 'ntdll.dll', func: 'EtwEventWriteTransfer'},
+            {module: 'ntdll.dll', func: 'EtwEventWriteString'},
+            {module: 'ntdll.dll', func: 'EtwEventWriteEx'},
+            {module: 'kernelbase.dll', func: 'EventWrite'},
+            {module: 'kernelbase.dll', func: 'EventWriteTransfer'},
+          ];
 
-            for (var api of etwApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of etwApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     Interceptor.replace(
                         addr,
                         new NativeCallback(
-                            function () {
+                            () => {
                                 send({
                                     type: 'bypass',
                                     target: api.func,
@@ -1838,12 +1841,12 @@ const antiDebugger = {
             }
 
             // Hook ETW trace registration
-            var etwRegister = Module.findExportByName('ntdll.dll', 'EtwRegister');
-            if (etwRegister) {
+          const etwRegister = Module.findExportByName('ntdll.dll', 'EtwRegister');
+          if (etwRegister) {
                 Interceptor.replace(
                     etwRegister,
                     new NativeCallback(
-                        function (_providerId, _enableCallback, _callbackContext, regHandle) {
+                        (_providerId, _enableCallback, _callbackContext, regHandle) => {
                             send({
                                 type: 'bypass',
                                 target: 'EtwRegister',
@@ -1860,12 +1863,12 @@ const antiDebugger = {
                         ['pointer', 'pointer', 'pointer', 'pointer']
                     )
                 );
-                this.hooksInstalled['EtwRegister'] = true;
+                this.hooksInstalled.EtwRegister = true;
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'ETW manipulation bypass failed: ' + e.message,
+                message: `ETW manipulation bypass failed: ${e.message}`,
             });
         }
     },
@@ -1880,28 +1883,28 @@ const antiDebugger = {
 
         try {
             // Hook WMI COM interfaces used for process enumeration and debugging detection
-            var oleApis = [
-                { module: 'ole32.dll', func: 'CoCreateInstance' },
-                { module: 'ole32.dll', func: 'CoGetClassObject' },
-                { module: 'oleaut32.dll', func: 'SysAllocString' },
-            ];
+          const oleApis = [
+            {module: 'ole32.dll', func: 'CoCreateInstance'},
+            {module: 'ole32.dll', func: 'CoGetClassObject'},
+            {module: 'oleaut32.dll', func: 'SysAllocString'},
+          ];
 
-            for (var api of oleApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of oleApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     Interceptor.attach(addr, {
                         onEnter: function (args) {
                             // Monitor WMI class instantiation
                             if (args[0] && !args[0].isNull() && api.func === 'CoCreateInstance') {
-                                var clsid = args[0];
-                                // WbemLocator CLSID: {4590f811-1d3a-11d0-891f-00aa004b2e24}
-                                var wbemBytes = clsid.readByteArray(16);
-                                if (wbemBytes) {
-                                    var wbemPattern = [
-                                        0x11, 0xf8, 0x90, 0x45, 0x3a, 0x1d, 0xd0, 0x11,
-                                    ];
-                                    var isWbem = true;
-                                    for (var i = 0; i < 8 && i < wbemBytes.byteLength; i++) {
+                              const clsid = args[0];
+                              // WbemLocator CLSID: {4590f811-1d3a-11d0-891f-00aa004b2e24}
+                              const wbemBytes = clsid.readByteArray(16);
+                              if (wbemBytes) {
+                                  const wbemPattern = [
+                                    0x11, 0xf8, 0x90, 0x45, 0x3a, 0x1d, 0xd0, 0x11,
+                                  ];
+                                  let isWbem = true;
+                                  for (let i = 0; i < 8 && i < wbemBytes.byteLength; i++) {
                                         if (wbemBytes[i] !== wbemPattern[i]) {
                                             isWbem = false;
                                             break;
@@ -1926,24 +1929,24 @@ const antiDebugger = {
                             }
                         },
                     });
-                    this.hooksInstalled[api.func + '_WMI'] = true;
+                    this.hooksInstalled[`${api.func}_WMI`] = true;
                 }
             }
 
             // Hook WMI service connections
-            var connectServer = Module.findExportByName(
-                'wbemprox.dll',
-                '?ConnectServer@WbemLocator@@UAGXPBG0PAPAXPAX@Z'
-            );
-            if (!connectServer) {
+          const connectServer = Module.findExportByName(
+            'wbemprox.dll',
+            '?ConnectServer@WbemLocator@@UAGXPBG0PAPAXPAX@Z'
+          );
+          if (!connectServer) {
                 // Try alternative WMI connection methods
-                var wmiApis = Process.enumerateModules().filter((m) =>
-                    m.name.toLowerCase().includes('wbem')
-                );
-                for (var wmiMod of wmiApis) {
+              const wmiApis = Process.enumerateModules().filter(m =>
+                m.name.toLowerCase().includes('wbem')
+              );
+              for (let wmiMod of wmiApis) {
                     try {
-                        var exports = wmiMod.enumerateExports();
-                        for (var exp of exports) {
+                      const exports = wmiMod.enumerateExports();
+                      for (let exp of exports) {
                             if (exp.name.toLowerCase().includes('connect')) {
                                 Interceptor.attach(exp.address, {
                                     onEnter: function () {
@@ -1968,16 +1971,15 @@ const antiDebugger = {
                         send({
                             type: 'debug',
                             target: 'heap_flag_check',
-                            message: 'Heap flag analysis failed: ' + error.message,
+                            message: `Heap flag analysis failed: ${error.message}`,
                         });
-                        continue;
                     }
                 }
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'WMI bypass failed: ' + e.message,
+                message: `WMI bypass failed: ${e.message}`,
             });
         }
     },
@@ -1992,21 +1994,21 @@ const antiDebugger = {
 
         try {
             // Hook AMSI scanning functions
-            var amsiApis = [
-                { module: 'amsi.dll', func: 'AmsiScanBuffer' },
-                { module: 'amsi.dll', func: 'AmsiScanString' },
-                { module: 'amsi.dll', func: 'AmsiOpenSession' },
-                { module: 'amsi.dll', func: 'AmsiInitialize' },
-            ];
+          const amsiApis = [
+            {module: 'amsi.dll', func: 'AmsiScanBuffer'},
+            {module: 'amsi.dll', func: 'AmsiScanString'},
+            {module: 'amsi.dll', func: 'AmsiOpenSession'},
+            {module: 'amsi.dll', func: 'AmsiInitialize'},
+          ];
 
-            for (var api of amsiApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of amsiApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     if (api.func === 'AmsiScanBuffer' || api.func === 'AmsiScanString') {
                         Interceptor.replace(
                             addr,
                             new NativeCallback(
-                                function () {
+                                () => {
                                     send({
                                         type: 'bypass',
                                         target: api.func,
@@ -2024,7 +2026,7 @@ const antiDebugger = {
                         Interceptor.replace(
                             addr,
                             new NativeCallback(
-                                function () {
+                                () => {
                                     send({
                                         type: 'bypass',
                                         target: api.func,
@@ -2045,10 +2047,10 @@ const antiDebugger = {
 
             // Patch AMSI.dll in memory to disable it
             try {
-                var amsiModule = Process.findModuleByName('amsi.dll');
-                if (amsiModule) {
-                    var amsiScanBuffer = Module.findExportByName('amsi.dll', 'AmsiScanBuffer');
-                    if (amsiScanBuffer) {
+              const amsiModule = Process.findModuleByName('amsi.dll');
+              if (amsiModule) {
+                  const amsiScanBuffer = Module.findExportByName('amsi.dll', 'AmsiScanBuffer');
+                  if (amsiScanBuffer) {
                         // Patch the function to return AMSI_RESULT_CLEAN immediately
                         Memory.protect(amsiScanBuffer, 16, 'rwx');
                         // MOV EAX, 0; RET (return AMSI_RESULT_CLEAN)
@@ -2066,13 +2068,13 @@ const antiDebugger = {
                 send({
                     type: 'warning',
                     target: 'AMSI_patching',
-                    message: 'AMSI patching failed, hooks should still work: ' + error.message,
+                    message: `AMSI patching failed, hooks should still work: ${error.message}`,
                 });
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'AMSI bypass failed: ' + e.message,
+                message: `AMSI bypass failed: ${e.message}`,
             });
         }
     },
@@ -2087,19 +2089,19 @@ const antiDebugger = {
 
         try {
             // Hook CET-related system calls
-            var cetApis = [
-                { module: 'ntdll.dll', func: 'NtSetInformationProcess' },
-                { module: 'kernel32.dll', func: 'SetProcessMitigationPolicy' },
-            ];
+          const cetApis = [
+            {module: 'ntdll.dll', func: 'NtSetInformationProcess'},
+            {module: 'kernel32.dll', func: 'SetProcessMitigationPolicy'},
+          ];
 
-            for (var api of cetApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of cetApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     Interceptor.attach(addr, {
                         onEnter: function (args) {
                             if (api.func === 'SetProcessMitigationPolicy') {
-                                var mitigationPolicy = args[0].toInt32();
-                                // ProcessUserShadowStackPolicy = 13
+                              const mitigationPolicy = args[0].toInt32();
+                              // ProcessUserShadowStackPolicy = 13
                                 if (mitigationPolicy === 13) {
                                     send({
                                         type: 'bypass',
@@ -2110,8 +2112,8 @@ const antiDebugger = {
                                     this.blockCET = true;
                                 }
                             } else if (api.func === 'NtSetInformationProcess') {
-                                var infoClass = args[1].toInt32();
-                                // ProcessUserCetAvailableOptOut = 0x7C
+                              const infoClass = args[1].toInt32();
+                              // ProcessUserCetAvailableOptOut = 0x7C
                                 if (infoClass === 0x7c) {
                                     send({
                                         type: 'bypass',
@@ -2130,32 +2132,32 @@ const antiDebugger = {
                             }
                         },
                     });
-                    this.hooksInstalled[api.func + '_CET'] = true;
+                    this.hooksInstalled[`${api.func}_CET`] = true;
                 }
             }
 
             // Hook Intel CET instruction interception
             try {
-                var modules = Process.enumerateModules();
-                for (var mod of modules) {
+              const modules = Process.enumerateModules();
+              for (let mod of modules) {
                     if (mod.name.toLowerCase().includes('.exe')) {
                         // Look for ENDBR32/ENDBR64 instructions (CET markers)
-                        var endbr64Pattern = 'f3 0f 1e fa'; // ENDBR64
-                        var endbr32Pattern = 'f3 0f 1e fb'; // ENDBR32
+                      const endbr64Pattern = 'f3 0f 1e fa'; // ENDBR64
+                      const endbr32Pattern = 'f3 0f 1e fb'; // ENDBR32
 
                         try {
-                            var matches64 = Memory.scanSync(
-                                mod.base,
-                                Math.min(mod.size, 0x100000),
-                                endbr64Pattern
-                            );
-                            var matches32 = Memory.scanSync(
-                                mod.base,
-                                Math.min(mod.size, 0x100000),
-                                endbr32Pattern
-                            );
+                          const matches64 = Memory.scanSync(
+                            mod.base,
+                            Math.min(mod.size, 0x100000),
+                            endbr64Pattern
+                          );
+                          const matches32 = Memory.scanSync(
+                            mod.base,
+                            Math.min(mod.size, 0x100000),
+                            endbr32Pattern
+                          );
 
-                            if (matches64.length > 0 || matches32.length > 0) {
+                          if (matches64.length > 0 || matches32.length > 0) {
                                 send({
                                     type: 'info',
                                     target: 'CET_Detection',
@@ -2169,7 +2171,7 @@ const antiDebugger = {
                             send({
                                 type: 'debug',
                                 target: 'CET_analysis',
-                                message: 'CET instruction analysis failed: ' + error.message,
+                                message: `CET instruction analysis failed: ${error.message}`,
                             });
                             continue;
                         }
@@ -2180,13 +2182,13 @@ const antiDebugger = {
                 send({
                     type: 'warning',
                     target: 'CET_scan',
-                    message: 'CET instruction scanning failed: ' + error.message,
+                    message: `CET instruction scanning failed: ${error.message}`,
                 });
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'CET protections bypass failed: ' + e.message,
+                message: `CET protections bypass failed: ${e.message}`,
             });
         }
     },
@@ -2201,11 +2203,11 @@ const antiDebugger = {
 
         try {
             // Hook HVCI-related system information queries
-            var ntQuerySystemInfo = Module.findExportByName(
-                'ntdll.dll',
-                'NtQuerySystemInformation'
-            );
-            if (ntQuerySystemInfo) {
+          const ntQuerySystemInfo = Module.findExportByName(
+            'ntdll.dll',
+            'NtQuerySystemInformation'
+          );
+          if (ntQuerySystemInfo) {
                 Interceptor.attach(ntQuerySystemInfo, {
                     onEnter: function (args) {
                         this.infoClass = args[0].toInt32();
@@ -2245,20 +2247,20 @@ const antiDebugger = {
                         }
                     },
                 });
-                this.hooksInstalled['NtQuerySystemInformation_HVCI'] = true;
+                this.hooksInstalled.NtQuerySystemInformation_HVCI = true;
             }
 
             // Hook kernel debugging APIs
-            var kernelApis = [
-                { module: 'ntdll.dll', func: 'NtSystemDebugControl' },
-                { module: 'ntdll.dll', func: 'NtQuerySystemDebugInformation' },
-            ];
+          const kernelApis = [
+            {module: 'ntdll.dll', func: 'NtSystemDebugControl'},
+            {module: 'ntdll.dll', func: 'NtQuerySystemDebugInformation'},
+          ];
 
-            for (var api of kernelApis) {
-                var addr = Module.findExportByName(api.module, api.func);
-                if (addr) {
+          for (let api of kernelApis) {
+              const addr = Module.findExportByName(api.module, api.func);
+              if (addr) {
                     Interceptor.attach(addr, {
-                        onLeave: function (retval) {
+                        onLeave: retval => {
                             send({
                                 type: 'bypass',
                                 target: api.func,
@@ -2274,7 +2276,7 @@ const antiDebugger = {
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'HVCI checks bypass failed: ' + e.message,
+                message: `HVCI checks bypass failed: ${e.message}`,
             });
         }
     },
@@ -2289,18 +2291,18 @@ const antiDebugger = {
 
         try {
             // Hook system integrity check functions
-            var integrityApis = [
-                { module: 'ntdll.dll', func: 'NtQuerySystemInformation' },
-                { module: 'ntdll.dll', func: 'NtSetSystemInformation' },
-            ];
+          const integrityApis = [
+            {module: 'ntdll.dll', func: 'NtQuerySystemInformation'},
+            {module: 'ntdll.dll', func: 'NtSetSystemInformation'},
+          ];
 
-            var processedInfoClasses = new Set();
+          const processedInfoClasses = new Set();
 
-            var ntQuerySystemInfo = Module.findExportByName(
-                'ntdll.dll',
-                'NtQuerySystemInformation'
-            );
-            if (ntQuerySystemInfo) {
+          const ntQuerySystemInfo = Module.findExportByName(
+            'ntdll.dll',
+            'NtQuerySystemInformation'
+          );
+          if (ntQuerySystemInfo) {
                 Interceptor.attach(ntQuerySystemInfo, {
                     onEnter: function (args) {
                         this.infoClass = args[0].toInt32();
@@ -2312,18 +2314,18 @@ const antiDebugger = {
                             this.systemInfo &&
                             !this.systemInfo.isNull()
                         ) {
-                            var infoClass = this.infoClass;
+                          const infoClass = this.infoClass;
 
-                            // Monitor for PatchGuard-related information classes
-                            var patchGuardClasses = [
-                                0x4f, // SystemModuleInformation
-                                0x50, // SystemModuleInformationEx
-                                0x51, // SystemSessionCreate
-                                0x5c, // SystemWatchdogTimerHandler
-                                0x5d, // SystemWatchdogTimerInformation
-                            ];
+                          // Monitor for PatchGuard-related information classes
+                          const patchGuardClasses = [
+                            0x4f, // SystemModuleInformation
+                            0x50, // SystemModuleInformationEx
+                            0x51, // SystemSessionCreate
+                            0x5c, // SystemWatchdogTimerHandler
+                            0x5d, // SystemWatchdogTimerInformation
+                          ];
 
-                            if (
+                          if (
                                 patchGuardClasses.includes(infoClass) &&
                                 !processedInfoClasses.has(infoClass)
                             ) {
@@ -2339,7 +2341,7 @@ const antiDebugger = {
                         }
                     },
                 });
-                this.hooksInstalled['NtQuerySystemInformation_PatchGuard'] = true;
+                this.hooksInstalled.NtQuerySystemInformation_PatchGuard = true;
             }
 
             // Hook remaining integrity APIs
@@ -2349,7 +2351,7 @@ const antiDebugger = {
                     var addr = Module.findExportByName(api.module, api.func);
                     if (addr) {
                         Interceptor.attach(addr, {
-                            onEnter: function () {
+                            onEnter: () => {
                                 send({
                                     type: 'bypass',
                                     target: 'integrity_check',
@@ -2358,23 +2360,23 @@ const antiDebugger = {
                                 });
                             },
                         });
-                        this.hooksInstalled[api.func + '_integrity'] = true;
+                        this.hooksInstalled[`${api.func}_integrity`] = true;
                     }
                 }
             }
 
             // Hook timer-related functions used by PatchGuard
-            var timerApis = [
-                { module: 'ntdll.dll', func: 'NtCreateTimer' },
-                { module: 'ntdll.dll', func: 'NtSetTimer' },
-                { module: 'ntdll.dll', func: 'NtQueryTimer' },
-            ];
+          const timerApis = [
+            {module: 'ntdll.dll', func: 'NtCreateTimer'},
+            {module: 'ntdll.dll', func: 'NtSetTimer'},
+            {module: 'ntdll.dll', func: 'NtQueryTimer'},
+          ];
 
-            for (var api of timerApis) {
+          for (var api of timerApis) {
                 var addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function () {
+                        onEnter: () => {
                             send({
                                 type: 'info',
                                 target: api.func,
@@ -2382,22 +2384,22 @@ const antiDebugger = {
                             });
                         },
                     });
-                    this.hooksInstalled[api.func + '_PG'] = true;
+                    this.hooksInstalled[`${api.func}_PG`] = true;
                 }
             }
 
             // Hook interrupt-related functions
-            var interruptApis = [
-                { module: 'hal.dll', func: 'HalRequestSoftwareInterrupt' },
-                { module: 'ntoskrnl.exe', func: 'KeInsertQueueDpc' },
-            ];
+          const interruptApis = [
+            {module: 'hal.dll', func: 'HalRequestSoftwareInterrupt'},
+            {module: 'ntoskrnl.exe', func: 'KeInsertQueueDpc'},
+          ];
 
-            for (var api of interruptApis) {
+          for (var api of interruptApis) {
                 try {
                     var addr = Module.findExportByName(api.module, api.func);
                     if (addr) {
                         Interceptor.attach(addr, {
-                            onEnter: function () {
+                            onEnter: () => {
                                 send({
                                     type: 'bypass',
                                     target: api.func,
@@ -2406,21 +2408,20 @@ const antiDebugger = {
                                 });
                             },
                         });
-                        this.hooksInstalled[api.func + '_PG'] = true;
+                        this.hooksInstalled[`${api.func}_PG`] = true;
                     }
                 } catch (error) {
                     send({
                         type: 'debug',
                         target: 'PG_hook',
-                        message: 'Kernel module not accessible from user mode: ' + error.message,
+                        message: `Kernel module not accessible from user mode: ${error.message}`,
                     });
-                    continue;
                 }
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'PatchGuard evasion setup failed: ' + e.message,
+                message: `PatchGuard evasion setup failed: ${e.message}`,
             });
         }
     },
@@ -2435,15 +2436,15 @@ const antiDebugger = {
 
         try {
             // Hook Windows ML (WinML) and related AI/ML APIs
-            var mlApis = [
-                { module: 'winml.dll', func: 'WinMLCreateRuntime' },
-                { module: 'winml.dll', func: 'WinMLLoadModel' },
-                { module: 'onnxruntime.dll', func: 'OrtCreateSession' },
-                { module: 'onnxruntime.dll', func: 'OrtRun' },
-                { module: 'directml.dll', func: 'DMLCreateDevice' },
-            ];
+          const mlApis = [
+            {module: 'winml.dll', func: 'WinMLCreateRuntime'},
+            {module: 'winml.dll', func: 'WinMLLoadModel'},
+            {module: 'onnxruntime.dll', func: 'OrtCreateSession'},
+            {module: 'onnxruntime.dll', func: 'OrtRun'},
+            {module: 'directml.dll', func: 'DMLCreateDevice'},
+          ];
 
-            for (var api of mlApis) {
+          for (var api of mlApis) {
                 var addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
@@ -2468,26 +2469,26 @@ const antiDebugger = {
             }
 
             // Hook behavioral pattern analysis APIs
-            var behaviorApis = [
-                { module: 'user32.dll', func: 'GetCursorPos' },
-                { module: 'user32.dll', func: 'GetKeyState' },
-                { module: 'kernel32.dll', func: 'GetTickCount' },
-                { module: 'kernel32.dll', func: 'GetTickCount64' },
-            ];
+          const behaviorApis = [
+            {module: 'user32.dll', func: 'GetCursorPos'},
+            {module: 'user32.dll', func: 'GetKeyState'},
+            {module: 'kernel32.dll', func: 'GetTickCount'},
+            {module: 'kernel32.dll', func: 'GetTickCount64'},
+          ];
 
-            var behaviorCounter = 0;
-            var baseTime = Date.now();
-            var modifiedCursorPos = { x: 100, y: 100 };
+          let behaviorCounter = 0;
+          const baseTime = Date.now();
+          const modifiedCursorPos = {x: 100, y: 100};
 
-            for (var api of behaviorApis) {
+          for (var api of behaviorApis) {
                 var addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     if (api.func === 'GetCursorPos') {
                         Interceptor.attach(addr, {
                             onLeave: function (retval) {
                                 if (retval.toInt32() !== 0) {
-                                    var point = this.context.rcx;
-                                    if (point && !point.isNull()) {
+                                  const point = this.context.rcx;
+                                  if (point && !point.isNull()) {
                                         modifiedCursorPos.x += Math.floor(
                                             (Math.random() - 0.5) * 10
                                         );
@@ -2517,7 +2518,7 @@ const antiDebugger = {
                         Interceptor.replace(
                             addr,
                             new NativeCallback(
-                                function (vKey) {
+                                vKey => {
                                     if (behaviorCounter % 100 === 0) {
                                         send({
                                             type: 'bypass',
@@ -2536,10 +2537,10 @@ const antiDebugger = {
                         Interceptor.replace(
                             addr,
                             new NativeCallback(
-                                function () {
-                                    var elapsed = Date.now() - baseTime;
-                                    var modifiedTickCount = (baseTime + elapsed * 0.8) & 0xffffffff;
-                                    send({
+                                () => {
+                                  const elapsed = Date.now() - baseTime;
+                                  const modifiedTickCount = (baseTime + elapsed * 0.8) & 0xffffffff;
+                                  send({
                                         type: 'bypass',
                                         target: 'GetTickCount',
                                         action: 'timing_manipulation_ml',
@@ -2555,10 +2556,10 @@ const antiDebugger = {
                         Interceptor.replace(
                             addr,
                             new NativeCallback(
-                                function () {
-                                    var elapsed = Date.now() - baseTime;
-                                    var modifiedTickCount64 = baseTime + elapsed * 0.8;
-                                    send({
+                                () => {
+                                  const elapsed = Date.now() - baseTime;
+                                  const modifiedTickCount64 = baseTime + elapsed * 0.8;
+                                  send({
                                         type: 'bypass',
                                         target: 'GetTickCount64',
                                         action: 'timing_manipulation_ml',
@@ -2571,25 +2572,25 @@ const antiDebugger = {
                             )
                         );
                     }
-                    this.hooksInstalled[api.func + '_ML'] = true;
+                    this.hooksInstalled[`${api.func}_ML`] = true;
                 }
             }
 
             // Hook telemetry and analytics that feed ML models
-            var telemetryApis = [
-                { module: 'kernel32.dll', func: 'CreateEventW' },
-                { module: 'advapi32.dll', func: 'RegSetValueExW' },
-                { module: 'wininet.dll', func: 'InternetOpenW' },
-            ];
+          const telemetryApis = [
+            {module: 'kernel32.dll', func: 'CreateEventW'},
+            {module: 'advapi32.dll', func: 'RegSetValueExW'},
+            {module: 'wininet.dll', func: 'InternetOpenW'},
+          ];
 
-            for (var api of telemetryApis) {
+          for (var api of telemetryApis) {
                 var addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
                         onEnter: function (args) {
                             if (api.func === 'CreateEventW' && args[2] && !args[2].isNull()) {
-                                var eventName = args[2].readUtf16String();
-                                if (
+                              const eventName = args[2].readUtf16String();
+                              if (
                                     eventName &&
                                     (eventName.includes('Telemetry') ||
                                         eventName.includes('Analytics'))
@@ -2611,13 +2612,13 @@ const antiDebugger = {
                             }
                         },
                     });
-                    this.hooksInstalled[api.func + '_Telemetry'] = true;
+                    this.hooksInstalled[`${api.func}_Telemetry`] = true;
                 }
             }
         } catch (e) {
             send({
                 type: 'warning',
-                message: 'ML behavior analysis evasion failed: ' + e.message,
+                message: `ML behavior analysis evasion failed: ${e.message}`,
             });
         }
     },
@@ -2660,8 +2661,8 @@ const antiDebugger = {
     // Periodic statistics reporting
     reportPeriodicStatistics: function () {
         setInterval(() => {
-            var totalBypasses = 0;
-            for (var key in this.BYPASS_STATS) {
+          let totalBypasses = 0;
+          for (let key in this.BYPASS_STATS) {
                 totalBypasses += this.BYPASS_STATS[key];
             }
 
@@ -2687,19 +2688,19 @@ const antiDebugger = {
                 separator: '=======================================',
             });
 
-            var categories = {
-                'Core Detection': 0,
-                'Hardware Breakpoints': 0,
-                'Timing Protection': 0,
-                'Process Information': 0,
-                'Thread Context': 0,
-                'Exception Handling': 0,
-                'Advanced Detection': 0,
-                Communication: 0,
-                'Memory Protection': 0,
-            };
+          const categories = {
+            'Core Detection': 0,
+            'Hardware Breakpoints': 0,
+            'Timing Protection': 0,
+            'Process Information': 0,
+            'Thread Context': 0,
+            'Exception Handling': 0,
+            'Advanced Detection': 0,
+            Communication: 0,
+            'Memory Protection': 0,
+          };
 
-            for (var hook in this.hooksInstalled) {
+          for (let hook in this.hooksInstalled) {
                 if (
                     hook.includes('IsDebugger') ||
                     hook.includes('Remote') ||
@@ -2742,7 +2743,7 @@ const antiDebugger = {
                     hook.includes('Mapping') ||
                     hook.includes('Reg')
                 ) {
-                    categories['Communication']++;
+                    categories.Communication++;
                 } else if (hook.includes('Virtual') || hook.includes('Protection')) {
                     categories['Memory Protection']++;
                 }
@@ -2755,10 +2756,10 @@ const antiDebugger = {
                 total_hooks: Object.keys(this.hooksInstalled).length,
             });
 
-            var config = this.config;
-            var activeFeatures = [];
+          const config = this.config;
+          const activeFeatures = [];
 
-            if (config.hardwareBreakpoints.enabled) {
+          if (config.hardwareBreakpoints.enabled) {
                 activeFeatures.push('Hardware Breakpoint Bypass');
             }
             if (config.timingProtection.enabled) {
@@ -2846,5 +2847,5 @@ try {
         stack: e.stack,
         timestamp: Date.now(),
     });
-    send('[-] Anti-debugging bypass initialization failed: ' + e.message);
+    send(`[-] Anti-debugging bypass initialization failed: ${e.message}`);
 }

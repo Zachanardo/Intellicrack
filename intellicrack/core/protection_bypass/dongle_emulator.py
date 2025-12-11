@@ -1636,6 +1636,253 @@ class HardwareDongleEmulator:
             self.wibukey_dongles.clear()
         self.logger.info("Cleared all dongle emulation hooks and virtual devices")
 
+    def get_dongle_config(self, dongle_type: str) -> dict[str, Any] | None:
+        """Get configuration for a specific dongle type.
+
+        Args:
+            dongle_type: Type of dongle to get configuration for.
+                         Valid types: 'hasp', 'sentinel', 'wibukey', 'codemeter',
+                         'safenet', 'superpro', 'rockey', 'dinkey'
+
+        Returns:
+            Dictionary containing dongle configuration parameters, or None if not found.
+
+        """
+        dongle_type_lower = dongle_type.lower().strip()
+
+        config_templates: dict[str, dict[str, Any]] = {
+            "hasp": {
+                "type": "HASP",
+                "vendor_id": 0x0529,
+                "product_id": 0x0001,
+                "memory_size": 8192,
+                "algorithms": ["AES", "DES", "DES3", "RSA"],
+                "features": {
+                    "encryption": True,
+                    "decryption": True,
+                    "memory_read": True,
+                    "memory_write": True,
+                    "rtc": True,
+                    "feature_licensing": True,
+                },
+                "api_functions": [
+                    "hasp_login",
+                    "hasp_logout",
+                    "hasp_encrypt",
+                    "hasp_decrypt",
+                    "hasp_read",
+                    "hasp_write",
+                    "hasp_get_size",
+                    "hasp_get_rtc",
+                    "hasp_legacy_get_info",
+                ],
+                "driver_names": ["aksusbd.sys", "hardlock.sys", "hasp_net.dll"],
+                "emulation_ready": True,
+            },
+            "sentinel": {
+                "type": "Sentinel",
+                "vendor_id": 0x0529,
+                "product_id": 0x0001,
+                "memory_size": 4096,
+                "algorithms": ["AES", "RSA", "DES", "HMAC"],
+                "features": {
+                    "query": True,
+                    "read": True,
+                    "write": True,
+                    "encryption": True,
+                    "challenge_response": True,
+                },
+                "api_functions": [
+                    "RNBOsproFindFirstUnit",
+                    "RNBOsproFindNextUnit",
+                    "RNBOsproQuery",
+                    "RNBOsproRead",
+                    "RNBOsproWrite",
+                    "RNBOsproDecrement",
+                    "RNBOsproGetFullStatus",
+                ],
+                "driver_names": ["sentinel.sys", "sntnlusb.sys", "sx32w.dll"],
+                "emulation_ready": True,
+            },
+            "safenet": {
+                "type": "SafeNet",
+                "vendor_id": 0x0529,
+                "product_id": 0x0001,
+                "memory_size": 4096,
+                "algorithms": ["AES", "RSA", "ECC"],
+                "features": {
+                    "encryption": True,
+                    "signing": True,
+                    "key_storage": True,
+                    "certificate_storage": True,
+                },
+                "api_functions": [
+                    "CA_OpenSession",
+                    "CA_CloseSession",
+                    "CA_Login",
+                    "CA_Logout",
+                    "CA_CreateObject",
+                    "CA_DestroyObject",
+                ],
+                "driver_names": ["etoken.dll", "eTSignC.dll"],
+                "emulation_ready": True,
+            },
+            "wibukey": {
+                "type": "WibuKey",
+                "vendor_id": 0x064F,
+                "product_id": 0x0BD7,
+                "memory_size": 4096,
+                "algorithms": ["AES", "Challenge-Response"],
+                "features": {
+                    "encryption": True,
+                    "decryption": True,
+                    "license_management": True,
+                    "container_access": True,
+                },
+                "api_functions": [
+                    "WkbOpen2",
+                    "WkbClose",
+                    "WkbCrypt",
+                    "WkbCrypt2",
+                    "WkbGetEntry",
+                    "WkbProgramEntry",
+                    "WkbCheckEntry",
+                ],
+                "driver_names": ["wibukey.sys", "wibucm.dll", "WibuKey64.dll"],
+                "emulation_ready": True,
+            },
+            "codemeter": {
+                "type": "CodeMeter",
+                "vendor_id": 0x064F,
+                "product_id": 0x0BD7,
+                "memory_size": 16384,
+                "algorithms": ["AES-256", "RSA-2048", "ECC"],
+                "features": {
+                    "encryption": True,
+                    "decryption": True,
+                    "license_borrowing": True,
+                    "network_licensing": True,
+                    "container_management": True,
+                    "secure_update": True,
+                },
+                "api_functions": [
+                    "CmAccess",
+                    "CmRelease",
+                    "CmCrypt",
+                    "CmGetInfo",
+                    "CmSetFeature",
+                    "CmBoxSequence",
+                    "CmCalculatePioCoreKey",
+                ],
+                "driver_names": ["CodeMeter.exe", "WibuCm64.dll", "CodeMeter64.dll"],
+                "emulation_ready": True,
+            },
+            "superpro": {
+                "type": "SuperPro",
+                "vendor_id": 0x0529,
+                "product_id": 0x0001,
+                "memory_size": 2048,
+                "algorithms": ["DES", "AES"],
+                "features": {
+                    "query": True,
+                    "read": True,
+                    "write": True,
+                    "decrement": True,
+                },
+                "api_functions": [
+                    "RNBOsproFindFirstUnit",
+                    "RNBOsproQuery",
+                    "RNBOsproRead",
+                    "RNBOsproWrite",
+                ],
+                "driver_names": ["sprousb.sys", "sentinel.dll"],
+                "emulation_ready": True,
+            },
+            "rockey": {
+                "type": "ROCKEY",
+                "vendor_id": 0x0471,
+                "product_id": 0x485D,
+                "memory_size": 1024,
+                "algorithms": ["DES", "Custom"],
+                "features": {
+                    "read": True,
+                    "write": True,
+                    "run_user_code": True,
+                    "hardware_id": True,
+                },
+                "api_functions": [
+                    "Rockey_Find",
+                    "Rockey_Open",
+                    "Rockey_Close",
+                    "Rockey_Read",
+                    "Rockey_Write",
+                    "Rockey_Encrypt",
+                    "Rockey_Decrypt",
+                ],
+                "driver_names": ["rockey.sys", "rockey4.dll"],
+                "emulation_ready": True,
+            },
+            "dinkey": {
+                "type": "Dinkey",
+                "vendor_id": 0x16D0,
+                "product_id": 0x0543,
+                "memory_size": 512,
+                "algorithms": ["AES-128", "SHA-256"],
+                "features": {
+                    "encryption": True,
+                    "license_count": True,
+                    "expiry_date": True,
+                    "feature_flags": True,
+                },
+                "api_functions": [
+                    "DDProtCheck",
+                    "DDProtGetInfo",
+                    "DDProtGetData",
+                    "DDProtSetData",
+                    "DDProtDecrement",
+                ],
+                "driver_names": ["dinkey.sys", "ddprot32.dll", "ddprot64.dll"],
+                "emulation_ready": True,
+            },
+        }
+
+        if dongle_type_lower in config_templates:
+            config = config_templates[dongle_type_lower].copy()
+
+            with self.lock:
+                if dongle_type_lower == "hasp" and self.hasp_dongles:
+                    dongle = next(iter(self.hasp_dongles.values()))
+                    config["active_instance"] = {
+                        "hasp_id": dongle.hasp_id,
+                        "vendor_code": dongle.vendor_code,
+                        "feature_id": dongle.feature_id,
+                        "logged_in": dongle.logged_in,
+                        "session_handle": dongle.session_handle,
+                    }
+                elif dongle_type_lower == "sentinel" and self.sentinel_dongles:
+                    dongle = next(iter(self.sentinel_dongles.values()))
+                    config["active_instance"] = {
+                        "device_id": dongle.device_id,
+                        "serial_number": dongle.serial_number,
+                        "firmware_version": dongle.firmware_version,
+                        "developer_id": dongle.developer_id,
+                    }
+                elif dongle_type_lower in {"wibukey", "codemeter"} and self.wibukey_dongles:
+                    dongle = next(iter(self.wibukey_dongles.values()))
+                    config["active_instance"] = {
+                        "firm_code": dongle.firm_code,
+                        "product_code": dongle.product_code,
+                        "feature_code": dongle.feature_code,
+                        "serial_number": dongle.serial_number,
+                        "container_handle": dongle.container_handle,
+                        "active_licenses": list(dongle.active_licenses),
+                    }
+
+            return config
+
+        self.logger.warning(f"Unknown dongle type: {dongle_type}")
+        return None
+
 
 def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | None = None) -> dict[str, object]:
     """Activate hardware dongle emulation.

@@ -249,9 +249,7 @@ pytest tests/core/analysis/test_cross_tool_orchestrator_production.py --cov --co
 ## Future Enhancements
 
 ### Additional Test Coverage
-1. Binary Ninja integration tests
-2. IDA Pro orchestration tests
-3. Cloud-based analysis coordination
+1. Cloud-based analysis coordination
 4. Distributed analysis across machines
 5. GPU-accelerated analysis coordination
 

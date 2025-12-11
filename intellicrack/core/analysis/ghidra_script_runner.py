@@ -427,15 +427,12 @@ class GhidraScriptRunner:
     def validate_script(self, script_path: Path) -> bool:
         """Validate a Ghidra script."""
         try:
-            # Check file exists
             if not script_path.exists():
                 return False
 
-            # Check language
             if script_path.suffix not in [".py", ".java"]:
                 return False
 
-            # Try to parse for basic syntax (Python only)
             if script_path.suffix == ".py":
                 code = Path(script_path).read_text()
                 compile(code, str(script_path), "exec")
@@ -445,3 +442,19 @@ class GhidraScriptRunner:
         except Exception as e:
             logger.error(f"Script validation failed: {e}")
             return False
+
+    def refresh_scripts(self) -> int:
+        """Refresh the list of discovered scripts from filesystem.
+
+        Clears the current discovered scripts cache and re-scans the
+        intellicrack scripts directory to find all available Ghidra scripts.
+
+        Returns:
+            Number of scripts discovered after refresh.
+
+        """
+        self.discovered_scripts.clear()
+        self._discover_all_scripts()
+        script_count = len(self.discovered_scripts)
+        logger.info("Refreshed scripts: %d scripts found", script_count)
+        return script_count

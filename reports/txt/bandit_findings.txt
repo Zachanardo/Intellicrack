@@ -1,0 +1,1720 @@
+﻿48 findings in intellicrack/core\vulnerability_research\fuzzing_engine.py
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:28:0
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:351:35
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:353:32
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:407:28
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:603:32
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:870:24
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:874:23
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:892:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:893:18
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:902:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:903:20
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:911:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:914:11
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:918:29
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:922:37
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:937:16
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:938:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:946:16
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:947:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:950:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:958:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:959:22
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:967:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:968:20
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:974:23
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:977:18
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:997:20
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1002:15
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1003:15
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1009:22
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1010:24
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1015:15
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1016:29
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1028:20
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1029:25
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1033:14
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1034:25
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1039:27
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1040:23
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1045:17
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1046:29
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1115:38
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1118:18
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1119:27
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1134:19
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1207:32
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1214:32
+
+   Location: intellicrack/core\vulnerability_research\fuzzing_engine.py:1316:12
+
+
+33 findings in intellicrack/ml\pattern_evolution_tracker.py
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:27:0
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:502:19
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:503:41
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:506:25
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:507:41
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:510:22
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:515:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:516:37
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:519:19
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:552:15
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:556:29
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:557:44
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:560:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:564:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:565:36
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:574:35
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:577:37
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:580:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:615:15
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:619:29
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:620:47
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:623:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:627:26
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:628:39
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:644:34
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:709:11
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:710:19
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:724:16
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:1408:19
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:1417:51
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:1418:40
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:1500:25
+
+   Location: intellicrack/ml\pattern_evolution_tracker.py:1506:21
+
+
+21 findings in intellicrack/core\protection_bypass\hardware_id_spoofer.py
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:16:0
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:755:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:759:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:761:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:765:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:769:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:781:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:783:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:795:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:853:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:857:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:922:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:922:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:929:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:929:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:947:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:951:16
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:1124:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:1124:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:1125:12
+
+   Location: intellicrack/core\protection_bypass\hardware_id_spoofer.py:1125:12
+
+
+19 findings in intellicrack/core\offline_activation_emulator.py
+
+   Location: intellicrack/core\offline_activation_emulator.py:13:0
+
+   Location: intellicrack/core\offline_activation_emulator.py:26:4
+
+   Location: intellicrack/core\offline_activation_emulator.py:49:20
+
+   Location: intellicrack/core\offline_activation_emulator.py:54:12
+
+   Location: intellicrack/core\offline_activation_emulator.py:259:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:259:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:284:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:284:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:309:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:309:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:405:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:405:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:429:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:429:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:448:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:448:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:453:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:453:25
+
+   Location: intellicrack/core\offline_activation_emulator.py:2288:19
+
+
+17 findings in intellicrack/ui\widgets\ai_assistant_widget.py
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:697:12
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:708:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:708:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:727:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:727:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:748:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:748:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:767:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:767:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:936:12
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:947:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:947:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:963:37
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:963:37
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:1004:29
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:1022:37
+
+   Location: intellicrack/ui\widgets\ai_assistant_widget.py:1157:12
+
+
+16 findings in intellicrack/core\serial_generator.py
+
+   Location: intellicrack/core\serial_generator.py:437:40
+
+   Location: intellicrack/core\serial_generator.py:439:40
+
+   Location: intellicrack/core\serial_generator.py:441:40
+
+   Location: intellicrack/core\serial_generator.py:474:24
+
+   Location: intellicrack/core\serial_generator.py:508:28
+
+   Location: intellicrack/core\serial_generator.py:539:18
+
+   Location: intellicrack/core\serial_generator.py:606:18
+
+   Location: intellicrack/core\serial_generator.py:645:18
+
+   Location: intellicrack/core\serial_generator.py:667:23
+
+   Location: intellicrack/core\serial_generator.py:704:23
+
+   Location: intellicrack/core\serial_generator.py:728:16
+
+   Location: intellicrack/core\serial_generator.py:749:12
+
+   Location: intellicrack/core\serial_generator.py:776:16
+
+   Location: intellicrack/core\serial_generator.py:788:15
+
+   Location: intellicrack/core\serial_generator.py:829:15
+
+   Location: intellicrack/core\serial_generator.py:830:16
+
+
+16 findings in intellicrack/plugins\custom_modules\license_server_emulator.py
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:34:0
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:38:0
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:1178:19
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:1312:25
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4277:12
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4283:12
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4283:12
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4315:16
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4317:25
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4320:29
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4724:12
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4726:21
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:4726:21
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:5021:18
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:6236:21
+
+   Location: intellicrack/plugins\custom_modules\license_server_emulator.py:6236:21
+
+
+14 findings in intellicrack/core\exploitation\keygen_generator.py
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:632:37
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:635:33
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:652:34
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:723:27
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:726:27
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:902:26
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:903:26
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:907:19
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:941:16
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:982:19
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:984:26
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:994:23
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:996:27
+
+   Location: intellicrack/core\exploitation\keygen_generator.py:997:33
+
+
+13 findings in intellicrack/ai\model_format_converter.py
+
+   Location: intellicrack/ai\model_format_converter.py:309:28
+
+   Location: intellicrack/ai\model_format_converter.py:314:29
+
+   Location: intellicrack/ai\model_format_converter.py:339:24
+
+   Location: intellicrack/ai\model_format_converter.py:436:34
+
+   Location: intellicrack/ai\model_format_converter.py:446:29
+
+   Location: intellicrack/ai\model_format_converter.py:728:24
+
+   Location: intellicrack/ai\model_format_converter.py:845:40
+
+   Location: intellicrack/ai\model_format_converter.py:846:47
+
+   Location: intellicrack/ai\model_format_converter.py:847:53
+
+   Location: intellicrack/ai\model_format_converter.py:861:24
+
+   Location: intellicrack/ai\model_format_converter.py:886:21
+
+   Location: intellicrack/ai\model_format_converter.py:889:20
+
+   Location: intellicrack/ai\model_format_converter.py:956:25
+
+
+13 findings in intellicrack/utils\dependency_fallbacks.py
+
+   Location: intellicrack/utils\dependency_fallbacks.py:218:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:220:16
+
+   Location: intellicrack/utils\dependency_fallbacks.py:222:17
+
+   Location: intellicrack/utils\dependency_fallbacks.py:246:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:248:16
+
+   Location: intellicrack/utils\dependency_fallbacks.py:272:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:274:16
+
+   Location: intellicrack/utils\dependency_fallbacks.py:323:19
+
+   Location: intellicrack/utils\dependency_fallbacks.py:324:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:326:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:327:12
+
+   Location: intellicrack/utils\dependency_fallbacks.py:346:15
+
+   Location: intellicrack/utils\dependency_fallbacks.py:348:16
+
+
+12 findings in intellicrack/ai\script_generation_agent.py
+
+   Location: intellicrack/ai\script_generation_agent.py:25:0
+
+   Location: intellicrack/ai\script_generation_agent.py:530:8
+
+   Location: intellicrack/ai\script_generation_agent.py:1603:8
+
+   Location: intellicrack/ai\script_generation_agent.py:1624:34
+
+   Location: intellicrack/ai\script_generation_agent.py:1624:34
+
+   Location: intellicrack/ai\script_generation_agent.py:1688:8
+
+   Location: intellicrack/ai\script_generation_agent.py:1708:29
+
+   Location: intellicrack/ai\script_generation_agent.py:1708:29
+
+   Location: intellicrack/ai\script_generation_agent.py:1987:8
+
+   Location: intellicrack/ai\script_generation_agent.py:2037:8
+
+   Location: intellicrack/ai\script_generation_agent.py:2161:8
+
+   Location: intellicrack/ai\script_generation_agent.py:2828:8
+
+
+12 findings in intellicrack/core\anti_analysis\vm_detector.py
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:27:0
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:554:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:554:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1023:29
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1045:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1045:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1220:29
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1220:29
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1270:29
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1281:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1688:25
+
+   Location: intellicrack/core\anti_analysis\vm_detector.py:1693:25
+
+
+11 findings in intellicrack/ai\llm_backends.py
+
+   Location: intellicrack/ai\llm_backends.py:1034:33
+
+   Location: intellicrack/ai\llm_backends.py:1051:33
+
+   Location: intellicrack/ai\llm_backends.py:1058:33
+
+   Location: intellicrack/ai\llm_backends.py:1193:33
+
+   Location: intellicrack/ai\llm_backends.py:1202:29
+
+   Location: intellicrack/ai\llm_backends.py:1519:29
+
+   Location: intellicrack/ai\llm_backends.py:1535:33
+
+   Location: intellicrack/ai\llm_backends.py:1548:29
+
+   Location: intellicrack/ai\llm_backends.py:1848:29
+
+   Location: intellicrack/ai\llm_backends.py:1857:29
+
+   Location: intellicrack/ai\llm_backends.py:1884:29
+
+
+11 findings in intellicrack/core\patching\windows_activator.py
+
+   Location: intellicrack/core\patching\windows_activator.py:24:0
+
+   Location: intellicrack/core\patching\windows_activator.py:236:21
+
+   Location: intellicrack/core\patching\windows_activator.py:236:21
+
+   Location: intellicrack/core\patching\windows_activator.py:355:21
+
+   Location: intellicrack/core\patching\windows_activator.py:355:21
+
+   Location: intellicrack/core\patching\windows_activator.py:385:21
+
+   Location: intellicrack/core\patching\windows_activator.py:385:21
+
+   Location: intellicrack/core\patching\windows_activator.py:661:25
+
+   Location: intellicrack/core\patching\windows_activator.py:848:22
+
+   Location: intellicrack/core\patching\windows_activator.py:974:22
+
+   Location: intellicrack/core\patching\windows_activator.py:1127:22
+
+
+10 findings in intellicrack/core\subscription_validation_bypass.py
+
+   Location: intellicrack/core\subscription_validation_bypass.py:37:18
+
+   Location: intellicrack/core\subscription_validation_bypass.py:217:12
+
+   Location: intellicrack/core\subscription_validation_bypass.py:916:16
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1065:32
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1067:20
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1192:32
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1194:16
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1204:16
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1208:19
+
+   Location: intellicrack/core\subscription_validation_bypass.py:1276:20
+
+
+10 findings in intellicrack/core\analysis\fingerprint_engine.py
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:337:19
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:338:20
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:403:12
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:488:8
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:659:8
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:683:12
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:691:12
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:786:8
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:818:27
+
+   Location: intellicrack/core\analysis\fingerprint_engine.py:825:8
+
+
+9 findings in intellicrack/plugins\custom_modules\ui_enhancement_module.py
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:25:0
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:940:16
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2911:16
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2920:33
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2920:33
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2922:33
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2922:33
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2924:33
+
+   Location: intellicrack/plugins\custom_modules\ui_enhancement_module.py:2924:33
+
+
+9 findings in intellicrack/protection\denuvo_ticket_analyzer.py
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:40:4
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:41:4
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:42:4
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:43:4
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:44:4
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:1057:22
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:1058:25
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:1064:22
+
+   Location: intellicrack/protection\denuvo_ticket_analyzer.py:1065:25
+
+
+9 findings in intellicrack/ui\tabs\analysis_tab.py
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:1436:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:3894:12
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:3936:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:3942:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:4019:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:4037:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:4053:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:4105:16
+
+   Location: intellicrack/ui\tabs\analysis_tab.py:4111:16
+
+
+9 findings in intellicrack/core\license_snapshot.py
+
+   Location: intellicrack/core\license_snapshot.py:614:12
+
+   Location: intellicrack/core\license_snapshot.py:616:21
+
+   Location: intellicrack/core\license_snapshot.py:616:21
+
+   Location: intellicrack/core\license_snapshot.py:660:12
+
+   Location: intellicrack/core\license_snapshot.py:662:21
+
+   Location: intellicrack/core\license_snapshot.py:662:21
+
+   Location: intellicrack/core\license_snapshot.py:704:12
+
+   Location: intellicrack/core\license_snapshot.py:706:21
+
+   Location: intellicrack/core\license_snapshot.py:706:21
+
+
+9 findings in intellicrack/core\anti_analysis\sandbox_detector.py
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:27:0
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:634:12
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:639:33
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:766:16
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:769:29
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:823:16
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:826:29
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:1217:16
+
+   Location: intellicrack/core\anti_analysis\sandbox_detector.py:1218:16
+
+
+9 findings in intellicrack/ai\qemu_manager.py
+
+   Location: intellicrack/ai\qemu_manager.py:25:0
+
+   Location: intellicrack/ai\qemu_manager.py:788:12
+
+   Location: intellicrack/ai\qemu_manager.py:2920:8
+
+   Location: intellicrack/ai\qemu_manager.py:3221:12
+
+   Location: intellicrack/ai\qemu_manager.py:3263:20
+
+   Location: intellicrack/ai\qemu_manager.py:3275:16
+
+   Location: intellicrack/ai\qemu_manager.py:3466:16
+
+   Location: intellicrack/ai\qemu_manager.py:3550:32
+
+   Location: intellicrack/ai\qemu_manager.py:4069:35
+
+
+8 findings in intellicrack/core\protection_bypass\tpm_bypass.py
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:21:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:22:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:23:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:24:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:25:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:26:4
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:700:67
+
+   Location: intellicrack/core\protection_bypass\tpm_bypass.py:911:27
+
+
+8 findings in intellicrack/core\analysis\behavioral_analysis.py
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:29:0
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:175:27
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:291:16
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:294:16
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:303:16
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:303:16
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:1514:22
+
+   Location: intellicrack/core\analysis\behavioral_analysis.py:1562:22
+
+
+7 findings in intellicrack/core\process_manipulation.py
+
+   Location: intellicrack/core\process_manipulation.py:3103:11
+
+   Location: intellicrack/core\process_manipulation.py:3107:28
+
+   Location: intellicrack/core\process_manipulation.py:3111:28
+
+   Location: intellicrack/core\process_manipulation.py:3188:36
+
+   Location: intellicrack/core\process_manipulation.py:3225:33
+
+   Location: intellicrack/core\process_manipulation.py:3253:24
+
+   Location: intellicrack/core\process_manipulation.py:3257:42
+
+
+7 findings in intellicrack/utils\exploitation\exploitation.py
+
+   Location: intellicrack/utils\exploitation\exploitation.py:564:31
+
+   Location: intellicrack/utils\exploitation\exploitation.py:2865:4
+
+   Location: intellicrack/utils\exploitation\exploitation.py:2943:4
+
+   Location: intellicrack/utils\exploitation\exploitation.py:3033:4
+
+   Location: intellicrack/utils\exploitation\exploitation.py:3087:4
+
+   Location: intellicrack/utils\exploitation\exploitation.py:4171:8
+
+   Location: intellicrack/utils\exploitation\exploitation.py:4184:22
+
+
+7 findings in intellicrack/ui\traffic_analyzer.py
+
+   Location: intellicrack/ui\traffic_analyzer.py:190:20
+
+   Location: intellicrack/ui\traffic_analyzer.py:204:24
+
+   Location: intellicrack/ui\traffic_analyzer.py:206:41
+
+   Location: intellicrack/ui\traffic_analyzer.py:211:41
+
+   Location: intellicrack/ui\traffic_analyzer.py:243:24
+
+   Location: intellicrack/ui\traffic_analyzer.py:245:36
+
+   Location: intellicrack/ui\traffic_analyzer.py:250:36
+
+
+7 findings in intellicrack/handlers\numpy_handler.py
+
+   Location: intellicrack/handlers\numpy_handler.py:1436:27
+
+   Location: intellicrack/handlers\numpy_handler.py:1442:24
+
+   Location: intellicrack/handlers\numpy_handler.py:1484:27
+
+   Location: intellicrack/handlers\numpy_handler.py:1493:24
+
+   Location: intellicrack/handlers\numpy_handler.py:1524:27
+
+   Location: intellicrack/handlers\numpy_handler.py:1536:30
+
+   Location: intellicrack/handlers\numpy_handler.py:1540:29
+
+
+7 findings in intellicrack/ai\headless_training_interface.py
+
+   Location: intellicrack/ai\headless_training_interface.py:663:37
+
+   Location: intellicrack/ai\headless_training_interface.py:713:36
+
+   Location: intellicrack/ai\headless_training_interface.py:720:34
+
+   Location: intellicrack/ai\headless_training_interface.py:724:26
+
+   Location: intellicrack/ai\headless_training_interface.py:725:24
+
+   Location: intellicrack/ai\headless_training_interface.py:726:25
+
+   Location: intellicrack/ai\headless_training_interface.py:727:23
+
+
+6 findings in intellicrack/core\analysis\cross_tool_orchestrator.py
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:36:4
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:1094:16
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:1120:20
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:1129:31
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:1268:16
+
+   Location: intellicrack/core\analysis\cross_tool_orchestrator.py:1273:23
+
+
+6 findings in intellicrack/core\protection_bypass\dongle_emulator.py
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:43:4
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:44:4
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:45:4
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:46:4
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:395:25
+
+   Location: intellicrack/core\protection_bypass\dongle_emulator.py:420:25
+
+
+6 findings in intellicrack/plugins\custom_modules\cloud_license_interceptor.py
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:30:0
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:87:19
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:96:20
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1566:39
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1615:20
+
+   Location: intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1751:40
+
+
+6 findings in intellicrack/core\protection_bypass\cloud_license_analyzer.py
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:10:0
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:35:20
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:36:17
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:37:20
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:38:21
+
+   Location: intellicrack/core\protection_bypass\cloud_license_analyzer.py:39:25
+
+
+6 findings in intellicrack/ai\model_manager_module.py
+
+   Location: intellicrack/ai\model_manager_module.py:121:20
+
+   Location: intellicrack/ai\model_manager_module.py:982:12
+
+   Location: intellicrack/ai\model_manager_module.py:2200:12
+
+   Location: intellicrack/ai\model_manager_module.py:2918:12
+
+   Location: intellicrack/ai\model_manager_module.py:2926:16
+
+   Location: intellicrack/ai\model_manager_module.py:2937:12
+
+
+5 findings in intellicrack/core\analysis\radare2_signature_detector.py
+
+   Location: intellicrack/core\analysis\radare2_signature_detector.py:17:0
+
+   Location: intellicrack/core\analysis\radare2_signature_detector.py:548:21
+
+   Location: intellicrack/core\analysis\radare2_signature_detector.py:548:21
+
+   Location: intellicrack/core\analysis\radare2_signature_detector.py:554:25
+
+   Location: intellicrack/core\analysis\radare2_signature_detector.py:558:25
+
+
+5 findings in intellicrack/ui\tabs\adobe_injector_tab.py
+
+   Location: intellicrack/ui\tabs\adobe_injector_tab.py:12:0
+
+   Location: intellicrack/ui\tabs\adobe_injector_tab.py:325:46
+
+   Location: intellicrack/ui\tabs\adobe_injector_tab.py:340:46
+
+   Location: intellicrack/ui\tabs\adobe_injector_tab.py:412:21
+
+   Location: intellicrack/ui\tabs\adobe_injector_tab.py:412:21
+
+
+5 findings in intellicrack/ai\enhanced_training_interface.py
+
+   Location: intellicrack/ai\enhanced_training_interface.py:1444:24
+
+   Location: intellicrack/ai\enhanced_training_interface.py:1447:51
+
+   Location: intellicrack/ai\enhanced_training_interface.py:1719:33
+
+   Location: intellicrack/ai\enhanced_training_interface.py:1720:30
+
+   Location: intellicrack/ai\enhanced_training_interface.py:1721:33
+
+
+5 findings in intellicrack/ml\license_protection_neural_network.py
+
+   Location: intellicrack/ml\license_protection_neural_network.py:197:29
+
+   Location: intellicrack/ml\license_protection_neural_network.py:324:29
+
+   Location: intellicrack/ml\license_protection_neural_network.py:457:29
+
+   Location: intellicrack/ml\license_protection_neural_network.py:1406:25
+
+   Location: intellicrack/ml\license_protection_neural_network.py:1470:21
+
+
+5 findings in intellicrack/core\orchestration\result_serialization_protocol.py
+
+   Location: intellicrack/core\orchestration\result_serialization_protocol.py:369:8
+
+   Location: intellicrack/core\orchestration\result_serialization_protocol.py:370:8
+
+   Location: intellicrack/core\orchestration\result_serialization_protocol.py:371:8
+
+   Location: intellicrack/core\orchestration\result_serialization_protocol.py:386:8
+
+   Location: intellicrack/core\orchestration\result_serialization_protocol.py:387:8
+
+
+5 findings in intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py
+
+   Location: intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:14:0
+
+   Location: intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:1952:21
+
+   Location: intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:1952:21
+
+   Location: intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:1960:21
+
+   Location: intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:1960:21
+
+
+5 findings in intellicrack/plugins\plugin_system.py
+
+   Location: intellicrack/plugins\plugin_system.py:1605:16
+
+   Location: intellicrack/plugins\plugin_system.py:1908:21
+
+   Location: intellicrack/plugins\plugin_system.py:2132:12
+
+   Location: intellicrack/plugins\plugin_system.py:2137:26
+
+   Location: intellicrack/plugins\plugin_system.py:2146:26
+
+
+4 findings in intellicrack/core\exploitation\automated_unpacker.py
+
+   Location: intellicrack/core\exploitation\automated_unpacker.py:649:12
+
+   Location: intellicrack/core\exploitation\automated_unpacker.py:660:21
+
+   Location: intellicrack/core\exploitation\automated_unpacker.py:660:21
+
+   Location: intellicrack/core\exploitation\automated_unpacker.py:1780:12
+
+
+4 findings in intellicrack/core\certificate\apk_analyzer.py
+
+   Location: intellicrack/core\certificate\apk_analyzer.py:88:0
+
+   Location: intellicrack/core\certificate\apk_analyzer.py:91:0
+
+   Location: intellicrack/core\certificate\apk_analyzer.py:243:19
+
+   Location: intellicrack/core\certificate\apk_analyzer.py:446:21
+
+
+4 findings in intellicrack/core\network\protocols\codemeter_parser.py
+
+   Location: intellicrack/core\network\protocols\codemeter_parser.py:192:47
+
+   Location: intellicrack/core\network\protocols\codemeter_parser.py:193:32
+
+   Location: intellicrack/core\network\protocols\codemeter_parser.py:194:33
+
+   Location: intellicrack/core\network\protocols\codemeter_parser.py:195:36
+
+
+4 findings in intellicrack/ai\model_sharding.py
+
+   Location: intellicrack/ai\model_sharding.py:236:21
+
+   Location: intellicrack/ai\model_sharding.py:440:34
+
+   Location: intellicrack/ai\model_sharding.py:448:34
+
+   Location: intellicrack/ai\model_sharding.py:504:34
+
+
+4 findings in intellicrack/ai\quantization_manager.py
+
+   Location: intellicrack/ai\quantization_manager.py:249:20
+
+   Location: intellicrack/ai\quantization_manager.py:293:20
+
+   Location: intellicrack/ai\quantization_manager.py:368:20
+
+   Location: intellicrack/ai\quantization_manager.py:778:20
+
+
+4 findings in intellicrack/core\analysis\ghidra_analyzer.py
+
+   Location: intellicrack/core\analysis\ghidra_analyzer.py:26:0
+
+   Location: intellicrack/core\analysis\ghidra_analyzer.py:33:4
+
+   Location: intellicrack/core\analysis\ghidra_analyzer.py:43:4
+
+   Location: intellicrack/core\analysis\ghidra_analyzer.py:112:19
+
+
+4 findings in intellicrack/utils\json_utils.py
+
+   Location: intellicrack/utils\json_utils.py:161:8
+
+   Location: intellicrack/utils\json_utils.py:172:12
+
+   Location: intellicrack/utils\json_utils.py:190:8
+
+   Location: intellicrack/utils\json_utils.py:248:12
+
+
+3 findings in intellicrack/core\processing\qemu_emulator.py
+
+   Location: intellicrack/core\processing\qemu_emulator.py:28:0
+
+   Location: intellicrack/core\processing\qemu_emulator.py:2069:27
+
+   Location: intellicrack/core\processing\qemu_emulator.py:2288:72
+
+
+3 findings in intellicrack/core\monitoring\frida_server_manager.py
+
+   Location: intellicrack/core\monitoring\frida_server_manager.py:14:0
+
+   Location: intellicrack/core\monitoring\frida_server_manager.py:241:38
+
+   Location: intellicrack/core\monitoring\frida_server_manager.py:249:38
+
+
+3 findings in intellicrack/core\hardware_spoofer.py
+
+   Location: intellicrack/core\hardware_spoofer.py:8:0
+
+   Location: intellicrack/core\hardware_spoofer.py:321:25
+
+   Location: intellicrack/core\hardware_spoofer.py:321:25
+
+
+3 findings in intellicrack/core\certificate\hook_obfuscation.py
+
+   Location: intellicrack/core\certificate\hook_obfuscation.py:224:17
+
+   Location: intellicrack/core\certificate\hook_obfuscation.py:225:18
+
+   Location: intellicrack/core\certificate\hook_obfuscation.py:226:17
+
+
+3 findings in intellicrack/core\protection_bypass\securom_bypass.py
+
+   Location: intellicrack/core\protection_bypass\securom_bypass.py:10:0
+
+   Location: intellicrack/core\protection_bypass\securom_bypass.py:974:16
+
+   Location: intellicrack/core\protection_bypass\securom_bypass.py:974:16
+
+
+3 findings in intellicrack/utils\system\file_resolution.py
+
+   Location: intellicrack/utils\system\file_resolution.py:318:12
+
+   Location: intellicrack/utils\system\file_resolution.py:338:12
+
+   Location: intellicrack/utils\system\file_resolution.py:461:12
+
+
+3 findings in intellicrack/ui\widgets\gpu_status_widget.py
+
+   Location: intellicrack/ui\widgets\gpu_status_widget.py:24:0
+
+   Location: intellicrack/ui\widgets\gpu_status_widget.py:112:21
+
+   Location: intellicrack/ui\widgets\gpu_status_widget.py:112:21
+
+
+3 findings in intellicrack/ai\multi_agent_system.py
+
+   Location: intellicrack/ai\multi_agent_system.py:26:0
+
+   Location: intellicrack/ai\multi_agent_system.py:2102:12
+
+   Location: intellicrack/ai\multi_agent_system.py:2236:16
+
+
+3 findings in intellicrack/ui\tabs\base_tab.py
+
+   Location: intellicrack/ui\tabs\base_tab.py:214:20
+
+   Location: intellicrack/ui\tabs\base_tab.py:223:24
+
+   Location: intellicrack/ui\tabs\base_tab.py:232:8
+
+
+3 findings in intellicrack/ui\widgets\cpu_status_widget.py
+
+   Location: intellicrack/ui\widgets\cpu_status_widget.py:167:16
+
+   Location: intellicrack/ui\widgets\cpu_status_widget.py:169:23
+
+   Location: intellicrack/ui\widgets\cpu_status_widget.py:169:23
+
+
+3 findings in intellicrack/core\analysis\dynamic_analyzer.py
+
+   Location: intellicrack/core\analysis\dynamic_analyzer.py:24:0
+
+   Location: intellicrack/core\analysis\dynamic_analyzer.py:1113:29
+
+   Location: intellicrack/core\analysis\dynamic_analyzer.py:1124:38
+
+
+3 findings in intellicrack/core\anti_analysis\debugger_bypass.py
+
+   Location: intellicrack/core\anti_analysis\debugger_bypass.py:676:16
+
+   Location: intellicrack/core\anti_analysis\debugger_bypass.py:678:25
+
+   Location: intellicrack/core\anti_analysis\debugger_bypass.py:683:25
+
+
+3 findings in intellicrack/core\analysis\binary_ninja_analyzer.py
+
+   Location: intellicrack/core\analysis\binary_ninja_analyzer.py:273:8
+
+   Location: intellicrack/core\analysis\binary_ninja_analyzer.py:279:8
+
+   Location: intellicrack/core\analysis\binary_ninja_analyzer.py:468:12
+
+
+3 findings in intellicrack/utils\subprocess_security.py
+
+   Location: intellicrack/utils\subprocess_security.py:17:0
+
+   Location: intellicrack/utils\subprocess_security.py:253:15
+
+   Location: intellicrack/utils\subprocess_security.py:314:15
+
+
+3 findings in intellicrack/core\vulnerability_research\vulnerability_analyzer.py
+
+   Location: intellicrack/core\vulnerability_research\vulnerability_analyzer.py:24:0
+
+   Location: intellicrack/core\vulnerability_research\vulnerability_analyzer.py:27:0
+
+   Location: intellicrack/core\vulnerability_research\vulnerability_analyzer.py:1739:16
+
+
+2 findings in intellicrack/utils\core\internal_helpers.py
+
+   Location: intellicrack/utils\core\internal_helpers.py:25:0
+
+   Location: intellicrack/utils\core\internal_helpers.py:2545:28
+
+
+2 findings in intellicrack/core\processing\streaming_analysis_manager.py
+
+   Location: intellicrack/core\processing\streaming_analysis_manager.py:428:36
+
+   Location: intellicrack/core\processing\streaming_analysis_manager.py:430:36
+
+
+2 findings in intellicrack/utils\system\system_utils.py
+
+   Location: intellicrack/utils\system\system_utils.py:25:0
+
+   Location: intellicrack/utils\system\system_utils.py:213:17
+
+
+2 findings in intellicrack/ui\widgets\embedded_terminal_widget.py
+
+   Location: intellicrack/ui\widgets\embedded_terminal_widget.py:30:0
+
+   Location: intellicrack/ui\widgets\embedded_terminal_widget.py:416:28
+
+
+2 findings in intellicrack/core\terminal_manager.py
+
+   Location: intellicrack/core\terminal_manager.py:27:0
+
+   Location: intellicrack/core\terminal_manager.py:283:25
+
+
+2 findings in intellicrack/core\security_enforcement.py
+
+   Location: intellicrack/core\security_enforcement.py:25:0
+
+   Location: intellicrack/core\security_enforcement.py:26:0
+
+
+2 findings in intellicrack/core\reporting\pdf_generator.py
+
+   Location: intellicrack/core\reporting\pdf_generator.py:30:0
+
+   Location: intellicrack/core\reporting\pdf_generator.py:1469:20
+
+
+2 findings in intellicrack/core\protection_bypass\integrity_check_defeat.py
+
+   Location: intellicrack/core\protection_bypass\integrity_check_defeat.py:176:15
+
+   Location: intellicrack/core\protection_bypass\integrity_check_defeat.py:180:15
+
+
+2 findings in intellicrack/plugins\custom_modules\hardware_dongle_emulator.py
+
+   Location: intellicrack/plugins\custom_modules\hardware_dongle_emulator.py:407:22
+
+   Location: intellicrack/plugins\custom_modules\hardware_dongle_emulator.py:706:25
+
+
+2 findings in intellicrack/core\protection_bypass\vm_bypass.py
+
+   Location: intellicrack/core\protection_bypass\vm_bypass.py:766:12
+
+   Location: intellicrack/core\protection_bypass\vm_bypass.py:816:12
+
+
+2 findings in intellicrack/handlers\tensorflow_handler.py
+
+   Location: intellicrack/handlers\tensorflow_handler.py:950:19
+
+   Location: intellicrack/handlers\tensorflow_handler.py:1350:25
+
+
+2 findings in intellicrack/ai\coordination_layer.py
+
+   Location: intellicrack/ai\coordination_layer.py:26:0
+
+   Location: intellicrack/ai\coordination_layer.py:521:41
+
+
+2 findings in intellicrack/core\ai_model_manager.py
+
+   Location: intellicrack/core\ai_model_manager.py:307:20
+
+   Location: intellicrack/core\ai_model_manager.py:308:24
+
+
+2 findings in intellicrack/core\anti_analysis\timing_attacks.py
+
+   Location: intellicrack/core\anti_analysis\timing_attacks.py:147:30
+
+   Location: intellicrack/core\anti_analysis\timing_attacks.py:221:20
+
+
+2 findings in intellicrack/ai\ai_script_generator.py
+
+   Location: intellicrack/ai\ai_script_generator.py:1686:35
+
+   Location: intellicrack/ai\ai_script_generator.py:1756:36
+
+
+2 findings in intellicrack/core\analysis\ghidra_output_parser.py
+
+   Location: intellicrack/core\analysis\ghidra_output_parser.py:27:4
+
+   Location: intellicrack/core\analysis\ghidra_output_parser.py:106:19
+
+
+2 findings in intellicrack/core\analysis\ghidra_script_runner.py
+
+   Location: intellicrack/core\analysis\ghidra_script_runner.py:23:0
+
+   Location: intellicrack/core\analysis\ghidra_script_runner.py:239:21
+
+
+2 findings in intellicrack/ai\model_download_manager.py
+
+   Location: intellicrack/ai\model_download_manager.py:394:25
+
+   Location: intellicrack/ai\model_download_manager.py:465:25
+
+
+2 findings in intellicrack/ai\integration_manager.py
+
+   Location: intellicrack/ai\integration_manager.py:407:12
+
+   Location: intellicrack/ai\integration_manager.py:454:12
+
+
+2 findings in intellicrack/core\certificate\frida_stealth.py
+
+   Location: intellicrack/core\certificate\frida_stealth.py:546:35
+
+   Location: intellicrack/core\certificate\frida_stealth.py:605:39
+
+
+2 findings in intellicrack/core\network\ssl_interceptor.py
+
+   Location: intellicrack/core\network\ssl_interceptor.py:5:0
+
+   Location: intellicrack/core\network\ssl_interceptor.py:8:0
+
+
+2 findings in intellicrack/core\frida_manager.py
+
+   Location: intellicrack/core\frida_manager.py:2557:41
+
+   Location: intellicrack/core\frida_manager.py:2594:27
+
+
+2 findings in intellicrack/core\ml\incremental_learner.py
+
+   Location: intellicrack/core\ml\incremental_learner.py:22:0
+
+   Location: intellicrack/core\ml\incremental_learner.py:323:41
+
+
+2 findings in intellicrack/core\processing\distributed_manager.py
+
+   Location: intellicrack/core\processing\distributed_manager.py:33:0
+
+   Location: intellicrack/core\processing\distributed_manager.py:540:19
+
+
+2 findings in intellicrack/core\adobe_injector_integration.py
+
+   Location: intellicrack/core\adobe_injector_integration.py:14:0
+
+   Location: intellicrack/core\adobe_injector_integration.py:128:27
+
+
+1 findings in intellicrack/utils\core\final_utilities.py
+
+   Location: intellicrack/utils\core\final_utilities.py:25:0
+
+
+1 findings in intellicrack/ai\lora_adapter_manager.py
+
+   Location: intellicrack/ai\lora_adapter_manager.py:577:25
+
+
+1 findings in intellicrack/utils\analysis\binary_analysis.py
+
+   Location: intellicrack/utils\analysis\binary_analysis.py:26:0
+
+
+1 findings in intellicrack/utils\core\exception_utils.py
+
+   Location: intellicrack/utils\core\exception_utils.py:27:0
+
+
+1 findings in intellicrack/ui\widgets\memory_dumper.py
+
+   Location: intellicrack/ui\widgets\memory_dumper.py:242:16
+
+
+1 findings in intellicrack/ai\model_cache_manager.py
+
+   Location: intellicrack/ai\model_cache_manager.py:26:0
+
+
+1 findings in intellicrack/ui\tabs\exploitation_tab.py
+
+   Location: intellicrack/ui\tabs\exploitation_tab.py:955:12
+
+
+1 findings in intellicrack/cli\advanced_export.py
+
+   Location: intellicrack/cli\advanced_export.py:33:4
+
+
+1 findings in intellicrack/cli\ai_wrapper.py
+
+   Location: intellicrack/cli\ai_wrapper.py:27:0
+
+
+1 findings in intellicrack/ai\visualization_analytics.py
+
+   Location: intellicrack/ai\visualization_analytics.py:1413:8
+
+
+1 findings in intellicrack/protection\intellicrack_protection_advanced.py
+
+   Location: intellicrack/protection\intellicrack_protection_advanced.py:26:0
+
+
+1 findings in intellicrack/ai\qemu_test_manager_enhanced.py
+
+   Location: intellicrack/ai\qemu_test_manager_enhanced.py:23:0
+
+
+1 findings in intellicrack/cli\cli.py
+
+   Location: intellicrack/cli\cli.py:2702:17
+
+
+1 findings in intellicrack/utils\system\process_common.py
+
+   Location: intellicrack/utils\system\process_common.py:25:0
+
+
+1 findings in intellicrack/utils\system\process_helpers.py
+
+   Location: intellicrack/utils\system\process_helpers.py:34:4
+
+
+1 findings in intellicrack/utils\runtime\additional_runners.py
+
+   Location: intellicrack/utils\runtime\additional_runners.py:25:0
+
+
+1 findings in intellicrack/utils\runtime\runner_functions.py
+
+   Location: intellicrack/utils\runtime\runner_functions.py:25:0
+
+
+1 findings in intellicrack/utils\system\subprocess_utils.py
+
+   Location: intellicrack/utils\system\subprocess_utils.py:25:0
+
+
+1 findings in intellicrack/core\processing\vm_workflow_manager.py
+
+   Location: intellicrack/core\processing\vm_workflow_manager.py:283:16
+
+
+1 findings in intellicrack/utils\system\process_utils.py
+
+   Location: intellicrack/utils\system\process_utils.py:25:0
+
+
+1 findings in intellicrack/utils\system\program_discovery.py
+
+   Location: intellicrack/utils\system\program_discovery.py:26:0
+
+
+1 findings in intellicrack/utils\report_generator.py
+
+   Location: intellicrack/utils\report_generator.py:34:4
+
+
+1 findings in intellicrack/utils\core\path_discovery.py
+
+   Location: intellicrack/utils\core\path_discovery.py:29:0
+
+
+1 findings in intellicrack/utils\dependencies.py
+
+   Location: intellicrack/utils\dependencies.py:162:4
+
+
+1 findings in intellicrack/utils\core\import_patterns.py
+
+   Location: intellicrack/utils\core\import_patterns.py:98:8
+
+
+1 findings in intellicrack/ai\local_gguf_server.py
+
+   Location: intellicrack/ai\local_gguf_server.py:819:23
+
+
+1 findings in intellicrack/utils\ghidra_common.py
+
+   Location: intellicrack/utils\ghidra_common.py:21:0
+
+
+1 findings in intellicrack/utils\gpu_autoloader.py
+
+   Location: intellicrack/utils\gpu_autoloader.py:12:0
+
+
+1 findings in intellicrack/ai\llm_fallback_chains.py
+
+   Location: intellicrack/ai\llm_fallback_chains.py:302:66
+
+
+1 findings in intellicrack/ai\learning_engine.py
+
+   Location: intellicrack/ai\learning_engine.py:710:22
+
+
+1 findings in intellicrack/core\tool_discovery.py
+
+   Location: intellicrack/core\tool_discovery.py:28:0
+
+
+1 findings in intellicrack/core\trial_reset_engine.py
+
+   Location: intellicrack/core\trial_reset_engine.py:922:31
+
+
+1 findings in intellicrack/core\analysis\radare2_scripting.py
+
+   Location: intellicrack/core\analysis\radare2_scripting.py:23:0
+
+
+1 findings in intellicrack/core\analysis\radare2_json_standardizer.py
+
+   Location: intellicrack/core\analysis\radare2_json_standardizer.py:639:12
+
+
+1 findings in intellicrack/core\analysis\memory_forensics_engine.py
+
+   Location: intellicrack/core\analysis\memory_forensics_engine.py:15:0
+
+
+1 findings in intellicrack/handlers\aiohttp_handler.py
+
+   Location: intellicrack/handlers\aiohttp_handler.py:342:25
+
+
+1 findings in intellicrack/core\vulnerability_research\binary_differ.py
+
+   Location: intellicrack/core\vulnerability_research\binary_differ.py:24:0
+
+
+1 findings in intellicrack/core\analysis\radare2_bypass_generator.py
+
+   Location: intellicrack/core\analysis\radare2_bypass_generator.py:2611:19
+
+
+1 findings in intellicrack/core\startup_checks.py
+
+   Location: intellicrack/core\startup_checks.py:25:0
+
+
+1 findings in intellicrack/core\execution\script_execution_manager.py
+
+   Location: intellicrack/core\execution\script_execution_manager.py:24:0
+
+
+1 findings in intellicrack/core\anti_analysis\debugger_detector.py
+
+   Location: intellicrack/core\anti_analysis\debugger_detector.py:812:20
+
+
+1 findings in intellicrack/core\network\protocols\hasp_parser.py
+
+   Location: intellicrack/core\network\protocols\hasp_parser.py:27:0
+
+
+1 findings in intellicrack/core\exploitation\crypto_key_extractor.py
+
+   Location: intellicrack/core\exploitation\crypto_key_extractor.py:135:8
+
+
+1 findings in intellicrack/core\security_utils.py
+
+   Location: intellicrack/core\security_utils.py:25:0
+
+
+1 findings in intellicrack/core\analysis\symbolic_executor.py
+
+   Location: intellicrack/core\analysis\symbolic_executor.py:664:55
+
+
+1 findings in intellicrack/core\resources\resource_manager.py
+
+   Location: intellicrack/core\resources\resource_manager.py:15:0
+
+
+1 findings in intellicrack/core\anti_analysis\base_detector.py
+
+   Location: intellicrack/core\anti_analysis\base_detector.py:22:0
+
+
+1 findings in intellicrack/core\processing\qiling_emulator.py
+
+   Location: intellicrack/core\processing\qiling_emulator.py:776:56
+
+
+1 findings in intellicrack/plugins\custom_modules\performance_optimizer.py
+
+   Location: intellicrack/plugins\custom_modules\performance_optimizer.py:27:0
+
+
+1 findings in intellicrack/core\analysis\cfg_explorer.py
+
+   Location: intellicrack/core\analysis\cfg_explorer.py:834:4
+
+
+1 findings in intellicrack/plugins\custom_modules\intellicrack_core_engine.py
+
+   Location: intellicrack/plugins\custom_modules\intellicrack_core_engine.py:33:0
+
+
+1 findings in intellicrack/protection\analysis_cache.py
+
+   Location: intellicrack/protection\analysis_cache.py:28:0
+
+
+1 findings in intellicrack/cli\progress_manager.py
+
+   Location: intellicrack/cli\progress_manager.py:26:0
+
+
+1 findings in intellicrack/cli\tutorial_system.py
+
+   Location: intellicrack/cli\tutorial_system.py:666:16
+
+
+1 findings in intellicrack/cli\terminal_dashboard.py
+
+   Location: intellicrack/cli\terminal_dashboard.py:565:16
+
+
+1 findings in intellicrack/plugins\custom_modules\anti_anti_debug_suite.py
+
+   Location: intellicrack/plugins\custom_modules\anti_anti_debug_suite.py:1594:16
+
+
+1 findings in intellicrack/handlers\pdfkit_handler.py
+
+   Location: intellicrack/handlers\pdfkit_handler.py:505:17
+
+
+1 findings in intellicrack/handlers\psutil_handler.py
+
+   Location: intellicrack/handlers\psutil_handler.py:24:0
+
+
+1 findings in intellicrack/handlers\frida_handler.py
+
+   Location: intellicrack/handlers\frida_handler.py:32:0
+
+
+1 findings in intellicrack/core\analysis\incremental_manager.py
+
+   Location: intellicrack/core\analysis\incremental_manager.py:30:0
+
+
+1 findings in intellicrack/core\analysis\firmware_analyzer.py
+
+   Location: intellicrack/core\analysis\firmware_analyzer.py:18:0
+
+
+1 findings in intellicrack/models\model_manager.py
+
+   Location: intellicrack/models\model_manager.py:640:12
+
+
+1 findings in intellicrack/handlers\requests_handler.py
+
+   Location: intellicrack/handlers\requests_handler.py:682:17
+
+
+1 findings in intellicrack/hexview\file_handler.py
+
+   Location: intellicrack/hexview\file_handler.py:298:36

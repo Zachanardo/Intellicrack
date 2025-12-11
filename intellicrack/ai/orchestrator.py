@@ -1128,6 +1128,49 @@ class AIOrchestrator:
             }
         return None
 
+    def get_task_result(self, task_id: str) -> AIResult | None:
+        """Get the result of a completed task.
+
+        Retrieves the result for a task that has been processed. Returns None if
+        the task is still pending, not found, or has no result available yet.
+
+        Args:
+            task_id: Unique identifier of the task to retrieve results for.
+
+        Returns:
+            AIResult object containing task results if completed, None otherwise.
+
+        """
+        progress_info = self.task_progress.get(task_id)
+        if not progress_info:
+            return None
+
+        if progress_info.get("progress", 0) < 100:
+            return None
+
+        if task_id not in self.active_tasks:
+            return None
+
+        task = self.active_tasks[task_id]
+
+        result_data = {}
+        if cached_results := self.shared_context.get("last_analysis_orchestrator"):
+            if isinstance(cached_results, dict):
+                result_data = cached_results
+
+        task_progress_status = progress_info.get("status", "")
+
+        return AIResult(
+            task_id=task_id,
+            task_type=task.task_type,
+            success="completed" in task_progress_status.lower() or "success" in task_progress_status.lower(),
+            result_data=result_data,
+            confidence=0.85 if result_data else 0.0,
+            processing_time=0.0,
+            components_used=["orchestrator"],
+            errors=[] if "error" not in task_progress_status.lower() else [task_progress_status],
+        )
+
     def quick_vulnerability_scan(self, binary_path: str, callback: Callable | None = None) -> str:
         """Quick vulnerability scan using fast ML models."""
         task = AITask(

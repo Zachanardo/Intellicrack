@@ -392,6 +392,771 @@ class IntellicrackAIInterface:
             "action_history": self.confirmation_manager.action_history,
         }
 
+    def generate_frida_script(
+        self,
+        binary_path: str | None,
+        target_function: str | None,
+        script_type: str = "hook",
+    ) -> dict[str, Any]:
+        """Generate a Frida script for the target binary.
+
+        Creates a customized Frida script based on the binary analysis
+        and specified target function or script type.
+
+        Args:
+            binary_path: Path to the target binary file.
+            target_function: Specific function to target (optional).
+            script_type: Type of script to generate (hook, bypass, trace, spoof).
+
+        Returns:
+            Dictionary containing the generated script and metadata.
+
+        """
+        if not binary_path:
+            return {
+                "status": "error",
+                "message": "Binary path is required for Frida script generation",
+            }
+
+        binary_name = os.path.basename(binary_path).replace(".exe", "").replace(".dll", "")
+
+        script_generators = {
+            "hook": self._generate_hook_script,
+            "bypass": self._generate_bypass_script,
+            "trace": self._generate_trace_script,
+            "spoof": self._generate_spoof_script,
+        }
+
+        generator = script_generators.get(script_type, self._generate_hook_script)
+        script_content = generator(binary_name, target_function)
+
+        return {
+            "status": "success",
+            "script_type": script_type,
+            "binary_path": binary_path,
+            "target_function": target_function,
+            "script": script_content,
+            "language": "javascript",
+            "platform": "frida",
+            "session_id": self.session_id,
+        }
+
+    def _generate_hook_script(self, binary_name: str, target_function: str | None) -> str:
+        """Generate a Frida hook script for licensing functions."""
+        target_spec = ""
+        if target_function:
+            target_spec = f'''
+const specificTarget = "{target_function}";
+if (specificTarget) {{
+    const targetAddr = Module.findExportByName(targetModule, specificTarget);
+    if (targetAddr) {{
+        Interceptor.attach(targetAddr, {{
+            onEnter: function(args) {{
+                console.log("[TARGET] " + specificTarget + " called");
+                console.log("    Args: " + JSON.stringify(Array.from(arguments).slice(0, 4)));
+            }},
+            onLeave: function(retval) {{
+                console.log("[TARGET] " + specificTarget + " returned: " + retval);
+            }}
+        }});
+        console.log("[*] Hooked specific target: " + specificTarget);
+    }}
+}}
+'''
+
+        return f'''"use strict";
+
+const targetModule = "{binary_name}";
+
+console.log("[*] Frida Hook Script for " + targetModule);
+console.log("[*] Session: {self.session_id}");
+
+const licenseKeywords = ["license", "serial", "valid", "check", "trial", "expire", "register", "activate"];
+
+function hookLicenseFunctions() {{
+    const module = Process.findModuleByName(targetModule + ".exe") ||
+                   Process.findModuleByName(targetModule + ".dll") ||
+                   Process.findModuleByName(targetModule);
+
+    if (!module) {{
+        console.log("[!] Module not found, waiting for load...");
+        return false;
+    }}
+
+    console.log("[*] Module found at: " + module.base);
+
+    let hookCount = 0;
+
+    module.enumerateExports().forEach(function(exp) {{
+        const name = exp.name.toLowerCase();
+        const isLicenseRelated = licenseKeywords.some(kw => name.includes(kw));
+
+        if (isLicenseRelated) {{
+            try {{
+                Interceptor.attach(exp.address, {{
+                    onEnter: function(args) {{
+                        console.log("[HOOK] " + exp.name + " called");
+                        console.log("    Return address: " + this.returnAddress);
+                        for (let i = 0; i < Math.min(4, args.length || 4); i++) {{
+                            try {{
+                                const strVal = args[i].readUtf8String();
+                                if (strVal && strVal.length < 256) {{
+                                    console.log("    arg[" + i + "]: \\"" + strVal + "\\"");
+                                }} else {{
+                                    console.log("    arg[" + i + "]: " + args[i]);
+                                }}
+                            }} catch(e) {{
+                                console.log("    arg[" + i + "]: " + args[i]);
+                            }}
+                        }}
+                    }},
+                    onLeave: function(retval) {{
+                        console.log("[HOOK] " + exp.name + " returned: " + retval);
+                    }}
+                }});
+                hookCount++;
+                console.log("[+] Hooked: " + exp.name);
+            }} catch(e) {{
+                console.log("[!] Failed to hook " + exp.name + ": " + e);
+            }}
+        }}
+    }});
+
+    console.log("[*] Total hooks installed: " + hookCount);
+    return hookCount > 0;
+}}
+{target_spec}
+hookLicenseFunctions();
+'''
+
+    def _generate_bypass_script(self, binary_name: str, target_function: str | None) -> str:
+        """Generate a Frida bypass script for license validation."""
+        target_bypass = ""
+        if target_function:
+            target_bypass = f'''
+const specificBypass = Module.findExportByName(null, "{target_function}");
+if (specificBypass) {{
+    Interceptor.replace(specificBypass, new NativeCallback(function() {{
+        console.log("[BYPASS] {target_function} bypassed - returning success");
+        return 1;
+    }}, "int", []));
+    console.log("[*] Specific function bypassed: {target_function}");
+}}
+'''
+
+        return f'''"use strict";
+
+const targetModule = "{binary_name}";
+
+console.log("[*] Frida Bypass Script for " + targetModule);
+console.log("[*] Session: {self.session_id}");
+
+function bypassLicenseChecks() {{
+    const bypassPatterns = [
+        {{ name: "IsDebuggerPresent", dll: "kernel32.dll", returnValue: 0 }},
+        {{ name: "CheckRemoteDebuggerPresent", dll: "kernel32.dll", hookType: "attach" }},
+    ];
+
+    bypassPatterns.forEach(function(pattern) {{
+        const addr = Module.findExportByName(pattern.dll, pattern.name);
+        if (addr) {{
+            if (pattern.hookType === "attach") {{
+                Interceptor.attach(addr, {{
+                    onLeave: function(retval) {{
+                        const debugPtr = this.context.rdx || this.context.r8;
+                        if (debugPtr) {{
+                            try {{
+                                Memory.writeU8(debugPtr, 0);
+                            }} catch(e) {{}}
+                        }}
+                    }}
+                }});
+            }} else {{
+                Interceptor.replace(addr, new NativeCallback(function() {{
+                    return pattern.returnValue;
+                }}, "int", []));
+            }}
+            console.log("[*] Bypassed: " + pattern.name);
+        }}
+    }});
+
+    const regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+    if (regQueryValue) {{
+        Interceptor.attach(regQueryValue, {{
+            onEnter: function(args) {{
+                try {{
+                    this.valueName = args[1].readUtf16String();
+                }} catch(e) {{
+                    this.valueName = null;
+                }}
+            }},
+            onLeave: function(retval) {{
+                if (this.valueName) {{
+                    const licenseKeys = ["license", "serial", "key", "trial", "expire"];
+                    const isLicenseKey = licenseKeys.some(k =>
+                        this.valueName.toLowerCase().includes(k));
+                    if (isLicenseKey) {{
+                        console.log("[BYPASS] Registry license query intercepted: " + this.valueName);
+                    }}
+                }}
+            }}
+        }});
+        console.log("[*] Registry monitoring enabled");
+    }}
+}}
+{target_bypass}
+bypassLicenseChecks();
+console.log("[*] License bypass script active");
+'''
+
+    def _generate_trace_script(self, binary_name: str, target_function: str | None) -> str:
+        """Generate a Frida trace script for API monitoring."""
+        target_trace = ""
+        if target_function:
+            target_trace = f'''
+const specificTrace = Module.findExportByName(null, "{target_function}");
+if (specificTrace) {{
+    Interceptor.attach(specificTrace, {{
+        onEnter: function(args) {{
+            console.log("[TRACE-TARGET] {target_function}");
+            console.log("    Backtrace:\\n" + Thread.backtrace(this.context, Backtracer.ACCURATE)
+                .map(DebugSymbol.fromAddress).join("\\n    "));
+        }}
+    }});
+    console.log("[*] Tracing specific function: {target_function}");
+}}
+'''
+
+        return f'''"use strict";
+
+const targetModule = "{binary_name}";
+
+console.log("[*] Frida Trace Script for " + targetModule);
+console.log("[*] Session: {self.session_id}");
+
+const traceAPIs = [
+    {{ dll: "advapi32.dll", funcs: ["RegOpenKeyExW", "RegQueryValueExW", "RegSetValueExW", "RegCloseKey"] }},
+    {{ dll: "kernel32.dll", funcs: ["GetVolumeInformationW", "GetComputerNameW", "GetSystemTime", "GetLocalTime"] }},
+    {{ dll: "crypt32.dll", funcs: ["CryptVerifySignature", "CryptHashData", "CryptDecrypt", "CryptEncrypt"] }},
+    {{ dll: "winhttp.dll", funcs: ["WinHttpOpen", "WinHttpSendRequest", "WinHttpReceiveResponse"] }},
+    {{ dll: "wininet.dll", funcs: ["InternetOpenW", "HttpSendRequestW", "InternetReadFile"] }},
+];
+
+function setupTracing() {{
+    let traceCount = 0;
+
+    traceAPIs.forEach(function(apiGroup) {{
+        apiGroup.funcs.forEach(function(funcName) {{
+            try {{
+                const addr = Module.findExportByName(apiGroup.dll, funcName);
+                if (addr) {{
+                    Interceptor.attach(addr, {{
+                        onEnter: function(args) {{
+                            const timestamp = new Date().toISOString();
+                            console.log("[" + timestamp + "] " + apiGroup.dll + "!" + funcName);
+                            console.log("    From: " + this.returnAddress);
+                        }},
+                        onLeave: function(retval) {{
+                            console.log("    Return: " + retval);
+                        }}
+                    }});
+                    traceCount++;
+                }}
+            }} catch(e) {{
+                console.log("[!] Failed to trace " + funcName + ": " + e);
+            }}
+        }});
+    }});
+
+    console.log("[*] Tracing " + traceCount + " API functions");
+}}
+{target_trace}
+setupTracing();
+'''
+
+    def _generate_spoof_script(self, binary_name: str, target_function: str | None) -> str:
+        """Generate a Frida spoof script for hardware ID and time manipulation."""
+        return f'''"use strict";
+
+const targetModule = "{binary_name}";
+
+console.log("[*] Frida Spoof Script for " + targetModule);
+console.log("[*] Session: {self.session_id}");
+
+const spoofedData = {{
+    machineGuid: "{{DEADBEEF-1337-4242-8080-C0FFEEBADC0D}}",
+    volumeSerial: 0xDEADBEEF,
+    computerName: "LICENSED-PC",
+    spoofDate: new Date("2020-01-01T00:00:00"),
+}};
+
+function setupSpoofing() {{
+    const getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
+    if (getVolumeInfo) {{
+        Interceptor.attach(getVolumeInfo, {{
+            onLeave: function(retval) {{
+                if (retval.toInt32() !== 0) {{
+                    const serialPtr = this.context.r9;
+                    if (serialPtr) {{
+                        try {{
+                            Memory.writeU32(serialPtr, spoofedData.volumeSerial);
+                            console.log("[SPOOF] Volume serial spoofed to: 0x" +
+                                spoofedData.volumeSerial.toString(16));
+                        }} catch(e) {{}}
+                    }}
+                }}
+            }}
+        }});
+        console.log("[*] Volume serial spoofing enabled");
+    }}
+
+    const getComputerName = Module.findExportByName("kernel32.dll", "GetComputerNameW");
+    if (getComputerName) {{
+        Interceptor.attach(getComputerName, {{
+            onLeave: function(retval) {{
+                if (retval.toInt32() !== 0) {{
+                    const namePtr = this.context.rcx;
+                    if (namePtr) {{
+                        try {{
+                            Memory.writeUtf16String(namePtr, spoofedData.computerName);
+                            console.log("[SPOOF] Computer name spoofed to: " + spoofedData.computerName);
+                        }} catch(e) {{}}
+                    }}
+                }}
+            }}
+        }});
+        console.log("[*] Computer name spoofing enabled");
+    }}
+
+    const getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
+    if (getSystemTime) {{
+        Interceptor.attach(getSystemTime, {{
+            onLeave: function() {{
+                const timePtr = this.context.rcx;
+                if (timePtr) {{
+                    try {{
+                        Memory.writeU16(timePtr, spoofedData.spoofDate.getFullYear());
+                        Memory.writeU16(timePtr.add(2), spoofedData.spoofDate.getMonth() + 1);
+                        Memory.writeU16(timePtr.add(6), spoofedData.spoofDate.getDate());
+                        console.log("[SPOOF] System time spoofed");
+                    }} catch(e) {{}}
+                }}
+            }}
+        }});
+        console.log("[*] System time spoofing enabled");
+    }}
+
+    const getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
+    if (getLocalTime) {{
+        Interceptor.attach(getLocalTime, {{
+            onLeave: function() {{
+                const timePtr = this.context.rcx;
+                if (timePtr) {{
+                    try {{
+                        Memory.writeU16(timePtr, spoofedData.spoofDate.getFullYear());
+                        Memory.writeU16(timePtr.add(2), spoofedData.spoofDate.getMonth() + 1);
+                        Memory.writeU16(timePtr.add(6), spoofedData.spoofDate.getDate());
+                    }} catch(e) {{}}
+                }}
+            }}
+        }});
+        console.log("[*] Local time spoofing enabled");
+    }}
+}}
+
+setupSpoofing();
+console.log("[*] Hardware/Time spoofing script active");
+'''
+
+    def generate_ghidra_script(
+        self,
+        binary_path: str | None,
+        analysis_type: str = "comprehensive",
+    ) -> dict[str, Any]:
+        """Generate a Ghidra analysis script for the target binary.
+
+        Creates a customized Ghidra script based on the requested
+        analysis type for deeper binary analysis.
+
+        Args:
+            binary_path: Path to the target binary file.
+            analysis_type: Type of analysis (comprehensive, licensing, crypto, strings).
+
+        Returns:
+            Dictionary containing the generated script and metadata.
+
+        """
+        if not binary_path:
+            return {
+                "status": "error",
+                "message": "Binary path is required for Ghidra script generation",
+            }
+
+        binary_name = os.path.basename(binary_path).replace(".exe", "").replace(".dll", "")
+        safe_name = "".join(c if c.isalnum() else "_" for c in binary_name)
+
+        script_generators = {
+            "comprehensive": self._generate_comprehensive_ghidra_script,
+            "licensing": self._generate_licensing_ghidra_script,
+            "crypto": self._generate_crypto_ghidra_script,
+            "strings": self._generate_strings_ghidra_script,
+        }
+
+        generator = script_generators.get(analysis_type, self._generate_comprehensive_ghidra_script)
+        script_content = generator(safe_name)
+
+        return {
+            "status": "success",
+            "script_type": analysis_type,
+            "binary_path": binary_path,
+            "script": script_content,
+            "language": "java",
+            "platform": "ghidra",
+            "session_id": self.session_id,
+            "class_name": f"{safe_name}_Analysis",
+        }
+
+    def _generate_comprehensive_ghidra_script(self, binary_name: str) -> str:
+        """Generate comprehensive Ghidra analysis script."""
+        return f'''//@category Intellicrack
+//@menupath Analysis.Intellicrack.Comprehensive Analysis
+//@author Intellicrack AI
+//@description Comprehensive binary analysis for {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.address.*;
+import ghidra.program.model.mem.*;
+import java.util.*;
+
+public class {binary_name}_Analysis extends GhidraScript {{
+
+    private static final String[] LICENSE_KEYWORDS = {{
+        "license", "serial", "trial", "expire", "register",
+        "activate", "validate", "check", "verify", "key", "hwid"
+    }};
+
+    private static final String[] CRYPTO_KEYWORDS = {{
+        "crypt", "encrypt", "decrypt", "hash", "sha", "md5",
+        "aes", "rsa", "sign", "verify"
+    }};
+
+    @Override
+    protected void run() throws Exception {{
+        println("=== Intellicrack Comprehensive Analysis ===");
+        println("Binary: {binary_name}");
+        println("Session: {self.session_id}");
+        println("");
+
+        analyzeLicensingFunctions();
+        analyzeCryptoFunctions();
+        analyzeStrings();
+        analyzeImports();
+
+        println("");
+        println("=== Analysis Complete ===");
+    }}
+
+    private void analyzeLicensingFunctions() throws Exception {{
+        println("[*] Analyzing Licensing Functions...");
+        FunctionManager funcManager = currentProgram.getFunctionManager();
+        int count = 0;
+
+        FunctionIterator functions = funcManager.getFunctions(true);
+        while (functions.hasNext() && !monitor.isCancelled()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+
+            for (String keyword : LICENSE_KEYWORDS) {{
+                if (name.contains(keyword)) {{
+                    count++;
+                    println("  [LICENSE] " + func.getName() + " at " + func.getEntryPoint());
+                    func.setComment("INTELLICRACK: Potential licensing function");
+                    break;
+                }}
+            }}
+        }}
+        println("  Found " + count + " licensing-related functions");
+    }}
+
+    private void analyzeCryptoFunctions() throws Exception {{
+        println("[*] Analyzing Cryptographic Functions...");
+        FunctionManager funcManager = currentProgram.getFunctionManager();
+        int count = 0;
+
+        FunctionIterator functions = funcManager.getFunctions(true);
+        while (functions.hasNext() && !monitor.isCancelled()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+
+            for (String keyword : CRYPTO_KEYWORDS) {{
+                if (name.contains(keyword)) {{
+                    count++;
+                    println("  [CRYPTO] " + func.getName() + " at " + func.getEntryPoint());
+                    func.setComment("INTELLICRACK: Cryptographic function");
+                    break;
+                }}
+            }}
+        }}
+        println("  Found " + count + " cryptographic functions");
+    }}
+
+    private void analyzeStrings() throws Exception {{
+        println("[*] Analyzing Interesting Strings...");
+        Memory memory = currentProgram.getMemory();
+        int count = 0;
+
+        String[] interestingStrings = {{
+            "license", "trial", "expire", "invalid", "error",
+            "success", "valid", "register", "serial"
+        }};
+
+        for (String searchStr : interestingStrings) {{
+            Address addr = memory.findBytes(
+                currentProgram.getMinAddress(),
+                searchStr.getBytes(),
+                null, true, monitor
+            );
+            if (addr != null) {{
+                count++;
+                println("  [STRING] \\"" + searchStr + "\\" at " + addr);
+            }}
+        }}
+        println("  Found " + count + " interesting strings");
+    }}
+
+    private void analyzeImports() throws Exception {{
+        println("[*] Analyzing Suspicious Imports...");
+        SymbolTable symTable = currentProgram.getSymbolTable();
+        int count = 0;
+
+        String[] suspiciousImports = {{
+            "RegOpenKey", "RegQueryValue", "GetVolumeInformation",
+            "GetComputerName", "CryptDecrypt", "IsDebuggerPresent"
+        }};
+
+        SymbolIterator symbols = symTable.getExternalSymbols();
+        while (symbols.hasNext() && !monitor.isCancelled()) {{
+            Symbol sym = symbols.next();
+            String name = sym.getName();
+
+            for (String suspicious : suspiciousImports) {{
+                if (name.contains(suspicious)) {{
+                    count++;
+                    println("  [IMPORT] " + name + " at " + sym.getAddress());
+                    break;
+                }}
+            }}
+        }}
+        println("  Found " + count + " suspicious imports");
+    }}
+}}
+'''
+
+    def _generate_licensing_ghidra_script(self, binary_name: str) -> str:
+        """Generate Ghidra script focused on licensing analysis."""
+        return f'''//@category Intellicrack
+//@menupath Analysis.Intellicrack.Licensing Analysis
+//@author Intellicrack AI
+//@description Deep licensing analysis for {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.address.*;
+import java.util.*;
+
+public class {binary_name}_LicenseAnalysis extends GhidraScript {{
+
+    @Override
+    protected void run() throws Exception {{
+        println("=== Intellicrack Licensing Analysis ===");
+        println("Binary: {binary_name}");
+
+        FunctionManager funcManager = currentProgram.getFunctionManager();
+        SymbolTable symTable = currentProgram.getSymbolTable();
+
+        String[] patterns = {{
+            "license", "serial", "valid", "check", "trial",
+            "expire", "register", "activate", "key", "hwid",
+            "machine", "dongle", "hasp", "sentinel"
+        }};
+
+        println("");
+        println("[*] Searching for licensing functions...");
+
+        FunctionIterator functions = funcManager.getFunctions(true);
+        while (functions.hasNext() && !monitor.isCancelled()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+
+            for (String pattern : patterns) {{
+                if (name.contains(pattern)) {{
+                    println("");
+                    println("[LICENSE FUNCTION] " + func.getName());
+                    println("  Address: " + func.getEntryPoint());
+                    println("  Size: " + func.getBody().getNumAddresses() + " bytes");
+
+                    symTable.createLabel(func.getEntryPoint(),
+                        "IC_LICENSE_" + func.getName(), SourceType.USER_DEFINED);
+
+                    func.setComment("INTELLICRACK: License validation - potential bypass target");
+                    break;
+                }}
+            }}
+        }}
+
+        println("");
+        println("=== Licensing Analysis Complete ===");
+    }}
+}}
+'''
+
+    def _generate_crypto_ghidra_script(self, binary_name: str) -> str:
+        """Generate Ghidra script focused on cryptographic analysis."""
+        return f'''//@category Intellicrack
+//@menupath Analysis.Intellicrack.Crypto Analysis
+//@author Intellicrack AI
+//@description Cryptographic routine analysis for {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.*;
+import java.util.*;
+
+public class {binary_name}_CryptoAnalysis extends GhidraScript {{
+
+    private static final byte[][] CRYPTO_CONSTANTS = {{
+        {{ 0x63, 0x7c, 0x77, 0x7b, (byte)0xf2, 0x6b, 0x6f, (byte)0xc5 }},  // AES S-box
+        {{ 0x67, 0x45, 0x23, 0x01 }},  // MD5 init A
+        {{ (byte)0xef, (byte)0xcd, (byte)0xab, (byte)0x89 }},  // MD5 init B
+        {{ 0x01, 0x23, 0x45, 0x67 }},  // SHA-1 H0
+    }};
+
+    @Override
+    protected void run() throws Exception {{
+        println("=== Intellicrack Crypto Analysis ===");
+        println("Binary: {binary_name}");
+
+        Memory memory = currentProgram.getMemory();
+        FunctionManager funcManager = currentProgram.getFunctionManager();
+
+        println("");
+        println("[*] Searching for cryptographic constants...");
+
+        for (byte[] constant : CRYPTO_CONSTANTS) {{
+            Address addr = memory.findBytes(
+                currentProgram.getMinAddress(),
+                constant, null, true, monitor
+            );
+
+            while (addr != null && !monitor.isCancelled()) {{
+                println("  [CRYPTO CONST] Found at " + addr);
+                createBookmark(addr, "CryptoConstant", "Potential crypto constant");
+
+                Function containingFunc = funcManager.getFunctionContaining(addr);
+                if (containingFunc != null) {{
+                    println("    In function: " + containingFunc.getName());
+                    containingFunc.setComment("INTELLICRACK: Contains crypto constant");
+                }}
+
+                addr = memory.findBytes(addr.add(1), constant, null, true, monitor);
+            }}
+        }}
+
+        println("");
+        println("[*] Searching for crypto function patterns...");
+
+        String[] cryptoPatterns = {{
+            "crypt", "encrypt", "decrypt", "aes", "rsa",
+            "sha", "md5", "hash", "sign", "verify", "pkcs"
+        }};
+
+        FunctionIterator functions = funcManager.getFunctions(true);
+        while (functions.hasNext() && !monitor.isCancelled()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+
+            for (String pattern : cryptoPatterns) {{
+                if (name.contains(pattern)) {{
+                    println("  [CRYPTO FUNC] " + func.getName() + " at " + func.getEntryPoint());
+                    break;
+                }}
+            }}
+        }}
+
+        println("");
+        println("=== Crypto Analysis Complete ===");
+    }}
+}}
+'''
+
+    def _generate_strings_ghidra_script(self, binary_name: str) -> str:
+        """Generate Ghidra script for string analysis."""
+        return f'''//@category Intellicrack
+//@menupath Analysis.Intellicrack.String Analysis
+//@author Intellicrack AI
+//@description Interesting string analysis for {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.address.*;
+import java.util.*;
+
+public class {binary_name}_StringAnalysis extends GhidraScript {{
+
+    @Override
+    protected void run() throws Exception {{
+        println("=== Intellicrack String Analysis ===");
+        println("Binary: {binary_name}");
+
+        String[] licenseStrings = {{
+            "license", "trial", "expire", "invalid", "valid",
+            "serial", "key", "register", "activate", "error",
+            "success", "fail", "crack", "patch", "bypass"
+        }};
+
+        println("");
+        println("[*] Searching for licensing-related strings...");
+
+        DataIterator dataIterator = currentProgram.getListing().getDefinedData(true);
+        int foundCount = 0;
+
+        while (dataIterator.hasNext() && !monitor.isCancelled()) {{
+            Data data = dataIterator.next();
+
+            if (data.getDataType() instanceof StringDataType ||
+                data.getDataType() instanceof UnicodeDataType) {{
+
+                String value = data.getValue().toString().toLowerCase();
+
+                for (String searchStr : licenseStrings) {{
+                    if (value.contains(searchStr)) {{
+                        foundCount++;
+                        println("");
+                        println("[STRING] \\"" + data.getValue() + "\\"");
+                        println("  Address: " + data.getAddress());
+                        println("  Type: " + data.getDataType().getName());
+
+                        createBookmark(data.getAddress(), "LicenseString",
+                            "License-related string: " + searchStr);
+                        break;
+                    }}
+                }}
+            }}
+        }}
+
+        println("");
+        println("[*] Found " + foundCount + " interesting strings");
+        println("");
+        println("=== String Analysis Complete ===");
+    }}
+}}
+'''
+
 
 # Tool definitions for AI models (Claude Code style)
 AI_TOOLS = {

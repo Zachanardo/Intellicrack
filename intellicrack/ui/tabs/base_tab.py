@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 from collections.abc import Callable
 from typing import Any
 
@@ -173,3 +174,115 @@ class BaseTab(QWidget):
         if self.task_manager:
             return self.task_manager.submit_callable(func, args, kwargs, description=description)
         return None
+
+    def cleanup(self) -> None:
+        """Clean up resources when tab is being closed or destroyed.
+
+        Performs cleanup of timers, threads, connections, and other resources
+        that the tab may have created. Subclasses should override this method
+        and call super().cleanup() to ensure proper resource release.
+
+        """
+        try:
+            if hasattr(self, "_cleanup_timers"):
+                for timer in getattr(self, "_cleanup_timers", []):
+                    if hasattr(timer, "stop"):
+                        timer.stop()
+                    if hasattr(timer, "deleteLater"):
+                        timer.deleteLater()
+
+            if hasattr(self, "_cleanup_threads"):
+                for thread in getattr(self, "_cleanup_threads", []):
+                    if hasattr(thread, "quit"):
+                        thread.quit()
+                        thread.wait(1000)
+                    elif hasattr(thread, "stop"):
+                        thread.stop()
+
+            if hasattr(self, "_cleanup_connections"):
+                for connection in getattr(self, "_cleanup_connections", []):
+                    try:
+                        if hasattr(connection, "disconnect"):
+                            connection.disconnect()
+                    except (RuntimeError, TypeError):
+                        pass
+
+            if hasattr(self, "_cleanup_file_handles"):
+                for handle in getattr(self, "_cleanup_file_handles", []):
+                    try:
+                        if hasattr(handle, "close") and not handle.closed:
+                            handle.close()
+                    except Exception:
+                        pass
+
+            if hasattr(self, "_cleanup_callbacks") and self.shared_context:
+                config_manager = self.shared_context.get("config_manager")
+                if config_manager and hasattr(config_manager, "unregister_callback"):
+                    for key, callback in getattr(self, "_cleanup_callbacks", []):
+                        with contextlib.suppress(Exception):
+                            config_manager.unregister_callback(key, callback)
+
+            self._cleanup_timers = []
+            self._cleanup_threads = []
+            self._cleanup_connections = []
+            self._cleanup_file_handles = []
+            self._cleanup_callbacks = []
+
+        except Exception:
+            pass
+
+    def register_timer_for_cleanup(self, timer: object) -> None:
+        """Register a timer to be stopped during cleanup.
+
+        Args:
+            timer: QTimer or similar timer object to register.
+
+        """
+        if not hasattr(self, "_cleanup_timers"):
+            self._cleanup_timers: list[object] = []
+        self._cleanup_timers.append(timer)
+
+    def register_thread_for_cleanup(self, thread: object) -> None:
+        """Register a thread to be stopped during cleanup.
+
+        Args:
+            thread: QThread or threading.Thread to register.
+
+        """
+        if not hasattr(self, "_cleanup_threads"):
+            self._cleanup_threads: list[object] = []
+        self._cleanup_threads.append(thread)
+
+    def register_connection_for_cleanup(self, connection: object) -> None:
+        """Register a signal connection to be disconnected during cleanup.
+
+        Args:
+            connection: PyQt signal connection to register.
+
+        """
+        if not hasattr(self, "_cleanup_connections"):
+            self._cleanup_connections: list[object] = []
+        self._cleanup_connections.append(connection)
+
+    def register_file_handle_for_cleanup(self, handle: object) -> None:
+        """Register a file handle to be closed during cleanup.
+
+        Args:
+            handle: File handle or similar resource to register.
+
+        """
+        if not hasattr(self, "_cleanup_file_handles"):
+            self._cleanup_file_handles: list[object] = []
+        self._cleanup_file_handles.append(handle)
+
+    def register_callback_for_cleanup(self, key: str, callback: Callable[..., object]) -> None:
+        """Register a config callback to be unregistered during cleanup.
+
+        Args:
+            key: Configuration key the callback is registered to.
+            callback: Callback function to unregister.
+
+        """
+        if not hasattr(self, "_cleanup_callbacks"):
+            self._cleanup_callbacks: list[tuple[str, Callable[..., object]]] = []
+        self._cleanup_callbacks.append((key, callback))

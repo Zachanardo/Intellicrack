@@ -543,6 +543,111 @@ class ConsoleWidget(QWidget):
 
         return super().eventFilter(obj, event)
 
+    def search_and_highlight(self, search_text: str) -> int:
+        """Search for text in the console and highlight all matches with visual feedback.
+
+        Performs a comprehensive search through the console output, highlighting all
+        occurrences of the search text with a distinctive background color. Navigates
+        to the first match if found.
+
+        Args:
+            search_text: The text string to search for. Empty string clears highlighting.
+
+        Returns:
+            int: The number of matches found.
+
+        """
+        if not search_text:
+            extra_selections: list = []
+            self.output.setExtraSelections(extra_selections)
+            return 0
+
+        from intellicrack.handlers.pyqt6_handler import QTextEdit
+
+        extra_selections = []
+        highlight_format = QTextCharFormat()
+        highlight_format.setBackground(QColor("#FFFF00"))
+        highlight_format.setForeground(QColor("#000000"))
+
+        document = self.output.document()
+        cursor = QTextCursor(document)
+        cursor.movePosition(QTextCursor.Start)
+
+        match_count = 0
+        first_match_cursor: QTextCursor | None = None
+
+        while True:
+            cursor = document.find(search_text, cursor)
+            if cursor.isNull():
+                break
+
+            match_count += 1
+
+            if first_match_cursor is None:
+                first_match_cursor = QTextCursor(cursor)
+
+            selection = QTextEdit.ExtraSelection()
+            selection.cursor = cursor
+            selection.format = highlight_format
+            extra_selections.append(selection)
+
+        self.output.setExtraSelections(extra_selections)
+
+        if first_match_cursor is not None:
+            self.output.setTextCursor(first_match_cursor)
+            self.output.ensureCursorVisible()
+
+        return match_count
+
+    def set_filter(self, filter_patterns: list[str] | None) -> None:
+        """Apply log filtering based on specified patterns.
+
+        Filters the console display to show only lines matching any of the provided
+        patterns. When filter_patterns is None, all content is shown. The filter
+        operates by storing the original content and displaying only matching lines.
+
+        Args:
+            filter_patterns: List of string patterns to filter by (e.g., ["[ERROR]", "[WARNING]"]).
+                           If None, removes filtering and shows all content.
+
+        """
+        if not hasattr(self, "_original_content"):
+            self._original_content: str = ""
+        if not hasattr(self, "_is_filtered"):
+            self._is_filtered: bool = False
+
+        current_content = self.output.toPlainText()
+
+        if not self._is_filtered:
+            self._original_content = current_content
+
+        if filter_patterns is None:
+            if self._is_filtered and self._original_content:
+                self.output.clear()
+                self.output.setPlainText(self._original_content)
+            self._is_filtered = False
+            self.filters = []
+            return
+
+        self.filters = filter_patterns
+        self._is_filtered = True
+
+        source_content = self._original_content if self._original_content else current_content
+        lines = source_content.split("\n")
+
+        filtered_lines: list[str] = []
+        for line in lines:
+            if any(pattern in line for pattern in filter_patterns):
+                filtered_lines.append(line)
+
+        self.output.clear()
+        if filtered_lines:
+            self.output.setPlainText("\n".join(filtered_lines))
+
+        if self.autoscroll_cb.isChecked():
+            scrollbar = self.output.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+
     def get_content(self) -> str:
         """Get the complete console output as plain text.
 

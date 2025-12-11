@@ -38,6 +38,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QTableView,
     QTabWidget,
     QTextCharFormat,
+    QTextDocument,
     QTextEdit,
     QThread,
     QVBoxLayout,

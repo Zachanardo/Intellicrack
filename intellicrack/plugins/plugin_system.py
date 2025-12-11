@@ -29,6 +29,7 @@ import sys
 import tempfile
 import traceback
 from collections.abc import Callable
+from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 

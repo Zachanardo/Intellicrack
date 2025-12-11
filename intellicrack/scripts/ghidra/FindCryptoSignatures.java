@@ -143,11 +143,11 @@ public class FindCryptoSignatures extends GhidraScript {
   }
 
   private class CryptoEvidence {
-    String algorithm;
-    Address location;
+    final String algorithm;
+    final Address location;
     double confidence;
-    String details;
-    List<Address> references = new ArrayList<>();
+    final String details;
+    final List<Address> references = new ArrayList<>();
 
     CryptoEvidence(String algo, Address loc, double conf, String det) {
       this.algorithm = algo;
@@ -158,7 +158,7 @@ public class FindCryptoSignatures extends GhidraScript {
   }
 
   private class InstructionPatternMatcher {
-    private Listing listing;
+    private final Listing listing;
 
     InstructionPatternMatcher(Listing listing) {
       this.listing = listing;
@@ -231,7 +231,7 @@ public class FindCryptoSignatures extends GhidraScript {
     }
   }
 
-  private final class EntropyAnalyzer {
+  private static final class EntropyAnalyzer {
     double calculateEntropy(byte[] data) {
       if (data == null || data.length == 0) return 0.0;
 
@@ -286,9 +286,8 @@ public class FindCryptoSignatures extends GhidraScript {
   private final class CrossReferenceAnalyzer {
     boolean verifyCryptoUsage(Address constantAddr) {
       Reference[] refs = getReferencesTo(constantAddr);
-      if (refs.length == 0) return false;
 
-      for (Reference ref : refs) {
+        for (Reference ref : refs) {
         Address fromAddr = ref.getFromAddress();
         Function func = getFunctionContaining(fromAddr);
 
@@ -336,7 +335,7 @@ public class FindCryptoSignatures extends GhidraScript {
     }
   }
 
-  private Map<Address, CryptoEvidence> cryptoFindings = new HashMap<>();
+  private final Map<Address, CryptoEvidence> cryptoFindings = new HashMap<>();
   private InstructionPatternMatcher patternMatcher;
   private EntropyAnalyzer entropyAnalyzer;
   private CrossReferenceAnalyzer xrefAnalyzer;
@@ -700,9 +699,8 @@ public class FindCryptoSignatures extends GhidraScript {
     while (codeUnitIter.hasNext() && !monitor.isCancelled()) {
       CodeUnit codeUnit = codeUnitIter.next();
 
-      if (codeUnit instanceof Instruction) {
-        Instruction instruction = (Instruction) codeUnit;
-        instructionCount++;
+      if (codeUnit instanceof Instruction instruction) {
+          instructionCount++;
 
         String mnemonic = instruction.getMnemonicString().toUpperCase();
 
@@ -1099,7 +1097,7 @@ public class FindCryptoSignatures extends GhidraScript {
     Reference[] refs = referenceManager.getReferencesTo(symbol.getAddress());
     for (Reference ref : refs) {
       Function func = getFunctionContaining(ref.getFromAddress());
-      if (func != null && patternMatcher.hasCryptoRotations(func)) {
+      if (patternMatcher.hasCryptoRotations(func)) {
         CryptoEvidence evidence =
             new CryptoEvidence(
                 "License-Crypto Integration",
@@ -1309,9 +1307,9 @@ public class FindCryptoSignatures extends GhidraScript {
       0xFF,
       0xFF00,
       0xFF0000,
-      0xFF000000,
+        0xffff_ffff_ff00_0000L,
       0xFFFF,
-      0xFFFF0000,
+        0xffff_ffff_ffff_0000L,
       0xF0F0F0F0L,
       0x0F0F0F0FL,
       0xAAAAAAAAL,
@@ -1352,7 +1350,7 @@ public class FindCryptoSignatures extends GhidraScript {
       }
     }
 
-    return loopCount >= 2 && jumpTargets.size() >= 1;
+    return loopCount >= 2 && !jumpTargets.isEmpty();
   }
 
   private void analyzeComprehensivePcodeBlocks() {
@@ -1397,6 +1395,7 @@ public class FindCryptoSignatures extends GhidraScript {
           }
         }
       } catch (Exception e) {
+          throw new RuntimeException(e);
       }
     }
 
@@ -1411,11 +1410,11 @@ public class FindCryptoSignatures extends GhidraScript {
     }
   }
 
-  private class PcodeBlockAnalysisResult {
+  private static class PcodeBlockAnalysisResult {
     boolean isCryptoBlock = false;
     String patternType = "UNKNOWN";
     double confidence = 0.0;
-    Map<String, Object> details = new HashMap<>();
+    final Map<String, Object> details = new HashMap<>();
   }
 
   private PcodeBlockAnalysisResult analyzePcodeBlock(ghidra.program.model.block.CodeBlock block) {
@@ -1587,7 +1586,7 @@ public class FindCryptoSignatures extends GhidraScript {
         List<PcodeOp> producers = entry.getValue();
         List<PcodeOp> consumers = varnodeSources.get(varnode);
 
-        if (consumers != null && producers.size() > 0) {
+        if (consumers != null && !producers.isEmpty()) {
           VarnodeFlowAnalysisResult result =
               analyzeVarnodeFlow(varnode, producers, consumers, function);
 
@@ -1622,11 +1621,11 @@ public class FindCryptoSignatures extends GhidraScript {
     }
   }
 
-  private class VarnodeFlowAnalysisResult {
+  private static class VarnodeFlowAnalysisResult {
     boolean isCryptoPattern = false;
     String patternType = "UNKNOWN";
     double confidence = 0.0;
-    Map<String, Object> details = new HashMap<>();
+    final Map<String, Object> details = new HashMap<>();
   }
 
   private VarnodeFlowAnalysisResult analyzeVarnodeFlow(
@@ -1717,13 +1716,9 @@ public class FindCryptoSignatures extends GhidraScript {
         result.isCryptoPattern = true;
         result.patternType = "STREAM_CIPHER_STATE";
         result.confidence = Math.min(0.85, (xorOperations + loadStoreOperations) / 20.0);
-      } else if (shiftOperations > 5 && rotateOperations > 3) {
-        result.isCryptoPattern = true;
-        result.patternType = "HASH_ROUND_FUNCTION";
-        result.confidence = Math.min(0.80, (shiftOperations + rotateOperations) / 20.0);
       }
 
-      if (hasMultipleDataPaths(varnode, producers, consumers)) {
+        if (hasMultipleDataPaths(varnode, producers, consumers)) {
         result.confidence = Math.min(0.98, result.confidence * 1.2);
       }
 
@@ -1763,9 +1758,7 @@ public class FindCryptoSignatures extends GhidraScript {
       Varnode shiftAmount = op.getInput(1);
       if (shiftAmount != null && shiftAmount.isConstant()) {
         long shift = shiftAmount.getOffset();
-        if (shift == 1 || shift == 3 || shift == 5 || shift == 7 || shift == 13 || shift == 17) {
-          return true;
-        }
+          return shift == 1 || shift == 3 || shift == 5 || shift == 7 || shift == 13 || shift == 17;
       }
     }
 
@@ -1893,11 +1886,11 @@ public class FindCryptoSignatures extends GhidraScript {
     }
   }
 
-  private class DataInstanceAnalysisResult {
+  private static class DataInstanceAnalysisResult {
     boolean isCryptoData = false;
     String patternType = "UNKNOWN";
     double confidence = 0.0;
-    Map<String, Object> details = new HashMap<>();
+    final Map<String, Object> details = new HashMap<>();
   }
 
   private DataInstanceAnalysisResult analyzeDataInstance(Data data, DataType dataType) {
@@ -1954,6 +1947,7 @@ public class FindCryptoSignatures extends GhidraScript {
           }
         }
       } catch (Exception e) {
+          throw new RuntimeException(e);
       }
     }
 
@@ -1972,12 +1966,12 @@ public class FindCryptoSignatures extends GhidraScript {
           result.confidence = 0.88;
         }
       } catch (Exception e) {
+          throw new RuntimeException(e);
       }
     }
 
-    if (dataType instanceof ghidra.program.model.data.Array) {
-      ghidra.program.model.data.Array arrayType = (ghidra.program.model.data.Array) dataType;
-      int numElements = arrayType.getNumElements();
+    if (dataType instanceof ghidra.program.model.data.Array arrayType) {
+        int numElements = arrayType.getNumElements();
       DataType elementType = arrayType.getDataType();
 
       if (numElements == 256 && elementType.getLength() == 1) {
@@ -2008,7 +2002,7 @@ public class FindCryptoSignatures extends GhidraScript {
     int[] aesFirstBytes = {0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5};
     int matches = 0;
 
-    for (int i = 0; i < Math.min(8, bytes.length); i++) {
+    for (int i = 0; i < 8; i++) {
       if ((bytes[i] & 0xFF) == aesFirstBytes[i]) {
         matches++;
       }
@@ -2022,8 +2016,7 @@ public class FindCryptoSignatures extends GhidraScript {
 
     long[] sha256First = {0x428a2f98L, 0x71374491L, 0xb5c0fbcfL, 0xe9b5dba5L};
 
-    for (int i = 0; i < Math.min(4, sha256First.length); i++) {
-      if (bytes.length >= (i + 1) * 4) {
+    for (int i = 0; i < 4; i++) {
         long value =
             ((bytes[i * 4] & 0xFFL) << 24)
                 | ((bytes[i * 4 + 1] & 0xFFL) << 16)
@@ -2033,7 +2026,6 @@ public class FindCryptoSignatures extends GhidraScript {
         if (value == sha256First[i]) {
           return true;
         }
-      }
     }
 
     return false;
@@ -2057,7 +2049,7 @@ public class FindCryptoSignatures extends GhidraScript {
     String magic = "expand 32-byte k";
     byte[] magicBytes = magic.getBytes();
 
-    for (int i = 0; i < Math.min(16, bytes.length); i++) {
+    for (int i = 0; i < 16; i++) {
       if (bytes[i] != magicBytes[i]) {
         return false;
       }

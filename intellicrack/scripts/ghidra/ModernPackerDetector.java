@@ -28,9 +28,9 @@ public class ModernPackerDetector extends GhidraScript {
   private static final Map<String, PackerSignature> PACKER_SIGNATURES = new HashMap<>();
 
   // Detection results
-  private List<PackerDetection> detectedPackers = new ArrayList<>();
-  private Map<String, Double> sectionEntropy = new HashMap<>();
-  private List<PEAnomaly> peAnomalies = new ArrayList<>();
+  private final List<PackerDetection> detectedPackers = new ArrayList<>();
+  private final Map<String, Double> sectionEntropy = new HashMap<>();
+  private final List<PEAnomaly> peAnomalies = new ArrayList<>();
 
   // Analysis configuration
   private static final double HIGH_ENTROPY_THRESHOLD = 7.0;
@@ -81,7 +81,7 @@ public class ModernPackerDetector extends GhidraScript {
             "ASProtect 2.x",
             new byte[] {0x60, (byte) 0xE8, 0x03, 0x00, 0x00, 0x00, (byte) 0xE9, (byte) 0xEB, 0x04},
             Arrays.asList(".aspr", ".adata", ".aspack"),
-            Arrays.asList("ASProtect"),
+            List.of("ASProtect"),
             new PECharacteristics(true, true, true)));
 
     // Obsidium
@@ -90,8 +90,8 @@ public class ModernPackerDetector extends GhidraScript {
         new PackerSignature(
             "Obsidium 1.x",
             new byte[] {(byte) 0xEB, 0x02, 0x00, 0x00, (byte) 0xE8, 0x25, 0x00, 0x00, 0x00},
-            Arrays.asList(".obsidium"),
-            Arrays.asList("Obsidium"),
+            List.of(".obsidium"),
+            List.of("Obsidium"),
             new PECharacteristics(true, false, false)));
 
     // Code Virtualizer
@@ -100,7 +100,7 @@ public class ModernPackerDetector extends GhidraScript {
         new PackerSignature(
             "Code Virtualizer",
             new byte[] {(byte) 0x9C, 0x60, (byte) 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5D, 0x81},
-            Arrays.asList(".cv"),
+            List.of(".cv"),
             Arrays.asList("VirtualizerStart", "VirtualizerEnd"),
             new PECharacteristics(true, true, true)));
 
@@ -111,7 +111,7 @@ public class ModernPackerDetector extends GhidraScript {
             "UPX",
             new byte[] {0x60, (byte) 0xBE, 0x00, 0x00, 0x00, 0x00, (byte) 0x8D, (byte) 0xBE},
             Arrays.asList("UPX0", "UPX1", "UPX2"),
-            Arrays.asList("UPX"),
+            List.of("UPX"),
             new PECharacteristics(false, false, true)));
 
     // PECompact
@@ -120,8 +120,8 @@ public class ModernPackerDetector extends GhidraScript {
         new PackerSignature(
             "PECompact",
             new byte[] {(byte) 0xB8, 0x00, 0x00, 0x00, 0x00, 0x50, 0x64, (byte) 0xFF, 0x35},
-            Arrays.asList(".pec2"),
-            Arrays.asList("PECompact"),
+            List.of(".pec2"),
+            List.of("PECompact"),
             new PECharacteristics(false, false, true)));
   }
 
@@ -937,10 +937,10 @@ public class ModernPackerDetector extends GhidraScript {
    * identification
    */
   private class MLPackerDetectionEngine {
-    private Map<String, Double> featureWeights = new HashMap<>();
-    private Map<String, List<String>> behavioralClusters = new HashMap<>();
-    private Map<Address, Double> suspicionScores = new HashMap<>();
-    private Map<String, Double> instructionPatternWeights = new HashMap<>();
+    private final Map<String, Double> featureWeights = new HashMap<>();
+    private final Map<String, List<String>> behavioralClusters = new HashMap<>();
+    private final Map<Address, Double> suspicionScores = new HashMap<>();
+    private final Map<String, Double> instructionPatternWeights = new HashMap<>();
 
     public MLPackerDetectionEngine() {
       initializeFeatureWeights();
@@ -1319,7 +1319,7 @@ public class ModernPackerDetector extends GhidraScript {
           jumpCount++;
         }
       }
-      return instructions.size() > 0 ? (double) jumpCount / instructions.size() : 0.0;
+      return !instructions.isEmpty() ? (double) jumpCount / instructions.size() : 0.0;
     }
 
     private double analyzeArithmeticChains(List<Instruction> instructions) {
@@ -1330,7 +1330,7 @@ public class ModernPackerDetector extends GhidraScript {
           arithmeticCount++;
         }
       }
-      return instructions.size() > 0 ? (double) arithmeticCount / instructions.size() : 0.0;
+      return !instructions.isEmpty() ? (double) arithmeticCount / instructions.size() : 0.0;
     }
 
     private double analyzeStackPatterns(List<Instruction> instructions) {
@@ -1341,7 +1341,7 @@ public class ModernPackerDetector extends GhidraScript {
           stackCount++;
         }
       }
-      return instructions.size() > 0 ? (double) stackCount / instructions.size() : 0.0;
+      return !instructions.isEmpty() ? (double) stackCount / instructions.size() : 0.0;
     }
 
     private double analyzeRegisterUsage(List<Instruction> instructions) {
@@ -1824,8 +1824,8 @@ public class ModernPackerDetector extends GhidraScript {
    * packing
    */
   private final class AdvancedObfuscationDetector {
-    private Map<String, Double> obfuscationScores = new HashMap<>();
-    private List<String> detectedTechniques = new ArrayList<>();
+    private final Map<String, Double> obfuscationScores = new HashMap<>();
+    private final List<String> detectedTechniques = new ArrayList<>();
 
     public List<PackerDetection> detectObfuscationTechniques(Program program) throws Exception {
       List<PackerDetection> detections = new ArrayList<>();
@@ -3037,7 +3037,7 @@ public class ModernPackerDetector extends GhidraScript {
     }
 
     private boolean hasHTTPCommunication(Program program) throws Exception {
-      return hasStringPattern(program, "http://")
+      return hasStringPattern(program, "https://")
           || hasStringPattern(program, "GET")
           || hasStringPattern(program, "POST")
           || hasAPIPattern(program, "HttpClient")
@@ -3251,9 +3251,8 @@ public class ModernPackerDetector extends GhidraScript {
           // Check if destination is in an executable section
           try {
             Object[] destOperands = instr.getOpObjects(0);
-            if (destOperands.length > 0 && destOperands[0] instanceof Address) {
-              Address destAddr = (Address) destOperands[0];
-              MemoryBlock block = currentProgram.getMemory().getBlock(destAddr);
+            if (destOperands.length > 0 && destOperands[0] instanceof Address destAddr) {
+                MemoryBlock block = currentProgram.getMemory().getBlock(destAddr);
               if (block != null && block.isExecute() && block.isWrite()) {
                 return true;
               }
@@ -3383,63 +3382,19 @@ public class ModernPackerDetector extends GhidraScript {
     return result.toString().trim();
   }
 
-  // Inner classes
-  private static class PackerSignature {
-    String name;
-    byte[] signature;
-    List<String> sectionNames;
-    List<String> importNames;
-    PECharacteristics characteristics;
-
-    PackerSignature(
-        String name,
-        byte[] signature,
-        List<String> sections,
-        List<String> imports,
-        PECharacteristics chars) {
-      this.name = name;
-      this.signature = signature;
-      this.sectionNames = sections;
-      this.importNames = imports;
-      this.characteristics = chars;
+    // Inner classes
+    private record PackerSignature(String name, byte[] signature, List<String> sectionNames, List<String> importNames,
+                                   PECharacteristics characteristics) {
     }
-  }
 
-  private static class PECharacteristics {
-    boolean hasAntiDebug;
-    boolean hasAntiVM;
-    boolean hasCompression;
-
-    PECharacteristics(boolean antiDebug, boolean antiVM, boolean compression) {
-      this.hasAntiDebug = antiDebug;
-      this.hasAntiVM = antiVM;
-      this.hasCompression = compression;
+    private record PECharacteristics(boolean hasAntiDebug, boolean hasAntiVM, boolean hasCompression) {
     }
-  }
 
-  private static class PackerDetection {
-    String packerName;
-    String reason;
-    double confidence;
-    String details;
-
-    PackerDetection(String name, String reason, double confidence, String details) {
-      this.packerName = name;
-      this.reason = reason;
-      this.confidence = confidence;
-      this.details = details;
+    private record PackerDetection(String packerName, String reason, double confidence, String details) {
     }
-  }
 
-  private static class PEAnomaly {
-    String description;
-    String severity;
-
-    PEAnomaly(String desc, String severity) {
-      this.description = desc;
-      this.severity = severity;
+    private record PEAnomaly(String description, String severity) {
     }
-  }
 
   /** Comprehensive analysis utilizing all imported components for complete functionality */
   private void analyzeWithUnusedImports() {
@@ -3754,7 +3709,7 @@ public class ModernPackerDetector extends GhidraScript {
               + String.format("%.1f%%", overallConfidence));
 
       // Enhanced packer detection summary
-      if (detectedPackers.size() > 0) {
+      if (!detectedPackers.isEmpty()) {
         println("      ✓ Enhanced Packer Detection Summary:");
         double maxConfidence =
             detectedPackers.stream()

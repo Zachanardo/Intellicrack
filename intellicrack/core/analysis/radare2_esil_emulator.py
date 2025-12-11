@@ -88,7 +88,7 @@ class ESILBreakpoint:
     condition: str | None = None
     hit_count: int = 0
     enabled: bool = True
-    callback: Callable | None = None
+    callback: Callable[["RadareESILEmulator", dict[str, Any]], None] | None = None
 
 
 class RadareESILEmulator:
@@ -163,10 +163,25 @@ class RadareESILEmulator:
         self.entry_point = 0
 
         self._lock = threading.RLock()
-        self._esil_hooks: dict[str, list[Callable]] = {}
+        self._esil_hooks: dict[str, list[Callable[..., Any]]] = {}
 
         self._initialize_session()
         self._setup_esil_vm()
+
+    @property
+    def _session(self) -> R2SessionWrapper:
+        """Get session with None check.
+
+        Returns:
+            Active session wrapper
+
+        Raises:
+            RuntimeError: If session not initialized
+
+        """
+        if self.session is None:
+            raise RuntimeError("Session not initialized")
+        return self.session
 
     def _initialize_session(self) -> None:
         """Initialize r2pipe session from pool or create new one.
@@ -196,16 +211,20 @@ class RadareESILEmulator:
                 if not self.session.connect():
                     raise RuntimeError("Failed to connect session")
 
-            self.session.execute("e io.va=true")
-            self.session.execute("e asm.esil=true")
-            self.session.execute("e esil.stack.addr=0x100000")
-            self.session.execute("e esil.stack.size=0x10000")
-            self.session.execute("e esil.fillstack=true")
-            self.session.execute("e esil.nonull=false")
+            self._session.execute("e io.va=true")
+            self._session.execute("e asm.esil=true")
+            self._session.execute("e esil.stack.addr=0x100000")
+            self._session.execute("e esil.stack.size=0x10000")
+            self._session.execute("e esil.fillstack=true")
+            self._session.execute("e esil.nonull=false")
 
-            info = self.session.execute("ij", expect_json=True)
-            self.arch = info.get("bin", {}).get("arch", "x86")
-            self.bits = info.get("bin", {}).get("bits", 64)
+            info = self._session.execute("ij", expect_json=True)
+            if isinstance(info, dict):
+                bin_info = info.get("bin", {})
+                if isinstance(bin_info, dict):
+                    self.arch = str(bin_info.get("arch", "x86"))
+                    bits_val = bin_info.get("bits", 64)
+                    self.bits = int(bits_val) if isinstance(bits_val, (int, float)) else 64
 
             logger.info(f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}")
 
@@ -221,25 +240,31 @@ class RadareESILEmulator:
 
         """
         try:
-            self.session.execute("aei")
-            self.session.execute("aeim")
-            self.session.execute("aeip")
+            self._session.execute("aei")
+            self._session.execute("aeim")
+            self._session.execute("aeip")
 
             self._initialize_registers()
             self._setup_memory_regions()
 
-            entry = self.session.execute("iej", expect_json=True)
-            if entry and isinstance(entry, list) and len(entry) > 0 and "vaddr" in entry[0]:
-                self.entry_point = entry[0]["vaddr"]
-                self.session.execute(f"s {self.entry_point}")
-                logger.debug(f"Set entry point to 0x{self.entry_point:x}")
+            entry = self._session.execute("iej", expect_json=True)
+            if isinstance(entry, list) and len(entry) > 0:
+                first_entry = entry[0]
+                if isinstance(first_entry, dict) and "vaddr" in first_entry:
+                    vaddr = first_entry["vaddr"]
+                    self.entry_point = int(vaddr) if isinstance(vaddr, (int, float)) else 0
+                    self._session.execute(f"s {self.entry_point}")
+                    logger.debug(f"Set entry point to 0x{self.entry_point:x}")
             else:
                 logger.warning("Could not determine entry point, using current address")
-                if pc_info := self.session.execute("drj", expect_json=True):
+                pc_info = self._session.execute("drj", expect_json=True)
+                if isinstance(pc_info, list):
                     for reg in pc_info:
-                        if reg.get("role") == "PC" or reg.get("name") in ["rip", "eip", "pc"]:
-                            self.entry_point = reg.get("value", 0)
-                            break
+                        if isinstance(reg, dict):
+                            if reg.get("role") == "PC" or reg.get("name") in {"rip", "eip", "pc"}:
+                                val = reg.get("value", 0)
+                                self.entry_point = int(val) if isinstance(val, (int, float)) else 0
+                                break
 
         except Exception as e:
             logger.error(f"Failed to setup ESIL VM: {e}")
@@ -253,18 +278,22 @@ class RadareESILEmulator:
 
         """
         try:
-            reg_info = self.session.execute("drrj", expect_json=True)
-            if not reg_info:
+            reg_info = self._session.execute("drrj", expect_json=True)
+            if not isinstance(reg_info, list) or not reg_info:
                 logger.warning("No register information available")
                 return
 
             for reg in reg_info:
+                if not isinstance(reg, dict):
+                    continue
                 name = reg.get("name", "")
-                if not name:
+                if not name or not isinstance(name, str):
                     continue
 
-                size = reg.get("size", 8)
-                value = reg.get("value", 0)
+                size_val = reg.get("size", 8)
+                size = int(size_val) if isinstance(size_val, (int, float)) else 8
+                value_val = reg.get("value", 0)
+                value = int(value_val) if isinstance(value_val, (int, float)) else 0
 
                 self.registers[name] = ESILRegister(
                     name=name,
@@ -286,23 +315,29 @@ class RadareESILEmulator:
 
         """
         try:
-            sections = self.session.execute("iSj", expect_json=True)
-            if not sections:
+            sections = self._session.execute("iSj", expect_json=True)
+            if not isinstance(sections, list) or not sections:
                 logger.warning("No section information available")
                 return
 
             for section in sections:
+                if not isinstance(section, dict):
+                    continue
                 perm = section.get("perm", "")
-                if "r" in perm:
-                    addr = section.get("vaddr", 0)
-                    size = section.get("vsize", 0)
-                    name = section.get("name", "section")
+                if not isinstance(perm, str) or "r" not in perm:
+                    continue
+                addr_val = section.get("vaddr", 0)
+                size_val = section.get("vsize", 0)
+                name_val = section.get("name", "section")
+                addr = int(addr_val) if isinstance(addr_val, (int, float)) else 0
+                size = int(size_val) if isinstance(size_val, (int, float)) else 0
+                name = str(name_val) if name_val else "section"
 
-                    if addr and size:
-                        self.session.execute(f"aeim {addr} {size} {name}")
-                        logger.debug(f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})")
+                if addr and size:
+                    self._session.execute(f"aeim {addr} {size} {name}")
+                    logger.debug(f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})")
 
-            self.session.execute("aeim 0x200000 0x100000 heap")
+            self._session.execute("aeim 0x200000 0x100000 heap")
             logger.debug("Mapped heap region at 0x200000")
 
         except Exception as e:
@@ -324,7 +359,9 @@ class RadareESILEmulator:
         """
         with self._lock:
             try:
-                result = self.session.execute(f"?v ${register}")
+                result = self._session.execute(f"?v ${register}")
+                if not isinstance(result, str):
+                    raise RuntimeError(f"Unexpected result type for register {register}")
                 return int(result.strip(), 0)
             except Exception as e:
                 logger.error(f"Failed to read register {register}: {e}")
@@ -353,9 +390,9 @@ class RadareESILEmulator:
                         symbolic=True,
                         constraints=[f"{sym_name} = {value}"],
                     )
-                    self.session.execute(f"dr {register}={sym_name}")
+                    self._session.execute(f"dr {register}={sym_name}")
                 else:
-                    self.session.execute(f"dr {register}={value}")
+                    self._session.execute(f"dr {register}={value}")
                     if register in self.registers:
                         self.registers[register].value = value if isinstance(value, int) else int(value)
                         self.registers[register].symbolic = False
@@ -382,7 +419,9 @@ class RadareESILEmulator:
         """
         with self._lock:
             try:
-                result = self.session.execute(f"p8 {size} @ {address}")
+                result = self._session.execute(f"p8 {size} @ {address}")
+                if not isinstance(result, str):
+                    raise RuntimeError(f"Unexpected result type for memory read at 0x{address:x}")
                 return bytes.fromhex(result.strip())
             except Exception as e:
                 logger.error(f"Failed to read memory at 0x{address:x}: {e}")
@@ -409,7 +448,7 @@ class RadareESILEmulator:
                         self.path_constraints.append(f"{sym_name} = {byte}")
 
                 hex_data = data.hex()
-                self.session.execute(f"wx {hex_data} @ {address}")
+                self._session.execute(f"wx {hex_data} @ {address}")
                 self.memory_map[address] = data
 
                 logger.debug(f"Wrote {len(data)} bytes to 0x{address:x} (symbolic={symbolic})")
@@ -422,7 +461,7 @@ class RadareESILEmulator:
         self,
         address: int,
         condition: str | None = None,
-        callback: Callable | None = None,
+        callback: Callable[["RadareESILEmulator", dict[str, Any]], None] | None = None,
     ) -> ESILBreakpoint:
         """Add conditional breakpoint with optional callback.
 
@@ -442,7 +481,7 @@ class RadareESILEmulator:
             try:
                 bp = ESILBreakpoint(address=address, condition=condition, callback=callback)
                 self.breakpoints[address] = bp
-                self.session.execute(f"db {address}")
+                self._session.execute(f"db {address}")
                 logger.debug(f"Added breakpoint at 0x{address:x}")
                 return bp
             except Exception as e:
@@ -460,12 +499,12 @@ class RadareESILEmulator:
             if address in self.breakpoints:
                 del self.breakpoints[address]
                 try:
-                    self.session.execute(f"db- {address}")
+                    self._session.execute(f"db- {address}")
                     logger.debug(f"Removed breakpoint at 0x{address:x}")
                 except Exception as e:
                     logger.warning(f"Failed to remove breakpoint: {e}")
 
-    def add_hook(self, hook_type: str, callback: Callable) -> None:
+    def add_hook(self, hook_type: str, callback: Callable[..., Any]) -> None:
         """Add ESIL operation hook.
 
         Args:
@@ -491,7 +530,7 @@ class RadareESILEmulator:
             self.taint_sources.append(address)
             try:
                 for i in range(size):
-                    self.session.execute(f"dte {address + i}")
+                    self._session.execute(f"dte {address + i}")
                 logger.debug(f"Added taint source at 0x{address:x} (size: {size})")
             except Exception as e:
                 logger.warning(f"Failed to set taint source: {e}")
@@ -509,32 +548,45 @@ class RadareESILEmulator:
         with self._lock:
             try:
                 prev_registers = self._get_register_state()
-                prev_pc_info = self.session.execute("drj", expect_json=True)
-                prev_pc = next(
-                    (r["value"] for r in prev_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
-                    0,
-                )
+                prev_pc_info = self._session.execute("drj", expect_json=True)
+                prev_pc = 0
+                if isinstance(prev_pc_info, list):
+                    for r in prev_pc_info:
+                        if isinstance(r, dict):
+                            if r.get("role") == "PC" or r.get("name") in {"rip", "eip", "pc"}:
+                                val = r.get("value", 0)
+                                prev_pc = int(val) if isinstance(val, (int, float)) else 0
+                                break
 
-                inst_info = self.session.execute("pdj 1", expect_json=True)
-                if not inst_info or len(inst_info) == 0:
+                inst_info = self._session.execute("pdj 1", expect_json=True)
+                if not isinstance(inst_info, list) or len(inst_info) == 0:
                     raise RuntimeError("No instruction at current address")
 
                 inst = inst_info[0]
-                inst_addr = inst.get("offset", 0)
-                inst_esil = inst.get("esil", "")
-                inst_opcode = inst.get("opcode", "")
+                if not isinstance(inst, dict):
+                    raise RuntimeError("Invalid instruction format")
+                offset_val = inst.get("offset", 0)
+                inst_addr = int(offset_val) if isinstance(offset_val, (int, float)) else 0
+                esil_val = inst.get("esil", "")
+                inst_esil = str(esil_val) if esil_val else ""
+                opcode_val = inst.get("opcode", "")
+                inst_opcode = str(opcode_val) if opcode_val else ""
 
-                self.session.execute("aes")
+                self._session.execute("aes")
                 self.instruction_count += 1
 
                 new_registers = self._get_register_state()
-                new_pc_info = self.session.execute("drj", expect_json=True)
-                new_pc = next(
-                    (r["value"] for r in new_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
-                    prev_pc,
-                )
+                new_pc_info = self._session.execute("drj", expect_json=True)
+                new_pc = prev_pc
+                if isinstance(new_pc_info, list):
+                    for r in new_pc_info:
+                        if isinstance(r, dict):
+                            if r.get("role") == "PC" or r.get("name") in {"rip", "eip", "pc"}:
+                                val = r.get("value", 0)
+                                new_pc = int(val) if isinstance(val, (int, float)) else prev_pc
+                                break
 
-                changed_regs = {}
+                changed_regs: dict[str, dict[str, int]] = {}
                 for reg, new_val in new_registers.items():
                     if reg in prev_registers and prev_registers[reg] != new_val:
                         changed_regs[reg] = {"old": prev_registers[reg], "new": new_val}
@@ -544,15 +596,17 @@ class RadareESILEmulator:
                 mem_accesses = self._get_memory_accesses(inst_esil, inst_addr, new_registers)
                 self.memory_accesses.extend(mem_accesses)
 
-                control_flow_change = None
-                if new_pc != prev_pc + inst.get("size", 4):
+                control_flow_change: dict[str, Any] | None = None
+                size_val = inst.get("size", 4)
+                inst_size = int(size_val) if isinstance(size_val, (int, float)) else 4
+                if new_pc != prev_pc + inst_size:
                     control_flow_change = {
                         "from": prev_pc,
                         "to": new_pc,
                         "type": self._determine_control_flow_type(inst_opcode),
                     }
 
-                if new_pc in self.breakpoints:
+                if isinstance(new_pc, int) and new_pc in self.breakpoints:
                     bp = self.breakpoints[new_pc]
                     bp.hit_count += 1
                     if bp.enabled and (not bp.condition or self._evaluate_condition(bp.condition)):
@@ -615,11 +669,17 @@ class RadareESILEmulator:
 
         """
         try:
-            reg_info = self.session.execute("drj", expect_json=True)
-            regs = {}
+            reg_info = self._session.execute("drj", expect_json=True)
+            regs: dict[str, int] = {}
+            if not isinstance(reg_info, list):
+                return regs
             for reg in reg_info:
-                if name := reg.get("name", ""):
-                    regs[name] = reg.get("value", 0)
+                if not isinstance(reg, dict):
+                    continue
+                name = reg.get("name", "")
+                if name and isinstance(name, str):
+                    val = reg.get("value", 0)
+                    regs[name] = int(val) if isinstance(val, (int, float)) else 0
             return regs
         except Exception as e:
             logger.warning(f"Failed to get register state: {e}")
@@ -636,7 +696,9 @@ class RadareESILEmulator:
 
         """
         try:
-            taint_info = self.session.execute(f"dtg {register}")
+            taint_info = self._session.execute(f"dtg {register}")
+            if not isinstance(taint_info, str):
+                return False
             return "tainted" in taint_info.lower()
         except Exception:
             return False
@@ -736,7 +798,9 @@ class RadareESILEmulator:
             pass
 
         try:
-            result = self.session.execute(f"?v {expr}")
+            result = self._session.execute(f"?v {expr}")
+            if not isinstance(result, str):
+                return None
             return int(result.strip(), 0)
         except Exception:
             return None
@@ -756,10 +820,9 @@ class RadareESILEmulator:
             condition = condition.replace(reg, str(val))
 
         try:
-            import ast
-
             node = ast.parse(condition, mode="eval")
-            return self._eval_node(node.body) if self._validate_ast_node(node) else False
+            result = self._eval_node(node.body) if self._validate_ast_node(node) else False
+            return bool(result)
         except Exception:
             return False
 
@@ -809,7 +872,7 @@ class RadareESILEmulator:
             for subnode in ast.walk(node)
         )
 
-    def _eval_node(self, node: ast.AST) -> int | float | str | bool:
+    def _eval_node(self, node: ast.AST) -> int | float | bool:
         """Evaluate the parsed AST manually instead of using eval.
 
         Args:
@@ -822,13 +885,24 @@ class RadareESILEmulator:
         if isinstance(node, ast.Expression):
             return self._eval_node(node.body)
         if isinstance(node, ast.Constant):
-            return node.value
+            val = node.value
+            if isinstance(val, bool):
+                return val
+            if isinstance(val, (int, float)):
+                return val
+            return 0
         if isinstance(node, ast.Num):
-            return node.n
+            val = node.n
+            if isinstance(val, (int, float)):
+                return val
+            return 0
         if isinstance(node, ast.Str):
-            return node.s
+            return 0
         if isinstance(node, ast.NameConstant):
-            return node.value
+            val = node.value
+            if isinstance(val, bool):
+                return val
+            return 0
         if isinstance(node, ast.Name):
             raise TypeError(f"Unexpected variable name: {node.id}")
         if isinstance(node, ast.BinOp):
@@ -849,8 +923,10 @@ class RadareESILEmulator:
             Operation result
 
         """
-        left = self._eval_node(node.left)
-        right = self._eval_node(node.right)
+        left_raw = self._eval_node(node.left)
+        right_raw = self._eval_node(node.right)
+        left: int | float = int(left_raw) if isinstance(left_raw, bool) else left_raw
+        right: int | float = int(right_raw) if isinstance(right_raw, bool) else right_raw
         if isinstance(node.op, ast.Add):
             return left + right
         if isinstance(node.op, ast.Sub):
@@ -864,14 +940,14 @@ class RadareESILEmulator:
         if isinstance(node.op, ast.Pow):
             return left**right
         if isinstance(node.op, ast.BitAnd):
-            return left & right
+            return int(left) & int(right)
         if isinstance(node.op, ast.BitOr):
-            return left | right
+            return int(left) | int(right)
         if isinstance(node.op, ast.BitXor):
-            return left ^ right
+            return int(left) ^ int(right)
         if isinstance(node.op, ast.LShift):
-            return left << right
-        return left >> right if isinstance(node.op, ast.RShift) else 0
+            return int(left) << int(right)
+        return int(left) >> int(right) if isinstance(node.op, ast.RShift) else 0
 
     def _eval_unaryop(self, node: ast.UnaryOp) -> int:
         """Evaluate unary operations.
@@ -883,7 +959,8 @@ class RadareESILEmulator:
             Operation result
 
         """
-        operand = self._eval_node(node.operand)
+        operand_raw = self._eval_node(node.operand)
+        operand = int(operand_raw) if isinstance(operand_raw, bool) else int(operand_raw)
         if isinstance(node.op, ast.UAdd):
             return +operand
         if isinstance(node.op, ast.USub):
@@ -900,10 +977,12 @@ class RadareESILEmulator:
             Comparison result
 
         """
-        left = self._eval_node(node.left)
+        left_raw = self._eval_node(node.left)
+        left: int | float = int(left_raw) if isinstance(left_raw, bool) else left_raw
         result = True
         for op, comparator in zip(node.ops, node.comparators, strict=False):
-            right = self._eval_node(comparator)
+            right_raw = self._eval_node(comparator)
+            right: int | float = int(right_raw) if isinstance(right_raw, bool) else right_raw
             if isinstance(op, ast.Eq):
                 result = result and (left == right)
             elif isinstance(op, ast.NotEq):
@@ -937,12 +1016,14 @@ class RadareESILEmulator:
             RuntimeError: If emulation fails
 
         """
-        trace = []
+        trace: list[dict[str, Any]] = []
         self.state = ESILState.RUNNING
 
         try:
             if isinstance(target, str):
-                result = self.session.execute(f"?v {target}")
+                result = self._session.execute(f"?v {target}")
+                if not isinstance(result, str):
+                    raise RuntimeError(f"Could not resolve target: {target}")
                 target_addr = int(result.strip(), 0)
             else:
                 target_addr = target
@@ -985,11 +1066,17 @@ class RadareESILEmulator:
                 return True
 
             try:
-                sections = self.session.execute("iSj", expect_json=True)
+                sections = self._session.execute("iSj", expect_json=True)
+                if not isinstance(sections, list):
+                    continue
                 mapped = False
                 for section in sections:
-                    start = section.get("vaddr", 0)
-                    end = start + section.get("vsize", 0)
+                    if not isinstance(section, dict):
+                        continue
+                    start_val = section.get("vaddr", 0)
+                    size_val = section.get("vsize", 0)
+                    start = int(start_val) if isinstance(start_val, (int, float)) else 0
+                    end = start + (int(size_val) if isinstance(size_val, (int, float)) else 0)
                     if start <= access.address < end:
                         mapped = True
                         break
@@ -1009,11 +1096,20 @@ class RadareESILEmulator:
             List of API call information
 
         """
-        api_calls = []
+        api_calls: list[dict[str, Any]] = []
 
         try:
-            imports = self.session.execute("iij", expect_json=True)
-            import_addrs = {imp.get("plt", 0): imp.get("name", "") for imp in imports}
+            imports = self._session.execute("iij", expect_json=True)
+            if not isinstance(imports, list):
+                return api_calls
+            import_addrs: dict[int, str] = {}
+            for imp in imports:
+                if isinstance(imp, dict):
+                    plt_val = imp.get("plt", 0)
+                    name_val = imp.get("name", "")
+                    plt = int(plt_val) if isinstance(plt_val, (int, float)) else 0
+                    name = str(name_val) if name_val else ""
+                    import_addrs[plt] = name
 
             api_calls.extend(
                 {
@@ -1040,7 +1136,7 @@ class RadareESILEmulator:
             List of argument values
 
         """
-        args = []
+        args: list[int] = []
         registers = self._get_register_state()
 
         if self.arch == "x86":
@@ -1077,7 +1173,7 @@ class RadareESILEmulator:
             List of potential license check locations
 
         """
-        license_patterns = []
+        license_patterns: list[dict[str, Any]] = []
         patterns = [
             "cmp.*0x.*",
             "test.*",
@@ -1087,32 +1183,38 @@ class RadareESILEmulator:
 
         try:
             for pattern in patterns:
-                matches = self.session.execute(f"/j {pattern}", expect_json=True)
-                if not matches:
+                matches = self._session.execute(f"/j {pattern}", expect_json=True)
+                if not isinstance(matches, list) or not matches:
                     continue
 
                 for match in matches:
-                    addr = match.get("offset", 0)
+                    if not isinstance(match, dict):
+                        continue
+                    addr_val = match.get("offset", 0)
+                    addr = int(addr_val) if isinstance(addr_val, (int, float)) else 0
                     if not addr:
                         continue
 
                     try:
-                        cfg = self.session.execute(f"agj @ {addr}", expect_json=True)
-                        if cfg and len(cfg) > 0:
-                            blocks = cfg[0].get("blocks", [])
-                            for block in blocks:
-                                if block.get("offset", 0) == addr:
-                                    jumps = block.get("jump", [])
-                                    if len(jumps) > 1:
-                                        license_patterns.append(
-                                            {
-                                                "address": addr,
-                                                "type": "conditional_branch",
-                                                "pattern": pattern,
-                                                "true_path": jumps[0],
-                                                "false_path": jumps[1] if len(jumps) > 1 else None,
-                                            }
-                                        )
+                        cfg = self._session.execute(f"agj @ {addr}", expect_json=True)
+                        if isinstance(cfg, list) and len(cfg) > 0:
+                            first_cfg = cfg[0]
+                            if isinstance(first_cfg, dict):
+                                blocks = first_cfg.get("blocks", [])
+                                if isinstance(blocks, list):
+                                    for block in blocks:
+                                        if isinstance(block, dict) and block.get("offset", 0) == addr:
+                                            jumps = block.get("jump", [])
+                                            if isinstance(jumps, list) and len(jumps) > 1:
+                                                license_patterns.append(
+                                                    {
+                                                        "address": addr,
+                                                        "type": "conditional_branch",
+                                                        "pattern": pattern,
+                                                        "true_path": jumps[0],
+                                                        "false_path": jumps[1] if len(jumps) > 1 else None,
+                                                    }
+                                                )
                     except Exception as e:
                         logger.debug(f"Failed to analyze license check pattern: {e}")
 
@@ -1222,12 +1324,12 @@ class RadareESILEmulator:
                 self.instruction_count = 0
                 self.cycle_count = 0
 
-                self.session.execute("aei")
-                self.session.execute("aeim")
-                self.session.execute("aeip")
+                self._session.execute("aei")
+                self._session.execute("aeim")
+                self._session.execute("aeip")
 
                 if self.entry_point:
-                    self.session.execute(f"s {self.entry_point}")
+                    self._session.execute(f"s {self.entry_point}")
 
                 self._initialize_registers()
 

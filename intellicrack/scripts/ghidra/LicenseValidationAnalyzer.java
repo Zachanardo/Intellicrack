@@ -23,7 +23,6 @@ import ghidra.program.util.*;
 import ghidra.util.exception.*;
 import java.io.*;
 import java.util.*;
-import java.util.regex.*;
 
 public class LicenseValidationAnalyzer extends GhidraScript {
 
@@ -38,8 +37,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   private static final Map<String, Double> CRYPTO_PATTERN_WEIGHTS = new HashMap<>();
 
   // Analysis results
-  private List<LicenseFunction> detectedFunctions = new ArrayList<>();
-  private Map<Address, Double> functionScores = new HashMap<>();
+  private final List<LicenseFunction> detectedFunctions = new ArrayList<>();
+  private final Map<Address, Double> functionScores = new HashMap<>();
   private DecompInterface decompiler;
 
   static {
@@ -654,10 +653,10 @@ public class LicenseValidationAnalyzer extends GhidraScript {
    * behavioral analysis for license validation detection
    */
   private class MLLicenseDetectionEngine {
-    private Map<String, Double> behavioralPatternWeights = new HashMap<>();
-    private Map<String, List<String>> semanticClusters = new HashMap<>();
-    private Map<Address, Double> suspicionScores = new HashMap<>();
-    private Map<String, Double> instructionSequenceWeights = new HashMap<>();
+    private final Map<String, Double> behavioralPatternWeights = new HashMap<>();
+    private final Map<String, List<String>> semanticClusters = new HashMap<>();
+    private final Map<Address, Double> suspicionScores = new HashMap<>();
+    private final Map<String, Double> instructionSequenceWeights = new HashMap<>();
 
     public MLLicenseDetectionEngine() {
       initializeBehavioralPatterns();
@@ -1464,8 +1463,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
    * sophisticated license validation mechanisms
    */
   private class BehavioralLicenseAnalyzer {
-    private Map<String, Double> behaviorSignatures = new HashMap<>();
-    private Map<Address, List<String>> functionBehaviors = new HashMap<>();
+    private final Map<String, Double> behaviorSignatures = new HashMap<>();
+    private final Map<Address, List<String>> functionBehaviors = new HashMap<>();
 
     public BehavioralLicenseAnalyzer() {
       initializeBehaviorSignatures();
@@ -1855,7 +1854,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         if (ref.getReferenceType().isCall()) {
           Function calledFunc = getFunctionAt(ref.getToAddress());
           if (calledFunc != null) {
-            maxDepth = Math.max(maxDepth, 1); // Simplified depth calculation
+            maxDepth = 1; // Simplified depth calculation
           }
         }
       }
@@ -1946,9 +1945,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
    * license validation functions
    */
   private class AntiAnalysisDetectionEngine {
-    private Map<String, Double> antiAnalysisSignatures = new HashMap<>();
-    private Set<String> packerSignatures = new HashSet<>();
-    private Set<String> obfuscationPatterns = new HashSet<>();
+    private final Map<String, Double> antiAnalysisSignatures = new HashMap<>();
+    private final Set<String> packerSignatures = new HashSet<>();
+    private final Set<String> obfuscationPatterns = new HashSet<>();
 
     public AntiAnalysisDetectionEngine() {
       initializeAntiAnalysisSignatures();
@@ -2691,9 +2690,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
    * Cloud License Detection Engine Specialized detection for modern cloud-based licensing systems
    */
   private class CloudLicenseDetectionEngine {
-    private Map<String, Double> cloudServicePatterns = new HashMap<>();
-    private Map<String, Double> oauthPatterns = new HashMap<>();
-    private Map<String, Double> jwtPatterns = new HashMap<>();
+    private final Map<String, Double> cloudServicePatterns = new HashMap<>();
+    private final Map<String, Double> oauthPatterns = new HashMap<>();
+    private final Map<String, Double> jwtPatterns = new HashMap<>();
 
     public CloudLicenseDetectionEngine() {
       initializeCloudServicePatterns();
@@ -3254,9 +3253,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     while (codeUnitIter.hasNext() && !monitor.isCancelled()) {
       CodeUnit codeUnit = codeUnitIter.next();
 
-      if (codeUnit instanceof Instruction) {
-        Instruction inst = (Instruction) codeUnit;
-        String mnemonic = inst.getMnemonicString().toLowerCase();
+      if (codeUnit instanceof Instruction inst) {
+          String mnemonic = inst.getMnemonicString().toLowerCase();
 
         // Check for license validation instruction patterns
         if (isLicenseValidationInstruction(inst)) {
@@ -3276,9 +3274,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         for (int i = 0; i < inst.getNumOperands(); i++) {
           Object[] opObjects = inst.getOpObjects(i);
           for (Object obj : opObjects) {
-            if (obj instanceof Data) {
-              Data data = (Data) obj;
-              if (data.hasStringValue()) {
+            if (obj instanceof Data data) {
+                if (data.hasStringValue()) {
                 String stringValue = data.getDefaultValueRepresentation();
                 if (isLicenseRelatedString(stringValue)) {
                   licenseRelatedCodeUnits++;
@@ -3287,9 +3284,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             }
           }
         }
-      } else if (codeUnit instanceof Data) {
-        Data data = (Data) codeUnit;
-        if (data.hasStringValue()) {
+      } else if (codeUnit instanceof Data data) {
+          if (data.hasStringValue()) {
           String stringValue = data.getDefaultValueRepresentation();
           if (isLicenseRelatedString(stringValue)) {
             licenseRelatedCodeUnits++;
@@ -3299,7 +3295,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       // Check for license-related comments
       String comment = codeUnit.getComment(CodeUnit.EOL_COMMENT);
-      if (comment != null && isLicenseRelatedString(comment)) {
+      if (isLicenseRelatedString(comment)) {
         licenseRelatedCodeUnits++;
       }
     }
@@ -3442,10 +3438,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     while (dataTypeIter.hasNext() && !monitor.isCancelled()) {
       DataType dataType = dataTypeIter.next();
 
-      if (dataType instanceof Structure) {
-        Structure structure = (Structure) dataType;
+      if (dataType instanceof Structure structure) {
 
-        // Analyze structure for license-related fields
+          // Analyze structure for license-related fields
         if (isLicenseRelatedStructure(structure)) {
           licenseStructures++;
           structurePatterns.merge("LicenseStructure", 1, Integer::sum);
@@ -3459,23 +3454,21 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             String fieldName = component.getFieldName();
             DataType componentType = component.getDataType();
 
-            if (fieldName != null && isLicenseRelatedString(fieldName)) {
+            if (isLicenseRelatedString(fieldName)) {
               structurePatterns.merge("LicenseField", 1, Integer::sum);
             }
 
             // Check for nested license structures
-            if (componentType instanceof Structure) {
-              Structure nestedStruct = (Structure) componentType;
-              if (isLicenseRelatedStructure(nestedStruct)) {
+            if (componentType instanceof Structure nestedStruct) {
+                if (isLicenseRelatedStructure(nestedStruct)) {
                 structurePatterns.merge("NestedLicenseStructure", 1, Integer::sum);
               }
             }
           }
         }
-      } else if (dataType instanceof Enum) {
-        Enum enumType = (Enum) dataType;
+      } else if (dataType instanceof Enum enumType) {
 
-        // Analyze enum for license-related values
+          // Analyze enum for license-related values
         if (isLicenseRelatedEnum(enumType)) {
           licenseEnums++;
           structurePatterns.merge("LicenseEnum", 1, Integer::sum);
@@ -3656,7 +3649,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           blockTypePatterns.merge("LicenseCodeProtection", 1, Integer::sum);
         } else if (!isExecutable && isWritable) {
           blockTypePatterns.merge("LicenseDataStorage", 1, Integer::sum);
-        } else if (isReadable && !isWritable && !isExecutable) {
+        } else if (isReadable && !isWritable) {
           blockTypePatterns.merge("LicenseConstants", 1, Integer::sum);
         }
 
@@ -3749,7 +3742,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       String line;
       while ((line = reader.readLine()) != null) {
-        if (!line.startsWith("#") && line.trim().length() > 0) {
+        if (!line.startsWith("#") && !line.trim().isEmpty()) {
           configWriter.write(line + "\n");
         }
       }
@@ -3783,7 +3776,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   private boolean hasLicenseOperands(Instruction inst) {
     for (int i = 0; i < inst.getNumOperands(); i++) {
       String operand = inst.getDefaultOperandRepresentation(i);
-      if (operand != null && isLicenseRelatedString(operand)) {
+      if (isLicenseRelatedString(operand)) {
         return true;
       }
     }
@@ -3841,7 +3834,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     DataTypeComponent[] components = structure.getDefinedComponents();
     for (DataTypeComponent component : components) {
       String fieldName = component.getFieldName();
-      if (fieldName != null && isLicenseRelatedString(fieldName)) {
+      if (isLicenseRelatedString(fieldName)) {
         return true;
       }
     }
@@ -3886,9 +3879,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     for (int i = 0; i < inst.getNumOperands(); i++) {
       Object[] objects = inst.getOpObjects(i);
       for (Object obj : objects) {
-        if (obj instanceof Register) {
-          Register reg = (Register) obj;
-          try {
+        if (obj instanceof Register reg) {
+            try {
             RegisterValue regValue =
                 currentProgram.getProgramContext().getRegisterValue(reg, inst.getAddress());
             if (regValue != null && regValue.hasValue()) {

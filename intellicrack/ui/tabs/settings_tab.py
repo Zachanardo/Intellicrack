@@ -23,7 +23,7 @@ import json
 import logging
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -61,7 +61,7 @@ class SettingsTab(BaseTab):
     settings_changed = pyqtSignal(str, object)
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, shared_context: Dict | None = None, parent: QWidget | None = None) -> None:
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize settings tab with application configuration and preferences.
 
         Args:

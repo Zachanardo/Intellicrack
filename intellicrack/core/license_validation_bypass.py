@@ -808,6 +808,68 @@ class LicenseValidationBypass:
 
         return None
 
+    def _read_openssl_bignum_10x(self, data: bytes) -> int | None:
+        """Read OpenSSL 1.0.x BIGNUM format (pointer-based storage).
+
+        OpenSSL 1.0.x uses a BIGNUM structure with pointer to dynamically
+        allocated data. The structure layout is:
+        - d: BN_ULONG* pointer to number data (8 bytes on x64)
+        - top: int number of BN_ULONGs used (4 bytes)
+        - dmax: int allocated size (4 bytes)
+        - neg: int sign flag (4 bytes)
+        - flags: int (4 bytes)
+
+        Args:
+            data: Raw bytes containing the BIGNUM structure.
+
+        Returns:
+            Integer value of the BIGNUM, or None if parsing fails.
+
+        """
+        try:
+            if len(data) < 24:
+                return None
+
+            d_ptr = struct.unpack("<Q", data[:8])[0]
+
+            top = struct.unpack("<I", data[8:12])[0]
+            if top == 0 or top > 256:
+                return None
+
+            struct.unpack("<I", data[12:16])[0]
+
+            neg = struct.unpack("<I", data[16:20])[0]
+
+            if d_ptr == 0:
+                return 0
+
+            num_offset = 24
+            if num_offset + (top * 8) > len(data):
+                num_offset = 0
+                if num_offset + (top * 8) > len(data):
+                    return None
+
+            num_bytes = []
+            for i in range(top):
+                word_offset = num_offset + (i * 8)
+                if word_offset + 8 > len(data):
+                    break
+                word = struct.unpack("<Q", data[word_offset:word_offset + 8])[0]
+                num_bytes.extend(word.to_bytes(8, "little"))
+
+            while num_bytes and num_bytes[-1] == 0:
+                num_bytes.pop()
+
+            if not num_bytes:
+                return 0
+
+            value = int.from_bytes(bytes(num_bytes), "little")
+            return value if neg == 0 else -value
+
+        except (struct.error, ValueError, IndexError) as e:
+            logger.debug(f"OpenSSL 1.0.x BIGNUM reading failed: {e}")
+            return None
+
     def _read_openssl_bignum_11x(self, data: bytes) -> int | None:
         """Read OpenSSL 1.1.x BIGNUM format (inline storage)."""
         try:

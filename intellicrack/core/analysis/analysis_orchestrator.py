@@ -22,6 +22,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -30,6 +31,9 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
+
+
+logger = logging.getLogger(__name__)
 
 from ...ai.qemu_manager import QEMUManager
 from ...utils.tools.ghidra_script_manager import GhidraScriptManager
@@ -101,31 +105,58 @@ class AnalysisOrchestrator(QObject):
     #: Signal emitted when analysis is completed (type: OrchestrationResult)
     analysis_completed = pyqtSignal(OrchestrationResult)
 
-    def __init__(self) -> None:
+    def __init__(self, binary_path: str | None = None) -> None:
         """Initialize the analysis orchestrator.
 
         Sets up all analysis engines including binary analyzer, entropy analyzer,
         multi-format analyzer, dynamic analyzer, vulnerability engine, YARA pattern
         engine, and radare2 integration for comprehensive binary analysis orchestration.
+
+        Args:
+            binary_path: Optional path to the binary file to analyze. If provided,
+                the orchestrator will use this path when orchestrate() is called.
+
         """
         super().__init__()
 
-        # Initialize analyzers (some will be created lazily)
+        self.binary_path = binary_path
+
         self.binary_analyzer = BinaryAnalyzer()
         self.entropy_analyzer = EntropyAnalyzer()
         self.multi_format_analyzer = MultiFormatAnalyzer()
-        self.dynamic_analyzer = None  # Will be created when binary_path is available
+        self.dynamic_analyzer = None
         self.vulnerability_engine = VulnerabilityEngine()
         self.yara_engine = YaraPatternEngine()
-        self.radare2 = None  # Will be created when binary_path is available
+        self.radare2 = None
 
-        # Initialize Ghidra integration components
         self.ghidra_script_manager = GhidraScriptManager()
-        self.qemu_manager = None  # Initialized on demand to avoid resource overhead
+        self.qemu_manager = None
 
-        # Analysis configuration
         self.enabled_phases = list(AnalysisPhase)
-        self.timeout_per_phase = 300  # 5 minutes per phase
+        self.timeout_per_phase = 300
+
+    def orchestrate(self) -> OrchestrationResult:
+        """Execute orchestrated analysis using the configured binary path.
+
+        This method runs the complete analysis pipeline on the binary file
+        specified during initialization or via the binary_path attribute.
+        It coordinates all enabled analysis phases and collects results.
+
+        Returns:
+            OrchestrationResult containing all analysis data, including
+            completed phases, results, errors, and warnings.
+
+        """
+        if not self.binary_path:
+            result = OrchestrationResult(binary_path="", success=False)
+            result.add_error(
+                AnalysisPhase.PREPARATION,
+                "No binary path configured. Set binary_path before calling orchestrate().",
+            )
+            self.analysis_completed.emit(result)
+            return result
+
+        return self.analyze_binary(self.binary_path, self.enabled_phases)
 
     def analyze_binary(self, binary_path: str, phases: list[AnalysisPhase] | None = None) -> OrchestrationResult:
         """Perform orchestrated analysis on a binary.

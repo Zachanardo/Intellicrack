@@ -1412,6 +1412,42 @@ class R2ImportExportAnalyzer:
 
         return xrefs
 
+    def get_imports(self) -> dict[str, Any]:
+        """Get imports in a simplified format for compatibility.
+
+        Returns:
+            Dictionary containing imports list with normalized structure.
+
+        """
+        try:
+            with r2_session(self.binary_path, self.radare2_path) as r2:
+                raw_imports = r2._execute_command("iij", expect_json=True)
+
+                if not isinstance(raw_imports, list):
+                    return {"imports": [], "error": "Failed to retrieve imports"}
+
+                normalized_imports = []
+                for imp in raw_imports:
+                    normalized_import = {
+                        "name": imp.get("name", ""),
+                        "plt": imp.get("plt", 0),
+                        "addr": imp.get("addr", imp.get("plt", 0)),
+                        "ordinal": imp.get("ordinal", 0),
+                        "libname": imp.get("libname", ""),
+                        "type": imp.get("type", ""),
+                        "bind": imp.get("bind", ""),
+                    }
+                    normalized_imports.append(normalized_import)
+
+                return {
+                    "imports": normalized_imports,
+                    "total_count": len(normalized_imports),
+                    "binary_path": self.binary_path,
+                }
+        except R2Exception as e:
+            self.logger.error(f"Failed to get imports: {e}")
+            return {"imports": [], "error": str(e)}
+
 
 def analyze_binary_imports_exports(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Perform comprehensive import/export analysis on a binary.

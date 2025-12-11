@@ -745,6 +745,143 @@ class LicenseDebugger:
             logger.exception(f"An unexpected error occurred while hooking API {module_name}!{function_name}: {e}")
             return False
 
+    def hook_api(self, address: int, hook_handler: Callable[[object, object], None]) -> bool:
+        """Install a hook at a specific memory address."""
+        if not self.process_handle:
+            logger.error("Cannot hook API: no process attached")
+            return False
+        if address <= 0:
+            logger.error(f"Invalid address for hook: {address}")
+            return False
+        try:
+            if address in self.api_hooks:
+                logger.warning(f"Hook already exists at 0x{address:X}")
+                return True
+            if not self.set_breakpoint(address, hook_handler, f"API Hook at 0x{address:X}"):
+                logger.error(f"Failed to set breakpoint for hook at 0x{address:X}")
+                return False
+            self.api_hooks[address] = {
+                "module": "unknown",
+                "function": f"hook_0x{address:X}",
+                "callback": hook_handler,
+                "address": address,
+            }
+            logger.info(f"Successfully installed hook at 0x{address:X}")
+            return True
+        except Exception as e:
+            logger.exception(f"Failed to install hook at 0x{address:X}: {e}")
+            return False
+
+    def analyze_pe_header(self) -> dict[str, Any] | None:
+        """Analyze the PE header of the attached process main module."""
+        if not self.process_handle:
+            logger.error("Cannot analyze PE header: no process attached")
+            return None
+        try:
+            base_address = self._get_process_base_address()
+            if not base_address:
+                return None
+            dos_header = self._read_memory(base_address, 64)
+            if not dos_header or dos_header[:2] != b"MZ":
+                return None
+            e_lfanew = struct.unpack_from("<I", dos_header, 0x3C)[0]
+            pe_header_offset = base_address + e_lfanew
+            pe_signature = self._read_memory(pe_header_offset, 4)
+            if not pe_signature or pe_signature != b"PE\x00\x00":
+                return None
+            coff_header = self._read_memory(pe_header_offset + 4, 20)
+            if not coff_header:
+                return None
+            machine = struct.unpack_from("<H", coff_header, 0)[0]
+            section_count = struct.unpack_from("<H", coff_header, 2)[0]
+            opt_hdr_size = struct.unpack_from("<H", coff_header, 16)[0]
+            is_64bit = machine == 0x8664
+            opt_hdr_offset = pe_header_offset + 24
+            optional_header = self._read_memory(opt_hdr_offset, opt_hdr_size)
+            if not optional_header:
+                return None
+            if is_64bit:
+                entry_rva = struct.unpack_from("<I", optional_header, 16)[0]
+                image_base = struct.unpack_from("<Q", optional_header, 24)[0]
+                checksum = struct.unpack_from("<I", optional_header, 64)[0]
+                subsystem = struct.unpack_from("<H", optional_header, 68)[0]
+                data_dir_off = 112
+            else:
+                entry_rva = struct.unpack_from("<I", optional_header, 16)[0]
+                image_base = struct.unpack_from("<I", optional_header, 28)[0]
+                checksum = struct.unpack_from("<I", optional_header, 64)[0]
+                subsystem = struct.unpack_from("<H", optional_header, 68)[0]
+                data_dir_off = 96
+            num_dirs = struct.unpack_from("<I", optional_header, data_dir_off - 4)[0]
+            import_rva = struct.unpack_from("<I", optional_header, data_dir_off)[0] if num_dirs > 1 else 0
+            tls_rva = 0
+            tls_size = 0
+            if num_dirs > 9:
+                tls_rva = struct.unpack_from("<I", optional_header, data_dir_off + 72)[0]
+                tls_size = struct.unpack_from("<I", optional_header, data_dir_off + 76)[0]
+            sections = []
+            sec_hdr_off = opt_hdr_offset + opt_hdr_size
+            for i in range(section_count):
+                sec_data = self._read_memory(sec_hdr_off + (i * 40), 40)
+                if sec_data:
+                    sections.append({
+                        "name": sec_data[:8].rstrip(b"\x00").decode("ascii", errors="ignore"),
+                        "virtual_address": struct.unpack_from("<I", sec_data, 12)[0],
+                        "virtual_size": struct.unpack_from("<I", sec_data, 8)[0],
+                        "raw_size": struct.unpack_from("<I", sec_data, 16)[0],
+                        "characteristics": struct.unpack_from("<I", sec_data, 36)[0],
+                    })
+            tls_callbacks: list[int] = []
+            if tls_rva > 0 and tls_size > 0:
+                ptr_size = 8 if is_64bit else 4
+                ptr_off = 24 if is_64bit else 12
+                tls_dir = self._read_memory(base_address + tls_rva, 40 if is_64bit else 24)
+                if tls_dir and len(tls_dir) >= ptr_off + ptr_size:
+                    fmt = "<Q" if is_64bit else "<I"
+                    cb_ptr = struct.unpack_from(fmt, tls_dir, ptr_off)[0]
+                    if cb_ptr:
+                        for idx in range(64):
+                            cb_data = self._read_memory(cb_ptr + (idx * ptr_size), ptr_size)
+                            if not cb_data:
+                                break
+                            cb_addr = struct.unpack(fmt, cb_data)[0]
+                            if cb_addr == 0:
+                                break
+                            tls_callbacks.append(cb_addr)
+            return {
+                "image_base": image_base,
+                "entry_point": base_address + entry_rva,
+                "section_count": section_count,
+                "sections": sections,
+                "tls_callbacks": tls_callbacks,
+                "import_directory_rva": import_rva,
+                "has_tls": len(tls_callbacks) > 0,
+                "is_64bit": is_64bit,
+                "checksum": checksum,
+                "subsystem": subsystem,
+                "base_address": base_address,
+            }
+        except Exception as e:
+            logger.exception(f"Failed to analyze PE header: {e}")
+            return None
+
+    def _get_process_base_address(self) -> int | None:
+        """Get the base address of the main module."""
+        if not self.process_handle or not self.process_id:
+            return None
+        try:
+            psapi = ctypes.WinDLL("psapi", use_last_error=True)
+            hmod = (ctypes.c_void_p * 1024)()
+            cb_needed = wintypes.DWORD()
+            if psapi.EnumProcessModules(
+                self.process_handle, ctypes.byref(hmod), ctypes.sizeof(hmod), ctypes.byref(cb_needed)
+            ):
+                return hmod[0]
+            return None
+        except Exception as e:
+            logger.exception(f"Failed to get process base address: {e}")
+            return None
+
     def _debug_loop(self) -> None:
         """Run main debugging event loop."""
         debug_event = DEBUG_EVENT()

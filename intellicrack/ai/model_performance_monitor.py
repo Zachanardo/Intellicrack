@@ -440,6 +440,108 @@ class ModelPerformanceMonitor:
         if len(history) % 10 == 0:
             self._save_benchmarks()
 
+    def get_stats(self, model_name: str) -> dict[str, Any]:
+        """Get performance statistics for a specific model.
+
+        This provides a simplified interface for retrieving model performance stats,
+        commonly used by the AIModelManager.
+
+        Args:
+            model_name: The model name/identifier to get stats for
+
+        Returns:
+            Dictionary containing performance statistics including:
+            - total_inferences: Number of inferences performed
+            - avg_tokens_per_second: Average throughput
+            - avg_latency: Average inference time in seconds
+            - error_rate: Percentage of failed inferences
+            - memory_usage_mb: Average memory consumption
+            - last_inference_time: Timestamp of most recent inference
+
+        """
+        if model_name not in self.metrics_history:
+            return {
+                "model_name": model_name,
+                "status": "no_data",
+                "message": "No performance data recorded for this model",
+                "total_inferences": 0,
+            }
+
+        history = list(self.metrics_history[model_name])
+        if not history:
+            return {
+                "model_name": model_name,
+                "status": "empty",
+                "message": "Metrics history is empty",
+                "total_inferences": 0,
+            }
+
+        successful_inferences = [m for m in history if m.error is None]
+        failed_inferences = [m for m in history if m.error is not None]
+
+        tokens_per_second = [m.tokens_per_second for m in successful_inferences]
+        inference_times = [m.inference_time for m in successful_inferences]
+        memory_usage = [m.memory_used_mb + m.gpu_memory_mb for m in history]
+
+        def safe_mean(values: list[float]) -> float:
+            if not values:
+                return 0.0
+            if HAS_NUMPY and np is not None:
+                return float(np.mean(values))
+            return sum(values) / len(values)
+
+        def safe_percentile(values: list[float], percentile: float) -> float:
+            if not values:
+                return 0.0
+            sorted_vals = sorted(values)
+            idx = int(len(sorted_vals) * percentile)
+            return sorted_vals[min(idx, len(sorted_vals) - 1)]
+
+        benchmark = self.benchmarks.get(model_name)
+        latest = history[-1]
+
+        stats: dict[str, Any] = {
+            "model_name": model_name,
+            "status": "active",
+            "total_inferences": len(history),
+            "successful_inferences": len(successful_inferences),
+            "failed_inferences": len(failed_inferences),
+            "error_rate": len(failed_inferences) / len(history) if history else 0.0,
+            "performance": {
+                "avg_tokens_per_second": safe_mean(tokens_per_second),
+                "avg_latency_seconds": safe_mean(inference_times),
+                "p50_latency": safe_percentile(inference_times, 0.50),
+                "p95_latency": safe_percentile(inference_times, 0.95),
+                "p99_latency": safe_percentile(inference_times, 0.99),
+                "min_latency": min(inference_times) if inference_times else 0.0,
+                "max_latency": max(inference_times) if inference_times else 0.0,
+            },
+            "resource_usage": {
+                "avg_memory_mb": safe_mean(memory_usage),
+                "avg_cpu_percent": safe_mean([m.cpu_percent for m in history]),
+                "avg_gpu_percent": safe_mean([m.gpu_percent for m in history]),
+            },
+            "latest": {
+                "timestamp": latest.timestamp.isoformat(),
+                "inference_time": latest.inference_time,
+                "tokens_per_second": latest.tokens_per_second,
+                "tokens_generated": latest.tokens_generated,
+                "device": latest.device,
+                "quantization": latest.quantization,
+            },
+        }
+
+        if benchmark:
+            stats["benchmark"] = {
+                "avg_tokens_per_second": benchmark.avg_tokens_per_second,
+                "avg_inference_time": benchmark.avg_inference_time,
+                "avg_memory_mb": benchmark.avg_memory_mb,
+                "total_tokens_generated": benchmark.total_tokens,
+                "benchmark_date": benchmark.benchmark_date.isoformat(),
+            }
+
+        return stats
+
     def get_metrics_summary(self, model_id: str) -> dict[str, Any]:
         """Get summary metrics for a model.
 

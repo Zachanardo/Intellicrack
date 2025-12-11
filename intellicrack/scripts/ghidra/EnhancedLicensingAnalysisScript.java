@@ -20,11 +20,11 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
   private FunctionManager functionManager;
   private SymbolTable symbolTable;
   private ReferenceManager referenceManager;
-  private Map<String, Set<Function>> licenseSymbolMap = new HashMap<>();
-  private Map<AddressSpace, AddressSet> addressSpaceAnalysis = new HashMap<>();
-  private Set<CodeUnit> licenseCodeUnits = new HashSet<>();
-  private Map<String, List<Address>> licensePatternMap = new HashMap<>();
-  private Set<Address> highConfidenceLicenseCode = new HashSet<>();
+  private final Map<String, Set<Function>> licenseSymbolMap = new HashMap<>();
+  private final Map<AddressSpace, AddressSet> addressSpaceAnalysis = new HashMap<>();
+  private final Set<CodeUnit> licenseCodeUnits = new HashSet<>();
+  private final Map<String, List<Address>> licensePatternMap = new HashMap<>();
+  private final Set<Address> highConfidenceLicenseCode = new HashSet<>();
 
   @Override
   public void run() throws Exception {
@@ -183,7 +183,7 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
         if (val instanceof String) {
           sb.append("\"").append(val.toString().replace("\"", "\\\"")).append("\"");
         } else if (val instanceof List) {
-          sb.append(val.toString());
+          sb.append(val);
         } else {
           sb.append(val);
         }

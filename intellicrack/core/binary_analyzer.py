@@ -32,6 +32,8 @@ from pathlib import Path
 from typing import Any
 
 
+logger = logging.getLogger(__name__)
+
 try:
     from .analysis.multi_format_analyzer import BinaryInfo, MultiFormatBinaryAnalyzer
 except ImportError:
@@ -106,7 +108,6 @@ except ImportError:
 from ..utils.logger import log_all_methods
 
 
-logger = logging.getLogger(__name__)
 logger.debug("Binary analyzer module loaded")
 
 

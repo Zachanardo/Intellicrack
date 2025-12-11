@@ -173,7 +173,7 @@ else:
 
             HAS_TORCH = True
             TORCH_AVAILABLE = True
-            TORCH_VERSION = torch_temp.__version__
+            TORCH_VERSION = torch.__version__
             logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
         else:
             error_msg = "PyTorch import failed"

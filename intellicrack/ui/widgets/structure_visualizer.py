@@ -337,6 +337,277 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
+    def _build_macho_tree(self) -> None:
+        """Build Mach-O structure tree for macOS/iOS binaries."""
+        root = QTreeWidgetItem(self.tree_view, ["Mach-O Structure"])
+
+        if "macho_header" in self.structure_data:
+            header_item = QTreeWidgetItem(root, ["Mach-O Header"])
+            header_data = self.structure_data["macho_header"]
+
+            magic = header_data.get("magic", 0)
+            magic_str = self._get_macho_magic_name(magic)
+            QTreeWidgetItem(header_item, ["Magic", f"0x{magic:08X} ({magic_str})"])
+
+            cpu_type = header_data.get("cpu_type", 0)
+            cpu_name = self._get_macho_cpu_name(cpu_type)
+            QTreeWidgetItem(header_item, ["CPU Type", f"0x{cpu_type:08X} ({cpu_name})"])
+
+            cpu_subtype = header_data.get("cpu_subtype", 0)
+            QTreeWidgetItem(header_item, ["CPU Subtype", f"0x{cpu_subtype:08X}"])
+
+            file_type = header_data.get("file_type", 0)
+            file_type_name = self._get_macho_file_type(file_type)
+            QTreeWidgetItem(header_item, ["File Type", f"{file_type} ({file_type_name})"])
+
+            QTreeWidgetItem(header_item, ["Number of Load Commands", str(header_data.get("ncmds", 0))])
+            QTreeWidgetItem(header_item, ["Size of Load Commands", f"0x{header_data.get('sizeofcmds', 0):08X}"])
+
+            flags = header_data.get("flags", 0)
+            QTreeWidgetItem(header_item, ["Flags", f"0x{flags:08X}"])
+
+            flags_item = QTreeWidgetItem(header_item, ["Flag Details"])
+            self._add_macho_flags(flags_item, flags)
+
+        if "load_commands" in self.structure_data:
+            lc_root = QTreeWidgetItem(root, ["Load Commands"])
+
+            for i, cmd in enumerate(self.structure_data["load_commands"]):
+                cmd_type = cmd.get("cmd", 0)
+                cmd_name = cmd.get("cmd_name", self._get_macho_load_cmd_name(cmd_type))
+                cmd_item = QTreeWidgetItem(lc_root, [f"[{i}] {cmd_name}"])
+
+                QTreeWidgetItem(cmd_item, ["Command", f"0x{cmd_type:08X}"])
+                QTreeWidgetItem(cmd_item, ["Size", f"0x{cmd.get('cmdsize', 0):08X}"])
+
+                if cmd_name in ("LC_SEGMENT", "LC_SEGMENT_64"):
+                    seg_name = cmd.get("segname", "")
+                    QTreeWidgetItem(cmd_item, ["Segment Name", seg_name])
+                    QTreeWidgetItem(cmd_item, ["VM Address", f"0x{cmd.get('vmaddr', 0):016X}"])
+                    QTreeWidgetItem(cmd_item, ["VM Size", f"0x{cmd.get('vmsize', 0):016X}"])
+                    QTreeWidgetItem(cmd_item, ["File Offset", f"0x{cmd.get('fileoff', 0):016X}"])
+                    QTreeWidgetItem(cmd_item, ["File Size", f"0x{cmd.get('filesize', 0):016X}"])
+
+                    if "sections" in cmd:
+                        sections_item = QTreeWidgetItem(cmd_item, ["Sections"])
+                        for section in cmd["sections"]:
+                            sec_name = section.get("sectname", "Unknown")
+                            sec_item = QTreeWidgetItem(sections_item, [sec_name])
+                            QTreeWidgetItem(sec_item, ["Address", f"0x{section.get('addr', 0):016X}"])
+                            QTreeWidgetItem(sec_item, ["Size", f"0x{section.get('size', 0):016X}"])
+                            QTreeWidgetItem(sec_item, ["Offset", f"0x{section.get('offset', 0):08X}"])
+
+                elif cmd_name == "LC_UUID":
+                    uuid_bytes = cmd.get("uuid", b"")
+                    if isinstance(uuid_bytes, bytes):
+                        uuid_str = uuid_bytes.hex()
+                    else:
+                        uuid_str = str(uuid_bytes)
+                    QTreeWidgetItem(cmd_item, ["UUID", uuid_str])
+
+                elif cmd_name in ("LC_DYLIB", "LC_LOAD_DYLIB", "LC_LOAD_WEAK_DYLIB", "LC_REEXPORT_DYLIB"):
+                    QTreeWidgetItem(cmd_item, ["Library", cmd.get("name", "")])
+                    QTreeWidgetItem(cmd_item, ["Version", cmd.get("current_version", "")])
+                    QTreeWidgetItem(cmd_item, ["Compatibility", cmd.get("compatibility_version", "")])
+
+                elif cmd_name == "LC_MAIN":
+                    QTreeWidgetItem(cmd_item, ["Entry Offset", f"0x{cmd.get('entryoff', 0):016X}"])
+                    QTreeWidgetItem(cmd_item, ["Stack Size", f"0x{cmd.get('stacksize', 0):016X}"])
+
+                elif cmd_name == "LC_CODE_SIGNATURE":
+                    QTreeWidgetItem(cmd_item, ["Data Offset", f"0x{cmd.get('dataoff', 0):08X}"])
+                    QTreeWidgetItem(cmd_item, ["Data Size", f"0x{cmd.get('datasize', 0):08X}"])
+
+        if "sections" in self.structure_data:
+            sections_item = QTreeWidgetItem(root, ["Sections"])
+
+            for section in self.structure_data["sections"]:
+                section_name = section.get("name", section.get("sectname", "Unknown"))
+                segment_name = section.get("segment", section.get("segname", ""))
+                display_name = f"{segment_name},{section_name}" if segment_name else section_name
+
+                section_item = QTreeWidgetItem(sections_item, [display_name])
+
+                QTreeWidgetItem(section_item, ["Address", f"0x{section.get('addr', section.get('virtual_address', 0)):016X}"])
+                QTreeWidgetItem(section_item, ["Size", f"0x{section.get('size', section.get('virtual_size', 0)):016X}"])
+                QTreeWidgetItem(section_item, ["Offset", f"0x{section.get('offset', section.get('raw_address', 0)):08X}"])
+                QTreeWidgetItem(section_item, ["Align", str(section.get("align", 0))])
+
+                if self.highlight_suspicious_cb.isChecked() and self._is_suspicious_section(section):
+                    section_item.setForeground(0, QBrush(QColor(255, 100, 100)))
+
+        if "dylibs" in self.structure_data or "libraries" in self.structure_data:
+            libs = self.structure_data.get("dylibs", self.structure_data.get("libraries", []))
+            if libs:
+                libs_item = QTreeWidgetItem(root, ["Dynamic Libraries"])
+                for lib in libs:
+                    if isinstance(lib, dict):
+                        lib_name = lib.get("name", lib.get("path", "Unknown"))
+                    else:
+                        lib_name = str(lib)
+                    QTreeWidgetItem(libs_item, [lib_name])
+
+        if "symbols" in self.structure_data:
+            symbols = self.structure_data["symbols"]
+            if symbols:
+                symbols_item = QTreeWidgetItem(root, [f"Symbols ({len(symbols)})"])
+                for sym in symbols[:100]:
+                    if isinstance(sym, dict):
+                        sym_name = sym.get("name", "Unknown")
+                        sym_addr = sym.get("address", sym.get("value", 0))
+                        sym_item = QTreeWidgetItem(symbols_item, [sym_name])
+                        QTreeWidgetItem(sym_item, ["Address", f"0x{sym_addr:016X}"])
+                    else:
+                        QTreeWidgetItem(symbols_item, [str(sym)])
+
+                if len(symbols) > 100:
+                    QTreeWidgetItem(symbols_item, [f"... and {len(symbols) - 100} more symbols"])
+
+        self.tree_view.expandAll()
+
+    def _get_macho_magic_name(self, magic: int) -> str:
+        """Get Mach-O magic number name."""
+        magic_names = {
+            0xFEEDFACE: "MH_MAGIC (32-bit)",
+            0xCEFAEDFE: "MH_CIGAM (32-bit, swapped)",
+            0xFEEDFACF: "MH_MAGIC_64 (64-bit)",
+            0xCFFAEDFE: "MH_CIGAM_64 (64-bit, swapped)",
+            0xCAFEBABE: "FAT_MAGIC (Universal)",
+            0xBEBAFECA: "FAT_CIGAM (Universal, swapped)",
+        }
+        return magic_names.get(magic, "Unknown")
+
+    def _get_macho_cpu_name(self, cpu_type: int) -> str:
+        """Get Mach-O CPU type name."""
+        cpu_names = {
+            1: "VAX",
+            6: "MC680x0",
+            7: "x86",
+            0x01000007: "x86_64",
+            10: "MC98000",
+            11: "HPPA",
+            12: "ARM",
+            0x0100000C: "ARM64",
+            13: "MC88000",
+            14: "SPARC",
+            15: "i860",
+            18: "PowerPC",
+            0x01000012: "PowerPC64",
+        }
+        return cpu_names.get(cpu_type, f"Unknown (0x{cpu_type:X})")
+
+    def _get_macho_file_type(self, file_type: int) -> str:
+        """Get Mach-O file type name."""
+        file_types = {
+            1: "MH_OBJECT",
+            2: "MH_EXECUTE",
+            3: "MH_FVMLIB",
+            4: "MH_CORE",
+            5: "MH_PRELOAD",
+            6: "MH_DYLIB",
+            7: "MH_DYLINKER",
+            8: "MH_BUNDLE",
+            9: "MH_DYLIB_INTERFACE",
+            10: "MH_DSYM",
+            11: "MH_KEXT_BUNDLE",
+            12: "MH_FILESET",
+        }
+        return file_types.get(file_type, f"Unknown ({file_type})")
+
+    def _get_macho_load_cmd_name(self, cmd: int) -> str:
+        """Get Mach-O load command name."""
+        cmd_names = {
+            0x1: "LC_SEGMENT",
+            0x2: "LC_SYMTAB",
+            0x3: "LC_SYMSEG",
+            0x4: "LC_THREAD",
+            0x5: "LC_UNIXTHREAD",
+            0x6: "LC_LOADFVMLIB",
+            0x7: "LC_IDFVMLIB",
+            0x8: "LC_IDENT",
+            0x9: "LC_FVMFILE",
+            0xA: "LC_PREPAGE",
+            0xB: "LC_DYSYMTAB",
+            0xC: "LC_LOAD_DYLIB",
+            0xD: "LC_ID_DYLIB",
+            0xE: "LC_LOAD_DYLINKER",
+            0xF: "LC_ID_DYLINKER",
+            0x10: "LC_PREBOUND_DYLIB",
+            0x11: "LC_ROUTINES",
+            0x12: "LC_SUB_FRAMEWORK",
+            0x13: "LC_SUB_UMBRELLA",
+            0x14: "LC_SUB_CLIENT",
+            0x15: "LC_SUB_LIBRARY",
+            0x16: "LC_TWOLEVEL_HINTS",
+            0x17: "LC_PREBIND_CKSUM",
+            0x80000018: "LC_LOAD_WEAK_DYLIB",
+            0x19: "LC_SEGMENT_64",
+            0x1A: "LC_ROUTINES_64",
+            0x1B: "LC_UUID",
+            0x8000001C: "LC_RPATH",
+            0x1D: "LC_CODE_SIGNATURE",
+            0x1E: "LC_SEGMENT_SPLIT_INFO",
+            0x8000001F: "LC_REEXPORT_DYLIB",
+            0x20: "LC_LAZY_LOAD_DYLIB",
+            0x21: "LC_ENCRYPTION_INFO",
+            0x22: "LC_DYLD_INFO",
+            0x80000022: "LC_DYLD_INFO_ONLY",
+            0x80000023: "LC_LOAD_UPWARD_DYLIB",
+            0x24: "LC_VERSION_MIN_MACOSX",
+            0x25: "LC_VERSION_MIN_IPHONEOS",
+            0x26: "LC_FUNCTION_STARTS",
+            0x27: "LC_DYLD_ENVIRONMENT",
+            0x80000028: "LC_MAIN",
+            0x29: "LC_DATA_IN_CODE",
+            0x2A: "LC_SOURCE_VERSION",
+            0x2B: "LC_DYLIB_CODE_SIGN_DRS",
+            0x2C: "LC_ENCRYPTION_INFO_64",
+            0x2D: "LC_LINKER_OPTION",
+            0x2E: "LC_LINKER_OPTIMIZATION_HINT",
+            0x2F: "LC_VERSION_MIN_TVOS",
+            0x30: "LC_VERSION_MIN_WATCHOS",
+            0x31: "LC_NOTE",
+            0x32: "LC_BUILD_VERSION",
+            0x80000033: "LC_DYLD_EXPORTS_TRIE",
+            0x80000034: "LC_DYLD_CHAINED_FIXUPS",
+        }
+        return cmd_names.get(cmd, f"LC_UNKNOWN (0x{cmd:X})")
+
+    def _add_macho_flags(self, parent: QTreeWidgetItem, flags: int) -> None:
+        """Add Mach-O header flags as tree items."""
+        flag_definitions = [
+            (0x1, "MH_NOUNDEFS", "No undefined references"),
+            (0x2, "MH_INCRLINK", "Incremental link"),
+            (0x4, "MH_DYLDLINK", "Input for dynamic linker"),
+            (0x8, "MH_BINDATLOAD", "Bind undefined refs at load"),
+            (0x10, "MH_PREBOUND", "Prebound"),
+            (0x20, "MH_SPLIT_SEGS", "Split read-only and read-write segments"),
+            (0x40, "MH_LAZY_INIT", "Lazy init"),
+            (0x80, "MH_TWOLEVEL", "Two-level namespace bindings"),
+            (0x100, "MH_FORCE_FLAT", "Force flat namespace"),
+            (0x200, "MH_NOMULTIDEFS", "No multiple definitions"),
+            (0x400, "MH_NOFIXPREBINDING", "Do not notify prebinding agent"),
+            (0x800, "MH_PREBINDABLE", "Not prebound but can be"),
+            (0x1000, "MH_ALLMODSBOUND", "All modules bound"),
+            (0x2000, "MH_SUBSECTIONS_VIA_SYMBOLS", "Safe to divide sections"),
+            (0x4000, "MH_CANONICAL", "Canonicalized via unprebind"),
+            (0x8000, "MH_WEAK_DEFINES", "Contains weak symbols"),
+            (0x10000, "MH_BINDS_TO_WEAK", "Uses weak symbols"),
+            (0x20000, "MH_ALLOW_STACK_EXECUTION", "Allow stack execution"),
+            (0x40000, "MH_ROOT_SAFE", "Safe for UID 0"),
+            (0x80000, "MH_SETUID_SAFE", "Safe for setuid"),
+            (0x100000, "MH_NO_REEXPORTED_DYLIBS", "No re-exported dylibs"),
+            (0x200000, "MH_PIE", "Position Independent Executable"),
+            (0x400000, "MH_DEAD_STRIPPABLE_DYLIB", "Dead-strippable dylib"),
+            (0x800000, "MH_HAS_TLV_DESCRIPTORS", "Has thread-local variables"),
+            (0x1000000, "MH_NO_HEAP_EXECUTION", "No heap execution"),
+            (0x2000000, "MH_APP_EXTENSION_SAFE", "App extension safe"),
+        ]
+
+        for flag_value, flag_name, description in flag_definitions:
+            if flags & flag_value:
+                QTreeWidgetItem(parent, [flag_name, description])
+
     def _build_generic_tree(self) -> None:
         """Build generic structure tree."""
         root = QTreeWidgetItem(self.tree_view, [f"{self.binary_format} Structure"])

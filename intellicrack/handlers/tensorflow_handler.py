@@ -1383,6 +1383,25 @@ class FallbackConfig:
         logger.info("Listing physical devices for %s (fallback mode)", device_type)
         return []
 
+    @staticmethod
+    def get_visible_devices(device_type: str | None = None) -> list[object]:
+        """Get currently visible devices for TensorFlow computation.
+
+        Args:
+            device_type: Optional device type filter ('GPU', 'CPU', 'TPU', etc.).
+                        If None, returns all visible devices.
+
+        Returns:
+            List of visible device objects (empty in fallback mode since no
+            real TensorFlow devices are available).
+
+        """
+        if device_type:
+            logger.info("Getting visible devices for %s (fallback mode)", device_type)
+        else:
+            logger.info("Getting all visible devices (fallback mode)")
+        return []
+
     class Experimental:
         """Experimental TensorFlow features."""
 

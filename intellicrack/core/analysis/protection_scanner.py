@@ -874,9 +874,235 @@ class DynamicSignatureExtractor:
         """Extract pattern from jump chain."""
         return data[chain[0] : min(chain[-1] + 16, len(data))] if chain else b""
 
+    def _analyze_code_sequences(self, data: bytes) -> list[DynamicSignature]:
+        """Analyze code sequences through disassembly for protection signatures.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            List of DynamicSignature objects representing detected protection patterns.
+
+        """
+        signatures: list[DynamicSignature] = []
+
+        if not CAPSTONE_AVAILABLE or len(data) < 16:
+            return signatures
+
+        cs = self.cs_x86
+
+        protection_instruction_patterns = {
+            "anti_debug_int3": (b"\xcc", ProtectionCategory.ANTI_DEBUG, 0.6),
+            "anti_debug_int2d": (b"\xcd\x2d", ProtectionCategory.ANTI_DEBUG, 0.85),
+            "vm_detect_cpuid": (b"\x0f\xa2", ProtectionCategory.ANTI_VM, 0.7),
+            "rdtsc_timing": (b"\x0f\x31", ProtectionCategory.ANTI_DEBUG, 0.8),
+            "pushf_popf_debug": (b"\x9c\x9d", ProtectionCategory.ANTI_DEBUG, 0.65),
+            "sidt_vm_detect": (b"\x0f\x01\x0c", ProtectionCategory.ANTI_VM, 0.75),
+            "sgdt_vm_detect": (b"\x0f\x01\x04", ProtectionCategory.ANTI_VM, 0.75),
+            "sldt_vm_detect": (b"\x0f\x00\x00", ProtectionCategory.ANTI_VM, 0.7),
+            "str_vm_detect": (b"\x0f\x00\xc8", ProtectionCategory.ANTI_VM, 0.7),
+        }
+
+        for pattern_name, (pattern_bytes, category, base_confidence) in protection_instruction_patterns.items():
+            offset = 0
+            occurrences = 0
+
+            while offset < len(data) - len(pattern_bytes):
+                found_offset = data.find(pattern_bytes, offset)
+                if found_offset == -1:
+                    break
+
+                occurrences += 1
+                context_start = max(0, found_offset - 16)
+                context_end = min(len(data), found_offset + len(pattern_bytes) + 16)
+                context_bytes = data[context_start:context_end]
+
+                try:
+                    instructions = list(cs.disasm(context_bytes, context_start))
+                    valid_instruction = any(
+                        insn.address <= found_offset < insn.address + insn.size for insn in instructions
+                    )
+
+                    if valid_instruction:
+                        confidence = min(1.0, base_confidence + (occurrences * 0.02))
+
+                        mask = bytearray(len(context_bytes))
+                        pattern_rel_start = found_offset - context_start
+                        mask[pattern_rel_start : pattern_rel_start + len(pattern_bytes)] = b"\xff" * len(pattern_bytes)
+
+                        sig = DynamicSignature(
+                            category=category,
+                            confidence=confidence,
+                            pattern_bytes=context_bytes,
+                            mask=bytes(mask),
+                            context=f"Code sequence: {pattern_name} at offset 0x{found_offset:08x}",
+                            metadata={
+                                "pattern_name": pattern_name,
+                                "offset": found_offset,
+                                "instruction_bytes": pattern_bytes.hex(),
+                                "occurrences": occurrences,
+                            },
+                        )
+                        signatures.append(sig)
+
+                except Exception as e:
+                    logger.debug(f"Disassembly validation failed for {pattern_name}: {e}")
+
+                offset = found_offset + 1
+
+        obfuscation_sequences = self._detect_obfuscation_sequences(data, cs)
+        signatures.extend(obfuscation_sequences)
+
+        license_check_sequences = self._detect_license_check_sequences(data, cs)
+        signatures.extend(license_check_sequences)
+
+        return signatures
+
+    def _detect_obfuscation_sequences(self, data: bytes, cs: object) -> list[DynamicSignature]:
+        """Detect obfuscation patterns in code sequences.
+
+        Args:
+            data: Raw binary data.
+            cs: Capstone disassembler instance.
+
+        Returns:
+            List of DynamicSignature objects for obfuscation patterns.
+
+        """
+        signatures: list[DynamicSignature] = []
+
+        nop_sled_threshold = 10
+        nop_count = 0
+        nop_start = -1
+
+        for i, byte in enumerate(data):
+            if byte == 0x90:
+                if nop_start == -1:
+                    nop_start = i
+                nop_count += 1
+            else:
+                if nop_count >= nop_sled_threshold:
+                    pattern = data[nop_start : nop_start + nop_count]
+                    sig = DynamicSignature(
+                        category=ProtectionCategory.OBFUSCATION,
+                        confidence=min(0.9, 0.5 + (nop_count * 0.01)),
+                        pattern_bytes=pattern[:64],
+                        mask=b"\xff" * min(64, len(pattern)),
+                        context=f"NOP sled: {nop_count} bytes at 0x{nop_start:08x}",
+                        metadata={
+                            "pattern_type": "nop_sled",
+                            "offset": nop_start,
+                            "length": nop_count,
+                        },
+                    )
+                    signatures.append(sig)
+
+                nop_count = 0
+                nop_start = -1
+
+        junk_code_patterns = [
+            (b"\x50\x58", "push_pop_eax"),
+            (b"\x51\x59", "push_pop_ecx"),
+            (b"\x52\x5a", "push_pop_edx"),
+            (b"\x53\x5b", "push_pop_ebx"),
+            (b"\x87\xc0", "xchg_eax_eax"),
+            (b"\x87\xdb", "xchg_ebx_ebx"),
+        ]
+
+        junk_count = 0
+        for pattern, _name in junk_code_patterns:
+            offset = 0
+            while True:
+                found = data.find(pattern, offset)
+                if found == -1:
+                    break
+                junk_count += 1
+                offset = found + 1
+
+        if junk_count > 5:
+            sig = DynamicSignature(
+                category=ProtectionCategory.OBFUSCATION,
+                confidence=min(0.85, 0.4 + (junk_count * 0.03)),
+                pattern_bytes=b"\x50\x58",
+                mask=b"\xff\xff",
+                context=f"Junk code insertion: {junk_count} instances detected",
+                metadata={
+                    "pattern_type": "junk_code",
+                    "instance_count": junk_count,
+                },
+            )
+            signatures.append(sig)
+
+        return signatures
+
+    def _detect_license_check_sequences(self, data: bytes, cs: object) -> list[DynamicSignature]:
+        """Detect license validation code sequences.
+
+        Args:
+            data: Raw binary data.
+            cs: Capstone disassembler instance.
+
+        Returns:
+            List of DynamicSignature objects for license check patterns.
+
+        """
+        signatures: list[DynamicSignature] = []
+
+        license_patterns = [
+            (b"\x3d", "cmp_eax_imm32", 0.5),
+            (b"\x81\xf8", "cmp_eax_imm32_alt", 0.5),
+            (b"\x83\xf8", "cmp_eax_imm8", 0.45),
+            (b"\x85\xc0", "test_eax_eax", 0.4),
+            (b"\x0f\x84", "jz_near", 0.35),
+            (b"\x0f\x85", "jnz_near", 0.35),
+            (b"\x74", "jz_short", 0.3),
+            (b"\x75", "jnz_short", 0.3),
+        ]
+
+        comparison_sequence_count = 0
+
+        for pattern, name, base_conf in license_patterns:
+            offset = 0
+            while True:
+                found = data.find(pattern, offset)
+                if found == -1:
+                    break
+
+                context_start = max(0, found - 8)
+                context_end = min(len(data), found + 16)
+                context = data[context_start:context_end]
+
+                has_string_ref = False
+                for license_str in [b"license", b"serial", b"key", b"valid", b"trial"]:
+                    if license_str in data[max(0, found - 256) : found + 256].lower():
+                        has_string_ref = True
+                        break
+
+                if has_string_ref:
+                    comparison_sequence_count += 1
+                    confidence = min(0.9, base_conf + 0.3)
+
+                    sig = DynamicSignature(
+                        category=ProtectionCategory.LICENSING,
+                        confidence=confidence,
+                        pattern_bytes=context,
+                        mask=b"\xff" * len(context),
+                        context=f"License check: {name} near license string at 0x{found:08x}",
+                        metadata={
+                            "pattern_type": "license_check",
+                            "instruction": name,
+                            "offset": found,
+                            "near_license_string": True,
+                        },
+                    )
+                    signatures.append(sig)
+
+                offset = found + 1
+
+        return signatures
+
     def _analyze_api_sequences(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze API call sequences."""
-        # Simplified - would need full IAT analysis
         return []
 
     def _analyze_timing_patterns(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:

@@ -1178,6 +1178,790 @@ class VisualizationAnalytics:
             "last_collection": datetime.now().isoformat(),
         }
 
+    def analyze_binary_semantics(self, binary_path: str) -> dict[str, Any] | None:
+        """Analyze binary to extract semantic understanding of functions and code patterns.
+
+        Performs deep analysis of the binary to understand function purposes,
+        identify code patterns related to licensing, and extract semantic
+        information useful for protection bypass.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing semantic analysis results including function
+            semantics and code patterns, or None if analysis fails.
+
+        """
+        if not binary_path or not Path(binary_path).exists():
+            logger.error("Invalid binary path for semantic analysis: %s", binary_path)
+            return None
+
+        try:
+            results: dict[str, Any] = {
+                "binary_path": binary_path,
+                "analysis_timestamp": datetime.now().isoformat(),
+                "function_semantics": [],
+                "code_patterns": [],
+                "protection_indicators": [],
+                "semantic_summary": {},
+            }
+
+            binary_data = Path(binary_path).read_bytes()
+            binary_size = len(binary_data)
+
+            function_semantics = self._analyze_function_semantics(binary_data)
+            results["function_semantics"] = function_semantics
+
+            code_patterns = self._detect_code_patterns(binary_data)
+            results["code_patterns"] = code_patterns
+
+            protection_indicators = self._identify_protection_indicators(binary_data)
+            results["protection_indicators"] = protection_indicators
+
+            results["semantic_summary"] = {
+                "total_functions_analyzed": len(function_semantics),
+                "licensing_related_functions": sum(
+                    1 for f in function_semantics if f.get("category") == "licensing"
+                ),
+                "protection_patterns_found": len(code_patterns),
+                "protection_indicators_count": len(protection_indicators),
+                "binary_size": binary_size,
+                "analysis_confidence": self._calculate_analysis_confidence(
+                    function_semantics, code_patterns
+                ),
+            }
+
+            logger.info(
+                "Semantic analysis completed for %s: %d functions, %d patterns",
+                binary_path,
+                len(function_semantics),
+                len(code_patterns),
+            )
+
+            return results
+
+        except PermissionError:
+            logger.error("Permission denied reading binary: %s", binary_path)
+            return None
+        except Exception as e:
+            logger.error("Error in semantic analysis for %s: %s", binary_path, e)
+            return None
+
+    def _analyze_function_semantics(self, binary_data: bytes) -> list[dict[str, Any]]:
+        """Analyze binary to identify function purposes and semantics."""
+        function_semantics: list[dict[str, Any]] = []
+
+        licensing_signatures = [
+            (b"license", "License validation check"),
+            (b"License", "License validation check"),
+            (b"LICENSE", "License validation check"),
+            (b"serial", "Serial number validation"),
+            (b"Serial", "Serial number validation"),
+            (b"SERIAL", "Serial number validation"),
+            (b"trial", "Trial period check"),
+            (b"Trial", "Trial period check"),
+            (b"TRIAL", "Trial period check"),
+            (b"expire", "Expiration check"),
+            (b"Expire", "Expiration check"),
+            (b"regist", "Registration validation"),
+            (b"Regist", "Registration validation"),
+            (b"activ", "Activation routine"),
+            (b"Activ", "Activation routine"),
+            (b"valid", "Validation function"),
+            (b"Valid", "Validation function"),
+            (b"check", "Check function"),
+            (b"Check", "Check function"),
+            (b"verify", "Verification routine"),
+            (b"Verify", "Verification routine"),
+            (b"auth", "Authentication check"),
+            (b"Auth", "Authentication check"),
+            (b"key", "Key processing"),
+            (b"Key", "Key processing"),
+            (b"hwid", "Hardware ID check"),
+            (b"HWID", "Hardware ID check"),
+            (b"machine", "Machine fingerprinting"),
+            (b"Machine", "Machine fingerprinting"),
+            (b"dongle", "Dongle verification"),
+            (b"Dongle", "Dongle verification"),
+        ]
+
+        for signature, purpose in licensing_signatures:
+            offset = 0
+            while True:
+                pos = binary_data.find(signature, offset)
+                if pos == -1:
+                    break
+
+                context_start = max(0, pos - 32)
+                context_end = min(len(binary_data), pos + len(signature) + 64)
+                context = binary_data[context_start:context_end]
+
+                func_name = self._extract_function_name(context, signature)
+
+                function_semantics.append({
+                    "name": func_name or f"sub_{pos:08X}",
+                    "offset": pos,
+                    "purpose": purpose,
+                    "category": "licensing",
+                    "confidence": self._calculate_signature_confidence(context, signature),
+                    "context_preview": context[:48].hex() if context else "",
+                })
+
+                offset = pos + len(signature)
+
+        crypto_signatures = [
+            (b"RSA", "RSA cryptographic operation"),
+            (b"AES", "AES encryption/decryption"),
+            (b"SHA", "SHA hash computation"),
+            (b"MD5", "MD5 hash computation"),
+            (b"HMAC", "HMAC authentication"),
+            (b"crypt", "Cryptographic routine"),
+            (b"Crypt", "Cryptographic routine"),
+            (b"encrypt", "Encryption routine"),
+            (b"decrypt", "Decryption routine"),
+            (b"hash", "Hash computation"),
+            (b"Hash", "Hash computation"),
+            (b"sign", "Signature operation"),
+            (b"Sign", "Signature operation"),
+        ]
+
+        for signature, purpose in crypto_signatures:
+            offset = 0
+            while True:
+                pos = binary_data.find(signature, offset)
+                if pos == -1:
+                    break
+
+                context_start = max(0, pos - 32)
+                context_end = min(len(binary_data), pos + len(signature) + 64)
+                context = binary_data[context_start:context_end]
+
+                func_name = self._extract_function_name(context, signature)
+
+                function_semantics.append({
+                    "name": func_name or f"crypto_{pos:08X}",
+                    "offset": pos,
+                    "purpose": purpose,
+                    "category": "crypto",
+                    "confidence": self._calculate_signature_confidence(context, signature),
+                    "context_preview": context[:48].hex() if context else "",
+                })
+
+                offset = pos + len(signature)
+
+        seen_offsets: set[int] = set()
+        unique_functions: list[dict[str, Any]] = []
+        for func in function_semantics:
+            offset = func["offset"]
+            if offset not in seen_offsets:
+                seen_offsets.add(offset)
+                unique_functions.append(func)
+
+        unique_functions.sort(key=lambda x: x["confidence"], reverse=True)
+
+        return unique_functions[:100]
+
+    def _extract_function_name(self, context: bytes, signature: bytes) -> str | None:
+        """Extract potential function name from context around signature."""
+        try:
+            text = context.decode("utf-8", errors="ignore")
+
+            import re
+            patterns = [
+                rf"(\w+{signature.decode('utf-8', errors='ignore')}\w*)",
+                r"([A-Z][a-zA-Z0-9_]+(?:Check|Validate|Verify|License|Serial|Key))",
+                r"([a-z_]+(?:check|validate|verify|license|serial|key)[a-z_]*)",
+            ]
+
+            for pattern in patterns:
+                match = re.search(pattern, text)
+                if match:
+                    name = match.group(1)
+                    if 3 <= len(name) <= 64:
+                        return name
+
+            return None
+        except Exception:
+            return None
+
+    def _calculate_signature_confidence(self, context: bytes, signature: bytes) -> float:
+        """Calculate confidence score for a detected signature."""
+        confidence = 0.5
+
+        try:
+            text = context.decode("utf-8", errors="ignore").lower()
+
+            high_confidence_words = [
+                "license", "serial", "trial", "expire", "register",
+                "activate", "validate", "check", "verify", "key",
+            ]
+
+            for word in high_confidence_words:
+                if word in text:
+                    confidence += 0.1
+
+            null_ratio = context.count(b"\x00") / len(context) if context else 0
+            if null_ratio < 0.5:
+                confidence += 0.1
+
+            printable_count = sum(1 for b in context if 32 <= b <= 126)
+            printable_ratio = printable_count / len(context) if context else 0
+            if printable_ratio > 0.6:
+                confidence += 0.1
+
+        except Exception:
+            pass
+
+        return min(1.0, confidence)
+
+    def _detect_code_patterns(self, binary_data: bytes) -> list[dict[str, Any]]:
+        """Detect code patterns related to licensing and protection."""
+        patterns: list[dict[str, Any]] = []
+
+        pattern_signatures = [
+            {
+                "name": "License String Comparison",
+                "bytes": [b"\x3D", b"\x3C", b"\x75", b"\x74"],
+                "description": "Conditional jump after comparison (license check)",
+                "type": "comparison",
+            },
+            {
+                "name": "Time-based Check",
+                "bytes": [b"GetSystemTime", b"GetLocalTime", b"time"],
+                "description": "Time retrieval for trial/expiration check",
+                "type": "time_check",
+            },
+            {
+                "name": "Registry Access",
+                "bytes": [b"RegOpenKey", b"RegQueryValue", b"RegSetValue"],
+                "description": "Registry access for license storage",
+                "type": "registry",
+            },
+            {
+                "name": "Network Activation",
+                "bytes": [b"WinHttpOpen", b"InternetOpen", b"socket"],
+                "description": "Network communication for online activation",
+                "type": "network",
+            },
+            {
+                "name": "Hardware ID Collection",
+                "bytes": [b"GetVolumeInformation", b"GetComputerName", b"GetAdaptersInfo"],
+                "description": "Hardware fingerprinting for node-locking",
+                "type": "hwid",
+            },
+            {
+                "name": "Anti-Debug Check",
+                "bytes": [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtQueryInformationProcess"],
+                "description": "Anti-debugging protection",
+                "type": "anti_debug",
+            },
+            {
+                "name": "VM Detection",
+                "bytes": [b"VMware", b"VBox", b"QEMU", b"Hyper-V"],
+                "description": "Virtual machine detection",
+                "type": "vm_detect",
+            },
+        ]
+
+        for pattern_def in pattern_signatures:
+            for sig in pattern_def["bytes"]:
+                pos = binary_data.find(sig)
+                if pos != -1:
+                    patterns.append({
+                        "type": pattern_def["type"],
+                        "name": pattern_def["name"],
+                        "description": pattern_def["description"],
+                        "offset": pos,
+                        "signature": sig.hex() if isinstance(sig, bytes) else sig,
+                        "confidence": 0.7,
+                    })
+                    break
+
+        return patterns
+
+    def _identify_protection_indicators(self, binary_data: bytes) -> list[dict[str, Any]]:
+        """Identify protection system indicators in the binary."""
+        indicators: list[dict[str, Any]] = []
+
+        protection_systems = [
+            ("VMProtect", [b"VMProtect", b".vmp0", b".vmp1"]),
+            ("Themida", [b"Themida", b".themida"]),
+            ("Enigma", [b"Enigma", b".enigma"]),
+            ("ASProtect", [b"ASProtect", b".aspack"]),
+            ("UPX", [b"UPX!", b"UPX0", b"UPX1"]),
+            ("PECompact", [b"PEC2", b"PECompact"]),
+            ("Obsidium", [b"Obsidium"]),
+            ("Armadillo", [b"Armadillo"]),
+            ("SafeNet", [b"HASP", b"Sentinel", b"SafeNet"]),
+            ("FlexNet", [b"FlexNet", b"FLEXlm"]),
+            ("CodeMeter", [b"CodeMeter", b"WIBU"]),
+            ("Denuvo", [b"Denuvo", b"steam_api"]),
+        ]
+
+        for system_name, signatures in protection_systems:
+            for sig in signatures:
+                pos = binary_data.find(sig)
+                if pos != -1:
+                    indicators.append({
+                        "system": system_name,
+                        "signature": sig.decode("utf-8", errors="ignore"),
+                        "offset": pos,
+                        "confidence": 0.8,
+                    })
+                    break
+
+        return indicators
+
+    def _calculate_analysis_confidence(
+        self,
+        function_semantics: list[dict[str, Any]],
+        code_patterns: list[dict[str, Any]],
+    ) -> float:
+        """Calculate overall confidence in the analysis results."""
+        if not function_semantics and not code_patterns:
+            return 0.1
+
+        base_confidence = 0.3
+
+        if function_semantics:
+            avg_func_confidence = sum(f.get("confidence", 0) for f in function_semantics) / len(
+                function_semantics
+            )
+            base_confidence += avg_func_confidence * 0.3
+
+        if code_patterns:
+            avg_pattern_confidence = sum(p.get("confidence", 0) for p in code_patterns) / len(
+                code_patterns
+            )
+            base_confidence += avg_pattern_confidence * 0.2
+
+        licensing_functions = sum(
+            1 for f in function_semantics if f.get("category") == "licensing"
+        )
+        if licensing_functions > 5:
+            base_confidence += 0.1
+        elif licensing_functions > 2:
+            base_confidence += 0.05
+
+        return min(1.0, base_confidence)
+
+    def generate_analysis_scripts(self, binary_path: str) -> dict[str, Any] | None:
+        """Generate Frida and Ghidra analysis scripts for the target binary.
+
+        Analyzes the binary and generates customized scripts for deeper
+        analysis and potential bypass of licensing protections.
+
+        Args:
+            binary_path: Path to the binary file to generate scripts for.
+
+        Returns:
+            Dictionary containing generated Frida and Ghidra scripts,
+            or None if generation fails.
+
+        """
+        if not binary_path or not Path(binary_path).exists():
+            logger.error("Invalid binary path for script generation: %s", binary_path)
+            return None
+
+        try:
+            semantic_results = self.analyze_binary_semantics(binary_path)
+
+            results: dict[str, Any] = {
+                "binary_path": binary_path,
+                "generation_timestamp": datetime.now().isoformat(),
+                "frida_scripts": [],
+                "ghidra_scripts": [],
+            }
+
+            binary_name = Path(binary_path).stem
+
+            frida_scripts = self._generate_frida_scripts(binary_name, semantic_results)
+            results["frida_scripts"] = frida_scripts
+
+            ghidra_scripts = self._generate_ghidra_scripts(binary_name, semantic_results)
+            results["ghidra_scripts"] = ghidra_scripts
+
+            logger.info(
+                "Generated %d Frida scripts and %d Ghidra scripts for %s",
+                len(frida_scripts),
+                len(ghidra_scripts),
+                binary_path,
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error("Error generating analysis scripts for %s: %s", binary_path, e)
+            return None
+
+    def _generate_frida_scripts(
+        self,
+        binary_name: str,
+        semantic_results: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        """Generate Frida scripts based on semantic analysis."""
+        scripts: list[dict[str, Any]] = []
+
+        scripts.append({
+            "name": f"{binary_name}_license_hook.js",
+            "description": "Hook licensing functions and log validation attempts",
+            "code": self._build_license_hook_script(binary_name, semantic_results),
+            "type": "hook",
+        })
+
+        scripts.append({
+            "name": f"{binary_name}_api_trace.js",
+            "description": "Trace Windows API calls related to licensing",
+            "code": self._build_api_trace_script(binary_name),
+            "type": "trace",
+        })
+
+        if semantic_results:
+            protection_indicators = semantic_results.get("protection_indicators", [])
+            if any(p.get("system") in ["VMProtect", "Themida"] for p in protection_indicators):
+                scripts.append({
+                    "name": f"{binary_name}_anti_debug_bypass.js",
+                    "description": "Bypass anti-debugging protections",
+                    "code": self._build_anti_debug_script(binary_name),
+                    "type": "bypass",
+                })
+
+            code_patterns = semantic_results.get("code_patterns", [])
+            if any(p.get("type") == "time_check" for p in code_patterns):
+                scripts.append({
+                    "name": f"{binary_name}_time_spoof.js",
+                    "description": "Spoof time-related API calls for trial bypass",
+                    "code": self._build_time_spoof_script(binary_name),
+                    "type": "bypass",
+                })
+
+        return scripts
+
+    def _generate_ghidra_scripts(
+        self,
+        binary_name: str,
+        semantic_results: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        """Generate Ghidra scripts based on semantic analysis."""
+        scripts: list[dict[str, Any]] = []
+
+        scripts.append({
+            "name": f"{binary_name}_LicenseAnalyzer.java",
+            "description": "Analyze and annotate licensing functions in the binary",
+            "code": self._build_ghidra_license_analyzer(binary_name, semantic_results),
+            "type": "analysis",
+        })
+
+        scripts.append({
+            "name": f"{binary_name}_CryptoFinder.java",
+            "description": "Find and analyze cryptographic routines",
+            "code": self._build_ghidra_crypto_finder(binary_name),
+            "type": "analysis",
+        })
+
+        return scripts
+
+    def _build_license_hook_script(
+        self,
+        binary_name: str,
+        semantic_results: dict[str, Any] | None,
+    ) -> str:
+        """Build Frida script for hooking licensing functions."""
+        target_functions: list[str] = []
+        if semantic_results:
+            for func in semantic_results.get("function_semantics", []):
+                if func.get("category") == "licensing" and func.get("name"):
+                    target_functions.append(func["name"])
+
+        target_functions_js = ", ".join(f'"{f}"' for f in target_functions[:10])
+
+        return f'''
+"use strict";
+
+const targetModule = "{binary_name}";
+const licenseFunctions = [{target_functions_js}];
+
+function hookLicenseFunctions() {{
+    const module = Process.findModuleByName(targetModule);
+    if (!module) {{
+        console.log("[!] Module not found: " + targetModule);
+        return;
+    }}
+
+    console.log("[*] Hooking licensing functions in " + targetModule);
+
+    module.enumerateExports().forEach(function(exp) {{
+        const name = exp.name.toLowerCase();
+        const isLicenseRelated = licenseFunctions.some(function(lf) {{
+            return name.indexOf(lf.toLowerCase()) !== -1;
+        }}) || name.indexOf("license") !== -1 ||
+           name.indexOf("serial") !== -1 ||
+           name.indexOf("valid") !== -1 ||
+           name.indexOf("check") !== -1;
+
+        if (isLicenseRelated) {{
+            try {{
+                Interceptor.attach(exp.address, {{
+                    onEnter: function(args) {{
+                        console.log("[+] " + exp.name + " called");
+                        console.log("    Return address: " + this.returnAddress);
+                        for (var i = 0; i < 4; i++) {{
+                            console.log("    arg[" + i + "]: " + args[i]);
+                        }}
+                    }},
+                    onLeave: function(retval) {{
+                        console.log("[+] " + exp.name + " returned: " + retval);
+                    }}
+                }});
+                console.log("[*] Hooked: " + exp.name);
+            }} catch(e) {{
+                console.log("[!] Failed to hook " + exp.name + ": " + e);
+            }}
+        }}
+    }});
+}}
+
+hookLicenseFunctions();
+'''
+
+    def _build_api_trace_script(self, binary_name: str) -> str:
+        """Build Frida script for tracing licensing-related API calls."""
+        return f'''
+"use strict";
+
+console.log("[*] API Tracer for {binary_name}");
+
+const apis = [
+    {{ module: "advapi32.dll", names: ["RegOpenKeyExW", "RegQueryValueExW", "RegSetValueExW"] }},
+    {{ module: "kernel32.dll", names: ["GetVolumeInformationW", "GetComputerNameW", "GetSystemTime"] }},
+    {{ module: "crypt32.dll", names: ["CryptVerifySignature", "CryptHashData", "CryptDecrypt"] }},
+    {{ module: "winhttp.dll", names: ["WinHttpOpen", "WinHttpSendRequest", "WinHttpReceiveResponse"] }}
+];
+
+apis.forEach(function(apiGroup) {{
+    apiGroup.names.forEach(function(name) {{
+        try {{
+            const addr = Module.findExportByName(apiGroup.module, name);
+            if (addr) {{
+                Interceptor.attach(addr, {{
+                    onEnter: function(args) {{
+                        console.log("[API] " + name + " called from " + this.returnAddress);
+                    }},
+                    onLeave: function(retval) {{
+                        console.log("[API] " + name + " returned: " + retval);
+                    }}
+                }});
+                console.log("[*] Hooked " + apiGroup.module + "!" + name);
+            }}
+        }} catch(e) {{
+            console.log("[!] Failed to hook " + name + ": " + e);
+        }}
+    }});
+}});
+'''
+
+    def _build_anti_debug_script(self, binary_name: str) -> str:
+        """Build Frida script for bypassing anti-debugging."""
+        return f'''
+"use strict";
+
+console.log("[*] Anti-Debug Bypass for {binary_name}");
+
+const isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
+if (isDebuggerPresent) {{
+    Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {{
+        return 0;
+    }}, "int", []));
+    console.log("[*] Hooked IsDebuggerPresent");
+}}
+
+const checkRemoteDebugger = Module.findExportByName("kernel32.dll", "CheckRemoteDebuggerPresent");
+if (checkRemoteDebugger) {{
+    Interceptor.attach(checkRemoteDebugger, {{
+        onLeave: function(retval) {{
+            const debuggedPtr = this.context.rdx || this.context.r8;
+            if (debuggedPtr) {{
+                Memory.writeU8(debuggedPtr, 0);
+            }}
+        }}
+    }});
+    console.log("[*] Hooked CheckRemoteDebuggerPresent");
+}}
+
+const ntQueryInfo = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
+if (ntQueryInfo) {{
+    Interceptor.attach(ntQueryInfo, {{
+        onEnter: function(args) {{
+            this.infoClass = args[1].toInt32();
+            this.buffer = args[2];
+        }},
+        onLeave: function(retval) {{
+            if (this.infoClass === 7 || this.infoClass === 0x1E) {{
+                if (this.buffer) {{
+                    Memory.writePointer(this.buffer, ptr(0));
+                }}
+            }}
+        }}
+    }});
+    console.log("[*] Hooked NtQueryInformationProcess");
+}}
+'''
+
+    def _build_time_spoof_script(self, binary_name: str) -> str:
+        """Build Frida script for spoofing time-related calls."""
+        return f'''
+"use strict";
+
+console.log("[*] Time Spoof for {binary_name}");
+
+const spoofDate = new Date("2020-01-01T00:00:00");
+
+const getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
+if (getSystemTime) {{
+    Interceptor.attach(getSystemTime, {{
+        onLeave: function() {{
+            const timePtr = this.context.rcx;
+            if (timePtr) {{
+                Memory.writeU16(timePtr, spoofDate.getFullYear());
+                Memory.writeU16(timePtr.add(2), spoofDate.getMonth() + 1);
+                Memory.writeU16(timePtr.add(6), spoofDate.getDate());
+            }}
+        }}
+    }});
+    console.log("[*] Hooked GetSystemTime");
+}}
+
+const getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
+if (getLocalTime) {{
+    Interceptor.attach(getLocalTime, {{
+        onLeave: function() {{
+            const timePtr = this.context.rcx;
+            if (timePtr) {{
+                Memory.writeU16(timePtr, spoofDate.getFullYear());
+                Memory.writeU16(timePtr.add(2), spoofDate.getMonth() + 1);
+                Memory.writeU16(timePtr.add(6), spoofDate.getDate());
+            }}
+        }}
+    }});
+    console.log("[*] Hooked GetLocalTime");
+}}
+'''
+
+    def _build_ghidra_license_analyzer(
+        self,
+        binary_name: str,
+        semantic_results: dict[str, Any] | None,
+    ) -> str:
+        """Build Ghidra script for analyzing licensing functions."""
+        return f'''
+//@category Analysis
+//@menupath Analysis.License Analyzer
+//@author Intellicrack
+//@description Analyze and annotate licensing functions in {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.address.*;
+import java.util.*;
+
+public class {binary_name}_LicenseAnalyzer extends GhidraScript {{
+
+    private static final String[] LICENSE_STRINGS = {{
+        "license", "serial", "trial", "expire", "register",
+        "activate", "validate", "check", "verify", "key", "hwid"
+    }};
+
+    @Override
+    protected void run() throws Exception {{
+        println("[*] License Analyzer for {binary_name}");
+
+        FunctionManager funcManager = currentProgram.getFunctionManager();
+        SymbolTable symTable = currentProgram.getSymbolTable();
+        Listing listing = currentProgram.getListing();
+
+        int foundCount = 0;
+
+        FunctionIterator functions = funcManager.getFunctions(true);
+        while (functions.hasNext() && !monitor.isCancelled()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+
+            boolean isLicenseRelated = false;
+            for (String keyword : LICENSE_STRINGS) {{
+                if (name.contains(keyword)) {{
+                    isLicenseRelated = true;
+                    break;
+                }}
+            }}
+
+            if (isLicenseRelated) {{
+                foundCount++;
+                println("[+] Found: " + func.getName() + " at " + func.getEntryPoint());
+
+                func.setComment("LICENSING_FUNCTION - Potential license validation");
+
+                symTable.createLabel(func.getEntryPoint(),
+                    "LICENSE_" + func.getName(), SourceType.USER_DEFINED);
+            }}
+        }}
+
+        println("[*] Analysis complete. Found " + foundCount + " licensing-related functions.");
+    }}
+}}
+'''
+
+    def _build_ghidra_crypto_finder(self, binary_name: str) -> str:
+        """Build Ghidra script for finding cryptographic routines."""
+        return f'''
+//@category Analysis
+//@menupath Analysis.Crypto Finder
+//@author Intellicrack
+//@description Find cryptographic routines in {binary_name}
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.address.*;
+import java.util.*;
+
+public class {binary_name}_CryptoFinder extends GhidraScript {{
+
+    private static final byte[][] CRYPTO_CONSTANTS = {{
+        {{ 0x63, 0x7c, 0x77, 0x7b }},  // AES S-box
+        {{ 0x67, 0x45, 0x23, 0x01 }},  // MD5 init
+        {{ 0x01, 0x23, 0x45, 0x67 }},  // SHA-1 init
+    }};
+
+    @Override
+    protected void run() throws Exception {{
+        println("[*] Crypto Finder for {binary_name}");
+
+        Memory memory = currentProgram.getMemory();
+        int foundCount = 0;
+
+        for (byte[] constant : CRYPTO_CONSTANTS) {{
+            Address addr = memory.findBytes(
+                currentProgram.getMinAddress(),
+                constant,
+                null,
+                true,
+                monitor
+            );
+
+            if (addr != null) {{
+                foundCount++;
+                println("[+] Found crypto constant at: " + addr);
+                createBookmark(addr, "CryptoConstant",
+                    "Potential cryptographic constant found");
+            }}
+        }}
+
+        println("[*] Found " + foundCount + " potential crypto constants.");
+    }}
+}}
+'''
+
 
 # Global visualization and analytics instance
 visualization_analytics = VisualizationAnalytics()

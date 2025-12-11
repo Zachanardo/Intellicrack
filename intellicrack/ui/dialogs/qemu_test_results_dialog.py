@@ -153,6 +153,164 @@ class QEMUExecutionThread(QThread):
 
         return result
 
+    def _execute_ghidra_script(self) -> ExecutionResult:
+        """Execute Ghidra script in QEMU VM and capture output.
+
+        Runs a Ghidra headless analysis script against the target binary
+        in an isolated QEMU virtual machine environment, streaming output
+        back to the UI in real-time.
+
+        Returns:
+            ExecutionResult containing success status, output, errors,
+            exit code, and runtime duration.
+        """
+        self.progress_update.emit(20, "Preparing Ghidra environment in VM...")
+        self.output_update.emit("[*] Initializing Ghidra headless analysis...")
+
+        def output_callback(line: str) -> None:
+            self.output_update.emit(line)
+
+        self.progress_update.emit(40, "Uploading binary and script to VM...")
+        self.output_update.emit(f"[*] Target binary: {self.binary_path}")
+
+        try:
+            if hasattr(self.qemu_manager, "validate_ghidra_script"):
+                self.progress_update.emit(60, "Running Ghidra analysis...")
+                result = self.qemu_manager.validate_ghidra_script(
+                    self.snapshot_id,
+                    self.script_content,
+                    self.binary_path,
+                )
+            elif hasattr(self.qemu_manager, "test_ghidra_script"):
+                self.progress_update.emit(60, "Running Ghidra analysis...")
+                result = self.qemu_manager.test_ghidra_script(
+                    self.snapshot_id,
+                    self.script_content,
+                    self.binary_path,
+                )
+            else:
+                self.progress_update.emit(60, "Executing via generic interface...")
+                result = self.qemu_manager.test_script_in_vm(
+                    self.script_content,
+                    self.binary_path,
+                    script_type="ghidra",
+                    timeout=300,
+                )
+
+            self.progress_update.emit(90, "Parsing Ghidra output...")
+
+            for line in result.output.split("\n"):
+                output_callback(line)
+
+            return result
+
+        except AttributeError as e:
+            logger.error("QEMU manager missing Ghidra execution method: %s", e)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Ghidra execution not available: {e}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+        except TimeoutError as e:
+            logger.error("Ghidra script execution timed out: %s", e)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Ghidra analysis timed out: {e}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
+    def _execute_generic_script(self) -> ExecutionResult:
+        """Execute a generic script in QEMU VM and capture output.
+
+        Handles execution of non-Frida, non-Ghidra scripts such as
+        shell scripts, Python scripts, or radare2 scripts in the
+        isolated QEMU environment.
+
+        Returns:
+            ExecutionResult containing success status, output, errors,
+            exit code, and runtime duration.
+        """
+        self.progress_update.emit(20, "Preparing script environment in VM...")
+        self.output_update.emit("[*] Executing generic script in QEMU sandbox...")
+
+        def output_callback(line: str) -> None:
+            self.output_update.emit(line)
+
+        self.progress_update.emit(40, "Uploading binary and script to VM...")
+        self.output_update.emit(f"[*] Target binary: {self.binary_path}")
+        self.output_update.emit(f"[*] Script type: {self.script_type}")
+
+        try:
+            self.progress_update.emit(60, "Running script execution...")
+
+            if hasattr(self.qemu_manager, "test_script_in_vm"):
+                result = self.qemu_manager.test_script_in_vm(
+                    self.script_content,
+                    self.binary_path,
+                    script_type=self.script_type,
+                    timeout=120,
+                )
+            elif hasattr(self.qemu_manager, "_test_generic_script"):
+                result = self.qemu_manager._test_generic_script(
+                    self.snapshot_id,
+                    self.script_content,
+                    self.binary_path,
+                )
+            else:
+                self.output_update.emit("[!] No suitable execution method found")
+                self.output_update.emit("[*] Attempting direct command execution...")
+
+                if hasattr(self.qemu_manager, "execute_in_vm"):
+                    exec_result = self.qemu_manager.execute_in_vm(
+                        self.script_content,
+                        timeout=120,
+                    )
+                    result = ExecutionResult(
+                        success=exec_result.get("exit_code", -1) == 0,
+                        output=exec_result.get("stdout", ""),
+                        error=exec_result.get("stderr", ""),
+                        exit_code=exec_result.get("exit_code", -1),
+                        runtime_ms=0,
+                    )
+                else:
+                    return ExecutionResult(
+                        success=False,
+                        output="",
+                        error="No execution method available for generic scripts",
+                        exit_code=-1,
+                        runtime_ms=0,
+                    )
+
+            self.progress_update.emit(90, "Parsing script output...")
+
+            for line in result.output.split("\n"):
+                output_callback(line)
+
+            return result
+
+        except AttributeError as e:
+            logger.error("QEMU manager missing execution method: %s", e)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Script execution not available: {e}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+        except TimeoutError as e:
+            logger.error("Generic script execution timed out: %s", e)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Script execution timed out: {e}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
     def _parse_execution_results(self, result: ExecutionResult) -> TestResults:
         """Parse real execution results into structured format."""
         duration = time.time() - self.start_time

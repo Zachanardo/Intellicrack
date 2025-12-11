@@ -23,10 +23,9 @@ import inspect
 import logging
 import sys
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 
-# Type variable for decorators
 F = TypeVar("F", bound=Callable[..., Any])
 C = TypeVar("C", bound=type)
 
@@ -172,9 +171,9 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             finally:
                 local.in_logger = False
 
-        return async_wrapper
+        return cast("F", async_wrapper)
 
-    return wrapper
+    return cast("F", wrapper)
 
 
 def log_all_methods[C: type](cls: C) -> C:
@@ -196,8 +195,8 @@ def log_all_methods[C: type](cls: C) -> C:
 def setup_logger(
     name: str = "Intellicrack",
     level: int = logging.INFO,
-    log_file: str = None,
-    format_string: str = None,
+    log_file: str | None = None,
+    format_string: str | None = None,
 ) -> logging.Logger:
     """Set up a logger with the specified configuration.
 
@@ -220,23 +219,23 @@ def setup_logger(
 
     formatter = logging.Formatter(format_string)
 
-    # Console handler with UTF-8 encoding for Windows compatibility
     import codecs
-    import sys
+    import io
 
-    # Force UTF-8 encoding on Windows to prevent encoding errors
     if sys.platform == "win32":
         try:
-            # Try to reconfigure streams if they support it (Python 3.7+)
-            if hasattr(sys.stdout, "reconfigure"):
+            if hasattr(sys.stdout, "reconfigure") and callable(sys.stdout.reconfigure):
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "reconfigure") and callable(sys.stderr.reconfigure):
                 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
             elif hasattr(sys.stdout, "buffer"):
-                # Fallback for streams with buffer attribute
-                sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, errors="replace")
-                sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, errors="replace")
+                stdout_buffer = getattr(sys.stdout, "buffer", None)
+                stderr_buffer = getattr(sys.stderr, "buffer", None)
+                if stdout_buffer is not None:
+                    sys.stdout = io.TextIOWrapper(stdout_buffer, encoding="utf-8", errors="replace")
+                if stderr_buffer is not None:
+                    sys.stderr = io.TextIOWrapper(stderr_buffer, encoding="utf-8", errors="replace")
         except (AttributeError, OSError):
-            # If reconfiguration fails, just use the stream as-is
             pass
 
     console_handler = logging.StreamHandler(sys.stdout)
@@ -254,7 +253,7 @@ def setup_logger(
     return target_logger
 
 
-def get_logger(name: str = None) -> logging.Logger:
+def get_logger(name: str | None = None) -> logging.Logger:
     """Get a logger instance.
 
     Args:
@@ -277,8 +276,8 @@ def get_logger(name: str = None) -> logging.Logger:
 
 def configure_logging(
     level: int = logging.INFO,
-    log_file: str = None,
-    format_string: str = None,
+    log_file: str | None = None,
+    format_string: str | None = None,
     enable_comprehensive: bool = False,
 ) -> None:
     """Configure logging for the entire application.
@@ -303,7 +302,7 @@ def configure_logging(
 
 def setup_logging(
     level: str = "INFO",
-    log_file: str = None,
+    log_file: str | None = None,
     enable_rotation: bool = True,
     max_bytes: int = 10485760,
     backup_count: int = 5,
@@ -328,24 +327,25 @@ def setup_logging(
         raise TypeError(error_msg)
 
     # Set up handlers
-    handlers = []
+    handlers: list[logging.Handler] = []
 
-    # Force UTF-8 encoding on Windows to prevent encoding errors
-    import codecs
+    import io
 
     if sys.platform == "win32":
         try:
-            # Only reconfigure if not already UTF-8
-            if not hasattr(sys.stdout, "encoding") or sys.stdout.encoding.lower() not in [
-                "utf-8",
-                "utf8",
-            ]:
-                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+            current_encoding = getattr(sys.stdout, "encoding", None)
+            if current_encoding is None or current_encoding.lower() not in ["utf-8", "utf8"]:
+                if hasattr(sys.stdout, "reconfigure") and callable(sys.stdout.reconfigure):
+                    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+                if hasattr(sys.stderr, "reconfigure") and callable(sys.stderr.reconfigure):
+                    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
         except AttributeError:
-            # Fallback for older Python versions or non-standard streams
-            sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, errors="replace")
-            sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, errors="replace")
+            stdout_buffer = getattr(sys.stdout, "buffer", None)
+            stderr_buffer = getattr(sys.stderr, "buffer", None)
+            if stdout_buffer is not None:
+                sys.stdout = io.TextIOWrapper(stdout_buffer, encoding="utf-8", errors="replace")
+            if stderr_buffer is not None:
+                sys.stderr = io.TextIOWrapper(stderr_buffer, encoding="utf-8", errors="replace")
 
     # Console handler
     if enable_console:
@@ -360,6 +360,7 @@ def setup_logging(
 
     # File handler with rotation if log_file is specified
     if log_file:
+        file_handler: logging.Handler
         if enable_rotation:
             from logging.handlers import RotatingFileHandler
 
@@ -384,7 +385,7 @@ def setup_logging(
 
 
 def setup_persistent_logging(
-    log_dir: str = None,
+    log_dir: str | None = None,
     log_name: str = "intellicrack",
     enable_rotation: bool = True,
     max_bytes: int = 10485760,

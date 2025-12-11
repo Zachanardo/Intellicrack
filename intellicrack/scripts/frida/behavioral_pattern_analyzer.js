@@ -255,7 +255,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_call_pattern_analysis',
         });
 
-        if (!this.config.callPatterns.enabled) return;
+        if (!this.config.callPatterns.enabled) { return; }
 
         // Hook function entry/exit for all modules
         this.hookAllFunctionCalls();
@@ -274,24 +274,24 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_function_calls',
         });
 
-        var modules = Process.enumerateModules();
-        var hookedCount = 0;
+      const modules = Process.enumerateModules();
+      let hookedCount = 0;
 
-        for (var i = 0; i < modules.length && hookedCount < 1000; i++) {
-            var module = modules[i];
+      for (let i = 0; i < modules.length && hookedCount < 1000; i++) {
+          const module = modules[i];
 
-            // Skip system modules to reduce noise
+          // Skip system modules to reduce noise
             if (this.isSystemModule(module.name)) {
                 continue;
             }
 
             try {
-                var exports = Module.enumerateExports(module.name);
+              const exports = Module.enumerateExports(module.name);
 
-                for (var j = 0; j < exports.length && hookedCount < 1000; j++) {
-                    var exp = exports[j];
+              for (let j = 0; j < exports.length && hookedCount < 1000; j++) {
+                  const exp = exports[j];
 
-                    if (exp.type === 'function') {
+                  if (exp.type === 'function') {
                         this.hookFunctionForPatternAnalysis(module.name, exp.name, exp.address);
                         hookedCount++;
                     }
@@ -300,9 +300,8 @@ const BehavioralPatternAnalyzer = {
                 send({
                     type: 'debug',
                     target: 'module_enumeration',
-                    message: 'Module enumeration failed: ' + error.message,
+                    message: `Module enumeration failed: ${error.message}`,
                 });
-                continue;
             }
         }
 
@@ -316,12 +315,12 @@ const BehavioralPatternAnalyzer = {
 
     hookFunctionForPatternAnalysis: function (moduleName, functionName, address) {
         try {
-            var hookKey = moduleName + '!' + functionName;
+          const hookKey = `${moduleName}!${functionName}`;
 
-            Interceptor.attach(address, {
+          Interceptor.attach(address, {
                 onEnter: function (args) {
-                    var timestamp = Date.now();
-                    this.enterTime = timestamp;
+                  const timestamp = Date.now();
+                  this.enterTime = timestamp;
                     this.functionKey = hookKey;
                     this.args = args;
 
@@ -330,10 +329,10 @@ const BehavioralPatternAnalyzer = {
                 },
 
                 onLeave: function (retval) {
-                    var timestamp = Date.now();
-                    var duration = timestamp - this.enterTime;
+                  const timestamp = Date.now();
+                  const duration = timestamp - this.enterTime;
 
-                    // Record function exit
+                  // Record function exit
                     this.parent.parent.recordFunctionExit(
                         this.functionKey,
                         retval,
@@ -356,7 +355,7 @@ const BehavioralPatternAnalyzer = {
                 type: 'warning',
                 target: 'pattern_hook',
                 message:
-                    'Hook failed for ' + moduleName + '::' + functionName + ': ' + error.message,
+                    `Hook failed for ${moduleName}::${functionName}: ${error.message}`,
             });
         }
     },
@@ -373,8 +372,8 @@ const BehavioralPatternAnalyzer = {
             });
         }
 
-        var pattern = this.patterns.callSequences.get(functionKey);
-        pattern.entries.push({
+      const pattern = this.patterns.callSequences.get(functionKey);
+      pattern.entries.push({
             timestamp: timestamp,
             args: this.analyzeArguments(args),
             callStack: this.getCurrentCallStack(),
@@ -392,8 +391,8 @@ const BehavioralPatternAnalyzer = {
     },
 
     recordFunctionExit: function (functionKey, retval, duration, timestamp) {
-        var pattern = this.patterns.callSequences.get(functionKey);
-        if (!pattern) return;
+      const pattern = this.patterns.callSequences.get(functionKey);
+      if (!pattern) { return; }
 
         pattern.exits.push({
             timestamp: timestamp,
@@ -402,8 +401,8 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Update average duration
-        var totalCalls = pattern.entries.length;
-        pattern.avgDuration = (pattern.avgDuration * (totalCalls - 1) + duration) / totalCalls;
+      const totalCalls = pattern.entries.length;
+      pattern.avgDuration = (pattern.avgDuration * (totalCalls - 1) + duration) / totalCalls;
 
         // Update hook statistics
         if (this.activeHooks[functionKey]) {
@@ -419,22 +418,22 @@ const BehavioralPatternAnalyzer = {
     },
 
     analyzeArguments: function (args) {
-        var argAnalysis = {
-            count: 0,
-            types: [],
-            values: [],
-            patterns: {},
-        };
+      const argAnalysis = {
+        count: 0,
+        types: [],
+        values: [],
+        patterns: {},
+      };
 
-        try {
-            for (var i = 0; i < 8; i++) {
+      try {
+            for (let i = 0; i < 8; i++) {
                 // Analyze up to 8 arguments
                 if (args[i]) {
                     argAnalysis.count++;
 
                     // Determine argument type and extract value
-                    var argInfo = this.analyzeArgument(args[i]);
-                    argAnalysis.types.push(argInfo.type);
+                  const argInfo = this.analyzeArgument(args[i]);
+                  argAnalysis.types.push(argInfo.type);
                     argAnalysis.values.push(argInfo.value);
                 }
             }
@@ -442,31 +441,31 @@ const BehavioralPatternAnalyzer = {
             send({
                 type: 'debug',
                 target: 'argument_analysis',
-                message: 'Argument analysis failed: ' + error.message,
+                message: `Argument analysis failed: ${error.message}`,
             });
         }
 
         return argAnalysis;
     },
 
-    analyzeArgument: function (arg) {
-        var argInfo = {
-            type: 'unknown',
-            value: null,
-            size: 0,
-        };
+    analyzeArgument: arg => {
+      const argInfo = {
+        type: 'unknown',
+        value: null,
+        size: 0,
+      };
 
-        try {
-            var ptr = ptr(arg);
+      try {
+          const ptr = ptr(arg);
 
-            if (ptr.isNull()) {
+          if (ptr.isNull()) {
                 argInfo.type = 'null';
                 argInfo.value = null;
             } else {
                 // Try to determine if it's a pointer to string
                 try {
-                    var str = ptr.readUtf8String(64);
-                    if (str && str.length > 0 && str.length < 64) {
+                  const str = ptr.readUtf8String(64);
+                  if (str && str.length > 0 && str.length < 64) {
                         argInfo.type = 'string';
                         argInfo.value = str.substring(0, 32); // Truncate for analysis
                     } else {
@@ -477,11 +476,11 @@ const BehavioralPatternAnalyzer = {
                     send({
                         type: 'debug',
                         target: 'string_analysis',
-                        message: 'String pointer analysis failed: ' + error.message,
+                        message: `String pointer analysis failed: ${error.message}`,
                     });
                     // Not a valid string pointer
-                    var intVal = arg.toInt32();
-                    if (intVal >= -2147483648 && intVal <= 2147483647) {
+                  const intVal = arg.toInt32();
+                  if (intVal >= -2147483648 && intVal <= 2147483647) {
                         argInfo.type = 'integer';
                         argInfo.value = intVal;
                     } else {
@@ -494,7 +493,7 @@ const BehavioralPatternAnalyzer = {
             send({
                 type: 'debug',
                 target: 'arg_info',
-                message: 'Argument info extraction failed: ' + error.message,
+                message: `Argument info extraction failed: ${error.message}`,
             });
             argInfo.type = 'error';
             argInfo.value = null;
@@ -504,15 +503,15 @@ const BehavioralPatternAnalyzer = {
     },
 
     analyzeReturnValue: function (retval) {
-        var retInfo = {
-            type: 'unknown',
-            value: null,
-            success: false,
-        };
+      const retInfo = {
+        type: 'unknown',
+        value: null,
+        success: false,
+      };
 
-        try {
-            var intVal = retval.toInt32();
-            retInfo.type = 'integer';
+      try {
+          const intVal = retval.toInt32();
+          retInfo.type = 'integer';
             retInfo.value = intVal;
 
             // Common success/failure patterns
@@ -542,16 +541,16 @@ const BehavioralPatternAnalyzer = {
     },
 
     getCurrentCallStack: function () {
-        var callStack = [];
+      let callStack = [];
 
-        try {
-            var frames = Thread.backtrace(this.context, Backtracer.ACCURATE);
+      try {
+          const frames = Thread.backtrace(this.context, Backtracer.ACCURATE);
 
-            for (var i = 0; i < Math.min(frames.length, 10); i++) {
-                var frame = frames[i];
-                var symbol = DebugSymbol.fromAddress(frame);
+          for (let i = 0; i < Math.min(frames.length, 10); i++) {
+              const frame = frames[i];
+              const symbol = DebugSymbol.fromAddress(frame);
 
-                callStack.push({
+              callStack.push({
                     address: frame.toString(),
                     symbol: symbol.name || 'unknown',
                     module: symbol.moduleName || 'unknown',
@@ -562,8 +561,8 @@ const BehavioralPatternAnalyzer = {
             if (error.message.includes('symbol') || error.message.includes('debug')) {
                 // Protection is hiding debug symbols - implement stack spoofing
                 callStack.push({
-                    address: '0x' + Math.random().toString(16).slice(2, 10).toUpperCase(),
-                    name: 'legitimate_function_' + Math.floor(Math.random() * 1000),
+                    address: `0x${Math.random().toString(16).slice(2, 10).toUpperCase()}`,
+                    name: `legitimate_function_${Math.floor(Math.random() * 1000)}`,
                     module: 'system32.dll',
                     spoofed: true,
                     bypassReason: 'anti_analysis_detected',
@@ -593,7 +592,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     updateCallSequence: function (functionKey, timestamp) {
-        if (!this.config.callPatterns.trackCallSequences) return;
+        if (!this.config.callPatterns.trackCallSequences) { return; }
 
         // Add to current sequence window
         this.callSequenceWindow.push({
@@ -613,10 +612,10 @@ const BehavioralPatternAnalyzer = {
     },
 
     analyzeSequencePattern: function () {
-        var sequence = this.callSequenceWindow.map((item) => item.function);
-        var sequenceKey = sequence.join(' -> ');
+      const sequence = this.callSequenceWindow.map(item => item.function);
+      const sequenceKey = sequence.join(' -> ');
 
-        if (!this.patterns.temporalPatterns.has(sequenceKey)) {
+      if (!this.patterns.temporalPatterns.has(sequenceKey)) {
             this.patterns.temporalPatterns.set(sequenceKey, {
                 count: 0,
                 firstSeen: Date.now(),
@@ -626,8 +625,8 @@ const BehavioralPatternAnalyzer = {
             });
         }
 
-        var pattern = this.patterns.temporalPatterns.get(sequenceKey);
-        pattern.count++;
+      const pattern = this.patterns.temporalPatterns.get(sequenceKey);
+      pattern.count++;
         pattern.lastSeen = Date.now();
 
         // Calculate significance based on frequency and uniqueness
@@ -640,9 +639,9 @@ const BehavioralPatternAnalyzer = {
     },
 
     calculateSequenceSignificance: function (pattern) {
-        var frequency = pattern.count;
-        var recency = 1.0 / Math.max(1, (Date.now() - pattern.lastSeen) / 60000); // Recency in minutes
-        var uniqueness = 1.0 / Math.max(1, this.patterns.temporalPatterns.size / 100); // Relative uniqueness
+      const frequency = pattern.count;
+      const recency = 1.0 / Math.max(1, (Date.now() - pattern.lastSeen) / 60000); // Recency in minutes
+      const uniqueness = 1.0 / Math.max(1, this.patterns.temporalPatterns.size / 100); // Relative uniqueness
 
         return (frequency * 0.5 + recency * 0.3 + uniqueness * 0.2) / 10; // Normalized
     },
@@ -666,7 +665,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_api_pattern_analysis',
         });
 
-        if (!this.config.apiPatterns.enabled) return;
+        if (!this.config.apiPatterns.enabled) { return; }
 
         // Hook Windows API categories
         this.hookWindowsAPIPatterns();
@@ -684,21 +683,21 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_windows_api_patterns',
         });
 
-        var windowsAPIs = [
-            'CreateWindowExW',
-            'ShowWindow',
-            'UpdateWindow',
-            'DestroyWindow',
-            'GetMessage',
-            'DispatchMessage',
-            'PostMessage',
-            'SendMessage',
-            'CreateDialogParam',
-            'DialogBox',
-            'MessageBox',
-        ];
+      const windowsAPIs = [
+        'CreateWindowExW',
+        'ShowWindow',
+        'UpdateWindow',
+        'DestroyWindow',
+        'GetMessage',
+        'DispatchMessage',
+        'PostMessage',
+        'SendMessage',
+        'CreateDialogParam',
+        'DialogBox',
+        'MessageBox',
+      ];
 
-        for (var i = 0; i < windowsAPIs.length; i++) {
+      for (let i = 0; i < windowsAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('user32.dll', windowsAPIs[i], 'windows_ui');
         }
     },
@@ -710,17 +709,17 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_registry_api_patterns',
         });
 
-        var registryAPIs = [
-            'RegOpenKeyExW',
-            'RegCreateKeyExW',
-            'RegQueryValueExW',
-            'RegSetValueExW',
-            'RegDeleteKeyW',
-            'RegDeleteValueW',
-            'RegCloseKey',
-        ];
+      const registryAPIs = [
+        'RegOpenKeyExW',
+        'RegCreateKeyExW',
+        'RegQueryValueExW',
+        'RegSetValueExW',
+        'RegDeleteKeyW',
+        'RegDeleteValueW',
+        'RegCloseKey',
+      ];
 
-        for (var i = 0; i < registryAPIs.length; i++) {
+      for (let i = 0; i < registryAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('advapi32.dll', registryAPIs[i], 'registry');
         }
     },
@@ -732,21 +731,21 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_file_system_api_patterns',
         });
 
-        var fileAPIs = [
-            'CreateFileW',
-            'ReadFile',
-            'WriteFile',
-            'DeleteFileW',
-            'MoveFileW',
-            'CopyFileW',
-            'GetFileAttributesW',
-            'SetFileAttributesW',
-            'FindFirstFileW',
-            'FindNextFileW',
-            'CreateDirectoryW',
-        ];
+      const fileAPIs = [
+        'CreateFileW',
+        'ReadFile',
+        'WriteFile',
+        'DeleteFileW',
+        'MoveFileW',
+        'CopyFileW',
+        'GetFileAttributesW',
+        'SetFileAttributesW',
+        'FindFirstFileW',
+        'FindNextFileW',
+        'CreateDirectoryW',
+      ];
 
-        for (var i = 0; i < fileAPIs.length; i++) {
+      for (let i = 0; i < fileAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('kernel32.dll', fileAPIs[i], 'filesystem');
         }
     },
@@ -758,30 +757,30 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_network_api_patterns',
         });
 
-        var networkAPIs = [
-            'socket',
-            'connect',
-            'send',
-            'recv',
-            'closesocket',
-            'WSAStartup',
-            'WSACleanup',
-            'getaddrinfo',
-            'gethostbyname',
-        ];
+      const networkAPIs = [
+        'socket',
+        'connect',
+        'send',
+        'recv',
+        'closesocket',
+        'WSAStartup',
+        'WSACleanup',
+        'getaddrinfo',
+        'gethostbyname',
+      ];
 
-        for (var i = 0; i < networkAPIs.length; i++) {
+      for (var i = 0; i < networkAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('ws2_32.dll', networkAPIs[i], 'network');
         }
 
-        var httpAPIs = [
-            'WinHttpOpen',
-            'WinHttpConnect',
-            'WinHttpSendRequest',
-            'WinHttpReceiveResponse',
-        ];
+      const httpAPIs = [
+        'WinHttpOpen',
+        'WinHttpConnect',
+        'WinHttpSendRequest',
+        'WinHttpReceiveResponse',
+      ];
 
-        for (var i = 0; i < httpAPIs.length; i++) {
+      for (var i = 0; i < httpAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('winhttp.dll', httpAPIs[i], 'http');
         }
     },
@@ -793,20 +792,20 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_process_api_patterns',
         });
 
-        var processAPIs = [
-            'CreateProcessW',
-            'TerminateProcess',
-            'OpenProcess',
-            'GetCurrentProcess',
-            'CreateThread',
-            'ExitThread',
-            'SuspendThread',
-            'ResumeThread',
-            'WaitForSingleObject',
-            'WaitForMultipleObjects',
-        ];
+      const processAPIs = [
+        'CreateProcessW',
+        'TerminateProcess',
+        'OpenProcess',
+        'GetCurrentProcess',
+        'CreateThread',
+        'ExitThread',
+        'SuspendThread',
+        'ResumeThread',
+        'WaitForSingleObject',
+        'WaitForMultipleObjects',
+      ];
 
-        for (var i = 0; i < processAPIs.length; i++) {
+      for (let i = 0; i < processAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('kernel32.dll', processAPIs[i], 'process');
         }
     },
@@ -818,30 +817,30 @@ const BehavioralPatternAnalyzer = {
             action: 'hooking_memory_api_patterns',
         });
 
-        var memoryAPIs = [
-            'VirtualAlloc',
-            'VirtualFree',
-            'VirtualProtect',
-            'VirtualQuery',
-            'HeapCreate',
-            'HeapDestroy',
-            'HeapAlloc',
-            'HeapFree',
-            'GlobalAlloc',
-            'GlobalFree',
-            'LocalAlloc',
-            'LocalFree',
-        ];
+      const memoryAPIs = [
+        'VirtualAlloc',
+        'VirtualFree',
+        'VirtualProtect',
+        'VirtualQuery',
+        'HeapCreate',
+        'HeapDestroy',
+        'HeapAlloc',
+        'HeapFree',
+        'GlobalAlloc',
+        'GlobalFree',
+        'LocalAlloc',
+        'LocalFree',
+      ];
 
-        for (var i = 0; i < memoryAPIs.length; i++) {
+      for (let i = 0; i < memoryAPIs.length; i++) {
             this.hookAPIForPatternAnalysis('kernel32.dll', memoryAPIs[i], 'memory');
         }
     },
 
     hookAPIForPatternAnalysis: function (module, apiName, category) {
         try {
-            var apiFunc = Module.findExportByName(module, apiName);
-            if (!apiFunc) return;
+          const apiFunc = Module.findExportByName(module, apiName);
+          if (!apiFunc) { return; }
 
             Interceptor.attach(apiFunc, {
                 onEnter: function (args) {
@@ -852,9 +851,9 @@ const BehavioralPatternAnalyzer = {
                 },
 
                 onLeave: function (retval) {
-                    var duration = Date.now() - this.enterTime;
+                  const duration = Date.now() - this.enterTime;
 
-                    this.parent.parent.recordAPIUsage(
+                  this.parent.parent.recordAPIUsage(
                         this.apiName,
                         this.category,
                         this.args,
@@ -894,9 +893,9 @@ const BehavioralPatternAnalyzer = {
             });
         }
 
-        var categoryPattern = this.patterns.apiUsage.get(category);
+      const categoryPattern = this.patterns.apiUsage.get(category);
 
-        if (!categoryPattern.apis.has(apiName)) {
+      if (!categoryPattern.apis.has(apiName)) {
             categoryPattern.apis.set(apiName, {
                 callCount: 0,
                 totalDuration: 0,
@@ -907,15 +906,15 @@ const BehavioralPatternAnalyzer = {
             });
         }
 
-        var apiPattern = categoryPattern.apis.get(apiName);
-        apiPattern.callCount++;
+      const apiPattern = categoryPattern.apis.get(apiName);
+      apiPattern.callCount++;
         apiPattern.totalDuration += duration;
         apiPattern.avgDuration = apiPattern.totalDuration / apiPattern.callCount;
         apiPattern.lastCall = Date.now();
 
         // Analyze return value for success/failure
-        var success = this.isAPICallSuccessful(apiName, retval);
-        if (success) {
+      const success = this.isAPICallSuccessful(apiName, retval);
+      if (success) {
             apiPattern.successRate =
                 (apiPattern.successRate * (apiPattern.callCount - 1) + 1) / apiPattern.callCount;
         } else {
@@ -933,9 +932,9 @@ const BehavioralPatternAnalyzer = {
 
     isAPICallSuccessful: function (apiName, retval) {
         try {
-            var intVal = retval.toInt32();
+          const intVal = retval.toInt32();
 
-            // Common success patterns for Windows APIs
+          // Common success patterns for Windows APIs
             if (apiName.startsWith('Reg')) {
                 return intVal === 0; // ERROR_SUCCESS
             } else if (apiName.includes('Create') || apiName.includes('Open')) {
@@ -983,10 +982,10 @@ const BehavioralPatternAnalyzer = {
         // Look for license/protection-related registry access
         if (apiName === 'RegQueryValueExW' && args[1]) {
             try {
-                var valueName = args[1].readUtf16String().toLowerCase();
-                var protectionIndicators = ['license', 'serial', 'key', 'activation', 'trial'];
+              const valueName = args[1].readUtf16String().toLowerCase();
+              const protectionIndicators = ['license', 'serial', 'key', 'activation', 'trial'];
 
-                if (protectionIndicators.some((indicator) => valueName.includes(indicator))) {
+              if (protectionIndicators.some(indicator => valueName.includes(indicator))) {
                     this.recordProtectionMechanism('registry_license_check', {
                         api: apiName,
                         value: valueName,
@@ -995,9 +994,9 @@ const BehavioralPatternAnalyzer = {
 
                     // Implement sophisticated registry bypass using retval
                     if (retval && !retval.isNull()) {
-                        var resultCode = retval.toInt32();
+                      const resultCode = retval.toInt32();
 
-                        // If registry query failed, implement bypass
+                      // If registry query failed, implement bypass
                         if (resultCode !== 0) {
                             // ERROR_SUCCESS = 0
                             // Manipulate registry response for license bypass
@@ -1028,10 +1027,10 @@ const BehavioralPatternAnalyzer = {
         // Look for license file access patterns
         if (apiName === 'CreateFileW' && args[0]) {
             try {
-                var fileName = args[0].readUtf16String().toLowerCase();
-                var protectionFiles = ['.lic', '.key', 'license', 'serial', 'activation'];
+              const fileName = args[0].readUtf16String().toLowerCase();
+              const protectionFiles = ['.lic', '.key', 'license', 'serial', 'activation'];
 
-                if (protectionFiles.some((pattern) => fileName.includes(pattern))) {
+              if (protectionFiles.some(pattern => fileName.includes(pattern))) {
                     this.recordProtectionMechanism('file_license_check', {
                         api: apiName,
                         file: fileName,
@@ -1040,9 +1039,9 @@ const BehavioralPatternAnalyzer = {
 
                     // Implement sophisticated file system bypass using retval
                     if (retval && !retval.isNull()) {
-                        var fileHandle = retval.toPointer();
+                      const fileHandle = retval.toPointer();
 
-                        // If file access failed or returned invalid handle
+                      // If file access failed or returned invalid handle
                         if (fileHandle.isNull() || fileHandle.equals(ptr(-1))) {
                             // License file missing - implement virtual file creation
                             this.createVirtualLicenseFile(fileName, args);
@@ -1087,8 +1086,8 @@ const BehavioralPatternAnalyzer = {
             // Implement sophisticated network license bypass using args and retval
             if (apiName.includes('connect') && args && args.length > 0) {
                 // Analyze connection target for license server detection
-                var targetAddress = this.extractNetworkTarget(args);
-                if (this.isLicenseServer(targetAddress)) {
+              const targetAddress = this.extractNetworkTarget(args);
+              if (this.isLicenseServer(targetAddress)) {
                     this.implementLicenseServerBypass(args, retval);
                     this.behaviorStats.networkBypassCount =
                         (this.behaviorStats.networkBypassCount || 0) + 1;
@@ -1097,8 +1096,8 @@ const BehavioralPatternAnalyzer = {
 
             if (apiName.includes('Send') && args && args.length > 1) {
                 // Intercept and modify license request data
-                var sendData = this.extractSendData(args);
-                if (this.containsLicenseRequest(sendData)) {
+              const sendData = this.extractSendData(args);
+              if (this.containsLicenseRequest(sendData)) {
                     this.manipulateLicenseRequest(args, sendData);
                     this.behaviorStats.requestManipulationCount =
                         (this.behaviorStats.requestManipulationCount || 0) + 1;
@@ -1107,8 +1106,8 @@ const BehavioralPatternAnalyzer = {
 
             // Analyze return value for connection success/failure
             if (retval && !retval.isNull()) {
-                var connectionResult = retval.toInt32();
-                if (connectionResult === 0) {
+              const connectionResult = retval.toInt32();
+              if (connectionResult === 0) {
                     // Connection failed
                     // Implement fake license server response
                     this.injectFakeLicenseResponse(retval);
@@ -1123,10 +1122,10 @@ const BehavioralPatternAnalyzer = {
         // Look for anti-debug/protection processes
         if (apiName === 'CreateProcessW' && args[1]) {
             try {
-                var commandLine = args[1].readUtf16String().toLowerCase();
-                var protectionTools = ['debugger', 'ollydbg', 'x64dbg', 'wireshark'];
+              const commandLine = args[1].readUtf16String().toLowerCase();
+              const protectionTools = ['debugger', 'ollydbg', 'x64dbg', 'wireshark'];
 
-                if (protectionTools.some((tool) => commandLine.includes(tool))) {
+              if (protectionTools.some(tool => commandLine.includes(tool))) {
                     this.recordProtectionMechanism('anti_debug_detection', {
                         api: apiName,
                         command: commandLine,
@@ -1135,8 +1134,8 @@ const BehavioralPatternAnalyzer = {
 
                     // Implement anti-debugging process bypass using retval
                     if (retval && !retval.isNull()) {
-                        var processHandle = retval.toPointer();
-                        if (processHandle.isNull() || processHandle.equals(ptr(-1))) {
+                      const processHandle = retval.toPointer();
+                      if (processHandle.isNull() || processHandle.equals(ptr(-1))) {
                             // Process creation failed - likely blocked by protection
                             this.implementProcessCreationBypass(args, commandLine);
                             this.behaviorStats.processBlockBypassCount =
@@ -1170,10 +1169,10 @@ const BehavioralPatternAnalyzer = {
     detectMemoryProtectionPatterns: function (apiName, args, retval) {
         // Look for protection-related memory operations
         if (apiName === 'VirtualProtect' && args[2]) {
-            var protection = args[2].toInt32();
+          const protection = args[2].toInt32();
 
-            // PAGE_NOACCESS or unusual protection changes
-            if (protection === 0x01 || protection & 0x40) {
+          // PAGE_NOACCESS or unusual protection changes
+            if (protection === 0x01 || protection && 0x40) {
                 // PAGE_EXECUTE_READWRITE
                 this.recordProtectionMechanism('memory_protection_change', {
                     api: apiName,
@@ -1183,17 +1182,17 @@ const BehavioralPatternAnalyzer = {
 
                 // Implement memory protection bypass using retval
                 if (retval && !retval.isNull()) {
-                    var protectionResult = retval.toInt32();
-                    if (protectionResult === 0) {
+                  const protectionResult = retval.toInt32();
+                  if (protectionResult === 0) {
                         // Memory protection change failed - implement bypass
                         this.implementMemoryProtectionBypass(args, protection);
                         this.behaviorStats.memoryProtectionBypassCount =
                             (this.behaviorStats.memoryProtectionBypassCount || 0) + 1;
                     } else {
                         // Protection change succeeded - monitor for exploitation
-                        var baseAddress = args[0];
-                        var size = args[1].toInt32();
-                        this.monitorProtectedMemoryRegion(baseAddress, size, protection);
+                      const baseAddress = args[0];
+                      const size = args[1].toInt32();
+                      this.monitorProtectedMemoryRegion(baseAddress, size, protection);
                         this.behaviorStats.memoryMonitoringCount =
                             (this.behaviorStats.memoryMonitoringCount || 0) + 1;
                     }
@@ -1203,8 +1202,8 @@ const BehavioralPatternAnalyzer = {
 
         // Handle other memory protection APIs
         if (apiName === 'VirtualAlloc' && retval) {
-            var allocatedMemory = retval.toPointer();
-            if (!allocatedMemory.isNull()) {
+          const allocatedMemory = retval.toPointer();
+          if (!allocatedMemory.isNull()) {
                 // Memory allocated successfully - check for code injection patterns
                 this.analyzeAllocatedMemory(allocatedMemory, args);
                 this.behaviorStats.memoryAllocationAnalysisCount =
@@ -1223,8 +1222,8 @@ const BehavioralPatternAnalyzer = {
             });
         }
 
-        var mechanism = this.patterns.protectionMechanisms.get(type);
-        mechanism.occurrences.push(data);
+      const mechanism = this.patterns.protectionMechanisms.get(type);
+      mechanism.occurrences.push(data);
         mechanism.frequency++;
         mechanism.lastSeen = Date.now();
 
@@ -1245,10 +1244,10 @@ const BehavioralPatternAnalyzer = {
         });
     },
 
-    calculateProtectionCriticality: function (mechanism) {
-        var frequency = Math.min(mechanism.frequency / 10, 1.0); // Normalize frequency
-        var recency = 1.0 / Math.max(1, (Date.now() - mechanism.lastSeen) / 60000); // Recency factor
-        var persistence = Math.min(mechanism.occurrences.length / 5, 1.0); // Persistence factor
+    calculateProtectionCriticality: mechanism => {
+      const frequency = Math.min(mechanism.frequency / 10, 1.0); // Normalize frequency
+      const recency = 1.0 / Math.max(1, (Date.now() - mechanism.lastSeen) / 60000); // Recency factor
+      const persistence = Math.min(mechanism.occurrences.length / 5, 1.0); // Persistence factor
 
         return frequency * 0.4 + recency * 0.3 + persistence * 0.3;
     },
@@ -1261,7 +1260,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_memory_pattern_analysis',
         });
 
-        if (!this.config.memoryPatterns.enabled) return;
+        if (!this.config.memoryPatterns.enabled) { return; }
 
         this.hookMemoryAllocationPatterns();
         this.hookMemoryAccessPatterns();
@@ -1280,7 +1279,7 @@ const BehavioralPatternAnalyzer = {
         this.memoryAccessLog = [];
     },
 
-    hookMemoryAccessPatterns: function () {
+    hookMemoryAccessPatterns: () => {
         send({
             type: 'info',
             target: 'behavioral_analyzer',
@@ -1316,7 +1315,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_control_flow_analysis',
         });
 
-        if (!this.config.controlFlow.enabled) return;
+        if (!this.config.controlFlow.enabled) { return; }
 
         this.setupBasicBlockTracking();
         this.setupBranchPrediction();
@@ -1364,7 +1363,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_protection_mechanism_detection',
         });
 
-        if (!this.config.protectionDetection.enabled) return;
+        if (!this.config.protectionDetection.enabled) { return; }
 
         this.detectAntiDebugMechanisms();
         this.detectObfuscationTechniques();
@@ -1380,28 +1379,28 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Hook common anti-debug APIs
-        var antiDebugAPIs = [
-            'IsDebuggerPresent',
-            'CheckRemoteDebuggerPresent',
-            'NtQueryInformationProcess',
-            'OutputDebugStringA',
-            'OutputDebugStringW',
-            'GetTickCount',
-            'QueryPerformanceCounter',
-        ];
+      const antiDebugAPIs = [
+        'IsDebuggerPresent',
+        'CheckRemoteDebuggerPresent',
+        'NtQueryInformationProcess',
+        'OutputDebugStringA',
+        'OutputDebugStringW',
+        'GetTickCount',
+        'QueryPerformanceCounter',
+      ];
 
-        for (var i = 0; i < antiDebugAPIs.length; i++) {
+      for (let i = 0; i < antiDebugAPIs.length; i++) {
             this.hookAntiDebugAPI(antiDebugAPIs[i]);
         }
     },
 
     hookAntiDebugAPI: function (apiName) {
         try {
-            var modules = ['kernel32.dll', 'ntdll.dll'];
+          const modules = ['kernel32.dll', 'ntdll.dll'];
 
-            for (var i = 0; i < modules.length; i++) {
-                var apiFunc = Module.findExportByName(modules[i], apiName);
-                if (apiFunc) {
+          for (let i = 0; i < modules.length; i++) {
+              const apiFunc = Module.findExportByName(modules[i], apiName);
+              if (apiFunc) {
                     Interceptor.attach(apiFunc, {
                         onEnter: function (args) {
                             this.apiName = apiName;
@@ -1438,7 +1437,7 @@ const BehavioralPatternAnalyzer = {
 
                         onLeave: function (retval) {
                             this.parent.parent.recordProtectionMechanism(
-                                'anti_debug_' + this.apiName,
+                                `anti_debug_${this.apiName}`,
                                 {
                                     api: this.apiName,
                                     result: retval.toInt32(),
@@ -1537,7 +1536,7 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_hook_optimization',
         });
 
-        if (!this.config.hookOptimization.enabled) return;
+        if (!this.config.hookOptimization.enabled) { return; }
 
         this.setupHookPlacementQueue();
         this.setupEffectivenessMonitoring();
@@ -1589,9 +1588,9 @@ const BehavioralPatternAnalyzer = {
     },
 
     prioritizeForHookPlacement: function (type, mechanism) {
-        var priority = this.calculateHookPriority(type, mechanism);
+      const priority = this.calculateHookPriority(type, mechanism);
 
-        this.placementQueue.push({
+      this.placementQueue.push({
             type: type,
             mechanism: mechanism,
             priority: priority,
@@ -1612,30 +1611,30 @@ const BehavioralPatternAnalyzer = {
     },
 
     calculateHookPriority: function (type, mechanism) {
-        var criticality = mechanism.criticality || 0.5;
-        var frequency = Math.min(mechanism.frequency / 10, 1.0);
-        var recency = 1.0 / Math.max(1, (Date.now() - mechanism.lastSeen) / 60000);
+      const criticality = mechanism.criticality || 0.5;
+      const frequency = Math.min(mechanism.frequency / 10, 1.0);
+      const recency = 1.0 / Math.max(1, (Date.now() - mechanism.lastSeen) / 60000);
 
-        // Type-specific weights
-        var typeWeight = this.getTypeWeight(type);
+      // Type-specific weights
+      const typeWeight = this.getTypeWeight(type);
 
-        return criticality * 0.4 + frequency * 0.3 + recency * 0.2 + typeWeight * 0.1;
+      return criticality * 0.4 + frequency * 0.3 + recency * 0.2 + typeWeight * 0.1;
     },
 
-    getTypeWeight: function (type) {
-        var weights = {
-            anti_debug_detection: 0.9,
-            registry_license_check: 0.8,
-            file_license_check: 0.8,
-            network_license_check: 0.7,
-            memory_protection_change: 0.6,
-        };
+    getTypeWeight: type => {
+      const weights = {
+        anti_debug_detection: 0.9,
+        registry_license_check: 0.8,
+        file_license_check: 0.8,
+        network_license_check: 0.7,
+        memory_protection_change: 0.6,
+      };
 
-        return weights[type] || 0.5;
+      return weights[type] || 0.5;
     },
 
     processHookPlacementQueue: function () {
-        if (this.placementQueue.length === 0) return;
+        if (this.placementQueue.length === 0) { return; }
 
         send({
             type: 'info',
@@ -1644,13 +1643,13 @@ const BehavioralPatternAnalyzer = {
             queue_size: this.placementQueue.length,
         });
 
-        var processed = 0;
-        var maxProcessPerCycle = 5; // Limit processing to avoid performance impact
+      let processed = 0;
+      const maxProcessPerCycle = 5; // Limit processing to avoid performance impact
 
         while (this.placementQueue.length > 0 && processed < maxProcessPerCycle) {
-            var item = this.placementQueue.shift();
+          const item = this.placementQueue.shift();
 
-            if (this.shouldPlaceHook(item)) {
+          if (this.shouldPlaceHook(item)) {
                 this.placeOptimizedHook(item);
             }
 
@@ -1660,8 +1659,8 @@ const BehavioralPatternAnalyzer = {
 
     shouldPlaceHook: function (item) {
         // Check if we should place this hook based on current conditions
-        var timeSinceDetection = Date.now() - item.timestamp;
-        var maxAge = 300000; // 5 minutes
+      const timeSinceDetection = Date.now() - item.timestamp;
+      const maxAge = 300000; // 5 minutes
 
         if (timeSinceDetection > maxAge) {
             return false; // Too old
@@ -1689,12 +1688,12 @@ const BehavioralPatternAnalyzer = {
 
         try {
             // Create optimized hook based on the protection mechanism
-            var hookConfig = this.createOptimizedHookConfig(item);
+          const hookConfig = this.createOptimizedHookConfig(item);
 
-            // Place the hook
-            var hookId = this.installOptimizedHook(hookConfig);
+          // Place the hook
+          const hookId = this.installOptimizedHook(hookConfig);
 
-            if (hookId) {
+          if (hookId) {
                 this.trackHookEffectiveness(hookId, item);
                 this.stats.placedHooks++;
                 send({
@@ -1719,24 +1718,24 @@ const BehavioralPatternAnalyzer = {
         }
     },
 
-    createOptimizedHookConfig: function (item) {
-        var config = {
-            type: item.type,
-            priority: item.priority,
-            mechanism: item.mechanism,
-            hookStrategy: 'default',
-            performance: {
-                maxLatency: 10, // ms
-                maxCpuUsage: 5, // %
-                batchable: true,
-            },
-            effectiveness: {
-                expectedSuccessRate: 0.8,
-                measurables: ['call_count', 'success_rate', 'response_time'],
-            },
-        };
+    createOptimizedHookConfig: item => {
+      const config = {
+        type: item.type,
+        priority: item.priority,
+        mechanism: item.mechanism,
+        hookStrategy: 'default',
+        performance: {
+          maxLatency: 10, // ms
+          maxCpuUsage: 5, // %
+          batchable: true,
+        },
+        effectiveness: {
+          expectedSuccessRate: 0.8,
+          measurables: ['call_count', 'success_rate', 'response_time'],
+        },
+      };
 
-        // Customize based on protection type
+      // Customize based on protection type
         switch (item.type) {
             case 'anti_debug_detection':
                 config.hookStrategy = 'immediate_response';
@@ -1765,9 +1764,9 @@ const BehavioralPatternAnalyzer = {
         // This would install the actual hook based on the configuration
         // For this behavioral analyzer, we'll simulate the installation
 
-        var hookId = 'opt_hook_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      const hookId = `opt_hook_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        this.hookEffectiveness[hookId] = {
+      this.hookEffectiveness[hookId] = {
             config: config,
             installTime: Date.now(),
             callCount: 0,
@@ -1808,28 +1807,28 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Implement dynamic effectiveness monitoring based on item characteristics
-        var monitoringInterval = this.calculateOptimalMonitoringInterval(item);
-        var adaptiveEvaluation = setInterval(() => {
-            this.performAdaptiveHookEvaluation(hookId, item);
-        }, monitoringInterval);
+      const monitoringInterval = this.calculateOptimalMonitoringInterval(item);
+      const adaptiveEvaluation = setInterval(() => {
+        this.performAdaptiveHookEvaluation(hookId, item);
+      }, monitoringInterval);
 
-        // Set up final evaluation with item-specific timeout
-        var evaluationTimeout = this.calculateEvaluationTimeout(item);
-        setTimeout(() => {
+      // Set up final evaluation with item-specific timeout
+      const evaluationTimeout = this.calculateEvaluationTimeout(item);
+      setTimeout(() => {
             clearInterval(adaptiveEvaluation);
             this.evaluateHookEffectiveness(hookId);
         }, evaluationTimeout);
     },
 
     evaluateHookEffectiveness: function (hookId) {
-        var hook = this.hookEffectiveness[hookId];
-        if (!hook || hook.status !== 'active') return;
+      const hook = this.hookEffectiveness[hookId];
+      if (!hook || hook.status !== 'active') { return; }
 
         // Calculate effectiveness based on metrics
-        var successRate = hook.callCount > 0 ? hook.successCount / hook.callCount : 0;
-        var responsiveness =
-            hook.avgResponseTime < 10 ? 1.0 : Math.max(0, 1.0 - (hook.avgResponseTime - 10) / 100);
-        var usage = Math.min(hook.callCount / 10, 1.0); // Normalize usage
+      const successRate = hook.callCount > 0 ? hook.successCount / hook.callCount : 0;
+      const responsiveness =
+        hook.avgResponseTime < 10 ? 1.0 : Math.max(0, 1.0 - (hook.avgResponseTime - 10) / 100);
+      const usage = Math.min(hook.callCount / 10, 1.0); // Normalize usage
 
         hook.effectiveness = successRate * 0.5 + responsiveness * 0.3 + usage * 0.2;
 
@@ -1860,8 +1859,8 @@ const BehavioralPatternAnalyzer = {
             hook_id: hookId,
         });
 
-        var hook = this.hookEffectiveness[hookId];
-        if (hook) {
+      const hook = this.hookEffectiveness[hookId];
+      if (hook) {
             hook.status = 'removed';
             this.stats.removedHooks++;
             send({
@@ -1874,13 +1873,13 @@ const BehavioralPatternAnalyzer = {
     },
 
     updateEffectivenessMetrics: function () {
-        var totalHooks = Object.keys(this.hookEffectiveness).length;
-        var effectiveCount = 0;
-        var totalEffectiveness = 0;
+      const totalHooks = Object.keys(this.hookEffectiveness).length;
+      let effectiveCount = 0;
+      let totalEffectiveness = 0;
 
-        for (var hookId in this.hookEffectiveness) {
-            var hook = this.hookEffectiveness[hookId];
-            if (hook.status === 'active') {
+      for (let hookId in this.hookEffectiveness) {
+          const hook = this.hookEffectiveness[hookId];
+          if (hook.status === 'active') {
                 totalEffectiveness += hook.effectiveness;
                 if (hook.effectiveness > 0.6) {
                     effectiveCount++;
@@ -2008,9 +2007,9 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Simplified neural network training
-        var trainingData = this.prepareTrainingData();
+      const trainingData = this.prepareTrainingData();
 
-        if (trainingData.length > 10) {
+      if (trainingData.length > 10) {
             // Perform one epoch of training
             this.performNeuralNetworkTraining(trainingData);
             send({
@@ -2023,23 +2022,23 @@ const BehavioralPatternAnalyzer = {
     },
 
     prepareTrainingData: function () {
-        var trainingData = [];
+      const trainingData = [];
 
-        // Convert patterns to training samples
+      // Convert patterns to training samples
         this.patterns.callSequences.forEach((pattern, key) => {
-            var features = [
-                pattern.frequency / 100, // Normalized frequency
-                pattern.avgDuration / 1000, // Normalized duration
-                pattern.entries.length / 50, // Normalized call count
-                pattern.significance || 0, // Significance score
-            ];
+          const features = [
+            pattern.frequency / 100, // Normalized frequency
+            pattern.avgDuration / 1000, // Normalized duration
+            pattern.entries.length / 50, // Normalized call count
+            pattern.significance || 0, // Significance score
+          ];
 
-            // Enhanced feature extraction using key for pattern context
-            var keyHash = this.generateKeyHash(key);
-            var contextualFeatures = this.extractContextualFeatures(key, pattern);
-            var protectionTypeFeatures = this.analyzeProtectionTypeFromKey(key);
+          // Enhanced feature extraction using key for pattern context
+          const keyHash = this.generateKeyHash(key);
+          const contextualFeatures = this.extractContextualFeatures(key, pattern);
+          const protectionTypeFeatures = this.analyzeProtectionTypeFromKey(key);
 
-            // Extend features with key-based intelligence
+          // Extend features with key-based intelligence
             features.push(
                 keyHash / 1000000, // Normalized key hash
                 contextualFeatures.temporalDistance, // Pattern temporal distance
@@ -2047,12 +2046,12 @@ const BehavioralPatternAnalyzer = {
                 protectionTypeFeatures.riskLevel // Protection mechanism risk
             );
 
-            var label = pattern.significance > 0.7 ? 1 : 0; // Binary classification
+          const label = pattern.significance > 0.7 ? 1 : 0; // Binary classification
 
             // Use key for advanced training data categorization
-            var trainingCategory = this.categorizeTrainingData(key, pattern);
+          const trainingCategory = this.categorizeTrainingData(key, pattern);
 
-            trainingData.push({
+          trainingData.push({
                 features: features,
                 label: label,
                 patternKey: key,
@@ -2070,21 +2069,21 @@ const BehavioralPatternAnalyzer = {
 
     performNeuralNetworkTraining: function (trainingData) {
         // Simplified neural network training (gradient descent)
-        var learningRate = this.patternClassifier.learningRate;
+      const learningRate = this.patternClassifier.learningRate;
 
-        for (var i = 0; i < trainingData.length; i++) {
-            var sample = trainingData[i];
+      for (let i = 0; i < trainingData.length; i++) {
+          const sample = trainingData[i];
 
-            // Forward pass (simplified)
-            var prediction = this.computeNeuralNetworkPrediction(sample.features);
+          // Forward pass (simplified)
+          const prediction = this.computeNeuralNetworkPrediction(sample.features);
 
-            // Backward pass (simplified)
-            var error = prediction - sample.label;
+          // Backward pass (simplified)
+          const error = prediction - sample.label;
 
-            // Update weights (simplified)
-            for (var j = 0; j < sample.features.length; j++) {
-                var weightKey = 'w' + j;
-                if (!this.patternClassifier.weights[weightKey]) {
+          // Update weights (simplified)
+            for (let j = 0; j < sample.features.length; j++) {
+              const weightKey = `w${j}`;
+              if (!this.patternClassifier.weights[weightKey]) {
                     this.patternClassifier.weights[weightKey] = Math.random() * 0.1;
                 }
 
@@ -2095,12 +2094,12 @@ const BehavioralPatternAnalyzer = {
     },
 
     computeNeuralNetworkPrediction: function (features) {
-        var sum = 0;
+      let sum = 0;
 
-        for (var i = 0; i < features.length; i++) {
-            var weightKey = 'w' + i;
-            var weight = this.patternClassifier.weights[weightKey] || 0;
-            sum += features[i] * weight;
+      for (let i = 0; i < features.length; i++) {
+          const weightKey = `w${i}`;
+          const weight = this.patternClassifier.weights[weightKey] || 0;
+          sum += features[i] * weight;
         }
 
         // Sigmoid activation
@@ -2115,12 +2114,12 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Simplified decision tree training based on hook effectiveness data
-        var hookData = [];
+      const hookData = [];
 
-        for (var hookId in this.hookEffectiveness) {
-            var hook = this.hookEffectiveness[hookId];
+      for (let hookId in this.hookEffectiveness) {
+          const hook = this.hookEffectiveness[hookId];
 
-            hookData.push({
+          hookData.push({
                 features: {
                     frequency: hook.callCount,
                     successRate: hook.callCount > 0 ? hook.successCount / hook.callCount : 0,
@@ -2138,9 +2137,9 @@ const BehavioralPatternAnalyzer = {
 
     buildDecisionTree: function (data) {
         // Simplified decision tree building
-        var bestFeature = this.findBestSplit(data);
+      const bestFeature = this.findBestSplit(data);
 
-        if (bestFeature) {
+      if (bestFeature) {
             this.hookDecisionTree.root = {
                 feature: bestFeature.name,
                 threshold: bestFeature.threshold,
@@ -2159,15 +2158,15 @@ const BehavioralPatternAnalyzer = {
     },
 
     findBestSplit: function (data) {
-        var features = ['frequency', 'successRate', 'responseTime'];
-        var bestSplit = null;
-        var bestScore = -1;
+      const features = ['frequency', 'successRate', 'responseTime'];
+      let bestSplit = null;
+      let bestScore = -1;
 
-        for (var i = 0; i < features.length; i++) {
-            var feature = features[i];
-            var split = this.evaluateFeatureSplit(data, feature);
+      for (let i = 0; i < features.length; i++) {
+          const feature = features[i];
+          const split = this.evaluateFeatureSplit(data, feature);
 
-            if (split.score > bestScore) {
+          if (split.score > bestScore) {
                 bestScore = split.score;
                 bestSplit = {
                     name: feature,
@@ -2181,24 +2180,24 @@ const BehavioralPatternAnalyzer = {
         return bestSplit;
     },
 
-    evaluateFeatureSplit: function (data, feature) {
+    evaluateFeatureSplit: (data, feature) => {
         // Find the best threshold for this feature
-        var values = data.map((item) => item.features[feature]).sort((a, b) => a - b);
-        var bestThreshold = values[Math.floor(values.length / 2)]; // Median
+      const values = data.map(item => item.features[feature]).sort((a, b) => a - b);
+      const bestThreshold = values[Math.floor(values.length / 2)]; // Median
 
-        var leftGroup = data.filter((item) => item.features[feature] <= bestThreshold);
-        var rightGroup = data.filter((item) => item.features[feature] > bestThreshold);
+      const leftGroup = data.filter(item => item.features[feature] <= bestThreshold);
+      const rightGroup = data.filter(item => item.features[feature] > bestThreshold);
 
-        var leftAvg =
-            leftGroup.length > 0
-                ? leftGroup.reduce((sum, item) => sum + item.effectiveness, 0) / leftGroup.length
-                : 0;
-        var rightAvg =
-            rightGroup.length > 0
-                ? rightGroup.reduce((sum, item) => sum + item.effectiveness, 0) / rightGroup.length
-                : 0;
+      const leftAvg =
+        leftGroup.length > 0
+          ? leftGroup.reduce((sum, item) => sum + item.effectiveness, 0) / leftGroup.length
+          : 0;
+      const rightAvg =
+        rightGroup.length > 0
+          ? rightGroup.reduce((sum, item) => sum + item.effectiveness, 0) / rightGroup.length
+          : 0;
 
-        var score = Math.abs(leftAvg - rightAvg); // Information gain approximation
+      const score = Math.abs(leftAvg - rightAvg); // Information gain approximation
 
         return {
             threshold: bestThreshold,
@@ -2215,20 +2214,20 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Update baseline patterns for anomaly detection
-        var currentPatterns = {
-            avgCallFrequency: 0,
-            avgResponseTime: 0,
-            apiUsageDistribution: {},
-            memoryUsagePattern: {},
-        };
+      const currentPatterns = {
+        avgCallFrequency: 0,
+        avgResponseTime: 0,
+        apiUsageDistribution: {},
+        memoryUsagePattern: {},
+      };
 
-        // Calculate current averages
-        var totalCalls = 0;
-        var totalTime = 0;
+      // Calculate current averages
+      let totalCalls = 0;
+      let totalTime = 0;
 
-        for (var hookKey in this.activeHooks) {
-            var hook = this.activeHooks[hookKey];
-            totalCalls += hook.callCount;
+      for (let hookKey in this.activeHooks) {
+          const hook = this.activeHooks[hookKey];
+          totalCalls += hook.callCount;
             totalTime += hook.totalDuration;
         }
 
@@ -2236,7 +2235,7 @@ const BehavioralPatternAnalyzer = {
         currentPatterns.avgResponseTime = totalTime / totalCalls;
 
         // Update baseline with exponential moving average
-        var alpha = 0.1; // Smoothing factor
+      const alpha = 0.1; // Smoothing factor
 
         if (!this.anomalyDetector.baseline.avgCallFrequency) {
             this.anomalyDetector.baseline.avgCallFrequency = currentPatterns.avgCallFrequency;
@@ -2263,11 +2262,11 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Analyze which hook strategies are most effective
-        var strategyEffectiveness = {};
+      const strategyEffectiveness = {};
 
-        for (var hookId in this.hookEffectiveness) {
-            var hook = this.hookEffectiveness[hookId];
-            var strategy = hook.config.hookStrategy;
+      for (let hookId in this.hookEffectiveness) {
+          const hook = this.hookEffectiveness[hookId];
+          var strategy = hook.config.hookStrategy;
 
             if (!strategyEffectiveness[strategy]) {
                 strategyEffectiveness[strategy] = {
@@ -2283,8 +2282,8 @@ const BehavioralPatternAnalyzer = {
 
         // Calculate averages and update preferences
         for (var strategy in strategyEffectiveness) {
-            var data = strategyEffectiveness[strategy];
-            data.avgEffectiveness = data.totalEffectiveness / data.count;
+          const data = strategyEffectiveness[strategy];
+          data.avgEffectiveness = data.totalEffectiveness / data.count;
 
             send({
                 type: 'info',
@@ -2298,8 +2297,8 @@ const BehavioralPatternAnalyzer = {
     },
 
     cleanupOldPatterns: function () {
-        var currentTime = Date.now();
-        var maxAge = 1800000; // 30 minutes
+      const currentTime = Date.now();
+      const maxAge = 1800000; // 30 minutes
 
         // Clean up old temporal patterns
         this.patterns.temporalPatterns.forEach((pattern, key) => {
@@ -2325,11 +2324,11 @@ const BehavioralPatternAnalyzer = {
 
         try {
             // Calculate current performance metrics
-            var avgResponseTime = this.calculateAverageResponseTime();
-            var cpuUsage = this.estimateCpuUsage();
-            var memoryUsage = this.estimateMemoryUsage();
+          const avgResponseTime = this.calculateAverageResponseTime();
+          const cpuUsage = this.estimateCpuUsage();
+          const memoryUsage = this.estimateMemoryUsage();
 
-            // Adapt instrumentation level based on performance
+          // Adapt instrumentation level based on performance
             this.adaptInstrumentationLevel(avgResponseTime, cpuUsage, memoryUsage);
 
             // Remove ineffective hooks if performance is poor
@@ -2347,12 +2346,12 @@ const BehavioralPatternAnalyzer = {
     },
 
     calculateAverageResponseTime: function () {
-        var totalTime = 0;
-        var totalCalls = 0;
+      let totalTime = 0;
+      let totalCalls = 0;
 
-        for (var hookId in this.hookEffectiveness) {
-            var hook = this.hookEffectiveness[hookId];
-            if (hook.status === 'active') {
+      for (let hookId in this.hookEffectiveness) {
+          const hook = this.hookEffectiveness[hookId];
+          if (hook.status === 'active') {
                 totalTime += hook.avgResponseTime * hook.callCount;
                 totalCalls += hook.callCount;
             }
@@ -2363,12 +2362,12 @@ const BehavioralPatternAnalyzer = {
 
     estimateCpuUsage: function () {
         // Simplified CPU usage estimation based on hook count and activity
-        var activeHooks = Object.keys(this.hookEffectiveness).filter(
-            (hookId) => this.hookEffectiveness[hookId].status === 'active'
-        ).length;
+      const activeHooks = Object.keys(this.hookEffectiveness).filter(
+        hookId => this.hookEffectiveness[hookId].status === 'active'
+      ).length;
 
-        var totalCalls = 0;
-        for (var hookId in this.hookEffectiveness) {
+      let totalCalls = 0;
+      for (var hookId in this.hookEffectiveness) {
             totalCalls += this.hookEffectiveness[hookId].callCount;
         }
 
@@ -2377,19 +2376,19 @@ const BehavioralPatternAnalyzer = {
 
     estimateMemoryUsage: function () {
         // Simplified memory usage estimation
-        var patternCount =
-            this.patterns.callSequences.size +
-            this.patterns.apiUsage.size +
-            this.patterns.temporalPatterns.size;
+      const patternCount =
+        this.patterns.callSequences.size +
+        this.patterns.apiUsage.size +
+        this.patterns.temporalPatterns.size;
 
-        return patternCount * 0.1; // Rough estimation in MB
+      return patternCount * 0.1; // Rough estimation in MB
     },
 
     adaptInstrumentationLevel: function (avgResponseTime, cpuUsage, memoryUsage) {
-        var currentLevel = this.adaptiveConfig.currentInstrumentationLevel;
-        var targetLevel = currentLevel;
+      const currentLevel = this.adaptiveConfig.currentInstrumentationLevel;
+      let targetLevel = currentLevel;
 
-        // Implement advanced memory-based adaptive instrumentation using memoryUsage
+      // Implement advanced memory-based adaptive instrumentation using memoryUsage
         if (memoryUsage > 100) {
             // High memory usage threshold in MB
             // Critical memory usage - implement memory optimization bypass
@@ -2479,10 +2478,10 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Find hooks with worst performance
-        var hooks = [];
-        for (var hookId in this.hookEffectiveness) {
-            var hook = this.hookEffectiveness[hookId];
-            if (hook.status === 'active') {
+      const hooks = [];
+      for (let hookId in this.hookEffectiveness) {
+          const hook = this.hookEffectiveness[hookId];
+          if (hook.status === 'active') {
                 hooks.push({
                     id: hookId,
                     performance: hook.avgResponseTime,
@@ -2493,14 +2492,14 @@ const BehavioralPatternAnalyzer = {
 
         // Sort by worst performance (high response time, low effectiveness)
         hooks.sort((a, b) => {
-            var scoreA = a.performance / Math.max(a.effectiveness, 0.1);
-            var scoreB = b.performance / Math.max(b.effectiveness, 0.1);
-            return scoreB - scoreA;
+          const scoreA = a.performance / Math.max(a.effectiveness, 0.1);
+          const scoreB = b.performance / Math.max(b.effectiveness, 0.1);
+          return scoreB - scoreA;
         });
 
         // Remove worst 10%
-        var removeCount = Math.max(1, Math.floor(hooks.length * 0.1));
-        for (var i = 0; i < removeCount; i++) {
+      const removeCount = Math.max(1, Math.floor(hooks.length * 0.1));
+      for (let i = 0; i < removeCount; i++) {
             this.removeIneffectiveHook(hooks[i].id);
         }
     },
@@ -2523,26 +2522,26 @@ const BehavioralPatternAnalyzer = {
     },
 
     // === UTILITY FUNCTIONS ===
-    isSystemModule: function (moduleName) {
-        var systemModules = [
-            'ntdll.dll',
-            'kernel32.dll',
-            'kernelbase.dll',
-            'user32.dll',
-            'gdi32.dll',
-            'advapi32.dll',
-            'msvcrt.dll',
-            'shell32.dll',
-            'ole32.dll',
-            'oleaut32.dll',
-            'wininet.dll',
-            'winhttp.dll',
-            'ws2_32.dll',
-            'crypt32.dll',
-            'rpcrt4.dll',
-        ];
+    isSystemModule: moduleName => {
+      const systemModules = [
+        'ntdll.dll',
+        'kernel32.dll',
+        'kernelbase.dll',
+        'user32.dll',
+        'gdi32.dll',
+        'advapi32.dll',
+        'msvcrt.dll',
+        'shell32.dll',
+        'ole32.dll',
+        'oleaut32.dll',
+        'wininet.dll',
+        'winhttp.dll',
+        'ws2_32.dll',
+        'crypt32.dll',
+        'rpcrt4.dll',
+      ];
 
-        return systemModules.includes(moduleName.toLowerCase());
+      return systemModules.includes(moduleName.toLowerCase());
     },
 
     evaluateSequenceForHookOptimization: function (sequence, pattern) {
@@ -2568,10 +2567,10 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Add to optimization queue
-        for (var i = 0; i < sequence.length; i++) {
-            var functionKey = sequence[i];
+        for (let i = 0; i < sequence.length; i++) {
+          const functionKey = sequence[i];
 
-            if (!this.hookCandidates[functionKey]) {
+          if (!this.hookCandidates[functionKey]) {
                 this.hookCandidates[functionKey] = {
                     priority: 0,
                     reasons: [],
@@ -2586,10 +2585,10 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectExecutionTimeAnomalies: function (functionKey, duration) {
-        if (!this.anomalyDetector.baseline.avgResponseTime) return;
+        if (!this.anomalyDetector.baseline.avgResponseTime) { return; }
 
-        var baseline = this.anomalyDetector.baseline.avgResponseTime;
-        var threshold = baseline * 3; // 3x baseline is anomalous
+      const baseline = this.anomalyDetector.baseline.avgResponseTime;
+      const threshold = baseline * 3; // 3x baseline is anomalous
 
         if (duration > threshold) {
             send({
@@ -2612,16 +2611,16 @@ const BehavioralPatternAnalyzer = {
     },
 
     analyzeParameterPatterns: function (functionKey, args) {
-        var pattern = this.patterns.callSequences.get(functionKey);
-        if (!pattern) return;
+      const pattern = this.patterns.callSequences.get(functionKey);
+      if (!pattern) { return; }
 
         // Analyze parameter patterns for this function
-        for (var i = 0; i < 4; i++) {
+        for (let i = 0; i < 4; i++) {
             // Analyze first 4 parameters
             if (args[i]) {
-                var paramKey = 'param_' + i;
+              const paramKey = `param_${i}`;
 
-                if (!pattern.parameters[paramKey]) {
+              if (!pattern.parameters[paramKey]) {
                     pattern.parameters[paramKey] = {
                         values: [],
                         types: new Map(),
@@ -2629,8 +2628,8 @@ const BehavioralPatternAnalyzer = {
                     };
                 }
 
-                var argInfo = this.analyzeArgument(args[i]);
-                pattern.parameters[paramKey].values.push(argInfo.value);
+              const argInfo = this.analyzeArgument(args[i]);
+              pattern.parameters[paramKey].values.push(argInfo.value);
 
                 // Track type frequency
                 if (!pattern.parameters[paramKey].types.has(argInfo.type)) {
@@ -2653,13 +2652,13 @@ const BehavioralPatternAnalyzer = {
         }
     },
 
-    detectParameterPattern: function (functionKey, paramKey, paramData) {
+    detectParameterPattern: (functionKey, paramKey, paramData) => {
         // Detect patterns in parameter values
-        var values = paramData.values.slice(-10); // Last 10 values
+      const values = paramData.values.slice(-10); // Last 10 values
 
         // Check for constant values
-        var uniqueValues = [...new Set(values)];
-        if (uniqueValues.length === 1) {
+      const uniqueValues = [...new Set(values)];
+      if (uniqueValues.length === 1) {
             send({
                 type: 'info',
                 target: 'behavioral_analyzer',
@@ -2671,11 +2670,11 @@ const BehavioralPatternAnalyzer = {
         }
 
         // Check for incremental patterns
-        if (values.length > 3 && values.every((v) => typeof v === 'number')) {
-            var isIncremental = true;
-            var diff = values[1] - values[0];
+        if (values.length > 3 && values.every(v => typeof v === 'number')) {
+          let isIncremental = true;
+          const diff = values[1] - values[0];
 
-            for (var i = 2; i < values.length; i++) {
+          for (let i = 2; i < values.length; i++) {
                 if (values[i] - values[i - 1] !== diff) {
                     isIncremental = false;
                     break;
@@ -2699,15 +2698,15 @@ const BehavioralPatternAnalyzer = {
     installSummary: function () {
         setTimeout(() => {
             // Send comprehensive summary message
-            var summaryData = {
-                type: 'summary',
-                target: 'behavioral_analyzer',
-                action: 'installation_summary',
-            };
+          const summaryData = {
+            type: 'summary',
+            target: 'behavioral_analyzer',
+            action: 'installation_summary',
+          };
 
-            var activeComponents = [];
+          const activeComponents = [];
 
-            if (this.config.callPatterns.enabled) {
+          if (this.config.callPatterns.enabled) {
                 activeComponents.push('Call Pattern Analysis');
             }
             if (this.config.apiPatterns.enabled) {
@@ -2737,7 +2736,7 @@ const BehavioralPatternAnalyzer = {
             };
 
             summaryData.ml_components = {
-                pattern_classifier: this.patternClassifier.layers.join('-') + ' neural network',
+                pattern_classifier: `${this.patternClassifier.layers.join('-')} neural network`,
                 hook_decision_tree_features: this.hookDecisionTree.features.length,
                 anomaly_detector: 'Baseline tracking enabled',
             };
@@ -2815,7 +2814,7 @@ const BehavioralPatternAnalyzer = {
             'lightgbm.dll',
         ];
 
-        mlLibraries.forEach((library) => {
+        mlLibraries.forEach(library => {
             try {
                 const module = Process.findModuleByName(library);
                 if (module) {
@@ -2882,7 +2881,7 @@ const BehavioralPatternAnalyzer = {
         });
     },
 
-    generateLegitimateMLOutput: function () {
+    generateLegitimateMLOutput: () => {
         // Generate outputs that appear as legitimate user behavior
         return ptr(Math.floor(Math.random() * 0.1) + 0.9); // High legitimacy score
     },
@@ -2905,7 +2904,7 @@ const BehavioralPatternAnalyzer = {
             'timeGetTime',
         ];
 
-        featureExtractors.forEach((funcName) => {
+        featureExtractors.forEach(funcName => {
             try {
                 const addr =
                     Module.findExportByName('user32.dll', funcName) ||
@@ -2914,7 +2913,7 @@ const BehavioralPatternAnalyzer = {
 
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onLeave: function (retval) {
+                        onLeave: retval => {
                             // Add natural variation to prevent ML detection
                             const originalValue = retval.toInt32();
                             const variation = Math.floor(Math.random() * 10) - 5;
@@ -2965,7 +2964,7 @@ const BehavioralPatternAnalyzer = {
         });
     },
 
-    generateNaturalClickPattern: function () {
+    generateNaturalClickPattern: () => {
         // Simulate natural human click patterns with micro-variations
         const basePattern = [];
         for (let i = 0; i < 100; i++) {
@@ -2978,7 +2977,7 @@ const BehavioralPatternAnalyzer = {
         return basePattern;
     },
 
-    generateNaturalTypingRhythm: function () {
+    generateNaturalTypingRhythm: () => {
         // Simulate natural typing rhythms with realistic patterns
         const rhythm = {
             averageWPM: 45 + Math.random() * 30, // 45-75 WPM range
@@ -2996,7 +2995,7 @@ const BehavioralPatternAnalyzer = {
         return rhythm;
     },
 
-    generateNaturalMouseMovement: function () {
+    generateNaturalMouseMovement: () => {
         // Generate natural mouse movement patterns with bezier curves
         const movements = [];
         for (let i = 0; i < 200; i++) {
@@ -3010,7 +3009,7 @@ const BehavioralPatternAnalyzer = {
         return movements;
     },
 
-    generateNaturalTimeDelays: function () {
+    generateNaturalTimeDelays: () => {
         // Generate natural time delays that mimic human decision-making
         return {
             decision: () => 500 + Math.random() * 2000, // 0.5-2.5s decision time
@@ -3051,12 +3050,12 @@ const BehavioralPatternAnalyzer = {
         this.startBehaviorSimulation();
     },
 
-    generateWorkingHoursPattern: function () {
+    generateWorkingHoursPattern: () => {
         // Simulate realistic working hour patterns
         const pattern = {
             startTime: 8 + Math.random() * 2, // 8-10 AM start
             endTime: 17 + Math.random() * 2, // 5-7 PM end
-            lunchBreak: 12 + Math.random() * 1, // 12-1 PM lunch
+            lunchBreak: 12 + Math.random(), // 12-1 PM lunch
             productivity: [],
         };
 
@@ -3077,7 +3076,7 @@ const BehavioralPatternAnalyzer = {
         return pattern;
     },
 
-    generateBreakPatterns: function () {
+    generateBreakPatterns: () => {
         // Natural break patterns throughout the day
         return {
             microBreaks: {
@@ -3095,7 +3094,7 @@ const BehavioralPatternAnalyzer = {
         };
     },
 
-    simulateHeartRateVariation: function () {
+    simulateHeartRateVariation: () => {
         // Simulate natural heart rate variation during computer use
         const baseRate = 60 + Math.random() * 20; // 60-80 BPM at rest
         const variation = [];
@@ -3161,7 +3160,7 @@ const BehavioralPatternAnalyzer = {
         ];
 
         setInterval(() => {
-            environmentalFactors.forEach((factor) => {
+            environmentalFactors.forEach(factor => {
                 const currentValue = this.measureEnvironmentalFactor(factor);
                 const previousValue = this.adaptationEngine.environmentalFactors.get(factor);
 
@@ -3175,7 +3174,7 @@ const BehavioralPatternAnalyzer = {
         }, 5000); // Check every 5 seconds
     },
 
-    measureEnvironmentalFactor: function (factor) {
+    measureEnvironmentalFactor: factor => {
         switch (factor) {
             case 'systemLoad':
                 return Math.random(); // Simulated system load
@@ -3219,12 +3218,7 @@ const BehavioralPatternAnalyzer = {
                 }
                 break;
             case 'userActivity':
-                if (value < 0.2) {
-                    // Low user activity - enter stealth mode
-                    this.adaptiveConfig.stealthMode = true;
-                } else {
-                    this.adaptiveConfig.stealthMode = false;
-                }
+                this.adaptiveConfig.stealthMode = value < 0.2;
                 break;
         }
     },
@@ -3265,7 +3259,7 @@ const BehavioralPatternAnalyzer = {
             { module: 'user32.dll', func: 'GetForegroundWindow' },
         ];
 
-        detectionAPIs.forEach((api) => {
+        detectionAPIs.forEach(api => {
             try {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
@@ -3329,22 +3323,22 @@ const BehavioralPatternAnalyzer = {
     isAnalysisAttempt: function (funcName, args) {
         // Heuristics to detect analysis attempts
         const suspiciousPatterns = {
-            NtQueryInformationProcess: (args) => {
+            NtQueryInformationProcess: args => {
                 // Check for debugger detection queries
                 const infoClass = args[1].toInt32();
                 return infoClass === 7 || infoClass === 30; // ProcessDebugPort, ProcessDebugObjectHandle
             },
-            GetTickCount: (args) => {
+            GetTickCount: args => {
                 // Detect timing analysis using args for advanced bypass
-                var isTimingAnalysis = false;
+              let isTimingAnalysis = false;
 
-                // Analyze call context using args for timing bypass
+              // Analyze call context using args for timing bypass
                 if (args && args.length >= 0) {
                     // Check call stack depth for timing measurement patterns
-                    var callStackDepth = this.analyzeCallStackDepth();
-                    var callFrequency = this.analyzeCallFrequency('GetTickCount');
+                  const callStackDepth = this.analyzeCallStackDepth();
+                  const callFrequency = this.analyzeCallFrequency('GetTickCount');
 
-                    // Sophisticated timing analysis detection using contextual data
+                  // Sophisticated timing analysis detection using contextual data
                     if (callFrequency > 10) {
                         // High frequency calls suggest timing measurement
                         isTimingAnalysis = true;
@@ -3354,8 +3348,8 @@ const BehavioralPatternAnalyzer = {
                     }
 
                     // Analyze call patterns using args context
-                    var callPattern = this.analyzeTimingCallPattern(args, callStackDepth);
-                    if (callPattern.suspiciousPattern) {
+                  const callPattern = this.analyzeTimingCallPattern(args, callStackDepth);
+                  if (callPattern.suspiciousPattern) {
                         isTimingAnalysis = true;
                         this.implementSophisticatedTimingEvasion(args, callPattern);
                     }
@@ -3366,7 +3360,7 @@ const BehavioralPatternAnalyzer = {
 
                 return isTimingAnalysis;
             },
-            RegOpenKeyExW: (args) => {
+            RegOpenKeyExW: args => {
                 // Check for registry analysis
                 const keyName = args[1].readUtf16String();
                 return keyName && (keyName.includes('Debug') || keyName.includes('Analysis'));
@@ -3399,7 +3393,7 @@ const BehavioralPatternAnalyzer = {
 
     randomizeBehaviorPatterns: function () {
         // Randomize behavior to avoid detection patterns
-        Object.keys(this.humanBehavior.patterns).forEach((pattern) => {
+        Object.keys(this.humanBehavior.patterns).forEach(pattern => {
             this.humanBehavior.patterns[pattern] = this.generateRandomizedPattern(pattern);
         });
     },
@@ -3461,7 +3455,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     // Missing helper functions for v3.0.0
-    generateFocusLevelPatterns: function () {
+    generateFocusLevelPatterns: () => {
         const focusLevels = [];
         for (let hour = 0; hour < 24; hour++) {
             // Focus follows circadian rhythm with personal variation
@@ -3472,15 +3466,13 @@ const BehavioralPatternAnalyzer = {
         return focusLevels;
     },
 
-    generateTaskSwitchingPatterns: function () {
-        return {
-            switchFrequency: 8 + Math.random() * 12, // 8-20 switches per hour
-            contextSwitchDelay: 2000 + Math.random() * 3000, // 2-5s delay
-            multitaskingEfficiency: 0.6 + Math.random() * 0.3, // 60-90% efficiency
-        };
-    },
+    generateTaskSwitchingPatterns: () => ({
+        switchFrequency: 8 + Math.random() * 12, // 8-20 switches per hour
+        contextSwitchDelay: 2000 + Math.random() * 3000, // 2-5s delay
+        multitaskingEfficiency: 0.6 + Math.random() * 0.3, // 60-90% efficiency
+    }),
 
-    simulateBlinkRatePattern: function () {
+    simulateBlinkRatePattern: () => {
         // Natural blink rate varies from 12-20 blinks per minute
         const baseRate = 15 + Math.random() * 5;
         const hourlyPattern = [];
@@ -3498,23 +3490,19 @@ const BehavioralPatternAnalyzer = {
         return hourlyPattern;
     },
 
-    simulateMicroBreakPattern: function () {
-        return {
-            frequency: 300 + Math.random() * 300, // 5-10 minute intervals
-            duration: 3000 + Math.random() * 7000, // 3-10 second breaks
-            triggers: ['eye_strain', 'cognitive_load', 'fatigue'],
-        };
-    },
+    simulateMicroBreakPattern: () => ({
+        frequency: 300 + Math.random() * 300, // 5-10 minute intervals
+        duration: 3000 + Math.random() * 7000, // 3-10 second breaks
+        triggers: ['eye_strain', 'cognitive_load', 'fatigue'],
+    }),
 
-    simulateAttentionSpanPattern: function () {
-        return {
-            peakDuration: 20 + Math.random() * 25, // 20-45 minutes
-            degradationRate: 0.02 + Math.random() * 0.03, // 2-5% per minute
-            recoveryRate: 0.1 + Math.random() * 0.1, // 10-20% per break
-        };
-    },
+    simulateAttentionSpanPattern: () => ({
+        peakDuration: 20 + Math.random() * 25, // 20-45 minutes
+        degradationRate: 0.02 + Math.random() * 0.03, // 2-5% per minute
+        recoveryRate: 0.1 + Math.random() * 0.1, // 10-20% per break
+    }),
 
-    simulateLearningCurvePattern: function () {
+    simulateLearningCurvePattern: () => {
         const curve = [];
         for (let session = 0; session < 100; session++) {
             // Learning follows logarithmic curve with plateaus
@@ -3526,7 +3514,7 @@ const BehavioralPatternAnalyzer = {
         return curve;
     },
 
-    simulateFatiguePattern: function () {
+    simulateFatiguePattern: () => {
         const fatigue = [];
         for (let hour = 0; hour < 24; hour++) {
             let level = 0.2; // Base fatigue
@@ -3578,7 +3566,7 @@ const BehavioralPatternAnalyzer = {
         return factors.reduce((sum, factor) => sum + factor, 0) / factors.length;
     },
 
-    determineAdaptationType: function (factor, value) {
+    determineAdaptationType: (factor, value) => {
         if (factor === 'systemLoad' && value > 0.8) {
             return 'reduce_activity';
         } else if (factor === 'userActivity' && value < 0.2) {
@@ -3605,7 +3593,7 @@ const BehavioralPatternAnalyzer = {
         }
     },
 
-    generateNaturalResponse: function (funcName) {
+    generateNaturalResponse: funcName => {
         // Generate natural responses for different API calls
         switch (funcName) {
             case 'IsDebuggerPresent':

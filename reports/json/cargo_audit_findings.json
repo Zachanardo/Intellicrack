@@ -1,0 +1,15 @@
+﻿{
+    "files":  [
+                  {
+                      "path":  "Cargo.toml",
+                      "findings":  [
+
+                                   ],
+                      "count":  0
+                  }
+              ],
+    "total_findings":  0,
+    "generated":  "2025-12-10T21:38:29.0299948-07:00",
+    "total_files":  1,
+    "tool":  "cargo-audit"
+}

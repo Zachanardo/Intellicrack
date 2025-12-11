@@ -18,8 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (

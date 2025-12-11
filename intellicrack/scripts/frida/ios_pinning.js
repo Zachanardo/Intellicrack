@@ -34,9 +34,9 @@ if (ObjC.available) {
         if (SSLSetSessionOption) {
             Interceptor.attach(SSLSetSessionOption, {
                 onEnter: function (args) {
-                    const context = args[0];
+                    const _context = args[0];
                     const option = args[1].toInt32();
-                    const value = args[2].toInt32();
+                    const _value = args[2].toInt32();
 
                     if (option === kSSLSessionOptionBreakOnServerAuth) {
                         log(
@@ -46,7 +46,7 @@ if (ObjC.available) {
                         this.modified = true;
                     }
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     if (this.modified) {
                         send({ type: 'ssl_option_bypass' });
                     }
@@ -55,7 +55,7 @@ if (ObjC.available) {
             log('Successfully hooked SSLSetSessionOption');
         }
     } catch (e) {
-        logError('Failed to hook SSLSetSessionOption: ' + e.message);
+        logError(`Failed to hook SSLSetSessionOption: ${e.message}`);
     }
 
     try {
@@ -108,7 +108,7 @@ if (ObjC.available) {
             log('Successfully hooked SecTrustEvaluate');
         }
     } catch (e) {
-        logError('Failed to hook SecTrustEvaluate: ' + e.message);
+        logError(`Failed to hook SecTrustEvaluate: ${e.message}`);
     }
 
     try {
@@ -158,7 +158,7 @@ if (ObjC.available) {
             log('Successfully hooked SSLHandshake');
         }
     } catch (e) {
-        logError('Failed to hook SSLHandshake: ' + e.message);
+        logError(`Failed to hook SSLHandshake: ${e.message}`);
     }
 
     try {
@@ -172,7 +172,7 @@ if (ObjC.available) {
             );
             if (tls_helper_create_peer_trust) {
                 Interceptor.attach(tls_helper_create_peer_trust, {
-                    onEnter: args => {
+                    onEnter: _args => {
                         log('tls_helper_create_peer_trust: Intercepted');
                     },
                     onLeave: retval => {
@@ -189,7 +189,7 @@ if (ObjC.available) {
             }
         }
     } catch (e) {
-        log('BoringSSL not found or failed to hook: ' + e.message);
+        log(`BoringSSL not found or failed to hook: ${e.message}`);
     }
 
     try {
@@ -202,7 +202,7 @@ if (ObjC.available) {
                 AFSecurityPolicy['- evaluateServerTrust:forDomain:'].implementation,
                 {
                     onEnter: function (args) {
-                        const serverTrust = new ObjC.Object(args[2]);
+                        const _serverTrust = new ObjC.Object(args[2]);
                         const domain = new ObjC.Object(args[3]);
 
                         log(
@@ -228,7 +228,7 @@ if (ObjC.available) {
             log('Successfully hooked AFSecurityPolicy.evaluateServerTrust');
         }
     } catch (e) {
-        log('AFNetworking not found or failed to hook: ' + e.message);
+        log(`AFNetworking not found or failed to hook: ${e.message}`);
     }
 
     try {
@@ -243,7 +243,7 @@ if (ObjC.available) {
                     ];
 
                 if (originalDidReceiveChallenge) {
-                    const hookBlock = ObjC.Block.implement({
+                    const _hookBlock = ObjC.Block.implement({
                         types: originalDidReceiveChallenge.types,
                         implementation: (session, challenge, completionHandler) => {
                             const challengeObj = new ObjC.Object(challenge);
@@ -289,7 +289,7 @@ if (ObjC.available) {
             }
         }
     } catch (e) {
-        logError('Failed to hook NSURLSession: ' + e.message);
+        logError(`Failed to hook NSURLSession: ${e.message}`);
     }
 
     try {
@@ -310,7 +310,7 @@ if (ObjC.available) {
             log('Successfully hooked NSURLConnection');
         }
     } catch (e) {
-        log('NSURLConnection not found or failed to hook: ' + e.message);
+        log(`NSURLConnection not found or failed to hook: ${e.message}`);
     }
 
     try {
@@ -346,7 +346,7 @@ if (ObjC.available) {
             log('Successfully hooked SecTrustGetCertificateCount');
         }
     } catch (e) {
-        logError('Failed to hook certificate extraction functions: ' + e.message);
+        logError(`Failed to hook certificate extraction functions: ${e.message}`);
     }
 
     log('iOS certificate pinning bypass initialization complete');

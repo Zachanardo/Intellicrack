@@ -19,7 +19,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import math
+
+
+logger = logging.getLogger(__name__)
+import contextlib
 import os
 import shutil
 from datetime import datetime
@@ -3792,3 +3797,349 @@ class AnalysisTab(BaseTab):
         """Read file content using a context manager."""
         with open(file_path, "rb") as f:
             return f.read()
+
+    def _monitor_api_calls(self) -> list[str]:
+        """Monitor and detect API calls in the loaded binary.
+
+        Analyzes the binary's import table and detects API calls commonly
+        associated with licensing, registration, and protection mechanisms.
+
+        Returns:
+            List of detected API call descriptions with context.
+
+        """
+        api_calls: list[str] = []
+
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
+            return api_calls
+
+        try:
+            import pefile
+
+            pe = pefile.PE(self.current_file_path, fast_load=True)
+            pe.parse_data_directories(
+                directories=[
+                    pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"],
+                    pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT"],
+                ]
+            )
+
+            license_related_apis = {
+                "RegOpenKeyExA", "RegOpenKeyExW", "RegQueryValueExA", "RegQueryValueExW",
+                "RegSetValueExA", "RegSetValueExW", "RegCreateKeyExA", "RegCreateKeyExW",
+                "GetVolumeInformationA", "GetVolumeInformationW",
+                "GetComputerNameA", "GetComputerNameW", "GetComputerNameExA", "GetComputerNameExW",
+                "GetUserNameA", "GetUserNameW",
+                "CryptAcquireContextA", "CryptAcquireContextW",
+                "CryptCreateHash", "CryptHashData", "CryptGetHashParam", "CryptVerifySignatureA",
+                "CryptImportKey", "CryptDecrypt", "CryptEncrypt", "CryptGenRandom",
+                "GetSystemTime", "GetLocalTime", "GetTickCount", "GetTickCount64",
+                "QueryPerformanceCounter", "GetSystemTimeAsFileTime",
+                "InternetOpenA", "InternetOpenW", "InternetConnectA", "InternetConnectW",
+                "HttpOpenRequestA", "HttpOpenRequestW", "HttpSendRequestA", "HttpSendRequestW",
+                "WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest",
+                "socket", "connect", "send", "recv", "gethostbyname",
+                "WSAStartup", "WSAConnect", "WSASend", "WSARecv",
+                "CreateFileA", "CreateFileW", "ReadFile", "WriteFile",
+                "GetFileAttributesA", "GetFileAttributesW", "GetFileSize",
+                "GetSystemDirectoryA", "GetSystemDirectoryW",
+                "GetWindowsDirectoryA", "GetWindowsDirectoryW",
+                "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
+                "OutputDebugStringA", "OutputDebugStringW",
+                "NtQueryInformationProcess", "ZwQueryInformationProcess",
+                "GetModuleHandleA", "GetModuleHandleW", "LoadLibraryA", "LoadLibraryW",
+                "GetProcAddress", "VirtualProtect", "VirtualAlloc", "VirtualQuery",
+            }
+
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode("utf-8", errors="ignore")
+                    for imp in entry.imports:
+                        if imp.name:
+                            func_name = imp.name.decode("utf-8", errors="ignore")
+                            if func_name in license_related_apis:
+                                api_calls.append(f"{dll_name}!{func_name} @ 0x{imp.address:08X}")
+
+            if hasattr(pe, "DIRECTORY_ENTRY_DELAY_IMPORT"):
+                for entry in pe.DIRECTORY_ENTRY_DELAY_IMPORT:
+                    dll_name = entry.dll.decode("utf-8", errors="ignore")
+                    for imp in entry.imports:
+                        if imp.name:
+                            func_name = imp.name.decode("utf-8", errors="ignore")
+                            if func_name in license_related_apis:
+                                api_calls.append(f"[DELAY] {dll_name}!{func_name} @ 0x{imp.address:08X}")
+
+            pe.close()
+
+        except ImportError:
+            try:
+                import lief
+
+                binary = lief.parse(self.current_file_path)
+                if binary is None:
+                    return api_calls
+
+                license_keywords = [
+                    "reg", "crypt", "license", "serial", "key", "valid", "check",
+                    "internet", "http", "socket", "connect", "time", "debug",
+                ]
+
+                if hasattr(binary, "imports"):
+                    for imp in binary.imports:
+                        dll_name = imp.name
+                        for entry in imp.entries:
+                            if entry.name:
+                                func_lower = entry.name.lower()
+                                if any(kw in func_lower for kw in license_keywords):
+                                    api_calls.append(f"{dll_name}!{entry.name}")
+
+            except Exception:
+                pass
+
+        except Exception as e:
+            self.log_activity(f"API monitoring error: {e!s}")
+
+        return api_calls
+
+    def _monitor_file_operations(self) -> list[str]:
+        """Monitor and detect file operations related to licensing.
+
+        Analyzes binary for file system operations targeting license files,
+        configuration files, and protection-related paths.
+
+        Returns:
+            List of detected file operation descriptions.
+
+        """
+        file_ops: list[str] = []
+
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
+            return file_ops
+
+        try:
+            license_file_patterns = [
+                ".lic", ".key", ".dat", ".cfg", ".ini", ".reg", ".license",
+                "license", "serial", "activation", "registration", "settings",
+                "config", "prefs", "preferences", ".xml", ".json",
+            ]
+
+            with open(self.current_file_path, "rb") as f:
+                content = f.read()
+
+            import re
+
+            ascii_strings = re.findall(rb"[\x20-\x7e]{4,}", content)
+            unicode_strings = re.findall(rb"(?:[\x20-\x7e]\x00){4,}", content)
+
+            all_strings: list[str] = []
+            for s in ascii_strings:
+                with contextlib.suppress(Exception):
+                    all_strings.append(s.decode("ascii"))
+
+            for s in unicode_strings:
+                with contextlib.suppress(Exception):
+                    all_strings.append(s.decode("utf-16-le"))
+
+            seen_ops: set[str] = set()
+            for string in all_strings:
+                string_lower = string.lower()
+
+                if any(pattern in string_lower for pattern in license_file_patterns):
+                    if "\\" in string or "/" in string or "." in string:
+                        if len(string) < 260 and string not in seen_ops:
+                            seen_ops.add(string)
+                            if any(ext in string_lower for ext in [".lic", ".key", ".license"]):
+                                file_ops.append(f"[LICENSE FILE] {string}")
+                            elif any(ext in string_lower for ext in [".dat", ".cfg", ".ini"]):
+                                file_ops.append(f"[CONFIG FILE] {string}")
+                            elif any(ext in string_lower for ext in [".reg"]):
+                                file_ops.append(f"[REGISTRY FILE] {string}")
+                            else:
+                                file_ops.append(f"[FILE REF] {string}")
+
+            common_license_paths = [
+                "AppData\\Local", "AppData\\Roaming", "ProgramData",
+                "Application Data", "Documents and Settings",
+                "/etc/", "/var/lib/", "/opt/", "~/.config/",
+            ]
+
+            for string in all_strings:
+                for path_pattern in common_license_paths:
+                    if path_pattern.lower() in string.lower() and string not in seen_ops:
+                        seen_ops.add(string)
+                        file_ops.append(f"[PATH REF] {string}")
+
+        except Exception as e:
+            self.log_activity(f"File operation monitoring error: {e!s}")
+
+        return file_ops[:50]
+
+    def _monitor_network_activity(self) -> list[str]:
+        """Monitor and detect network activity related to licensing.
+
+        Analyzes binary for network endpoints, URLs, and connection patterns
+        commonly used for license validation and activation.
+
+        Returns:
+            List of detected network activity descriptions.
+
+        """
+        net_activity: list[str] = []
+
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
+            return net_activity
+
+        try:
+            with open(self.current_file_path, "rb") as f:
+                content = f.read()
+
+            import re
+
+            url_pattern = rb"https?://[a-zA-Z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+"
+            urls = re.findall(url_pattern, content)
+
+            seen_urls: set[str] = set()
+            license_keywords = [
+                "license", "activation", "register", "auth", "valid", "check",
+                "serial", "key", "token", "verify", "subscribe", "purchase",
+            ]
+
+            for url_bytes in urls:
+                try:
+                    url = url_bytes.decode("utf-8", errors="ignore")
+                    if url not in seen_urls and len(url) < 500:
+                        seen_urls.add(url)
+                        url_lower = url.lower()
+                        if any(kw in url_lower for kw in license_keywords):
+                            net_activity.append(f"[LICENSE SERVER] {url}")
+                        else:
+                            net_activity.append(f"[URL] {url}")
+                except Exception:
+                    pass
+
+            ip_pattern = rb"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+            ips = re.findall(ip_pattern, content)
+
+            seen_ips: set[str] = set()
+            for ip_bytes in ips:
+                try:
+                    ip = ip_bytes.decode("utf-8")
+                    parts = ip.split(".")
+                    if all(0 <= int(p) <= 255 for p in parts):
+                        if ip not in seen_ips and not ip.startswith("0.") and not ip.startswith("255."):
+                            seen_ips.add(ip)
+                            if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172."):
+                                net_activity.append(f"[PRIVATE IP] {ip}")
+                            else:
+                                net_activity.append(f"[PUBLIC IP] {ip}")
+                except Exception:
+                    pass
+
+            domain_pattern = rb"[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}"
+            domains = re.findall(domain_pattern, content)
+
+            license_domain_keywords = ["license", "activation", "auth", "register", "verify"]
+            seen_domains: set[str] = set()
+
+            for domain_bytes in domains:
+                try:
+                    domain = domain_bytes.decode("utf-8", errors="ignore").lower()
+                    if domain not in seen_domains and len(domain) > 4:
+                        if any(kw in domain for kw in license_domain_keywords):
+                            seen_domains.add(domain)
+                            net_activity.append(f"[LICENSE DOMAIN] {domain}")
+                except Exception:
+                    pass
+
+        except Exception as e:
+            self.log_activity(f"Network activity monitoring error: {e!s}")
+
+        return net_activity[:50]
+
+    def _monitor_registry_operations(self) -> list[str]:
+        """Monitor and detect registry operations related to licensing.
+
+        Analyzes binary for registry key references commonly used for
+        storing license data, serial numbers, and activation states.
+
+        Returns:
+            List of detected registry operation descriptions.
+
+        """
+        reg_ops: list[str] = []
+
+        if not hasattr(self, "current_file_path") or not self.current_file_path:
+            return reg_ops
+
+        try:
+            with open(self.current_file_path, "rb") as f:
+                content = f.read()
+
+            import re
+
+            registry_patterns = [
+                rb"HKEY_LOCAL_MACHINE",
+                rb"HKEY_CURRENT_USER",
+                rb"HKEY_CLASSES_ROOT",
+                rb"HKLM",
+                rb"HKCU",
+                rb"HKCR",
+                rb"SOFTWARE\\",
+                rb"Software\\",
+            ]
+
+            license_reg_keywords = [
+                "license", "serial", "registration", "activation", "key",
+                "registered", "trial", "expir", "valid", "auth",
+            ]
+
+            ascii_strings = re.findall(rb"[\x20-\x7e]{8,}", content)
+            unicode_strings = re.findall(rb"(?:[\x20-\x7e]\x00){8,}", content)
+
+            all_strings: list[str] = []
+            for s in ascii_strings:
+                with contextlib.suppress(Exception):
+                    all_strings.append(s.decode("ascii"))
+
+            for s in unicode_strings:
+                with contextlib.suppress(Exception):
+                    all_strings.append(s.decode("utf-16-le"))
+
+            seen_keys: set[str] = set()
+
+            for string in all_strings:
+                string_upper = string.upper()
+
+                is_registry_path = any(
+                    pattern.decode("utf-8").upper() in string_upper
+                    for pattern in registry_patterns
+                )
+
+                if is_registry_path and string not in seen_keys:
+                    seen_keys.add(string)
+                    string_lower = string.lower()
+
+                    if any(kw in string_lower for kw in license_reg_keywords):
+                        reg_ops.append(f"[LICENSE KEY] {string}")
+                    elif "software\\" in string_lower:
+                        reg_ops.append(f"[SOFTWARE KEY] {string}")
+                    else:
+                        reg_ops.append(f"[REGISTRY KEY] {string}")
+
+            common_license_subkeys = [
+                "Registration", "License", "Serial", "Activation",
+                "Settings", "Configuration", "Auth", "Key",
+            ]
+
+            for string in all_strings:
+                if len(string) > 3 and len(string) < 100:
+                    for subkey in common_license_subkeys:
+                        if subkey.lower() in string.lower() and "\\" in string:
+                            if string not in seen_keys:
+                                seen_keys.add(string)
+                                reg_ops.append(f"[SUBKEY] {string}")
+
+        except Exception as e:
+            self.log_activity(f"Registry monitoring error: {e!s}")
+
+        return reg_ops[:50]

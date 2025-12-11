@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import threading
-import threading as _threading
 import time
 import types
 from collections.abc import Callable
@@ -34,7 +33,7 @@ from typing import Any, Self
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator
 from .intelligent_code_modifier import IntelligentCodeModifier
-from .llm_backends import LLMManager
+from .llm_backends import LLMManager, LLMProvider
 from .performance_monitor import performance_monitor, profile_ai_operation
 from .script_generation_agent import AIAgent
 
@@ -1156,6 +1155,109 @@ class IntegrationManager:
         }
 
         return self.create_workflow(workflow_def)
+
+    def generate_response(
+        self,
+        prompt: str,
+        model: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1000,
+    ) -> str:
+        """Generate a response using the configured LLM backend.
+
+        Args:
+            prompt: The input prompt to send to the language model
+            model: Optional model name to use (defaults to active backend)
+            temperature: Sampling temperature for response generation (0.0-1.0)
+            max_tokens: Maximum number of tokens in the response
+
+        Returns:
+            Generated response text from the language model
+
+        """
+        from .llm_backends import LLMConfig, LLMMessage
+
+        try:
+            if not self.llm_manager:
+                self.logger.error("LLM manager not available")
+                return "Error: AI backend not configured. Please configure an LLM provider in settings."
+
+            available_llms = self.llm_manager.get_available_llms()
+            if not available_llms:
+                provider = self._detect_provider_from_model(model)
+                if provider:
+                    config = LLMConfig(
+                        provider=provider,
+                        model_name=model,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    llm_id = f"{provider.value}_{model}" if model else provider.value
+                    if not self.llm_manager.register_llm(llm_id, config):
+                        return f"Error: Failed to initialize AI model '{model or 'default'}'"
+                else:
+                    return "Error: No AI models available. Please configure an LLM provider."
+
+            backend_id = None
+            if model:
+                for llm_id in available_llms:
+                    info = self.llm_manager.get_llm_info(llm_id)
+                    if info and info.get("model_name") == model:
+                        backend_id = llm_id
+                        break
+
+            if not backend_id:
+                backend_id = self.llm_manager.active_backend
+
+            if not backend_id:
+                return "Error: No active AI backend available"
+
+            messages = [LLMMessage(role="user", content=prompt)]
+
+            response = self.llm_manager.chat(messages, llm_id=backend_id)
+
+            if response and response.content:
+                return response.content.strip()
+
+            return "Error: AI model returned empty response"
+
+        except ImportError as e:
+            self.logger.exception("Import error during response generation")
+            return f"Error: Required AI dependencies not available - {e}"
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.exception("Error generating AI response")
+            return f"Error generating response: {e}"
+
+    def _detect_provider_from_model(self, model: str | None) -> "LLMProvider | None":
+        """Detect the LLM provider from model name.
+
+        Args:
+            model: Model name string to analyze
+
+        Returns:
+            Detected LLMProvider or None if unable to determine
+
+        """
+        from .llm_backends import LLMProvider
+
+        if not model:
+            return None
+
+        model_lower = model.lower()
+
+        if any(name in model_lower for name in ["gpt-4", "gpt-3.5", "o1", "davinci", "curie"]):
+            return LLMProvider.OPENAI
+
+        if any(name in model_lower for name in ["claude", "anthropic", "opus", "sonnet", "haiku"]):
+            return LLMProvider.ANTHROPIC
+
+        if any(name in model_lower for name in ["llama", "mistral", "mixtral", "codellama", "deepseek"]):
+            return LLMProvider.OLLAMA
+
+        if model_lower.endswith(".gguf"):
+            return LLMProvider.LOCAL_GGUF
+
+        return None
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary for integration operations."""

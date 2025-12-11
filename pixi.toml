@@ -11,37 +11,42 @@ preview = ["pixi-build"]
 
 [dependencies]
 # Core Languages & Toolchains
-python = "3.12.*"  # Python interpreter version 3.12
-rust = ">=1.70"  # Rust compiler and toolchain
-m2w64-toolchain = ">=5.3.0,<6"  # MinGW-w64 compiler toolchain for Windows
-m2w64-binutils = ">=2.25.1,<3"  # Binary utilities for MinGW-w64
-nodejs = "*"  # Node.js JavaScript runtime for linters
+python = "3.12.*"
+rust = "*"
+m2w64-toolchain = "*"
+m2w64-binutils = "*"
+nodejs = "*"
+yarn = "*"
+markdownlint-cli = "*"
+shellcheck = "*"
+pmd = "*"
+checkstyle = "*"
 
 # Version Control & Package Management
-git = "*"  # Distributed version control system
-pip = "*"  # Python package installer
-wheel = "*"  # Python wheel package format
-setuptools = "*"  # Python package build system
+git = "*"
+pip = "*"
+wheel = "*"
+setuptools = "*"
 
 # IDE Integration
-pixi-pycharm = ">=0.0.10,<0.0.11"  # PyCharm IDE integration for pixi
+pixi-pycharm = "*"
 
 # Python Development Tools
-pytest = ">=9.0.1,<10"  # Python testing framework
-anyio = ">=4.11.0,<5"  # Async I/O library compatibility layer
-rich = ">=14.2.0,<15"  # Rich text and formatting for terminal output
-mypy = ">=1.18.2,<2"  # Static type checker for Python
-types-requests = ">=2.32.4.20250913,<3"  # Type stubs for requests library
-types-pyyaml = ">=6.0.12.20250915,<7"  # Type stubs for PyYAML library
-just = ">=1.43.1"  # Command runner and task automation tool
+pytest = "*"
+anyio = "*"
+rich = "*"
+mypy = "*"
+types-requests = "*"
+types-pyyaml = "*"
+just = "*"
 
 # Rust Development Tools
-cargo-nextest = ">=0.9.106"  # Next-generation test runner for Rust
-cargo-insta = ">=1.44.3"  # Snapshot testing tool for Rust
-cargo-expand = ">=1.0.118"  # Expand Rust macros for debugging
-cargo-llvm-cov = ">=0.6.21"  # Code coverage reports using LLVM
-cargo-audit = ">=0.21.2"  # Security vulnerability scanner for Rust dependencies
-cargo-deny = ">=0.18.8"  # Dependency linting and policy enforcement for Rust
+cargo-nextest = "*"
+cargo-insta = "*"
+cargo-expand = "*"
+cargo-llvm-cov = "*"
+cargo-audit = "*"
+cargo-deny = "*"
 
 [pypi-dependencies]
 intellicrack = { path = ".", editable = true }  # Editable install of Intellicrack for development
@@ -65,6 +70,8 @@ darglint = "*"  # Docstring argument checker
 pyroma = "*"  # Package quality checker
 mypy-extensions = "*"  # Extensions for mypy type checker
 dead = "*"  # Dead code and dependency detector
+uncalled = "*"  # Dead code finder using AST and regex
+deadcode = "*"  # Advanced unused code detector with more rules than vulture
 pygount = "*"  # Source code line counter
 pytest-deadfixtures = "*"  # Pytest plugin to find unused fixtures
 pyright = "*"  # Microsoft's static type checker for Python
@@ -143,24 +150,23 @@ index-strategy = "unsafe-best-match"
 
 [tasks]
 # Complete installation: installs dependencies + post-install setup
-setup = { depends-on = ["install-linters", "build-rust-launcher"] }
+setup = { depends-on = ["install-yarn-deps", "create-shortcut"] }
+
+# Generate requirements.txt from pixi packages for Dependabot
+generate-requirements = "pixi list --json | python -c \"import json,sys;[print(f\\\"{p['name']}=={p['version']}\\\" if p.get('version') else p['name']) for p in sorted(json.load(sys.stdin),key=lambda x:x['name']) if p.get('kind')=='pypi']\" > requirements.txt"
 
 # Rust launcher build
-build-rust-launcher = '''
-cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
-$WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut("$PWD\Intellicrack.lnk")
-$Shortcut.TargetPath = "$PWD\intellicrack-launcher\target\release\Intellicrack.exe"
-$Shortcut.IconLocation = "$PWD\intellicrack\assets\icon.ico"
-$Shortcut.WorkingDirectory = "$PWD"
-$Shortcut.Save()
-Write-Output "Shortcut created: Intellicrack.lnk"
-'''
+build-rust-launcher = "cargo build --release --manifest-path intellicrack-launcher/Cargo.toml"
 
-# Linter installation (Node.js-based)
-install-linters = { depends-on = ["install-eslint", "install-markdownlint"] }
-install-eslint = "npm install -g eslint@9.18.0 eslint-config-standard@17.1.0"
-install-markdownlint = "npm install -g markdownlint-cli@0.43.0"
+# Create Windows shortcut for launcher
+create-shortcut = { cmd = "powershell -Command \"\\$s=(New-Object -ComObject WScript.Shell).CreateShortcut('Intellicrack.lnk'); \\$s.TargetPath='intellicrack-launcher\\target\\release\\Intellicrack.exe'; \\$s.IconLocation='intellicrack\\assets\\icon.ico'; \\$s.Save(); Write-Host 'Shortcut created'\"", depends-on = ["build-rust-launcher"] }
+
+# Node.js package installation from package.json using Yarn (from conda)
+# Installs eslint, prettier, knip, typescript, and all plugins (conda packages have Windows path issues)
+install-yarn-deps = { cmd = "yarn install", inputs = ["package.json"], outputs = ["node_modules", "yarn.lock"] }
+
+# CI/reproducible install (requires existing yarn.lock)
+install-yarn-deps-ci = { cmd = "yarn install --immutable", inputs = ["package.json", "yarn.lock"], outputs = ["node_modules"] }
 
 # Documentation generation tasks
 docs-apidoc = "sphinx-apidoc -f -o docs/source intellicrack"

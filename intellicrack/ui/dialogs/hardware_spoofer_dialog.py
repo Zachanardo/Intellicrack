@@ -90,17 +90,16 @@ class HardwareSpoofingWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the HardwareSpoofingDialog with spoofer and UI components.
+        """Initialize the HardwareSpoofingWorker thread.
 
         Args:
-            parent: Parent widget for this dialog. Defaults to None.
+            parent: Parent widget for this thread. Defaults to None.
 
         """
         super().__init__(parent)
         self.spoofer = HardwareFingerPrintSpoofer()
-        self.worker_thread = None
-        self.init_ui()
-        self.load_settings()
+        self.action: str = ""
+        self.params: dict[str, Any] = {}
 
     def run(self) -> None:
         """Execute spoofing operation."""
@@ -345,42 +344,32 @@ class HardwareSpoofingWorker(QThread):
 
         spoofed_info: dict[str, Any] = {}
 
-        # Generate CPU ID (Intel format)
-        cpu_vendors = ["BFEBFBFF", "AFEBFBFF", "CFEBFBFF"]  # Intel prefixes
-        # Note: Using secrets module for generating fake hardware IDs
+        cpu_vendors = ["BFEBFBFF", "AFEBFBFF", "CFEBFBFF"]
         cpu_id = secrets.choice(cpu_vendors) + "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
         spoofed_info["cpu_id"] = cpu_id
 
-        # Generate motherboard serial
         mb_prefixes = ["MB", "SN", "System", "Base"]
-        # Note: Using secrets module for generating fake hardware IDs
         mb_serial = f"{secrets.choice(mb_prefixes)}-" + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
         spoofed_info["motherboard_serial"] = mb_serial
 
-        # Generate HDD serial (realistic format)
         hdd_brands = ["WD-WCC", "ST", "HGST", "TOSHIBA"]
-        # Note: Using secrets module for generating fake hardware IDs
         hdd_serial = secrets.choice(hdd_brands) + "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(10))
         spoofed_info["hdd_serial"] = hdd_serial
 
-        oui_prefixes = ["00:1B:44", "00:50:56", "00:0C:29", "08:00:27"]  # Common OUIs
+        oui_prefixes = ["00:1B:44", "00:50:56", "00:0C:29", "08:00:27"]
         mac_addresses: list[str] = []
         for _ in range(2):
-            # Note: Using secrets module for generating fake hardware IDs
             oui = secrets.choice(oui_prefixes)
             nic = ":".join([f"{secrets.randbelow(256):02X}" for _ in range(3)])
             mac_addresses.append(f"{oui}:{nic}")
         spoofed_info["mac_addresses"] = mac_addresses
 
-        # Generate volume serials
         volumes: dict[str, str] = {}
-        # Note: Using secrets module for generating fake hardware IDs
         serial = f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
         for drive in ["C:", "D:"]:
             volumes[drive] = serial
         spoofed_info["volume_serials"] = volumes
 
-        # Generate BIOS info
         bios_manufacturers = [
             AMI_MANUFACTURER,
             PHOENIX_MANUFACTURER,
@@ -395,8 +384,6 @@ class HardwareSpoofingWorker(QThread):
         }
         spoofed_info["bios_info"] = bios_info
 
-        # Generate Windows Product ID
-        # Note: Using secrets module for generating fake hardware IDs
         product_id = f"{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}-{secrets.randbelow(90000) + 10000:05d}"
         spoofed_info["product_id"] = product_id
 
@@ -638,6 +625,7 @@ class HardwareSpoofingDialog(QDialog):
 
         self.init_ui()
         self.load_saved_profiles()
+        self.load_settings()
 
     def init_ui(self) -> None:
         """Initialize the user interface."""
@@ -1530,7 +1518,120 @@ class HardwareSpoofingDialog(QDialog):
                     self.profiles_table.setCellWidget(row, 3, action_widget)
 
                 except Exception as e:
-                    print(f"Failed to load profile {file_name}: {e}")
+                    logger.warning("Failed to load profile %s: %s", file_name, e)
+
+    def load_settings(self) -> None:
+        """Load dialog settings from persistent storage.
+
+        Loads previously saved spoofing method selections, hook configurations,
+        persistence options, and anti-detection settings from the user's
+        configuration directory.
+        """
+        settings_dir = os.path.join(os.path.expanduser("~"), INTELLICRACK_DIR)
+        settings_path = os.path.join(settings_dir, "hw_spoofer_settings.json")
+
+        if not os.path.exists(settings_path):
+            return
+
+        try:
+            with open(settings_path, encoding="utf-8") as f:
+                settings = json.load(f)
+
+            if "spoof_methods" in settings:
+                for method, enabled in settings["spoof_methods"].items():
+                    if method in self.spoof_methods:
+                        self.spoof_methods[method].setChecked(enabled)
+
+            if "hook_methods" in settings:
+                for hook, enabled in settings["hook_methods"].items():
+                    if hook in self.hook_methods:
+                        self.hook_methods[hook].setChecked(enabled)
+
+            if "generation_mode" in settings and hasattr(self, "gen_mode_combo"):
+                index = self.gen_mode_combo.findText(settings["generation_mode"])
+                if index >= 0:
+                    self.gen_mode_combo.setCurrentIndex(index)
+
+            if "persist_reboot" in settings and hasattr(self, "persist_reboot"):
+                self.persist_reboot.setChecked(settings.get("persist_reboot", False))
+
+            if "persist_service" in settings and hasattr(self, "persist_service"):
+                self.persist_service.setChecked(settings.get("persist_service", False))
+
+            if "persist_startup" in settings and hasattr(self, "persist_startup"):
+                self.persist_startup.setChecked(settings.get("persist_startup", False))
+
+            if "anti_detect_checks" in settings:
+                for detection, enabled in settings["anti_detect_checks"].items():
+                    if detection in self.anti_detect_checks:
+                        self.anti_detect_checks[detection].setChecked(enabled)
+
+            if "last_spoofed_hardware" in settings:
+                self.spoofed_hardware = settings["last_spoofed_hardware"]
+                self._update_hardware_table(self.spoofed_hardware)
+
+            logger.info("Hardware spoofer settings loaded successfully")
+
+        except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in settings file: %s", e)
+        except PermissionError as e:
+            logger.error("Permission denied reading settings: %s", e)
+        except OSError as e:
+            logger.error("Failed to load hardware spoofer settings: %s", e)
+
+    def save_settings(self) -> None:
+        """Save current dialog settings to persistent storage.
+
+        Saves spoofing method selections, hook configurations, persistence
+        options, anti-detection settings, and last used spoofed hardware
+        values for restoration on next dialog open.
+        """
+        settings_dir = os.path.join(os.path.expanduser("~"), INTELLICRACK_DIR)
+        os.makedirs(settings_dir, exist_ok=True)
+        settings_path = os.path.join(settings_dir, "hw_spoofer_settings.json")
+
+        settings: dict[str, Any] = {
+            "spoof_methods": {
+                method: check.isChecked() for method, check in self.spoof_methods.items()
+            },
+            "hook_methods": {
+                hook: check.isChecked() for hook, check in self.hook_methods.items()
+            },
+            "anti_detect_checks": {
+                detection: check.isChecked() for detection, check in self.anti_detect_checks.items()
+            },
+        }
+
+        if hasattr(self, "gen_mode_combo"):
+            settings["generation_mode"] = self.gen_mode_combo.currentText()
+
+        if hasattr(self, "persist_reboot"):
+            settings["persist_reboot"] = self.persist_reboot.isChecked()
+
+        if hasattr(self, "persist_service"):
+            settings["persist_service"] = self.persist_service.isChecked()
+
+        if hasattr(self, "persist_startup"):
+            settings["persist_startup"] = self.persist_startup.isChecked()
+
+        if self.spoofed_hardware:
+            settings["last_spoofed_hardware"] = self.spoofed_hardware
+
+        settings["saved_at"] = datetime.now().isoformat()
+
+        try:
+            with open(settings_path, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2)
+            logger.info("Hardware spoofer settings saved successfully")
+        except PermissionError as e:
+            logger.error("Permission denied saving settings: %s", e)
+        except OSError as e:
+            logger.error("Failed to save hardware spoofer settings: %s", e)
+
+    def closeEvent(self, event: Any) -> None:
+        """Handle dialog close event to save settings."""
+        self.save_settings()
+        super().closeEvent(event)
 
     @pyqtSlot(str, str)
     def on_status_update(self, message: str, color: str) -> None:

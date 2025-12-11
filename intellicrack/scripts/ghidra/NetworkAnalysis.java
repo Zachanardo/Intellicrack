@@ -19,10 +19,10 @@ import java.util.*;
 public class NetworkAnalysis extends GhidraScript {
 
   // Enhanced tracking using Set/HashSet/Iterator
-  private Set<Address> networkFunctions = new HashSet<>();
-  private Set<String> uniqueEndpoints = new HashSet<>();
-  private Set<Address> bufferLocations = new HashSet<>();
-  private Map<Address, String> networkStructures = new HashMap<>();
+  private final Set<Address> networkFunctions = new HashSet<>();
+  private final Set<String> uniqueEndpoints = new HashSet<>();
+  private final Set<Address> bufferLocations = new HashSet<>();
+  private final Map<Address, String> networkStructures = new HashMap<>();
   private FunctionManager functionManager;
   private ReferenceManager referenceManager;
   private DataTypeManager dataTypeManager;
@@ -144,7 +144,7 @@ public class NetworkAnalysis extends GhidraScript {
 
   private void findHardcodedUrls(List<String> urls) throws Exception {
     // Common URL patterns
-    String[] urlPatterns = {"http://", "https://", "ftp://", "tcp://", "udp://"};
+    String[] urlPatterns = {"https://", "https://", "ftp://", "tcp://", "udp://"};
 
     Memory localMemory = currentProgram.getMemory();
 
@@ -188,7 +188,7 @@ public class NetworkAnalysis extends GhidraScript {
       // IPs can have 1-3 digits per octet, so we need to check intelligently
       String potentialIP = extractPotentialIPAroundDot(dotAddr);
 
-      if (potentialIP != null && isValidIP(potentialIP)) {
+      if (isValidIP(potentialIP)) {
         // Avoid duplicates
         if (!urls.contains(potentialIP)) {
           urls.add(potentialIP);
@@ -316,7 +316,7 @@ public class NetworkAnalysis extends GhidraScript {
     for (int suspicious : SUSPICIOUS_PORTS) {
       if (port == suspicious) return true;
     }
-    return port > 1024 && port != 80 && port != 443 && port != 8080;
+    return port > 1024 && port != 8080;
   }
 
   private void analyzeNetworkBehavior(
@@ -658,9 +658,8 @@ public class NetworkAnalysis extends GhidraScript {
           || typeName.contains("http")
           || typeName.contains("tcp")) {
 
-        if (dt instanceof Structure) {
-          Structure struct = (Structure) dt;
-          println(
+        if (dt instanceof Structure struct) {
+            println(
               "    Found network structure: "
                   + dt.getName()
                   + " ("
@@ -677,9 +676,8 @@ public class NetworkAnalysis extends GhidraScript {
             }
           }
           networkStructCount++;
-        } else if (dt instanceof ghidra.program.model.data.Enum) {
-          ghidra.program.model.data.Enum enumType = (ghidra.program.model.data.Enum) dt;
-          println(
+        } else if (dt instanceof ghidra.program.model.data.Enum enumType) {
+            println(
               "    Found network enum: "
                   + dt.getName()
                   + " with "

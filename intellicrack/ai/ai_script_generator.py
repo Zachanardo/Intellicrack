@@ -6,10 +6,16 @@ working with real binaries to defeat modern licensing protections.
 Copyright (C) 2025 Zachary Flint
 """
 
+from __future__ import annotations
+
+import hashlib
 import logging
 import re
+import uuid
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 
@@ -33,20 +39,40 @@ class ScriptType(Enum):
     """Script type enumeration."""
 
     FRIDA = "frida"
+    GHIDRA = "ghidra"
     PYTHON = "python"
     BINARY_PATCH = "binary_patch"
     HYBRID = "hybrid"
+
+
+class ProtectionType(Enum):
+    """Protection type enumeration for analysis."""
+
+    LICENSE_CHECK = "license_check"
+    SERIAL_VALIDATION = "serial_validation"
+    TRIAL_LIMITATION = "trial_limitation"
+    ONLINE_ACTIVATION = "online_activation"
+    HARDWARE_BINDING = "hardware_binding"
+    VM_PROTECTION = "vm_protection"
+    ANTI_DEBUG = "anti_debug"
+    ANTI_TAMPER = "anti_tamper"
+    OBFUSCATION = "obfuscation"
+    UNKNOWN = "unknown"
 
 
 @dataclass
 class ScriptMetadata:
     """Metadata for generated scripts."""
 
+    script_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    script_type: ScriptType = ScriptType.FRIDA
     iterations: int = 0
     refinement_notes: list[str] = field(default_factory=list)
     success_probability: float = 0.5
-    creation_time: str = ""
+    creation_time: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
     target_binary: str = ""
+    protection_types: list[ProtectionType] = field(default_factory=list)
+    improvements: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -1600,6 +1626,956 @@ const DateSpoofer = {
 DateSpoofer.spoofAllDateSources();
 """
 
+    def generate_frida_script(
+        self,
+        binary_path_or_analysis: str | dict[str, Any],
+        protection_info: dict[str, Any] | None = None,
+    ) -> GeneratedScript | None:
+        """Generate a Frida bypass script for the target binary.
+
+        Args:
+            binary_path_or_analysis: Either a binary path string or analysis dict.
+            protection_info: Optional protection information dict.
+
+        Returns:
+            GeneratedScript object with Frida code, or None on failure.
+
+        """
+        try:
+            binary_path: str
+            analysis_data: dict[str, Any]
+
+            if isinstance(binary_path_or_analysis, dict):
+                analysis_data = binary_path_or_analysis
+                binary_path = analysis_data.get("binary_path", analysis_data.get("target_binary", "unknown"))
+            else:
+                binary_path = str(binary_path_or_analysis)
+                analysis_data = self._analyze_binary_for_scripting(binary_path)
+
+            if protection_info:
+                analysis_data["protection_info"] = protection_info
+
+            protection_types = self._detect_protection_types(analysis_data)
+            detected_protections = analysis_data.get("protections", [])
+            if isinstance(detected_protections, list):
+                for p in detected_protections:
+                    if isinstance(p, dict):
+                        ptype = p.get("type", "").lower()
+                        for pt in ProtectionType:
+                            if pt.value in ptype or ptype in pt.value:
+                                if pt not in protection_types:
+                                    protection_types.append(pt)
+
+            base_script = self._generate_frida_base_script(binary_path, analysis_data, protection_types)
+
+            context = {
+                "protection": protection_info or {"type": ",".join(pt.value for pt in protection_types)},
+                "difficulty": self._assess_difficulty(protection_types),
+                "techniques": [pt.value for pt in protection_types],
+            }
+
+            enhanced_script = self.generate_script(
+                prompt=f"Generate Frida bypass for {binary_path}",
+                base_script=base_script,
+                context=context,
+            )
+
+            success_probability = self._calculate_success_probability(protection_types, analysis_data)
+
+            metadata = ScriptMetadata(
+                script_id=f"frida_{hashlib.md5(binary_path.encode()).hexdigest()[:8]}",
+                script_type=ScriptType.FRIDA,
+                iterations=0,
+                success_probability=success_probability,
+                creation_time=datetime.now(tz=UTC).isoformat(),
+                target_binary=binary_path,
+                protection_types=protection_types,
+            )
+
+            hooks = self._extract_hooks_from_script(enhanced_script)
+
+            return GeneratedScript(
+                content=enhanced_script,
+                language="javascript",
+                metadata=metadata,
+                entry_point="main",
+                dependencies=["frida"],
+                hooks=hooks,
+                patches=[],
+            )
+
+        except Exception as e:
+            logger.error("Failed to generate Frida script: %s", e, exc_info=True)
+            return None
+
+    def generate_ghidra_script(
+        self,
+        binary_path_or_analysis: str | dict[str, Any],
+        protection_info: dict[str, Any] | None = None,
+    ) -> GeneratedScript | None:
+        """Generate a Ghidra analysis script for the target binary.
+
+        Args:
+            binary_path_or_analysis: Either a binary path string or analysis dict.
+            protection_info: Optional protection information dict.
+
+        Returns:
+            GeneratedScript object with Ghidra/Java code, or None on failure.
+
+        """
+        try:
+            binary_path: str
+            analysis_data: dict[str, Any]
+
+            if isinstance(binary_path_or_analysis, dict):
+                analysis_data = binary_path_or_analysis
+                binary_path = analysis_data.get("binary_path", analysis_data.get("target_binary", "unknown"))
+            else:
+                binary_path = str(binary_path_or_analysis)
+                analysis_data = self._analyze_binary_for_scripting(binary_path)
+
+            if protection_info:
+                analysis_data["protection_info"] = protection_info
+
+            protection_types = self._detect_protection_types(analysis_data)
+            detected_protections = analysis_data.get("protections", [])
+            if isinstance(detected_protections, list):
+                for p in detected_protections:
+                    if isinstance(p, dict):
+                        ptype = p.get("type", "").lower()
+                        for pt in ProtectionType:
+                            if pt.value in ptype or ptype in pt.value:
+                                if pt not in protection_types:
+                                    protection_types.append(pt)
+
+            ghidra_script = self._generate_ghidra_analysis_script(binary_path, analysis_data, protection_types)
+
+            success_probability = self._calculate_success_probability(protection_types, analysis_data)
+
+            metadata = ScriptMetadata(
+                script_id=f"ghidra_{hashlib.md5(binary_path.encode()).hexdigest()[:8]}",
+                script_type=ScriptType.GHIDRA,
+                iterations=0,
+                success_probability=success_probability,
+                creation_time=datetime.now(tz=UTC).isoformat(),
+                target_binary=binary_path,
+                protection_types=protection_types,
+            )
+
+            patches = self._extract_patches_from_ghidra_script(ghidra_script)
+
+            return GeneratedScript(
+                content=ghidra_script,
+                language="java",
+                metadata=metadata,
+                entry_point="run",
+                dependencies=["ghidra"],
+                hooks=[],
+                patches=patches,
+            )
+
+        except Exception as e:
+            logger.error("Failed to generate Ghidra script: %s", e, exc_info=True)
+            return None
+
+    def save_script(
+        self,
+        script: GeneratedScript,
+        save_dir: str | Path | None = None,
+    ) -> str:
+        """Save a generated script to the filesystem.
+
+        Args:
+            script: The GeneratedScript object to save.
+            save_dir: Optional directory to save to. Defaults to ai_generated scripts dir.
+
+        Returns:
+            Absolute path to the saved script file.
+
+        """
+        if save_dir is None:
+            base_dir = Path(__file__).parent.parent / "scripts" / "ai_generated"
+        else:
+            base_dir = Path(save_dir)
+
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+        extension_map = {
+            "javascript": ".js",
+            "java": ".java",
+            "python": ".py",
+        }
+        extension = extension_map.get(script.language, ".txt")
+
+        script_type_prefix = script.metadata.script_type.value if script.metadata.script_type else "script"
+        timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+        filename = f"ai_{script_type_prefix}_{script.metadata.script_id}_{timestamp}{extension}"
+
+        filepath = base_dir / filename
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            header = self._generate_script_header(script)
+            f.write(header)
+            f.write(script.content)
+
+        metadata_path = filepath.with_suffix(filepath.suffix + ".meta.json")
+        import json as json_module
+
+        metadata_dict = {
+            "script_id": script.metadata.script_id,
+            "script_type": script.metadata.script_type.value if script.metadata.script_type else "unknown",
+            "target_binary": script.metadata.target_binary,
+            "protection_types": [pt.value for pt in script.metadata.protection_types],
+            "success_probability": script.metadata.success_probability,
+            "creation_time": script.metadata.creation_time,
+            "iterations": script.metadata.iterations,
+            "language": script.language,
+            "entry_point": script.entry_point,
+            "dependencies": script.dependencies,
+            "hooks_count": len(script.hooks),
+            "patches_count": len(script.patches),
+        }
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            json_module.dump(metadata_dict, f, indent=2)
+
+        logger.info("Saved script to %s", filepath)
+        return str(filepath.absolute())
+
+    def refine_script(
+        self,
+        original_script: str | GeneratedScript,
+        execution_results: dict[str, Any],
+        analysis_data: dict[str, Any],
+    ) -> GeneratedScript | None:
+        """Refine a script based on execution results and analysis.
+
+        Args:
+            original_script: The original script content or GeneratedScript object.
+            execution_results: Results from testing/executing the script.
+            analysis_data: Analysis data about the target binary.
+
+        Returns:
+            Refined GeneratedScript object, or None on failure.
+
+        """
+        try:
+            if isinstance(original_script, GeneratedScript):
+                script_content = original_script.content
+                original_metadata = original_script.metadata
+                script_type = original_metadata.script_type
+            else:
+                script_content = str(original_script)
+                original_metadata = None
+                script_type = ScriptType.FRIDA if "Interceptor" in script_content else ScriptType.GHIDRA
+
+            improvements: list[str] = []
+            refined_content = script_content
+
+            success = execution_results.get("success", False)
+            errors = execution_results.get("errors", [])
+            error_message = execution_results.get("error", "")
+            hooks_triggered = execution_results.get("hooks_triggered", 0)
+            bypassed = execution_results.get("bypassed", False)
+
+            if not success or errors or error_message:
+                refined_content, error_improvements = self._fix_script_errors(
+                    refined_content, errors, error_message, script_type
+                )
+                improvements.extend(error_improvements)
+
+            if hooks_triggered == 0 and script_type == ScriptType.FRIDA:
+                refined_content, hook_improvements = self._improve_hook_targeting(refined_content, analysis_data)
+                improvements.extend(hook_improvements)
+
+            if not bypassed:
+                refined_content, bypass_improvements = self._strengthen_bypass_logic(
+                    refined_content, analysis_data, script_type
+                )
+                improvements.extend(bypass_improvements)
+
+            protection_evasion = execution_results.get("protection_detection", {})
+            if protection_evasion.get("detected", False):
+                refined_content, evasion_improvements = self._add_evasion_techniques(
+                    refined_content, protection_evasion, script_type
+                )
+                improvements.extend(evasion_improvements)
+
+            iteration_count = (original_metadata.iterations + 1) if original_metadata else 1
+            base_probability = original_metadata.success_probability if original_metadata else 0.5
+            improvement_factor = min(0.1 * len(improvements), 0.3)
+            new_probability = min(0.95, base_probability + improvement_factor)
+
+            binary_path = analysis_data.get("binary_path", analysis_data.get("target_binary", "unknown"))
+            protection_types = self._detect_protection_types(analysis_data)
+
+            metadata = ScriptMetadata(
+                script_id=original_metadata.script_id if original_metadata else f"refined_{uuid.uuid4().hex[:8]}",
+                script_type=script_type,
+                iterations=iteration_count,
+                refinement_notes=improvements,
+                success_probability=new_probability,
+                creation_time=datetime.now(tz=UTC).isoformat(),
+                target_binary=binary_path,
+                protection_types=protection_types,
+                improvements=improvements,
+            )
+
+            language = "javascript" if script_type == ScriptType.FRIDA else "java"
+            hooks = self._extract_hooks_from_script(refined_content) if script_type == ScriptType.FRIDA else []
+            patches = self._extract_patches_from_ghidra_script(refined_content) if script_type == ScriptType.GHIDRA else []
+
+            return GeneratedScript(
+                content=refined_content,
+                language=language,
+                metadata=metadata,
+                entry_point="main" if script_type == ScriptType.FRIDA else "run",
+                dependencies=["frida"] if script_type == ScriptType.FRIDA else ["ghidra"],
+                hooks=hooks,
+                patches=patches,
+            )
+
+        except Exception as e:
+            logger.error("Failed to refine script: %s", e, exc_info=True)
+            return None
+
+    def _analyze_binary_for_scripting(self, binary_path: str) -> dict[str, Any]:
+        """Analyze a binary to gather information for script generation."""
+        analysis: dict[str, Any] = {
+            "binary_path": binary_path,
+            "exists": False,
+            "protections": [],
+            "imports": [],
+            "exports": [],
+            "strings": [],
+        }
+
+        path_obj = Path(binary_path)
+        if not path_obj.exists():
+            return analysis
+
+        analysis["exists"] = True
+        analysis["size"] = path_obj.stat().st_size
+        analysis["name"] = path_obj.name
+
+        if self.binary_analyzer:
+            try:
+                detailed = self.binary_analyzer.analyze(binary_path)
+                if detailed:
+                    analysis.update(detailed)
+            except Exception as e:
+                logger.warning("Binary analyzer failed: %s", e)
+
+        return analysis
+
+    def _detect_protection_types(self, analysis_data: dict[str, Any]) -> list[ProtectionType]:
+        """Detect protection types from analysis data."""
+        protection_types: list[ProtectionType] = []
+
+        protection_info = analysis_data.get("protection_info", {})
+        protection_type_str = protection_info.get("type", "").lower()
+
+        type_mapping = {
+            "license": ProtectionType.LICENSE_CHECK,
+            "serial": ProtectionType.SERIAL_VALIDATION,
+            "trial": ProtectionType.TRIAL_LIMITATION,
+            "online": ProtectionType.ONLINE_ACTIVATION,
+            "activation": ProtectionType.ONLINE_ACTIVATION,
+            "hardware": ProtectionType.HARDWARE_BINDING,
+            "hwid": ProtectionType.HARDWARE_BINDING,
+            "vm": ProtectionType.VM_PROTECTION,
+            "vmprotect": ProtectionType.VM_PROTECTION,
+            "themida": ProtectionType.VM_PROTECTION,
+            "debug": ProtectionType.ANTI_DEBUG,
+            "tamper": ProtectionType.ANTI_TAMPER,
+            "obfuscat": ProtectionType.OBFUSCATION,
+        }
+
+        for key, ptype in type_mapping.items():
+            if key in protection_type_str and ptype not in protection_types:
+                protection_types.append(ptype)
+
+        imports = analysis_data.get("imports", [])
+        import_str = " ".join(str(i) for i in imports).lower()
+
+        if any(api in import_str for api in ["regqueryvalue", "regopen", "regenumkey"]):
+            if ProtectionType.LICENSE_CHECK not in protection_types:
+                protection_types.append(ProtectionType.LICENSE_CHECK)
+
+        if any(api in import_str for api in ["gettickcount", "getsystemtime", "queryperf"]):
+            if ProtectionType.TRIAL_LIMITATION not in protection_types:
+                protection_types.append(ProtectionType.TRIAL_LIMITATION)
+
+        if any(api in import_str for api in ["winhttp", "wininet", "urldownload", "internetopen"]):
+            if ProtectionType.ONLINE_ACTIVATION not in protection_types:
+                protection_types.append(ProtectionType.ONLINE_ACTIVATION)
+
+        if any(api in import_str for api in ["getvolume", "getadapters", "wmi", "deviceio"]):
+            if ProtectionType.HARDWARE_BINDING not in protection_types:
+                protection_types.append(ProtectionType.HARDWARE_BINDING)
+
+        if any(api in import_str for api in ["isdebuggerpresent", "checkremote", "ntqueryinfo"]):
+            if ProtectionType.ANTI_DEBUG not in protection_types:
+                protection_types.append(ProtectionType.ANTI_DEBUG)
+
+        if not protection_types:
+            protection_types.append(ProtectionType.UNKNOWN)
+
+        return protection_types
+
+    def _assess_difficulty(self, protection_types: list[ProtectionType]) -> str:
+        """Assess bypass difficulty based on protection types."""
+        high_difficulty = {ProtectionType.VM_PROTECTION, ProtectionType.ANTI_TAMPER, ProtectionType.OBFUSCATION}
+        medium_difficulty = {ProtectionType.ONLINE_ACTIVATION, ProtectionType.HARDWARE_BINDING, ProtectionType.ANTI_DEBUG}
+
+        high_count = sum(1 for pt in protection_types if pt in high_difficulty)
+        medium_count = sum(1 for pt in protection_types if pt in medium_difficulty)
+
+        if high_count >= 2 or (high_count >= 1 and medium_count >= 2):
+            return "Very Hard"
+        if high_count >= 1 or medium_count >= 2:
+            return "Hard"
+        if medium_count >= 1 or len(protection_types) >= 3:
+            return "Medium"
+        return "Easy"
+
+    def _calculate_success_probability(
+        self, protection_types: list[ProtectionType], analysis_data: dict[str, Any]
+    ) -> float:
+        """Calculate estimated success probability."""
+        base_probability = 0.7
+
+        difficulty_penalties = {
+            ProtectionType.VM_PROTECTION: 0.2,
+            ProtectionType.ANTI_TAMPER: 0.15,
+            ProtectionType.OBFUSCATION: 0.15,
+            ProtectionType.ONLINE_ACTIVATION: 0.1,
+            ProtectionType.HARDWARE_BINDING: 0.1,
+            ProtectionType.ANTI_DEBUG: 0.05,
+            ProtectionType.TRIAL_LIMITATION: 0.05,
+            ProtectionType.LICENSE_CHECK: 0.05,
+            ProtectionType.SERIAL_VALIDATION: 0.05,
+        }
+
+        for ptype in protection_types:
+            base_probability -= difficulty_penalties.get(ptype, 0)
+
+        if analysis_data.get("exists"):
+            base_probability += 0.05
+
+        return max(0.1, min(0.95, base_probability))
+
+    def _generate_frida_base_script(
+        self,
+        binary_path: str,
+        analysis_data: dict[str, Any],
+        protection_types: list[ProtectionType],
+    ) -> str:
+        """Generate base Frida script targeting detected protections."""
+        script_parts = [
+            "'use strict';",
+            "",
+            f"// Frida bypass script for: {Path(binary_path).name}",
+            f"// Generated: {datetime.now(tz=UTC).isoformat()}",
+            f"// Target protections: {', '.join(pt.value for pt in protection_types)}",
+            "",
+            "const moduleName = Process.enumerateModulesSync()[0].name;",
+            "",
+        ]
+
+        if ProtectionType.LICENSE_CHECK in protection_types or ProtectionType.SERIAL_VALIDATION in protection_types:
+            script_parts.append(self._generate_license_check_bypass())
+
+        if ProtectionType.TRIAL_LIMITATION in protection_types:
+            script_parts.append(self._generate_time_manipulation())
+
+        if ProtectionType.ONLINE_ACTIVATION in protection_types:
+            script_parts.append(self._generate_network_emulation())
+
+        if ProtectionType.HARDWARE_BINDING in protection_types:
+            script_parts.append(self._generate_hwid_spoofer())
+
+        if ProtectionType.ANTI_DEBUG in protection_types:
+            script_parts.append(self._generate_anti_debug_bypass())
+
+        script_parts.extend([
+            "",
+            "// Main bypass logic",
+            "function main() {",
+            "    console.log('[*] Intellicrack Frida bypass initialized');",
+            "    console.log('[*] Module: ' + moduleName);",
+            "}",
+            "",
+            "main();",
+        ])
+
+        return "\n".join(script_parts)
+
+    def _generate_license_check_bypass(self) -> str:
+        """Generate license check bypass code."""
+        return """
+// License check bypass
+const licenseBypass = {
+    init: function() {
+        const regQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
+        if (regQueryValueExW) {
+            Interceptor.attach(regQueryValueExW, {
+                onEnter: function(args) {
+                    this.valueName = Memory.readUtf16String(args[1]);
+                },
+                onLeave: function(retval) {
+                    if (this.valueName && (
+                        this.valueName.toLowerCase().includes('license') ||
+                        this.valueName.toLowerCase().includes('serial') ||
+                        this.valueName.toLowerCase().includes('key')
+                    )) {
+                        console.log('[+] Intercepted license query: ' + this.valueName);
+                        retval.replace(0);
+                    }
+                }
+            });
+        }
+
+        // Hook common license validation functions
+        const commonChecks = ['CheckLicense', 'ValidateLicense', 'IsLicensed', 'CheckSerial'];
+        Process.enumerateModulesSync().forEach(function(mod) {
+            try {
+                mod.enumerateExports().forEach(function(exp) {
+                    commonChecks.forEach(function(check) {
+                        if (exp.name.toLowerCase().includes(check.toLowerCase())) {
+                            console.log('[*] Hooking: ' + exp.name);
+                            Interceptor.attach(exp.address, {
+                                onLeave: function(retval) {
+                                    console.log('[+] Forcing success for: ' + exp.name);
+                                    retval.replace(1);
+                                }
+                            });
+                        }
+                    });
+                });
+            } catch(e) {}
+        });
+    }
+};
+licenseBypass.init();
+"""
+
+    def _generate_anti_debug_bypass(self) -> str:
+        """Generate anti-debugging bypass code."""
+        return """
+// Anti-debug bypass
+const antiDebugBypass = {
+    init: function() {
+        const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+        if (isDebuggerPresent) {
+            Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {
+                return 0;
+            }, 'int', []));
+        }
+
+        const checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');
+        if (checkRemoteDebugger) {
+            Interceptor.attach(checkRemoteDebugger, {
+                onLeave: function(retval) {
+                    if (this.context.rdx) {
+                        Memory.writeU32(this.context.rdx, 0);
+                    }
+                    retval.replace(1);
+                }
+            });
+        }
+
+        const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
+        if (ntQueryInfo) {
+            Interceptor.attach(ntQueryInfo, {
+                onEnter: function(args) {
+                    this.infoClass = args[1].toInt32();
+                    this.buffer = args[2];
+                },
+                onLeave: function(retval) {
+                    if (this.infoClass === 7 || this.infoClass === 0x1f) {
+                        Memory.writeU32(this.buffer, 0);
+                    }
+                }
+            });
+        }
+
+        console.log('[+] Anti-debug bypass active');
+    }
+};
+antiDebugBypass.init();
+"""
+
+    def _generate_ghidra_analysis_script(
+        self,
+        binary_path: str,
+        analysis_data: dict[str, Any],
+        protection_types: list[ProtectionType],
+    ) -> str:
+        """Generate Ghidra analysis and patching script."""
+        protections_str = ", ".join(pt.value for pt in protection_types)
+
+        script = f'''// Ghidra script for: {Path(binary_path).name}
+// Generated: {datetime.now(tz=UTC).isoformat()}
+// Target protections: {protections_str}
+// @category Intellicrack.Analysis
+// @keybinding
+// @menupath Tools.Intellicrack.Analyze Protection
+// @toolbar
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.address.*;
+import ghidra.app.decompiler.*;
+import java.util.*;
+
+public class IntellicrackAnalysis extends GhidraScript {{
+
+    private List<Address> licenseCheckLocations = new ArrayList<>();
+    private List<Address> antiDebugLocations = new ArrayList<>();
+    private List<Address> patchTargets = new ArrayList<>();
+
+    @Override
+    public void run() throws Exception {{
+        println("[*] Intellicrack Analysis Script Started");
+        println("[*] Analyzing: " + currentProgram.getName());
+
+        // Find license check functions
+        findLicenseCheckFunctions();
+
+        // Find anti-debug code
+        findAntiDebugCode();
+
+        // Find string references
+        findProtectionStrings();
+
+        // Generate patch recommendations
+        generatePatchRecommendations();
+
+        println("[*] Analysis complete. Found " + patchTargets.size() + " patch targets.");
+    }}
+
+    private void findLicenseCheckFunctions() {{
+        println("[*] Searching for license check functions...");
+        String[] patterns = {{"license", "serial", "regist", "valid", "activ", "trial"}};
+
+        FunctionIterator functions = currentProgram.getFunctionManager().getFunctions(true);
+        while (functions.hasNext()) {{
+            Function func = functions.next();
+            String name = func.getName().toLowerCase();
+            for (String pattern : patterns) {{
+                if (name.contains(pattern)) {{
+                    licenseCheckLocations.add(func.getEntryPoint());
+                    println("[+] Found license function: " + func.getName() + " at " + func.getEntryPoint());
+                }}
+            }}
+        }}
+    }}
+
+    private void findAntiDebugCode() {{
+        println("[*] Searching for anti-debug code...");
+        String[] antiDebugAPIs = {{"IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"}};
+
+        SymbolTable symbolTable = currentProgram.getSymbolTable();
+        for (String api : antiDebugAPIs) {{
+            SymbolIterator symbols = symbolTable.getSymbols(api);
+            while (symbols.hasNext()) {{
+                Symbol sym = symbols.next();
+                antiDebugLocations.add(sym.getAddress());
+                println("[+] Found anti-debug API: " + api + " at " + sym.getAddress());
+            }}
+        }}
+    }}
+
+    private void findProtectionStrings() {{
+        println("[*] Searching for protection-related strings...");
+        String[] protectionStrings = {{"license", "trial", "expired", "invalid", "activation", "register"}};
+
+        Memory memory = currentProgram.getMemory();
+        for (String searchStr : protectionStrings) {{
+            Address addr = memory.findBytes(currentProgram.getMinAddress(),
+                                           searchStr.getBytes(),
+                                           null,
+                                           true,
+                                           monitor);
+            while (addr != null) {{
+                println("[+] Found string '" + searchStr + "' at " + addr);
+                addr = memory.findBytes(addr.add(1), searchStr.getBytes(), null, true, monitor);
+            }}
+        }}
+    }}
+
+    private void generatePatchRecommendations() {{
+        println("\\n[*] Patch Recommendations:");
+
+        for (Address addr : licenseCheckLocations) {{
+            patchTargets.add(addr);
+            println("[PATCH] License check at " + addr + " - NOP or force return true");
+        }}
+
+        for (Address addr : antiDebugLocations) {{
+            patchTargets.add(addr);
+            println("[PATCH] Anti-debug at " + addr + " - Replace with return 0");
+        }}
+    }}
+}}
+'''
+        return script
+
+    def _extract_hooks_from_script(self, script_content: str) -> list[dict[str, Any]]:
+        """Extract hook information from Frida script."""
+        hooks: list[dict[str, Any]] = []
+
+        interceptor_pattern = r'Interceptor\.attach\s*\(\s*([^,]+)'
+        matches = re.findall(interceptor_pattern, script_content)
+        for match in matches:
+            hooks.append({
+                "type": "interceptor",
+                "target": match.strip(),
+                "mode": "attach",
+            })
+
+        replace_pattern = r'Interceptor\.replace\s*\(\s*([^,]+)'
+        matches = re.findall(replace_pattern, script_content)
+        for match in matches:
+            hooks.append({
+                "type": "interceptor",
+                "target": match.strip(),
+                "mode": "replace",
+            })
+
+        return hooks
+
+    def _extract_patches_from_ghidra_script(self, script_content: str) -> list[dict[str, Any]]:
+        """Extract patch information from Ghidra script."""
+        patches: list[dict[str, Any]] = []
+
+        patch_pattern = r'\[PATCH\]\s*([^\n]+)'
+        matches = re.findall(patch_pattern, script_content)
+        for match in matches:
+            patches.append({
+                "description": match.strip(),
+                "type": "recommended",
+            })
+
+        return patches
+
+    def _generate_script_header(self, script: GeneratedScript) -> str:
+        """Generate a header comment for saved scripts."""
+        if script.language == "javascript":
+            return f"""/**
+ * Intellicrack AI-Generated Script
+ * Script ID: {script.metadata.script_id}
+ * Type: {script.metadata.script_type.value if script.metadata.script_type else 'unknown'}
+ * Target: {script.metadata.target_binary}
+ * Generated: {script.metadata.creation_time}
+ * Success Probability: {script.metadata.success_probability:.1%}
+ */
+
+"""
+        elif script.language == "java":
+            return f"""/**
+ * Intellicrack AI-Generated Ghidra Script
+ * Script ID: {script.metadata.script_id}
+ * Target: {script.metadata.target_binary}
+ * Generated: {script.metadata.creation_time}
+ * Success Probability: {script.metadata.success_probability:.1%}
+ */
+
+"""
+        return ""
+
+    def _fix_script_errors(
+        self,
+        script_content: str,
+        errors: list[Any],
+        error_message: str,
+        script_type: ScriptType,
+    ) -> tuple[str, list[str]]:
+        """Fix errors in the script based on execution feedback."""
+        improvements: list[str] = []
+        refined = script_content
+
+        all_errors = " ".join(str(e) for e in errors) + " " + error_message
+
+        if "null" in all_errors.lower() or "undefined" in all_errors.lower():
+            null_check = """
+// Null safety wrapper
+function safeCall(fn, fallback) {
+    try {
+        const result = fn();
+        return result !== null && result !== undefined ? result : fallback;
+    } catch(e) {
+        return fallback;
+    }
+}
+"""
+            refined = null_check + refined
+            improvements.append("Added null safety wrapper for function calls")
+
+        if "access" in all_errors.lower() or "permission" in all_errors.lower():
+            if script_type == ScriptType.FRIDA:
+                memory_safety = """
+// Memory access safety
+function safeReadPointer(addr) {
+    try {
+        return Memory.readPointer(addr);
+    } catch(e) {
+        console.log('[!] Safe read failed at: ' + addr);
+        return ptr(0);
+    }
+}
+"""
+                refined = memory_safety + refined
+                improvements.append("Added memory access safety wrappers")
+
+        if "module" in all_errors.lower() or "export" in all_errors.lower():
+            module_check = """
+// Module availability check
+function findExportSafe(moduleName, exportName) {
+    try {
+        const mod = Process.findModuleByName(moduleName);
+        if (!mod) return null;
+        return Module.findExportByName(moduleName, exportName);
+    } catch(e) {
+        return null;
+    }
+}
+"""
+            refined = module_check + refined
+            improvements.append("Added safe module/export lookup")
+
+        return refined, improvements
+
+    def _improve_hook_targeting(
+        self,
+        script_content: str,
+        analysis_data: dict[str, Any],
+    ) -> tuple[str, list[str]]:
+        """Improve hook targeting when no hooks are triggered."""
+        improvements: list[str] = []
+        refined = script_content
+
+        dynamic_discovery = """
+// Dynamic function discovery
+function discoverTargetFunctions() {
+    const targets = [];
+    Process.enumerateModulesSync().forEach(function(mod) {
+        if (mod.name.toLowerCase().includes('.exe') || mod.name.toLowerCase().includes('.dll')) {
+            try {
+                mod.enumerateExports().forEach(function(exp) {
+                    const name = exp.name.toLowerCase();
+                    if (name.includes('check') || name.includes('valid') ||
+                        name.includes('license') || name.includes('verify')) {
+                        targets.push({module: mod.name, export: exp.name, address: exp.address});
+                    }
+                });
+            } catch(e) {}
+        }
+    });
+    return targets;
+}
+
+const discoveredTargets = discoverTargetFunctions();
+console.log('[*] Discovered ' + discoveredTargets.length + ' potential targets');
+discoveredTargets.forEach(function(t) {
+    try {
+        Interceptor.attach(t.address, {
+            onEnter: function(args) {
+                console.log('[*] Called: ' + t.export);
+            },
+            onLeave: function(retval) {
+                console.log('[*] ' + t.export + ' returned: ' + retval);
+            }
+        });
+    } catch(e) {}
+});
+"""
+        refined = dynamic_discovery + "\n" + refined
+        improvements.append("Added dynamic function discovery")
+
+        return refined, improvements
+
+    def _strengthen_bypass_logic(
+        self,
+        script_content: str,
+        analysis_data: dict[str, Any],
+        script_type: ScriptType,
+    ) -> tuple[str, list[str]]:
+        """Strengthen bypass logic when protection is not bypassed."""
+        improvements: list[str] = []
+        refined = script_content
+
+        if script_type == ScriptType.FRIDA:
+            aggressive_hooks = """
+// Aggressive return value manipulation
+function forceReturnTrue(funcName, moduleName) {
+    const addr = Module.findExportByName(moduleName, funcName);
+    if (addr) {
+        Interceptor.replace(addr, new NativeCallback(function() {
+            console.log('[+] Forced true for: ' + funcName);
+            return 1;
+        }, 'int', []));
+    }
+}
+
+// Common validation functions to bypass
+['IsValid', 'CheckLicense', 'Validate', 'IsRegistered', 'IsTrial'].forEach(function(fn) {
+    Process.enumerateModulesSync().forEach(function(mod) {
+        try {
+            mod.enumerateExports().forEach(function(exp) {
+                if (exp.name.toLowerCase().includes(fn.toLowerCase())) {
+                    forceReturnTrue(exp.name, mod.name);
+                }
+            });
+        } catch(e) {}
+    });
+});
+"""
+            refined = aggressive_hooks + "\n" + refined
+            improvements.append("Added aggressive return value manipulation")
+
+        return refined, improvements
+
+    def _add_evasion_techniques(
+        self,
+        script_content: str,
+        protection_evasion: dict[str, Any],
+        script_type: ScriptType,
+    ) -> tuple[str, list[str]]:
+        """Add evasion techniques when protection detection is triggered."""
+        improvements: list[str] = []
+        refined = script_content
+
+        if script_type == ScriptType.FRIDA:
+            stealth_mode = """
+// Stealth mode - minimize detection footprint
+const stealthMode = {
+    originalAttach: Interceptor.attach,
+    delayedHooks: [],
+
+    init: function() {
+        // Add random delays to hook installation
+        this.delayedHooks.forEach(function(hook, index) {
+            setTimeout(function() {
+                try {
+                    stealthMode.originalAttach(hook.target, hook.callbacks);
+                } catch(e) {}
+            }, 100 + Math.random() * 500);
+        });
+    },
+
+    addDelayedHook: function(target, callbacks) {
+        this.delayedHooks.push({target: target, callbacks: callbacks});
+    }
+};
+"""
+            refined = stealth_mode + "\n" + refined
+            improvements.append("Added stealth mode with delayed hook installation")
+
+        return refined, improvements
+
     def _insert_enhancement(self, script: str, enhancement: str) -> str:
         """Insert enhancement at appropriate location in script."""
         # Find appropriate insertion point
@@ -1673,5 +2649,5 @@ DateSpoofer.spoofAllDateSources();
         return "\n".join(lines)
 
 
-# Export the class
-__all__ = ["AIScriptGenerator"]
+# Export the classes
+__all__ = ["AIScriptGenerator", "GeneratedScript", "ScriptMetadata", "ScriptType", "ProtectionType"]

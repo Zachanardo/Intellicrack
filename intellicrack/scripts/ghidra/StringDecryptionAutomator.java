@@ -12,9 +12,9 @@ import java.util.*;
 
 public class StringDecryptionAutomator extends GhidraScript {
 
-  private Map<Address, EncryptedString> encryptedStrings = new HashMap<>();
-  private Map<Address, DecryptionRoutine> decryptionRoutines = new HashMap<>();
-  private Map<String, Integer> decryptionAlgorithms = new HashMap<>();
+  private final Map<Address, EncryptedString> encryptedStrings = new HashMap<>();
+  private final Map<Address, DecryptionRoutine> decryptionRoutines = new HashMap<>();
+  private final Map<String, Integer> decryptionAlgorithms = new HashMap<>();
   private int stringsDecrypted = 0;
   private int decryptionFunctionsFound = 0;
 
@@ -138,9 +138,7 @@ public class StringDecryptionAutomator extends GhidraScript {
         return true;
       }
 
-      if ((rotateCount + shiftCount) > 8 && loopCount > 0 && stringLoadCount > 2) {
-        return true;
-      }
+        return (rotateCount + shiftCount) > 8 && loopCount > 0 && stringLoadCount > 2;
     }
 
     return false;
@@ -170,9 +168,8 @@ public class StringDecryptionAutomator extends GhidraScript {
         xorOps++;
 
         Object[] operands = inst.getOpObjects(1);
-        if (operands.length > 0 && operands[0] instanceof Scalar) {
-          Scalar scalar = (Scalar) operands[0];
-          long value = scalar.getValue();
+        if (operands.length > 0 && operands[0] instanceof Scalar scalar) {
+            long value = scalar.getValue();
 
           if (value > 0 && value < 256) {
             keyCandidate = new byte[] {(byte) value};
@@ -248,7 +245,7 @@ public class StringDecryptionAutomator extends GhidraScript {
           Address stringAddr = findStringArgument(callSite);
           if (stringAddr != null) {
             byte[] data = readPotentialString(stringAddr);
-            if (data != null && looksEncrypted(data)) {
+            if (looksEncrypted(data)) {
               EncryptedString encStr = new EncryptedString();
               encStr.address = stringAddr;
               encStr.data = data;
@@ -365,11 +362,7 @@ public class StringDecryptionAutomator extends GhidraScript {
     }
 
     double entropy = calculateEntropy(data);
-    if (entropy > 6.0 && entropy < 7.9) {
-      return true;
-    }
-
-    return false;
+      return entropy > 6.0 && entropy < 7.9;
   }
 
   private double calculateEntropy(byte[] data) {
@@ -407,10 +400,9 @@ public class StringDecryptionAutomator extends GhidraScript {
         routine = guessDecryptionRoutine(encStr);
       }
 
-      if (routine != null) {
         String decrypted = decryptString(encStr, routine);
 
-        if (decrypted != null && looksLikeValidString(decrypted)) {
+        if (looksLikeValidString(decrypted)) {
           encStr.decryptedValue = decrypted;
           stringsDecrypted++;
 
@@ -419,9 +411,9 @@ public class StringDecryptionAutomator extends GhidraScript {
           try {
             setEOLComment(addr, "Decrypted: " + sanitizeForDisplay(decrypted));
           } catch (Exception e) {
+              throw new RuntimeException(e);
           }
         }
-      }
     }
   }
 
@@ -453,7 +445,7 @@ public class StringDecryptionAutomator extends GhidraScript {
         break;
 
       case ROT_CIPHER:
-        decrypted = decryptROT(encStr.data, 13);
+        decrypted = decryptROT(encStr.data);
         break;
 
       case ADD_CIPHER:
@@ -492,7 +484,7 @@ public class StringDecryptionAutomator extends GhidraScript {
     return result;
   }
 
-  private byte[] decryptROT(byte[] data, int shift) {
+  private byte[] decryptROT(byte[] data) {
     if (data == null) return null;
 
     byte[] result = new byte[data.length];
@@ -501,9 +493,9 @@ public class StringDecryptionAutomator extends GhidraScript {
       int b = data[i] & 0xFF;
 
       if (b >= 'A' && b <= 'Z') {
-        result[i] = (byte) (((b - 'A' + shift) % 26) + 'A');
+        result[i] = (byte) (((b - 'A' + 13) % 26) + 'A');
       } else if (b >= 'a' && b <= 'z') {
-        result[i] = (byte) (((b - 'a' + shift) % 26) + 'a');
+        result[i] = (byte) (((b - 'a' + 13) % 26) + 'a');
       } else {
         result[i] = data[i];
       }

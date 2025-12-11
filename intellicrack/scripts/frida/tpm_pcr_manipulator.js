@@ -8,8 +8,6 @@
  * - Bypass measured boot integrity checks
  */
 
-'use strict';
-
 const TARGET_PCRS = {
     0: 'BIOS / Platform Configuration',
     1: 'BIOS Configuration',
@@ -228,12 +226,12 @@ function blockAllPCRExtends() {
 
 function getSummary() {
     return {
-        spoofedPCRs: Object.keys(spoofedPCRValues).map((pcr) => ({
-            pcr: parseInt(pcr),
-            name: TARGET_PCRS[parseInt(pcr)],
-            value: spoofedPCRValues[pcr].toString('hex').substring(0, 32) + '...',
+        spoofedPCRs: Object.keys(spoofedPCRValues).map(pcr => ({
+            pcr: parseInt(pcr, 10),
+            name: TARGET_PCRS[parseInt(pcr, 10)],
+            value: `${spoofedPCRValues[pcr].toString('hex').substring(0, 32)}...`,
         })),
-        blockedPCRs: Array.from(blockedPCRs).map((pcr) => ({
+        blockedPCRs: Array.from(blockedPCRs).map(pcr => ({
             pcr: pcr,
             name: TARGET_PCRS[pcr],
         })),
@@ -261,7 +259,7 @@ function initialize() {
 }
 
 rpc.exports = {
-    setSpoofedPCR: function (pcrIndex, hexValue) {
+    setSpoofedPCR: (pcrIndex, hexValue) => {
         const buffer = Buffer.from(hexValue, 'hex');
         if (buffer.length === 32) {
             setSpoofedPCRValue(pcrIndex, buffer);
@@ -269,31 +267,29 @@ rpc.exports = {
         }
         return { status: 'error', message: 'Value must be 32 bytes (64 hex chars)' };
     },
-    blockPCR: function (pcrIndex) {
+    blockPCR: pcrIndex => {
         blockPCRExtend(pcrIndex);
         return { status: 'success', pcr: pcrIndex };
     },
-    unblockPCR: function (pcrIndex) {
+    unblockPCR: pcrIndex => {
         unblockPCRExtend(pcrIndex);
         return { status: 'success', pcr: pcrIndex };
     },
-    spoofSecureBoot: function () {
+    spoofSecureBoot: () => {
         spoofSecureBootPCR();
         return { status: 'success' };
     },
-    spoofCleanBoot: function () {
+    spoofCleanBoot: () => {
         spoofCleanBootState();
         return { status: 'success' };
     },
-    blockAll: function () {
+    blockAll: () => {
         blockAllPCRExtends();
         return { status: 'success' };
     },
     getSummary: getSummary,
-    getOperations: function () {
-        return pcrOperations;
-    },
-    clearOperations: function () {
+    getOperations: () => pcrOperations,
+    clearOperations: () => {
         pcrOperations.length = 0;
         return { status: 'cleared' };
     },

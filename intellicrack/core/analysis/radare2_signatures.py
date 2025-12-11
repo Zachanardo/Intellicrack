@@ -1,11 +1,13 @@
 """Radare2 signature analysis module for pattern matching and function identification."""
 
+import json as json_module
 import logging
+import re
 from typing import Any
 
 from intellicrack.utils.logger import logger
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, R2SessionPoolAdapter, r2_session
 
 
 """
@@ -53,8 +55,8 @@ class R2SignatureAnalyzer:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.signature_cache = {}
-        self.custom_signatures = {}
+        self.signature_cache: dict[str, Any] = {}
+        self.custom_signatures: dict[str, Any] = {}
 
     def analyze_signatures(self) -> dict[str, Any]:
         """Perform comprehensive signature analysis on the binary.
@@ -63,7 +65,7 @@ class R2SignatureAnalyzer:
             Complete signature analysis results
 
         """
-        result = {
+        result: dict[str, Any] = {
             "binary_path": self.binary_path,
             "flirt_signatures": {},
             "zignature_matches": {},
@@ -128,9 +130,9 @@ class R2SignatureAnalyzer:
 
         return result
 
-    def _apply_flirt_signatures(self, r2: R2Session) -> dict[str, Any]:
+    def _apply_flirt_signatures(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
         """Apply FLIRT signatures to identify library functions."""
-        flirt_result = {
+        flirt_result: dict[str, Any] = {
             "signatures_applied": 0,
             "functions_identified": 0,
             "signature_files_used": [],
@@ -138,10 +140,10 @@ class R2SignatureAnalyzer:
         }
 
         try:
-            # Apply FLIRT signatures
             r2._execute_command("zf")
 
-            if sig_info := r2._execute_command("zi"):
+            sig_info = r2._execute_command("zi")
+            if sig_info and isinstance(sig_info, str):
                 flirt_result["signature_info"] = sig_info.strip()
 
             # Get functions that were identified by signatures
@@ -184,28 +186,28 @@ class R2SignatureAnalyzer:
 
         return flirt_result
 
-    def _apply_zignatures(self, r2: R2Session) -> dict[str, Any]:
+    def _apply_zignatures(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
         """Apply Zignatures for function identification."""
-        zignature_result = {
+        zignature_result: dict[str, Any] = {
             "signatures_loaded": 0,
             "matches": [],
             "match_confidence": {},
         }
 
         try:
-            # Check if zignatures are available
             zignature_info = r2._execute_command("z")
 
-            # Verify zignature system is functional
-            if not zignature_info or "no signatures" in zignature_info.lower():
+            if not zignature_info or (isinstance(zignature_info, str) and "no signatures" in zignature_info.lower()):
                 self.logger.warning("No zignatures available in radare2 session")
                 return {"signatures": [], "signature_count": 0}
 
-            if zignature_matches := r2._execute_command("zs"):
+            zignature_matches = r2._execute_command("zs")
+            if zignature_matches and isinstance(zignature_matches, str):
                 matches = [line.strip() for line in zignature_matches.split("\n") if line.strip() and "match" in line.lower()]
                 zignature_result["matches"] = matches
 
-            if zignature_stats := r2._execute_command("zi"):
+            zignature_stats = r2._execute_command("zi")
+            if zignature_stats and isinstance(zignature_stats, str):
                 zignature_result["statistics"] = zignature_stats.strip()
 
         except R2Exception as e:
@@ -311,9 +313,9 @@ class R2SignatureAnalyzer:
             return "analysis_heuristic"
         return "disassembly" if func_name.startswith("sub_") else "signature_database"
 
-    def _analyze_library_functions(self, r2: R2Session, functions: list[dict[str, Any]]) -> dict[str, Any]:
+    def _analyze_library_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze and categorize library functions."""
-        library_analysis = {
+        library_analysis: dict[str, Any] = {
             "c_runtime": [],
             "windows_api": [],
             "posix_api": [],
@@ -325,40 +327,47 @@ class R2SignatureAnalyzer:
             "r2_enhanced_info": {},
         }
 
-        # Use r2 session to get additional library info
         try:
-            # Get imports from r2
-            imports = r2.run_command("ii")  # Import information
-            import_libs = r2.run_command("il")  # Import libraries
+            imports_result = r2._execute_command("ii")
+            import_libs_result = r2._execute_command("il")
 
-            # Parse library dependencies
-            library_analysis["r2_enhanced_info"]["imports"] = imports
-            library_analysis["r2_enhanced_info"]["libraries"] = import_libs
+            imports = imports_result if isinstance(imports_result, str) else str(imports_result)
+            import_libs = import_libs_result if isinstance(import_libs_result, str) else str(import_libs_result)
 
-            # Get PLT entries for better library function detection
-            plt_entries = r2.run_command("afl~plt")
-            library_analysis["r2_enhanced_info"]["plt_entries"] = plt_entries
+            r2_enhanced: dict[str, Any] = library_analysis["r2_enhanced_info"]
+            r2_enhanced["imports"] = imports
+            r2_enhanced["libraries"] = import_libs
+
+            plt_result = r2._execute_command("afl~plt")
+            plt_entries = plt_result if isinstance(plt_result, str) else str(plt_result)
+            r2_enhanced["plt_entries"] = plt_entries
 
         except Exception as e:
             self.logger.debug(f"Failed to get r2 library info: {e}")
+
+        c_runtime_list: list[dict[str, Any]] = library_analysis["c_runtime"]
+        windows_api_list: list[dict[str, Any]] = library_analysis["windows_api"]
+        posix_api_list: list[dict[str, Any]] = library_analysis["posix_api"]
+        crypto_list: list[dict[str, Any]] = library_analysis["crypto_libraries"]
+        network_list: list[dict[str, Any]] = library_analysis["network_libraries"]
+        ui_list: list[dict[str, Any]] = library_analysis["ui_libraries"]
+        compression_list: list[dict[str, Any]] = library_analysis["compression_libraries"]
+        database_list: list[dict[str, Any]] = library_analysis["database_libraries"]
 
         for func in functions:
             func_name = func.get("name", "")
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            # Use r2 to get function-specific info
             try:
-                # Get function info from r2
-                func_info = r2.run_command(f"afi @ {func_addr}")
+                func_info_result = r2._execute_command(f"afi @ {func_addr}")
+                func_info = func_info_result if isinstance(func_info_result, str) else str(func_info_result)
 
-                # Check if function is imported
                 is_import = "import" in func_info or func_name.startswith("sym.imp.")
 
-                # Get function size and complexity from r2
-                func_size = r2.run_command(f"afi~size @ {func_addr}")
+                func_size_result = r2._execute_command(f"afi~size @ {func_addr}")
+                func_size = func_size_result if isinstance(func_size_result, str) else str(func_size_result)
 
-                # Enhance function data with r2 info
                 func["r2_import"] = is_import
                 func["r2_size"] = func_size
                 func["r2_info"] = func_info
@@ -366,43 +375,35 @@ class R2SignatureAnalyzer:
             except Exception as e:
                 self.logger.debug(f"Failed to get r2 info for {func_name}: {e}")
 
-            # C Runtime Library
             if any(crt in name_lower for crt in ["msvcrt", "ucrt", "libc", "malloc", "free", "printf"]):
-                library_analysis["c_runtime"].append(func)
+                c_runtime_list.append(func)
 
-            # Windows API
             elif any(win_api in name_lower for win_api in ["kernel32", "user32", "advapi32", "ntdll"]):
-                library_analysis["windows_api"].append(func)
+                windows_api_list.append(func)
 
-            # POSIX API
             elif any(posix in name_lower for posix in ["pthread", "dlopen", "mmap", "fork"]):
-                library_analysis["posix_api"].append(func)
+                posix_api_list.append(func)
 
-            # Crypto Libraries
             elif any(crypto in name_lower for crypto in ["openssl", "crypto", "bcrypt", "crypt32"]):
-                library_analysis["crypto_libraries"].append(func)
+                crypto_list.append(func)
 
-            # Network Libraries
             elif any(net in name_lower for net in ["ws2_32", "wininet", "winhttp", "socket"]):
-                library_analysis["network_libraries"].append(func)
+                network_list.append(func)
 
-            # UI Libraries
             elif any(ui in name_lower for ui in ["gdi32", "comctl32", "shell32", "ole32"]):
-                library_analysis["ui_libraries"].append(func)
+                ui_list.append(func)
 
-            # Compression Libraries
             elif any(comp in name_lower for comp in ["zlib", "bzip2", "lzma", "deflate"]):
-                library_analysis["compression_libraries"].append(func)
+                compression_list.append(func)
 
-            # Database Libraries
             elif any(db in name_lower for db in ["sqlite", "odbc", "oledb"]):
-                library_analysis["database_libraries"].append(func)
+                database_list.append(func)
 
         return library_analysis
 
-    def _detect_compiler_artifacts(self, r2: R2Session, functions: list[dict[str, Any]]) -> dict[str, Any]:
+    def _detect_compiler_artifacts(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> dict[str, Any]:
         """Detect compiler-specific artifacts and runtime functions."""
-        compiler_artifacts = {
+        compiler_artifacts: dict[str, Any] = {
             "msvc_artifacts": [],
             "gcc_artifacts": [],
             "clang_artifacts": [],
@@ -414,40 +415,49 @@ class R2SignatureAnalyzer:
             "build_info": {},
         }
 
-        # Use r2 to detect compiler and build information
+        build_info: dict[str, Any] = compiler_artifacts["build_info"]
+        compiler_info: dict[str, Any] = compiler_artifacts["compiler_info"]
+        msvc_list: list[dict[str, Any]] = compiler_artifacts["msvc_artifacts"]
+        gcc_list: list[dict[str, Any]] = compiler_artifacts["gcc_artifacts"]
+        exception_list: list[dict[str, Any]] = compiler_artifacts["exception_handling"]
+        stack_list: list[dict[str, Any]] = compiler_artifacts["stack_guards"]
+        runtime_list: list[dict[str, Any]] = compiler_artifacts["runtime_checks"]
+
+        binary_info = ""
+        entry_disasm = ""
+
         try:
-            # Get binary info for compiler detection
-            binary_info = r2.run_command("iI")  # Binary information
-            compiler_artifacts["build_info"]["binary_info"] = binary_info
+            binary_info_result = r2._execute_command("iI")
+            binary_info = binary_info_result if isinstance(binary_info_result, str) else str(binary_info_result)
+            build_info["binary_info"] = binary_info
 
-            # Check for compiler signatures in strings
-            compiler_strings = r2.run_command("iz~GCC|MSVC|clang|Borland")
-            compiler_artifacts["compiler_info"]["strings"] = compiler_strings
+            compiler_strings_result = r2._execute_command("iz~GCC|MSVC|clang|Borland")
+            compiler_strings = compiler_strings_result if isinstance(compiler_strings_result, str) else str(compiler_strings_result)
+            compiler_info["strings"] = compiler_strings
 
-            # Analyze entry point for compiler-specific initialization
-            entry_point = r2.run_command("ie")  # Entry point
-            entry_disasm = r2.run_command("pd 50 @ entry0")  # Disassemble entry
+            entry_point_result = r2._execute_command("ie")
+            entry_point = entry_point_result if isinstance(entry_point_result, str) else str(entry_point_result)
+            entry_disasm_result = r2._execute_command("pd 50 @ entry0")
+            entry_disasm = entry_disasm_result if isinstance(entry_disasm_result, str) else str(entry_disasm_result)
 
-            # Store entry point information for analysis
             compiler_artifacts["entry_analysis"] = {
                 "entry_point_info": entry_point,
                 "entry_disasm": entry_disasm,
             }
 
-            # Detect compiler from entry point patterns
             if "security_init_cookie" in entry_disasm:
-                compiler_artifacts["compiler_info"]["detected"] = "MSVC"
+                compiler_info["detected"] = "MSVC"
             elif "__libc_start_main" in entry_disasm:
-                compiler_artifacts["compiler_info"]["detected"] = "GCC/Linux"
+                compiler_info["detected"] = "GCC/Linux"
             elif "_start" in entry_disasm and "note.ABI-tag" in binary_info:
-                compiler_artifacts["compiler_info"]["detected"] = "GCC"
+                compiler_info["detected"] = "GCC"
 
-            # Get sections for additional compiler hints
-            sections = r2.run_command("iS")  # Sections
+            sections_result = r2._execute_command("iS")
+            sections = sections_result if isinstance(sections_result, str) else str(sections_result)
             if ".gcc_except_table" in sections:
-                compiler_artifacts["compiler_info"]["gcc_exceptions"] = True
+                compiler_info["gcc_exceptions"] = True
             if ".msvcjmc" in sections:
-                compiler_artifacts["compiler_info"]["msvc_jmc"] = True
+                compiler_info["msvc_jmc"] = True
 
         except Exception as e:
             self.logger.debug(f"Failed to get compiler info from r2: {e}")
@@ -457,49 +467,41 @@ class R2SignatureAnalyzer:
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            # Use r2 to analyze function for compiler artifacts
             try:
-                # Get function assembly
-                func_asm = r2.run_command(f"pdf @ {func_addr}")
+                func_asm_result = r2._execute_command(f"pdf @ {func_addr}")
+                func_asm = func_asm_result if isinstance(func_asm_result, str) else str(func_asm_result)
 
-                # Check for stack canary setup
                 if "fs:0x28" in func_asm or "__stack_chk_fail" in func_asm:
                     func["has_stack_protection"] = True
 
-                # Check for SEH setup (Windows)
                 if "__SEH_prolog" in func_asm or "fs:0" in func_asm:
                     func["has_seh"] = True
 
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name}: {e}")
 
-            # MSVC artifacts
             if any(msvc in name_lower for msvc in ["__security_", "__report_", "_crt", "_chk"]):
-                compiler_artifacts["msvc_artifacts"].append(func)
+                msvc_list.append(func)
 
-            # GCC artifacts
             elif any(gcc in name_lower for gcc in ["__stack_chk", "__gxx_", "_gnu_"]):
-                compiler_artifacts["gcc_artifacts"].append(func)
+                gcc_list.append(func)
 
-            # Exception handling
             elif any(eh in name_lower for eh in ["__eh_", "_except_", "__try", "__catch"]):
-                compiler_artifacts["exception_handling"].append(func)
+                exception_list.append(func)
 
-            # Stack protection
             elif any(stack in name_lower for stack in ["__stack_chk", "__guard", "_security_"]):
-                compiler_artifacts["stack_guards"].append(func)
+                stack_list.append(func)
 
-            # Runtime checks
             elif any(check in name_lower for check in ["__chk", "_check_", "__valid"]):
-                compiler_artifacts["runtime_checks"].append(func)
+                runtime_list.append(func)
 
         return compiler_artifacts
 
-    def _identify_crypto_functions(self, r2: R2Session, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _identify_crypto_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify cryptographic functions and algorithms."""
-        crypto_functions = []
+        crypto_functions: list[dict[str, Any]] = []
 
-        crypto_patterns = {
+        crypto_patterns: dict[str, list[str]] = {
             "aes": ["aes", "rijndael"],
             "des": ["des", "3des", "triple"],
             "rsa": ["rsa", "pubkey"],
@@ -508,91 +510,93 @@ class R2SignatureAnalyzer:
             "crypto_api": ["crypt", "cipher", "encrypt", "decrypt"],
         }
 
-        # Use r2 to search for crypto constants and patterns
+        aes_sbox = ""
+        des_sbox = ""
+        sha_const = ""
+        crypto_strings = ""
+        crypto_imports = ""
+
         try:
-            # Search for common crypto constants
-            aes_sbox = r2.run_command("/x 637c777bf26b6fc5")  # AES S-box
-            des_sbox = r2.run_command("/x 14041100001010400")  # DES permutation
-            sha_const = r2.run_command("/x 67452301efcdab89")  # SHA-1 init
+            aes_sbox_result = r2._execute_command("/x 637c777bf26b6fc5")
+            aes_sbox = aes_sbox_result if isinstance(aes_sbox_result, str) else str(aes_sbox_result)
+            des_sbox_result = r2._execute_command("/x 14041100001010400")
+            des_sbox = des_sbox_result if isinstance(des_sbox_result, str) else str(des_sbox_result)
+            sha_const_result = r2._execute_command("/x 67452301efcdab89")
+            sha_const = sha_const_result if isinstance(sha_const_result, str) else str(sha_const_result)
 
-            # Search for crypto-related strings
-            crypto_strings = r2.run_command("iz~crypt|cipher|aes|des|rsa|sha|md5")
+            crypto_strings_result = r2._execute_command("iz~crypt|cipher|aes|des|rsa|sha|md5")
+            crypto_strings = crypto_strings_result if isinstance(crypto_strings_result, str) else str(crypto_strings_result)
 
-            # Get cross-references to crypto imports
-            crypto_imports = r2.run_command("ii~crypt|ssl|tls")
+            crypto_imports_result = r2._execute_command("ii~crypt|ssl|tls")
+            crypto_imports = crypto_imports_result if isinstance(crypto_imports_result, str) else str(crypto_imports_result)
 
         except Exception as e:
             self.logger.debug(f"Failed to search for crypto patterns: {e}")
-            aes_sbox = des_sbox = sha_const = crypto_strings = crypto_imports = ""
 
         for func in functions:
             func_name = func.get("name", "")
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            crypto_info = {
-                "function": func,
-                "crypto_type": None,
-                "patterns_matched": [],
-                "confidence": 0.0,
-                "r2_analysis": {},
-            }
+            r2_analysis: dict[str, Any] = {}
+            crypto_type: str | None = None
+            confidence: float = 0.0
+            patterns_matched: list[str] = []
 
-            # Use r2 to analyze function for crypto operations
             try:
-                # Get function disassembly
-                func_asm = r2.run_command(f"pdr @ {func_addr}")  # Recursive disassemble
+                func_asm_result = r2._execute_command(f"pdr @ {func_addr}")
+                func_asm = func_asm_result if isinstance(func_asm_result, str) else str(func_asm_result)
 
-                # Check for crypto-specific instructions
                 if "aesenc" in func_asm or "aesdec" in func_asm:
-                    crypto_info["r2_analysis"]["aes_instructions"] = True
-                    crypto_info["crypto_type"] = "aes"
-                    crypto_info["confidence"] = 0.95
+                    r2_analysis["aes_instructions"] = True
+                    crypto_type = "aes"
+                    confidence = 0.95
 
-                # Check for rotate operations (common in crypto)
                 if func_asm.count("rol") + func_asm.count("ror") > 10:
-                    crypto_info["r2_analysis"]["rotation_heavy"] = True
+                    r2_analysis["rotation_heavy"] = True
 
-                # Check for XOR operations (common in crypto)
                 xor_count = func_asm.count("xor")
                 if xor_count > 20:
-                    crypto_info["r2_analysis"]["xor_heavy"] = True
-                    crypto_info["r2_analysis"]["xor_count"] = xor_count
+                    r2_analysis["xor_heavy"] = True
+                    r2_analysis["xor_count"] = xor_count
 
-                # Check if function references crypto constants
-                func_refs = r2.run_command(f"axf @ {func_addr}")
-                if any(const in func_refs for const in [aes_sbox, des_sbox, sha_const]):
-                    crypto_info["r2_analysis"]["references_crypto_constants"] = True
-                    crypto_info["confidence"] = max(crypto_info["confidence"], 0.8)
+                func_refs_result = r2._execute_command(f"axf @ {func_addr}")
+                func_refs = func_refs_result if isinstance(func_refs_result, str) else str(func_refs_result)
+                if any(const in func_refs for const in [aes_sbox, des_sbox, sha_const] if const):
+                    r2_analysis["references_crypto_constants"] = True
+                    confidence = max(confidence, 0.8)
 
-                # Check if function name appears in crypto strings or imports
                 if crypto_strings and func_name.lower() in crypto_strings.lower():
-                    crypto_info["r2_analysis"]["mentioned_in_strings"] = True
-                    crypto_info["confidence"] = max(crypto_info["confidence"], 0.7)
+                    r2_analysis["mentioned_in_strings"] = True
+                    confidence = max(confidence, 0.7)
 
                 if crypto_imports and func_name.lower() in crypto_imports.lower():
-                    crypto_info["r2_analysis"]["related_to_crypto_imports"] = True
-                    crypto_info["confidence"] = max(crypto_info["confidence"], 0.9)
+                    r2_analysis["related_to_crypto_imports"] = True
+                    confidence = max(confidence, 0.9)
 
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name} for crypto: {e}")
 
-            # Name-based detection with r2 enhancement
-            for crypto_type, patterns in crypto_patterns.items():
+            for ctype, patterns in crypto_patterns.items():
                 if any(pattern in name_lower for pattern in patterns):
-                    crypto_info["crypto_type"] = crypto_type
-                    crypto_info["patterns_matched"] = [p for p in patterns if p in name_lower]
+                    crypto_type = ctype
+                    patterns_matched = [p for p in patterns if p in name_lower]
                     base_confidence = self._calculate_crypto_confidence(func_name, patterns)
 
-                    # Boost confidence if r2 analysis confirms crypto operations
-                    if crypto_info["r2_analysis"]:
-                        crypto_info["confidence"] = min(base_confidence + 0.2, 1.0)
+                    if r2_analysis:
+                        confidence = min(base_confidence + 0.2, 1.0)
                     else:
-                        crypto_info["confidence"] = base_confidence
+                        confidence = base_confidence
                     break
 
-            # Add function if crypto indicators found
-            if crypto_info["crypto_type"] or crypto_info["r2_analysis"]:
+            if crypto_type or r2_analysis:
+                crypto_info: dict[str, Any] = {
+                    "function": func,
+                    "crypto_type": crypto_type,
+                    "patterns_matched": patterns_matched,
+                    "confidence": confidence,
+                    "r2_analysis": r2_analysis,
+                }
                 crypto_functions.append(crypto_info)
 
         return crypto_functions
@@ -609,11 +613,11 @@ class R2SignatureAnalyzer:
             return 0.8
         return 0.7 if matches > 1 else 0.6
 
-    def _detect_anti_analysis_functions(self, r2: R2Session, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _detect_anti_analysis_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Detect anti-analysis and anti-debugging functions."""
-        anti_analysis = []
+        anti_analysis: list[dict[str, Any]] = []
 
-        anti_patterns = {
+        anti_patterns: dict[str, list[str]] = {
             "debugger_detection": [
                 "isdebuggerpresent",
                 "checkremotedebugger",
@@ -624,99 +628,99 @@ class R2SignatureAnalyzer:
             "packer_functions": ["unpack", "decrypt", "decompress", "inflate"],
         }
 
-        # Use r2 to detect anti-analysis patterns
+        peb_access = ""
+        int3_scan = ""
+        rdtsc_scan = ""
+        cond_jumps = ""
+        jmp_patterns = ""
+
         try:
-            # Search for common anti-debug tricks
-            peb_access = r2.run_command("/x 6430:0000")  # fs:[30h] PEB access
-            int3_scan = r2.run_command("/x cc")  # INT3 breakpoints
-            rdtsc_scan = r2.run_command("/x 0f31")  # RDTSC instruction
+            peb_result = r2._execute_command("/x 6430:0000")
+            peb_access = peb_result if isinstance(peb_result, str) else str(peb_result)
+            int3_result = r2._execute_command("/x cc")
+            int3_scan = int3_result if isinstance(int3_result, str) else str(int3_result)
+            rdtsc_result = r2._execute_command("/x 0f31")
+            rdtsc_scan = rdtsc_result if isinstance(rdtsc_result, str) else str(rdtsc_result)
 
-            # Get all conditional jumps for anti-debug checks
-            cond_jumps = r2.run_command("afl~jz|jnz|je|jne")
+            cond_result = r2._execute_command("afl~jz|jnz|je|jne")
+            cond_jumps = cond_result if isinstance(cond_result, str) else str(cond_result)
 
-            # Search for obfuscation patterns
-            jmp_patterns = r2.run_command("/x eb??eb")  # Jmp over jmp
+            jmp_result = r2._execute_command("/x eb??eb")
+            jmp_patterns = jmp_result if isinstance(jmp_result, str) else str(jmp_result)
 
         except Exception as e:
             self.logger.debug(f"Failed to scan for anti-analysis patterns: {e}")
-            peb_access = int3_scan = rdtsc_scan = cond_jumps = jmp_patterns = ""
 
         for func in functions:
             func_name = func.get("name", "")
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            anti_info = {
-                "function": func,
-                "category": None,
-                "patterns_matched": [],
-                "risk_level": "low",
-                "r2_analysis": {},
-            }
+            r2_analysis: dict[str, Any] = {}
+            category: str | None = None
+            risk_level = "low"
+            patterns_matched: list[str] = []
 
-            # Use r2 to analyze function for anti-analysis techniques
             try:
-                # Get function disassembly
-                func_asm = r2.run_command(f"pdf @ {func_addr}")
+                func_asm_result = r2._execute_command(f"pdf @ {func_addr}")
+                func_asm = func_asm_result if isinstance(func_asm_result, str) else str(func_asm_result)
 
-                # Check for PEB access (debugger detection)
                 if "fs:[30h]" in func_asm or "fs:[0x30]" in func_asm or (peb_access and str(func_addr) in peb_access):
-                    anti_info["r2_analysis"]["peb_access"] = True
-                    anti_info["category"] = "debugger_detection"
-                    anti_info["risk_level"] = "high"
+                    r2_analysis["peb_access"] = True
+                    category = "debugger_detection"
+                    risk_level = "high"
 
-                # Check for RDTSC (timing checks)
                 if "rdtsc" in func_asm or (rdtsc_scan and str(func_addr) in rdtsc_scan):
-                    anti_info["r2_analysis"]["rdtsc_usage"] = True
-                    anti_info["category"] = "vm_detection"
-                    anti_info["risk_level"] = "medium"
+                    r2_analysis["rdtsc_usage"] = True
+                    category = "vm_detection"
+                    risk_level = "medium"
 
-                # Check for INT3 breakpoint scanning
                 if "int3" in func_asm or (int3_scan and str(func_addr) in int3_scan):
-                    anti_info["r2_analysis"]["int3_scanning"] = True
-                    anti_info["category"] = "debugger_detection"
-                    anti_info["risk_level"] = "high"
+                    r2_analysis["int3_scanning"] = True
+                    category = "debugger_detection"
+                    risk_level = "high"
 
-                # Analyze conditional jump patterns for anti-debug logic
                 if cond_jumps and func_name.lower() in cond_jumps.lower():
-                    # Count conditional jumps in this function
                     cond_jump_count = func_asm.count("jz") + func_asm.count("jnz") + func_asm.count("je") + func_asm.count("jne")
-                    if cond_jump_count > 5:  # High number of conditional jumps suggests complex logic
-                        anti_info["r2_analysis"]["complex_conditional_logic"] = True
-                        anti_info["r2_analysis"]["conditional_jump_count"] = cond_jump_count
-                        anti_info["risk_level"] = "medium"
+                    if cond_jump_count > 5:
+                        r2_analysis["complex_conditional_logic"] = True
+                        r2_analysis["conditional_jump_count"] = cond_jump_count
+                        risk_level = "medium"
 
-                # Check for INT3 scanning
                 if "int3" in func_asm or "cc" in func_asm:
-                    anti_info["r2_analysis"]["int3_detection"] = True
-                    anti_info["category"] = "debugger_detection"
-                    anti_info["risk_level"] = "high"
+                    r2_analysis["int3_detection"] = True
+                    category = "debugger_detection"
+                    risk_level = "high"
 
-                # Check for obfuscation patterns
                 if jmp_patterns and str(func_addr) in jmp_patterns:
-                    anti_info["r2_analysis"]["obfuscation"] = True
-                    anti_info["category"] = "analysis_evasion"
+                    r2_analysis["obfuscation"] = True
+                    category = "analysis_evasion"
 
-                # Get cross-references to check for suspicious API calls
-                xrefs = r2.run_command(f"axtj @ {func_addr}")
+                xrefs_result = r2._execute_command(f"axtj @ {func_addr}")
+                xrefs = xrefs_result if isinstance(xrefs_result, str) else str(xrefs_result)
                 if "IsDebuggerPresent" in xrefs or "CheckRemoteDebugger" in xrefs:
-                    anti_info["r2_analysis"]["debug_api_calls"] = True
-                    anti_info["category"] = "debugger_detection"
-                    anti_info["risk_level"] = "high"
+                    r2_analysis["debug_api_calls"] = True
+                    category = "debugger_detection"
+                    risk_level = "high"
 
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name} for anti-analysis: {e}")
 
-            # Name-based detection
-            for category, patterns in anti_patterns.items():
+            for cat, patterns in anti_patterns.items():
                 if any(pattern in name_lower for pattern in patterns):
-                    anti_info["category"] = category
-                    anti_info["patterns_matched"] = [p for p in patterns if p in name_lower]
-                    anti_info["risk_level"] = self._calculate_anti_analysis_risk(func_name, category)
+                    category = cat
+                    patterns_matched = [p for p in patterns if p in name_lower]
+                    risk_level = self._calculate_anti_analysis_risk(func_name, cat)
                     break
 
-            # Add function if anti-analysis indicators found
-            if anti_info["category"] or anti_info["r2_analysis"]:
+            if category or r2_analysis:
+                anti_info: dict[str, Any] = {
+                    "function": func,
+                    "category": category,
+                    "patterns_matched": patterns_matched,
+                    "risk_level": risk_level,
+                    "r2_analysis": r2_analysis,
+                }
                 anti_analysis.append(anti_info)
 
         return anti_analysis
@@ -751,11 +755,11 @@ class R2SignatureAnalyzer:
 
         return base_risk
 
-    def _identify_license_validation_functions(self, r2: R2Session, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _identify_license_validation_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify potential license validation functions."""
-        license_functions = []
+        license_functions: list[dict[str, Any]] = []
 
-        license_patterns = [
+        license_patterns: list[str] = [
             "license",
             "registration",
             "activation",
@@ -770,107 +774,102 @@ class R2SignatureAnalyzer:
             "key",
         ]
 
-        # Use r2 to search for license-related strings and patterns
+        license_strings = ""
+        time_calls = ""
+        reg_calls = ""
+        crypto_calls = ""
+
         try:
-            # Search for license-related strings
-            license_strings = r2.run_command("iz~license|serial|key|trial|activation|registration")
+            lic_result = r2._execute_command("iz~license|serial|key|trial|activation|registration")
+            license_strings = lic_result if isinstance(lic_result, str) else str(lic_result)
 
-            # Search for date/time comparisons (common in trial checks)
-            time_calls = r2.run_command("ii~time|date|GetSystemTime|GetLocalTime")
+            time_result = r2._execute_command("ii~time|date|GetSystemTime|GetLocalTime")
+            time_calls = time_result if isinstance(time_result, str) else str(time_result)
 
-            # Search for registry access (common for license storage)
-            reg_calls = r2.run_command("ii~RegOpenKey|RegQueryValue|RegSetValue")
+            reg_result = r2._execute_command("ii~RegOpenKey|RegQueryValue|RegSetValue")
+            reg_calls = reg_result if isinstance(reg_result, str) else str(reg_result)
 
-            # Search for crypto imports (license key validation)
-            crypto_calls = r2.run_command("ii~CryptHashData|CryptVerifySignature|BCrypt")
+            crypto_result = r2._execute_command("ii~CryptHashData|CryptVerifySignature|BCrypt")
+            crypto_calls = crypto_result if isinstance(crypto_result, str) else str(crypto_result)
 
         except Exception as e:
             self.logger.debug(f"Failed to search for license patterns: {e}")
-            license_strings = time_calls = reg_calls = crypto_calls = ""
 
         for func in functions:
             func_name = func.get("name", "")
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            license_info = {
-                "function": func,
-                "patterns_matched": [],
-                "confidence": 0.0,
-                "license_type": None,
-                "r2_analysis": {},
-            }
+            r2_analysis: dict[str, Any] = {}
+            confidence: float = 0.0
+            license_type: str | None = None
+            patterns_matched: list[str] = []
 
-            # Use r2 to analyze function for license validation patterns
             try:
-                # Get function strings
-                func_strings = r2.run_command(f"pds @ {func_addr}")
+                func_strings_result = r2._execute_command(f"pds @ {func_addr}")
+                func_strings = func_strings_result if isinstance(func_strings_result, str) else str(func_strings_result)
 
-                # Check for license-related strings in function
                 if any(lic in func_strings.lower() for lic in ["license", "serial", "activation", "trial"]):
-                    license_info["r2_analysis"]["license_strings"] = True
-                    license_info["confidence"] += 0.3
+                    r2_analysis["license_strings"] = True
+                    confidence += 0.3
 
-                # Get function imports
-                func_imports = r2.run_command(f"afij @ {func_addr}")
+                func_imports_result = r2._execute_command(f"afij @ {func_addr}")
+                func_imports = func_imports_result if isinstance(func_imports_result, str) else str(func_imports_result)
 
-                # Check for time/date functions (trial checks)
                 if any(time_func in func_imports for time_func in ["time", "GetSystemTime", "GetLocalTime"]):
-                    license_info["r2_analysis"]["time_checks"] = True
-                    license_info["license_type"] = "trial_validation"
-                    license_info["confidence"] += 0.2
+                    r2_analysis["time_checks"] = True
+                    license_type = "trial_validation"
+                    confidence += 0.2
 
-                # Cross-reference with global license string analysis
                 if license_strings and func_name.lower() in license_strings.lower():
-                    license_info["r2_analysis"]["referenced_in_license_strings"] = True
-                    license_info["confidence"] += 0.3
+                    r2_analysis["referenced_in_license_strings"] = True
+                    confidence += 0.3
 
-                # Check for registry functions (license storage)
                 if any(reg_func in func_imports for reg_func in ["RegOpenKey", "RegQueryValue"]):
-                    license_info["r2_analysis"]["registry_access"] = True
-                    license_info["confidence"] += 0.2
+                    r2_analysis["registry_access"] = True
+                    confidence += 0.2
 
-                # Cross-reference with global time calls analysis
                 if time_calls and func_name.lower() in time_calls.lower():
-                    license_info["r2_analysis"]["uses_time_apis"] = True
-                    license_info["license_type"] = "trial_validation"
-                    license_info["confidence"] += 0.4
+                    r2_analysis["uses_time_apis"] = True
+                    license_type = "trial_validation"
+                    confidence += 0.4
 
-                # Cross-reference with global registry calls analysis
                 if reg_calls and func_name.lower() in reg_calls.lower():
-                    license_info["r2_analysis"]["uses_registry_apis"] = True
-                    license_info["license_type"] = "registry_license"
-                    license_info["confidence"] += 0.4
+                    r2_analysis["uses_registry_apis"] = True
+                    license_type = "registry_license"
+                    confidence += 0.4
 
-                # Check for crypto functions (key validation)
                 if any(crypto_func in func_imports for crypto_func in ["Crypt", "Hash", "Verify"]):
-                    license_info["r2_analysis"]["crypto_validation"] = True
+                    r2_analysis["crypto_validation"] = True
 
-                # Cross-reference with global crypto calls analysis
                 if crypto_calls and func_name.lower() in crypto_calls.lower():
-                    license_info["r2_analysis"]["uses_crypto_apis"] = True
-                    license_info["license_type"] = "crypto_license"
-                    license_info["confidence"] += 0.5
+                    r2_analysis["uses_crypto_apis"] = True
+                    license_type = "crypto_license"
+                    confidence += 0.5
 
-                # Analyze control flow complexity (license checks tend to be complex)
-                func_blocks = r2.run_command(f"afbj @ {func_addr}")
-                if func_blocks.count('"jump"') > 10:  # Many conditional branches
-                    license_info["r2_analysis"]["complex_logic"] = True
-                    license_info["confidence"] += 0.1
+                func_blocks_result = r2._execute_command(f"afbj @ {func_addr}")
+                func_blocks = func_blocks_result if isinstance(func_blocks_result, str) else str(func_blocks_result)
+                if func_blocks.count('"jump"') > 10:
+                    r2_analysis["complex_logic"] = True
+                    confidence += 0.1
 
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name} for license validation: {e}")
 
-            # Name-based pattern matching
-            matched_patterns = [pattern for pattern in license_patterns if pattern in name_lower]
-            if matched_patterns:
-                license_info["patterns_matched"] = matched_patterns
-                base_confidence = len(matched_patterns) / len(license_patterns)
-                license_info["confidence"] = min(license_info["confidence"] + base_confidence, 1.0)
-                license_info["license_type"] = self._determine_license_type(func_name)
+            patterns_matched = [pattern for pattern in license_patterns if pattern in name_lower]
+            if patterns_matched:
+                base_confidence = len(patterns_matched) / len(license_patterns)
+                confidence = min(confidence + base_confidence, 1.0)
+                license_type = self._determine_license_type(func_name)
 
-            # Add function if license indicators found
-            if matched_patterns or license_info["r2_analysis"]:
+            if patterns_matched or r2_analysis:
+                license_info: dict[str, Any] = {
+                    "function": func,
+                    "patterns_matched": patterns_matched,
+                    "confidence": confidence,
+                    "license_type": license_type,
+                    "r2_analysis": r2_analysis,
+                }
                 license_functions.append(license_info)
 
         return license_functions
@@ -889,11 +888,11 @@ class R2SignatureAnalyzer:
             return "registration_validation"
         return "general_validation"
 
-    def _check_vulnerability_signatures(self, r2: R2Session, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _check_vulnerability_signatures(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Check for known vulnerability signatures."""
-        vulnerability_sigs = []
+        vulnerability_sigs: list[dict[str, Any]] = []
 
-        vulnerable_functions = {
+        vulnerable_functions: dict[str, list[str]] = {
             "buffer_overflow": ["strcpy", "strcat", "sprintf", "gets", "scanf"],
             "format_string": ["printf", "fprintf", "snprintf"],
             "integer_overflow": ["malloc", "calloc", "realloc"],
@@ -901,58 +900,55 @@ class R2SignatureAnalyzer:
             "race_condition": ["createthread", "createprocess"],
         }
 
-        # Use r2 to analyze binary for vulnerability patterns
+        dangerous_imports = ""
+        format_string_pattern = ""
+        dangerous_calls = ""
+        has_canary = False
+
         try:
-            # Get all dangerous function imports
-            dangerous_imports = r2.run_command("ii~strcpy|strcat|sprintf|gets|scanf|printf")
+            dangerous_result = r2._execute_command("ii~strcpy|strcat|sprintf|gets|scanf|printf")
+            dangerous_imports = dangerous_result if isinstance(dangerous_result, str) else str(dangerous_result)
 
-            # Search for format string vulnerabilities
-            format_string_pattern = r2.run_command("/x 2425")  # %% pattern
+            format_result = r2._execute_command("/x 2425")
+            format_string_pattern = format_result if isinstance(format_result, str) else str(format_result)
 
-            # Get all calls to dangerous functions
-            dangerous_calls = r2.run_command("axt @ sym.imp.strcpy")
-            dangerous_calls += r2.run_command("axt @ sym.imp.strcat")
-            dangerous_calls += r2.run_command("axt @ sym.imp.sprintf")
+            calls1 = r2._execute_command("axt @ sym.imp.strcpy")
+            calls1_str = calls1 if isinstance(calls1, str) else str(calls1)
+            calls2 = r2._execute_command("axt @ sym.imp.strcat")
+            calls2_str = calls2 if isinstance(calls2, str) else str(calls2)
+            calls3 = r2._execute_command("axt @ sym.imp.sprintf")
+            calls3_str = calls3 if isinstance(calls3, str) else str(calls3)
+            dangerous_calls = calls1_str + calls2_str + calls3_str
 
-            # Check for stack protection
-            canary_check = r2.run_command("iI~canary")
+            canary_result = r2._execute_command("iI~canary")
+            canary_check = canary_result if isinstance(canary_result, str) else str(canary_result)
             has_canary = "canary" in canary_check.lower()
 
         except Exception as e:
             self.logger.debug(f"Failed to analyze vulnerability patterns: {e}")
-            dangerous_imports = format_string_pattern = dangerous_calls = ""
-            has_canary = False
 
         for func in functions:
             func_name = func.get("name", "")
             name_lower = func_name.lower()
             func_addr = func.get("offset", 0)
 
-            vuln_info = {
-                "function": func,
-                "vulnerability_type": None,
-                "risk_level": "low",
-                "mitigation_needed": True,
-                "r2_analysis": {},
-            }
+            r2_analysis: dict[str, Any] = {}
+            vulnerability_type: str | None = None
+            risk_level = "low"
 
-            # Use r2 to check for vulnerability patterns in function
             try:
-                # Get function disassembly
-                func_asm = r2.run_command(f"pdf @ {func_addr}")
+                func_asm_result = r2._execute_command(f"pdf @ {func_addr}")
+                func_asm = func_asm_result if isinstance(func_asm_result, str) else str(func_asm_result)
 
-                # Check for dangerous function calls
                 if "call sym.imp.strcpy" in func_asm or "call sym.imp.strcat" in func_asm:
-                    vuln_info["r2_analysis"]["unsafe_string_ops"] = True
-                    vuln_info["vulnerability_type"] = "buffer_overflow"
-                    vuln_info["risk_level"] = "medium" if has_canary else "high"
+                    r2_analysis["unsafe_string_ops"] = True
+                    vulnerability_type = "buffer_overflow"
+                    risk_level = "medium" if has_canary else "high"
 
-                # Cross-reference with global dangerous imports analysis
                 if dangerous_imports and func_name.lower() in dangerous_imports.lower():
-                    vuln_info["r2_analysis"]["imports_dangerous_functions"] = True
-                    vuln_info["risk_level"] = "high"
+                    r2_analysis["imports_dangerous_functions"] = True
+                    risk_level = "high"
 
-                # Use dangerous_calls cross-reference data to identify vulnerable call sites
                 if dangerous_calls:
                     func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
                     if func_addr_hex in dangerous_calls or str(func_addr) in dangerous_calls:
@@ -961,57 +957,55 @@ class R2SignatureAnalyzer:
                             if func_addr_hex in line or str(func_addr) in line:
                                 call_sites.append(line.strip())
                         if call_sites:
-                            vuln_info["r2_analysis"]["dangerous_call_sites"] = call_sites
-                            vuln_info["r2_analysis"]["calls_unsafe_functions"] = True
-                            if vuln_info["risk_level"] == "low":
-                                vuln_info["risk_level"] = "medium"
+                            r2_analysis["dangerous_call_sites"] = call_sites
+                            r2_analysis["calls_unsafe_functions"] = True
+                            if risk_level == "low":
+                                risk_level = "medium"
 
-                # Check for format string vulnerabilities
                 if "call sym.imp.printf" in func_asm and "%s" in func_asm and ("mov" in func_asm and "rdi" in func_asm):
-                    vuln_info["r2_analysis"]["format_string_risk"] = True
-                    vuln_info["vulnerability_type"] = "format_string"
+                    r2_analysis["format_string_risk"] = True
+                    vulnerability_type = "format_string"
 
-                # Cross-reference with global format string pattern analysis
                 if format_string_pattern and str(func_addr) in format_string_pattern:
-                    vuln_info["r2_analysis"]["contains_format_patterns"] = True
-                    vuln_info["vulnerability_type"] = "format_string"
-                    vuln_info["risk_level"] = "high"
+                    r2_analysis["contains_format_patterns"] = True
+                    vulnerability_type = "format_string"
+                    risk_level = "high"
 
-                # Check for potential integer overflows
                 if "imul" in func_asm and "malloc" in func_asm:
-                    vuln_info["r2_analysis"]["integer_overflow_risk"] = True
-                    vuln_info["vulnerability_type"] = "integer_overflow"
+                    r2_analysis["integer_overflow_risk"] = True
+                    vulnerability_type = "integer_overflow"
 
-                # Check for use-after-free patterns
                 if "call sym.imp.free" in func_asm:
-                    # Check if pointer is used after free
                     lines = func_asm.split("\n")
                     for i, line in enumerate(lines):
                         if "call sym.imp.free" in line:
-                            # Check next few instructions for pointer reuse
                             for j in range(i + 1, min(i + 10, len(lines))):
                                 if "mov" in lines[j] and any(reg in lines[j] for reg in ["rax", "rbx", "rcx", "rdx"]):
-                                    vuln_info["r2_analysis"]["potential_uaf"] = True
-                                    vuln_info["vulnerability_type"] = "use_after_free"
+                                    r2_analysis["potential_uaf"] = True
+                                    vulnerability_type = "use_after_free"
                                     break
 
-                # Analyze function complexity for race conditions
                 if ("pthread_create" in func_asm or "CreateThread" in func_asm) and ("mutex" not in func_asm and "lock" not in func_asm):
-                    vuln_info["r2_analysis"]["thread_safety_risk"] = True
-                    vuln_info["vulnerability_type"] = "race_condition"
+                    r2_analysis["thread_safety_risk"] = True
+                    vulnerability_type = "race_condition"
 
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name} for vulnerabilities: {e}")
 
-            # Name-based vulnerability detection
             for vuln_type, patterns in vulnerable_functions.items():
                 if any(pattern in name_lower for pattern in patterns):
-                    vuln_info["vulnerability_type"] = vuln_type
-                    vuln_info["risk_level"] = self._calculate_vulnerability_risk(vuln_type)
+                    vulnerability_type = vuln_type
+                    risk_level = self._calculate_vulnerability_risk(vuln_type)
                     break
 
-            # Add function if vulnerability indicators found
-            if vuln_info["vulnerability_type"] or vuln_info["r2_analysis"]:
+            if vulnerability_type or r2_analysis:
+                vuln_info: dict[str, Any] = {
+                    "function": func,
+                    "vulnerability_type": vulnerability_type,
+                    "risk_level": risk_level,
+                    "mitigation_needed": True,
+                    "r2_analysis": r2_analysis,
+                }
                 vulnerability_sigs.append(vuln_info)
 
         return vulnerability_sigs
@@ -1025,66 +1019,64 @@ class R2SignatureAnalyzer:
 
         return "medium" if vuln_type in medium_risk else "low"
 
-    def _apply_custom_patterns(self, r2: R2Session, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _apply_custom_patterns(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Apply custom signature patterns for specific detection."""
-        custom_matches = []
+        custom_matches: list[dict[str, Any]] = []
 
-        # Custom patterns for license validation
-        custom_patterns = {
+        custom_patterns: dict[str, str] = {
             "license_check_complex": r"check.*license|license.*valid|validate.*key",
             "trial_expire": r"trial.*expire|demo.*time|time.*left",
             "registration_check": r"reg.*check|check.*reg|registered",
             "activation_routine": r"activate|activation|serial.*check",
         }
 
-        # Use r2 to define and search for custom patterns
+        custom_sig_matches = ""
+        xor_pattern = ""
+        cmp_pattern = ""
+
         try:
-            # Define custom signatures in r2
-            r2.run_command("zo license_sig 48 8b 05 ?? ?? ?? ?? 48 85 c0 74 ?? ff")  # Common license check pattern
-            r2.run_command("zo time_check e8 ?? ?? ?? ?? 48 3b ?? 7? ??")  # Time comparison pattern
-            r2.run_command("zo crypto_sig 48 89 ?? 24 ?? e8 ?? ?? ?? ?? 48 85 c0")  # Crypto validation pattern
+            r2._execute_command("zo license_sig 48 8b 05 ?? ?? ?? ?? 48 85 c0 74 ?? ff")
+            r2._execute_command("zo time_check e8 ?? ?? ?? ?? 48 3b ?? 7? ??")
+            r2._execute_command("zo crypto_sig 48 89 ?? 24 ?? e8 ?? ?? ?? ?? 48 85 c0")
 
-            # Search for custom signatures
-            custom_sig_matches = r2.run_command("zj")  # Get signature matches in JSON
+            sig_result = r2._execute_command("zj")
+            custom_sig_matches = sig_result if isinstance(sig_result, str) else str(sig_result)
 
-            # Search for specific byte patterns
-            xor_pattern = r2.run_command("/x 31c0")  # XOR eax, eax (common in checks)
-            cmp_pattern = r2.run_command("/x 3d00000000")  # CMP eax, 0
+            xor_result = r2._execute_command("/x 31c0")
+            xor_pattern = xor_result if isinstance(xor_result, str) else str(xor_result)
+            cmp_result = r2._execute_command("/x 3d00000000")
+            cmp_pattern = cmp_result if isinstance(cmp_result, str) else str(cmp_result)
 
         except Exception as e:
             self.logger.debug(f"Failed to apply custom signatures: {e}")
-            custom_sig_matches = xor_pattern = cmp_pattern = ""
 
         for func in functions:
             func_name = func.get("name", "")
             func_addr = func.get("offset", 0)
 
-            # Use r2 to check if function matches custom patterns
             try:
-                # Get function info and parse for size/complexity weighting
-                func_info = r2.run_command(f"afij @ {func_addr}")
+                func_info_result = r2._execute_command(f"afij @ {func_addr}")
+                func_info = func_info_result if isinstance(func_info_result, str) else str(func_info_result)
                 func_size = 0
                 func_complexity = 0
 
                 try:
-                    import json as json_module
                     func_info_data = json_module.loads(func_info) if func_info.strip() else []
                     if func_info_data and isinstance(func_info_data, list) and len(func_info_data) > 0:
                         fi = func_info_data[0]
-                        func_size = fi.get("size", 0)
-                        func_complexity = fi.get("cc", 0)  # cyclomatic complexity
+                        if isinstance(fi, dict):
+                            func_size = int(fi.get("size", 0))
+                            func_complexity = int(fi.get("cc", 0))
                 except (ValueError, KeyError, IndexError):
                     pass
 
-                # Calculate confidence weight based on function size and complexity
                 size_weight = min(1.0, func_size / 500) if func_size > 0 else 0.5
                 complexity_weight = min(1.0, func_complexity / 10) if func_complexity > 0 else 0.5
                 confidence_modifier = (size_weight + complexity_weight) / 2
 
-                # Check if function contains custom signature matches
                 if custom_sig_matches and str(func_addr) in custom_sig_matches:
                     weighted_confidence = min(0.98, 0.9 * (0.8 + 0.4 * confidence_modifier))
-                    pattern_match = {
+                    pattern_match: dict[str, Any] = {
                         "function": func,
                         "pattern_name": "r2_custom_signature",
                         "pattern": "Binary signature match",
@@ -1095,8 +1087,6 @@ class R2SignatureAnalyzer:
                     }
                     custom_matches.append(pattern_match)
 
-                # Cross-reference xor_pattern and cmp_pattern with function addresses
-                # to detect license check patterns
                 func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
                 xor_in_func = False
                 cmp_in_func = False
@@ -1138,10 +1128,9 @@ class R2SignatureAnalyzer:
                     }
                     custom_matches.append(pattern_match)
 
-                # Analyze function for specific patterns
-                func_asm = r2.run_command(f"pdf @ {func_addr}")
+                func_asm_result = r2._execute_command(f"pdf @ {func_addr}")
+                func_asm = func_asm_result if isinstance(func_asm_result, str) else str(func_asm_result)
 
-                # Check for license validation patterns
                 if "xor eax, eax" in func_asm and "test" in func_asm and "jz" in func_asm:
                     weighted_confidence = min(0.85, 0.7 * (0.8 + 0.4 * confidence_modifier))
                     pattern_match = {
@@ -1153,7 +1142,6 @@ class R2SignatureAnalyzer:
                     }
                     custom_matches.append(pattern_match)
 
-                # Check for time-based patterns
                 if "call" in func_asm and "time" in func_asm and "cmp" in func_asm:
                     weighted_confidence = min(0.90, 0.8 * (0.8 + 0.4 * confidence_modifier))
                     pattern_match = {
@@ -1168,9 +1156,7 @@ class R2SignatureAnalyzer:
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {func_name} with custom patterns: {e}")
 
-            # Regex pattern matching on function names
             for pattern_name, pattern in custom_patterns.items():
-                import re
 
                 if re.search(pattern, func_name, re.IGNORECASE):
                     # Enhance match with r2 analysis
@@ -1203,7 +1189,7 @@ class R2SignatureAnalyzer:
 
     def _find_unidentified_functions(self, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Find functions that haven't been identified by signatures."""
-        unidentified = []
+        unidentified: list[dict[str, Any]] = []
 
         for func in functions:
             func_name = func.get("name", "")
@@ -1247,10 +1233,14 @@ class R2SignatureAnalyzer:
 
     def _analyze_identification_confidence(self, result: dict[str, Any]) -> dict[str, Any]:
         """Analyze confidence levels of function identification."""
-        confidence_analysis = {
-            "high_confidence": [],
-            "medium_confidence": [],
-            "low_confidence": [],
+        high_confidence: list[dict[str, Any]] = []
+        medium_confidence: list[dict[str, Any]] = []
+        low_confidence: list[dict[str, Any]] = []
+
+        confidence_analysis: dict[str, Any] = {
+            "high_confidence": high_confidence,
+            "medium_confidence": medium_confidence,
+            "low_confidence": low_confidence,
             "average_confidence": 0.0,
             "confidence_distribution": {},
         }
@@ -1260,25 +1250,24 @@ class R2SignatureAnalyzer:
         if not identified_funcs:
             return confidence_analysis
 
-        confidences = []
+        confidences: list[float] = []
         for func in identified_funcs:
             confidence = func.get("confidence", 0.0)
-            confidences.append(confidence)
+            confidences.append(float(confidence))
 
             if confidence >= 0.8:
-                confidence_analysis["high_confidence"].append(func)
+                high_confidence.append(func)
             elif confidence >= 0.5:
-                confidence_analysis["medium_confidence"].append(func)
+                medium_confidence.append(func)
             else:
-                confidence_analysis["low_confidence"].append(func)
+                low_confidence.append(func)
 
         confidence_analysis["average_confidence"] = sum(confidences) / len(confidences)
 
-        # Distribution
         confidence_analysis["confidence_distribution"] = {
-            "high (>= 0.8)": len(confidence_analysis["high_confidence"]),
-            "medium (0.5-0.8)": len(confidence_analysis["medium_confidence"]),
-            "low (< 0.5)": len(confidence_analysis["low_confidence"]),
+            "high (>= 0.8)": len(high_confidence),
+            "medium (0.5-0.8)": len(medium_confidence),
+            "low (< 0.5)": len(low_confidence),
         }
 
         return confidence_analysis

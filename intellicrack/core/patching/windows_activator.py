@@ -773,6 +773,258 @@ class WindowsActivator:
                 "error": str(e),
             }
 
+    def activate_windows_interactive(
+        self, output_callback: callable | None = None
+    ) -> dict[str, any]:
+        """Activate Windows with interactive output streaming.
+
+        Runs the Windows activation process with real-time output streaming
+        to a callback function. Useful for GUI applications that need to
+        display activation progress to users.
+
+        Args:
+            output_callback: Optional callback function that receives output lines.
+                            Signature: callback(line: str, is_stderr: bool) -> None
+
+        Returns:
+            Dictionary with activation results including:
+                - success: Boolean indicating if activation succeeded
+                - method: Activation method used (hwid)
+                - return_code: Process exit code
+                - stdout: Complete stdout output
+                - stderr: Complete stderr output
+                - error: Error message if activation failed
+                - post_activation_status: Current activation status after attempt
+
+        """
+        prereq_ok, issues = self.check_prerequisites()
+        if not prereq_ok:
+            if output_callback:
+                for issue in issues:
+                    output_callback(f"Prerequisite issue: {issue}", True)
+            return {
+                "success": False,
+                "error": "Prerequisites not met",
+                "issues": issues,
+            }
+
+        try:
+            cmd_args = [str(self.script_path), "/HWID"]
+
+            self.logger.info("Starting interactive Windows activation with HWID method")
+            if output_callback:
+                output_callback("Starting Windows activation (HWID method)...", False)
+
+            import queue
+            import threading
+            import time as time_module
+
+            result = {
+                "success": False,
+                "method": "hwid",
+                "return_code": -1,
+                "stdout": "",
+                "stderr": "",
+                "error": None,
+            }
+
+            output_queue: queue.Queue = queue.Queue()
+            stdout_lines: list[str] = []
+            stderr_lines: list[str] = []
+
+            def reader_thread(pipe: any, line_list: list[str], is_stderr: bool = False) -> None:
+                try:
+                    for line in iter(pipe.readline, ""):
+                        if not line:
+                            break
+                        line = line.rstrip("\n\r")
+                        line_list.append(line)
+                        output_queue.put((line, is_stderr))
+                except Exception as e:
+                    self.logger.debug(f"Reader thread error: {e}")
+                finally:
+                    pipe.close()
+
+            process = subprocess.Popen(
+                cmd_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd=self.script_path.parent,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+
+            stdout_thread = threading.Thread(
+                target=reader_thread,
+                args=(process.stdout, stdout_lines, False),
+            )
+            stderr_thread = threading.Thread(
+                target=reader_thread,
+                args=(process.stderr, stderr_lines, True),
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+
+            start_time = time_module.time()
+            timeout = 300
+
+            while process.poll() is None:
+                if time_module.time() - start_time > timeout:
+                    process.terminate()
+                    result["error"] = "Activation process timed out"
+                    if output_callback:
+                        output_callback("ERROR: Activation process timed out", True)
+                    break
+
+                try:
+                    line, is_stderr = output_queue.get(timeout=0.1)
+                    if output_callback:
+                        output_callback(line, is_stderr)
+                except queue.Empty:
+                    continue
+
+            stdout_thread.join(timeout=2)
+            stderr_thread.join(timeout=2)
+
+            while not output_queue.empty():
+                try:
+                    line, is_stderr = output_queue.get_nowait()
+                    if output_callback:
+                        output_callback(line, is_stderr)
+                except queue.Empty:
+                    break
+
+            result["return_code"] = process.returncode
+            result["stdout"] = "\n".join(stdout_lines)
+            result["stderr"] = "\n".join(stderr_lines)
+            result["success"] = process.returncode == 0
+
+            if result["success"]:
+                self.logger.info("Interactive Windows activation completed successfully")
+                result["post_activation_status"] = self.get_activation_status()
+                if output_callback:
+                    output_callback("Activation completed successfully!", False)
+            else:
+                self.logger.error("Interactive Windows activation failed")
+                if output_callback:
+                    output_callback("Activation failed. Check output for details.", True)
+
+            return result
+
+        except subprocess.TimeoutExpired:
+            self.logger.error("Windows activation timed out")
+            if output_callback:
+                output_callback("ERROR: Activation timed out", True)
+            return {
+                "success": False,
+                "error": "Activation process timed out",
+            }
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error during Windows activation: %s", e)
+            if output_callback:
+                output_callback(f"ERROR: {e}", True)
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
+    def activate_windows_in_terminal(self) -> dict[str, any]:
+        """Activate Windows using an embedded terminal approach.
+
+        Runs the Windows activation script in a new command prompt window
+        for maximum compatibility with scripts that require user interaction
+        or display colored console output.
+
+        Returns:
+            Dictionary with activation results including:
+                - success: Boolean indicating if activation was initiated
+                - method: Activation method used (terminal)
+                - process_started: Boolean indicating if the process started
+                - error: Error message if startup failed
+                - post_activation_status: Status check result (may be delayed)
+
+        """
+        prereq_ok, issues = self.check_prerequisites()
+        if not prereq_ok:
+            return {
+                "success": False,
+                "error": "Prerequisites not met",
+                "issues": issues,
+            }
+
+        try:
+            self.logger.info("Starting Windows activation in terminal mode")
+
+            if os.name != "nt":
+                return {
+                    "success": False,
+                    "error": "Terminal activation only supported on Windows",
+                }
+
+            cmd_args = [
+                "cmd.exe",
+                "/c",
+                "start",
+                "Windows Activation",
+                "/wait",
+                str(self.script_path),
+            ]
+
+            process = subprocess.Popen(
+                cmd_args,
+                cwd=self.script_path.parent,
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+            )
+
+            self.logger.info("Terminal activation window opened, waiting for completion...")
+
+            try:
+                return_code = process.wait(timeout=600)
+
+                result = {
+                    "success": return_code == 0,
+                    "method": "terminal",
+                    "return_code": return_code,
+                    "process_started": True,
+                }
+
+                if return_code == 0:
+                    self.logger.info("Terminal activation completed successfully")
+                    result["post_activation_status"] = self.get_activation_status()
+                else:
+                    self.logger.warning("Terminal activation exited with code: %d", return_code)
+
+                return result
+
+            except subprocess.TimeoutExpired:
+                self.logger.warning("Terminal activation window still open after timeout")
+                return {
+                    "success": False,
+                    "method": "terminal",
+                    "process_started": True,
+                    "error": "Activation window remained open - user interaction may be required",
+                }
+
+        except FileNotFoundError:
+            self.logger.error("Activation script not found: %s", self.script_path)
+            return {
+                "success": False,
+                "error": f"Activation script not found: {self.script_path}",
+            }
+        except PermissionError:
+            self.logger.error("Permission denied - administrator privileges required")
+            return {
+                "success": False,
+                "error": "Administrator privileges required for activation",
+            }
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error during terminal activation: %s", e)
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
 
 def create_windows_activator() -> WindowsActivator:
     """Create Windows activator instance.
@@ -816,3 +1068,123 @@ def activate_windows_kms() -> dict[str, any]:
     """
     activator = create_windows_activator()
     return activator.activate_windows(ActivationMethod.KMS38)
+
+
+class WindowsActivatorInteractive:
+    """Interactive Windows activation with real-time output streaming."""
+
+    def __init__(self, activator: WindowsActivator) -> None:
+        """Initialize with a WindowsActivator instance."""
+        self.activator = activator
+        self.logger = get_logger(__name__)
+
+    def run_with_callback(
+        self,
+        cmd_args: list[str],
+        output_callback: callable | None = None,
+        timeout: int = 300,
+    ) -> dict[str, any]:
+        """Run activation command with real-time output streaming.
+
+        Args:
+            cmd_args: Command arguments to execute
+            output_callback: Optional callback function to receive output lines
+            timeout: Maximum execution time in seconds
+
+        Returns:
+            Dictionary with execution results
+
+        """
+        import queue
+        import threading
+
+        result = {
+            "success": False,
+            "return_code": -1,
+            "stdout": "",
+            "stderr": "",
+            "error": None,
+        }
+
+        output_queue: queue.Queue = queue.Queue()
+        stdout_lines: list[str] = []
+        stderr_lines: list[str] = []
+
+        def reader_thread(pipe: any, line_list: list[str], is_stderr: bool = False) -> None:
+            try:
+                for line in iter(pipe.readline, ""):
+                    if not line:
+                        break
+                    line = line.rstrip("\n\r")
+                    line_list.append(line)
+                    output_queue.put((line, is_stderr))
+            except Exception as e:
+                self.logger.debug(f"Reader thread error: {e}")
+            finally:
+                pipe.close()
+
+        try:
+            process = subprocess.Popen(
+                cmd_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd=self.activator.script_path.parent,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+
+            stdout_thread = threading.Thread(
+                target=reader_thread,
+                args=(process.stdout, stdout_lines, False),
+            )
+            stderr_thread = threading.Thread(
+                target=reader_thread,
+                args=(process.stderr, stderr_lines, True),
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+
+            import time as time_module
+            start_time = time_module.time()
+
+            while process.poll() is None:
+                if time_module.time() - start_time > timeout:
+                    process.terminate()
+                    result["error"] = "Process timed out"
+                    break
+
+                try:
+                    line, is_stderr = output_queue.get(timeout=0.1)
+                    if output_callback:
+                        output_callback(line, is_stderr)
+                except queue.Empty:
+                    continue
+
+            stdout_thread.join(timeout=2)
+            stderr_thread.join(timeout=2)
+
+            while not output_queue.empty():
+                try:
+                    line, is_stderr = output_queue.get_nowait()
+                    if output_callback:
+                        output_callback(line, is_stderr)
+                except queue.Empty:
+                    break
+
+            result["return_code"] = process.returncode
+            result["stdout"] = "\n".join(stdout_lines)
+            result["stderr"] = "\n".join(stderr_lines)
+            result["success"] = process.returncode == 0
+
+        except FileNotFoundError:
+            result["error"] = "Activation script not found"
+            self.logger.error("Activation script not found")
+        except PermissionError:
+            result["error"] = "Permission denied - administrator privileges required"
+            self.logger.error("Permission denied for activation script")
+        except Exception as e:
+            result["error"] = str(e)
+            self.logger.error(f"Interactive activation error: {e}")
+
+        return result

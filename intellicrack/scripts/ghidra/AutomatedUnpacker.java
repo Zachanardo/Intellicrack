@@ -346,19 +346,12 @@ public class AutomatedUnpacker extends GhidraScript {
   // Advanced Unpacking State
   private Address originalEntryPoint;
   private Address currentEntryPoint;
-  private List<UnpackingLayer> unpackingLayers = new ArrayList<>();
-  private Map<Address, MemoryDump> memoryDumps = new HashMap<>();
+  private final List<UnpackingLayer> unpackingLayers = new ArrayList<>();
+  private final Map<Address, MemoryDump> memoryDumps = new HashMap<>();
   private ImportTableInfo importTable;
-  private List<Address> possibleOEPs = new ArrayList<>();
+  private final List<Address> possibleOEPs = new ArrayList<>();
 
-  // Enhanced Analysis Components
-  private Map<String, UnpackingEngine> unpackingEngines = new HashMap<>();
-  private MachineLearningClassifier mlClassifier;
-  private BehavioralAnalyzer behavioralAnalyzer;
-  private AntiUnpackingBypass antiUnpackingBypass;
-  private AdvancedMemoryDumper memoryDumper;
-  private ModernIATReconstructor iatReconstructor;
-  private ExecutorService analysisExecutor;
+    private ExecutorService analysisExecutor;
 
   // Ghidra Analysis Components
   private FunctionManager functionManager;
@@ -369,23 +362,23 @@ public class AutomatedUnpacker extends GhidraScript {
   private DecompileOptions decompileOptions;
 
   // Code Analysis State
-  private Map<CodeUnit, PcodeBlockBasic> pcodeBlocks = new HashMap<>();
-  private Set<AddressSpace> analyzedSpaces = new HashSet<>();
-  private List<Structure> packerStructures = new ArrayList<>();
-  private List<Enum> packerEnums = new ArrayList<>();
-  private Map<Address, RegisterValue> registerStates = new HashMap<>();
-  private Map<Register, OperandType> operandTypeMap = new HashMap<>();
+  private final Map<CodeUnit, PcodeBlockBasic> pcodeBlocks = new HashMap<>();
+  private final Set<AddressSpace> analyzedSpaces = new HashSet<>();
+  private final List<Structure> packerStructures = new ArrayList<>();
+  private final List<Enum> packerEnums = new ArrayList<>();
+  private final Map<Address, RegisterValue> registerStates = new HashMap<>();
+  private final Map<Register, OperandType> operandTypeMap = new HashMap<>();
 
   // Analysis I/O and Buffers
   private FileWriter analysisLogger;
   private BufferedReader configReader;
   private CharBuffer textBuffer;
   private IntBuffer dataBuffer;
-  private Map<String, PackerAnalysisResult> packerAnalysisResults = new HashMap<>();
-  private Map<String, Double> mlFeatureVector = new HashMap<>();
-  private List<BehavioralEvent> behavioralEvents = new ArrayList<>();
-  private Set<String> detectedAntiUnpackingTechniques = new HashSet<>();
-  private Map<String, Integer> confidenceScores = new HashMap<>();
+  private final Map<String, PackerAnalysisResult> packerAnalysisResults = new HashMap<>();
+  private final Map<String, Double> mlFeatureVector = new HashMap<>();
+  private final List<BehavioralEvent> behavioralEvents = new ArrayList<>();
+  private final Set<String> detectedAntiUnpackingTechniques = new HashSet<>();
+  private final Map<String, Integer> confidenceScores = new HashMap<>();
   private UnpackingStrategy currentStrategy;
   private Date analysisStartTime;
   private ComprehensiveReport finalReport;
@@ -403,42 +396,27 @@ public class AutomatedUnpacker extends GhidraScript {
     ModernIATReconstructor localIatReconstructor = new ModernIATReconstructor();
 
     // Assign local instances to class fields for proper initialization
-    this.mlClassifier = localMlClassifier;
-    this.behavioralAnalyzer = localBehavioralAnalyzer;
-    this.antiUnpackingBypass = localAntiUnpackingBypass;
-    this.memoryDumper = localMemoryDumper;
-    this.iatReconstructor = localIatReconstructor;
 
-    // Validate component initialization
-    if (this.mlClassifier != null) {
+      // Validate component initialization
       println(
           "✓ Machine Learning Classifier initialized with confidence threshold: "
               + ML_CONFIDENCE_THRESHOLD
               + "%");
-    }
-    if (this.behavioralAnalyzer != null) {
       println(
           "✓ Behavioral Analyzer initialized with timeout: "
               + (BEHAVIORAL_ANALYSIS_TIMEOUT / 1000)
               + " seconds");
-    }
-    if (this.antiUnpackingBypass != null) {
       println("✓ Anti-Unpacking Bypass engine ready");
-    }
-    if (this.memoryDumper != null) {
       println(
           "✓ Memory Dumper initialized with max size: "
               + (MEMORY_DUMP_SIZE / (1024 * 1024))
               + " MB");
-    }
-    if (this.iatReconstructor != null) {
       println("✓ IAT Reconstructor initialized");
-    }
 
-    // Initialize specialized unpacking engines
+      // Initialize specialized unpacking engines
     Map<String, UnpackingEngine> localUnpackingEngines = initializeUnpackingEngines();
-    this.unpackingEngines = localUnpackingEngines;
-    println("✓ Initialized " + this.unpackingEngines.size() + " specialized unpacking engines");
+      // Enhanced Analysis Components
+      println("✓ Initialized " + localUnpackingEngines.size() + " specialized unpacking engines");
 
     // Initialize enhanced analysis components
     try {
@@ -460,7 +438,7 @@ public class AutomatedUnpacker extends GhidraScript {
     println("\n[Phase 1] Bypassing Anti-Unpacking Techniques...");
     try {
       AntiUnpackingResult bypassResult =
-          antiUnpackingBypass.bypassTechniques(currentEntryPoint, blocks);
+          localAntiUnpackingBypass.bypassTechniques(currentEntryPoint, blocks);
       if (bypassResult.success) {
         println(
             "✓ Successfully bypassed "
@@ -483,7 +461,7 @@ public class AutomatedUnpacker extends GhidraScript {
     println("\n[Phase 2] ML-Based Packer Classification...");
     try {
       PackerClassificationResult classification =
-          mlClassifier.classifyPacker(currentEntryPoint, blocks);
+          localMlClassifier.classifyPacker(currentEntryPoint, blocks);
       println("✓ Packer Detection Results:");
       println(
           "  Primary: "
@@ -531,7 +509,7 @@ public class AutomatedUnpacker extends GhidraScript {
     println("\n[Phase 3] Real-Time Behavioral Analysis...");
     try {
       BehavioralAnalysisResult behaviorResult =
-          behavioralAnalyzer.analyzeBehavior(currentEntryPoint, blocks);
+          localBehavioralAnalyzer.analyzeBehavior(currentEntryPoint, blocks);
 
       // Store behavioral events for comprehensive analysis
       storeBehavioralEvents(behaviorResult);
@@ -559,7 +537,7 @@ public class AutomatedUnpacker extends GhidraScript {
     String detectedPacker = classification.primaryPacker.toLowerCase();
 
     // Try to find specific engine for detected packer
-    for (Map.Entry<String, UnpackingEngine> entry : unpackingEngines.entrySet()) {
+    for (Map.Entry<String, UnpackingEngine> entry : localUnpackingEngines.entrySet()) {
       if (detectedPacker.contains(entry.getKey().toLowerCase())
           || entry.getValue().isApplicable(blocks, currentEntryPoint)) {
         selectedEngine = entry.getValue();
@@ -570,7 +548,7 @@ public class AutomatedUnpacker extends GhidraScript {
 
     // Fallback to generic engine if no specific match
     if (selectedEngine == null) {
-      selectedEngine = unpackingEngines.get("Generic");
+      selectedEngine = localUnpackingEngines.get("Generic");
       println("✓ Using generic unpacking engine");
     }
 
@@ -602,7 +580,7 @@ public class AutomatedUnpacker extends GhidraScript {
     // Phase 6: Advanced Memory Dumping
     println("\n[Phase 6] Advanced Memory Dumping...");
     try {
-      MemoryDumpResult dumpResult = memoryDumper.dumpMemoryRegions(currentEntryPoint, blocks);
+      MemoryDumpResult dumpResult = localMemoryDumper.dumpMemoryRegions(currentEntryPoint, blocks);
       if (dumpResult.success) {
         println("✓ Memory dump successful:");
         println("  Regions Dumped: " + dumpResult.regionsDumped);
@@ -627,7 +605,7 @@ public class AutomatedUnpacker extends GhidraScript {
     println("\n[Phase 7] Modern Import Address Table Reconstruction...");
     try {
       IATReconstructionResult iatResult =
-          iatReconstructor.reconstructImportTable(currentEntryPoint, blocks);
+          localIatReconstructor.reconstructImportTable(currentEntryPoint, blocks);
       if (iatResult.success) {
         println("✓ IAT Reconstruction successful:");
         println("  Total Functions: " + iatResult.totalFunctions);
@@ -658,14 +636,14 @@ public class AutomatedUnpacker extends GhidraScript {
     List<Address> additionalOEPs = new ArrayList<>();
     try {
       // Check if there are additional packer layers
-      for (UnpackingEngine engine : unpackingEngines.values()) {
+      for (UnpackingEngine engine : localUnpackingEngines.values()) {
         if (engine != selectedEngine) {
           List<Address> oepCandidates = engine.findOEPCandidates(currentEntryPoint);
           additionalOEPs.addAll(oepCandidates);
         }
       }
 
-      if (additionalOEPs.size() > 0) {
+      if (!additionalOEPs.isEmpty()) {
         println("✓ Additional OEP candidates found: " + additionalOEPs.size());
         for (Address oep : additionalOEPs.subList(0, Math.min(3, additionalOEPs.size()))) {
           println("  - " + oep);
@@ -1929,10 +1907,10 @@ public class AutomatedUnpacker extends GhidraScript {
 
   // Specialized Unpacking Engines
   private abstract class UnpackingEngine {
-    protected String name;
+    protected final String name;
     protected double confidenceScore;
     protected List<byte[][]> signatures;
-    protected Map<String, Object> analysisResults;
+    protected final Map<String, Object> analysisResults;
 
     public UnpackingEngine(String engineName) {
       this.name = engineName;
@@ -2217,7 +2195,7 @@ public class AutomatedUnpacker extends GhidraScript {
       return null;
     }
 
-    private byte[] extractAllocationData(Address allocation) throws Exception {
+    private byte[] extractAllocationData(Address allocation) {
       return new byte[0];
     }
 
@@ -2237,11 +2215,11 @@ public class AutomatedUnpacker extends GhidraScript {
       return false;
     }
 
-    private void patchTimingChecks(Address entryPoint) throws Exception {}
+    private void patchTimingChecks(Address entryPoint) {}
 
-    private void patchMemoryChecks(Address entryPoint) throws Exception {}
+    private void patchMemoryChecks(Address entryPoint) {}
 
-    private void patchPatternWithNops(Address entryPoint, byte[] pattern) throws Exception {}
+    private void patchPatternWithNops(Address entryPoint, byte[] pattern) {}
 
     private boolean isValidOEPCandidate(Address addr) {
       return true;
@@ -2377,9 +2355,7 @@ public class AutomatedUnpacker extends GhidraScript {
       for (Address routine : routines) {
         try {
           byte[] decryptedData = executeThemidaDecryption(routine);
-          if (decryptedData != null) {
             decrypted.put(routine, decryptedData);
-          }
         } catch (Exception e) {
           println("Section decryption failed at " + routine + ": " + e.getMessage());
         }
@@ -2421,7 +2397,7 @@ public class AutomatedUnpacker extends GhidraScript {
       return false;
     }
 
-    private byte[] executeThemidaDecryption(Address routine) throws Exception {
+    private byte[] executeThemidaDecryption(Address routine) {
       return new byte[0];
     }
 
@@ -2437,13 +2413,13 @@ public class AutomatedUnpacker extends GhidraScript {
       return new ArrayList<>();
     }
 
-    private void bypassThemidaAntiDebug(Address entryPoint) throws Exception {}
+    private void bypassThemidaAntiDebug(Address entryPoint) {}
 
-    private void bypassThemidaVMDetection(Address entryPoint) throws Exception {}
+    private void bypassThemidaVMDetection(Address entryPoint) {}
 
-    private void bypassThemidaCRC(Address entryPoint) throws Exception {}
+    private void bypassThemidaCRC(Address entryPoint) {}
 
-    private void bypassThemidaIntegrityChecks(Address entryPoint) throws Exception {}
+    private void bypassThemidaIntegrityChecks(Address entryPoint) {}
   }
 
   private class ObsidiumUnpacker extends UnpackingEngine {
@@ -2555,11 +2531,11 @@ public class AutomatedUnpacker extends GhidraScript {
       return null;
     }
 
-    private void bypassObsidiumAntiDebug(Address entryPoint) throws Exception {}
+    private void bypassObsidiumAntiDebug(Address entryPoint) {}
 
-    private void bypassObsidiumCRCChecks(Address entryPoint) throws Exception {}
+    private void bypassObsidiumCRCChecks(Address entryPoint) {}
 
-    private void bypassObsidiumVMChecks(Address entryPoint) throws Exception {}
+    private void bypassObsidiumVMChecks(Address entryPoint) {}
   }
 
   private class UPXUnpacker extends UnpackingEngine {
@@ -2891,15 +2867,12 @@ public class AutomatedUnpacker extends GhidraScript {
         memory.getBytes(entryPoint, entryBytes);
 
         // PECompact 2.x starts with specific pattern
-        if (entryBytes[0] == (byte) 0xB8
-            && // MOV EAX, imm32
-            entryBytes[5] == 0x50
-            && // PUSH EAX
-            entryBytes[6] == 0x64) { // FS: prefix
-          return true;
-        }
-
-        return false;
+          // FS: prefix
+          return entryBytes[0] == (byte) 0xB8
+              && // MOV EAX, imm32
+              entryBytes[5] == 0x50
+              && // PUSH EAX
+              entryBytes[6] == 0x64;
 
       } catch (Exception e) {
         return false;
@@ -3539,11 +3512,7 @@ public class AutomatedUnpacker extends GhidraScript {
         };
 
         Address vmHandler = memory.findBytes(entryPoint, vmHandlerPattern, null, true, monitor);
-        if (vmHandler != null) {
-          return true;
-        }
-
-        return false;
+          return vmHandler != null;
 
       } catch (Exception e) {
         return false;
@@ -3676,7 +3645,7 @@ public class AutomatedUnpacker extends GhidraScript {
     private boolean isValidVMInstruction(int instr) {
       // Check if instruction is valid VM opcode
       int opcode = instr & 0xFF;
-      return opcode >= 0 && opcode <= 0x7F; // VM opcodes typically in this range
+      return opcode <= 0x7F; // VM opcodes typically in this range
     }
 
     private Map<Integer, VMHandler> buildHandlerTable(Memory memory, Address dispatcher)
@@ -3709,19 +3678,14 @@ public class AutomatedUnpacker extends GhidraScript {
         String mnemonic = instr.getMnemonicString();
 
         // Map VM operations to x86
-        if (mnemonic.equals("MOV")) {
-          handler.operation = "VM_MOV";
-        } else if (mnemonic.equals("ADD")) {
-          handler.operation = "VM_ADD";
-        } else if (mnemonic.equals("XOR")) {
-          handler.operation = "VM_XOR";
-        } else if (mnemonic.equals("JMP")) {
-          handler.operation = "VM_JMP";
-        } else if (mnemonic.equals("CALL")) {
-          handler.operation = "VM_CALL";
-        } else {
-          handler.operation = "VM_UNKNOWN";
-        }
+          switch (mnemonic) {
+              case "MOV" -> handler.operation = "VM_MOV";
+              case "ADD" -> handler.operation = "VM_ADD";
+              case "XOR" -> handler.operation = "VM_XOR";
+              case "JMP" -> handler.operation = "VM_JMP";
+              case "CALL" -> handler.operation = "VM_CALL";
+              default -> handler.operation = "VM_UNKNOWN";
+          }
       }
 
       return handler;
@@ -3915,7 +3879,7 @@ public class AutomatedUnpacker extends GhidraScript {
     }
 
     // Helper classes for CodeVirtualizer
-    private final class VMArchitecture {
+    private static final class VMArchitecture {
       String type;
       int registerCount;
       int instructionSize;
@@ -3947,9 +3911,9 @@ public class AutomatedUnpacker extends GhidraScript {
     Map<String, Object> registers = new HashMap<>();
   }
 
-  private class UnpackingStrategy {
-    String strategyName;
-    List<String> applicableEngines;
+  private static class UnpackingStrategy {
+    final String strategyName;
+    final List<String> applicableEngines;
     int maxLayers;
     boolean useMLClassification;
     boolean performBehavioralAnalysis;
@@ -3960,11 +3924,11 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  private class PackerAnalysisResult {
-    String packerName;
+  private static class PackerAnalysisResult {
+    final String packerName;
     double confidence;
-    List<String> characteristics;
-    Map<String, Object> technicalDetails;
+    final List<String> characteristics;
+    final Map<String, Object> technicalDetails;
 
     public PackerAnalysisResult(String name) {
       this.packerName = name;
@@ -3975,10 +3939,10 @@ public class AutomatedUnpacker extends GhidraScript {
 
   private class BehavioralEvent {
     long timestamp;
-    String eventType;
-    Address location;
+    final String eventType;
+    final Address location;
     String description;
-    Map<String, Object> parameters;
+    final Map<String, Object> parameters;
 
     public BehavioralEvent(String type, Address addr, String desc) {
       this.timestamp = System.currentTimeMillis();
@@ -3990,14 +3954,14 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private class ComprehensiveReport {
-    Date analysisDate;
+    final Date analysisDate;
     String programName;
-    Map<String, PackerAnalysisResult> packerAnalysis;
-    List<UnpackingResult> unpackingResults;
-    List<Address> oepCandidates;
+    final Map<String, PackerAnalysisResult> packerAnalysis;
+    final List<UnpackingResult> unpackingResults;
+    final List<Address> oepCandidates;
     ImportTableInfo reconstructedImports;
-    List<BehavioralEvent> behavioralEvents;
-    Map<String, Double> confidenceMetrics;
+    final List<BehavioralEvent> behavioralEvents;
+    final Map<String, Double> confidenceMetrics;
 
     public ComprehensiveReport() {
       this.analysisDate = new Date();
@@ -4010,7 +3974,7 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   // Inner classes for legacy compatibility
-  private final class PackerCharacteristics {
+  private static final class PackerCharacteristics {
     String packerType = "Unknown";
     boolean usesVirtualAlloc = false;
     boolean usesVirtualProtect = false;
@@ -4023,11 +3987,10 @@ public class AutomatedUnpacker extends GhidraScript {
   // Advanced Analysis Components
   private class MachineLearningClassifier {
     private Map<String, Double> featureWeights;
-    private double threshold;
 
-    public MachineLearningClassifier() {
+      public MachineLearningClassifier() {
       initializeFeatureWeights();
-      this.threshold = ML_CONFIDENCE_THRESHOLD / 100.0;
+          double threshold = ML_CONFIDENCE_THRESHOLD / 100.0;
     }
 
     public PackerClassificationResult classifyPacker(Address entryPoint, MemoryBlock[] blocks) {
@@ -4416,7 +4379,6 @@ public class AutomatedUnpacker extends GhidraScript {
 
         // Check for Sleep/delay patterns (sandbox timeouts)
         Symbol[] sleepSymbols = currentProgram.getSymbolTable().getSymbols("Sleep");
-        if (sleepSymbols.length > 0) {
           // Check if Sleep is called with large values
           for (Symbol sleep : sleepSymbols) {
             ReferenceIterator refs =
@@ -4425,9 +4387,8 @@ public class AutomatedUnpacker extends GhidraScript {
               evasionCount++;
             }
           }
-        }
 
-        // Check for environment fingerprinting
+          // Check for environment fingerprinting
         String[] sandboxChecks = {
           "GetCursorPos", "GetUserName", "GetComputerName", "GetDiskFreeSpace", "GetSystemTime"
         };
@@ -4706,7 +4667,7 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  private final class PackerClassificationResult {
+  private static final class PackerClassificationResult {
     String predictedPacker;
     double confidence;
     Map<String, Double> features;
@@ -4714,8 +4675,8 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private class BehavioralAnalyzer {
-    private List<BehavioralEvent> events;
-    private Map<String, Integer> patternCounts;
+    private final List<BehavioralEvent> events;
+    private final Map<String, Integer> patternCounts;
 
     public BehavioralAnalyzer() {
       this.events = new ArrayList<>();
@@ -4885,7 +4846,7 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private class AntiUnpackingBypass {
-    private Map<String, List<Address>> detectedTechniques;
+    private final Map<String, List<Address>> detectedTechniques;
 
     public AntiUnpackingBypass() {
       this.detectedTechniques = new HashMap<>();
@@ -5318,9 +5279,9 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private class UnpackingLayer {
-    Address callSite;
-    Address stubAddress;
-    int layerNumber;
+    final Address callSite;
+    final Address stubAddress;
+    final int layerNumber;
 
     UnpackingLayer(Address call, Address stub, int number) {
       this.callSite = call;
@@ -5334,11 +5295,11 @@ public class AutomatedUnpacker extends GhidraScript {
     Date timestamp;
     long codeSize;
     long dataSize;
-    List<String> newSections = new ArrayList<>();
+    final List<String> newSections = new ArrayList<>();
   }
 
   private class ImportTableInfo {
-    Map<String, List<ImportedFunction>> imports = new HashMap<>();
+    final Map<String, List<ImportedFunction>> imports = new HashMap<>();
 
     void addImport(String dll, String function, Address address) {
       imports
@@ -5362,8 +5323,8 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private class ImportedFunction {
-    String name;
-    Address address;
+    final String name;
+    final Address address;
 
     ImportedFunction(String name, Address addr) {
       this.name = name;
@@ -5530,15 +5491,13 @@ public class AutomatedUnpacker extends GhidraScript {
     while (dataTypeIter.hasNext()) {
       DataType dataType = dataTypeIter.next();
 
-      if (dataType instanceof Structure) {
-        Structure struct = (Structure) dataType;
-        if (isPotentiallyPacked(struct)) {
+      if (dataType instanceof Structure struct) {
+          if (isPotentiallyPacked(struct)) {
           packerStructures.add(struct);
           structCount++;
         }
-      } else if (dataType instanceof Enum) {
-        Enum enumType = (Enum) dataType;
-        if (containsPackerIndicators(enumType)) {
+      } else if (dataType instanceof Enum enumType) {
+          if (containsPackerIndicators(enumType)) {
           packerEnums.add(enumType);
           enumCount++;
         }
@@ -5607,10 +5566,9 @@ public class AutomatedUnpacker extends GhidraScript {
           PcodeOp[] pcodeOps = inst.getPcode();
 
           for (PcodeOp pcodeOp : pcodeOps) {
-            if (pcodeOp instanceof PcodeOpAST) {
-              PcodeOpAST astOp = (PcodeOpAST) pcodeOp;
+            if (pcodeOp instanceof PcodeOpAST astOp) {
 
-              // Create basic block for pcode analysis
+                // Create basic block for pcode analysis
               PcodeBlockBasic basicBlock =
                   new PcodeBlockBasic() {
                     private Iterator<PcodeOpAST> opIterator;
@@ -5674,41 +5632,24 @@ public class AutomatedUnpacker extends GhidraScript {
     println("  ✓ P-code analysis initialized for " + pcodeBlocks.size() + " code units");
   }
 
-  // Helper class to implement AddressRange interface
-  private static class AddressRangeImpl implements AddressRange {
-    private final Address minAddress;
-    private final Address maxAddress;
+    // Helper class to implement AddressRange interface
+    private record AddressRangeImpl(Address minAddress, Address maxAddress) implements AddressRange {
 
-    public AddressRangeImpl(Address min, Address max) {
-      this.minAddress = min;
-      this.maxAddress = max;
-    }
+        @Override
+        public boolean contains(Address addr) {
+            return addr.compareTo(minAddress) >= 0 && addr.compareTo(maxAddress) <= 0;
+        }
 
-    @Override
-    public Address getMinAddress() {
-      return minAddress;
-    }
+        @Override
+        public long getLength() {
+            return maxAddress.subtract(minAddress) + 1;
+        }
 
-    @Override
-    public Address getMaxAddress() {
-      return maxAddress;
+        @Override
+        public String toString() {
+            return "[" + minAddress + ", " + maxAddress + "]";
+        }
     }
-
-    @Override
-    public boolean contains(Address addr) {
-      return addr.compareTo(minAddress) >= 0 && addr.compareTo(maxAddress) <= 0;
-    }
-
-    @Override
-    public long getLength() {
-      return maxAddress.subtract(minAddress) + 1;
-    }
-
-    @Override
-    public String toString() {
-      return "[" + minAddress + ", " + maxAddress + "]";
-    }
-  }
 
   private void cleanupAnalysisResources() throws IOException {
     // Close file resources
@@ -5954,7 +5895,7 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   // Machine Learning Classifier for packer identification
-  private class MachineLearningClassifier {
+  private static class MachineLearningClassifier {
     private Map<String, Double> featureWeights;
     private Map<String, Double[]> packerProfiles;
 
@@ -6068,9 +6009,9 @@ public class AutomatedUnpacker extends GhidraScript {
 
   // Behavioral Analyzer for runtime analysis
   private class BehavioralAnalyzer {
-    private List<BehavioralEvent> events;
-    private Map<String, Integer> apiCallFrequency;
-    private Set<Address> modifiedMemoryRegions;
+    private final List<BehavioralEvent> events;
+    private final Map<String, Integer> apiCallFrequency;
+    private final Set<Address> modifiedMemoryRegions;
 
     public BehavioralAnalyzer() {
       this.events = new ArrayList<>();
@@ -6165,8 +6106,8 @@ public class AutomatedUnpacker extends GhidraScript {
 
   // Anti-Unpacking Bypass component
   private class AntiUnpackingBypass {
-    private Map<String, byte[]> antiDebugPatches;
-    private List<Address> patchedLocations;
+    private final Map<String, byte[]> antiDebugPatches;
+    private final List<Address> patchedLocations;
 
     public AntiUnpackingBypass() {
       this.antiDebugPatches = new HashMap<>();
@@ -6285,8 +6226,8 @@ public class AutomatedUnpacker extends GhidraScript {
 
   // Advanced Memory Dumper
   private class AdvancedMemoryDumper {
-    private Map<Address, byte[]> memorySnapshots;
-    private List<MemoryRegion> dumpedRegions;
+    private final Map<Address, byte[]> memorySnapshots;
+    private final List<MemoryRegion> dumpedRegions;
 
     public AdvancedMemoryDumper() {
       this.memorySnapshots = new HashMap<>();
@@ -6390,10 +6331,10 @@ public class AutomatedUnpacker extends GhidraScript {
 
   // Import Table Info structure
   private class ImportTableInfo {
-    List<ImportedDLL> dlls;
+    final List<ImportedDLL> dlls;
     int totalImports;
-    boolean isReconstructed;
-    double reconstructionConfidence;
+    final boolean isReconstructed;
+    final double reconstructionConfidence;
 
     public ImportTableInfo() {
       this.dlls = new ArrayList<>();
@@ -6418,12 +6359,12 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   // Packer Classification result
-  private class PackerClassification {
+  private static class PackerClassification {
     String primaryPacker;
     double primaryConfidence;
     String secondaryPacker;
     double secondaryConfidence;
-    List<String> characteristics;
+    final List<String> characteristics;
 
     public PackerClassification() {
       this.characteristics = new ArrayList<>();
@@ -6431,7 +6372,7 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   // Behavioral Profile
-  private final class BehavioralProfile {
+  private static final class BehavioralProfile {
     int suspiciousApiCount;
     int memoryAllocationCount;
     int protectionChangeCount;
@@ -6566,7 +6507,7 @@ public class AutomatedUnpacker extends GhidraScript {
               section.parse(sectionBytes);
 
               String sectionName = section.getName().trim();
-              if (sectionName.length() > 0) {
+              if (!sectionName.isEmpty()) {
                 println("        Section " + i + ": " + sectionName);
                 println(
                     "          Virtual Address: 0x"
@@ -6731,7 +6672,7 @@ public class AutomatedUnpacker extends GhidraScript {
       configJson.append("  \"unpacker_version\": \"3.0.0\",\n");
       configJson
           .append("  \"analysis_timestamp\": \"")
-          .append(new java.util.Date().toString())
+          .append(new java.util.Date())
           .append("\",\n");
       configJson
           .append("  \"target_program\": \"")
@@ -7062,9 +7003,8 @@ public class AutomatedUnpacker extends GhidraScript {
 
       for (String structName : commonPackerStructures) {
         DataType dt = dtm.getDataType(structName);
-        if (dt instanceof Structure) {
-          Structure struct = (Structure) dt;
-          packerStructures.add(struct);
+        if (dt instanceof Structure struct) {
+            packerStructures.add(struct);
 
           // Analyze structure complexity and obfuscation indicators
           analyzeStructureComplexity(struct);
@@ -7085,9 +7025,8 @@ public class AutomatedUnpacker extends GhidraScript {
           Address addr = symbol.getAddress();
           DataType dt = currentProgram.getListing().getDataAt(addr).getDataType();
 
-          if (dt instanceof Structure && !packerStructures.contains(dt)) {
-            Structure packerStruct = (Structure) dt;
-            packerStructures.add(packerStruct);
+          if (dt instanceof Structure packerStruct && !packerStructures.contains(dt)) {
+              packerStructures.add(packerStruct);
             analyzeStructureComplexity(packerStruct);
           }
         }
@@ -7135,7 +7074,7 @@ public class AutomatedUnpacker extends GhidraScript {
       }
 
       // Store analysis results for ML classification
-      if (hasObfuscatedNames || hasSuspiciousAlignment || hasUnusualSizing) {
+      if (hasObfuscatedNames || hasUnusualSizing) {
         mlFeatureVector.put(
             "obfuscated_structures",
             mlFeatureVector.getOrDefault("obfuscated_structures", 0.0) + 1.0);
@@ -7493,16 +7432,14 @@ public class AutomatedUnpacker extends GhidraScript {
       String mnemonic = inst.getMnemonicString().toLowerCase();
 
       // Count different types of register operations
-      if (mnemonic.equals("mov")) {
-        mlFeatureVector.put(
-            "mov_instructions", mlFeatureVector.getOrDefault("mov_instructions", 0.0) + 1.0);
-      } else if (mnemonic.equals("push") || mnemonic.equals("pop")) {
-        mlFeatureVector.put(
-            "stack_operations", mlFeatureVector.getOrDefault("stack_operations", 0.0) + 1.0);
-      } else if (mnemonic.equals("call") || mnemonic.equals("ret")) {
-        mlFeatureVector.put(
-            "control_transfer", mlFeatureVector.getOrDefault("control_transfer", 0.0) + 1.0);
-      }
+        switch (mnemonic) {
+            case "mov" -> mlFeatureVector.put(
+                "mov_instructions", mlFeatureVector.getOrDefault("mov_instructions", 0.0) + 1.0);
+            case "push", "pop" -> mlFeatureVector.put(
+                "stack_operations", mlFeatureVector.getOrDefault("stack_operations", 0.0) + 1.0);
+            case "call", "ret" -> mlFeatureVector.put(
+                "control_transfer", mlFeatureVector.getOrDefault("control_transfer", 0.0) + 1.0);
+        }
 
       // Analyze operand types for advanced pattern recognition
       int numOperands = inst.getNumOperands();
@@ -7573,9 +7510,8 @@ public class AutomatedUnpacker extends GhidraScript {
 
       for (String enumName : commonPackerEnums) {
         DataType dt = dtm.getDataType(enumName);
-        if (dt instanceof Enum) {
-          Enum enumType = (Enum) dt;
-          packerEnums.add(enumType);
+        if (dt instanceof Enum enumType) {
+            packerEnums.add(enumType);
           analyzePackerEnum(enumType);
         }
       }

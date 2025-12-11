@@ -1111,11 +1111,9 @@ const modularHookLibrary = {
         }
 
         // Hooks should be object
-        if (module.hooks && typeof module.hooks !== 'object') {
-            return false;
-        }
+        return !(module.hooks && typeof module.hooks !== 'object');
 
-        return true;
+
     },
 
     loadModule: function (moduleId, options) {
@@ -1141,15 +1139,15 @@ const modularHookLibrary = {
             }
 
             // Get module definition
-            var moduleDefinition = this.moduleRegistry.get(moduleId);
-            if (!moduleDefinition) {
-                throw new Error('Module not found: ' + moduleId);
+          const moduleDefinition = this.moduleRegistry.get(moduleId);
+          if (!moduleDefinition) {
+                throw new Error(`Module not found: ${moduleId}`);
             }
 
             // Check cache first
             if (this.config.library.enableCaching && this.moduleCache.has(moduleId)) {
-                var cachedModule = this.moduleCache.get(moduleId);
-                this.loadedModules.set(moduleId, cachedModule);
+              const cachedModule = this.moduleCache.get(moduleId);
+              this.loadedModules.set(moduleId, cachedModule);
                 this.stats.cacheHits++;
                 send({
                     type: 'info',
@@ -1164,20 +1162,20 @@ const modularHookLibrary = {
 
             // Load dependencies first
             if (moduleDefinition.dependencies && moduleDefinition.dependencies.length > 0) {
-                for (var i = 0; i < moduleDefinition.dependencies.length; i++) {
-                    var depId = moduleDefinition.dependencies[i];
-                    this.loadModule(depId);
+                for (let i = 0; i < moduleDefinition.dependencies.length; i++) {
+                  const depId = moduleDefinition.dependencies[i];
+                  this.loadModule(depId);
                 }
             }
 
             // Create module instance
-            var moduleInstance = this.createModuleInstance(moduleDefinition, options);
+          const moduleInstance = this.createModuleInstance(moduleDefinition, options);
 
-            // Install the module
+          // Install the module
             if (moduleInstance.install) {
-                var installResult = moduleInstance.install();
-                if (!installResult) {
-                    throw new Error('Module installation failed: ' + moduleId);
+              const installResult = moduleInstance.install();
+              if (!installResult) {
+                    throw new Error(`Module installation failed: ${moduleId}`);
                 }
             }
 
@@ -1210,55 +1208,39 @@ const modularHookLibrary = {
         }
     },
 
-    createModuleInstance: function (moduleDefinition, options) {
-        var instance = {
-            id: moduleDefinition.id,
-            name: moduleDefinition.name,
-            version: moduleDefinition.version,
-            category: moduleDefinition.category,
-            dependencies: moduleDefinition.dependencies || [],
-            hooks: moduleDefinition.hooks || {},
-            status: 'loaded',
-            loadedAt: Date.now(),
-            options: options,
+    createModuleInstance: (moduleDefinition, options) => {
+      const instance = {
+        id: moduleDefinition.id,
+        name: moduleDefinition.name,
+        version: moduleDefinition.version,
+        category: moduleDefinition.category,
+        dependencies: moduleDefinition.dependencies || [],
+        hooks: moduleDefinition.hooks || {},
+        status: 'loaded',
+        loadedAt: Date.now(),
+        options: options,
 
-            // Copy methods from definition
-            install:
-                moduleDefinition.install ||
-                function () {
-                    return true;
-                },
-            uninstall:
-                moduleDefinition.uninstall ||
-                function () {
-                    return true;
-                },
-            enable:
-                moduleDefinition.enable ||
-                function () {
-                    return true;
-                },
-            disable:
-                moduleDefinition.disable ||
-                function () {
-                    return true;
-                },
+        // Copy methods from definition
+        install: moduleDefinition.install || (() => true),
+        uninstall: moduleDefinition.uninstall || (() => true),
+        enable: moduleDefinition.enable || (() => true),
+        disable: moduleDefinition.disable || (() => true),
 
-            // Add management methods
-            getHooks: function () {
-                return Object.keys(this.hooks);
-            },
+        // Add management methods
+        getHooks: function () {
+          return Object.keys(this.hooks);
+        },
 
-            isInstalled: function () {
-                return this.status === 'installed';
-            },
+        isInstalled: function () {
+          return this.status === 'installed';
+        },
 
-            isEnabled: function () {
-                return this.status === 'enabled';
-            },
-        };
+        isEnabled: function () {
+          return this.status === 'enabled';
+        },
+      };
 
-        return instance;
+      return instance;
     },
 
     unloadModule: function (moduleId) {
@@ -1270,8 +1252,8 @@ const modularHookLibrary = {
         });
 
         try {
-            var moduleInstance = this.loadedModules.get(moduleId);
-            if (!moduleInstance) {
+          const moduleInstance = this.loadedModules.get(moduleId);
+          if (!moduleInstance) {
                 send({
                     type: 'warning',
                     target: 'hook_library',
@@ -1327,8 +1309,8 @@ const modularHookLibrary = {
     cacheModule: function (moduleId, moduleInstance) {
         if (this.moduleCache.size >= this.config.library.maxCacheSize) {
             // Remove oldest entry
-            var oldestKey = this.moduleCache.keys().next().value;
-            this.moduleCache.delete(oldestKey);
+          const oldestKey = this.moduleCache.keys().next().value;
+          this.moduleCache.delete(oldestKey);
         }
 
         this.moduleCache.set(moduleId, moduleInstance);
@@ -1344,20 +1326,20 @@ const modularHookLibrary = {
         });
 
         try {
-            var hookInfo = {
-                id: hookId,
-                definition: hookDefinition,
-                moduleId: moduleId,
-                installedAt: Date.now(),
-                status: 'installed',
-                callCount: 0,
-                successCount: 0,
-                errorCount: 0,
-            };
+          const hookInfo = {
+            id: hookId,
+            definition: hookDefinition,
+            moduleId: moduleId,
+            installedAt: Date.now(),
+            status: 'installed',
+            callCount: 0,
+            successCount: 0,
+            errorCount: 0,
+          };
 
-            // Install the actual Frida hook based on strategy
-            var fridaHook = this.createFridaHook(hookDefinition);
-            if (fridaHook) {
+          // Install the actual Frida hook based on strategy
+          const fridaHook = this.createFridaHook(hookDefinition);
+          if (fridaHook) {
                 hookInfo.fridaHook = fridaHook;
                 this.activeHooks.set(hookId, hookInfo);
                 this.stats.hooksInstalled++;
@@ -1386,10 +1368,10 @@ const modularHookLibrary = {
     },
 
     createFridaHook: function (hookDefinition) {
-        var strategy = hookDefinition.strategy;
-        var target = hookDefinition.target || hookDefinition.module;
+      const strategy = hookDefinition.strategy;
+      const target = hookDefinition.target || hookDefinition.module;
 
-        if (!target) {
+      if (!target) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -1436,9 +1418,9 @@ const modularHookLibrary = {
         }
     },
 
-    createReplaceReturnHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
-        if (!targetFunc) {
+    createReplaceReturnHook: hookDefinition => {
+      const targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
+      if (!targetFunc) {
             send({
                 type: 'warning',
                 target: 'hook_library',
@@ -1451,7 +1433,7 @@ const modularHookLibrary = {
         return Interceptor.replace(
             targetFunc,
             new NativeCallback(
-                function () {
+                () => {
                     send({
                         type: 'info',
                         target: 'hook_library',
@@ -1466,9 +1448,9 @@ const modularHookLibrary = {
         );
     },
 
-    createInterceptModifyHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
-        if (!targetFunc) {
+    createInterceptModifyHook: hookDefinition => {
+      const targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
+      if (!targetFunc) {
             return null;
         }
 
@@ -1492,16 +1474,16 @@ const modularHookLibrary = {
         });
     },
 
-    createMonitorLogHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
-        if (!targetFunc) {
+    createMonitorLogHook: hookDefinition => {
+      const targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
+      if (!targetFunc) {
             return null;
         }
 
         return Interceptor.attach(targetFunc, {
-            onEnter: function (args) {
-                var argValues = [];
-                for (var i = 0; i < Math.min(args.length || 4, 4); i++) {
+            onEnter: args => {
+              const argValues = [];
+              for (let i = 0; i < Math.min(args.length || 4, 4); i++) {
                     try {
                         argValues.push(args[i].toString());
                     } catch (_e) {
@@ -1519,17 +1501,17 @@ const modularHookLibrary = {
         });
     },
 
-    createSpoofValuesHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
-        if (!targetFunc) {
+    createSpoofValuesHook: hookDefinition => {
+      const targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
+      if (!targetFunc) {
             return null;
         }
 
         return Interceptor.attach(targetFunc, {
-            onLeave: function (retval) {
+            onLeave: retval => {
                 if (hookDefinition.spoofedValues) {
-                    var originalValue = retval.toString();
-                    if (hookDefinition.spoofedValue !== undefined) {
+                  const originalValue = retval.toString();
+                  if (hookDefinition.spoofedValue !== undefined) {
                         retval.replace(hookDefinition.spoofedValue);
                     }
                     send({
@@ -1545,14 +1527,14 @@ const modularHookLibrary = {
         });
     },
 
-    createBlockRequestsHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
-        if (!targetFunc) {
+    createBlockRequestsHook: hookDefinition => {
+      const targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
+      if (!targetFunc) {
             return null;
         }
 
         return Interceptor.attach(targetFunc, {
-            onLeave: function (retval) {
+            onLeave: retval => {
                 retval.replace(-1); // Block by returning error
                 send({
                     type: 'bypass',
@@ -1572,8 +1554,8 @@ const modularHookLibrary = {
             hook_id: hookId,
         });
 
-        var hookInfo = this.activeHooks.get(hookId);
-        if (!hookInfo) {
+      const hookInfo = this.activeHooks.get(hookId);
+      if (!hookInfo) {
             send({
                 type: 'warning',
                 target: 'hook_library',
@@ -1618,15 +1600,15 @@ const modularHookLibrary = {
             group_id: groupId,
         });
 
-        var group = {
-            id: groupId,
-            hooks: hookIds,
-            options: options || {},
-            createdAt: Date.now(),
-            status: 'created',
-        };
+      const group = {
+        id: groupId,
+        hooks: hookIds,
+        options: options || {},
+        createdAt: Date.now(),
+        status: 'created',
+      };
 
-        this.hookGroups.set(groupId, group);
+      this.hookGroups.set(groupId, group);
         return group;
     },
 
@@ -1638,8 +1620,8 @@ const modularHookLibrary = {
             group_id: groupId,
         });
 
-        var group = this.hookGroups.get(groupId);
-        if (!group) {
+      const group = this.hookGroups.get(groupId);
+      if (!group) {
             send({
                 type: 'warning',
                 target: 'hook_library',
@@ -1649,12 +1631,12 @@ const modularHookLibrary = {
             return false;
         }
 
-        var results = [];
-        for (var i = 0; i < group.hooks.length; i++) {
-            var hookId = group.hooks[i];
-            var hookInfo = this.activeHooks.get(hookId);
+      const results = [];
+      for (let i = 0; i < group.hooks.length; i++) {
+          const hookId = group.hooks[i];
+          const hookInfo = this.activeHooks.get(hookId);
 
-            if (hookInfo) {
+          if (hookInfo) {
                 results.push({ hookId: hookId, status: 'executed' });
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
@@ -1674,15 +1656,15 @@ const modularHookLibrary = {
             chain_id: chainId,
         });
 
-        var chain = {
-            id: chainId,
-            hooks: hookIds,
-            options: options || {},
-            createdAt: Date.now(),
-            status: 'created',
-        };
+      const chain = {
+        id: chainId,
+        hooks: hookIds,
+        options: options || {},
+        createdAt: Date.now(),
+        status: 'created',
+      };
 
-        this.hookChains.set(chainId, chain);
+      this.hookChains.set(chainId, chain);
         return chain;
     },
 
@@ -1694,8 +1676,8 @@ const modularHookLibrary = {
             chain_id: chainId,
         });
 
-        var chain = this.hookChains.get(chainId);
-        if (!chain) {
+      const chain = this.hookChains.get(chainId);
+      if (!chain) {
             send({
                 type: 'warning',
                 target: 'hook_library',
@@ -1706,14 +1688,14 @@ const modularHookLibrary = {
         }
 
         // Execute hooks in sequence with dependency checking
-        var results = [];
-        for (var i = 0; i < chain.hooks.length; i++) {
-            var hookId = chain.hooks[i];
-            var hookInfo = this.activeHooks.get(hookId);
+      const results = [];
+      for (let i = 0; i < chain.hooks.length; i++) {
+          const hookId = chain.hooks[i];
+          const hookInfo = this.activeHooks.get(hookId);
 
-            if (hookInfo) {
+          if (hookInfo) {
                 // Check if previous hooks succeeded (if required)
-                if (chain.options.stopOnFailure && results.some((r) => r.status === 'failed')) {
+                if (chain.options.stopOnFailure && results.some(r => r.status === 'failed')) {
                     results.push({ hookId: hookId, status: 'skipped' });
                     continue;
                 }
@@ -1771,10 +1753,10 @@ const modularHookLibrary = {
     },
 
     detectCircularDependencies: function () {
-        var visited = new Set();
-        var recursionStack = new Set();
+      const visited = new Set();
+      const recursionStack = new Set();
 
-        for (var moduleId of this.dependencyGraph.keys()) {
+      for (let moduleId of this.dependencyGraph.keys()) {
             if (this.hasCycle(moduleId, visited, recursionStack)) {
                 return true;
             }
@@ -1795,10 +1777,10 @@ const modularHookLibrary = {
         visited.add(moduleId);
         recursionStack.add(moduleId);
 
-        var dependencies = this.dependencyGraph.get(moduleId) || [];
-        for (var i = 0; i < dependencies.length; i++) {
-            var dep = dependencies[i];
-            if (this.hasCycle(dep, visited, recursionStack)) {
+      const dependencies = this.dependencyGraph.get(moduleId) || [];
+      for (let i = 0; i < dependencies.length; i++) {
+          const dep = dependencies[i];
+          if (this.hasCycle(dep, visited, recursionStack)) {
                 return true;
             }
         }
@@ -1808,15 +1790,15 @@ const modularHookLibrary = {
     },
 
     resolveDependencies: function (moduleId) {
-        var resolved = [];
-        var resolving = new Set();
+      const resolved = [];
+      const resolving = new Set();
 
-        return this.resolveDependenciesRecursive(moduleId, resolved, resolving);
+      return this.resolveDependenciesRecursive(moduleId, resolved, resolving);
     },
 
     resolveDependenciesRecursive: function (moduleId, resolved, resolving) {
         if (resolving.has(moduleId)) {
-            throw new Error('Circular dependency detected: ' + moduleId);
+            throw new Error(`Circular dependency detected: ${moduleId}`);
         }
 
         if (resolved.indexOf(moduleId) !== -1) {
@@ -1825,11 +1807,11 @@ const modularHookLibrary = {
 
         resolving.add(moduleId);
 
-        var module = this.moduleRegistry.get(moduleId);
-        if (module && module.dependencies) {
-            for (var i = 0; i < module.dependencies.length; i++) {
-                var dep = module.dependencies[i];
-                this.resolveDependenciesRecursive(dep, resolved, resolving);
+      const module = this.moduleRegistry.get(moduleId);
+      if (module?.dependencies) {
+            for (let i = 0; i < module.dependencies.length; i++) {
+              const dep = module.dependencies[i];
+              this.resolveDependenciesRecursive(dep, resolved, resolving);
             }
         }
 
@@ -1874,10 +1856,10 @@ const modularHookLibrary = {
     },
 
     updatePerformanceMetrics: function () {
-        var totalTime = 0;
-        var totalExecutions = 0;
+      const totalTime = 0;
+      let totalExecutions = 0;
 
-        this.activeHooks.forEach((hookInfo) => {
+      this.activeHooks.forEach(hookInfo => {
             totalExecutions += hookInfo.callCount;
             // totalTime would be calculated from actual hook execution times
         });
@@ -1924,24 +1906,24 @@ const modularHookLibrary = {
         });
 
         // Load essential modules
-        var essentialModules = [
-            'antidebug.basic',
-            'networking.http',
-            'crypto.base',
-            'hardware.base',
-            'memory.base',
-            'registry.access',
-        ];
+      const essentialModules = [
+        'antidebug.basic',
+        'networking.http',
+        'crypto.base',
+        'hardware.base',
+        'memory.base',
+        'registry.access',
+      ];
 
-        for (var i = 0; i < essentialModules.length; i++) {
-            var moduleId = essentialModules[i];
-            if (this.moduleRegistry.has(moduleId)) {
+      for (let i = 0; i < essentialModules.length; i++) {
+          const moduleId = essentialModules[i];
+          if (this.moduleRegistry.has(moduleId)) {
                 this.loadModule(moduleId);
             }
         }
     },
 
-    startConflictDetection: function () {
+    startConflictDetection: () => {
         send({
             type: 'info',
             target: 'conflict_detection',
@@ -1999,8 +1981,8 @@ const modularHookLibrary = {
     },
 
     getModulesByCategory: function (category) {
-        var modules = [];
-        this.moduleRegistry.forEach((module, moduleId) => {
+      const modules = [];
+      this.moduleRegistry.forEach((module, moduleId) => {
             if (module.category === category) {
                 modules.push(moduleId);
             }
@@ -2022,9 +2004,9 @@ const modularHookLibrary = {
                 section: 'header',
             });
 
-            var activeFeatures = [];
+          const activeFeatures = [];
 
-            if (this.config.library.enabled) {
+          if (this.config.library.enabled) {
                 activeFeatures.push('Core Library System');
             }
             if (this.config.library.enableCaching) {
@@ -2059,12 +2041,12 @@ const modularHookLibrary = {
                 section: 'categories',
             });
 
-            var categories = Object.keys(this.config.categories);
-            for (var i = 0; i < categories.length; i++) {
+          const categories = Object.keys(this.config.categories);
+          for (var i = 0; i < categories.length; i++) {
                 var category = categories[i];
                 if (this.config.categories[category]) {
-                    var moduleCount = this.getModulesByCategory(category).length;
-                    send({
+                  const moduleCount = this.getModulesByCategory(category).length;
+                  send({
                         type: 'info',
                         target: 'hook_library',
                         action: 'category_module_count',
@@ -2158,7 +2140,7 @@ const modularHookLibrary = {
                 target: 'modular_hook_library',
                 action: 'config_setting',
                 setting: 'timeout',
-                value: this.config.execution.timeout + 'ms',
+                value: `${this.config.execution.timeout}ms`,
             });
 
             send({
@@ -2212,10 +2194,10 @@ const modularHookLibrary = {
                 action: 'runtime_statistic',
                 metric: 'cache_hit_rate',
                 value:
-                    (
+                    `${(
                         (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
                         100
-                    ).toFixed(1) + '%',
+                    ).toFixed(1)}%`,
             });
 
             send({
@@ -2229,8 +2211,8 @@ const modularHookLibrary = {
                 action: 'available_modules_header',
             });
 
-            var modulesByCategory = {};
-            this.moduleRegistry.forEach((module, moduleId) => {
+          const modulesByCategory = {};
+          this.moduleRegistry.forEach((module, moduleId) => {
                 if (!modulesByCategory[module.category]) {
                     modulesByCategory[module.category] = [];
                 }
@@ -2244,12 +2226,12 @@ const modularHookLibrary = {
                     action: 'module_category',
                     category: category,
                 });
-                var modules = modulesByCategory[category];
-                for (var i = 0; i < modules.length; i++) {
+              const modules = modulesByCategory[category];
+              for (var i = 0; i < modules.length; i++) {
                     var moduleId = modules[i];
-                    var isLoaded = this.loadedModules.has(moduleId);
-                    var status = isLoaded ? 'loaded' : 'available';
-                    send({
+                  const isLoaded = this.loadedModules.has(moduleId);
+                  const status = isLoaded ? 'loaded' : 'available';
+                  send({
                         type: 'info',
                         target: 'modular_hook_library',
                         action: 'module_status',
@@ -2279,17 +2261,16 @@ const modularHookLibrary = {
 
     // === ENHANCEMENT FUNCTIONS (2025) - BATCH 1 - PRODUCTION-READY ===
     initializeAdvancedModularOrchestration: function () {
-        var _self = this; // Reserved for closures
-        var orchestrator = {
-            interceptorBatch: null,
-            activeInterceptors: new Map(),
-            threadHookMap: new Map(),
-            moduleLoadCallbacks: [],
-            hookTransactions: new Map(),
-            performanceMetrics: new Map(),
-        };
+      const orchestrator = {
+        interceptorBatch: null,
+        activeInterceptors: new Map(),
+        threadHookMap: new Map(),
+        moduleLoadCallbacks: [],
+        hookTransactions: new Map(),
+        performanceMetrics: new Map(),
+      };
 
-        // Real batch hook management with Interceptor API
+      // Real batch hook management with Interceptor API
         orchestrator.beginHookTransaction = function (transactionId) {
             Interceptor.beginBatch();
             this.interceptorBatch = transactionId;
@@ -2301,8 +2282,8 @@ const modularHookLibrary = {
         };
 
         orchestrator.commitHookTransaction = function (transactionId) {
-            var transaction = this.hookTransactions.get(transactionId);
-            if (transaction && transaction.status === 'active') {
+          const transaction = this.hookTransactions.get(transactionId);
+          if (transaction && transaction.status === 'active') {
                 try {
                     Interceptor.endBatch();
                     transaction.status = 'committed';
@@ -2325,9 +2306,9 @@ const modularHookLibrary = {
         };
 
         orchestrator.rollbackHookTransaction = function (transactionId) {
-            var transaction = this.hookTransactions.get(transactionId);
-            if (transaction) {
-                transaction.hooks.forEach(function (hook) {
+          const transaction = this.hookTransactions.get(transactionId);
+          if (transaction) {
+                transaction.hooks.forEach(hook => {
                     if (hook.interceptor) {
                         hook.interceptor.detach();
                     }
@@ -2339,20 +2320,24 @@ const modularHookLibrary = {
 
         // Thread-aware hook distribution
         orchestrator.attachToThread = function (tid, target, callbacks) {
-            var interceptor = Interceptor.attach(target, {
-                onEnter: function (args) {
-                    if (this.threadId === tid || tid === 0) {
-                        if (callbacks.onEnter) callbacks.onEnter.call(this, args);
-                    }
-                },
-                onLeave: function (retval) {
-                    if (this.threadId === tid || tid === 0) {
-                        if (callbacks.onLeave) callbacks.onLeave.call(this, retval);
-                    }
-                },
-            });
+          const interceptor = Interceptor.attach(target, {
+            onEnter: function (args) {
+              if (this.threadId === tid || tid === 0) {
+                if (callbacks.onEnter) {
+                  callbacks.onEnter.call(this, args);
+                }
+              }
+            },
+            onLeave: function (retval) {
+              if (this.threadId === tid || tid === 0) {
+                if (callbacks.onLeave) {
+                  callbacks.onLeave.call(this, retval);
+                }
+              }
+            },
+          });
 
-            if (!this.threadHookMap.has(tid)) {
+          if (!this.threadHookMap.has(tid)) {
                 this.threadHookMap.set(tid, []);
             }
             this.threadHookMap.get(tid).push(interceptor);
@@ -2360,9 +2345,8 @@ const modularHookLibrary = {
         };
 
         // Module load monitoring for dynamic hook installation
-        orchestrator.monitorModuleLoads = function () {
-            var _self = this; // Reserved for closures
-            Process.enumerateModules().forEach(function (module) {
+        orchestrator.monitorModuleLoads = () => {
+            Process.enumerateModules().forEach(module => {
                 self.performanceMetrics.set(module.name, {
                     base: module.base,
                     size: module.size,
@@ -2387,8 +2371,8 @@ const modularHookLibrary = {
             });
 
             // Windows module monitoring
-            var loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
-            if (loadLibrary) {
+          const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
+          if (loadLibrary) {
                 Interceptor.attach(loadLibrary, {
                     onEnter: function (args) {
                         this.libName = args[0].readUtf16String();
@@ -2405,13 +2389,13 @@ const modularHookLibrary = {
         };
 
         // Performance tracking for hooks
-        orchestrator.measureHookPerformance = function (hookId, callback) {
-            return function () {
-                var start = Date.now();
-                var result = callback.apply(this, arguments);
-                var duration = Date.now() - start;
+        orchestrator.measureHookPerformance = (hookId, callback) =>
+            function () {
+              const start = Date.now();
+              const result = callback.apply(this, arguments);
+              const duration = Date.now() - start;
 
-                if (!self.moduleOrchestrator.performanceMetrics.has(hookId)) {
+              if (!self.moduleOrchestrator.performanceMetrics.has(hookId)) {
                     self.moduleOrchestrator.performanceMetrics.set(hookId, {
                         count: 0,
                         totalTime: 0,
@@ -2420,124 +2404,124 @@ const modularHookLibrary = {
                     });
                 }
 
-                var metrics = self.moduleOrchestrator.performanceMetrics.get(hookId);
-                metrics.count++;
+              const metrics = self.moduleOrchestrator.performanceMetrics.get(hookId);
+              metrics.count++;
                 metrics.totalTime += duration;
                 metrics.avgTime = metrics.totalTime / metrics.count;
                 metrics.maxTime = Math.max(metrics.maxTime, duration);
 
                 return result;
             };
-        };
 
         this.moduleOrchestrator = orchestrator;
         orchestrator.monitorModuleLoads();
     },
 
     setupIntelligentHookComposition: function () {
-        var _self = this; // Reserved for closures
-        var composer = {
-            compositions: new Map(),
-            chainedHooks: new Map(),
-            sharedContexts: new Map(),
-            hookDependencies: new Map(),
-        };
+      const composer = {
+        compositions: new Map(),
+        chainedHooks: new Map(),
+        sharedContexts: new Map(),
+        hookDependencies: new Map(),
+      };
 
-        // Create real hook chains with shared context
+      // Create real hook chains with shared context
         composer.createHookChain = function (chainId, hookConfigs) {
-            var sharedContext = {
-                chainId: chainId,
-                results: [],
-                flags: {},
-                data: {},
-                startTime: Date.now(),
-            };
+          const sharedContext = {
+            chainId: chainId,
+            results: [],
+            flags: {},
+            data: {},
+            startTime: Date.now(),
+          };
 
-            this.sharedContexts.set(chainId, sharedContext);
-            var chain = [];
+          this.sharedContexts.set(chainId, sharedContext);
+          const chain = [];
 
-            // Track composition stats in parent
+          // Track composition stats in parent
             if (self.stats) {
                 self.stats.hookChainsCreated = (self.stats.hookChainsCreated || 0) + 1;
             }
 
-            hookConfigs.forEach(function (config, index) {
-                var target = Module.findExportByName(config.module, config.function);
-                if (!target) return;
+            hookConfigs.forEach((config, index) => {
+              const target = Module.findExportByName(config.module, config.function);
+              if (!target) { return; }
 
-                var hookCallbacks = {
-                    onEnter: function (args) {
-                        // Access previous hook results via shared context
-                        var ctx = composer.sharedContexts.get(chainId);
-                        this.hookIndex = index;
-                        this.sharedContext = ctx;
+              const hookCallbacks = {
+                onEnter: function (args) {
+                  // Access previous hook results via shared context
+                  const ctx = composer.sharedContexts.get(chainId);
+                  this.hookIndex = index;
+                  this.sharedContext = ctx;
 
-                        // Check pre-conditions from previous hooks
-                        if (config.requires) {
-                            for (var i = 0; i < config.requires.length; i++) {
-                                if (!ctx.flags[config.requires[i]]) {
-                                    this.skip = true;
-                                    return;
-                                }
-                            }
-                        }
+                  // Check pre-conditions from previous hooks
+                  if (config.requires) {
+                    for (let i = 0; i < config.requires.length; i++) {
+                      if (!ctx.flags[config.requires[i]]) {
+                        this.skip = true;
+                        return;
+                      }
+                    }
+                  }
 
-                        // Store arguments for potential modification
-                        this.originalArgs = [];
-                        for (var j = 0; j < config.argCount || 4; j++) {
-                            this.originalArgs.push(args[j]);
-                        }
+                  // Store arguments for potential modification
+                  this.originalArgs = [];
+                  for (let j = 0; j < config.argCount || 4; j++) {
+                    this.originalArgs.push(args[j]);
+                  }
 
-                        // Apply argument transformations from previous hooks
-                        if (ctx.data.argTransforms && ctx.data.argTransforms[index]) {
-                            var transforms = ctx.data.argTransforms[index];
-                            transforms.forEach(function (transform) {
-                                args[transform.index] = transform.value;
-                            });
-                        }
+                  // Apply argument transformations from previous hooks
+                  if (ctx.data.argTransforms?.[index]) {
+                    const transforms = ctx.data.argTransforms[index];
+                    transforms.forEach(transform => {
+                      args[transform.index] = transform.value;
+                    });
+                  }
 
-                        // Execute custom onEnter logic
-                        if (config.onEnter) {
-                            config.onEnter.call(this, args, ctx);
-                        }
-                    },
-                    onLeave: function (retval) {
-                        if (this.skip) return;
+                  // Execute custom onEnter logic
+                  if (config.onEnter) {
+                    config.onEnter.call(this, args, ctx);
+                  }
+                },
+                onLeave: function (retval) {
+                  if (this.skip) {
+                    return;
+                  }
 
-                        var ctx = this.sharedContext;
+                  const ctx = this.sharedContext;
 
-                        // Store result for next hooks in chain
-                        ctx.results[index] = {
-                            function: config.function,
-                            retval: retval,
-                            args: this.originalArgs,
-                            timestamp: Date.now(),
-                        };
+                  // Store result for next hooks in chain
+                  ctx.results[index] = {
+                    function: config.function,
+                    retval: retval,
+                    args: this.originalArgs,
+                    timestamp: Date.now(),
+                  };
 
-                        // Apply conditional logic based on return value
-                        if (config.onLeave) {
-                            var newRetval = config.onLeave.call(this, retval, ctx);
-                            if (newRetval !== undefined) {
-                                retval.replace(newRetval);
-                            }
-                        }
+                  // Apply conditional logic based on return value
+                  if (config.onLeave) {
+                    const newRetval = config.onLeave.call(this, retval, ctx);
+                    if (newRetval !== undefined) {
+                      retval.replace(newRetval);
+                    }
+                  }
 
-                        // Set flags for dependent hooks
-                        if (config.sets) {
-                            config.sets.forEach(function (flag) {
-                                ctx.flags[flag] = true;
-                            });
-                        }
+                  // Set flags for dependent hooks
+                  if (config.sets) {
+                    config.sets.forEach(flag => {
+                      ctx.flags[flag] = true;
+                    });
+                  }
 
-                        // Trigger dependent hooks if conditions met
-                        if (config.triggers && retval.toInt32() === config.triggerValue) {
-                            composer.executeDependentHooks(chainId, config.triggers);
-                        }
-                    },
-                };
+                  // Trigger dependent hooks if conditions met
+                  if (config.triggers && retval.toInt32() === config.triggerValue) {
+                    composer.executeDependentHooks(chainId, config.triggers);
+                  }
+                },
+              };
 
-                var interceptor = Interceptor.attach(target, hookCallbacks);
-                chain.push({
+              const interceptor = Interceptor.attach(target, hookCallbacks);
+              chain.push({
                     id: config.function,
                     interceptor: interceptor,
                     config: config,
@@ -2549,10 +2533,9 @@ const modularHookLibrary = {
         };
 
         // Execute dependent hooks based on conditions
-        composer.executeDependentHooks = function (chainId, hookIds) {
-            var _self = this; // Reserved for closures
-            var chainContext = self.sharedContexts.get(chainId);
-            if (!chainContext) {
+        composer.executeDependentHooks = (chainId, hookIds) => {
+          const chainContext = self.sharedContexts.get(chainId);
+          if (!chainContext) {
                 send({
                     type: 'warning',
                     target: 'hook_library',
@@ -2562,9 +2545,9 @@ const modularHookLibrary = {
                 return;
             }
 
-            hookIds.forEach(function (hookId) {
-                var deps = self.hookDependencies.get(hookId);
-                if (deps && deps.target) {
+            hookIds.forEach(hookId => {
+              const deps = self.hookDependencies.get(hookId);
+              if (deps?.target) {
                     Interceptor.attach(deps.target, deps.callbacks);
                     chainContext.results.push({
                         hookId: hookId,
@@ -2576,97 +2559,95 @@ const modularHookLibrary = {
         };
 
         // Create composite hook with multiple behaviors
-        composer.createCompositeHook = function (target, behaviors) {
-            var composite = {
-                onEnter: function (args) {
-                    this.behaviors = [];
-                    for (var i = 0; i < behaviors.length; i++) {
-                        var behavior = behaviors[i];
-                        if (behavior.condition && !behavior.condition(args)) {
-                            continue;
-                        }
-                        if (behavior.onEnter) {
-                            var result = behavior.onEnter.call(this, args);
-                            this.behaviors.push({
-                                id: behavior.id,
-                                result: result,
-                            });
-                        }
-                    }
-                },
-                onLeave: function (retval) {
-                    for (var i = 0; i < this.behaviors.length; i++) {
-                        var behaviorResult = this.behaviors[i];
-                        var behavior = behaviors.find(function (b) {
-                            return b.id === behaviorResult.id;
-                        });
-                        if (behavior && behavior.onLeave) {
-                            var newRetval = behavior.onLeave.call(
-                                this,
-                                retval,
-                                behaviorResult.result
-                            );
-                            if (newRetval !== undefined) {
-                                retval.replace(newRetval);
-                            }
-                        }
-                    }
-                },
-            };
+        composer.createCompositeHook = (target, behaviors) => {
+          const composite = {
+            onEnter: function (args) {
+              this.behaviors = [];
+              for (let i = 0; i < behaviors.length; i++) {
+                const behavior = behaviors[i];
+                if (behavior.condition && !behavior.condition(args)) {
+                  continue;
+                }
+                if (behavior.onEnter) {
+                  const result = behavior.onEnter.call(this, args);
+                  this.behaviors.push({
+                    id: behavior.id,
+                    result: result,
+                  });
+                }
+              }
+            },
+            onLeave: function (retval) {
+              for (let i = 0; i < this.behaviors.length; i++) {
+                const behaviorResult = this.behaviors[i];
+                const behavior = behaviors.find(b => b.id === behaviorResult.id);
+                if (behavior?.onLeave) {
+                  const newRetval = behavior.onLeave.call(
+                    this,
+                    retval,
+                    behaviorResult.result
+                  );
+                  if (newRetval !== undefined) {
+                    retval.replace(newRetval);
+                  }
+                }
+              }
+            },
+          };
 
-            return Interceptor.attach(target, composite);
+          return Interceptor.attach(target, composite);
         };
 
         // Anti-detection hook compositions
         composer.setupAntiDetectionChain = function () {
-            var antiDebugChain = [
-                {
-                    module: 'kernel32.dll',
-                    function: 'IsDebuggerPresent',
-                    onLeave: function (retval, ctx) {
-                        retval.replace(0);
-                        ctx.flags.debuggerCheckBypassed = true;
-                    },
-                    sets: ['debuggerCheckBypassed'],
-                },
-                {
-                    module: 'kernel32.dll',
-                    function: 'CheckRemoteDebuggerPresent',
-                    requires: ['debuggerCheckBypassed'],
-                    onEnter: function (args, ctx) {
-                        this.pDebuggerPresent = args[1];
-                        ctx.flags.remoteDebuggerChecked = true;
-                    },
-                    onLeave: function (retval, ctx) {
-                        if (this.pDebuggerPresent) {
-                            this.pDebuggerPresent.writeU8(0);
-                        }
-                        retval.replace(1);
-                        ctx.flags.remoteDebuggerBypassed = true;
-                    },
-                },
-                {
-                    module: 'ntdll.dll',
-                    function: 'NtQueryInformationProcess',
-                    onEnter: function (args, ctx) {
-                        this.infoClass = args[1].toInt32();
-                        this.buffer = args[2];
-                        ctx.flags.queryInformationHooked = true;
-                    },
-                    onLeave: function (retval, ctx) {
-                        if (this.infoClass === 7 && this.buffer) {
-                            // ProcessDebugPort
-                            this.buffer.writeU32(0);
-                            ctx.flags.debugPortZeroed = true;
-                        }
-                        if (retval.toInt32() === 0) {
-                            ctx.flags.querySucceeded = true;
-                        }
-                    },
-                },
-            ];
+          const antiDebugChain = [
+            {
+              module: 'kernel32.dll',
+              function: 'IsDebuggerPresent',
+              onLeave: (retval, ctx) => {
+                retval.replace(0);
+                ctx.flags.debuggerCheckBypassed = true;
+              },
+              sets: ['debuggerCheckBypassed'],
+            },
+            {
+              module: 'kernel32.dll',
+              function: 'CheckRemoteDebuggerPresent',
+              requires: ['debuggerCheckBypassed'],
+              onEnter: function (args, ctx) {
+                this.pDebuggerPresent = args[1];
+                ctx.flags.remoteDebuggerChecked = true;
+              },
+              onLeave: function (retval, ctx) {
+                if (this.pDebuggerPresent) {
+                  this.pDebuggerPresent.writeU8(0);
+                }
+                retval.replace(1);
+                ctx.flags.remoteDebuggerBypassed = true;
+              },
+            },
+            {
+              module: 'ntdll.dll',
+              function: 'NtQueryInformationProcess',
+              onEnter: function (args, ctx) {
+                this.infoClass = args[1].toInt32();
+                this.buffer = args[2];
+                ctx.flags.queryInformationHooked = true;
+              },
+              onLeave: function (retval, ctx) {
+                if (this.infoClass === 7 && this.buffer) {
+                  // ProcessDebugPort
+                  this.buffer.writeU32(0);
+                  ctx.flags.debugPortZeroed = true;
+                }
+                if (retval.toInt32() === 0) {
+                  ctx.flags.querySucceeded = true;
+                }
+              },
+            },
+          ];
 
-            return this.createHookChain('antiDebug', antiDebugChain);
+          return this.createHookChain('antiDebug', antiDebugChain);
         };
 
         this.hookComposer = composer;
@@ -2674,23 +2655,22 @@ const modularHookLibrary = {
     },
 
     initializeAdaptiveLoadBalancer: function () {
-        var _self = this; // Reserved for closures
-        var balancer = {
-            threadMetrics: new Map(),
-            hookDistribution: new Map(),
-            performanceData: new Map(),
-            stalkerSessions: new Map(),
-        };
+      const balancer = {
+        threadMetrics: new Map(),
+        hookDistribution: new Map(),
+        performanceData: new Map(),
+        stalkerSessions: new Map(),
+      };
 
-        // Track balancer stats in parent
+      // Track balancer stats in parent
         if (self.stats) {
             self.stats.loadBalancerInitialized = true;
         }
 
         // Real thread performance monitoring
-        balancer.analyzeThreadLoad = function () {
-            var threads = Process.enumerateThreads();
-            threads.forEach(function (thread) {
+        balancer.analyzeThreadLoad = () => {
+          const threads = Process.enumerateThreads();
+          threads.forEach(thread => {
                 if (!balancer.threadMetrics.has(thread.id)) {
                     balancer.threadMetrics.set(thread.id, {
                         id: thread.id,
@@ -2704,8 +2684,8 @@ const modularHookLibrary = {
                 // Use Stalker to measure actual thread activity
                 if (!balancer.stalkerSessions.has(thread.id)) {
                     try {
-                        var events = [];
-                        balancer.stalkerSessions.set(thread.id, {
+                      const events = [];
+                      balancer.stalkerSessions.set(thread.id, {
                             session: Stalker.attach(thread.id, {
                                 events: {
                                     call: true,
@@ -2714,9 +2694,9 @@ const modularHookLibrary = {
                                     block: false,
                                     compile: false,
                                 },
-                                onReceive: function (rawEvents) {
-                                    var metrics = balancer.threadMetrics.get(thread.id);
-                                    if (metrics) {
+                                onReceive: rawEvents => {
+                                  const metrics = balancer.threadMetrics.get(thread.id);
+                                  if (metrics) {
                                         metrics.callCount += rawEvents.length / 16; // Each event is 16 bytes
                                         metrics.lastUpdate = Date.now();
                                     }
@@ -2750,12 +2730,12 @@ const modularHookLibrary = {
             this.analyzeThreadLoad();
 
             // Find thread with lowest load
-            var bestThread = null;
-            var lowestLoad = Infinity;
+          let bestThread = null;
+          let lowestLoad = Infinity;
 
-            this.threadMetrics.forEach(function (metrics, tid) {
-                var load = metrics.callCount / (Date.now() - metrics.lastUpdate + 1);
-                if (load < lowestLoad) {
+          this.threadMetrics.forEach((metrics, tid) => {
+              const load = metrics.callCount / (Date.now() - metrics.lastUpdate + 1);
+              if (load < lowestLoad) {
                     lowestLoad = load;
                     bestThread = tid;
                 }
@@ -2763,37 +2743,37 @@ const modularHookLibrary = {
 
             if (bestThread) {
                 // Attach hook to specific thread
-                var target = Module.findExportByName(hookConfig.module, hookConfig.function);
-                if (target) {
-                    var interceptor = Interceptor.attach(target, {
-                        onEnter: function (args) {
-                            if (this.threadId === bestThread) {
-                                var _startTime = Date.now(); // Reserved for performance tracking
-                                if (hookConfig.onEnter) {
-                                    hookConfig.onEnter.call(this, args);
-                                }
-                                this.enterTime = startTime;
-                            }
-                        },
-                        onLeave: function (retval) {
-                            if (this.threadId === bestThread && this.enterTime) {
-                                var duration = Date.now() - this.enterTime;
-                                var metrics = balancer.threadMetrics.get(bestThread);
-                                if (metrics) {
-                                    metrics.executionTime += duration;
-                                    metrics.hooks.push({
-                                        function: hookConfig.function,
-                                        duration: duration,
-                                    });
-                                }
-                                if (hookConfig.onLeave) {
-                                    hookConfig.onLeave.call(this, retval);
-                                }
-                            }
-                        },
-                    });
+              const target = Module.findExportByName(hookConfig.module, hookConfig.function);
+              if (target) {
+                  const interceptor = Interceptor.attach(target, {
+                    onEnter: function (args) {
+                      if (this.threadId === bestThread) {
+                        const _startTime = Date.now(); // Reserved for performance tracking
+                        if (hookConfig.onEnter) {
+                          hookConfig.onEnter.call(this, args);
+                        }
+                        this.enterTime = startTime;
+                      }
+                    },
+                    onLeave: function (retval) {
+                      if (this.threadId === bestThread && this.enterTime) {
+                        const duration = Date.now() - this.enterTime;
+                        const metrics = balancer.threadMetrics.get(bestThread);
+                        if (metrics) {
+                          metrics.executionTime += duration;
+                          metrics.hooks.push({
+                            function: hookConfig.function,
+                            duration: duration,
+                          });
+                        }
+                        if (hookConfig.onLeave) {
+                          hookConfig.onLeave.call(this, retval);
+                        }
+                      }
+                    },
+                  });
 
-                    if (!this.hookDistribution.has(bestThread)) {
+                  if (!this.hookDistribution.has(bestThread)) {
                         this.hookDistribution.set(bestThread, []);
                     }
                     this.hookDistribution.get(bestThread).push(interceptor);
@@ -2805,18 +2785,18 @@ const modularHookLibrary = {
 
         // Hook migration based on performance
         balancer.migrateHooks = function () {
-            var migrations = [];
+          const migrations = [];
 
-            this.threadMetrics.forEach(function (metrics, tid) {
+          this.threadMetrics.forEach((metrics, tid) => {
                 if (metrics.executionTime > 1000) {
                     // If thread is overloaded
-                    var hooks = balancer.hookDistribution.get(tid);
-                    if (hooks && hooks.length > 1) {
+                  const hooks = balancer.hookDistribution.get(tid);
+                  if (hooks && hooks.length > 1) {
                         // Find less loaded thread
-                        var targetThread = null;
-                        var minLoad = metrics.executionTime;
+                      let targetThread = null;
+                      let minLoad = metrics.executionTime;
 
-                        balancer.threadMetrics.forEach(function (otherMetrics, otherTid) {
+                      balancer.threadMetrics.forEach((otherMetrics, otherTid) => {
                             if (otherTid !== tid && otherMetrics.executionTime < minLoad) {
                                 targetThread = otherTid;
                                 minLoad = otherMetrics.executionTime;
@@ -2835,13 +2815,13 @@ const modularHookLibrary = {
             });
 
             // Execute migrations
-            migrations.forEach(function (migration) {
-                var fromHooks = balancer.hookDistribution.get(migration.from);
-                var toHooks = balancer.hookDistribution.get(migration.to) || [];
+            migrations.forEach(migration => {
+              const fromHooks = balancer.hookDistribution.get(migration.from);
+              const toHooks = balancer.hookDistribution.get(migration.to) || [];
 
-                if (fromHooks) {
-                    var index = fromHooks.indexOf(migration.hook);
-                    if (index > -1) {
+              if (fromHooks) {
+                  const index = fromHooks.indexOf(migration.hook);
+                  if (index > -1) {
                         fromHooks.splice(index, 1);
                         toHooks.push(migration.hook);
                         balancer.hookDistribution.set(migration.to, toHooks);
@@ -2851,12 +2831,12 @@ const modularHookLibrary = {
         };
 
         // Performance-based hook optimization
-        balancer.optimizeHookPlacement = function () {
-            setInterval(function () {
+        balancer.optimizeHookPlacement = () => {
+            setInterval(() => {
                 balancer.migrateHooks();
 
                 // Clean up finished Stalker sessions
-                balancer.stalkerSessions.forEach(function (session, tid) {
+                balancer.stalkerSessions.forEach((session, tid) => {
                     if (Date.now() - session.startTime > 60000) {
                         // Refresh every minute
                         Stalker.detach(tid);
@@ -2872,24 +2852,23 @@ const modularHookLibrary = {
     },
 
     setupQuantumResistantModuleEncryption: function () {
-        var _self = this; // Reserved for closures
-        var encryption = {
-            protectedCode: new Map(),
-            codeSignatures: new Map(),
-            memoryRegions: new Map(),
-            encryptionKeys: new Map(),
-        };
+      const encryption = {
+        protectedCode: new Map(),
+        codeSignatures: new Map(),
+        memoryRegions: new Map(),
+        encryptionKeys: new Map(),
+      };
 
-        // ChaCha20-Poly1305 implementation for real encryption
-        encryption.chacha20Block = function (key, counter, nonce) {
-            var constants = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574];
-            var state = new Uint32Array(16);
+      // ChaCha20-Poly1305 implementation for real encryption
+        encryption.chacha20Block = (key, counter, nonce) => {
+          const constants = [0x61707865, 0x3320646e, 0x79622d32, 0x6b206574];
+          const state = new Uint32Array(16);
 
-            // Initialize state
-            for (var i = 0; i < 4; i++) state[i] = constants[i];
-            for (var i = 0; i < 8; i++) state[4 + i] = key[i];
+          // Initialize state
+            for (var i = 0; i < 4; i++) { state[i] = constants[i]; }
+            for (var i = 0; i < 8; i++) { state[4 + i] = key[i]; }
             state[12] = counter;
-            for (var i = 0; i < 3; i++) state[13 + i] = nonce[i];
+            for (var i = 0; i < 3; i++) { state[13 + i] = nonce[i]; }
 
             // ChaCha20 quarter round
             function quarterRound(a, b, c, d) {
@@ -2920,10 +2899,10 @@ const modularHookLibrary = {
 
         // Encrypt sensitive hook code
         encryption.encryptHookCode = function (code, moduleId) {
-            var key = new Uint32Array(8);
-            var nonce = new Uint32Array(3);
+          const key = new Uint32Array(8);
+          const nonce = new Uint32Array(3);
 
-            // Generate unique key for each module
+          // Generate unique key for each module
             for (var i = 0; i < 8; i++) {
                 key[i] = Math.floor(Math.random() * 0xffffffff);
             }
@@ -2934,17 +2913,17 @@ const modularHookLibrary = {
             this.encryptionKeys.set(moduleId, { key: key, nonce: nonce });
 
             // Convert code to bytes
-            var codeBytes = [];
-            for (var i = 0; i < code.length; i++) {
+          const codeBytes = [];
+          for (var i = 0; i < code.length; i++) {
                 codeBytes.push(code.charCodeAt(i));
             }
 
             // Encrypt with ChaCha20
-            var encrypted = [];
-            var counter = 0;
-            for (var i = 0; i < codeBytes.length; i += 64) {
-                var keystream = this.chacha20Block(key, counter++, nonce);
-                for (var j = 0; j < 64 && i + j < codeBytes.length; j++) {
+          const encrypted = [];
+          const counter = 0;
+          for (var i = 0; i < codeBytes.length; i += 64) {
+              const keystream = this.chacha20Block(key, counter++, nonce);
+              for (let j = 0; j < 64 && i + j < codeBytes.length; j++) {
                     encrypted.push(
                         codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
                     );
@@ -2961,8 +2940,8 @@ const modularHookLibrary = {
                 Memory.protect(address, size, 'r-x');
 
                 // Calculate checksum for integrity
-                var checksum = 0;
-                for (var i = 0; i < size; i++) {
+              let checksum = 0;
+              for (let i = 0; i < size; i++) {
                     checksum = (checksum + address.add(i).readU8()) & 0xffffffff;
                 }
 
@@ -2982,38 +2961,37 @@ const modularHookLibrary = {
         };
 
         // Monitor code integrity to detect tampering
-        encryption.monitorCodeIntegrity = function (address, size, expectedChecksum) {
-            var _self = this; // Reserved for closures
-            var checkInterval = setInterval(function () {
-                try {
-                    var currentChecksum = 0;
-                    for (var i = 0; i < size; i++) {
-                        currentChecksum = (currentChecksum + address.add(i).readU8()) & 0xffffffff;
-                    }
+        encryption.monitorCodeIntegrity = (address, size, expectedChecksum) => {
+          const checkInterval = setInterval(() => {
+            try {
+              let currentChecksum = 0;
+              for (let i = 0; i < size; i++) {
+                currentChecksum = (currentChecksum + address.add(i).readU8()) & 0xffffffff;
+              }
 
-                    if (currentChecksum !== expectedChecksum) {
-                        send({
-                            type: 'warning',
-                            target: 'code_integrity',
-                            action: 'tampering_detected',
-                            address: address.toString(),
-                            expected: expectedChecksum,
-                            actual: currentChecksum,
-                        });
+              if (currentChecksum !== expectedChecksum) {
+                send({
+                  type: 'warning',
+                  target: 'code_integrity',
+                  action: 'tampering_detected',
+                  address: address.toString(),
+                  expected: expectedChecksum,
+                  actual: currentChecksum,
+                });
 
-                        // Restore protected code if possible
-                        self.restoreProtectedCode(address);
-                    }
-                } catch (_e) {
-                    clearInterval(checkInterval);
-                }
-            }, 1000); // Check every second
+                // Restore protected code if possible
+                self.restoreProtectedCode(address);
+              }
+            } catch (_e) {
+              clearInterval(checkInterval);
+            }
+          }, 1000); // Check every second
         };
 
         // Store encrypted module code
         encryption.storeEncryptedModule = function (moduleId, code) {
-            var encrypted = this.encryptHookCode(code, moduleId);
-            this.protectedCode.set(moduleId, {
+          const encrypted = this.encryptHookCode(code, moduleId);
+          this.protectedCode.set(moduleId, {
                 encrypted: encrypted,
                 originalLength: code.length,
                 timestamp: Date.now(),
@@ -3022,17 +3000,17 @@ const modularHookLibrary = {
 
         // Decrypt and load module on demand
         encryption.loadProtectedModule = function (moduleId) {
-            var protectedData = this.protectedCode.get(moduleId);
-            var keys = this.encryptionKeys.get(moduleId);
+          const protectedData = this.protectedCode.get(moduleId);
+          const keys = this.encryptionKeys.get(moduleId);
 
-            if (!protectedData || !keys) return null;
+          if (!protectedData || !keys) { return null; }
 
             // Decrypt code
-            var decrypted = [];
-            var counter = 0;
-            for (var i = 0; i < protectedData.encrypted.length; i += 64) {
-                var keystream = this.chacha20Block(keys.key, counter++, keys.nonce);
-                for (var j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
+          const decrypted = [];
+          const counter = 0;
+          for (let i = 0; i < protectedData.encrypted.length; i += 64) {
+              const keystream = this.chacha20Block(keys.key, counter++, keys.nonce);
+              for (let j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
                     decrypted.push(
                         protectedData.encrypted[i + j] ^
                             ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
@@ -3041,12 +3019,12 @@ const modularHookLibrary = {
             }
 
             // Convert back to string
-            var code = String.fromCharCode.apply(null, decrypted);
+          const code = String.fromCharCode.apply(null, decrypted);
 
-            // Allocate protected memory for code
-            var codeSize = protectedData.originalLength;
-            var codePage = Memory.alloc(Process.pageSize);
-            Memory.protect(codePage, Process.pageSize, 'rwx');
+          // Allocate protected memory for code
+          const codeSize = protectedData.originalLength;
+          const codePage = Memory.alloc(Process.pageSize);
+          Memory.protect(codePage, Process.pageSize, 'rwx');
 
             // Write and protect
             codePage.writeUtf8String(code);
@@ -3058,45 +3036,44 @@ const modularHookLibrary = {
         this.moduleEncryption = encryption;
 
         // Protect critical system hooks
-        var criticalHooks = [
-            'IsDebuggerPresent',
-            'CheckRemoteDebuggerPresent',
-            'NtQueryInformationProcess',
-        ];
-        criticalHooks.forEach(function (hookName) {
-            var addr = Module.findExportByName(null, hookName);
-            if (addr) {
+      const criticalHooks = [
+        'IsDebuggerPresent',
+        'CheckRemoteDebuggerPresent',
+        'NtQueryInformationProcess',
+      ];
+      criticalHooks.forEach(hookName => {
+          const addr = Module.findExportByName(null, hookName);
+          if (addr) {
                 encryption.protectHookMemory(addr, 16);
             }
         });
     },
 
     initializeAIAssistedDependencyResolution: function () {
-        var _self = this; // Reserved for closures
-        var resolver = {
-            importTable: new Map(),
-            exportTable: new Map(),
-            dependencyGraph: new Map(),
-            loadOrder: [],
-            circularDeps: new Set(),
-        };
+      const resolver = {
+        importTable: new Map(),
+        exportTable: new Map(),
+        dependencyGraph: new Map(),
+        loadOrder: [],
+        circularDeps: new Set(),
+      };
 
-        // Analyze real module dependencies
-        resolver.analyzeModuleDependencies = function (moduleName) {
-            var module = Process.findModuleByName(moduleName);
-            if (!module) return null;
+      // Analyze real module dependencies
+        resolver.analyzeModuleDependencies = moduleName => {
+          const module = Process.findModuleByName(moduleName);
+          if (!module) { return null; }
 
-            var dependencies = {
-                imports: [],
-                exports: [],
-                delayedImports: [],
-                forwardedExports: [],
-            };
+          const dependencies = {
+            imports: [],
+            exports: [],
+            delayedImports: [],
+            forwardedExports: [],
+          };
 
-            // Get real imports
+          // Get real imports
             try {
-                var imports = Module.enumerateImports(moduleName);
-                imports.forEach(function (imp) {
+              const imports = Module.enumerateImports(moduleName);
+              imports.forEach(imp => {
                     dependencies.imports.push({
                         module: imp.module,
                         name: imp.name,
@@ -3114,8 +3091,8 @@ const modularHookLibrary = {
 
             // Get real exports
             try {
-                var exports = Module.enumerateExports(moduleName);
-                exports.forEach(function (exp) {
+              const exports = Module.enumerateExports(moduleName);
+              exports.forEach(exp => {
                     dependencies.exports.push({
                         name: exp.name,
                         address: exp.address,
@@ -3134,12 +3111,12 @@ const modularHookLibrary = {
         };
 
         // Build complete dependency graph
-        resolver.buildDependencyGraph = function () {
-            var modules = Process.enumerateModules();
+        resolver.buildDependencyGraph = () => {
+          const modules = Process.enumerateModules();
 
-            modules.forEach(function (module) {
-                var deps = resolver.analyzeModuleDependencies(module.name);
-                if (deps) {
+          modules.forEach(module => {
+              const deps = resolver.analyzeModuleDependencies(module.name);
+              if (deps) {
                     resolver.dependencyGraph.set(module.name, deps);
                 }
             });
@@ -3152,21 +3129,21 @@ const modularHookLibrary = {
         };
 
         // Detect circular dependencies
-        resolver.detectCircularDependencies = function () {
-            var visited = new Set();
-            var recursionStack = new Set();
+        resolver.detectCircularDependencies = () => {
+          const visited = new Set();
+          const recursionStack = new Set();
 
-            function hasCycle(module) {
+          function hasCycle(module) {
                 visited.add(module);
                 recursionStack.add(module);
 
-                var imports = resolver.importTable.get(module);
-                if (imports) {
-                    for (var dep of imports) {
+              const imports = resolver.importTable.get(module);
+              if (imports) {
+                    for (let dep of imports) {
                         if (!visited.has(dep)) {
-                            if (hasCycle(dep)) return true;
+                            if (hasCycle(dep)) { return true; }
                         } else if (recursionStack.has(dep)) {
-                            resolver.circularDeps.add(module + ' <-> ' + dep);
+                            resolver.circularDeps.add(`${module} <-> ${dep}`);
                             return true;
                         }
                     }
@@ -3176,7 +3153,7 @@ const modularHookLibrary = {
                 return false;
             }
 
-            resolver.importTable.forEach(function (_imports, module) {
+            resolver.importTable.forEach((_imports, module) => {
                 if (!visited.has(module)) {
                     hasCycle(module);
                 }
@@ -3184,16 +3161,16 @@ const modularHookLibrary = {
         };
 
         // Calculate optimal module load order
-        resolver.calculateLoadOrder = function () {
-            var visited = new Set();
-            var stack = [];
+        resolver.calculateLoadOrder = () => {
+          const visited = new Set();
+          const stack = [];
 
-            function topologicalSort(module) {
+          function topologicalSort(module) {
                 visited.add(module);
 
-                var imports = resolver.importTable.get(module);
-                if (imports) {
-                    imports.forEach(function (dep) {
+              const imports = resolver.importTable.get(module);
+              if (imports) {
+                    imports.forEach(dep => {
                         if (!visited.has(dep)) {
                             topologicalSort(dep);
                         }
@@ -3203,7 +3180,7 @@ const modularHookLibrary = {
                 stack.push(module);
             }
 
-            resolver.importTable.forEach(function (_imports, module) {
+            resolver.importTable.forEach((_imports, module) => {
                 if (!visited.has(module)) {
                     topologicalSort(module);
                 }
@@ -3213,14 +3190,14 @@ const modularHookLibrary = {
         };
 
         // Resolve hook dependencies automatically
-        resolver.resolveHookDependencies = function (hookConfig) {
-            var targetModule = hookConfig.module;
-            var targetFunction = hookConfig.function;
+        resolver.resolveHookDependencies = hookConfig => {
+          const targetModule = hookConfig.module;
+          const targetFunction = hookConfig.function;
 
-            // Find which modules import this function
-            var dependents = [];
-            resolver.dependencyGraph.forEach(function (deps, moduleName) {
-                deps.imports.forEach(function (imp) {
+          // Find which modules import this function
+          const dependents = [];
+          resolver.dependencyGraph.forEach((deps, moduleName) => {
+                deps.imports.forEach(imp => {
                     if (imp.module === targetModule && imp.name === targetFunction) {
                         dependents.push({
                             module: moduleName,
@@ -3231,9 +3208,7 @@ const modularHookLibrary = {
             });
 
             // Sort by load order priority
-            dependents.sort(function (a, b) {
-                return a.priority - b.priority;
-            });
+            dependents.sort((a, b) => a.priority - b.priority);
 
             return dependents;
         };
@@ -3241,17 +3216,13 @@ const modularHookLibrary = {
         // Predict hook conflicts
         resolver.predictHookConflicts = function (hook1, hook2) {
             // Check if hooks target related functions
-            var deps1 = this.resolveHookDependencies(hook1);
-            var deps2 = this.resolveHookDependencies(hook2);
+          const deps1 = this.resolveHookDependencies(hook1);
+          const deps2 = this.resolveHookDependencies(hook2);
 
-            // Find common dependents
-            var common = deps1.filter(function (d1) {
-                return deps2.some(function (d2) {
-                    return d1.module === d2.module;
-                });
-            });
+          // Find common dependents
+          const common = deps1.filter(d1 => deps2.some(d2 => d1.module === d2.module));
 
-            return common.length > 0
+          return common.length > 0
                 ? {
                       hasConflict: true,
                       commonDependents: common,
@@ -3268,26 +3239,25 @@ const modularHookLibrary = {
 
     // Enhancement Function 6: Advanced Conflict Mitigation
     setupAdvancedConflictMitigation: function () {
-        var _self = this; // Reserved for closures
-        var conflictResolver = {
-            hookConflicts: new Map(),
-            priorityQueue: [],
-            conflictChains: new Map(),
-            resolutionStrategies: new Map(),
-        };
+      const conflictResolver = {
+        hookConflicts: new Map(),
+        priorityQueue: [],
+        conflictChains: new Map(),
+        resolutionStrategies: new Map(),
+      };
 
-        // Real-time conflict detection using Interceptor introspection
-        conflictResolver.detectConflicts = function (targetAddr) {
-            var conflicts = [];
-            var existingHooks = [];
+      // Real-time conflict detection using Interceptor introspection
+        conflictResolver.detectConflicts = targetAddr => {
+          const conflicts = [];
+          const existingHooks = [];
 
-            // Check if address is already hooked
+          // Check if address is already hooked
             try {
-                var currentInstr = Instruction.parse(targetAddr);
-                if (currentInstr && currentInstr.toString().indexOf('jmp') === 0) {
+              const currentInstr = Instruction.parse(targetAddr);
+              if (currentInstr && currentInstr.toString().indexOf('jmp') === 0) {
                     // Detect trampolines indicating existing hooks
-                    var jumpTarget = ptr(currentInstr.operands[0].value);
-                    existingHooks.push({
+                  const jumpTarget = ptr(currentInstr.operands[0].value);
+                  existingHooks.push({
                         address: targetAddr,
                         target: jumpTarget,
                         type: 'interceptor',
@@ -3297,9 +3267,9 @@ const modularHookLibrary = {
 
             // Check global hook registry
             if (typeof global.fridaHooks !== 'undefined') {
-                for (var hookId in global.fridaHooks) {
-                    var hook = global.fridaHooks[hookId];
-                    if (hook.address && hook.address.equals(targetAddr)) {
+                for (let hookId in global.fridaHooks) {
+                  const hook = global.fridaHooks[hookId];
+                  if (hook.address?.equals(targetAddr)) {
                         conflicts.push({
                             id: hookId,
                             priority: hook.priority || 0,
@@ -3314,13 +3284,13 @@ const modularHookLibrary = {
 
         // Priority-based resolution with hook chaining
         conflictResolver.resolveByPriority = function (addr, newHook) {
-            var conflicts = this.detectConflicts(addr);
-            if (conflicts.length === 0) {
+          const conflicts = this.detectConflicts(addr);
+          if (conflicts.length === 0) {
                 return { action: 'install', chain: [] };
             }
 
             // Sort by priority and timestamp
-            conflicts.sort(function (a, b) {
+            conflicts.sort((a, b) => {
                 if (a.priority !== b.priority) {
                     return b.priority - a.priority;
                 }
@@ -3328,10 +3298,10 @@ const modularHookLibrary = {
             });
 
             // Build hook chain
-            var chain = [];
-            var currentPriority = newHook.priority || 0;
+          const chain = [];
+          const currentPriority = newHook.priority || 0;
 
-            for (var i = 0; i < conflicts.length; i++) {
+          for (let i = 0; i < conflicts.length; i++) {
                 if (conflicts[i].priority >= currentPriority) {
                     chain.push(conflicts[i].id);
                 } else {
@@ -3345,12 +3315,12 @@ const modularHookLibrary = {
 
         // Hook displacement and relocation
         conflictResolver.displaceHook = function (hookId) {
-            if (!global.fridaHooks || !global.fridaHooks[hookId]) return;
+            if (!global.fridaHooks || !global.fridaHooks[hookId]) { return; }
 
-            var hook = global.fridaHooks[hookId];
-            var alternativeAddrs = this.findAlternatives(hook.address);
+          const hook = global.fridaHooks[hookId];
+          const alternativeAddrs = this.findAlternatives(hook.address);
 
-            for (var i = 0; i < alternativeAddrs.length; i++) {
+          for (let i = 0; i < alternativeAddrs.length; i++) {
                 if (this.detectConflicts(alternativeAddrs[i]).length === 0) {
                     // Relocate hook to alternative address
                     hook.originalAddress = hook.address;
@@ -3367,24 +3337,22 @@ const modularHookLibrary = {
         };
 
         // Find alternative hook points
-        conflictResolver.findAlternatives = function (_addr) {
-            var alternatives = [];
-            var func = DebugSymbol.getFunctionByName(DebugSymbol.fromAddress(addr).name);
+        conflictResolver.findAlternatives = _addr => {
+          const alternatives = [];
+          const func = DebugSymbol.getFunctionByName(DebugSymbol.fromAddress(addr).name);
 
-            if (func) {
+          if (func) {
                 // Find all call sites to this function
-                Process.enumerateModules().forEach(function (module) {
-                    Memory.scanSync(module.base, module.size, 'e8 ?? ?? ?? ??').forEach(
-                        function (match) {
-                            var callInstr = Instruction.parse(match.address);
-                            if (callInstr && callInstr.operands[0]) {
-                                var target = ptr(callInstr.next.add(callInstr.operands[0].value));
-                                if (target.equals(addr)) {
-                                    alternatives.push(match.address);
-                                }
+                Process.enumerateModules().forEach(module => {
+                    Memory.scanSync(module.base, module.size, 'e8 ?? ?? ?? ??').forEach(match => {
+                      const callInstr = Instruction.parse(match.address);
+                      if (callInstr?.operands[0]) {
+                          const target = ptr(callInstr.next.add(callInstr.operands[0].value));
+                          if (target.equals(addr)) {
+                                alternatives.push(match.address);
                             }
                         }
-                    );
+                    });
                 });
             }
 
@@ -3397,20 +3365,20 @@ const modularHookLibrary = {
         }
 
         // Hook Interceptor.attach to add conflict detection
-        var originalAttach = Interceptor.attach;
-        Interceptor.attach = function (target, callbacks) {
-            var resolution = conflictResolver.resolveByPriority(target, {
-                priority: callbacks.priority || 0,
-                timestamp: Date.now(),
-            });
+      const originalAttach = Interceptor.attach;
+      Interceptor.attach = function (target, callbacks) {
+          const resolution = conflictResolver.resolveByPriority(target, {
+            priority: callbacks.priority || 0,
+            timestamp: Date.now(),
+          });
 
-            if (resolution.action === 'chain' && resolution.chain.length > 0) {
+          if (resolution.action === 'chain' && resolution.chain.length > 0) {
                 // Chain with existing hooks
-                var originalOnEnter = callbacks.onEnter;
-                callbacks.onEnter = function (args) {
-                    for (var i = 0; i < resolution.chain.length; i++) {
-                        var chainedHook = global.fridaHooks[resolution.chain[i]];
-                        if (chainedHook && chainedHook.onEnter) {
+              const originalOnEnter = callbacks.onEnter;
+              callbacks.onEnter = function (args) {
+                    for (let i = 0; i < resolution.chain.length; i++) {
+                      const chainedHook = global.fridaHooks[resolution.chain[i]];
+                      if (chainedHook?.onEnter) {
                             chainedHook.onEnter.call(this, args);
                         }
                     }
@@ -3428,33 +3396,32 @@ const modularHookLibrary = {
 
     // Enhancement Function 7: Predictive Hook Optimization
     initializePredictiveHookOptimization: function () {
-        var _self = this; // Reserved for closures
-        var optimizer = {
-            callFrequency: new Map(),
-            executionPaths: new Map(),
-            hotPaths: new Set(),
-            coldPaths: new Set(),
-        };
+      const optimizer = {
+        callFrequency: new Map(),
+        executionPaths: new Map(),
+        hotPaths: new Set(),
+        coldPaths: new Set(),
+      };
 
-        // Profile function call frequency using Stalker
-        optimizer.profileCallFrequency = function () {
-            var _frequency = new Map();
-            var _startTime = Date.now(); // Reserved for performance tracking
+      // Profile function call frequency using Stalker
+        optimizer.profileCallFrequency = () => {
+          const _frequency = new Map();
+          const _startTime = Date.now(); // Reserved for performance tracking
 
             Process.enumerateThreads()
                 .slice(0, 3)
-                .forEach(function (thread) {
+                .forEach(thread => {
                     try {
                         Stalker.follow(thread.id, {
                             events: {
                                 call: true,
                             },
-                            onReceive: function (events) {
-                                var parsed = Stalker.parse(events);
-                                parsed.forEach(function (event) {
+                            onReceive: events => {
+                              const parsed = Stalker.parse(events);
+                              parsed.forEach(event => {
                                     if (event.type === 'call') {
-                                        var addr = event.target;
-                                        frequency.set(
+                                      const addr = event.target;
+                                      frequency.set(
                                             addr.toString(),
                                             (frequency.get(addr.toString()) || 0) + 1
                                         );
@@ -3466,23 +3433,23 @@ const modularHookLibrary = {
                 });
 
             // Profile for 100ms
-            setTimeout(function () {
+            setTimeout(() => {
                 Process.enumerateThreads()
                     .slice(0, 3)
-                    .forEach(function (thread) {
+                    .forEach(thread => {
                         try {
                             Stalker.unfollow(thread.id);
                         } catch (_e) {}
                     });
 
                 // Identify hot and cold paths
-                var totalCalls = 0;
-                frequency.forEach(function (count) {
+              let totalCalls = 0;
+              frequency.forEach(count => {
                     totalCalls += count;
                 });
 
-                var avgCalls = totalCalls / Math.max(frequency.size, 1);
-                frequency.forEach(function (count, addr) {
+              const avgCalls = totalCalls / Math.max(frequency.size, 1);
+              frequency.forEach((count, addr) => {
                     if (count > avgCalls * 2) {
                         optimizer.hotPaths.add(addr);
                     } else if (count < avgCalls * 0.1) {
@@ -3495,28 +3462,28 @@ const modularHookLibrary = {
 
         // Optimize hook placement based on profiling
         optimizer.optimizeHookPlacement = function (targetFunc) {
-            var addr = Module.findExportByName(null, targetFunc);
-            if (!addr) return null;
+          const addr = Module.findExportByName(null, targetFunc);
+          if (!addr) { return null; }
 
-            var _frequency = this.callFrequency.get(addr.toString()) || 0;
-            var optimization = {
-                strategy: 'standard',
-                location: addr,
-                inlined: false,
-            };
+          const _frequency = this.callFrequency.get(addr.toString()) || 0;
+          const optimization = {
+            strategy: 'standard',
+            location: addr,
+            inlined: false,
+          };
 
-            if (this.hotPaths.has(addr.toString())) {
+          if (this.hotPaths.has(addr.toString())) {
                 // Hot path: inline hooks for performance
                 optimization.strategy = 'inline';
                 optimization.inlined = true;
 
                 // Find optimal inline location
-                var instructions = [];
-                var currentAddr = addr;
+              const instructions = [];
+              let currentAddr = addr;
 
-                for (var i = 0; i < 10; i++) {
-                    var instr = Instruction.parse(currentAddr);
-                    if (!instr) break;
+              for (let i = 0; i < 10; i++) {
+                  const instr = Instruction.parse(currentAddr);
+                  if (!instr) { break; }
                     instructions.push(instr);
                     currentAddr = instr.next;
 
@@ -3531,8 +3498,8 @@ const modularHookLibrary = {
                 optimization.strategy = 'lazy';
 
                 // Install lightweight trigger
-                var triggered = false;
-                optimization.trigger = function () {
+              let triggered = false;
+              optimization.trigger = () => {
                     if (!triggered) {
                         triggered = true;
                         // Full hook installation deferred
@@ -3546,31 +3513,31 @@ const modularHookLibrary = {
         };
 
         // Predictive prefetching of hook targets
-        optimizer.prefetchTargets = function (module) {
-            var predictions = [];
-            var exports = Module.enumerateExports(module);
+        optimizer.prefetchTargets = module => {
+          const predictions = [];
+          const exports = Module.enumerateExports(module);
 
-            exports.forEach(function (exp) {
+          exports.forEach(exp => {
                 if (exp.type === 'function') {
                     // Analyze function for likely hook targets
-                    var addr = exp.address;
-                    var range = Process.findRangeByAddress(addr);
-                    if (range) {
-                        var buf = Memory.readByteArray(addr, Math.min(256, range.size));
-                        var bytes = new Uint8Array(buf);
+                  const addr = exp.address;
+                  const range = Process.findRangeByAddress(addr);
+                  if (range) {
+                      const buf = Memory.readByteArray(addr, Math.min(256, range.size));
+                      const bytes = new Uint8Array(buf);
 
-                        // Look for patterns indicating security checks
-                        var patterns = [
-                            [0x48, 0x83, 0xec], // sub rsp, XX (stack frame)
-                            [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx (save registers)
-                            [0xe8], // call
-                            [0xff, 0x15], // call [rip+XX]
-                        ];
+                      // Look for patterns indicating security checks
+                      const patterns = [
+                        [0x48, 0x83, 0xec], // sub rsp, XX (stack frame)
+                        [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx (save registers)
+                        [0xe8], // call
+                        [0xff, 0x15], // call [rip+XX]
+                      ];
 
-                        for (var i = 0; i < bytes.length - 4; i++) {
-                            for (var j = 0; j < patterns.length; j++) {
-                                var match = true;
-                                for (var k = 0; k < patterns[j].length; k++) {
+                      for (let i = 0; i < bytes.length - 4; i++) {
+                            for (let j = 0; j < patterns.length; j++) {
+                              let match = true;
+                              for (let k = 0; k < patterns[j].length; k++) {
                                     if (bytes[i + k] !== patterns[j][k]) {
                                         match = false;
                                         break;
@@ -3605,19 +3572,18 @@ const modularHookLibrary = {
 
     // Enhancement Function 8: Dynamic Module Evolution
     setupDynamicModuleEvolution: function () {
-        var _self = this; // Reserved for closures
-        var evolution = {
-            moduleGenerations: new Map(),
-            mutationHistory: [],
-            adaptiveHooks: new Map(),
-        };
+      const evolution = {
+        moduleGenerations: new Map(),
+        mutationHistory: [],
+        adaptiveHooks: new Map(),
+      };
 
-        // Generate evolved hook variants using code mutation
+      // Generate evolved hook variants using code mutation
         evolution.evolveHook = function (originalHook, targetAddr) {
-            var generation = this.moduleGenerations.get(targetAddr.toString()) || 0;
-            var evolved = Object.assign({}, originalHook);
+          let generation = this.moduleGenerations.get(targetAddr.toString()) || 0;
+          const evolved = Object.assign({}, originalHook);
 
-            // Apply mutations based on generation
+          // Apply mutations based on generation
             if (generation > 0) {
                 evolved.onEnter = this.mutateCallback(originalHook.onEnter, generation);
                 evolved.onLeave = this.mutateCallback(originalHook.onLeave, generation);
@@ -3626,13 +3592,10 @@ const modularHookLibrary = {
             // Adaptive behavior based on runtime conditions
             evolved.adaptive = true;
             evolved.adaptations = [];
+            evolved.monitor = setInterval(() => {
+              const metrics = self.collectMetrics(targetAddr);
 
-            // Monitor and adapt
-            var _self = this; // Reserved for closures
-            evolved.monitor = setInterval(function () {
-                var metrics = self.collectMetrics(targetAddr);
-
-                if (metrics.failureRate > 0.1) {
+              if (metrics.failureRate > 0.1) {
                     // High failure rate - apply defensive mutations
                     self.applyDefensiveMutation(evolved, targetAddr);
                 } else if (metrics.successRate > 0.9 && metrics.avgTime > 10) {
@@ -3648,31 +3611,31 @@ const modularHookLibrary = {
         };
 
         // Mutate callback functions
-        evolution.mutateCallback = function (callback, generation) {
-            if (!callback) return null;
+        evolution.mutateCallback = (callback, generation) => {
+            if (!callback) { return null; }
 
             return function (args) {
                 // Add resilience layers
                 try {
                     // Generation 1: Add timing randomization
                     if (generation >= 1) {
-                        var delay = Math.floor(Math.random() * 10);
-                        Thread.sleep(delay / 1000);
+                      const delay = Math.floor(Math.random() * 10);
+                      Thread.sleep(delay / 1000);
                     }
 
                     // Generation 2: Add decoy operations
                     if (generation >= 2) {
-                        var decoy = Memory.alloc(16);
-                        Memory.writeU32(decoy, Math.random() * 0xffffffff);
+                      const decoy = Memory.alloc(16);
+                      Memory.writeU32(decoy, Math.random() * 0xffffffff);
                         Memory.readU32(decoy);
                     }
 
                     // Generation 3: Add anti-detection checks
                     if (generation >= 3) {
-                        var detector = Module.findExportByName(null, 'IsDebuggerPresent');
-                        if (detector) {
-                            var isDebugged = new NativeFunction(detector, 'int', [])();
-                            if (isDebugged) {
+                      const detector = Module.findExportByName(null, 'IsDebuggerPresent');
+                      if (detector) {
+                          const isDebugged = new NativeFunction(detector, 'int', [])();
+                          if (isDebugged) {
                                 // Apply evasion
                                 this.context.pc = this.context.pc.add(4);
                                 return;
@@ -3699,11 +3662,11 @@ const modularHookLibrary = {
         };
 
         // Apply defensive mutations
-        evolution.applyDefensiveMutation = function (hook, _addr) {
-            var original = hook.onEnter;
-            hook.onEnter = function (args) {
+        evolution.applyDefensiveMutation = (hook, _addr) => {
+          const original = hook.onEnter;
+          hook.onEnter = function (args) {
                 // Add input validation
-                for (var i = 0; i < args.length; i++) {
+                for (let i = 0; i < args.length; i++) {
                     if (args[i].isNull()) {
                         args[i] = Memory.alloc(8);
                     }
@@ -3725,24 +3688,24 @@ const modularHookLibrary = {
         };
 
         // Apply performance mutations
-        evolution.applyPerformanceMutation = function (hook, _addr) {
-            var original = hook.onEnter;
-            var cache = new Map();
+        evolution.applyPerformanceMutation = (hook, _addr) => {
+          const original = hook.onEnter;
+          const cache = new Map();
 
-            hook.onEnter = function (args) {
+          hook.onEnter = function (args) {
                 // Add caching layer
-                var key = args[0].toString();
-                if (cache.has(key)) {
+              const key = args[0].toString();
+              if (cache.has(key)) {
                     return cache.get(key);
                 }
 
-                var result = original.call(this, args);
-                cache.set(key, result);
+              const result = original.call(this, args);
+              cache.set(key, result);
 
                 // Limit cache size
                 if (cache.size > 100) {
-                    var firstKey = cache.keys().next().value;
-                    cache.delete(firstKey);
+                  const firstKey = cache.keys().next().value;
+                  cache.delete(firstKey);
                 }
 
                 return result;
@@ -3755,29 +3718,29 @@ const modularHookLibrary = {
         };
 
         // Collect runtime metrics
-        evolution.collectMetrics = function (_addr) {
-            var metrics = {
-                calls: 0,
-                failures: 0,
-                totalTime: 0,
-            };
+        evolution.collectMetrics = _addr => {
+          const metrics = {
+            calls: 0,
+            failures: 0,
+            totalTime: 0,
+          };
 
-            // Sample execution for metrics
-            var _startTime = Date.now(); // Reserved for performance tracking
-            var sampler = Interceptor.attach(addr, {
-                onEnter: function () {
-                    this.startTime = Date.now();
-                    metrics.calls++;
-                },
-                onLeave: function (ret) {
-                    if (ret.toInt32() < 0) {
-                        metrics.failures++;
-                    }
-                    metrics.totalTime += Date.now() - this.startTime;
-                },
-            });
+          // Sample execution for metrics
+          const _startTime = Date.now(); // Reserved for performance tracking
+          const sampler = Interceptor.attach(addr, {
+            onEnter: function () {
+              this.startTime = Date.now();
+              metrics.calls++;
+            },
+            onLeave: function (ret) {
+              if (ret.toInt32() < 0) {
+                metrics.failures++;
+              }
+              metrics.totalTime += Date.now() - this.startTime;
+            },
+          });
 
-            setTimeout(function () {
+          setTimeout(() => {
                 sampler.detach();
             }, 1000);
 
@@ -3798,33 +3761,32 @@ const modularHookLibrary = {
 
     // Enhancement Function 9: Advanced Versioning System
     initializeAdvancedVersioningSystem: function () {
-        var _self = this; // Reserved for closures
-        var versioning = {
-            versions: new Map(),
-            branches: new Map(),
-            checkpoints: [],
-            currentVersion: '1.0.0',
-        };
+      const versioning = {
+        versions: new Map(),
+        branches: new Map(),
+        checkpoints: [],
+        currentVersion: '1.0.0',
+      };
 
-        // Create versioned hook snapshot
+      // Create versioned hook snapshot
         versioning.createSnapshot = function (hookId) {
-            var hook = global.fridaHooks ? global.fridaHooks[hookId] : null;
-            if (!hook) return null;
+          const hook = global.fridaHooks ? global.fridaHooks[hookId] : null;
+          if (!hook) { return null; }
 
-            var snapshot = {
-                id: hookId,
-                version: this.incrementVersion(),
-                timestamp: Date.now(),
-                code: hook.toString ? hook.toString() : '',
-                metadata: {
-                    address: hook.address ? hook.address.toString() : null,
-                    module: hook.module || null,
-                    priority: hook.priority || 0,
-                },
-                state: {},
-            };
+          const snapshot = {
+            id: hookId,
+            version: this.incrementVersion(),
+            timestamp: Date.now(),
+            code: hook.toString ? hook.toString() : '',
+            metadata: {
+              address: hook.address ? hook.address.toString() : null,
+              module: hook.module || null,
+              priority: hook.priority || 0,
+            },
+            state: {},
+          };
 
-            // Capture hook state
+          // Capture hook state
             if (hook.onEnter) {
                 snapshot.state.onEnter = hook.onEnter.toString();
             }
@@ -3833,31 +3795,31 @@ const modularHookLibrary = {
             }
 
             // Store snapshot
-            var versionKey = hookId + '@' + snapshot.version;
-            this.versions.set(versionKey, snapshot);
+          const versionKey = `${hookId}@${snapshot.version}`;
+          this.versions.set(versionKey, snapshot);
 
             return snapshot;
         };
 
         // Branch hook development
         versioning.createBranch = function (hookId, branchName) {
-            var snapshot = this.createSnapshot(hookId);
-            if (!snapshot) return null;
+          const snapshot = this.createSnapshot(hookId);
+          if (!snapshot) { return null; }
 
-            var branch = {
-                name: branchName,
-                baseVersion: snapshot.version,
-                commits: [],
-                active: true,
-            };
+          const branch = {
+            name: branchName,
+            baseVersion: snapshot.version,
+            commits: [],
+            active: true,
+          };
 
-            this.branches.set(branchName, branch);
+          this.branches.set(branchName, branch);
 
             // Create branch-specific hook copy
-            if (global.fridaHooks && global.fridaHooks[hookId]) {
-                var branchedHook = Object.assign({}, global.fridaHooks[hookId]);
-                branchedHook.branch = branchName;
-                global.fridaHooks[hookId + '_' + branchName] = branchedHook;
+            if (global.fridaHooks?.[hookId]) {
+              const branchedHook = Object.assign({}, global.fridaHooks[hookId]);
+              branchedHook.branch = branchName;
+                global.fridaHooks[`${hookId}_${branchName}`] = branchedHook;
             }
 
             return branch;
@@ -3865,18 +3827,18 @@ const modularHookLibrary = {
 
         // Merge branches with conflict resolution
         versioning.mergeBranch = function (sourceBranch, targetBranch) {
-            var source = this.branches.get(sourceBranch);
-            var target = this.branches.get(targetBranch) || { commits: [] };
+          const source = this.branches.get(sourceBranch);
+          const target = this.branches.get(targetBranch) || {commits: []};
 
-            if (!source) return false;
+          if (!source) { return false; }
 
-            var conflicts = [];
-            var merged = [];
+          const conflicts = [];
+          const merged = [];
 
-            source.commits.forEach(function (commit) {
-                var hasConflict = false;
+          source.commits.forEach(commit => {
+              let hasConflict = false;
 
-                target.commits.forEach(function (targetCommit) {
+              target.commits.forEach(targetCommit => {
                     if (
                         commit.hookId === targetCommit.hookId &&
                         commit.address === targetCommit.address
@@ -3895,13 +3857,13 @@ const modularHookLibrary = {
             });
 
             // Auto-resolve conflicts
-            conflicts.forEach(function (conflict) {
-                var resolution = versioning.autoResolveConflict(conflict);
-                merged.push(resolution);
+            conflicts.forEach(conflict => {
+              const resolution = versioning.autoResolveConflict(conflict);
+              merged.push(resolution);
             });
 
             // Apply merged changes
-            merged.forEach(function (commit) {
+            merged.forEach(commit => {
                 versioning.applyCommit(commit);
             });
 
@@ -3909,17 +3871,17 @@ const modularHookLibrary = {
         };
 
         // Auto-resolve merge conflicts
-        versioning.autoResolveConflict = function (conflict) {
+        versioning.autoResolveConflict = conflict => {
             // Compare timestamps - newer wins
             if (conflict.source.timestamp > conflict.target.timestamp) {
                 return conflict.source;
             }
 
             // Compare complexity - more complex wins
-            var sourceComplexity = conflict.source.code ? conflict.source.code.length : 0;
-            var targetComplexity = conflict.target.code ? conflict.target.code.length : 0;
+          const sourceComplexity = conflict.source.code ? conflict.source.code.length : 0;
+          const targetComplexity = conflict.target.code ? conflict.target.code.length : 0;
 
-            if (sourceComplexity > targetComplexity) {
+          if (sourceComplexity > targetComplexity) {
                 return conflict.source;
             }
 
@@ -3927,21 +3889,21 @@ const modularHookLibrary = {
         };
 
         // Apply versioned commit
-        versioning.applyCommit = function (commit) {
-            if (!global.fridaHooks) global.fridaHooks = {};
+        versioning.applyCommit = commit => {
+            if (!global.fridaHooks) { global.fridaHooks = {}; }
 
-            var hook = global.fridaHooks[commit.hookId] || {};
+          const hook = global.fridaHooks[commit.hookId] || {};
 
-            // Apply changes from commit
+          // Apply changes from commit
             if (commit.address) {
                 hook.address = ptr(commit.address);
             }
             if (commit.code) {
                 try {
                     // Evaluate code in context
-                    var func = new Function('return ' + commit.code);
-                    var newHook = func();
-                    Object.assign(hook, newHook);
+                  const func = new Function(`return ${commit.code}`);
+                  const newHook = func();
+                  Object.assign(hook, newHook);
                 } catch (_e) {
                     // Silent fail on bad code
                 }
@@ -3952,16 +3914,16 @@ const modularHookLibrary = {
 
         // Rollback to specific version
         versioning.rollback = function (hookId, version) {
-            var versionKey = hookId + '@' + version;
-            var snapshot = this.versions.get(versionKey);
+          const versionKey = `${hookId}@${version}`;
+          const snapshot = this.versions.get(versionKey);
 
-            if (!snapshot) return false;
+          if (!snapshot) { return false; }
 
             // Restore hook from snapshot
             if (global.fridaHooks) {
-                var hook = global.fridaHooks[hookId] || {};
+              const hook = global.fridaHooks[hookId] || {};
 
-                // Restore state
+              // Restore state
                 if (snapshot.state.onEnter) {
                     try {
                         hook.onEnter = new Function('args', snapshot.state.onEnter);
@@ -3988,17 +3950,17 @@ const modularHookLibrary = {
 
         // Version increment logic
         versioning.incrementVersion = function () {
-            var parts = this.currentVersion.split('.');
-            parts[2] = (parseInt(parts[2]) + 1).toString();
+          const parts = this.currentVersion.split('.');
+          parts[2] = (parseInt(parts[2], 10) + 1).toString();
 
             // Handle overflow
-            if (parseInt(parts[2]) > 99) {
+            if (parseInt(parts[2], 10) > 99) {
                 parts[2] = '0';
-                parts[1] = (parseInt(parts[1]) + 1).toString();
+                parts[1] = (parseInt(parts[1], 10) + 1).toString();
             }
-            if (parseInt(parts[1]) > 99) {
+            if (parseInt(parts[1], 10) > 99) {
                 parts[1] = '0';
-                parts[0] = (parseInt(parts[0]) + 1).toString();
+                parts[0] = (parseInt(parts[0], 10) + 1).toString();
             }
 
             this.currentVersion = parts.join('.');
@@ -4007,15 +3969,15 @@ const modularHookLibrary = {
 
         // Create checkpoint for recovery
         versioning.createCheckpoint = function (name) {
-            var checkpoint = {
-                name: name || 'checkpoint_' + Date.now(),
-                timestamp: Date.now(),
-                hooks: {},
-            };
+          const checkpoint = {
+            name: name || `checkpoint_${Date.now()}`,
+            timestamp: Date.now(),
+            hooks: {},
+          };
 
-            // Snapshot all hooks
+          // Snapshot all hooks
             if (global.fridaHooks) {
-                for (var hookId in global.fridaHooks) {
+                for (let hookId in global.fridaHooks) {
                     checkpoint.hooks[hookId] = this.createSnapshot(hookId);
                 }
             }
@@ -4034,27 +3996,26 @@ const modularHookLibrary = {
 
     // Enhancement Function 10: Intelligent Performance Orchestrator
     setupIntelligentPerformanceOrchestrator: function () {
-        var _self = this; // Reserved for closures
-        var orchestrator = {
-            performanceMetrics: new Map(),
-            optimizationQueue: [],
-            resourceLimits: {
-                maxMemory: 100 * 1024 * 1024, // 100MB
-                maxCpu: 80, // 80%
-                maxHooks: 1000,
-            },
-        };
+      const orchestrator = {
+        performanceMetrics: new Map(),
+        optimizationQueue: [],
+        resourceLimits: {
+          maxMemory: 100 * 1024 * 1024, // 100MB
+          maxCpu: 80, // 80%
+          maxHooks: 1000,
+        },
+      };
 
-        // Real-time performance monitoring
+      // Real-time performance monitoring
         orchestrator.monitorPerformance = function () {
-            var metrics = {
-                memory: Process.getCurrentThreadId() ? this.getMemoryUsage() : 0,
-                cpu: this.getCpuUsage(),
-                hookCount: global.fridaHooks ? Object.keys(global.fridaHooks).length : 0,
-                timestamp: Date.now(),
-            };
+          const metrics = {
+            memory: Process.getCurrentThreadId() ? this.getMemoryUsage() : 0,
+            cpu: this.getCpuUsage(),
+            hookCount: global.fridaHooks ? Object.keys(global.fridaHooks).length : 0,
+            timestamp: Date.now(),
+          };
 
-            this.performanceMetrics.set(Date.now(), metrics);
+          this.performanceMetrics.set(Date.now(), metrics);
 
             // Trigger optimization if needed
             if (metrics.memory > this.resourceLimits.maxMemory * 0.8) {
@@ -4071,17 +4032,17 @@ const modularHookLibrary = {
         };
 
         // Get actual memory usage
-        orchestrator.getMemoryUsage = function () {
-            var usage = 0;
+        orchestrator.getMemoryUsage = () => {
+          let usage = 0;
 
-            // Calculate Frida heap usage
+          // Calculate Frida heap usage
             if (typeof gc !== 'undefined') {
                 gc(); // Force garbage collection if available
             }
 
             // Estimate based on allocated memory regions
-            Process.enumerateRanges('rw-').forEach(function (range) {
-                if (range.file && range.file.path && range.file.path.indexOf('frida') !== -1) {
+            Process.enumerateRanges('rw-').forEach(range => {
+                if (range.file?.path && range.file.path.indexOf('frida') !== -1) {
                     usage += range.size;
                 }
             });
@@ -4090,20 +4051,20 @@ const modularHookLibrary = {
         };
 
         // Get CPU usage estimate
-        orchestrator.getCpuUsage = function () {
-            var _startTime = Date.now(); // Reserved for performance tracking
-            var iterations = 0;
+        orchestrator.getCpuUsage = () => {
+          const _startTime = Date.now(); // Reserved for performance tracking
+          let iterations = 0;
 
-            // Benchmark loop
+          // Benchmark loop
             while (Date.now() - startTime < 10) {
                 iterations++;
             }
 
             // Compare to baseline (pre-calibrated)
-            var baseline = 100000;
-            var usage = Math.max(0, 100 - (iterations / baseline) * 100);
+          const baseline = 100000;
+          const usage = Math.max(0, 100 - (iterations / baseline) * 100);
 
-            return Math.min(100, usage);
+          return Math.min(100, usage);
         };
 
         // Optimize memory usage
@@ -4115,13 +4076,13 @@ const modularHookLibrary = {
 
             // Compress hook storage
             if (global.fridaHooks) {
-                for (var hookId in global.fridaHooks) {
-                    var hook = global.fridaHooks[hookId];
+                for (let hookId in global.fridaHooks) {
+                  const hook = global.fridaHooks[hookId];
 
-                    // Remove unnecessary properties
-                    delete hook.debug;
-                    delete hook.trace;
-                    delete hook.logs;
+                  // Remove unnecessary properties
+                    hook.debug = undefined;
+                    hook.trace = undefined;
+                    hook.logs = undefined;
 
                     // Compress callbacks
                     if (hook.onEnter && hook.onEnter.toString().length > 1000) {
@@ -4137,20 +4098,21 @@ const modularHookLibrary = {
         };
 
         // Optimize CPU usage
-        orchestrator.optimizeCpu = function () {
+        orchestrator.optimizeCpu = () => {
             // Throttle high-frequency hooks
             if (global.fridaHooks) {
-                for (var hookId in global.fridaHooks) {
-                    var hook = global.fridaHooks[hookId];
+                for (let hookId in global.fridaHooks) {
+                  const hook = global.fridaHooks[hookId];
 
-                    if (hook.frequency && hook.frequency > 1000) {
+                  if (hook.frequency && hook.frequency > 1000) {
                         // Add throttling
-                        var original = hook.onEnter;
-                        var lastCall = 0;
+                      const original = hook.onEnter;
+                      let lastCall = 0;
 
-                        hook.onEnter = function (args) {
-                            var now = Date.now();
-                            if (now - lastCall < 10) return; // Throttle to 100Hz
+                      hook.onEnter = function (args) {
+                          const now = Date.now();
+                          if (now - lastCall < 10) { return; // Throttle to 100Hz
+}
                             lastCall = now;
                             return original.call(this, args);
                         };
@@ -4159,8 +4121,8 @@ const modularHookLibrary = {
             }
 
             // Reduce Stalker sessions
-            var stalkerCount = 0;
-            Process.enumerateThreads().forEach(function (thread) {
+          let stalkerCount = 0;
+          Process.enumerateThreads().forEach(thread => {
                 try {
                     if (Stalker.getQueueCapacity(thread.id) > 0) {
                         stalkerCount++;
@@ -4173,24 +4135,24 @@ const modularHookLibrary = {
         };
 
         // Optimize hook count
-        orchestrator.optimizeHooks = function () {
-            if (!global.fridaHooks) return;
+        orchestrator.optimizeHooks = () => {
+            if (!global.fridaHooks) { return; }
 
             // Identify redundant hooks
-            var hookMap = new Map();
+          const hookMap = new Map();
 
-            for (var hookId in global.fridaHooks) {
-                var hook = global.fridaHooks[hookId];
-                var key = hook.address ? hook.address.toString() : hookId;
+          for (let hookId in global.fridaHooks) {
+              const hook = global.fridaHooks[hookId];
+              const key = hook.address ? hook.address.toString() : hookId;
 
-                if (!hookMap.has(key)) {
+              if (!hookMap.has(key)) {
                     hookMap.set(key, []);
                 }
                 hookMap.get(key).push(hookId);
             }
 
             // Merge redundant hooks
-            hookMap.forEach(function (hookIds, _address) {
+            hookMap.forEach((hookIds, _address) => {
                 if (hookIds.length > 1) {
                     orchestrator.mergeHooks(hookIds);
                 }
@@ -4198,24 +4160,24 @@ const modularHookLibrary = {
         };
 
         // Merge multiple hooks at same address
-        orchestrator.mergeHooks = function (hookIds) {
-            if (!global.fridaHooks || hookIds.length < 2) return;
+        orchestrator.mergeHooks = hookIds => {
+            if (!global.fridaHooks || hookIds.length < 2) { return; }
 
-            var masterHook = global.fridaHooks[hookIds[0]];
-            var callbacks = [];
+          const masterHook = global.fridaHooks[hookIds[0]];
+          const callbacks = [];
 
-            // Collect all callbacks
-            hookIds.forEach(function (id) {
-                var hook = global.fridaHooks[id];
-                if (hook.onEnter) {
+          // Collect all callbacks
+            hookIds.forEach(id => {
+              const hook = global.fridaHooks[id];
+              if (hook.onEnter) {
                     callbacks.push(hook.onEnter);
                 }
             });
 
             // Create merged callback
             masterHook.onEnter = function (args) {
-                var results = [];
-                for (var i = 0; i < callbacks.length; i++) {
+              const results = [];
+              for (let i = 0; i < callbacks.length; i++) {
                     try {
                         results.push(callbacks[i].call(this, args));
                     } catch (_e) {}
@@ -4230,16 +4192,16 @@ const modularHookLibrary = {
         };
 
         // Compress function for storage
-        orchestrator.compressFunction = function (func) {
-            var source = func.toString();
+        orchestrator.compressFunction = func => {
+          let source = func.toString();
 
-            // Remove comments and whitespace
+          // Remove comments and whitespace
             source = source.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
             source = source.replace(/\s+/g, ' ');
 
             // Recreate function
             try {
-                return new Function('return ' + source)();
+                return new Function(`return ${source}`)();
             } catch (_e) {
                 return func; // Return original if compression fails
             }
@@ -4247,9 +4209,9 @@ const modularHookLibrary = {
 
         // Adaptive resource allocation
         orchestrator.allocateResources = function () {
-            var metrics = this.monitorPerformance();
+          const metrics = this.monitorPerformance();
 
-            // Adjust limits based on available resources
+          // Adjust limits based on available resources
             if (metrics.memory < this.resourceLimits.maxMemory * 0.5) {
                 // Plenty of memory - allow more caching
                 this.resourceLimits.maxHooks = 1500;
@@ -4270,7 +4232,7 @@ const modularHookLibrary = {
         };
 
         // Start monitoring
-        setInterval(function () {
+        setInterval(() => {
             orchestrator.monitorPerformance();
             orchestrator.allocateResources();
         }, 5000);

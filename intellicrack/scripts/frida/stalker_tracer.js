@@ -63,7 +63,7 @@ function isLicensingRelated(name) {
         return false;
     }
     const lower = name.toLowerCase();
-    return licenseKeywords.some((keyword) => lower.includes(keyword));
+    return licenseKeywords.some(keyword => lower.includes(keyword));
 }
 
 function formatAddress(addr) {
@@ -88,7 +88,7 @@ function shouldExcludeModule(moduleName) {
     if (!moduleName) {
         return false;
     }
-    return config.excludeModules.some((excluded) =>
+    return config.excludeModules.some(excluded =>
         moduleName.toLowerCase().includes(excluded.toLowerCase())
     );
 }
@@ -116,12 +116,12 @@ function setupAPIMonitoring() {
         { module: 'ws2_32.dll', name: 'recv' },
     ];
 
-    criticalAPIs.forEach((api) => {
+    criticalAPIs.forEach(api => {
         const addr = Module.findExportByName(api.module, api.name);
         if (addr) {
             try {
                 Interceptor.attach(addr, {
-                    onEnter: function (args) {
+                    onEnter: function (_args) {
                         const tid = Process.getCurrentThreadId();
                         const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
                             .map(formatAddress)
@@ -172,13 +172,13 @@ function createStalkerTransformer() {
             block: true,
             compile: false,
         },
-        onReceive: function (events) {
+        onReceive: events => {
             const parsed = Stalker.parse(events, {
                 annotate: true,
                 stringify: false,
             });
 
-            parsed.forEach((event) => {
+            parsed.forEach(event => {
                 if (event[0] === 'call') {
                     const [, target] = event;
                     const moduleInfo = getModuleInfo(target);
@@ -227,7 +227,7 @@ function createStalkerTransformer() {
     };
 }
 
-function startStalking(targetFunction) {
+function startStalking(_targetFunction) {
     send({
         type: 'status',
         message: 'Starting Stalker on current thread',
@@ -295,7 +295,7 @@ function traceFunction(moduleName, functionName) {
     }
 
     const exports = module.enumerateExports();
-    const targetExport = exports.find((exp) => exp.name === functionName);
+    const targetExport = exports.find(exp => exp.name === functionName);
 
     if (!targetExport) {
         send({
@@ -316,14 +316,14 @@ function traceFunction(moduleName, functionName) {
     const maxDepth = 20;
 
     Interceptor.attach(targetExport.address, {
-        onEnter: function (args) {
+        onEnter: function (_args) {
             callDepth++;
             if (callDepth > maxDepth) {
                 return;
             }
 
             const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
-                .map((addr) => {
+                .map(addr => {
                     const info = getModuleInfo(addr);
                     return info ? `${info.name}+${info.offset}` : formatAddress(addr);
                 })
@@ -346,9 +346,9 @@ function traceFunction(moduleName, functionName) {
                     call: true,
                     ret: true,
                 },
-                onReceive: function (events) {
+                onReceive: events => {
                     const parsed = Stalker.parse(events);
-                    parsed.forEach((event) => {
+                    parsed.forEach(event => {
                         if (traceData.length < 10000) {
                             const moduleInfo = getModuleInfo(event[1]);
                             traceData.push({
@@ -362,7 +362,7 @@ function traceFunction(moduleName, functionName) {
                 },
             });
         },
-        onLeave: function (retval) {
+        onLeave: retval => {
             if (callDepth <= maxDepth) {
                 traceData.push({
                     type: 'leave',
@@ -414,7 +414,7 @@ function collectModuleCoverage(moduleName) {
             exec: true,
             block: true,
         },
-        transform: function (iterator) {
+        transform: iterator => {
             let instruction = iterator.next();
             while (instruction !== null) {
                 const addr = instruction.address;
@@ -423,7 +423,7 @@ function collectModuleCoverage(moduleName) {
                     const offset = addr.sub(moduleBase);
                     blocksCovered.add(formatAddress(offset));
 
-                    iterator.putCallout(function () {
+                    iterator.putCallout(() => {
                         stats.totalInstructions++;
                     });
                 }
@@ -467,14 +467,14 @@ function analyzeLicensingFlow() {
     const licensingEvents = [];
     const hooks = [];
 
-    licensingAPIs.forEach((api) => {
+    licensingAPIs.forEach(api => {
         const addr = Module.findExportByName(api.module, api.name);
         if (addr) {
             const hook = Interceptor.attach(addr, {
-                onEnter: function (args) {
+                onEnter: function (_args) {
                     const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
                     const callers = backtrace
-                        .map((addr) => {
+                        .map(addr => {
                             const info = getModuleInfo(addr);
                             return info
                                 ? {
@@ -484,9 +484,9 @@ function analyzeLicensingFlow() {
                                   }
                                 : null;
                         })
-                        .filter((x) => x !== null);
+                        .filter(x => x !== null);
 
-                    const licensingCaller = callers.find((c) => isLicensingRelated(c.module));
+                    const licensingCaller = callers.find(c => isLicensingRelated(c.module));
 
                     if (licensingCaller) {
                         licensingEvents.push({
@@ -521,16 +521,14 @@ rpc.exports = {
     traceFunction: traceFunction,
     collectModuleCoverage: collectModuleCoverage,
     analyzeLicensingFlow: analyzeLicensingFlow,
-    getStats: function () {
-        return {
-            totalInstructions: stats.totalInstructions,
-            uniqueBlocks: stats.uniqueBlocks.size,
-            coverageEntries: stats.coverage.size,
-            licensingRoutines: stats.licensingRoutines.length,
-            apiCalls: stats.apiCalls.size,
-        };
-    },
-    setConfig: function (newConfig) {
+    getStats: () => ({
+        totalInstructions: stats.totalInstructions,
+        uniqueBlocks: stats.uniqueBlocks.size,
+        coverageEntries: stats.coverage.size,
+        licensingRoutines: stats.licensingRoutines.length,
+        apiCalls: stats.apiCalls.size,
+    }),
+    setConfig: newConfig => {
         Object.assign(config, newConfig);
         send({
             type: 'status',

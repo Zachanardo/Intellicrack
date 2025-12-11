@@ -271,6 +271,41 @@ class AnalysisStatsGenerator:
             logger.debug(f"Stats generation failed: {e}")
             return default_return
 
+    @classmethod
+    def safe_recommendation_generation(
+        cls,
+        compute_recommendations: Callable[[], list[str]],
+    ) -> list[str]:
+        """Safely execute a recommendation generation function with error handling.
+
+        Wraps the execution of a recommendation computation function to provide
+        robust error handling. If the computation fails for any reason, returns
+        a default set of recommendations rather than propagating the error.
+
+        Args:
+            compute_recommendations: Callable that takes no arguments and returns
+                                   a list of recommendation strings
+
+        Returns:
+            List of recommendation strings from compute_recommendations, or a
+            default list with a generic recommendation if an exception occurs
+
+        """
+        try:
+            result = compute_recommendations()
+            if isinstance(result, list):
+                return result
+            return [str(result)] if result else ["No specific recommendations available"]
+        except TypeError as e:
+            logger.debug(f"Recommendation generation type error: {e}")
+            return ["Unable to generate recommendations - type error occurred"]
+        except ValueError as e:
+            logger.debug(f"Recommendation generation value error: {e}")
+            return ["Unable to generate recommendations - invalid value encountered"]
+        except Exception as e:
+            logger.debug(f"Recommendation generation failed: {e}")
+            return ["Unable to generate recommendations - please review manually"]
+
     @staticmethod
     def generate_summary_report(items: list[dict[str, Any]], title: str = "Analysis Summary") -> str:
         """Generate a text summary report.

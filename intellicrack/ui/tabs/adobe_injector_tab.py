@@ -8,10 +8,14 @@ Licensed under GNU GPL v3.0
 """
 
 import json
+import logging
 import subprocess
 import threading
 from collections.abc import Callable
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
 from intellicrack.core.terminal_manager import get_terminal_manager

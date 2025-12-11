@@ -8,21 +8,19 @@
  * - Attestation response modification
  */
 
-'use strict';
-
 const TPM_COMMANDS = {
-    0x00000144: 'TPM2_Startup',
-    0x00000153: 'TPM2_Create',
-    0x00000157: 'TPM2_Load',
-    0x0000015e: 'TPM2_Unseal',
-    0x00000158: 'TPM2_Quote',
-    0x0000017e: 'TPM2_PCR_Read',
-    0x00000182: 'TPM2_PCR_Extend',
-    0x0000017b: 'TPM2_GetRandom',
-    0x0000015d: 'TPM2_Sign',
-    0x00000131: 'TPM2_CreatePrimary',
-    0x00000176: 'TPM2_StartAuthSession',
-    0x0000017a: 'TPM2_GetCapability',
+    324: 'TPM2_Startup',
+    339: 'TPM2_Create',
+    343: 'TPM2_Load',
+    350: 'TPM2_Unseal',
+    344: 'TPM2_Quote',
+    382: 'TPM2_PCR_Read',
+    386: 'TPM2_PCR_Extend',
+    379: 'TPM2_GetRandom',
+    349: 'TPM2_Sign',
+    305: 'TPM2_CreatePrimary',
+    374: 'TPM2_StartAuthSession',
+    378: 'TPM2_GetCapability',
 };
 
 const interceptedCommands = [];
@@ -79,7 +77,7 @@ function hookTbsipSubmitCommand() {
 
     Interceptor.attach(tbsipSubmitCommand, {
         onEnter: function (args) {
-            const context = args[0];
+            const _context = args[0];
             const locality = args[1].toInt32();
             const priority = args[2].toInt32();
             const commandBuffer = args[3];
@@ -212,7 +210,7 @@ function hookNCryptTPMFunctions() {
                 if (providerNamePtr && !providerNamePtr.isNull()) {
                     try {
                         const providerName = providerNamePtr.readUtf16String();
-                        if (providerName && providerName.includes('TPM')) {
+                        if (providerName?.includes('TPM')) {
                             console.log(`[+] NCrypt TPM Provider Access: ${providerName}`);
                             this.isTpmProvider = true;
                         }
@@ -236,7 +234,7 @@ function hookNCryptTPMFunctions() {
     const ncryptOpenKey = ncryptDll.getExportByName('NCryptOpenKey');
     if (ncryptOpenKey) {
         Interceptor.attach(ncryptOpenKey, {
-            onEnter: function (args) {
+            onEnter: args => {
                 const keyNamePtr = args[2];
                 if (keyNamePtr && !keyNamePtr.isNull()) {
                     try {
@@ -248,7 +246,7 @@ function hookNCryptTPMFunctions() {
                 }
             },
 
-            onLeave: function (retval) {
+            onLeave: retval => {
                 if (retval.toInt32() === 0) {
                     console.log('[+] TPM Key Opened Successfully');
                 }
@@ -272,7 +270,7 @@ function hookDeviceIoControl() {
     }
 
     Interceptor.attach(deviceIoControl, {
-        onEnter: function (args) {
+        onEnter: args => {
             const hDevice = args[0];
             const dwIoControlCode = args[1].toInt32();
 
@@ -321,7 +319,7 @@ function getSummary() {
     return {
         hookedFunctions: Array.from(hookedFunctions),
         interceptedCommandCount: interceptedCommands.length,
-        commands: interceptedCommands.map((entry) => ({
+        commands: interceptedCommands.map(entry => ({
             timestamp: entry.timestamp,
             commandName: entry.command.commandName,
             commandCode: `0x${entry.command.commandCode.toString(16)}`,
@@ -359,10 +357,8 @@ function initialize() {
 
 rpc.exports = {
     getSummary: getSummary,
-    getInterceptedCommands: function () {
-        return interceptedCommands;
-    },
-    clearCommands: function () {
+    getInterceptedCommands: () => interceptedCommands,
+    clearCommands: () => {
         interceptedCommands.length = 0;
         return { status: 'cleared' };
     },

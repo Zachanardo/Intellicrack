@@ -2,14 +2,91 @@
   "name": "intellicrack",
   "version": "0.1.0",
   "description": "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities",
-  "devDependencies": {
-    "eslint": "^9.38.0",
-    "eslint-plugin-toml": "^0.12.0",
-    "prettier": "^3.4.2",
-    "prettier-plugin-toml": "^2.0.1"
+  "author": "Zachary Flint <zach.flint2@gmail.com>",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zachanardo/Intellicrack.git"
   },
+  "bugs": {
+    "url": "https://github.com/Zachanardo/Intellicrack/issues"
+  },
+  "homepage": "https://github.com/Zachanardo/Intellicrack#readme",
+  "keywords": [
+    "binary-analysis",
+    "reverse-engineering",
+    "security-research",
+    "frida",
+    "ghidra",
+    "radare2",
+    "license-analysis",
+    "protection-analysis",
+    "disassembly",
+    "decompilation"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "intellicrack/scripts/frida/**/*.js",
+    "intellicrack/core/certificate/frida_scripts/**/*.js",
+    "intellicrack/dashboard/static/js/**/*.js",
+    "eslint.config.mjs",
+    "knip.json",
+    "biome.json"
+  ],
   "scripts": {
-    "lint": "eslint . --ext .js,.toml",
-    "lint-toml": "eslint --ext .toml pixi.toml pyproject.toml"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:js": "eslint \"intellicrack/**/*.js\"",
+    "lint:toml": "eslint \"**/*.toml\"",
+    "lint:frida": "eslint \"intellicrack/scripts/frida/**/*.js\" \"intellicrack/core/certificate/frida_scripts/**/*.js\"",
+    "knip": "knip",
+    "knip:json": "knip --reporter json",
+    "knip:strict": "knip --no-exit-code --reporter compact",
+    "format": "prettier --write \"intellicrack/**/*.js\"",
+    "format:check": "prettier --check \"intellicrack/**/*.js\"",
+    "format:toml": "prettier --write \"**/*.toml\"",
+    "check": "yarn run lint && yarn run knip",
+    "check:all": "yarn run lint && yarn run format:check && yarn run knip",
+    "precommit": "yarn run lint:fix && yarn run format",
+    "analyze": "yarn run knip:json > reports/json/knip_analysis.json",
+    "biome": "biome check .",
+    "biome:fix": "biome check --write .",
+    "biome:lint": "biome lint .",
+    "biome:format": "biome format ."
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "*",
+    "@biomejs/biome": "*",
+    "@types/d3": "*",
+    "@types/frida-gum": "*",
+    "@types/node": "*",
+    "eslint": "*",
+    "eslint-config-prettier": "*",
+    "eslint-plugin-import": "*",
+    "eslint-plugin-jsdoc": "*",
+    "eslint-plugin-security": "*",
+    "eslint-plugin-toml": "*",
+    "eslint-plugin-unicorn": "*",
+    "eslint-plugin-yml": "*",
+    "knip": "*",
+    "prettier": "*",
+    "prettier-plugin-toml": "*",
+    "typescript": "*"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 4,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
+    "endOfLine": "auto",
+    "plugins": [
+      "prettier-plugin-toml"
+    ]
   }
 }

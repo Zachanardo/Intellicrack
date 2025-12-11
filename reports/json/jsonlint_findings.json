@@ -1,0 +1,371 @@
+﻿{
+    "files":  [
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/obsidium_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/obsidium_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/obsidium_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/hasp_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/hasp_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/hasp_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/securom_v7_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/securom_v7_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/securom_v7_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/safengine_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/safengine_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/safengine_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/asprotect_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/asprotect_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/asprotect_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/armadillo_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/armadillo_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/armadillo_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/flexlm_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/flexlm_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/flexlm_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/enigma_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/enigma_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/enigma_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/validation_system/phase6/code_review_report.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/validation_system/phase6/code_review_report.json\r",
+                                           "raw":  "tests/validation_system/phase6/code_review_report.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/validation_system/config.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/validation_system/config.json\r",
+                                           "raw":  "tests/validation_system/config.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "ui_config.json",
+                      "findings":  [
+                                       {
+                                           "message":  "ui_config.json: OSError: [Errno 22] Invalid argument: \u0027\\ufeffbiome.json\\nintellicrack/assets/example_configs/anthropic_claude3.json\\nintellicrack/assets/example_configs/frida_specialized.json\\nintellicrack/assets/example_configs/gptq_fast_inference.json\\nintellicrack/assets/example_configs/local_gguf_high_performance.json\\nintellicrack/assets/example_configs/ollama_codellama.json\\nintellicrack/assets/example_configs/onnx_production.json\\nintellicrack/assets/example_configs/openai_gpt4.json\\nintellicrack/assets/example_configs/pytorch_research.json\\nintellicrack/assets/example_configs/vulnerability_assessment.json\\nintellicrack/assets/fonts/font_config.json\\nintellicrack/data/protocol_signatures.json\\nintellicrack/data/training_samples/index.json\\nintellicrack/models/protection_classifier/metadata.json\\nintellicrack/models/protection_classifier/training_results.json\\nknip.json\\npackage.json\\ntests/integration/real_binary_tests/manifests/armadillo_samples.json\\ntests/integration/real_binary_tests/manifests/asprotect_samples.json\\ntests/integration/real_binary_tests/manifests/enigma_samples.json\\ntests/integration/real_binary_tests/manifests/flexlm_samples.json\\ntests/integration/real_binary_tests/manifests/hasp_samples.json\\ntests/integration/real_binary_tests/manifests/obsidium_samples.json\\ntests/integration/real_binary_tests/manifests/safengine_samples.json\\ntests/integration/real_binary_tests/manifests/securom_v7_samples.json\\ntests/integration/real_binary_tests/manifests/securom_v8_samples.json\\ntests/integration/real_binary_tests/manifests/starforce_samples.json\\ntests/integration/real_binary_tests/manifests/themida_samples.json\\ntests/integration/real_binary_tests/manifests/vmprotect_samples.json\\ntests/validation_system/config.json\\ntests/validation_system/phase6/code_review_report.json\\ntests/validation_system/version_compatibility_db.json\\nui_config.json\u0027",
+                                           "raw":  "ui_config.json: OSError: [Errno 22] Invalid argument: \u0027\\ufeffbiome.json\\nintellicrack/assets/example_configs/anthropic_claude3.json\\nintellicrack/assets/example_configs/frida_specialized.json\\nintellicrack/assets/example_configs/gptq_fast_inference.json\\nintellicrack/assets/example_configs/local_gguf_high_performance.json\\nintellicrack/assets/example_configs/ollama_codellama.json\\nintellicrack/assets/example_configs/onnx_production.json\\nintellicrack/assets/example_configs/openai_gpt4.json\\nintellicrack/assets/example_configs/pytorch_research.json\\nintellicrack/assets/example_configs/vulnerability_assessment.json\\nintellicrack/assets/fonts/font_config.json\\nintellicrack/data/protocol_signatures.json\\nintellicrack/data/training_samples/index.json\\nintellicrack/models/protection_classifier/metadata.json\\nintellicrack/models/protection_classifier/training_results.json\\nknip.json\\npackage.json\\ntests/integration/real_binary_tests/manifests/armadillo_samples.json\\ntests/integration/real_binary_tests/manifests/asprotect_samples.json\\ntests/integration/real_binary_tests/manifests/enigma_samples.json\\ntests/integration/real_binary_tests/manifests/flexlm_samples.json\\ntests/integration/real_binary_tests/manifests/hasp_samples.json\\ntests/integration/real_binary_tests/manifests/obsidium_samples.json\\ntests/integration/real_binary_tests/manifests/safengine_samples.json\\ntests/integration/real_binary_tests/manifests/securom_v7_samples.json\\ntests/integration/real_binary_tests/manifests/securom_v8_samples.json\\ntests/integration/real_binary_tests/manifests/starforce_samples.json\\ntests/integration/real_binary_tests/manifests/themida_samples.json\\ntests/integration/real_binary_tests/manifests/vmprotect_samples.json\\ntests/validation_system/config.json\\ntests/validation_system/phase6/code_review_report.json\\ntests/validation_system/version_compatibility_db.json\\nui_config.json\u0027",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/validation_system/version_compatibility_db.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/validation_system/version_compatibility_db.json\r",
+                                           "raw":  "tests/validation_system/version_compatibility_db.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/starforce_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/starforce_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/starforce_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/securom_v8_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/securom_v8_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/securom_v8_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/vmprotect_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/vmprotect_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/vmprotect_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "tests/integration/real_binary_tests/manifests/themida_samples.json",
+                      "findings":  [
+                                       {
+                                           "message":  "tests/integration/real_binary_tests/manifests/themida_samples.json\r",
+                                           "raw":  "tests/integration/real_binary_tests/manifests/themida_samples.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "package.json",
+                      "findings":  [
+                                       {
+                                           "message":  "package.json\r",
+                                           "raw":  "package.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/ollama_codellama.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/ollama_codellama.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/ollama_codellama.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/local_gguf_high_performance.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/local_gguf_high_performance.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/local_gguf_high_performance.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/openai_gpt4.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/openai_gpt4.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/openai_gpt4.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/onnx_production.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/onnx_production.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/onnx_production.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/anthropic_claude3.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/anthropic_claude3.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/anthropic_claude3.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "﻿biome.json",
+                      "findings":  [
+                                       {
+                                           "message":  "﻿biome.json\r",
+                                           "raw":  "﻿biome.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/gptq_fast_inference.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/gptq_fast_inference.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/gptq_fast_inference.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/frida_specialized.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/frida_specialized.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/frida_specialized.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/models/protection_classifier/metadata.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/models/protection_classifier/metadata.json\r",
+                                           "raw":  "intellicrack/models/protection_classifier/metadata.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/data/training_samples/index.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/data/training_samples/index.json\r",
+                                           "raw":  "intellicrack/data/training_samples/index.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "knip.json",
+                      "findings":  [
+                                       {
+                                           "message":  "knip.json\r",
+                                           "raw":  "knip.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/models/protection_classifier/training_results.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/models/protection_classifier/training_results.json\r",
+                                           "raw":  "intellicrack/models/protection_classifier/training_results.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/vulnerability_assessment.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/vulnerability_assessment.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/vulnerability_assessment.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/example_configs/pytorch_research.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/example_configs/pytorch_research.json\r",
+                                           "raw":  "intellicrack/assets/example_configs/pytorch_research.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/data/protocol_signatures.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/data/protocol_signatures.json\r",
+                                           "raw":  "intellicrack/data/protocol_signatures.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  },
+                  {
+                      "path":  "intellicrack/assets/fonts/font_config.json",
+                      "findings":  [
+                                       {
+                                           "message":  "intellicrack/assets/fonts/font_config.json\r",
+                                           "raw":  "intellicrack/assets/fonts/font_config.json\r",
+                                           "line":  null
+                                       }
+                                   ],
+                      "count":  1
+                  }
+              ],
+    "total_findings":  0,
+    "generated":  "2025-12-10T21:38:25.2294481-07:00",
+    "total_files":  33,
+    "tool":  "jsonlint"
+}

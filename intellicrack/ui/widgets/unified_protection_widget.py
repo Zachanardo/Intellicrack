@@ -569,7 +569,7 @@ class UnifiedProtectionWidget(QWidget):
         self.display_protection_cards(result)
 
         # Update details
-        self.update_details(result)
+        self._update_analysis_details(result)
 
         # Display bypass strategies
         self.display_bypass_strategies(result)
@@ -582,6 +582,94 @@ class UnifiedProtectionWidget(QWidget):
 
         # Update entropy visualization
         self.update_entropy_graph(result)
+
+    def update_details(self, result: UnifiedProtectionResult) -> None:
+        """Update the analysis details display with comprehensive protection information.
+
+        Populates the details text panel with formatted analysis results including
+        protection overview, detection sources, and actionable recommendations.
+
+        Args:
+            result: The unified protection analysis result containing all detection data.
+
+        """
+        self._update_analysis_details(result)
+
+    def _update_analysis_details(self, result: UnifiedProtectionResult) -> None:
+        """Internal method to update the analysis details display.
+
+        Args:
+            result: The unified protection analysis result containing all detection data.
+
+        """
+        details = "=== Protection Analysis Details ===\n\n"
+
+        details += f"File: {os.path.basename(result.file_path)}\n"
+        details += f"Type: {result.file_type}\n"
+        details += f"Architecture: {result.architecture}\n"
+        details += f"Analysis Time: {result.analysis_time:.3f} seconds\n\n"
+
+        if not result.protections:
+            details += "No protections detected.\n\n"
+            details += "This binary appears to have no software protection mechanisms.\n"
+            details += "It may be suitable for direct analysis without bypass techniques.\n"
+        else:
+            details += f"Total Protections Detected: {len(result.protections)}\n"
+            details += f"Overall Confidence: {result.confidence_score:.1f}%\n\n"
+
+            details += "--- Detected Protections ---\n\n"
+
+            for i, protection in enumerate(result.protections, 1):
+                details += f"{i}. {protection['name']}\n"
+                details += f"   Type: {protection['type']}\n"
+                details += f"   Confidence: {protection.get('confidence', 0):.0f}%\n"
+
+                source = protection.get("source", AnalysisSource.ICP)
+                details += f"   Detection Source: {self._format_source(source)}\n"
+
+                if protection.get("version"):
+                    details += f"   Version: {protection['version']}\n"
+
+                if "details" in protection and protection["details"]:
+                    details += "   Details:\n"
+                    for key, value in protection["details"].items():
+                        details += f"      {key}: {value}\n"
+
+                details += "\n"
+
+            details += "--- Protection Status Flags ---\n\n"
+            details += f"Packed Binary: {'Yes' if result.is_packed else 'No'}\n"
+            details += f"Protected: {'Yes' if result.is_protected else 'No'}\n"
+            details += f"Obfuscated: {'Yes' if result.is_obfuscated else 'No'}\n"
+            details += f"Anti-Debugging: {'Detected' if result.has_anti_debug else 'Not Detected'}\n"
+            details += f"Anti-VM: {'Detected' if result.has_anti_vm else 'Not Detected'}\n"
+            details += f"Licensing Protection: {'Detected' if result.has_licensing else 'Not Detected'}\n\n"
+
+            if result.has_licensing:
+                details += "--- Licensing Analysis ---\n\n"
+                details += "License protection mechanisms detected. Potential bypass approaches:\n"
+                details += "  - Locate license validation routines\n"
+                details += "  - Identify serial number algorithms\n"
+                details += "  - Trace registration API calls\n"
+                details += "  - Analyze time-based trial checks\n\n"
+
+            if result.has_anti_debug:
+                details += "--- Anti-Debugging Analysis ---\n\n"
+                details += "Anti-debugging techniques detected. Consider:\n"
+                details += "  - Using anti-anti-debug bypasses\n"
+                details += "  - Patching IsDebuggerPresent checks\n"
+                details += "  - Hooking NtQueryInformationProcess\n"
+                details += "  - Using ScyllaHide or similar tools\n\n"
+
+            if result.is_packed:
+                details += "--- Packing Analysis ---\n\n"
+                details += "Binary appears to be packed or compressed.\n"
+                details += "Consider unpacking before further analysis:\n"
+                details += "  - Use automatic unpacker tools\n"
+                details += "  - Dump process memory at OEP\n"
+                details += "  - Reconstruct import table\n\n"
+
+        self.details_text.setPlainText(details)
 
     def update_summary(self, result: UnifiedProtectionResult) -> None:
         """Update summary display."""

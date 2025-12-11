@@ -58,15 +58,14 @@ public class QuickStringDump extends GhidraScript {
 
   // Comprehensive analysis components using all imports
   private DataTypeManager dataTypeManager;
-  private FunctionManager functionManager;
-  private SymbolTable symbolTable;
+    private SymbolTable symbolTable;
   private ReferenceManager referenceManager;
-  private Map<DataType, Set<Address>> dataTypeStringMap = new HashMap<>();
-  private Map<Structure, List<StringAnalysisResult>> structureStrings = new HashMap<>();
-  private Map<ghidra.program.model.data.Enum, List<StringAnalysisResult>> enumStrings =
+  private final Map<DataType, Set<Address>> dataTypeStringMap = new HashMap<>();
+  private final Map<Structure, List<StringAnalysisResult>> structureStrings = new HashMap<>();
+  private final Map<ghidra.program.model.data.Enum, List<StringAnalysisResult>> enumStrings =
       new HashMap<>();
-  private Map<AddressSpace, AddressSet> stringsBySpace = new HashMap<>();
-  private Set<CodeUnit> stringCodeUnits = new HashSet<>();
+  private final Map<AddressSpace, AddressSet> stringsBySpace = new HashMap<>();
+  private final Set<CodeUnit> stringCodeUnits = new HashSet<>();
 
   @Override
   public void run() throws Exception {
@@ -141,7 +140,7 @@ public class QuickStringDump extends GhidraScript {
   private void initializeComprehensiveComponents() throws MemoryAccessException {
     // Initialize all managers and analysis components using imported classes
     dataTypeManager = currentProgram.getDataTypeManager();
-    functionManager = currentProgram.getFunctionManager();
+      FunctionManager functionManager = currentProgram.getFunctionManager();
     symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
 
@@ -345,7 +344,7 @@ public class QuickStringDump extends GhidraScript {
     }
   }
 
-  private void performAdvancedAnalysis() throws Exception {
+  private void performAdvancedAnalysis() {
     // Analyze string patterns for potential decryption keys, passwords, etc.
     for (StringAnalysisResult result : new ArrayList<>(analysisResults)) {
       performEntropyAnalysis(result);
@@ -457,7 +456,7 @@ public class QuickStringDump extends GhidraScript {
     // Check for URL encoding
     if (str.contains("%") && str.matches(".*%[0-9a-fA-F]{2}.*")) {
       try {
-        String decoded = java.net.URLDecoder.decode(str, "UTF-8");
+        String decoded = java.net.URLDecoder.decode(str, StandardCharsets.UTF_8);
         if (!decoded.equals(str)) {
           result.analysisNotes.add("URL encoding detected");
           result.decodedValue = decoded;
@@ -598,7 +597,7 @@ public class QuickStringDump extends GhidraScript {
     }
   }
 
-  private void detectObfuscatedStrings() throws Exception {
+  private void detectObfuscatedStrings() {
     for (StringAnalysisResult result : analysisResults) {
       detectXORObfuscation(result);
       detectRotationObfuscation(result);
@@ -624,7 +623,7 @@ public class QuickStringDump extends GhidraScript {
         decoded.append(decodedChar);
       }
 
-      if (isValid && decoded.length() > 0) {
+      if (isValid && !decoded.isEmpty()) {
         String decodedStr = decoded.toString();
         if (containsMeaningfulWords(decodedStr)) {
           result.category = "Obfuscated";
@@ -907,11 +906,7 @@ public class QuickStringDump extends GhidraScript {
     }
 
     // Check for long alphanumeric strings (common in API keys)
-    if (str.length() >= 20 && str.length() <= 80 && str.matches("[a-zA-Z0-9_\\-\\.]+")) {
-      return true;
-    }
-
-    return false;
+      return str.length() >= 20 && str.length() <= 80 && str.matches("[a-zA-Z0-9_\\-\\.]+");
   }
 
   private void writeHeader(PrintWriter writer) {
@@ -1054,13 +1049,11 @@ public class QuickStringDump extends GhidraScript {
     while (dataTypeIter.hasNext() && !monitor.isCancelled()) {
       DataType dataType = dataTypeIter.next();
 
-      if (dataType instanceof Structure) {
-        Structure structure = (Structure) dataType;
-        analyzeStructureForStringData(structure);
+      if (dataType instanceof Structure structure) {
+          analyzeStructureForStringData(structure);
         structuresAnalyzed++;
-      } else if (dataType instanceof ghidra.program.model.data.Enum) {
-        ghidra.program.model.data.Enum enumType = (ghidra.program.model.data.Enum) dataType;
-        analyzeEnumForStringData(enumType);
+      } else if (dataType instanceof ghidra.program.model.data.Enum enumType) {
+          analyzeEnumForStringData(enumType);
         enumsAnalyzed++;
       }
 
@@ -1301,9 +1294,8 @@ public class QuickStringDump extends GhidraScript {
         stringReferencingUnits++;
 
         // Perform advanced P-code analysis if this is an instruction
-        if (codeUnit instanceof Instruction) {
-          Instruction instruction = (Instruction) codeUnit;
-          analyzePcodeForStringOperations(instruction);
+        if (codeUnit instanceof Instruction instruction) {
+            analyzePcodeForStringOperations(instruction);
         }
       }
 
@@ -1359,10 +1351,9 @@ public class QuickStringDump extends GhidraScript {
           Object[] opObjects = instruction.getOpObjects(i);
 
           for (Object obj : opObjects) {
-            if (obj instanceof Address) {
-              Address opAddr = (Address) obj;
+            if (obj instanceof Address opAddr) {
 
-              // Check if this address corresponds to a string
+                // Check if this address corresponds to a string
               for (StringAnalysisResult result : analysisResults) {
                 if (result.address.equals(opAddr)) {
                   result.analysisNotes.add("P-code analysis: " + mnemonic + " operation");
@@ -1522,9 +1513,8 @@ public class QuickStringDump extends GhidraScript {
 
         // Extract and analyze string content
         Object value = data.getValue();
-        if (value instanceof String) {
-          String stringValue = (String) value;
-          analyzeStringForLicensingPatterns(stringValue, addr, dataType);
+        if (value instanceof String stringValue) {
+            analyzeStringForLicensingPatterns(stringValue, addr, dataType);
         }
       }
 
@@ -1551,11 +1541,10 @@ public class QuickStringDump extends GhidraScript {
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
 
-        if (dt instanceof Pointer) {
-          Pointer ptrType = (Pointer) dt;
-          DataType referencedType = ptrType.getDataType();
+        if (dt instanceof Pointer ptrType) {
+            DataType referencedType = ptrType.getDataType();
 
-          if (referencedType != null && isStringRelatedType(referencedType)) {
+          if (isStringRelatedType(referencedType)) {
             // Find instances of this pointer type
             findStringPointerInstances(ptrType);
           }
@@ -1602,11 +1591,10 @@ public class QuickStringDump extends GhidraScript {
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
 
-        if (dt instanceof Array) {
-          Array arrayType = (Array) dt;
-          DataType elementType = arrayType.getDataType();
+        if (dt instanceof Array arrayType) {
+            DataType elementType = arrayType.getDataType();
 
-          if (elementType != null && isStringRelatedType(elementType)) {
+          if (isStringRelatedType(elementType)) {
             // Find instances of string arrays
             findStringArrayInstances(arrayType);
           }
@@ -1660,10 +1648,9 @@ public class QuickStringDump extends GhidraScript {
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
 
-        if (dt instanceof Union) {
-          Union unionType = (Union) dt;
+        if (dt instanceof Union unionType) {
 
-          // Check union components for string types
+            // Check union components for string types
           for (int i = 0; i < unionType.getNumComponents(); i++) {
             DataTypeComponent component = unionType.getComponent(i);
             DataType componentType = component.getDataType();
@@ -1737,7 +1724,6 @@ public class QuickStringDump extends GhidraScript {
           // Find references to this string address
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(addr);
 
-          if (refs.length > 0) {
             // This string is referenced - analyze referencing functions
             for (Reference ref : refs) {
               Address fromAddr = ref.getFromAddress();
@@ -1756,7 +1742,6 @@ public class QuickStringDump extends GhidraScript {
                 }
               }
             }
-          }
         }
       }
 
@@ -1837,9 +1822,8 @@ public class QuickStringDump extends GhidraScript {
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
 
-        if (dt instanceof Structure) {
-          Structure struct = (Structure) dt;
-          analyzeStructureForStrings(struct);
+        if (dt instanceof Structure struct) {
+            analyzeStructureForStrings(struct);
         }
       }
 
@@ -2135,9 +2119,8 @@ public class QuickStringDump extends GhidraScript {
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null) {
             Object value = data.getValue();
-            if (value instanceof String) {
-              String stringValue = (String) value;
-              if (stringValue.length() >= MIN_STRING_LENGTH
+            if (value instanceof String stringValue) {
+                if (stringValue.length() >= MIN_STRING_LENGTH
                   && stringValue.length() <= MAX_STRING_LENGTH) {
                 spaceStrings.add(addr);
 
@@ -2181,10 +2164,9 @@ public class QuickStringDump extends GhidraScript {
             Data data = currentProgram.getListing().getDataAt(addr);
             if (data != null) {
               Object value = data.getValue();
-              if (value instanceof String) {
-                String stringValue = (String) value;
+              if (value instanceof String stringValue) {
 
-                // Extract patterns for cross-space comparison
+                  // Extract patterns for cross-space comparison
                 String pattern = extractStringPattern(stringValue);
                 if (pattern != null) {
                   if (!stringPatternSpaces.containsKey(pattern)) {
@@ -2257,9 +2239,8 @@ public class QuickStringDump extends GhidraScript {
             Data data = currentProgram.getListing().getDataAt(addr);
             if (data != null) {
               Object value = data.getValue();
-              if (value instanceof String) {
-                String stringValue = (String) value;
-                if (stringValue
+              if (value instanceof String stringValue) {
+                  if (stringValue
                     .toLowerCase()
                     .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*")) {
                   licensingStrings++;
@@ -2363,9 +2344,8 @@ public class QuickStringDump extends GhidraScript {
   private boolean isStringRelatedCodeUnit(CodeUnit codeUnit) {
     try {
       // Check if code unit contains string data
-      if (codeUnit instanceof Data) {
-        Data data = (Data) codeUnit;
-        DataType dataType = data.getDataType();
+      if (codeUnit instanceof Data data) {
+          DataType dataType = data.getDataType();
 
         if (isStringRelatedType(dataType)) {
           return true;
@@ -2373,18 +2353,16 @@ public class QuickStringDump extends GhidraScript {
 
         // Check value
         Object value = data.getValue();
-        if (value instanceof String) {
-          String stringValue = (String) value;
-          return stringValue.length() >= MIN_STRING_LENGTH
+        if (value instanceof String stringValue) {
+            return stringValue.length() >= MIN_STRING_LENGTH
               && stringValue.length() <= MAX_STRING_LENGTH;
         }
       }
 
       // Check for string references in instructions
-      if (codeUnit instanceof Instruction) {
-        Instruction inst = (Instruction) codeUnit;
+      if (codeUnit instanceof Instruction inst) {
 
-        for (int i = 0; i < inst.getNumOperands(); i++) {
+          for (int i = 0; i < inst.getNumOperands(); i++) {
           Reference[] refs = inst.getOperandReferences(i);
           for (Reference ref : refs) {
             Address toAddr = ref.getToAddress();
@@ -2474,13 +2452,11 @@ public class QuickStringDump extends GhidraScript {
   /** Check if code unit is licensing-related */
   private boolean isLicensingRelatedCodeUnit(CodeUnit codeUnit) {
     try {
-      if (codeUnit instanceof Data) {
-        Data data = (Data) codeUnit;
-        Object value = data.getValue();
+      if (codeUnit instanceof Data data) {
+          Object value = data.getValue();
 
-        if (value instanceof String) {
-          String stringValue = (String) value;
-          return stringValue
+        if (value instanceof String stringValue) {
+            return stringValue
               .toLowerCase()
               .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*");
         }
@@ -2507,14 +2483,12 @@ public class QuickStringDump extends GhidraScript {
     try {
       Address addr = codeUnit.getAddress();
 
-      if (codeUnit instanceof Data) {
-        Data data = (Data) codeUnit;
-        Object value = data.getValue();
+      if (codeUnit instanceof Data data) {
+          Object value = data.getValue();
 
-        if (value instanceof String) {
-          String stringValue = (String) value;
+        if (value instanceof String stringValue) {
 
-          // Analyze licensing string patterns
+            // Analyze licensing string patterns
           if (stringValue.length() > 10 && stringValue.matches(".*[0-9a-fA-F]{8,}.*")) {
             println(
                 "        Potential license key at "

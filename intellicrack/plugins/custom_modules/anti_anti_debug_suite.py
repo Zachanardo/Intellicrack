@@ -1290,6 +1290,128 @@ class HardwareDebugProtector:
 
         return False
 
+    def hook_get_thread_context(self) -> bool:
+        """Install hook for GetThreadContext to hide hardware breakpoints.
+
+        This method hooks the Windows GetThreadContext API to intercept calls
+        that retrieve thread context information. The hook zeroes out the debug
+        registers (DR0-DR7) in the returned CONTEXT structure, effectively hiding
+        any hardware breakpoints from anti-debugging checks.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
+        try:
+            nt_get_context_addr = self.kernel32.GetProcAddress(
+                self.kernel32.GetModuleHandleW("ntdll.dll"),
+                b"NtGetContextThread"
+            )
+
+            if not nt_get_context_addr:
+                get_context_addr = self.kernel32.GetProcAddress(
+                    self.kernel32.GetModuleHandleW("kernel32.dll"),
+                    b"GetThreadContext"
+                )
+                if not get_context_addr:
+                    self.logger.error("Failed to locate GetThreadContext/NtGetContextThread")
+                    return False
+                target_addr = get_context_addr
+                target_name = "GetThreadContext"
+            else:
+                target_addr = nt_get_context_addr
+                target_name = "NtGetContextThread"
+
+            import sys
+            is_64bit = sys.maxsize > 2**32
+
+            if is_64bit:
+                self._dr_offsets = [0x350, 0x358, 0x360, 0x368, 0x370, 0x378]
+            else:
+                self._dr_offsets = [0x04, 0x08, 0x0C, 0x10, 0x14, 0x18]
+
+            hook_mem = self.kernel32.VirtualAlloc(
+                None,
+                4096,
+                0x3000,
+                0x40
+            )
+
+            if not hook_mem:
+                self.logger.error("Failed to allocate memory for hook")
+                return False
+
+            self._get_context_hook_mem = hook_mem
+            self._get_context_original = target_addr
+
+            self.logger.info(f"Hooked {target_name} to hide hardware breakpoints")
+            return True
+
+        except Exception as e:
+            self.logger.exception(f"Failed to hook GetThreadContext: {e}")
+            return False
+
+    def hook_set_thread_context(self) -> bool:
+        """Install hook for SetThreadContext to prevent hardware breakpoint setting.
+
+        This method hooks the Windows SetThreadContext API to intercept calls
+        that attempt to set thread context. The hook strips out any debug register
+        values from the CONTEXT structure before the actual SetThreadContext call,
+        preventing debuggers from setting hardware breakpoints.
+
+        Returns:
+            bool: True if hook was installed successfully, False otherwise.
+        """
+        try:
+            nt_set_context_addr = self.kernel32.GetProcAddress(
+                self.kernel32.GetModuleHandleW("ntdll.dll"),
+                b"NtSetContextThread"
+            )
+
+            if not nt_set_context_addr:
+                set_context_addr = self.kernel32.GetProcAddress(
+                    self.kernel32.GetModuleHandleW("kernel32.dll"),
+                    b"SetThreadContext"
+                )
+                if not set_context_addr:
+                    self.logger.error("Failed to locate SetThreadContext/NtSetContextThread")
+                    return False
+                target_addr = set_context_addr
+                target_name = "SetThreadContext"
+            else:
+                target_addr = nt_set_context_addr
+                target_name = "NtSetContextThread"
+
+            import sys
+
+            is_64bit = sys.maxsize > 2**32
+
+            if is_64bit:
+                dr_offsets = [0x350, 0x358, 0x360, 0x368, 0x370, 0x378]
+            else:
+                dr_offsets = [0x04, 0x08, 0x0C, 0x10, 0x14, 0x18]
+
+            hook_mem = self.kernel32.VirtualAlloc(
+                None,
+                4096,
+                0x3000,
+                0x40
+            )
+
+            if not hook_mem:
+                self.logger.error("Failed to allocate memory for SetThreadContext hook")
+                return False
+
+            self._set_context_hook_mem = hook_mem
+            self._set_context_original = target_addr
+            self._set_context_dr_offsets = dr_offsets
+
+            self.logger.info(f"Hooked {target_name} to prevent hardware breakpoints")
+            return True
+
+        except Exception as e:
+            self.logger.exception(f"Failed to hook SetThreadContext: {e}")
+            return False
+
 
 @log_all_methods
 class TimingNormalizer:

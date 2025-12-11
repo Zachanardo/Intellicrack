@@ -30,11 +30,11 @@ public class FunctionLister extends GhidraScript {
   private Program program;
   private SymbolTable symbolTable;
   private ReferenceManager referenceManager;
-  private Map<String, Symbol> symbolCache = new HashMap<>();
-  private Map<Address, List<Reference>> referenceCache = new HashMap<>();
-  private Map<Address, CodeUnit> codeUnitMap = new HashMap<>();
-  private Set<String> exportedSymbols = new HashSet<>();
-  private Set<String> importedSymbols = new HashSet<>();
+  private final Map<String, Symbol> symbolCache = new HashMap<>();
+  private final Map<Address, List<Reference>> referenceCache = new HashMap<>();
+  private final Map<Address, CodeUnit> codeUnitMap = new HashMap<>();
+  private final Set<String> exportedSymbols = new HashSet<>();
+  private final Set<String> importedSymbols = new HashSet<>();
 
   // Function categories for classification
   private enum FunctionCategory {
@@ -98,10 +98,10 @@ public class FunctionLister extends GhidraScript {
   }
 
   private class FunctionMetrics {
-    String name;
-    Address entryPoint;
-    long size;
-    int paramCount;
+    final String name;
+    final Address entryPoint;
+    final long size;
+    final int paramCount;
     int localVarCount;
     int basicBlockCount;
     int cyclomaticComplexity;
@@ -111,10 +111,10 @@ public class FunctionLister extends GhidraScript {
     boolean hasRecursion;
     boolean usesIndirectCalls;
     boolean hasVulnerabilities;
-    List<String> calledFunctions;
-    List<String> callingFunctions;
-    List<String> vulnerabilities;
-    FunctionCategory category;
+    final List<String> calledFunctions;
+    final List<String> callingFunctions;
+    final List<String> vulnerabilities;
+    final FunctionCategory category;
     double complexityScore;
 
     FunctionMetrics(Function func) {
@@ -147,7 +147,7 @@ public class FunctionLister extends GhidraScript {
     }
   }
 
-  private Map<Address, FunctionMetrics> functionMetrics = new HashMap<>();
+  private final Map<Address, FunctionMetrics> functionMetrics = new HashMap<>();
 
   @Override
   public void run() throws Exception {
@@ -843,7 +843,7 @@ public class FunctionLister extends GhidraScript {
         hotspots.entrySet().stream()
             .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
             .limit(5)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     if (!topHotspots.isEmpty()) {
       println("  Top referenced addresses:");
@@ -874,9 +874,8 @@ public class FunctionLister extends GhidraScript {
       // Cache code units
       codeUnitMap.put(codeUnit.getAddress(), codeUnit);
 
-      if (codeUnit instanceof Instruction) {
-        Instruction inst = (Instruction) codeUnit;
-        instructions++;
+      if (codeUnit instanceof Instruction inst) {
+          instructions++;
 
         // Count mnemonics
         String mnemonic = inst.getMnemonicString();
@@ -885,9 +884,8 @@ public class FunctionLister extends GhidraScript {
         // Analyze specific instruction patterns
         analyzeInstructionPattern(inst);
 
-      } else if (codeUnit instanceof Data) {
-        Data data = (Data) codeUnit;
-        if (data.isDefined()) {
+      } else if (codeUnit instanceof Data data) {
+          if (data.isDefined()) {
           definedData++;
         } else {
           undefinedData++;
@@ -911,7 +909,7 @@ public class FunctionLister extends GhidraScript {
         mnemonicCounts.entrySet().stream()
             .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
             .limit(10)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     println("  Top 10 instructions:");
     for (Map.Entry<String, Integer> entry : topMnemonics) {
@@ -1141,14 +1139,10 @@ public class FunctionLister extends GhidraScript {
     // Check parameter count against architecture limits
     if (processor.contains("x86") && !processor.contains("x86_64")) {
       // x86-32 typically passes first few params in registers
-      if (params.length > 6) {
-        return true; // Potential stack overflow risk
-      }
+        return params.length > 6; // Potential stack overflow risk
     } else if (processor.contains("x86_64")) {
       // x86-64 passes first 6 params in registers
-      if (params.length > 10) {
-        return true; // Excessive parameters
-      }
+        return params.length > 10; // Excessive parameters
     }
 
     return false;
@@ -1414,18 +1408,16 @@ public class FunctionLister extends GhidraScript {
       DataType componentType = component.getDataType();
 
       // Check for dangerous structure members
-      if (componentType instanceof Array) {
-        Array arrayType = (Array) componentType;
-        if (arrayType.getElementLength() > 1024) {
+      if (componentType instanceof Array arrayType) {
+          if (arrayType.getElementLength() > 1024) {
           // Large array in structure - potential overflow
           println("[DataType Finding] Large array in structure: " + structure.getName());
         }
       }
 
       // Check for function pointers in structures
-      if (componentType instanceof Pointer) {
-        Pointer ptrType = (Pointer) componentType;
-        if (ptrType.getDataType() instanceof FunctionDefinition) {
+      if (componentType instanceof Pointer ptrType) {
+          if (ptrType.getDataType() instanceof FunctionDefinition) {
           println("[DataType Finding] Function pointer in structure: " + structure.getName());
         }
       }
@@ -1460,9 +1452,8 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Check for arrays of function pointers
-    if (elementType instanceof Pointer) {
-      Pointer ptrType = (Pointer) elementType;
-      if (ptrType.getDataType() instanceof FunctionDefinition) {
+    if (elementType instanceof Pointer ptrType) {
+        if (ptrType.getDataType() instanceof FunctionDefinition) {
         println("[DataType Finding] Array of function pointers: " + arrayType.getName());
       }
     }
@@ -1503,7 +1494,6 @@ public class FunctionLister extends GhidraScript {
 
     // Built-in types typically have simple names
     if (typeName.equals("void")
-        || typeName.equals("int")
         || typeName.equals("char")
         || typeName.equals("float")
         || typeName.equals("double")
@@ -1522,17 +1512,13 @@ public class FunctionLister extends GhidraScript {
     String typeName = dataType.getName().toLowerCase();
 
     // Check for inherently dangerous types
-    if (typeName.contains("char*")
-        || typeName.equals("char*")
-        || typeName.contains("void*")
-        || typeName.equals("void*")) {
+    if (typeName.contains("char*") || typeName.contains("void*")) {
       return true;
     }
 
     // Check for function pointers
-    if (dataType instanceof Pointer) {
-      Pointer ptrType = (Pointer) dataType;
-      return ptrType.getDataType() instanceof FunctionDefinition;
+    if (dataType instanceof Pointer ptrType) {
+        return ptrType.getDataType() instanceof FunctionDefinition;
     }
 
     return false;
@@ -1785,13 +1771,8 @@ public class FunctionLister extends GhidraScript {
           }
 
           // Try to read from the address to check accessibility
-          try {
             byte testByte = memory.getByte(memAddr);
             // Access succeeded
-          } catch (MemoryAccessException e) {
-            // This will propagate up to caller
-            throw e;
-          }
         }
       }
     }
@@ -2000,7 +1981,7 @@ public class FunctionLister extends GhidraScript {
             .filter(entry -> entry.getValue() >= 5)
             .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
             .limit(15)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     println("  Top reference hotspots found: " + hotspots.size());
 
@@ -2116,7 +2097,7 @@ public class FunctionLister extends GhidraScript {
             .filter(entry -> entry.getValue() >= 4)
             .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
             .limit(10)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     println("  Deep execution chains found: " + deepChains.size());
 
@@ -2228,7 +2209,7 @@ public class FunctionLister extends GhidraScript {
     List<Address> sortedAddresses =
         codeUnitMap.keySet().stream()
             .sorted(Address::compareTo)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     // Analyze instruction sequences
     for (int i = 0; i < sortedAddresses.size() - 2; i++) {
@@ -2240,14 +2221,11 @@ public class FunctionLister extends GhidraScript {
       CodeUnit unit2 = codeUnitMap.get(addr2);
       CodeUnit unit3 = codeUnitMap.get(addr3);
 
-      if (unit1 instanceof Instruction
-          && unit2 instanceof Instruction
-          && unit3 instanceof Instruction) {
-        Instruction inst1 = (Instruction) unit1;
-        Instruction inst2 = (Instruction) unit2;
-        Instruction inst3 = (Instruction) unit3;
+      if (unit1 instanceof Instruction inst1
+          && unit2 instanceof Instruction inst2
+          && unit3 instanceof Instruction inst3) {
 
-        String sequence =
+          String sequence =
             inst1.getMnemonicString()
                 + "-"
                 + inst2.getMnemonicString()
@@ -2273,7 +2251,7 @@ public class FunctionLister extends GhidraScript {
             .filter(entry -> entry.getValue() >= 3)
             .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
             .limit(15)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     println("  Common instruction sequences found: " + commonSequences.size());
 
@@ -2390,13 +2368,12 @@ public class FunctionLister extends GhidraScript {
         totalInstructions++;
 
         // Calculate instruction density in surrounding area
-        int density = calculateInstructionDensity(addr, 32);
+        int density = calculateInstructionDensity(addr);
         instructionDensityMap.put(addr, density);
-      } else if (unit instanceof Data) {
+      } else if (unit instanceof Data data) {
         totalData++;
 
-        Data data = (Data) unit;
-        String dataType = data.getDataType().getName();
+          String dataType = data.getDataType().getName();
         dataPatternMap.merge(dataType, 1, Integer::sum);
       }
     }
@@ -2413,7 +2390,7 @@ public class FunctionLister extends GhidraScript {
             .filter(entry -> entry.getValue() >= 24)
             .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
             .limit(10)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     if (!highDensityAreas.isEmpty()) {
       println("\n  High instruction density areas:");
@@ -2442,7 +2419,7 @@ public class FunctionLister extends GhidraScript {
           dataPatternMap.entrySet().stream()
               .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
               .limit(10)
-              .collect(java.util.stream.Collectors.toList());
+              .toList();
 
       for (Map.Entry<String, Integer> entry : sortedDataTypes) {
         String dataType = entry.getKey();
@@ -2457,10 +2434,10 @@ public class FunctionLister extends GhidraScript {
     }
   }
 
-  private int calculateInstructionDensity(Address centerAddr, int rangeBytes) {
+  private int calculateInstructionDensity(Address centerAddr) {
     int instructionCount = 0;
-    long startOffset = Math.max(0, centerAddr.getOffset() - rangeBytes / 2);
-    long endOffset = centerAddr.getOffset() + rangeBytes / 2;
+    long startOffset = Math.max(0, centerAddr.getOffset() - 32 / 2);
+    long endOffset = centerAddr.getOffset() + 32 / 2;
 
     for (Map.Entry<Address, CodeUnit> entry : codeUnitMap.entrySet()) {
       Address addr = entry.getKey();
@@ -2522,7 +2499,7 @@ public class FunctionLister extends GhidraScript {
             .filter(this::isSuspiciousCombination)
             .sorted((a, b) -> Integer.compare(b.referenceCount, a.referenceCount))
             .limit(15)
-            .collect(java.util.stream.Collectors.toList());
+            .toList();
 
     println("  Suspicious address combinations found: " + suspiciousAddresses.size());
 
@@ -2587,11 +2564,7 @@ public class FunctionLister extends GhidraScript {
     }
 
     // High data references with comparison instructions
-    if (result.dataReferences >= 3 && result.mnemonic.toLowerCase().contains("cmp")) {
-      return true;
-    }
-
-    return false;
+      return result.dataReferences >= 3 && result.mnemonic.toLowerCase().contains("cmp");
   }
 
   private String getSuspiciousReason(CombinedAnalysisResult result) {
@@ -2633,13 +2606,9 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Mixed references in validation-like function
-    if (result.callReferences > 0
-        && result.dataReferences >= 2
-        && (funcName.contains("check") || funcName.contains("verify"))) {
-      return true;
-    }
-
-    return false;
+      return result.callReferences > 0
+          && result.dataReferences >= 2
+          && (funcName.contains("check") || funcName.contains("verify"));
   }
 
   private boolean isAntiAnalysisCandidate(CombinedAnalysisResult result) {
@@ -2652,11 +2621,7 @@ public class FunctionLister extends GhidraScript {
     }
 
     // High indirect references (potential obfuscation)
-    if (result.indirectReferences >= 2) {
-      return true;
-    }
-
-    return false;
+      return result.indirectReferences >= 2;
   }
 
   private void generateCacheAnalysisReport(Map<Address, CombinedAnalysisResult> combinedResults) {

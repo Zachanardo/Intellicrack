@@ -68,34 +68,31 @@ public class SimpleStringExtractor extends GhidraScript {
   private StringExportEngine exportEngine;
   private StringPatternEngine patternEngine;
 
-  // Comprehensive analysis components using all imports
-  private DataTypeManager dataTypeManager;
-  private FunctionManager functionManager;
-  private SymbolTable symbolTable;
-  private ReferenceManager referenceManager;
-  private Map<DataType, Set<ExtractedString>> dataTypeStringMap = new HashMap<>();
-  private Map<Structure, List<ExtractedString>> structureStrings = new HashMap<>();
-  private Map<ghidra.program.model.data.Enum, List<ExtractedString>> enumStrings = new HashMap<>();
-  private Map<AddressSpace, AddressSet> stringsBySpace = new HashMap<>();
-  private Set<CodeUnit> stringCodeUnits = new HashSet<>();
-  private Set<Instruction> stringInstructions = new HashSet<>();
-  private Map<Function, Set<ExtractedString>> functionStringMap = new HashMap<>();
+    private FunctionManager functionManager;
+    private ReferenceManager referenceManager;
+  private final Map<DataType, Set<ExtractedString>> dataTypeStringMap = new HashMap<>();
+  private final Map<Structure, List<ExtractedString>> structureStrings = new HashMap<>();
+  private final Map<ghidra.program.model.data.Enum, List<ExtractedString>> enumStrings = new HashMap<>();
+  private final Map<AddressSpace, AddressSet> stringsBySpace = new HashMap<>();
+  private final Set<CodeUnit> stringCodeUnits = new HashSet<>();
+  private final Set<Instruction> stringInstructions = new HashSet<>();
+  private final Map<Function, Set<ExtractedString>> functionStringMap = new HashMap<>();
 
   // Additional comprehensive analysis components using Symbol, SymbolIterator, Iterator
-  private Map<Symbol, List<ExtractedString>> symbolStringMap = new HashMap<>();
-  private Set<Symbol> stringRelatedSymbols = new HashSet<>();
-  private Map<String, Set<Symbol>> symbolsByName = new HashMap<>();
-  private List<SymbolStringAnalysis> symbolAnalysisResults = new ArrayList<>();
+  private final Map<Symbol, List<ExtractedString>> symbolStringMap = new HashMap<>();
+  private final Set<Symbol> stringRelatedSymbols = new HashSet<>();
+  private final Map<String, Set<Symbol>> symbolsByName = new HashMap<>();
+  private final List<SymbolStringAnalysis> symbolAnalysisResults = new ArrayList<>();
 
   // Address analysis components using AddressSetView, AddressRange
-  private Map<AddressRange, List<ExtractedString>> stringsByRange = new HashMap<>();
+  private final Map<AddressRange, List<ExtractedString>> stringsByRange = new HashMap<>();
   private AddressSetView comprehensiveStringAddresses;
-  private Map<AddressSetView, StringDensityMetrics> addressSetMetrics = new HashMap<>();
+  private final Map<AddressSetView, StringDensityMetrics> addressSetMetrics = new HashMap<>();
 
   // Exception tracking for MemoryAccessException analysis
-  private List<MemoryAccessException> memoryAccessExceptions = new ArrayList<>();
-  private Map<Address, MemoryAccessException> addressExceptionMap = new HashMap<>();
-  private Set<Address> problematicAddresses = new HashSet<>();
+  private final List<MemoryAccessException> memoryAccessExceptions = new ArrayList<>();
+  private final Map<Address, MemoryAccessException> addressExceptionMap = new HashMap<>();
+  private final Set<Address> problematicAddresses = new HashSet<>();
 
   private Map<String, List<ExtractedString>> categorizedStrings;
   private List<ExtractedString> allStrings;
@@ -362,7 +359,7 @@ public class SimpleStringExtractor extends GhidraScript {
     println("STRING CATEGORIES:");
     categorizedStrings.entrySet().stream()
         .sorted(
-            Map.Entry.<String, List<ExtractedString>>comparingByValue(
+            Map.Entry.comparingByValue(
                 (a, b) -> Integer.compare(b.size(), a.size())))
         .forEach(
             entry -> {
@@ -553,7 +550,7 @@ public class SimpleStringExtractor extends GhidraScript {
         case "category.cryptographic.priority":
           try {
             int priority = Integer.parseInt(value);
-            applyCategoryPriority("Cryptographic", priority);
+            applyCategoryPriority(priority);
           } catch (NumberFormatException e) {
             // Continue with default priority
           }
@@ -579,9 +576,9 @@ public class SimpleStringExtractor extends GhidraScript {
     }
   }
 
-  private void applyCategoryPriority(String category, int priority) {
+  private void applyCategoryPriority(int priority) {
     // Adjust relevance scores based on category priority
-    List<ExtractedString> categoryStrings = categorizedStrings.get(category);
+    List<ExtractedString> categoryStrings = categorizedStrings.get("Cryptographic");
     if (categoryStrings != null) {
       for (ExtractedString str : categoryStrings) {
         str.relevanceScore += priority * 0.5;
@@ -895,7 +892,7 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   private double calculateEntropy(String str) {
-    if (str.length() == 0) return 0.0;
+    if (str.isEmpty()) return 0.0;
 
     Map<Character, Integer> charCounts = new HashMap<>();
     for (char c : str.toCharArray()) {
@@ -931,7 +928,7 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   // Inner class for string filtering
-  private final class StringFilterEngine {
+  private static final class StringFilterEngine {
 
     public boolean passesFilter(ExtractedString str, ExtractionConfig config) {
       // Length filter
@@ -957,11 +954,7 @@ public class SimpleStringExtractor extends GhidraScript {
       }
 
       // Skip very low entropy strings (likely repetitive/junk)
-      if (str.entropy < 1.0 && str.length > 10) {
-        return false;
-      }
-
-      return true;
+        return !(str.entropy < 1.0) || str.length <= 10;
     }
   }
 
@@ -1063,7 +1056,7 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   // Inner class for pattern matching
-  private final class StringPatternEngine {
+  private static final class StringPatternEngine {
 
     private final Pattern URL_PATTERN =
         Pattern.compile(
@@ -1332,11 +1325,11 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   // Configuration template and analysis components using FileWriter, IOException, BufferedReader
-  private Map<String, String> configurationTemplates = new HashMap<>();
-  private List<IOException> ioExceptions = new ArrayList<>();
-  private Map<String, List<String>> templateConfigurations = new HashMap<>();
-  private Set<String> configurationKeys = new HashSet<>();
-  private Map<String, BufferedReader> activeReaders = new HashMap<>();
+  private final Map<String, String> configurationTemplates = new HashMap<>();
+  private final List<IOException> ioExceptions = new ArrayList<>();
+  private final Map<String, List<String>> templateConfigurations = new HashMap<>();
+  private final Set<String> configurationKeys = new HashSet<>();
+  private final Map<String, BufferedReader> activeReaders = new HashMap<>();
 
   // Inner class for string export
   private final class StringExportEngine {
@@ -1349,10 +1342,7 @@ public class SimpleStringExtractor extends GhidraScript {
         throws Exception {
 
       switch (config.outputFormat.toLowerCase()) {
-        case "txt":
-          exportAsText(localAllStrings, localCategorizedStrings, localStats, config);
-          break;
-        case "csv":
+          case "csv":
           exportAsCSV(localAllStrings, localStats, config);
           break;
         case "json":
@@ -1364,7 +1354,8 @@ public class SimpleStringExtractor extends GhidraScript {
         case "html":
           exportAsHTML(localAllStrings, localCategorizedStrings, localStats, config);
           break;
-        default:
+          case "txt":
+          default:
           exportAsText(localAllStrings, localCategorizedStrings, localStats, config);
           break;
       }
@@ -1717,7 +1708,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
       localCategorizedStrings.entrySet().stream()
           .sorted(
-              Map.Entry.<String, List<ExtractedString>>comparingByValue(
+              Map.Entry.comparingByValue(
                   (a, b) -> Integer.compare(b.size(), a.size())))
           .forEach(
               entry -> {
@@ -1817,7 +1808,7 @@ public class SimpleStringExtractor extends GhidraScript {
     boolean isPrintable;
     long timestamp;
     String contextAnalysis = "";
-    List<String> referencingFunctions = new ArrayList<>();
+    final List<String> referencingFunctions = new ArrayList<>();
   }
 
   // Symbol string analysis class
@@ -1826,7 +1817,7 @@ public class SimpleStringExtractor extends GhidraScript {
     String symbolName;
     String symbolType;
     Address symbolAddress;
-    List<ExtractedString> associatedStrings = new ArrayList<>();
+    final List<ExtractedString> associatedStrings = new ArrayList<>();
     double relevanceScore = 0.0;
     int referenceCount = 0;
     String analysisNotes = "";
@@ -1850,7 +1841,8 @@ public class SimpleStringExtractor extends GhidraScript {
     long startTime = System.currentTimeMillis();
 
     // Initialize data type manager and structures
-    dataTypeManager = currentProgram.getDataTypeManager();
+      // Comprehensive analysis components using all imports
+      DataTypeManager dataTypeManager = currentProgram.getDataTypeManager();
 
     println("  Analyzing data types for string associations...");
 
@@ -1872,18 +1864,16 @@ public class SimpleStringExtractor extends GhidraScript {
         }
 
         // Analyze structures specifically
-        if (dataType instanceof Structure) {
-          Structure structure = (Structure) dataType;
-          List<ExtractedString> structStrings = analyzeStructureStrings(structure);
+        if (dataType instanceof Structure structure) {
+            List<ExtractedString> structStrings = analyzeStructureStrings(structure);
           if (!structStrings.isEmpty()) {
             structureStrings.put(structure, structStrings);
           }
         }
 
         // Analyze enums specifically
-        if (dataType instanceof ghidra.program.model.data.Enum) {
-          ghidra.program.model.data.Enum enumType = (ghidra.program.model.data.Enum) dataType;
-          List<ExtractedString> analyzedEnumStrings = analyzeEnumStrings(enumType);
+        if (dataType instanceof ghidra.program.model.data.Enum enumType) {
+            List<ExtractedString> analyzedEnumStrings = analyzeEnumStrings(enumType);
           if (!analyzedEnumStrings.isEmpty()) {
             this.enumStrings.put(enumType, analyzedEnumStrings);
           }
@@ -1947,11 +1937,7 @@ public class SimpleStringExtractor extends GhidraScript {
     if (typeName.contains("float") && str.value.matches(".*%[fFeEgG].*")) {
       return true;
     }
-    if (typeName.contains("char") && str.value.matches(".*%[sc].*")) {
-      return true;
-    }
-
-    return false;
+      return typeName.contains("char") && str.value.matches(".*%[sc].*");
   }
 
   private List<ExtractedString> analyzeStructureStrings(Structure structure) {
@@ -2168,7 +2154,7 @@ public class SimpleStringExtractor extends GhidraScript {
     long startTime = System.currentTimeMillis();
 
     // Initialize symbol analysis components
-    symbolTable = currentProgram.getSymbolTable();
+      SymbolTable symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
 
     println("  Performing comprehensive symbol analysis...");
@@ -2184,7 +2170,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
         // Analyze symbol for string associations
         SymbolStringAnalysis analysis = analyzeSymbolForStrings(symbol);
-        if (analysis.associatedStrings.size() > 0) {
+        if (!analysis.associatedStrings.isEmpty()) {
           symbolAnalysisResults.add(analysis);
           symbolStringMap.put(symbol, analysis.associatedStrings);
           stringRelations += analysis.associatedStrings.size();
@@ -2238,13 +2224,13 @@ public class SimpleStringExtractor extends GhidraScript {
     analysis.referenceCount = refsTo.length + refsFrom.length;
 
     // Generate analysis notes
-    if (analysis.associatedStrings.size() > 0) {
+    if (!analysis.associatedStrings.isEmpty()) {
       analysis.analysisNotes =
           String.format(
               "Symbol '%s' has %d associated strings with average relevance %.2f",
               symbolName,
               analysis.associatedStrings.size(),
-              analysis.relevanceScore / Math.max(1, analysis.associatedStrings.size()));
+              analysis.relevanceScore / analysis.associatedStrings.size());
     }
 
     return analysis;
@@ -2310,9 +2296,8 @@ public class SimpleStringExtractor extends GhidraScript {
         }
 
         // If it's an instruction, perform instruction-specific analysis
-        if (codeUnit instanceof Instruction) {
-          Instruction instruction = (Instruction) codeUnit;
-          if (isInstructionAssociatedWithStrings(instruction)) {
+        if (codeUnit instanceof Instruction instruction) {
+            if (isInstructionAssociatedWithStrings(instruction)) {
             stringInstructions.add(instruction);
             stringInstructionsFound++;
 
@@ -2371,9 +2356,8 @@ public class SimpleStringExtractor extends GhidraScript {
     for (int i = 0; i < instruction.getNumOperands(); i++) {
       Object[] opObjects = instruction.getOpObjects(i);
       for (Object obj : opObjects) {
-        if (obj instanceof Address) {
-          Address addr = (Address) obj;
-          Data data = currentProgram.getListing().getDataAt(addr);
+        if (obj instanceof Address addr) {
+            Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null && data.hasStringValue()) {
             return true;
           }

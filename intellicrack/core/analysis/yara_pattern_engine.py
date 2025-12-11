@@ -573,6 +573,145 @@ rule Basic_PE_Detection
         """Count total number of rules."""
         return len(list(self.compiled_rules)) if self.compiled_rules else 0
 
+    def scan(self, binary_path: str, timeout: int = 60) -> dict[str, Any]:
+        """Scan a binary file with YARA rules and return results as dictionary.
+
+        This is the public interface for scanning that returns a dictionary format
+        compatible with the analysis orchestrator and other consumers.
+
+        Args:
+            binary_path: Path to binary file to scan
+            timeout: Scan timeout in seconds
+
+        Returns:
+            Dictionary containing scan results with matches, metadata, and any errors
+
+        """
+        result = self.scan_file(binary_path, timeout)
+
+        if result.error:
+            return {
+                "error": result.error,
+                "file_path": result.file_path,
+                "matches": [],
+            }
+
+        matches_list = []
+        for match in result.matches:
+            matches_list.append({
+                "rule_name": match.rule_name,
+                "namespace": match.namespace,
+                "tags": match.tags,
+                "category": match.category.value,
+                "confidence": match.confidence,
+                "offset": match.offset,
+                "length": match.length,
+                "identifier": match.identifier,
+                "string_data": match.string_data,
+                "severity": match.severity,
+                "metadata": match.metadata,
+            })
+
+        return {
+            "file_path": result.file_path,
+            "matches": matches_list,
+            "total_rules": result.total_rules,
+            "scan_time": result.scan_time,
+            "has_protections": result.has_protections,
+            "has_packers": result.has_packers,
+            "has_licensing": result.has_licensing,
+            "high_confidence_count": len(result.high_confidence_matches),
+            "metadata": result.metadata,
+            "categories_detected": list({m.category.value for m in result.matches}),
+        }
+
+    def load_rules(self, rules_path: str) -> bool:
+        """Load YARA rules from specified path.
+
+        Allows loading additional rules from a custom directory or file.
+        The rules are compiled and merged with existing rules.
+
+        Args:
+            rules_path: Path to YARA rules file (.yar) or directory containing rules
+
+        Returns:
+            True if rules were loaded successfully, False otherwise
+
+        """
+        try:
+            rules_path_obj = Path(rules_path)
+
+            if not rules_path_obj.exists():
+                logger.warning(f"Rules path does not exist: {rules_path}")
+                return False
+
+            rule_files: dict[str, str] = {}
+
+            if rules_path_obj.is_file():
+                if rules_path_obj.suffix in (".yar", ".yara"):
+                    namespace = f"external_{rules_path_obj.stem}"
+                    rule_files[namespace] = str(rules_path_obj)
+                    try:
+                        with open(rules_path_obj, encoding="utf-8") as f:
+                            self.rule_sources[namespace] = f.read()
+                    except Exception as e:
+                        logger.debug(f"Could not read rule source from {rules_path_obj}: {e}")
+                else:
+                    logger.warning(f"Invalid rule file extension: {rules_path_obj.suffix}")
+                    return False
+            elif rules_path_obj.is_dir():
+                for rule_file in rules_path_obj.glob("*.yar"):
+                    namespace = f"external_{rule_file.stem}"
+                    rule_files[namespace] = str(rule_file)
+                    try:
+                        with open(rule_file, encoding="utf-8") as f:
+                            self.rule_sources[namespace] = f.read()
+                    except Exception as e:
+                        logger.debug(f"Could not read rule source from {rule_file}: {e}")
+
+                for rule_file in rules_path_obj.glob("*.yara"):
+                    namespace = f"external_{rule_file.stem}"
+                    rule_files[namespace] = str(rule_file)
+                    try:
+                        with open(rule_file, encoding="utf-8") as f:
+                            self.rule_sources[namespace] = f.read()
+                    except Exception as e:
+                        logger.debug(f"Could not read rule source from {rule_file}: {e}")
+
+            if not rule_files:
+                logger.warning(f"No YARA rule files found in: {rules_path}")
+                return False
+
+            existing_rule_files: dict[str, str] = {}
+            rules_dir = Path(__file__).parent.parent.parent / "data" / "yara_rules"
+            if rules_dir.exists():
+                for rule_file in rules_dir.glob("*.yar"):
+                    namespace = rule_file.stem
+                    existing_rule_files[namespace] = str(rule_file)
+
+            if self.custom_rules_path:
+                custom_path = Path(self.custom_rules_path)
+                if custom_path.exists():
+                    for rule_file in custom_path.glob("*.yar"):
+                        namespace = f"custom_{rule_file.stem}"
+                        existing_rule_files[namespace] = str(rule_file)
+
+            all_rule_files = {**existing_rule_files, **rule_files}
+
+            self.compiled_rules = yara.compile(filepaths=all_rule_files)
+            self._extract_rule_metadata()
+
+            logger.info(f"Loaded {len(rule_files)} additional YARA rule namespaces from {rules_path}")
+            logger.info(f"Total rules now: {self._count_total_rules()}")
+            return True
+
+        except yara.SyntaxError as e:
+            logger.error(f"YARA syntax error in rules from {rules_path}: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to load YARA rules from {rules_path}: {e}")
+            return False
+
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
         """Scan a file with YARA rules.
 

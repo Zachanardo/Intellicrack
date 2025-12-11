@@ -28,7 +28,7 @@ import re
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from ..resource_helper import get_resource_path
 
@@ -391,6 +391,59 @@ class GhidraScriptManager:
                 ]
             )
         ]
+
+    def discover_scripts(self, force_rescan: bool = False) -> int:
+        """Discover and catalog all Ghidra scripts in configured directories.
+
+        Scans all configured script directories for Java and Python Ghidra scripts,
+        extracts their metadata, validates them, and organizes them by category.
+        This is an alias for scan_scripts with additional directory checking.
+
+        Args:
+            force_rescan: If True, forces a rescan even if scripts were recently scanned
+
+        Returns:
+            Number of scripts discovered
+
+        """
+        for script_dir in self.script_dirs:
+            if not os.path.exists(script_dir):
+                try:
+                    os.makedirs(script_dir, exist_ok=True)
+                    logger.info(f"Created script directory during discovery: {script_dir}")
+                except OSError as e:
+                    logger.warning(f"Could not create script directory {script_dir}: {e}")
+
+        self.scan_scripts(force_rescan=force_rescan)
+        return len(self.scripts)
+
+    def list_scripts(self, category: str | None = None, valid_only: bool = False) -> list[GhidraScript]:
+        """List all discovered Ghidra scripts.
+
+        Returns a list of all discovered GhidraScript objects, optionally filtered
+        by category or validation status. If scripts haven't been scanned yet,
+        triggers a scan first.
+
+        Args:
+            category: Optional category name to filter scripts by
+            valid_only: If True, only return scripts that passed validation
+
+        Returns:
+            List of GhidraScript objects matching the filter criteria
+
+        """
+        if not self.scripts:
+            self.scan_scripts()
+
+        scripts = list(self.scripts.values())
+
+        if category is not None:
+            scripts = [s for s in scripts if s.category.lower() == category.lower()]
+
+        if valid_only:
+            scripts = [s for s in scripts if s.is_valid]
+
+        return sorted(scripts, key=lambda s: (s.category, s.name))
 
     def add_user_script(self, source_path: str, category: str = "User Scripts") -> GhidraScript | None:
         """Add a user script to the user scripts directory.

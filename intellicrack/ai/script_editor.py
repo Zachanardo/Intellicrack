@@ -975,6 +975,93 @@ Generate the complete modified script:"""
             elif "bypass" in goal_lower and "bypassed" not in output_lower:
                 prompt_parts.append(f"- Add logic to {goal}")
 
+    def _detect_script_type(self, script_path: str, script_content: str) -> str:
+        """Detect the type of script from path and content analysis.
+
+        This method combines path-based detection with content analysis
+        to accurately identify the script type for proper handling.
+
+        Args:
+            script_path: Path to the script file.
+            script_content: The actual content of the script.
+
+        Returns:
+            String identifying the script type (frida, ghidra, python, etc.).
+
+        """
+        path_type = self._detect_script_type_from_path(script_path)
+        if path_type != "unknown":
+            return path_type
+
+        content_lower = script_content.lower() if script_content else ""
+
+        frida_indicators = [
+            "interceptor.attach",
+            "interceptor.replace",
+            "memory.read",
+            "memory.write",
+            "module.findexportbyname",
+            "module.enumerateexports",
+            "nativefunction",
+            "nativepointer",
+            "process.enumerate",
+            "ptr(",
+            "send(",
+            "recv(",
+            "frida.",
+        ]
+        frida_score = sum(1 for ind in frida_indicators if ind in content_lower)
+        if frida_score >= 2:
+            return "frida"
+
+        ghidra_indicators = [
+            "from ghidra",
+            "import ghidra",
+            "currentprogram",
+            "currentaddress",
+            "getaddress",
+            "getfunction",
+            "getinstructionat",
+            "flatprogramapi",
+            "decompile",
+            "@category",
+            "@keybinding",
+            "ghidrascript",
+        ]
+        ghidra_score = sum(1 for ind in ghidra_indicators if ind in content_lower)
+        if ghidra_score >= 2:
+            return "ghidra"
+
+        r2_indicators = [
+            "r2pipe",
+            "r2.cmd",
+            "r2.cmdj",
+            "radare2",
+            "afl",
+            "pdf @",
+            "px @",
+            "pxq",
+            "izz",
+            "aaa",
+        ]
+        r2_score = sum(1 for ind in r2_indicators if ind in content_lower)
+        if r2_score >= 2:
+            return "radare2"
+
+        if "def " in content_lower or "import " in content_lower or "class " in content_lower:
+            if "#!/usr/bin/env python" in content_lower or "#!/usr/bin/python" in content_lower:
+                return "python"
+            if any(ind in content_lower for ind in ["import os", "import sys", "import re", "def main"]):
+                return "python"
+
+        if content_lower.strip().startswith("#!/bin/bash") or content_lower.strip().startswith("#!/bin/sh"):
+            return "shell"
+
+        if "function " in content_lower and ("{" in content_lower or "=>" in content_lower):
+            return "javascript"
+
+        return "unknown"
+
     def _detect_script_type_from_path(self, script_path: str) -> str:
         """Detect script type from file path/extension."""
         path = Path(script_path)

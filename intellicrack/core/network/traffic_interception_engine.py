@@ -692,5 +692,295 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
         return connections
 
+    def send_protocol_command(
+        self,
+        protocol_name: str,
+        host: str,
+        port: int,
+        command: bytes,
+    ) -> bytes | None:
+        """Send a protocol-specific command to a license server.
+
+        This method establishes a connection to the specified license server
+        and sends a protocol-appropriate command, returning the server's response.
+
+        Args:
+            protocol_name: Name of the license protocol (flexlm, hasp, adobe, etc.)
+            host: Target server hostname or IP address
+            port: Target server port number
+            command: Raw command bytes to send
+
+        Returns:
+            Server response bytes, or None if connection/send failed
+
+        """
+        try:
+            self.logger.info(
+                "Sending %s protocol command to %s:%d",
+                protocol_name,
+                host,
+                port,
+            )
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10.0)
+
+            try:
+                sock.connect((host, port))
+            except (TimeoutError, OSError) as e:
+                self.logger.error("Connection failed to %s:%d: %s", host, port, e)
+                sock.close()
+                return None
+
+            protocol_lower = protocol_name.lower()
+            wrapped_command = self._wrap_protocol_command(protocol_lower, command)
+
+            try:
+                sock.sendall(wrapped_command)
+            except OSError as e:
+                self.logger.error("Send failed: %s", e)
+                sock.close()
+                return None
+
+            response_chunks = []
+            total_received = 0
+            max_response_size = 65536
+
+            try:
+                while total_received < max_response_size:
+                    sock.settimeout(5.0)
+                    chunk = sock.recv(4096)
+                    if not chunk:
+                        break
+                    response_chunks.append(chunk)
+                    total_received += len(chunk)
+
+                    if self._is_response_complete(protocol_lower, b"".join(response_chunks)):
+                        break
+
+            except TimeoutError:
+                pass
+            except OSError as e:
+                self.logger.debug("Receive error: %s", e)
+
+            sock.close()
+
+            if response_chunks:
+                response = b"".join(response_chunks)
+                self.logger.info(
+                    "Received %d bytes response from %s:%d",
+                    len(response),
+                    host,
+                    port,
+                )
+
+                with self.connection_lock:
+                    connection_key = f"{host}:{port}"
+                    if connection_key not in self.active_connections:
+                        self.active_connections[connection_key] = {
+                            "first_seen": time.time(),
+                            "last_activity": time.time(),
+                            "packet_count": 1,
+                            "protocol": protocol_name,
+                        }
+                    else:
+                        self.active_connections[connection_key]["last_activity"] = time.time()
+                        self.active_connections[connection_key]["packet_count"] += 1
+
+                return response
+
+            self.logger.warning("No response received from %s:%d", host, port)
+            return None
+
+        except Exception as e:
+            self.logger.error("Protocol command failed: %s", e)
+            return None
+
+    def _wrap_protocol_command(self, protocol_name: str, command: bytes) -> bytes:
+        """Wrap command bytes in protocol-specific packet format.
+
+        Args:
+            protocol_name: Protocol identifier
+            command: Raw command data
+
+        Returns:
+            Protocol-wrapped command bytes
+
+        """
+        if protocol_name == "flexlm":
+            header = struct.pack(">HH", 0x0001, len(command))
+            return header + command
+
+        if protocol_name == "hasp":
+            header = b"\x00\x01\x02\x03"
+            length = struct.pack("<H", len(command))
+            return header + length + command
+
+        if protocol_name in {"adobe", "autodesk"}:
+            return command + b"\x00"
+
+        if protocol_name == "microsoft":
+            header = struct.pack("<I", len(command))
+            return header + command
+
+        return command
+
+    def _is_response_complete(self, protocol_name: str, data: bytes) -> bool:
+        """Check if received response is complete for the protocol.
+
+        Args:
+            protocol_name: Protocol identifier
+            data: Received data so far
+
+        Returns:
+            True if response appears complete
+
+        """
+        if not data:
+            return False
+
+        if protocol_name == "flexlm":
+            if len(data) >= 4:
+                expected_len = struct.unpack(">H", data[2:4])[0]
+                return len(data) >= expected_len + 4
+
+        if protocol_name == "hasp":
+            if len(data) >= 6:
+                expected_len = struct.unpack("<H", data[4:6])[0]
+                return len(data) >= expected_len + 6
+
+        if data.endswith(b"\x00") or data.endswith(b"\r\n"):
+            return True
+
+        return len(data) > 0
+
+    def capture_license_traffic(self) -> list[dict[str, Any]]:
+        """Capture and return recent license-related network traffic.
+
+        This method returns accumulated license traffic data that has been
+        captured during interception. It analyzes the packet queue for
+        license-related communications.
+
+        Returns:
+            List of license traffic dictionaries containing:
+            - protocol: Detected protocol name
+            - server: Server address (ip:port)
+            - timestamp: Time of capture
+            - data_size: Size of captured data
+            - direction: 'outbound' or 'inbound'
+            - patterns: Matched license patterns
+
+        """
+        license_traffic = []
+
+        with self.queue_lock:
+            packets_to_analyze = list(self.packet_queue)
+
+        for packet in packets_to_analyze:
+            if not packet.data:
+                continue
+
+            is_license = False
+            detected_protocol = "unknown"
+            patterns_found = []
+
+            if packet.dest_port in self.license_ports or packet.source_port in self.license_ports:
+                is_license = True
+
+            for proto, patterns in self.license_patterns.items():
+                for pattern in patterns:
+                    if pattern in packet.data:
+                        is_license = True
+                        detected_protocol = proto
+                        patterns_found.append(pattern.decode("utf-8", errors="ignore"))
+
+            if is_license:
+                if packet.dest_port in self.license_ports:
+                    server = f"{packet.dest_ip}:{packet.dest_port}"
+                    direction = "outbound"
+                else:
+                    server = f"{packet.source_ip}:{packet.source_port}"
+                    direction = "inbound"
+
+                license_traffic.append({
+                    "protocol": detected_protocol,
+                    "server": server,
+                    "timestamp": packet.timestamp,
+                    "data_size": len(packet.data),
+                    "direction": direction,
+                    "patterns": patterns_found,
+                    "source_ip": packet.source_ip,
+                    "dest_ip": packet.dest_ip,
+                    "source_port": packet.source_port,
+                    "dest_port": packet.dest_port,
+                })
+
+        if not license_traffic:
+            license_traffic = self._scan_for_active_license_servers()
+
+        self.logger.info("Captured %d license traffic entries", len(license_traffic))
+        return license_traffic
+
+    def _scan_for_active_license_servers(self) -> list[dict[str, Any]]:
+        """Scan for active license servers when no traffic is captured.
+
+        Returns:
+            List of detected license server entries
+
+        """
+        detected = []
+        scan_hosts = [self.bind_interface, "127.0.0.1"]
+
+        for host in scan_hosts:
+            for port in list(self.license_ports)[:10]:
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(0.3)
+                    result = sock.connect_ex((host, port))
+                    sock.close()
+
+                    if result == 0:
+                        protocol = self._identify_protocol_by_port(port)
+                        detected.append({
+                            "protocol": protocol,
+                            "server": f"{host}:{port}",
+                            "timestamp": time.time(),
+                            "data_size": 0,
+                            "direction": "detected",
+                            "patterns": [],
+                            "source_ip": self.bind_interface,
+                            "dest_ip": host,
+                            "source_port": 0,
+                            "dest_port": port,
+                        })
+
+                except (TimeoutError, OSError):
+                    continue
+
+        return detected
+
+    def _identify_protocol_by_port(self, port: int) -> str:
+        """Identify likely protocol based on port number.
+
+        Args:
+            port: Port number to identify
+
+        Returns:
+            Protocol name string
+
+        """
+        port_protocols = {
+            27000: "flexlm",
+            27001: "flexlm",
+            1947: "hasp",
+            443: "https_license",
+            80: "http_license",
+            1688: "microsoft_kms",
+            2080: "autodesk",
+            8080: "http_license",
+        }
+
+        return port_protocols.get(port, "unknown")
+
 
 __all__ = ["AnalyzedTraffic", "InterceptedPacket", "TrafficInterceptionEngine"]

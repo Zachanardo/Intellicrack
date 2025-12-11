@@ -359,17 +359,11 @@ class R2StringAnalyzer:
         # Remove whitespace and hyphens for analysis
         clean_content = re.sub(r"[\s\-_]", "", content)
 
-        # Common license key patterns
         license_key_patterns = [
-            # XXXX-XXXX-XXXX-XXXX format (16 chars in groups of 4)
             r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
-            # XXXXX-XXXXX-XXXXX-XXXXX format (20 chars in groups of 5)
             r"^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$",
-            # Microsoft-style product keys (25 characters)
             r"^[BCDFGHJKMPQRTVWXY2346789]{25}$",
-            # UUID format (license keys sometimes use this)
             r"^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$",
-            # Base32 encoded keys (common in software licensing)
             r"^[A-Z2-7]{16,}$",
         ]
 
@@ -1294,6 +1288,49 @@ class R2StringAnalyzer:
         except R2Exception as e:
             logger.error("R2Exception in radare2_strings: %s", e)
             return {"error": str(e)}
+
+    def get_strings(self, min_length: int = 4) -> dict[str, Any]:
+        """Get strings in a simplified format for compatibility.
+
+        Args:
+            min_length: Minimum string length to include.
+
+        Returns:
+            Dictionary containing strings list with normalized structure.
+
+        """
+        try:
+            with r2_session(self.binary_path, self.radare2_path) as r2:
+                raw_strings = r2._execute_command("izzj", expect_json=True)
+
+                if not isinstance(raw_strings, list):
+                    return {"strings": [], "error": "Failed to retrieve strings"}
+
+                normalized_strings = []
+                for string_data in raw_strings:
+                    str_length = string_data.get("length", 0)
+                    if str_length < min_length:
+                        continue
+
+                    normalized_string = {
+                        "string": string_data.get("string", ""),
+                        "vaddr": string_data.get("vaddr", 0),
+                        "paddr": string_data.get("paddr", 0),
+                        "length": str_length,
+                        "size": string_data.get("size", str_length),
+                        "section": string_data.get("section", ""),
+                        "type": string_data.get("type", "ascii"),
+                    }
+                    normalized_strings.append(normalized_string)
+
+                return {
+                    "strings": normalized_strings,
+                    "total_count": len(normalized_strings),
+                    "binary_path": self.binary_path,
+                }
+        except R2Exception as e:
+            self.logger.error(f"Failed to get strings: {e}")
+            return {"strings": [], "error": str(e)}
 
 
 def analyze_binary_strings(binary_path: str, radare2_path: str | None = None, min_length: int = 4) -> dict[str, Any]:

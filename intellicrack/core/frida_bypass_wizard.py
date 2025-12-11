@@ -1295,6 +1295,752 @@ class FridaBypassWizard:
             "metrics": self.metrics,
         }
 
+    def attach_to_process(
+        self,
+        pid: int | None = None,
+        process_name: str | None = None,
+    ) -> bool:
+        """Attach to a target process for bypass operations.
+
+        Establishes a Frida session with the target process either by PID
+        or by process name. Required before injecting scripts or running
+        bypass operations.
+
+        Args:
+            pid: Process ID to attach to (takes precedence over process_name)
+            process_name: Name of process to attach to
+
+        Returns:
+            True if attachment succeeded, False otherwise
+
+        Raises:
+            ValueError: If neither pid nor process_name is provided
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> wizard.attach_to_process(pid=1234)
+            True
+            >>> wizard.attach_to_process(process_name="target.exe")
+            True
+        """
+        if pid is None and process_name is None:
+            logger.error("Either pid or process_name must be provided")
+            return False
+
+        try:
+            if pid is not None:
+                success = self.frida_manager.attach_to_process(pid)
+            else:
+                success = self.frida_manager.attach_to_process(process_name)
+
+            if success:
+                self.session = getattr(self.frida_manager, "session", None)
+                self.target_process = {
+                    "pid": pid or getattr(self.frida_manager, "target_pid", None),
+                    "name": process_name or getattr(self.frida_manager, "target_name", "Unknown"),
+                }
+                logger.info(f"Successfully attached to process: {pid or process_name}")
+                return True
+            else:
+                logger.error(f"Failed to attach to process: {pid or process_name}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Exception during process attachment: {e}")
+            return False
+
+    def detach(self) -> bool:
+        """Detach from the currently attached process.
+
+        Cleanly terminates the Frida session and releases all resources
+        associated with the target process. Should be called when bypass
+        operations are complete or when switching targets.
+
+        Returns:
+            True if detachment succeeded, False otherwise
+
+        Side Effects:
+            - Terminates active Frida session
+            - Clears session and target_process attributes
+            - Resets wizard state to IDLE
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> wizard.attach_to_process(pid=1234)
+            True
+            >>> wizard.detach()
+            True
+        """
+        try:
+            if hasattr(self, "session") and self.session is not None:
+                try:
+                    self.session.detach()
+                except Exception as e:
+                    logger.warning(f"Error detaching session directly: {e}")
+
+            if hasattr(self.frida_manager, "detach"):
+                self.frida_manager.detach()
+            elif hasattr(self.frida_manager, "session") and self.frida_manager.session:
+                try:
+                    self.frida_manager.session.detach()
+                except Exception as e:
+                    logger.warning(f"Error detaching from frida_manager session: {e}")
+
+            self.session = None
+            self.session_id = None
+            self.target_process = None
+            self._update_state(WizardState.IDLE)
+
+            logger.info("Successfully detached from process")
+            return True
+
+        except Exception as e:
+            logger.error(f"Exception during detachment: {e}")
+            return False
+
+    def inject_script(self, script_content: str, script_name: str = "bypass_script") -> bool:
+        """Inject a Frida script into the attached process.
+
+        Loads and executes JavaScript code in the context of the target process.
+        The script can hook functions, intercept API calls, and modify behavior
+        to bypass protection mechanisms.
+
+        Args:
+            script_content: JavaScript code to inject
+            script_name: Identifier for the script (for logging and management)
+
+        Returns:
+            True if script injection succeeded, False otherwise
+
+        Raises:
+            RuntimeError: If not attached to a process
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> wizard.attach_to_process(pid=1234)
+            True
+            >>> script = '''
+            ... Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
+            ...     onLeave: function(retval) { retval.replace(0); }
+            ... });
+            ... '''
+            >>> wizard.inject_script(script, "anti_debug_bypass")
+            True
+        """
+        if self.target_process is None:
+            logger.error("Not attached to any process. Call attach_to_process first.")
+            return False
+
+        try:
+            session_id = self.session_id or getattr(self.frida_manager, "session_id", None)
+
+            if hasattr(self.frida_manager, "load_script"):
+                success = self.frida_manager.load_script(
+                    session_id,
+                    script_content,
+                    {"script_name": script_name, "inline": True},
+                )
+            elif hasattr(self.frida_manager, "inject_script"):
+                target_pid = self.target_process.get("pid")
+                success = self.frida_manager.inject_script(target_pid, script_content)
+            elif hasattr(self, "session") and self.session:
+                script_obj = self.session.create_script(script_content)
+                script_obj.load()
+                success = True
+            else:
+                logger.error("No suitable method found to inject script")
+                return False
+
+            if success:
+                self.metrics["scripts_loaded"] += 1
+                logger.info(f"Successfully injected script: {script_name}")
+                return True
+            else:
+                logger.error(f"Failed to inject script: {script_name}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Exception during script injection: {e}")
+            return False
+
+    def detect_protections(self) -> dict[str, float]:
+        """Detect protection mechanisms in the attached process.
+
+        Analyzes the target process to identify active protection mechanisms
+        such as anti-debugging, license validation, integrity checks, etc.
+        Returns confidence scores for each detected protection type.
+
+        Returns:
+            Dictionary mapping protection type names to confidence scores (0.0-1.0)
+
+        Raises:
+            RuntimeError: If not attached to a process
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> wizard.attach_to_process(pid=1234)
+            True
+            >>> detections = wizard.detect_protections()
+            >>> detections
+            {'ANTI_DEBUG': 0.95, 'LICENSE': 0.8, 'INTEGRITY': 0.6}
+        """
+        if self.target_process is None:
+            logger.warning("Not attached to any process, returning empty detections")
+            return {}
+
+        try:
+            detection_results: dict[str, float] = {}
+
+            if hasattr(self.frida_manager, "detector"):
+                detected = self.frida_manager.detector.get_detected_protections()
+                for prot_type, evidence in detected.items():
+                    confidence = min(1.0, len(evidence) * 0.2) if isinstance(evidence, list) else 0.8
+                    detection_results[prot_type] = confidence
+
+            if hasattr(self.frida_manager, "detect_protections"):
+                additional = self.frida_manager.detect_protections()
+                if isinstance(additional, dict):
+                    for key, value in additional.items():
+                        if isinstance(value, (int, float)):
+                            detection_results[str(key)] = float(value)
+                        else:
+                            detection_results[str(key)] = 0.75
+
+            for prot_type in self.detected_protections:
+                prot_name = prot_type.value if hasattr(prot_type, "value") else str(prot_type)
+                if prot_name not in detection_results:
+                    detection_results[prot_name] = 0.7
+
+            self.metrics["protections_detected"] = len(detection_results)
+            logger.info(f"Detected {len(detection_results)} protection mechanisms")
+
+            return detection_results
+
+        except Exception as e:
+            logger.error(f"Exception during protection detection: {e}")
+            return {}
+
+    def generate_bypass_script(self, protection_type: str) -> str | None:
+        """Generate a Frida bypass script for a specific protection type.
+
+        Creates JavaScript code tailored to bypass the specified protection
+        mechanism. Uses protection-specific templates and patterns.
+
+        Args:
+            protection_type: Type of protection to bypass (e.g., 'ANTI_DEBUG',
+                           'LICENSE', 'INTEGRITY', 'SSL_PINNING')
+
+        Returns:
+            JavaScript code string for bypassing the protection, or None if
+            no bypass is available for the specified protection type
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> script = wizard.generate_bypass_script("ANTI_DEBUG")
+            >>> print(script[:50])
+            'Interceptor.attach(Module.findExportByName...'
+        """
+        bypass_templates: dict[str, str] = {
+            "ANTI_DEBUG": self._get_anti_debug_bypass_script(),
+            "anti_debug": self._get_anti_debug_bypass_script(),
+            "LICENSE": self._get_license_bypass_script(),
+            "license": self._get_license_bypass_script(),
+            "INTEGRITY": self._get_integrity_bypass_script(),
+            "integrity": self._get_integrity_bypass_script(),
+            "SSL_PINNING": self._get_ssl_pinning_bypass_script(),
+            "ssl_pinning": self._get_ssl_pinning_bypass_script(),
+            "TIME": self._get_time_bypass_script(),
+            "time": self._get_time_bypass_script(),
+            "HARDWARE": self._get_hardware_bypass_script(),
+            "hardware": self._get_hardware_bypass_script(),
+            "CLOUD": self._get_cloud_bypass_script(),
+            "cloud": self._get_cloud_bypass_script(),
+        }
+
+        script = bypass_templates.get(protection_type)
+        if script:
+            logger.info(f"Generated bypass script for protection: {protection_type}")
+            return script
+
+        scripts = get_scripts_for_protection(protection_type)
+        if scripts:
+            script_path = Path(__file__).parent.parent / "scripts" / "frida" / scripts[0]
+            if script_path.exists():
+                return script_path.read_text(encoding="utf-8")
+
+        logger.warning(f"No bypass script available for protection: {protection_type}")
+        return None
+
+    def analyze_protections(self) -> dict[str, list[str]]:
+        """Analyze protection mechanisms in the attached process.
+
+        Performs comprehensive analysis of the target process to identify
+        protection mechanisms, their implementations, and potential bypass
+        approaches.
+
+        Returns:
+            Dictionary mapping protection categories to lists of findings
+
+        Example:
+            >>> wizard = FridaBypassWizard(frida_manager)
+            >>> wizard.attach_to_process(pid=1234)
+            True
+            >>> analysis = wizard.analyze_protections()
+            >>> analysis['Anti-Debug']
+            ['IsDebuggerPresent hook detected', 'PEB.BeingDebugged flag checked']
+        """
+        analysis_result: dict[str, list[str]] = {
+            "Anti-Debug": [],
+            "License Validation": [],
+            "Integrity Checks": [],
+            "Network Protection": [],
+            "Time-Based Protection": [],
+            "Hardware Binding": [],
+            "Obfuscation": [],
+        }
+
+        try:
+            if self.analysis_results.get("imports"):
+                import_analysis = self._analyze_imports_for_report()
+                for category, findings in import_analysis.items():
+                    if category in analysis_result:
+                        analysis_result[category].extend(findings)
+
+            if self.analysis_results.get("strings"):
+                string_analysis = self._analyze_strings_for_report()
+                for category, findings in string_analysis.items():
+                    if category in analysis_result:
+                        analysis_result[category].extend(findings)
+
+            if self.protection_evidence:
+                for prot_type, evidence_list in self.protection_evidence.items():
+                    prot_name = prot_type.value if hasattr(prot_type, "value") else str(prot_type)
+                    category = self._map_protection_to_category(prot_name)
+                    if category in analysis_result and isinstance(evidence_list, list):
+                        analysis_result[category].extend(evidence_list)
+
+            analysis_result = {k: v for k, v in analysis_result.items() if v}
+
+            logger.info(f"Protection analysis completed: {len(analysis_result)} categories with findings")
+            return analysis_result
+
+        except Exception as e:
+            logger.error(f"Exception during protection analysis: {e}")
+            return {"Error": [str(e)]}
+
+    def _get_anti_debug_bypass_script(self) -> str:
+        """Return Frida script for anti-debugging bypass."""
+        return """
+(function() {
+    'use strict';
+
+    if (Process.platform === 'windows') {
+        var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+        if (isDebuggerPresent) {
+            Interceptor.attach(isDebuggerPresent, {
+                onLeave: function(retval) {
+                    retval.replace(0);
+                }
+            });
+        }
+
+        var checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');
+        if (checkRemoteDebugger) {
+            Interceptor.attach(checkRemoteDebugger, {
+                onEnter: function(args) {
+                    this.pbDebuggerPresent = args[1];
+                },
+                onLeave: function(retval) {
+                    if (this.pbDebuggerPresent) {
+                        this.pbDebuggerPresent.writeU32(0);
+                    }
+                    retval.replace(1);
+                }
+            });
+        }
+
+        var ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
+        if (ntQueryInfo) {
+            Interceptor.attach(ntQueryInfo, {
+                onEnter: function(args) {
+                    this.infoClass = args[1].toInt32();
+                    this.buffer = args[2];
+                },
+                onLeave: function(retval) {
+                    if (this.infoClass === 7 || this.infoClass === 0x1e || this.infoClass === 0x1f) {
+                        if (this.buffer) {
+                            this.buffer.writePointer(ptr(0));
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    send({type: 'bypass', name: 'anti_debug', status: 'active'});
+})();
+"""
+
+    def _get_license_bypass_script(self) -> str:
+        """Return Frida script for license validation bypass."""
+        return """
+(function() {
+    'use strict';
+
+    var licensePatterns = [
+        'ValidateLicense', 'CheckLicense', 'IsLicensed', 'VerifyLicense',
+        'CheckRegistration', 'IsRegistered', 'ValidateSerial', 'CheckSerial',
+        'IsActivated', 'CheckActivation', 'ValidateKey', 'CheckKey'
+    ];
+
+    Process.enumerateModules().forEach(function(module) {
+        if (module.name.toLowerCase().indexOf('license') !== -1 ||
+            module.name.toLowerCase().indexOf('protect') !== -1) {
+
+            module.enumerateExports().forEach(function(exp) {
+                licensePatterns.forEach(function(pattern) {
+                    if (exp.name.toLowerCase().indexOf(pattern.toLowerCase()) !== -1) {
+                        try {
+                            Interceptor.attach(exp.address, {
+                                onLeave: function(retval) {
+                                    retval.replace(1);
+                                }
+                            });
+                            send({type: 'hook', target: exp.name, module: module.name});
+                        } catch(e) {}
+                    }
+                });
+            });
+        }
+    });
+
+    if (Process.platform === 'windows') {
+        var regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
+        if (regQueryValue) {
+            Interceptor.attach(regQueryValue, {
+                onEnter: function(args) {
+                    this.valueName = args[1].readUtf16String();
+                },
+                onLeave: function(retval) {
+                    if (this.valueName && (
+                        this.valueName.toLowerCase().indexOf('license') !== -1 ||
+                        this.valueName.toLowerCase().indexOf('serial') !== -1 ||
+                        this.valueName.toLowerCase().indexOf('registration') !== -1)) {
+                        retval.replace(0);
+                    }
+                }
+            });
+        }
+    }
+
+    send({type: 'bypass', name: 'license', status: 'active'});
+})();
+"""
+
+    def _get_integrity_bypass_script(self) -> str:
+        """Return Frida script for integrity check bypass."""
+        return """
+(function() {
+    'use strict';
+
+    var hashFunctions = [
+        {dll: 'advapi32.dll', name: 'CryptHashData'},
+        {dll: 'bcrypt.dll', name: 'BCryptHashData'},
+        {dll: null, name: 'MD5_Update'},
+        {dll: null, name: 'SHA1_Update'},
+        {dll: null, name: 'SHA256_Update'}
+    ];
+
+    hashFunctions.forEach(function(func) {
+        var addr = Module.findExportByName(func.dll, func.name);
+        if (addr) {
+            Interceptor.attach(addr, {
+                onLeave: function(retval) {
+                    send({type: 'integrity_call', function: func.name});
+                }
+            });
+        }
+    });
+
+    var verifyFunctions = ['VerifySignature', 'CryptVerifySignature', 'CheckIntegrity'];
+    verifyFunctions.forEach(function(name) {
+        var addr = Module.findExportByName(null, name);
+        if (addr) {
+            Interceptor.attach(addr, {
+                onLeave: function(retval) {
+                    retval.replace(1);
+                }
+            });
+        }
+    });
+
+    send({type: 'bypass', name: 'integrity', status: 'active'});
+})();
+"""
+
+    def _get_ssl_pinning_bypass_script(self) -> str:
+        """Return Frida script for SSL pinning bypass."""
+        return """
+(function() {
+    'use strict';
+
+    if (Process.platform === 'windows') {
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
+        if (winHttpSendRequest) {
+            Interceptor.attach(winHttpSendRequest, {
+                onLeave: function(retval) {}
+            });
+        }
+
+        var certVerify = Module.findExportByName('crypt32.dll', 'CertVerifyCertificateChainPolicy');
+        if (certVerify) {
+            Interceptor.attach(certVerify, {
+                onLeave: function(retval) {
+                    retval.replace(1);
+                }
+            });
+        }
+    }
+
+    var sslVerifyFunctions = [
+        'SSL_CTX_set_verify',
+        'SSL_set_verify',
+        'X509_verify_cert'
+    ];
+
+    sslVerifyFunctions.forEach(function(name) {
+        var addr = Module.findExportByName(null, name);
+        if (addr) {
+            Interceptor.attach(addr, {
+                onEnter: function(args) {
+                    if (name.indexOf('set_verify') !== -1) {
+                        args[1] = ptr(0);
+                    }
+                },
+                onLeave: function(retval) {
+                    if (name === 'X509_verify_cert') {
+                        retval.replace(1);
+                    }
+                }
+            });
+        }
+    });
+
+    send({type: 'bypass', name: 'ssl_pinning', status: 'active'});
+})();
+"""
+
+    def _get_time_bypass_script(self) -> str:
+        """Return Frida script for time-based protection bypass."""
+        return """
+(function() {
+    'use strict';
+
+    var targetTime = new Date('2025-01-01').getTime();
+
+    if (Process.platform === 'windows') {
+        var getSystemTime = Module.findExportByName('kernel32.dll', 'GetSystemTime');
+        if (getSystemTime) {
+            Interceptor.attach(getSystemTime, {
+                onLeave: function(retval) {}
+            });
+        }
+
+        var getLocalTime = Module.findExportByName('kernel32.dll', 'GetLocalTime');
+        if (getLocalTime) {
+            Interceptor.attach(getLocalTime, {
+                onLeave: function(retval) {}
+            });
+        }
+
+        var getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
+        if (getTickCount) {
+            Interceptor.attach(getTickCount, {
+                onLeave: function(retval) {
+                    retval.replace(1000);
+                }
+            });
+        }
+    }
+
+    send({type: 'bypass', name: 'time', status: 'active'});
+})();
+"""
+
+    def _get_hardware_bypass_script(self) -> str:
+        """Return Frida script for hardware ID bypass."""
+        return """
+(function() {
+    'use strict';
+
+    var spoofedValues = {
+        'CPUID': '00000000-0000-0000-0000-000000000000',
+        'MAC': '00:11:22:33:44:55',
+        'HDD': 'SPOOF-HDD-SERIAL-12345',
+        'BIOS': 'SPOOF-BIOS-SERIAL-12345'
+    };
+
+    if (Process.platform === 'windows') {
+        var getVolumeInfo = Module.findExportByName('kernel32.dll', 'GetVolumeInformationW');
+        if (getVolumeInfo) {
+            Interceptor.attach(getVolumeInfo, {
+                onEnter: function(args) {
+                    this.serialPtr = args[3];
+                },
+                onLeave: function(retval) {
+                    if (this.serialPtr && !this.serialPtr.isNull()) {
+                        this.serialPtr.writeU32(0x12345678);
+                    }
+                }
+            });
+        }
+
+        var getComputerName = Module.findExportByName('kernel32.dll', 'GetComputerNameW');
+        if (getComputerName) {
+            Interceptor.attach(getComputerName, {
+                onLeave: function(retval) {}
+            });
+        }
+    }
+
+    send({type: 'bypass', name: 'hardware', status: 'active'});
+})();
+"""
+
+    def _get_cloud_bypass_script(self) -> str:
+        """Return Frida script for cloud license bypass."""
+        return """
+(function() {
+    'use strict';
+
+    if (Process.platform === 'windows') {
+        var internetConnect = Module.findExportByName('wininet.dll', 'InternetConnectW');
+        if (internetConnect) {
+            Interceptor.attach(internetConnect, {
+                onEnter: function(args) {
+                    this.server = args[1].readUtf16String();
+                    send({type: 'network', action: 'connect', server: this.server});
+                }
+            });
+        }
+
+        var httpSendRequest = Module.findExportByName('wininet.dll', 'HttpSendRequestW');
+        if (httpSendRequest) {
+            Interceptor.attach(httpSendRequest, {
+                onLeave: function(retval) {
+                    retval.replace(1);
+                }
+            });
+        }
+
+        var internetReadFile = Module.findExportByName('wininet.dll', 'InternetReadFile');
+        if (internetReadFile) {
+            Interceptor.attach(internetReadFile, {
+                onEnter: function(args) {
+                    this.buffer = args[1];
+                    this.bytesRead = args[3];
+                },
+                onLeave: function(retval) {
+                    if (retval.toInt32() !== 0 && this.buffer) {
+                        var successResponse = '{"status":"success","licensed":true,"valid":true}';
+                        this.buffer.writeUtf8String(successResponse);
+                        if (this.bytesRead) {
+                            this.bytesRead.writeU32(successResponse.length);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    send({type: 'bypass', name: 'cloud', status: 'active'});
+})();
+"""
+
+    def _analyze_imports_for_report(self) -> dict[str, list[str]]:
+        """Analyze imports and return categorized findings."""
+        findings: dict[str, list[str]] = {
+            "Anti-Debug": [],
+            "License Validation": [],
+            "Integrity Checks": [],
+            "Network Protection": [],
+            "Time-Based Protection": [],
+            "Hardware Binding": [],
+        }
+
+        import_categories = {
+            "IsDebuggerPresent": "Anti-Debug",
+            "CheckRemoteDebuggerPresent": "Anti-Debug",
+            "NtQueryInformationProcess": "Anti-Debug",
+            "RegQueryValueEx": "License Validation",
+            "RegOpenKeyEx": "License Validation",
+            "CryptHashData": "Integrity Checks",
+            "BCryptHashData": "Integrity Checks",
+            "InternetOpen": "Network Protection",
+            "WinHttpOpen": "Network Protection",
+            "GetSystemTime": "Time-Based Protection",
+            "GetTickCount": "Time-Based Protection",
+            "GetVolumeInformation": "Hardware Binding",
+            "GetComputerName": "Hardware Binding",
+        }
+
+        for imp in self.analysis_results.get("imports", []):
+            func_name = imp.get("name", "")
+            if func_name in import_categories:
+                category = import_categories[func_name]
+                findings[category].append(f"Import: {func_name} from {imp.get('module', 'unknown')}")
+
+        return findings
+
+    def _analyze_strings_for_report(self) -> dict[str, list[str]]:
+        """Analyze strings and return categorized findings."""
+        findings: dict[str, list[str]] = {
+            "Anti-Debug": [],
+            "License Validation": [],
+            "Integrity Checks": [],
+            "Network Protection": [],
+            "Time-Based Protection": [],
+            "Hardware Binding": [],
+        }
+
+        string_patterns = {
+            "debug": "Anti-Debug",
+            "license": "License Validation",
+            "serial": "License Validation",
+            "registration": "License Validation",
+            "checksum": "Integrity Checks",
+            "hash": "Integrity Checks",
+            "http": "Network Protection",
+            "activation": "Network Protection",
+            "trial": "Time-Based Protection",
+            "expire": "Time-Based Protection",
+            "hwid": "Hardware Binding",
+            "hardware": "Hardware Binding",
+        }
+
+        for string in self.analysis_results.get("strings", [])[:50]:
+            string_lower = string.lower()
+            for pattern, category in string_patterns.items():
+                if pattern in string_lower:
+                    findings[category].append(f"String: {string[:60]}")
+                    break
+
+        return findings
+
+    def _map_protection_to_category(self, protection_name: str) -> str:
+        """Map protection type name to analysis category."""
+        category_map = {
+            "ANTI_DEBUG": "Anti-Debug",
+            "ANTI_ATTACH": "Anti-Debug",
+            "LICENSE": "License Validation",
+            "INTEGRITY": "Integrity Checks",
+            "SSL_PINNING": "Network Protection",
+            "CLOUD": "Network Protection",
+            "TIME": "Time-Based Protection",
+            "HARDWARE": "Hardware Binding",
+        }
+        return category_map.get(protection_name.upper(), "License Validation")
+
     def stop(self) -> None:
         """Stop the wizard if running.
 

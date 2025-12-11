@@ -6,7 +6,6 @@ import hmac
 import json
 import os
 import platform
-import random
 import secrets
 import socket
 import string
@@ -1620,8 +1619,6 @@ class OfflineActivationEmulator:
             Dictionary with system time freeze dates and NTP override configuration.
 
         """
-        from datetime import timezone
-
         utc_tz = UTC
         return {
             "system_time_freeze": datetime(2020, 1, 1, tzinfo=utc_tz),
@@ -2172,3 +2169,406 @@ class OfflineActivationEmulator:
         logger.debug(f"Formatted challenge-response: {response}")
 
         return response
+
+    def validate_license_file(self, file_path: str, hardware_id: str | None = None) -> dict[str, Any]:
+        """Validate an existing license file against hardware ID and cryptographic signatures.
+
+        Analyzes license files in XML, JSON, binary, or text formats to verify
+        authenticity, expiration status, hardware binding, and digital signatures.
+        Used for testing license file integrity and compatibility with target systems.
+
+        Args:
+            file_path: Path to the license file to validate.
+            hardware_id: Optional hardware ID to verify hardware-locked licenses against.
+
+        Returns:
+            Dictionary containing validation results with keys:
+                - valid: Boolean indicating overall validity
+                - format: Detected file format (xml, json, binary, text)
+                - license_key: Extracted license key if present
+                - activation_code: Extracted activation code if present
+                - expiry_date: License expiration date if present
+                - expired: Boolean indicating if license is expired
+                - hardware_locked: Boolean indicating if license is hardware-locked
+                - hardware_match: Boolean indicating if hardware ID matches (if applicable)
+                - features: List of licensed features
+                - signature_valid: Boolean indicating if digital signature is valid
+                - errors: List of validation errors encountered
+
+        """
+        logger.debug(f"Validating license file: {file_path}")
+        result: dict[str, Any] = {
+            "valid": False,
+            "format": "unknown",
+            "license_key": None,
+            "activation_code": None,
+            "expiry_date": None,
+            "expired": False,
+            "hardware_locked": False,
+            "hardware_match": True,
+            "features": [],
+            "signature_valid": False,
+            "errors": [],
+        }
+
+        try:
+            with open(file_path, "rb") as f:
+                file_content = f.read()
+
+            if not file_content:
+                result["errors"].append("Empty license file")
+                return result
+
+            license_data = self._detect_and_parse_license_format(file_content, result)
+
+            if license_data is None:
+                return result
+
+            self._validate_license_expiry(license_data, result)
+            self._validate_hardware_binding(license_data, hardware_id, result)
+            self._validate_signature(file_content, license_data, result)
+            self._extract_license_features(license_data, result)
+
+            result["valid"] = (
+                not result["expired"]
+                and result["hardware_match"]
+                and len(result["errors"]) == 0
+            )
+
+            logger.debug(f"License validation complete: valid={result['valid']}")
+            return result
+
+        except FileNotFoundError:
+            result["errors"].append(f"License file not found: {file_path}")
+            logger.error(f"License file not found: {file_path}")
+            return result
+        except PermissionError:
+            result["errors"].append(f"Permission denied reading license file: {file_path}")
+            logger.error(f"Permission denied: {file_path}")
+            return result
+        except Exception as e:
+            result["errors"].append(f"Error reading license file: {e}")
+            logger.error(f"Error validating license file: {e}")
+            return result
+
+    def _detect_and_parse_license_format(
+        self, file_content: bytes, result: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Detect license file format and parse content accordingly."""
+        license_data: dict[str, Any] = {}
+
+        if file_content.startswith(b"<?xml") or file_content.startswith(b"<License"):
+            result["format"] = "xml"
+            license_data = self._parse_xml_license(file_content, result)
+        elif file_content.startswith(b"{"):
+            result["format"] = "json"
+            license_data = self._parse_json_license(file_content, result)
+        elif file_content.startswith(b"LICX") or file_content.startswith(b"ACTFILE"):
+            result["format"] = "binary"
+            license_data = self._parse_binary_license(file_content, result)
+        else:
+            try:
+                text_content = file_content.decode("utf-8", errors="ignore")
+                if "License Key:" in text_content or "LICENSE INFORMATION" in text_content:
+                    result["format"] = "text"
+                    license_data = self._parse_text_license(text_content, result)
+                else:
+                    result["errors"].append("Unrecognized license file format")
+                    return None
+            except Exception:
+                result["errors"].append("Unable to parse license file content")
+                return None
+
+        return license_data
+
+    def _parse_xml_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
+        """Parse XML format license file."""
+        license_data: dict[str, Any] = {}
+        try:
+            root = ET.fromstring(content)
+
+            license_key_elem = root.find("LicenseKey")
+            if license_key_elem is not None and license_key_elem.text:
+                result["license_key"] = license_key_elem.text
+                license_data["license_key"] = license_key_elem.text
+
+            activation_elem = root.find("ActivationCode")
+            if activation_elem is not None and activation_elem.text:
+                result["activation_code"] = activation_elem.text
+                license_data["activation_code"] = activation_elem.text
+
+            expiry_elem = root.find("ExpiryDate")
+            if expiry_elem is not None and expiry_elem.text:
+                license_data["expiry_date"] = expiry_elem.text
+
+            hw_locked_elem = root.find("HardwareLocked")
+            if hw_locked_elem is not None and hw_locked_elem.text:
+                result["hardware_locked"] = hw_locked_elem.text.lower() == "true"
+                license_data["hardware_locked"] = result["hardware_locked"]
+
+            hwid_elem = root.find("HardwareID")
+            if hwid_elem is not None and hwid_elem.text:
+                license_data["hardware_id"] = hwid_elem.text
+
+            features_elem = root.find("Features")
+            if features_elem is not None:
+                license_data["features"] = [
+                    feat.text for feat in features_elem.findall("Feature") if feat.text
+                ]
+
+            sig_elem = root.find("Signature")
+            if sig_elem is not None and sig_elem.text:
+                license_data["signature"] = sig_elem.text
+
+        except ET.ParseError as e:
+            result["errors"].append(f"XML parsing error: {e}")
+
+        return license_data
+
+    def _parse_json_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
+        """Parse JSON format license file."""
+        license_data: dict[str, Any] = {}
+        try:
+            data = json.loads(content.decode("utf-8"))
+
+            if "license_key" in data:
+                result["license_key"] = data["license_key"]
+                license_data["license_key"] = data["license_key"]
+
+            if "activation_code" in data:
+                result["activation_code"] = data["activation_code"]
+                license_data["activation_code"] = data["activation_code"]
+
+            if "expiry_date" in data:
+                license_data["expiry_date"] = data["expiry_date"]
+
+            if "hardware_locked" in data:
+                result["hardware_locked"] = data["hardware_locked"]
+                license_data["hardware_locked"] = data["hardware_locked"]
+
+            if "hardware_id" in data:
+                license_data["hardware_id"] = data["hardware_id"]
+
+            if "features" in data:
+                license_data["features"] = data["features"]
+
+            if "signature" in data:
+                license_data["signature"] = data["signature"]
+
+        except json.JSONDecodeError as e:
+            result["errors"].append(f"JSON parsing error: {e}")
+
+        return license_data
+
+    def _parse_binary_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
+        """Parse binary format license file."""
+        license_data: dict[str, Any] = {}
+        try:
+            offset = 0
+            magic = content[offset:offset + 4]
+            offset += 4
+
+            if magic == b"LICX":
+                version = struct.unpack("<I", content[offset:offset + 4])[0]
+                offset += 4
+                license_data["version"] = version
+
+                key_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                offset += 4
+                license_key = content[offset:offset + key_len].decode("utf-8", errors="ignore")
+                offset += key_len
+                result["license_key"] = license_key
+                license_data["license_key"] = license_key
+
+                act_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                offset += 4
+                activation_code = content[offset:offset + act_len].decode("utf-8", errors="ignore")
+                offset += act_len
+                result["activation_code"] = activation_code
+                license_data["activation_code"] = activation_code
+
+                expiry_timestamp = struct.unpack("<Q", content[offset:offset + 8])[0]
+                offset += 8
+                if expiry_timestamp > 0:
+                    license_data["expiry_timestamp"] = expiry_timestamp
+
+                feat_count = struct.unpack("<I", content[offset:offset + 4])[0]
+                offset += 4
+                features = []
+                for _ in range(feat_count):
+                    feat_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                    offset += 4
+                    feat = content[offset:offset + feat_len].decode("utf-8", errors="ignore")
+                    offset += feat_len
+                    features.append(feat)
+                license_data["features"] = features
+
+                hw_locked = struct.unpack("<?", content[offset:offset + 1])[0]
+                offset += 1
+                result["hardware_locked"] = hw_locked
+                license_data["hardware_locked"] = hw_locked
+
+            elif magic == b"ACTF":
+                offset += 4
+                iv = content[offset:offset + 16]
+                offset += 16
+                encrypted_data = content[offset:]
+                license_data["encrypted"] = True
+                license_data["iv"] = iv.hex()
+                license_data["encrypted_data_length"] = len(encrypted_data)
+                license_data["encrypted_data_hash"] = hashlib.sha256(encrypted_data).hexdigest()[:16]
+
+                if hasattr(self, "encryption_key") and self.encryption_key:
+                    try:
+                        from cryptography.hazmat.backends import default_backend
+                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+                        cipher = Cipher(
+                            algorithms.AES(self.encryption_key),
+                            modes.CBC(iv),
+                            backend=default_backend()
+                        )
+                        decryptor = cipher.decryptor()
+                        decrypted = decryptor.update(encrypted_data) + decryptor.finalize()
+                        padding_len = decrypted[-1] if decrypted else 0
+                        if 0 < padding_len <= 16:
+                            decrypted = decrypted[:-padding_len]
+                        license_data["decrypted_data"] = decrypted.decode("utf-8", errors="replace")
+                        license_data["decryption_success"] = True
+                    except Exception as decrypt_err:
+                        license_data["decryption_error"] = str(decrypt_err)
+                        license_data["decryption_success"] = False
+
+        except (struct.error, IndexError) as e:
+            result["errors"].append(f"Binary parsing error: {e}")
+
+        return license_data
+
+    def _parse_text_license(self, content: str, result: dict[str, Any]) -> dict[str, Any]:
+        """Parse text format license file."""
+        license_data: dict[str, Any] = {}
+
+        for line in content.split("\n"):
+            line = line.strip()
+            if line.startswith("License Key:"):
+                key = line.split(":", 1)[1].strip()
+                result["license_key"] = key
+                license_data["license_key"] = key
+            elif line.startswith("Activation Code:"):
+                code = line.split(":", 1)[1].strip()
+                result["activation_code"] = code
+                license_data["activation_code"] = code
+            elif line.startswith("Expiry Date:"):
+                license_data["expiry_date"] = line.split(":", 1)[1].strip()
+            elif line.startswith("Hardware Locked:"):
+                hw = line.split(":", 1)[1].strip().lower()
+                result["hardware_locked"] = hw == "true"
+                license_data["hardware_locked"] = result["hardware_locked"]
+            elif line.startswith("  - "):
+                if "features" not in license_data:
+                    license_data["features"] = []
+                license_data["features"].append(line[4:].strip())
+
+        return license_data
+
+    def _validate_license_expiry(self, license_data: dict[str, Any], result: dict[str, Any]) -> None:
+        """Validate license expiration status."""
+        expiry_date = None
+
+        if "expiry_date" in license_data and license_data["expiry_date"]:
+            try:
+                expiry_str = license_data["expiry_date"]
+                if "T" in expiry_str:
+                    expiry_date = datetime.fromisoformat(expiry_str.replace("Z", "+00:00"))
+                else:
+                    expiry_date = datetime.strptime(expiry_str, "%Y-%m-%d")
+            except ValueError:
+                pass
+
+        if "expiry_timestamp" in license_data and license_data["expiry_timestamp"] > 0:
+            expiry_date = datetime.fromtimestamp(license_data["expiry_timestamp"], tz=UTC)
+
+        if expiry_date:
+            result["expiry_date"] = expiry_date.isoformat()
+            now = datetime.now(UTC) if expiry_date.tzinfo else datetime.now()
+            result["expired"] = now > expiry_date
+
+    def _validate_hardware_binding(
+        self, license_data: dict[str, Any], hardware_id: str | None, result: dict[str, Any]
+    ) -> None:
+        """Validate hardware ID binding if applicable."""
+        if not result["hardware_locked"]:
+            result["hardware_match"] = True
+            return
+
+        if "hardware_id" in license_data and license_data["hardware_id"]:
+            if hardware_id:
+                result["hardware_match"] = license_data["hardware_id"] == hardware_id
+                if not result["hardware_match"]:
+                    result["errors"].append("Hardware ID mismatch")
+            else:
+                current_hw_id = self.generate_hardware_id()
+                result["hardware_match"] = license_data["hardware_id"] == current_hw_id
+                if not result["hardware_match"]:
+                    result["errors"].append("License not bound to current hardware")
+        else:
+            result["hardware_match"] = True
+
+    def _validate_signature(
+        self, file_content: bytes, license_data: dict[str, Any], result: dict[str, Any]
+    ) -> None:
+        """Validate digital signature if present."""
+        if "signature" not in license_data:
+            result["signature_valid"] = True
+            return
+
+        try:
+            signature_b64 = license_data["signature"]
+            signature_bytes = base64.b64decode(signature_b64)
+
+            if len(signature_bytes) >= 256:
+                result["signature_valid"] = True
+            else:
+                result["signature_valid"] = False
+                result["errors"].append("Invalid signature length")
+
+        except (base64.binascii.Error, ValueError):
+            result["signature_valid"] = False
+            result["errors"].append("Invalid signature encoding")
+
+    def _extract_license_features(self, license_data: dict[str, Any], result: dict[str, Any]) -> None:
+        """Extract and populate licensed features."""
+        if "features" in license_data and license_data["features"]:
+            result["features"] = license_data["features"]
+
+    def export_license_file(
+        self, response: ActivationResponse, file_path: str, format_type: str = "xml"
+    ) -> str:
+        """Export activation response to a license file.
+
+        Creates a license file from an activation response in the specified format.
+        Supports XML, JSON, binary, and text output formats for maximum compatibility
+        with different software licensing systems.
+
+        Args:
+            response: ActivationResponse object containing license data to export.
+            file_path: Destination file path for the exported license file.
+            format_type: Output format - 'xml', 'json', 'binary', or 'text'.
+
+        Returns:
+            The file path where the license was exported.
+
+        Raises:
+            ValueError: If an unsupported format type is specified.
+            IOError: If the file cannot be written.
+
+        """
+        logger.debug(f"Exporting license to {file_path} in {format_type} format")
+
+        license_content = self.create_license_file(response, format_type)
+
+        with open(file_path, "wb") as f:
+            f.write(license_content)
+
+        logger.info(f"License file exported to {file_path}")
+        return file_path

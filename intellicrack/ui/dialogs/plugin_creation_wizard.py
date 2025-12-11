@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,

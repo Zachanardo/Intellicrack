@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -121,12 +123,87 @@ except ImportError as e:
                     data: Optional dictionary containing graph data for initialization
 
                 """
-                self._nodes = {}
-                self._edges = {}
-                self._node_attrs = {}
-                self._edge_attrs = {}
+                self._nodes: dict[object, bool] = {}
+                self._edges: dict[object, set[object]] = {}
+                self._node_attrs: dict[object, dict[str, object]] = {}
+                self._edge_attrs: dict[tuple[object, object], dict[str, object]] = {}
                 if data:
                     self.update(data)
+
+            def update(self, data: dict[str, object] | object) -> None:
+                """Update graph with nodes and edges from data.
+
+                Merges nodes, edges, and attributes from the provided data into
+                this graph. Supports both dictionary-based graph data and other
+                DiGraph instances.
+
+                Args:
+                    data: Dictionary containing graph data with optional keys:
+                        - 'nodes': Iterable of (node, attrs) tuples or node identifiers
+                        - 'edges': Iterable of (u, v) or (u, v, attrs) tuples
+                        - 'adjacency': Dict mapping nodes to lists of neighbor dicts
+                        Or another DiGraph instance to merge.
+
+                """
+                if hasattr(data, "_nodes") and hasattr(data, "_edges"):
+                    for node in data._nodes:
+                        self._nodes[node] = True
+                        if node in data._node_attrs:
+                            self._node_attrs[node] = data._node_attrs[node].copy()
+                    for src, neighbors in data._edges.items():
+                        if src not in self._edges:
+                            self._edges[src] = set()
+                        self._edges[src].update(neighbors)
+                    for edge_key, attrs in data._edge_attrs.items():
+                        self._edge_attrs[edge_key] = attrs.copy()
+                    return
+
+                if isinstance(data, dict):
+                    if "nodes" in data:
+                        nodes_data = data["nodes"]
+                        for item in nodes_data:
+                            if isinstance(item, tuple) and len(item) >= 2:
+                                node, attrs = item[0], item[1] if len(item) > 1 else {}
+                                self._nodes[node] = True
+                                if isinstance(attrs, dict):
+                                    self._node_attrs[node] = attrs
+                            else:
+                                self._nodes[item] = True
+
+                    if "edges" in data:
+                        edges_data = data["edges"]
+                        for edge in edges_data:
+                            if len(edge) >= 2:
+                                u, v = edge[0], edge[1]
+                                attrs = edge[2] if len(edge) > 2 and isinstance(edge[2], dict) else {}
+                                if u not in self._nodes:
+                                    self._nodes[u] = True
+                                if v not in self._nodes:
+                                    self._nodes[v] = True
+                                if u not in self._edges:
+                                    self._edges[u] = set()
+                                self._edges[u].add(v)
+                                if attrs:
+                                    self._edge_attrs[u, v] = attrs
+
+                    if "adjacency" in data:
+                        adjacency = data["adjacency"]
+                        for node, neighbors in adjacency.items():
+                            self._nodes[node] = True
+                            if node not in self._edges:
+                                self._edges[node] = set()
+                            for neighbor_info in neighbors:
+                                if isinstance(neighbor_info, dict):
+                                    neighbor = neighbor_info.get("id", neighbor_info.get("node"))
+                                    if neighbor is not None:
+                                        self._nodes[neighbor] = True
+                                        self._edges[node].add(neighbor)
+                                        edge_attrs = {k: v for k, v in neighbor_info.items() if k not in ("id", "node")}
+                                        if edge_attrs:
+                                            self._edge_attrs[node, neighbor] = edge_attrs
+                                else:
+                                    self._nodes[neighbor_info] = True
+                                    self._edges[node].add(neighbor_info)
 
             def add_node(self, node: object, **attrs: object) -> None:
                 """Add node to graph with optional attributes.
@@ -261,7 +338,7 @@ except ImportError as e:
                 """
                 return u in self._edges and v in self._edges[u]
 
-            def copy(self) -> "_IntellicrackNetworkX.DiGraph":
+            def copy(self) -> _IntellicrackNetworkX.DiGraph:
                 """Return copy of graph.
 
                 Returns:
@@ -279,7 +356,7 @@ except ImportError as e:
             """NetworkX-compatible exception."""
 
         @staticmethod
-        def simple_cycles(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[object]]:
+        def simple_cycles(graph: _IntellicrackNetworkX.DiGraph) -> list[list[object]]:
             """Find simple cycles using DFS.
 
             Args:
@@ -332,7 +409,7 @@ except ImportError as e:
 
         @staticmethod
         def strongly_connected_components(
-            graph: "_IntellicrackNetworkX.DiGraph",
+            graph: _IntellicrackNetworkX.DiGraph,
         ) -> list[list[object]]:
             """Find strongly connected components using Tarjan's algorithm.
 
@@ -388,7 +465,7 @@ except ImportError as e:
 
         @staticmethod
         def pagerank(
-            graph: "_IntellicrackNetworkX.DiGraph",
+            graph: _IntellicrackNetworkX.DiGraph,
             alpha: float = 0.85,
             max_iter: int = 100,
             tol: float = 1e-6,
@@ -437,7 +514,7 @@ except ImportError as e:
             return pr
 
         @staticmethod
-        def betweenness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[object, float]:
+        def betweenness_centrality(graph: _IntellicrackNetworkX.DiGraph) -> dict[object, float]:
             """Calculate betweenness centrality.
 
             Args:
@@ -491,7 +568,7 @@ except ImportError as e:
             return centrality
 
         @staticmethod
-        def closeness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[object, float]:
+        def closeness_centrality(graph: _IntellicrackNetworkX.DiGraph) -> dict[object, float]:
             """Calculate closeness centrality.
 
             Args:
@@ -525,7 +602,7 @@ except ImportError as e:
 
         @staticmethod
         def spring_layout(
-            graph: "_IntellicrackNetworkX.DiGraph",
+            graph: _IntellicrackNetworkX.DiGraph,
             k: float | None = None,
             pos: dict[object, tuple[float, float]] | None = None,
             iterations: int = 50,
@@ -599,7 +676,7 @@ except ImportError as e:
 
         @staticmethod
         def circular_layout(
-            graph: "_IntellicrackNetworkX.DiGraph",
+            graph: _IntellicrackNetworkX.DiGraph,
         ) -> dict[object, tuple[float, float]]:
             """Circular layout for graph visualization.
 
@@ -629,7 +706,7 @@ except ImportError as e:
 
         @staticmethod
         def draw_networkx(
-            graph: "_IntellicrackNetworkX.DiGraph",
+            graph: _IntellicrackNetworkX.DiGraph,
             pos: dict[object, tuple[float, float]] | None = None,
             ax: object = None,
             **kwargs: object,
@@ -666,7 +743,7 @@ except ImportError as e:
                 """PyDot interface for NetworkX compatibility."""
 
                 @staticmethod
-                def write_dot(graph: "_IntellicrackNetworkX.DiGraph", path: str) -> None:
+                def write_dot(graph: _IntellicrackNetworkX.DiGraph, path: str) -> None:
                     """Write graph in DOT format.
 
                     Args:
@@ -685,7 +762,7 @@ except ImportError as e:
                         f.write("}\n")
 
                 @staticmethod
-                def graphviz_layout(graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot") -> dict[object, tuple[float, float]]:
+                def graphviz_layout(graph: _IntellicrackNetworkX.DiGraph, prog: str = "dot") -> dict[object, tuple[float, float]]:
                     """Graphviz layout (fallback to spring layout).
 
                     Args:

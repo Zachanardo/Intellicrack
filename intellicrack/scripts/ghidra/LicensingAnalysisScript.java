@@ -23,11 +23,11 @@ public class LicensingAnalysisScript extends GhidraScript {
   private SymbolTable symbolTable;
   private ReferenceManager referenceManager;
   private DecompileOptions decompOptions;
-  private Map<String, HighFunction> highFunctionCache = new HashMap<>();
-  private Set<Address> analyzedAddresses = new HashSet<>();
-  private Set<String> licenseSymbols = new HashSet<>();
-  private AddressSet protectedRegions = new AddressSet();
-  private Map<String, Object> globalAnalysisData = new HashMap<>();
+  private final Map<String, HighFunction> highFunctionCache = new HashMap<>();
+  private final Set<Address> analyzedAddresses = new HashSet<>();
+  private final Set<String> licenseSymbols = new HashSet<>();
+  private final AddressSet protectedRegions = new AddressSet();
+  private final Map<String, Object> globalAnalysisData = new HashMap<>();
   private PrintWriter reportWriter;
   private BufferedReader configReader;
   private File outputFile;
@@ -311,9 +311,8 @@ public class LicensingAnalysisScript extends GhidraScript {
       CodeUnit codeUnit = codeUnitIter.next();
       codeUnitCount++;
 
-      if (codeUnit instanceof Instruction) {
-        Instruction inst = (Instruction) codeUnit;
-        mnemonics.add(inst.getMnemonicString());
+      if (codeUnit instanceof Instruction inst) {
+          mnemonics.add(inst.getMnemonicString());
 
         // Check for anti-debug instructions
         String mnemonic = inst.getMnemonicString().toUpperCase();
@@ -467,7 +466,7 @@ public class LicensingAnalysisScript extends GhidraScript {
         if (val instanceof String) {
           sb.append("\"").append(val.toString().replace("\"", "\\\"")).append("\"");
         } else if (val instanceof List) {
-          sb.append(val.toString());
+          sb.append(val);
         } else {
           sb.append(val);
         }

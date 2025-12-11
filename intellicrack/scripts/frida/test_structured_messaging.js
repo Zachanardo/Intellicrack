@@ -23,7 +23,7 @@ const TEST_CONFIG = {
     encryptionTestEnabled: true,
 };
 
-let TEST_RESULTS = {
+const TEST_RESULTS = {
     totalTests: 0,
     passedTests: 0,
     failedTests: 0,
@@ -168,7 +168,7 @@ function runBasicMessageTests() {
 }
 
 function runPerformanceTests() {
-    if (!TEST_CONFIG.performanceTestEnabled) return;
+    if (!TEST_CONFIG.performanceTestEnabled) { return; }
 
     console.log('[TEST] Running performance analysis tests...');
 
@@ -201,7 +201,7 @@ function runPerformanceTests() {
 }
 
 function runConcurrencyTests() {
-    if (!TEST_CONFIG.concurrencyTestEnabled) return;
+    if (!TEST_CONFIG.concurrencyTestEnabled) { return; }
 
     console.log('[TEST] Running concurrency tests...');
 
@@ -210,7 +210,7 @@ function runConcurrencyTests() {
 
     for (let batch = 0; batch < concurrentBatches; batch++) {
         // Simulate concurrent message sending
-        const batchPromises = [];
+        const _batchPromises = [];
 
         for (let msg = 0; msg < messagesPerBatch; msg++) {
             const testMessage = {
@@ -251,7 +251,7 @@ function runConcurrencyTests() {
 }
 
 function runStressTests() {
-    if (!TEST_CONFIG.stressTestEnabled) return;
+    if (!TEST_CONFIG.stressTestEnabled) { return; }
 
     console.log('[TEST] Running stress tests with high volume messaging...');
 
@@ -298,7 +298,7 @@ function runStressTests() {
 }
 
 function runErrorInjectionTests() {
-    if (!TEST_CONFIG.errorInjectionEnabled) return;
+    if (!TEST_CONFIG.errorInjectionEnabled) { return; }
 
     console.log('[TEST] Running error injection and edge case tests...');
 
@@ -362,7 +362,7 @@ function runErrorInjectionTests() {
 }
 
 function runIntegrationTests() {
-    if (!TEST_CONFIG.integrationTestEnabled) return;
+    if (!TEST_CONFIG.integrationTestEnabled) { return; }
 
     console.log('[TEST] Running integration tests with mock hooks...');
 
@@ -392,7 +392,7 @@ function runIntegrationTests() {
 }
 
 function runEncryptionTests() {
-    if (!TEST_CONFIG.encryptionTestEnabled) return;
+    if (!TEST_CONFIG.encryptionTestEnabled) { return; }
 
     console.log('[TEST] Running message encryption tests...');
 
@@ -427,7 +427,7 @@ function runEncryptionTests() {
 }
 
 function runTimingAnalysisTests() {
-    if (!TEST_CONFIG.timingAnalysisEnabled) return;
+    if (!TEST_CONFIG.timingAnalysisEnabled) { return; }
 
     console.log('[TEST] Running timing analysis tests...');
 
@@ -438,7 +438,7 @@ function runTimingAnalysisTests() {
         { name: 'extra_large_message', size: 8192 },
     ];
 
-    timingTests.forEach((test) => {
+    timingTests.forEach(test => {
         const testMessage = {
             type: 'info',
             target: 'timing_analysis',

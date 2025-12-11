@@ -1061,6 +1061,238 @@ class PDFReportGenerator:
         else:
             csv_data.append([section, parent_key or "value", str(data), ""])
 
+    def generate_from_html(self, html_content: str, output_path: str | None = None) -> str | None:
+        """Generate a PDF report from HTML content.
+
+        Args:
+            html_content: HTML string content to convert to PDF
+            output_path: Optional output path for the PDF file
+
+        Returns:
+            Path to the generated PDF file, or None if generation failed
+
+        """
+        if not output_path:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_path = os.path.join(self.output_dir, f"report_from_html_{timestamp}.pdf")
+
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+
+        if self.pdfkit_available:
+            try:
+                wkhtmltopdf_path = self._find_wkhtmltopdf()
+                config = None
+                if wkhtmltopdf_path:
+                    config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+
+                options = {
+                    "page-size": self.report_config.get("page_size", "letter").upper(),
+                    "margin-top": "0.75in",
+                    "margin-right": "0.75in",
+                    "margin-bottom": "0.75in",
+                    "margin-left": "0.75in",
+                    "encoding": "UTF-8",
+                    "no-outline": None,
+                    "enable-local-file-access": None,
+                }
+
+                if config:
+                    pdfkit.from_string(html_content, output_path, options=options, configuration=config)
+                else:
+                    pdfkit.from_string(html_content, output_path, options=options)
+
+                self.logger.info("Generated PDF from HTML: %s", output_path)
+                return output_path
+
+            except OSError as e:
+                self.logger.warning("pdfkit conversion failed: %s, trying reportlab fallback", e)
+
+        if self.reportlab_available:
+            try:
+                return self._convert_html_to_pdf_reportlab(html_content, output_path)
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("ReportLab HTML conversion failed: %s", e)
+
+        self.logger.error("No PDF generation backend available for HTML conversion")
+        return None
+
+    def _find_wkhtmltopdf(self) -> str | None:
+        """Find the wkhtmltopdf executable on the system.
+
+        Returns:
+            Path to wkhtmltopdf executable, or None if not found
+
+        """
+        import shutil
+
+        wkhtmltopdf_path = shutil.which("wkhtmltopdf")
+        if wkhtmltopdf_path:
+            return wkhtmltopdf_path
+
+        if platform.system() == "Windows":
+            common_paths = [
+                r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe",
+                r"C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe",
+                os.path.expanduser(r"~\AppData\Local\wkhtmltopdf\bin\wkhtmltopdf.exe"),
+            ]
+            for path in common_paths:
+                if os.path.isfile(path):
+                    return path
+        elif platform.system() == "Darwin":
+            common_paths = [
+                "/usr/local/bin/wkhtmltopdf",
+                "/opt/homebrew/bin/wkhtmltopdf",
+            ]
+            for path in common_paths:
+                if os.path.isfile(path):
+                    return path
+        else:
+            common_paths = [
+                "/usr/bin/wkhtmltopdf",
+                "/usr/local/bin/wkhtmltopdf",
+            ]
+            for path in common_paths:
+                if os.path.isfile(path):
+                    return path
+
+        return None
+
+    def _convert_html_to_pdf_reportlab(self, html_content: str, output_path: str) -> str | None:
+        """Convert HTML to PDF using ReportLab as fallback.
+
+        Args:
+            html_content: HTML string content to convert
+            output_path: Output path for the PDF file
+
+        Returns:
+            Path to the generated PDF file, or None if conversion failed
+
+        """
+        try:
+            import re
+
+            from reportlab.lib import colors
+
+            page_size_map = {
+                "letter": letter,
+                "a4": A4,
+                "legal": legal,
+            }
+            page_size = page_size_map.get(
+                str(self.report_config.get("page_size", "letter")).lower(), letter
+            )
+
+            doc = SimpleDocTemplate(
+                output_path,
+                pagesize=page_size,
+                rightMargin=72,
+                leftMargin=72,
+                topMargin=72,
+                bottomMargin=72,
+            )
+
+            styles = getSampleStyleSheet()
+            content = []
+
+            text_content = re.sub(r"<style[^>]*>.*?</style>", "", html_content, flags=re.DOTALL | re.IGNORECASE)
+            text_content = re.sub(r"<script[^>]*>.*?</script>", "", text_content, flags=re.DOTALL | re.IGNORECASE)
+
+            title_match = re.search(r"<title[^>]*>(.*?)</title>", text_content, re.IGNORECASE | re.DOTALL)
+            if title_match:
+                title_text = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+                if title_text:
+                    content.append(Paragraph(title_text, styles["Title"]))
+                    content.append(Spacer(1, 0.2 * inch))
+
+            h1_matches = re.findall(r"<h1[^>]*>(.*?)</h1>", text_content, re.IGNORECASE | re.DOTALL)
+            for h1_text in h1_matches:
+                clean_text = re.sub(r"<[^>]+>", "", h1_text).strip()
+                if clean_text:
+                    content.append(Paragraph(clean_text, styles["Heading1"]))
+                    content.append(Spacer(1, 0.1 * inch))
+
+            h2_matches = re.findall(r"<h2[^>]*>(.*?)</h2>", text_content, re.IGNORECASE | re.DOTALL)
+            for h2_text in h2_matches:
+                clean_text = re.sub(r"<[^>]+>", "", h2_text).strip()
+                if clean_text:
+                    content.append(Paragraph(clean_text, styles["Heading2"]))
+                    content.append(Spacer(1, 0.1 * inch))
+
+            p_matches = re.findall(r"<p[^>]*>(.*?)</p>", text_content, re.IGNORECASE | re.DOTALL)
+            for p_text in p_matches:
+                clean_text = re.sub(r"<[^>]+>", "", p_text).strip()
+                if clean_text:
+                    content.append(Paragraph(clean_text, styles["Normal"]))
+                    content.append(Spacer(1, 0.05 * inch))
+
+            table_matches = re.findall(r"<table[^>]*>(.*?)</table>", text_content, re.IGNORECASE | re.DOTALL)
+            for table_html in table_matches:
+                table_data = self._parse_html_table(table_html)
+                if table_data:
+                    table = Table(table_data)
+                    table.setStyle(
+                        TableStyle(
+                            [
+                                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                            ]
+                        )
+                    )
+                    content.append(table)
+                    content.append(Spacer(1, 0.1 * inch))
+
+            if not content:
+                stripped_text = re.sub(r"<[^>]+>", " ", text_content)
+                stripped_text = re.sub(r"\s+", " ", stripped_text).strip()
+                if stripped_text:
+                    content.append(Paragraph(stripped_text, styles["Normal"]))
+
+            if content:
+                doc.build(content)
+                self.logger.info("Generated PDF from HTML using ReportLab: %s", output_path)
+                return output_path
+
+            self.logger.warning("No content extracted from HTML for PDF generation")
+            return None
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("ReportLab HTML-to-PDF conversion error: %s", e)
+            return None
+
+    def _parse_html_table(self, table_html: str) -> list[list[str]]:
+        """Parse HTML table into list of rows.
+
+        Args:
+            table_html: HTML table content string
+
+        Returns:
+            List of row lists containing cell text
+
+        """
+        import re
+
+        table_data = []
+
+        row_matches = re.findall(r"<tr[^>]*>(.*?)</tr>", table_html, re.IGNORECASE | re.DOTALL)
+        for row_html in row_matches:
+            row_data = []
+            cell_matches = re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", row_html, re.IGNORECASE | re.DOTALL)
+            for cell_html in cell_matches:
+                cell_text = re.sub(r"<[^>]+>", "", cell_html).strip()
+                row_data.append(cell_text)
+            if row_data:
+                table_data.append(row_data)
+
+        return table_data
+
     def _generate_analysis_summary(self, analysis_results: dict[str, Any] | list[Any]) -> dict[str, Any]:
         """Generate summary of analysis results."""
         summary = {

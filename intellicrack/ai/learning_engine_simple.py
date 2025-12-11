@@ -209,6 +209,63 @@ class AILearningEngine:
         """
         return True
 
+    async def update_knowledge(
+        self,
+        agent_id: str,
+        knowledge_entry: dict[str, object],
+    ) -> bool:
+        """Update the knowledge base with new learning from agent operations.
+
+        Records knowledge acquired during license cracking sessions and updates
+        the learning statistics to track pattern evolution and analysis progress.
+
+        Args:
+            agent_id: Unique identifier for the agent providing the knowledge.
+            knowledge_entry: Dictionary containing knowledge data with keys like
+                'task_type', 'timestamp', 'input_patterns', 'output_patterns',
+                'success_indicators', and 'execution_context'.
+
+        Returns:
+            True if the knowledge was successfully recorded and statistics updated.
+
+        """
+        if not self.learning_enabled:
+            logger.debug("Learning disabled, skipping knowledge update from agent %s", agent_id)
+            return False
+
+        try:
+            task_type = str(knowledge_entry.get("task_type", "unknown"))
+            success_indicators = knowledge_entry.get("success_indicators", [])
+            input_patterns = knowledge_entry.get("input_patterns", [])
+            output_patterns = knowledge_entry.get("output_patterns", [])
+
+            self.learning_stats["records_processed"] += 1
+
+            if input_patterns or output_patterns:
+                self.learning_stats["patterns_evolved"] += len(input_patterns) + len(output_patterns)
+
+            if success_indicators:
+                current_success_count = self.learning_stats.get("success_count", 0)
+                self.learning_stats["success_count"] = current_success_count + len(success_indicators)
+                total_records = self.learning_stats["records_processed"]
+                if total_records > 0:
+                    self.learning_stats["success_rate"] = (
+                        self.learning_stats["success_count"] / total_records
+                    )
+
+            logger.debug(
+                "Updated knowledge from agent %s: task_type=%s, patterns=%d",
+                agent_id,
+                task_type,
+                len(input_patterns) + len(output_patterns),
+            )
+            return True
+
+        except (KeyError, TypeError, ValueError) as e:
+            logger.warning("Failed to update knowledge from agent %s: %s", agent_id, e)
+            self.learning_stats["failures_analyzed"] += 1
+            return False
+
     def get_learning_insights(self) -> dict[str, object]:
         """Get insights from learning data accumulated during cracking sessions.
 

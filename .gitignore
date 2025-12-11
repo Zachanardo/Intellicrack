@@ -454,10 +454,11 @@ project-docs/SPECIFIC_*
 # ==============================================================================
 # PACKAGE MANAGERS AND DEPENDENCIES
 # ==============================================================================
-# Node.js
+# Node.js / Yarn
 node_modules/
 package-lock.json
 yarn.lock
+.yarn/
 
 # Python package files
 Pipfile

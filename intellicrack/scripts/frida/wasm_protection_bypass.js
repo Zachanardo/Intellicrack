@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-const wasmProtectionBypass = {
+const _wasmProtectionBypass = {
     name: 'WebAssembly Protection Bypass',
     description: 'WASM-based license validation bypass for modern web applications',
     version: '3.0.0',
@@ -402,7 +402,7 @@ const wasmProtectionBypass = {
             const text = decoder.decode(bytes);
 
             // Look for license-related strings
-            this.config.patterns.license_functions.forEach((func) => {
+            this.config.patterns.license_functions.forEach(func => {
                 if (text.includes(func)) {
                     analysis.hasLicenseCheck = true;
                     analysis.licenseFunctions.push(func);
@@ -441,7 +441,7 @@ const wasmProtectionBypass = {
             let pos = offset + 1;
 
             // Skip section size (LEB128)
-            while (bytes[pos] & 0x80) pos++;
+            while (bytes[pos] && 0x80) { pos++; }
             pos++;
 
             // Read export count (simplified)
@@ -481,7 +481,7 @@ const wasmProtectionBypass = {
     },
 
     // Check if function name is license-related
-    isLicenseFunction: function (name) {
+    isLicenseFunction: name => {
         const lowerName = name.toLowerCase();
         const patterns = [
             'license',
@@ -500,7 +500,7 @@ const wasmProtectionBypass = {
             'register',
         ];
 
-        return patterns.some((pattern) => lowerName.includes(pattern));
+        return patterns.some(pattern => lowerName.includes(pattern));
     },
 
     // Patch WASM binary
@@ -532,18 +532,18 @@ const wasmProtectionBypass = {
         let pos = 8; // Skip magic and version
         while (pos < bytes.length) {
             const sectionId = bytes[pos++];
-            if (pos >= bytes.length) break;
+            if (pos >= bytes.length) { break; }
 
             // Read section size (LEB128)
             let sectionSize = 0;
             let shift = 0;
             let byte;
             do {
-                if (pos >= bytes.length) break;
+                if (pos >= bytes.length) { break; }
                 byte = bytes[pos++];
                 sectionSize |= (byte & 0x7f) << shift;
                 shift += 7;
-            } while (byte & 0x80);
+            } while (byte && 0x80);
 
             const sectionStart = pos;
             const sectionEnd = pos + sectionSize;
@@ -562,32 +562,31 @@ const wasmProtectionBypass = {
                 let numFunctions = 0;
                 shift = 0;
                 do {
-                    if (funcPos >= sectionEnd) break;
+                    if (funcPos >= sectionEnd) { break; }
                     byte = bytes[funcPos++];
                     numFunctions |= (byte & 0x7f) << shift;
                     shift += 7;
-                } while (byte & 0x80);
+                } while (byte && 0x80);
 
                 // 2. Locate and patch license check functions
                 for (let i = 0; i < numFunctions && funcPos < sectionEnd; i++) {
                     // Read function body size
                     let bodySize = 0;
                     shift = 0;
-                    const bodySizeStart = funcPos;
+                    const _bodySizeStart = funcPos;
                     do {
-                        if (funcPos >= sectionEnd) break;
+                        if (funcPos >= sectionEnd) { break; }
                         byte = bytes[funcPos++];
                         bodySize |= (byte & 0x7f) << shift;
                         shift += 7;
-                    } while (byte & 0x80);
+                    } while (byte && 0x80);
 
                     const bodyStart = funcPos;
                     const bodyEnd = funcPos + bodySize;
 
                     // Check if this is a license function by index
                     if (
-                        analysis.licenseFunctionIndices &&
-                        analysis.licenseFunctionIndices.includes(i)
+                        analysis.licenseFunctionIndices?.includes(i)
                     ) {
                         // 3. Patch function body to bypass license validation
                         send({
@@ -642,11 +641,11 @@ const wasmProtectionBypass = {
                 let numExports = 0;
                 shift = 0;
                 do {
-                    if (exportPos >= sectionEnd) break;
+                    if (exportPos >= sectionEnd) { break; }
                     byte = bytes[exportPos++];
                     numExports |= (byte & 0x7f) << shift;
                     shift += 7;
-                } while (byte & 0x80);
+                } while (byte && 0x80);
 
                 if (!analysis.licenseFunctionIndices) {
                     analysis.licenseFunctionIndices = [];
@@ -657,11 +656,11 @@ const wasmProtectionBypass = {
                     let nameLen = 0;
                     shift = 0;
                     do {
-                        if (exportPos >= sectionEnd) break;
+                        if (exportPos >= sectionEnd) { break; }
                         byte = bytes[exportPos++];
                         nameLen |= (byte & 0x7f) << shift;
                         shift += 7;
-                    } while (byte & 0x80);
+                    } while (byte && 0x80);
 
                     // Read export name
                     const nameBytes = [];
@@ -677,11 +676,11 @@ const wasmProtectionBypass = {
                     let index = 0;
                     shift = 0;
                     do {
-                        if (exportPos >= sectionEnd) break;
+                        if (exportPos >= sectionEnd) { break; }
                         byte = bytes[exportPos++];
                         index |= (byte & 0x7f) << shift;
                         shift += 7;
-                    } while (byte & 0x80);
+                    } while (byte && 0x80);
 
                     // Track license function indices
                     if (kind === 0 && this.isLicenseFunction(name)) {
@@ -935,7 +934,7 @@ const wasmProtectionBypass = {
     },
 
     // Modify license check result
-    modifyLicenseResult: function (funcName, result) {
+    modifyLicenseResult: (funcName, result) => {
         const lowerName = funcName.toLowerCase();
 
         // Boolean checks - ensure true
@@ -985,12 +984,12 @@ const wasmProtectionBypass = {
         try {
             const { buffer } = memory;
             const view = new Uint8Array(buffer);
-            const decoder = new TextDecoder();
+            const _decoder = new TextDecoder();
 
             // Look for license-related strings
             const patterns = ['UNLICENSED', 'TRIAL', 'EXPIRED', 'INVALID', 'LICENSE_FAIL'];
 
-            patterns.forEach((pattern) => {
+            patterns.forEach(pattern => {
                 const encoder = new TextEncoder();
                 const patternBytes = encoder.encode(pattern);
 
@@ -1066,13 +1065,13 @@ const wasmProtectionBypass = {
 
     // Hook WASM loading via fetch
     hookWASMLoading: function () {
-        if (!this.config.detection.monitor_fetch) return;
+        if (!this.config.detection.monitor_fetch) { return; }
 
         // Hook fetch
         const originalFetch = window.fetch;
         const self = this;
 
-        window.fetch = async function (url, options) {
+        window.fetch = async function (url, _options) {
             // Check if this is a WASM file
             if (self.isWASMURL(url)) {
                 send({
@@ -1129,7 +1128,7 @@ const wasmProtectionBypass = {
         }
 
         // Check known patterns
-        return this.config.patterns.module_patterns.some((pattern) => urlStr.includes(pattern));
+        return this.config.patterns.module_patterns.some(pattern => urlStr.includes(pattern));
     },
 
     // Hook XMLHttpRequest for WASM
@@ -1138,7 +1137,7 @@ const wasmProtectionBypass = {
         const originalSend = XMLHttpRequest.prototype.send;
         const self = this;
 
-        XMLHttpRequest.prototype.open = function (method, url) {
+        XMLHttpRequest.prototype.open = function (_method, url) {
             this._wasmURL = url;
             return originalOpen.apply(this, arguments);
         };
@@ -1196,7 +1195,7 @@ const wasmProtectionBypass = {
             'UTF8ToString',
         ];
 
-        emscriptenFuncs.forEach((func) => {
+        emscriptenFuncs.forEach(func => {
             if (typeof window[func] === 'function') {
                 this.hookEmscriptenFunction(func);
             }
@@ -1273,9 +1272,7 @@ const wasmProtectionBypass = {
 
     // Create Emscripten bypass function
     createEmscriptenBypass: function (name, returnType) {
-        const self = this;
-
-        return function (...args) {
+        return (...args) => {
             send({
                 type: 'bypass',
                 target: 'wasm_protection_bypass',
@@ -1284,7 +1281,7 @@ const wasmProtectionBypass = {
                 args_count: args.length,
             });
 
-            self.state.bypass_count++;
+            this.state.bypass_count++;
 
             // Return success based on type
             switch (returnType) {
@@ -1392,10 +1389,9 @@ const wasmProtectionBypass = {
     },
 
     // Hook memory allocation
-    hookMemoryAllocation: function () {
+    hookMemoryAllocation: () => {
         const originalMalloc = Module._malloc;
         const originalFree = Module._free;
-        const self = this;
 
         Module._malloc = function (size) {
             const ptr = originalMalloc.call(this, size);
@@ -1452,12 +1448,12 @@ const wasmProtectionBypass = {
 
     // Hook WebWorker WASM support
     hookWebWorkerWASM: function () {
-        if (!this.config.modernFeatures.webWorkers.enabled) return;
+        if (!this.config.modernFeatures.webWorkers.enabled) { return; }
 
         // Hook Worker constructor to intercept WASM in workers
         if (typeof Worker !== 'undefined') {
             const originalWorker = Worker;
-            Worker = function (scriptURL, options) {
+            Worker = (scriptURL, options) => {
                 const worker = new originalWorker(scriptURL, options);
 
                 send({
@@ -1488,7 +1484,7 @@ const wasmProtectionBypass = {
                 // Hook onmessage to catch responses
                 const originalOnMessage = worker.onmessage;
                 worker.onmessage = function (event) {
-                    if (event.data && event.data.licenseResult) {
+                    if (event.data?.licenseResult) {
                         send({
                             type: 'bypass',
                             target: 'wasm_bypass',
@@ -1517,12 +1513,12 @@ const wasmProtectionBypass = {
 
     // Hook SharedArrayBuffer and Atomics for shared WASM memory
     hookSharedMemoryFeatures: function () {
-        if (!this.config.modernFeatures.sharedMemory.enabled) return;
+        if (!this.config.modernFeatures.sharedMemory.enabled) { return; }
 
         // Hook SharedArrayBuffer creation
         if (typeof SharedArrayBuffer !== 'undefined') {
             const originalSAB = SharedArrayBuffer;
-            SharedArrayBuffer = function (length) {
+            SharedArrayBuffer = length => {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -1611,8 +1607,8 @@ const wasmProtectionBypass = {
 
     // Hook BigInt WASM integration for license bypass
     hookBigIntWASMFeatures: function () {
-        if (!this.config.modernFeatures.bigIntSupport.enabled) return;
-        if (typeof BigInt === 'undefined') return;
+        if (!this.config.modernFeatures.bigIntSupport.enabled) { return; }
+        if (typeof BigInt === 'undefined') { return; }
 
         // Hook BigInt constructor for license key spoofing
         const originalBigInt = BigInt;
@@ -1629,7 +1625,7 @@ const wasmProtectionBypass = {
                 });
 
                 // Store original for potential spoofing later
-                this.state.license_functions.add('bigint_license_' + result.toString());
+                this.state.license_functions.add(`bigint_license_${result.toString()}`);
             }
 
             return result;
@@ -1638,7 +1634,7 @@ const wasmProtectionBypass = {
         // Hook WASM BigInt imports/exports
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
             const originalGlobal = WebAssembly.Global;
-            WebAssembly.Global = function (descriptor, value) {
+            WebAssembly.Global = (descriptor, value) => {
                 if (
                     descriptor.value === 'i64' &&
                     typeof value === 'bigint' &&
@@ -1661,12 +1657,12 @@ const wasmProtectionBypass = {
 
     // Hook Memory64 WASM features
     hookMemory64Features: function () {
-        if (!this.config.modernFeatures.memory64.enabled) return;
+        if (!this.config.modernFeatures.memory64.enabled) { return; }
 
         // Hook WebAssembly.Memory for 64-bit memory bypass
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Memory) {
             const originalMemory = WebAssembly.Memory;
-            WebAssembly.Memory = function (descriptor) {
+            WebAssembly.Memory = descriptor => {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -1731,12 +1727,12 @@ const wasmProtectionBypass = {
 
     // Hook SIMD instructions for license bypass
     hookSIMDFeatures: function () {
-        if (!this.config.modernFeatures.simdInstructions.enabled) return;
+        if (!this.config.modernFeatures.simdInstructions.enabled) { return; }
 
         // Hook WASM SIMD globals if they exist
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
             const originalGlobal = WebAssembly.Global;
-            WebAssembly.Global = function (descriptor, value) {
+            WebAssembly.Global = (descriptor, value) => {
                 // Detect SIMD v128 globals used for license validation
                 if (descriptor.value === 'v128') {
                     send({
@@ -1764,12 +1760,12 @@ const wasmProtectionBypass = {
 
         // Hook potential SIMD library functions
         const simdLibraries = ['SIMD', 'wasm_simd128', 'v128'];
-        simdLibraries.forEach((libName) => {
+        simdLibraries.forEach(libName => {
             if (typeof window !== 'undefined' && window[libName]) {
                 const lib = window[libName];
 
                 // Hook common SIMD operations that might validate licenses
-                ['load', 'store', 'add', 'sub', 'and', 'or', 'xor'].forEach((op) => {
+                ['load', 'store', 'add', 'sub', 'and', 'or', 'xor'].forEach(op => {
                     if (lib[op] && typeof lib[op] === 'function') {
                         const original = lib[op];
                         lib[op] = function (...args) {
@@ -1778,7 +1774,7 @@ const wasmProtectionBypass = {
                             // Look for license validation patterns in SIMD results
                             if (result && Array.isArray(result)) {
                                 const hasLicensePattern = result.some(
-                                    (val) => val === 0xdeadbeef || val === 0xcafebabe || val === 0
+                                    val => val === 0xdeadbeef || val === 0xcafebabe || val === 0
                                 );
 
                                 if (hasLicensePattern) {
@@ -1923,10 +1919,9 @@ const wasmProtectionBypass = {
     },
 
     // Monitor dynamic WASM creation
-    monitorDynamicWASM: function () {
+    monitorDynamicWASM: () => {
         // Monitor eval for dynamic WASM
         const originalEval = window.eval;
-        const self = this;
 
         window.eval = function (code) {
             if (
@@ -2109,7 +2104,7 @@ const wasmProtectionBypass = {
         };
 
         // LEB128 decoder for WASM format
-        this.readLEB128 = function (view, offset) {
+        this.readLEB128 = (view, offset) => {
             let value = 0;
             let shift = 0;
             let bytesRead = 0;
@@ -2126,7 +2121,7 @@ const wasmProtectionBypass = {
         };
 
         // Patch custom sections containing license data
-        this.patchCustomSection = function (buffer, offset, size) {
+        this.patchCustomSection = (buffer, offset, size) => {
             const view = new Uint8Array(buffer, offset, size);
             const decoder = new TextDecoder();
             const text = decoder.decode(view);
@@ -2148,11 +2143,11 @@ const wasmProtectionBypass = {
         };
 
         // Patch code section for license checks
-        this.patchCodeSection = function (buffer, offset, size) {
+        this.patchCodeSection = (buffer, offset, size) => {
             const view = new Uint8Array(buffer, offset, size);
 
             // Common WASM opcodes for license validation
-            const patterns = [
+            const _patterns = [
                 [0x41, 0x00, 0x0b], // i32.const 0, end (return false)
                 [0x41, 0x01, 0x0b], // i32.const 1, end (return true)
             ];
@@ -2171,7 +2166,7 @@ const wasmProtectionBypass = {
         };
 
         // Patch data section strings
-        this.patchDataSection = function (buffer, offset, size) {
+        this.patchDataSection = (buffer, offset, size) => {
             const view = new Uint8Array(buffer, offset, size);
             const patterns = ['UNLICENSED', 'TRIAL', 'EXPIRED', 'INVALID'];
             const replacements = ['LICENSED', 'FULL', 'VALID', 'VALID'];
@@ -2206,13 +2201,11 @@ const wasmProtectionBypass = {
     },
 
     // Hook threading operations for concurrent license checks
-    hookThreadingOperations: function () {
-        const self = this;
-
+    hookThreadingOperations: () => {
         // Hook Worker threads that might validate licenses
         if (typeof Worker !== 'undefined') {
             const originalWorker = Worker;
-            Worker = function (scriptURL, options) {
+            Worker = (scriptURL, options) => {
                 const worker = new originalWorker(scriptURL, options);
 
                 // Intercept thread communications
@@ -2277,12 +2270,10 @@ const wasmProtectionBypass = {
 
     // Hook WASM exception handling used for protection
     hookWASMExceptions: function () {
-        const self = this;
-
         // Hook WebAssembly.Exception if available
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Exception) {
             const OriginalException = WebAssembly.Exception;
-            WebAssembly.Exception = function (tag, values) {
+            WebAssembly.Exception = (tag, values) => {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -2291,9 +2282,9 @@ const wasmProtectionBypass = {
 
                 // Prevent license failure exceptions
                 if (values && values.length > 0) {
-                    values = values.map((v) => {
-                        if (v === 0 || v === false) return 1;
-                        if (typeof v === 'string' && v.includes('LICENSE')) return 'VALID';
+                    values = values.map(v => {
+                        if (v === 0 || v === false) { return 1; }
+                        if (typeof v === 'string' && v.includes('LICENSE')) { return 'VALID'; }
                         return v;
                     });
                 }
@@ -2306,7 +2297,7 @@ const wasmProtectionBypass = {
         // Hook WebAssembly.Tag for exception handling
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Tag) {
             const OriginalTag = WebAssembly.Tag;
-            WebAssembly.Tag = function (descriptor) {
+            WebAssembly.Tag = descriptor => {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -2319,7 +2310,7 @@ const wasmProtectionBypass = {
         }
 
         // Hook try-catch in WASM context
-        this.hookWASMTryCatch = function () {
+        this.hookWASMTryCatch = () => {
             // Hook into the WASM instance's exception handling by intercepting throw operations
             // Patch the exception handling bytecode to bypass license validation exceptions
             send({
@@ -2335,8 +2326,7 @@ const wasmProtectionBypass = {
                     if (type === 'error' || type === 'unhandledrejection') {
                         const wrappedListener = function (event) {
                             if (
-                                event &&
-                                event.message &&
+                                event?.message &&
                                 typeof event.message === 'string' &&
                                 (event.message.includes('LICENSE') ||
                                     event.message.includes('license'))
@@ -2370,7 +2360,7 @@ const wasmProtectionBypass = {
         // Hook WebAssembly.Table
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Table) {
             const OriginalTable = WebAssembly.Table;
-            WebAssembly.Table = function (descriptor) {
+            WebAssembly.Table = descriptor => {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -2388,7 +2378,7 @@ const wasmProtectionBypass = {
                         // Wrap license validation functions
                         const funcStr = value.toString();
                         if (funcStr.includes('license') || funcStr.includes('validate')) {
-                            value = function () {
+                            value = () => {
                                 send({
                                     type: 'bypass',
                                     target: 'wasm_bypass',
@@ -2418,8 +2408,8 @@ const wasmProtectionBypass = {
         }
 
         // Wrap indirect function calls
-        this.wrapIndirectFunction = function (func, index) {
-            return function (...args) {
+        this.wrapIndirectFunction = (func, index) =>
+            function (...args) {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -2444,22 +2434,18 @@ const wasmProtectionBypass = {
 
                 return result;
             };
-        };
     },
 
     // Hook reference types (anyref, funcref, externref)
-    hookReferenceTypes: function () {
-        const self = this;
-
+    hookReferenceTypes: () => {
         // Hook WebAssembly.Global for reference types
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
             const OriginalGlobal = WebAssembly.Global;
-            WebAssembly.Global = function (descriptor, value) {
+            WebAssembly.Global = (descriptor, value) => {
                 const refTypes = ['anyref', 'funcref', 'externref', 'eqref', 'i31ref'];
 
                 if (refTypes.includes(descriptor.value)) {
                     send({
-                        type: 'info',
                         target: 'wasm_bypass',
                         action: 'reference_type_global_created',
                         type: descriptor.value,
@@ -2469,7 +2455,7 @@ const wasmProtectionBypass = {
                     if (typeof value === 'function') {
                         const funcStr = value.toString();
                         if (funcStr.includes('license') || funcStr.includes('validate')) {
-                            value = function () {
+                            value = () => {
                                 send({
                                     type: 'bypass',
                                     target: 'wasm_bypass',
@@ -2488,20 +2474,17 @@ const wasmProtectionBypass = {
     },
 
     // Hook GC proposal features
-    hookGCProposal: function () {
-        const self = this;
-
+    hookGCProposal: () => {
         // Hook struct and array types used in GC proposal
         if (typeof WebAssembly !== 'undefined') {
             // Hook potential GC-based license structures
             const gcTypes = ['struct', 'array', 'i31'];
 
-            gcTypes.forEach((typeName) => {
+            gcTypes.forEach(typeName => {
                 if (WebAssembly[typeName]) {
                     const Original = WebAssembly[typeName];
-                    WebAssembly[typeName] = function (...args) {
+                    WebAssembly[typeName] = (...args) => {
                         send({
-                            type: 'info',
                             target: 'wasm_bypass',
                             action: 'gc_type_created',
                             type: typeName,
@@ -2560,7 +2543,7 @@ const wasmProtectionBypass = {
                 const imports = originalImports.call(this, module);
 
                 // Analyze component imports for license validation
-                imports.forEach((imp) => {
+                imports.forEach(imp => {
                     if (
                         imp.name &&
                         (imp.name.includes('license') || imp.name.includes('validate'))
@@ -2593,7 +2576,7 @@ const wasmProtectionBypass = {
             WebAssembly.Module.exports = function (module) {
                 const exports = originalExports.call(this, module);
 
-                exports.forEach((exp) => {
+                exports.forEach(exp => {
                     if (exp.name && self.isLicenseFunction(exp.name)) {
                         send({
                             type: 'info',
@@ -2613,13 +2596,11 @@ const wasmProtectionBypass = {
     },
 
     // Hook WASI (WebAssembly System Interface)
-    hookWASI: function () {
-        const self = this;
-
+    hookWASI: () => {
         // Hook WASI imports that might be used for licensing
         const wasiModules = ['wasi_snapshot_preview1', 'wasi_unstable'];
 
-        wasiModules.forEach((moduleName) => {
+        wasiModules.forEach(moduleName => {
             if (typeof window !== 'undefined' && window[moduleName]) {
                 const wasiModule = window[moduleName];
 
@@ -2656,8 +2637,8 @@ const wasmProtectionBypass = {
 
                 // Hook random number generation (often used for license validation)
                 if (wasiModule.random_get) {
-                    const originalRandom = wasiModule.random_get;
-                    wasiModule.random_get = function (buf, bufLen) {
+                    const _originalRandom = wasiModule.random_get;
+                    wasiModule.random_get = (_buf, _bufLen) => {
                         send({
                             type: 'bypass',
                             target: 'wasm_bypass',
@@ -2676,14 +2657,12 @@ const wasmProtectionBypass = {
 
     // Hook framework-specific WASM patterns
     hookFrameworkPatterns: function () {
-        const self = this;
-
         // AssemblyScript patterns
-        this.hookAssemblyScript = function () {
+        this.hookAssemblyScript = () => {
             if (typeof window !== 'undefined' && window.__allocString) {
                 const original = window.__allocString;
                 window.__allocString = function (str) {
-                    if (str && str.includes('LICENSE')) {
+                    if (str?.includes('LICENSE')) {
                         str = str.replace(/INVALID|EXPIRED|TRIAL/g, 'VALID');
                         send({
                             type: 'bypass',
@@ -2697,7 +2676,7 @@ const wasmProtectionBypass = {
         };
 
         // Rust WASM patterns
-        this.hookRustWASM = function () {
+        this.hookRustWASM = () => {
             if (typeof window !== 'undefined' && window.wasm_bindgen) {
                 const original = window.wasm_bindgen;
                 window.wasm_bindgen = function (...args) {
@@ -2710,16 +2689,16 @@ const wasmProtectionBypass = {
                     const result = original.apply(this, args);
 
                     // Hook Rust panic handler to prevent license panics
-                    if (result && result.__wbindgen_throw) {
-                        const originalThrow = result.__wbindgen_throw;
-                        result.__wbindgen_throw = function (ptr, len) {
+                    if (result?.__wbindgen_throw) {
+                        const _originalThrow = result.__wbindgen_throw;
+                        result.__wbindgen_throw = (_ptr, _len) => {
                             send({
                                 type: 'bypass',
                                 target: 'wasm_bypass',
                                 action: 'rust_panic_suppressed',
                             });
                             // Don't throw on license failures
-                            return;
+
                         };
                     }
 
@@ -2729,7 +2708,7 @@ const wasmProtectionBypass = {
         };
 
         // Blazor/.NET WASM patterns
-        this.hookBlazorWASM = function () {
+        this.hookBlazorWASM = () => {
             if (typeof window !== 'undefined' && window.Blazor && window.Blazor._internal) {
                 const internal = window.Blazor._internal;
 
@@ -2737,7 +2716,7 @@ const wasmProtectionBypass = {
                 if (internal.invokeJSFromDotNet) {
                     const originalInvoke = internal.invokeJSFromDotNet;
                     internal.invokeJSFromDotNet = function (identifier, ...args) {
-                        if (identifier && identifier.includes('License')) {
+                        if (identifier?.includes('License')) {
                             send({
                                 type: 'bypass',
                                 target: 'wasm_bypass',
@@ -2753,7 +2732,7 @@ const wasmProtectionBypass = {
         };
 
         // Unity WebGL patterns
-        this.hookUnityWebGL = function () {
+        this.hookUnityWebGL = () => {
             if (typeof window !== 'undefined' && window.unityInstance) {
                 const unity = window.unityInstance;
 
@@ -2777,10 +2756,10 @@ const wasmProtectionBypass = {
         };
 
         // Go WASM patterns
-        this.hookGoWASM = function () {
+        this.hookGoWASM = () => {
             if (typeof window !== 'undefined' && window.Go) {
                 const OriginalGo = window.Go;
-                window.Go = function () {
+                window.Go = () => {
                     const go = new OriginalGo();
 
                     // Hook Go's importObject modifications
@@ -2793,7 +2772,7 @@ const wasmProtectionBypass = {
                         });
 
                         // Modify Go's import object for license bypass
-                        if (go.importObject && go.importObject.go) {
+                        if (go.importObject?.go) {
                             const goImports = go.importObject.go;
 
                             for (const key in goImports) {
@@ -2896,11 +2875,11 @@ const wasmProtectionBypass = {
             action: 'initializing_dynamic_bytecode_patching',
         });
 
-        this.patchBytecodeInstructions = function (buffer, patches) {
+        this.patchBytecodeInstructions = (buffer, patches) => {
             const view = new Uint8Array(buffer);
             let patchedCount = 0;
 
-            patches.forEach((patch) => {
+            patches.forEach(patch => {
                 if (patch.offset + patch.bytes.length <= view.length) {
                     for (let i = 0; i < patch.bytes.length; i++) {
                         view[patch.offset + i] = patch.bytes[i];
@@ -2963,7 +2942,7 @@ const wasmProtectionBypass = {
             const original = importObj[moduleName][fieldName];
 
             if (typeof original === 'function' && this.isLicenseFunction(fieldName)) {
-                importObj[moduleName][fieldName] = function () {
+                importObj[moduleName][fieldName] = () => {
                     send({
                         type: 'bypass',
                         target: 'wasm_bypass',
@@ -2984,9 +2963,7 @@ const wasmProtectionBypass = {
             action: 'initializing_table_manipulation',
         });
 
-        const self = this;
-
-        this.manipulateTable = function (table, targetIndex, replacementFunc) {
+        this.manipulateTable = (table, targetIndex, replacementFunc) => {
             try {
                 const original = table.get(targetIndex);
                 table.set(targetIndex, replacementFunc);
@@ -2999,7 +2976,7 @@ const wasmProtectionBypass = {
                     original_type: typeof original,
                 });
 
-                self.state.bypass_count++;
+                this.state.bypass_count++;
                 return true;
             } catch (e) {
                 send({
@@ -3013,7 +2990,7 @@ const wasmProtectionBypass = {
         };
     },
 
-    setupWasmThreadingBypass: function () {
+    setupWasmThreadingBypass: () => {
         send({
             type: 'info',
             target: 'wasm_bypass',
@@ -3088,10 +3065,10 @@ const wasmProtectionBypass = {
             action: 'initializing_debugging_countermeasures',
         });
 
-        this.spoofDebuggerDetection = function () {
+        this.spoofDebuggerDetection = () => {
             if (typeof window !== 'undefined') {
                 Object.defineProperty(window, 'debugger', {
-                    get: function () {
+                    get: () => {
                         send({
                             type: 'bypass',
                             target: 'wasm_bypass',
@@ -3106,7 +3083,7 @@ const wasmProtectionBypass = {
         this.spoofDebuggerDetection();
     },
 
-    initializeWasmCryptographicProtectionBypass: function () {
+    initializeWasmCryptographicProtectionBypass: () => {
         send({
             type: 'info',
             target: 'wasm_bypass',
@@ -3149,7 +3126,7 @@ const wasmProtectionBypass = {
                 return realTime + timeOffset;
             };
 
-            this.manipulateTime = function (offset) {
+            this.manipulateTime = offset => {
                 timeOffset = offset;
                 send({
                     type: 'bypass',
@@ -3192,7 +3169,7 @@ const wasmProtectionBypass = {
 
 // Auto-run on script load
 rpc.exports = {
-    init: function () {
+    init: () => {
         if (typeof window !== 'undefined') {
             wasmBypass.run();
         } else {

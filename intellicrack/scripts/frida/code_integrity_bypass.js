@@ -162,8 +162,8 @@ const CodeIntegrityBypass = {
     },
 
     hookCryptHashData: function () {
-        var cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
-        if (cryptHashData) {
+      const cryptHashData = Module.findExportByName('advapi32.dll', 'CryptHashData');
+      if (cryptHashData) {
             Interceptor.attach(cryptHashData, {
                 onEnter: function (args) {
                     this.hHash = args[0];
@@ -192,12 +192,12 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CryptHashData'] = true;
+            this.hooksInstalled.CryptHashData = true;
         }
 
         // Hook CryptGetHashParam to spoof final hash values
-        var cryptGetHashParam = Module.findExportByName('advapi32.dll', 'CryptGetHashParam');
-        if (cryptGetHashParam) {
+      const cryptGetHashParam = Module.findExportByName('advapi32.dll', 'CryptGetHashParam');
+      if (cryptGetHashParam) {
             Interceptor.attach(cryptGetHashParam, {
                 onEnter: function (args) {
                     this.hHash = args[0];
@@ -230,13 +230,13 @@ const CodeIntegrityBypass = {
 
                 spoofHashValue: function () {
                     try {
-                        var config = this.parent.parent.config;
-                        var hashLength = this.pdwDataLen.readU32();
+                      const config = this.parent.parent.config;
+                      const hashLength = this.pdwDataLen.readU32();
 
-                        // Determine hash type by length and spoof accordingly
-                        var spoofedHash = null;
+                      // Determine hash type by length and spoof accordingly
+                      let spoofedHash = null;
 
-                        if (hashLength === 16) {
+                      if (hashLength === 16) {
                             // MD5
                             if (config.hashAlgorithms.md5.enabled) {
                                 spoofedHash = this.hexToBytes(
@@ -280,16 +280,16 @@ const CodeIntegrityBypass = {
                     }
                 },
 
-                hexToBytes: function (hexString) {
-                    var bytes = [];
-                    for (var i = 0; i < hexString.length; i += 2) {
+                hexToBytes: hexString => {
+                  const bytes = [];
+                  for (let i = 0; i < hexString.length; i += 2) {
                         bytes.push(parseInt(hexString.substr(i, 2), 16));
                     }
                     return bytes;
                 },
             });
 
-            this.hooksInstalled['CryptGetHashParam'] = true;
+            this.hooksInstalled.CryptGetHashParam = true;
         }
     },
 
@@ -301,19 +301,19 @@ const CodeIntegrityBypass = {
         });
 
         // Hook common MD5 function names
-        var md5Functions = [
-            'MD5Init',
-            'MD5Update',
-            'MD5Final',
-            'md5_init',
-            'md5_update',
-            'md5_final',
-            'MD5_Init',
-            'MD5_Update',
-            'MD5_Final',
-        ];
+      const md5Functions = [
+        'MD5Init',
+        'MD5Update',
+        'MD5Final',
+        'md5_init',
+        'md5_update',
+        'md5_final',
+        'MD5_Init',
+        'MD5_Update',
+        'MD5_Final',
+      ];
 
-        md5Functions.forEach((funcName) => {
+      md5Functions.forEach(funcName => {
             this.hookHashFunction(funcName, 'md5', 16);
         });
 
@@ -329,53 +329,53 @@ const CodeIntegrityBypass = {
         });
 
         // SHA1 functions
-        var sha1Functions = [
-            'SHA1Init',
-            'SHA1Update',
-            'SHA1Final',
-            'sha1_init',
-            'sha1_update',
-            'sha1_final',
-            'SHA_Init',
-            'SHA_Update',
-            'SHA_Final',
-        ];
+      const sha1Functions = [
+        'SHA1Init',
+        'SHA1Update',
+        'SHA1Final',
+        'sha1_init',
+        'sha1_update',
+        'sha1_final',
+        'SHA_Init',
+        'SHA_Update',
+        'SHA_Final',
+      ];
 
-        sha1Functions.forEach((funcName) => {
+      sha1Functions.forEach(funcName => {
             this.hookHashFunction(funcName, 'sha1', 20);
         });
 
         // SHA256 functions
-        var sha256Functions = [
-            'SHA256Init',
-            'SHA256Update',
-            'SHA256Final',
-            'sha256_init',
-            'sha256_update',
-            'sha256_final',
-            'SHA256_Init',
-            'SHA256_Update',
-            'SHA256_Final',
-        ];
+      const sha256Functions = [
+        'SHA256Init',
+        'SHA256Update',
+        'SHA256Final',
+        'sha256_init',
+        'sha256_update',
+        'sha256_final',
+        'SHA256_Init',
+        'SHA256_Update',
+        'SHA256_Final',
+      ];
 
-        sha256Functions.forEach((funcName) => {
+      sha256Functions.forEach(funcName => {
             this.hookHashFunction(funcName, 'sha256', 32);
         });
 
         // SHA512 functions
-        var sha512Functions = [
-            'SHA512Init',
-            'SHA512Update',
-            'SHA512Final',
-            'sha512_init',
-            'sha512_update',
-            'sha512_final',
-            'SHA512_Init',
-            'SHA512_Update',
-            'SHA512_Final',
-        ];
+      const sha512Functions = [
+        'SHA512Init',
+        'SHA512Update',
+        'SHA512Final',
+        'sha512_init',
+        'sha512_update',
+        'sha512_final',
+        'SHA512_Init',
+        'SHA512_Update',
+        'SHA512_Final',
+      ];
 
-        sha512Functions.forEach((funcName) => {
+      sha512Functions.forEach(funcName => {
             this.hookHashFunction(funcName, 'sha512', 64);
         });
 
@@ -392,22 +392,22 @@ const CodeIntegrityBypass = {
             action: 'installing_crc32_hooks',
         });
 
-        var crc32Functions = ['crc32', 'CRC32', 'crc32_compute', 'CalcCRC32'];
+      const crc32Functions = ['crc32', 'CRC32', 'crc32_compute', 'CalcCRC32'];
 
-        crc32Functions.forEach((funcName) => {
+      crc32Functions.forEach(funcName => {
             this.hookHashFunction(funcName, 'crc32', 4);
         });
     },
 
     hookHashFunction: function (functionName, hashType, hashSize) {
-        var modules = Process.enumerateModules();
+      const modules = Process.enumerateModules();
 
-        for (var i = 0; i < modules.length; i++) {
-            var module = modules[i];
+      for (let i = 0; i < modules.length; i++) {
+          const module = modules[i];
 
-            try {
-                var hashFunc = Module.findExportByName(module.name, functionName);
-                if (hashFunc) {
+          try {
+              const hashFunc = Module.findExportByName(module.name, functionName);
+              if (hashFunc) {
                     Interceptor.attach(hashFunc, {
                         onEnter: function (args) {
                             // Manipulate hash input buffer to control output
@@ -455,16 +455,16 @@ const CodeIntegrityBypass = {
 
                         spoofFinalHash: function () {
                             try {
-                                var config = this.parent.parent.parent.config;
-                                var hashConfig = config.hashAlgorithms[this.hashType];
+                              const config = this.parent.parent.parent.config;
+                              const hashConfig = config.hashAlgorithms[this.hashType];
 
-                                if (hashConfig && hashConfig.enabled) {
+                              if (hashConfig?.enabled) {
                                     // The hash result is typically in the first argument for Final functions
-                                    var hashBuffer = this.context.rcx; // First argument
+                                  const hashBuffer = this.context.rcx; // First argument
 
                                     if (hashBuffer && !hashBuffer.isNull()) {
-                                        var spoofedBytes = this.hexToBytes(hashConfig.spoofedHash);
-                                        if (spoofedBytes.length >= this.hashSize) {
+                                      const spoofedBytes = this.hexToBytes(hashConfig.spoofedHash);
+                                      if (spoofedBytes.length >= this.hashSize) {
                                             hashBuffer.writeByteArray(
                                                 spoofedBytes.slice(0, this.hashSize)
                                             );
@@ -489,16 +489,16 @@ const CodeIntegrityBypass = {
                             }
                         },
 
-                        hexToBytes: function (hexString) {
-                            var bytes = [];
-                            for (var j = 0; j < hexString.length; j += 2) {
+                        hexToBytes: hexString => {
+                          const bytes = [];
+                          for (let j = 0; j < hexString.length; j += 2) {
                                 bytes.push(parseInt(hexString.substr(j, 2), 16));
                             }
                             return bytes;
                         },
                     });
 
-                    this.hooksInstalled[functionName + '_' + module.name] = true;
+                    this.hooksInstalled[`${functionName}_${module.name}`] = true;
                     send({
                         type: 'bypass',
                         target: 'code_integrity_bypass',
@@ -522,22 +522,22 @@ const CodeIntegrityBypass = {
     },
 
     hookComputeHashFunction: function (hashName, hashType, hashSize) {
-        var computeFunctions = [
-            'Compute' + hashName,
-            'Calculate' + hashName,
-            'Hash' + hashName,
-            hashName.toLowerCase() + '_compute',
-        ];
+      const computeFunctions = [
+        `Compute${hashName}`,
+        `Calculate${hashName}`,
+        `Hash${hashName}`,
+        `${hashName.toLowerCase()}_compute`,
+      ];
 
-        computeFunctions.forEach((funcName) => {
-            var modules = Process.enumerateModules();
+      computeFunctions.forEach(funcName => {
+          const modules = Process.enumerateModules();
 
-            for (var i = 0; i < modules.length; i++) {
-                var module = modules[i];
+          for (let i = 0; i < modules.length; i++) {
+              const module = modules[i];
 
-                try {
-                    var func = Module.findExportByName(module.name, funcName);
-                    if (func) {
+              try {
+                  const func = Module.findExportByName(module.name, funcName);
+                  if (func) {
                         Interceptor.attach(func, {
                             onLeave: function (retval) {
                                 // Manipulate compute function return value
@@ -555,18 +555,18 @@ const CodeIntegrityBypass = {
 
                             spoofComputeResult: function () {
                                 try {
-                                    var config = this.parent.parent.parent.config;
-                                    var hashConfig = config.hashAlgorithms[hashType];
+                                  const config = this.parent.parent.parent.config;
+                                  const hashConfig = config.hashAlgorithms[hashType];
 
-                                    if (hashConfig && hashConfig.enabled) {
+                                  if (hashConfig?.enabled) {
                                         // Try to find hash output buffer (usually second or third parameter)
-                                        var outputBuffer = this.context.rdx || this.context.r8;
+                                      const outputBuffer = this.context.rdx || this.context.r8;
 
-                                        if (outputBuffer && !outputBuffer.isNull()) {
-                                            var spoofedBytes = this.hexToBytes(
-                                                hashConfig.spoofedHash
-                                            );
-                                            if (spoofedBytes.length >= hashSize) {
+                                      if (outputBuffer && !outputBuffer.isNull()) {
+                                          const spoofedBytes = this.hexToBytes(
+                                            hashConfig.spoofedHash
+                                          );
+                                          if (spoofedBytes.length >= hashSize) {
                                                 outputBuffer.writeByteArray(
                                                     spoofedBytes.slice(0, hashSize)
                                                 );
@@ -590,16 +590,16 @@ const CodeIntegrityBypass = {
                                 }
                             },
 
-                            hexToBytes: function (hexString) {
-                                var bytes = [];
-                                for (var j = 0; j < hexString.length; j += 2) {
+                            hexToBytes: hexString => {
+                              const bytes = [];
+                              for (let j = 0; j < hexString.length; j += 2) {
                                     bytes.push(parseInt(hexString.substr(j, 2), 16));
                                 }
                                 return bytes;
                             },
                         });
 
-                        this.hooksInstalled[funcName + '_' + module.name] = true;
+                        this.hooksInstalled[`${funcName}_${module.name}`] = true;
                     }
                 } catch (e) {
                     // Module hook failed - log error details
@@ -625,8 +625,8 @@ const CodeIntegrityBypass = {
         });
 
         // Hook memory comparison functions that might be used for hash comparison
-        var memcmp = Module.findExportByName('msvcrt.dll', 'memcmp');
-        if (memcmp) {
+      const memcmp = Module.findExportByName('msvcrt.dll', 'memcmp');
+      if (memcmp) {
             Interceptor.attach(memcmp, {
                 onEnter: function (args) {
                     this.ptr1 = args[0];
@@ -663,19 +663,19 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['memcmp'] = true;
+            this.hooksInstalled.memcmp = true;
         }
 
         // Hook strcmp for string-based hash comparisons
-        var strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
-        if (strcmp) {
+      const strcmp = Module.findExportByName('msvcrt.dll', 'strcmp');
+      if (strcmp) {
             Interceptor.attach(strcmp, {
                 onEnter: function (args) {
                     try {
-                        var str1 = args[0].readAnsiString();
-                        var str2 = args[1].readAnsiString();
+                      const str1 = args[0].readAnsiString();
+                      const str2 = args[1].readAnsiString();
 
-                        // Check if these look like hex-encoded hashes
+                      // Check if these look like hex-encoded hashes
                         if (
                             str1 &&
                             str2 &&
@@ -720,7 +720,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['strcmp'] = true;
+            this.hooksInstalled.strcmp = true;
         }
     },
 
@@ -740,8 +740,8 @@ const CodeIntegrityBypass = {
     },
 
     hookWinVerifyTrust: function () {
-        var winVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
-        if (winVerifyTrust) {
+      const winVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
+      if (winVerifyTrust) {
             Interceptor.attach(winVerifyTrust, {
                 onEnter: function (args) {
                     this.hwnd = args[0];
@@ -758,8 +758,8 @@ const CodeIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.spoofSignature) {
-                        var config = this.parent.parent.config;
-                        if (config.signatures.enabled && config.signatures.spoofValidSignature) {
+                      const config = this.parent.parent.config;
+                      if (config.signatures.enabled && config.signatures.spoofValidSignature) {
                             retval.replace(0); // ERROR_SUCCESS
                             send({
                                 type: 'bypass',
@@ -771,13 +771,13 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['WinVerifyTrust'] = true;
+            this.hooksInstalled.WinVerifyTrust = true;
         }
     },
 
     hookCryptVerifySignature: function () {
-        var cryptVerifySignature = Module.findExportByName('crypt32.dll', 'CryptVerifySignature');
-        if (cryptVerifySignature) {
+      const cryptVerifySignature = Module.findExportByName('crypt32.dll', 'CryptVerifySignature');
+      if (cryptVerifySignature) {
             Interceptor.attach(cryptVerifySignature, {
                 onEnter: function (args) {
                     // Manipulate CryptVerifySignature parameters
@@ -808,8 +808,8 @@ const CodeIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.spoofResult) {
-                        var config = this.parent.parent.config;
-                        if (config.signatures.enabled) {
+                      const config = this.parent.parent.config;
+                      if (config.signatures.enabled) {
                             retval.replace(1); // TRUE
                             send({
                                 type: 'bypass',
@@ -821,19 +821,19 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CryptVerifySignature'] = true;
+            this.hooksInstalled.CryptVerifySignature = true;
         }
 
         // Hook CryptVerifyDetachedMessageSignature
-        var cryptVerifyDetached = Module.findExportByName(
-            'crypt32.dll',
-            'CryptVerifyDetachedMessageSignature'
-        );
-        if (cryptVerifyDetached) {
+      const cryptVerifyDetached = Module.findExportByName(
+        'crypt32.dll',
+        'CryptVerifyDetachedMessageSignature'
+      );
+      if (cryptVerifyDetached) {
             Interceptor.attach(cryptVerifyDetached, {
                 onLeave: function (retval) {
-                    var config = this.parent.parent.config;
-                    if (config.signatures.enabled) {
+                  const config = this.parent.parent.config;
+                  if (config.signatures.enabled) {
                         retval.replace(1); // TRUE
                         send({
                             type: 'bypass',
@@ -844,7 +844,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CryptVerifyDetachedMessageSignature'] = true;
+            this.hooksInstalled.CryptVerifyDetachedMessageSignature = true;
         }
     },
 
@@ -856,10 +856,10 @@ const CodeIntegrityBypass = {
         });
 
         // Hook ImageGetDigestStream
-        var imageGetDigestStream = Module.findExportByName('imagehlp.dll', 'ImageGetDigestStream');
-        if (imageGetDigestStream) {
+      const imageGetDigestStream = Module.findExportByName('imagehlp.dll', 'ImageGetDigestStream');
+      if (imageGetDigestStream) {
             Interceptor.attach(imageGetDigestStream, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'info',
@@ -870,14 +870,14 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['ImageGetDigestStream'] = true;
+            this.hooksInstalled.ImageGetDigestStream = true;
         }
 
         // Hook ImageGetCertificateData
-        var imageGetCertData = Module.findExportByName('imagehlp.dll', 'ImageGetCertificateData');
-        if (imageGetCertData) {
+      const imageGetCertData = Module.findExportByName('imagehlp.dll', 'ImageGetCertificateData');
+      if (imageGetCertData) {
             Interceptor.attach(imageGetCertData, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'info',
@@ -889,7 +889,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['ImageGetCertificateData'] = true;
+            this.hooksInstalled.ImageGetCertificateData = true;
         }
     },
 
@@ -902,8 +902,8 @@ const CodeIntegrityBypass = {
         });
 
         // Hook CheckSumMappedFile
-        var checkSumMapped = Module.findExportByName('imagehlp.dll', 'CheckSumMappedFile');
-        if (checkSumMapped) {
+      const checkSumMapped = Module.findExportByName('imagehlp.dll', 'CheckSumMappedFile');
+      if (checkSumMapped) {
             Interceptor.attach(checkSumMapped, {
                 onEnter: function (args) {
                     this.baseAddress = args[0];
@@ -922,28 +922,28 @@ const CodeIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.checkSum && !this.checkSum.isNull()) {
                         // CHECKSUM_SUCCESS
-                        var config = this.parent.parent.config;
-                        if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
+                      const config = this.parent.parent.config;
+                      if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
                             // Make calculated checksum match header checksum
-                            var headerSumValue = this.headerSum.readU32();
-                            this.checkSum.writeU32(headerSumValue);
+                          const headerSumValue = this.headerSum.readU32();
+                          this.checkSum.writeU32(headerSumValue);
                             send({
                                 type: 'bypass',
                                 target: 'code_integrity_bypass',
                                 action: 'pe_checksum_spoofed',
-                                header_sum: '0x' + headerSumValue.toString(16),
+                                header_sum: `0x${headerSumValue.toString(16)}`,
                             });
                         }
                     }
                 },
             });
 
-            this.hooksInstalled['CheckSumMappedFile'] = true;
+            this.hooksInstalled.CheckSumMappedFile = true;
         }
 
         // Hook MapFileAndCheckSum
-        var mapFileAndCheckSum = Module.findExportByName('imagehlp.dll', 'MapFileAndCheckSumW');
-        if (mapFileAndCheckSum) {
+      const mapFileAndCheckSum = Module.findExportByName('imagehlp.dll', 'MapFileAndCheckSumW');
+      if (mapFileAndCheckSum) {
             Interceptor.attach(mapFileAndCheckSum, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
@@ -963,11 +963,11 @@ const CodeIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.checkSum && !this.checkSum.isNull()) {
                         // CHECKSUM_SUCCESS
-                        var config = this.parent.parent.config;
-                        if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
+                      const config = this.parent.parent.config;
+                      if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
                             // Make calculated checksum match header checksum
-                            var headerSumValue = this.headerSum.readU32();
-                            this.checkSum.writeU32(headerSumValue);
+                          const headerSumValue = this.headerSum.readU32();
+                          this.checkSum.writeU32(headerSumValue);
                             send({
                                 type: 'bypass',
                                 target: 'code_integrity_bypass',
@@ -979,7 +979,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['MapFileAndCheckSumW'] = true;
+            this.hooksInstalled.MapFileAndCheckSumW = true;
         }
     },
 
@@ -992,8 +992,8 @@ const CodeIntegrityBypass = {
         });
 
         // Hook GetFileAttributes to potentially spoof file properties
-        var getFileAttribs = Module.findExportByName('kernel32.dll', 'GetFileAttributesW');
-        if (getFileAttribs) {
+      const getFileAttribs = Module.findExportByName('kernel32.dll', 'GetFileAttributesW');
+      if (getFileAttribs) {
             Interceptor.attach(getFileAttribs, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
@@ -1012,12 +1012,12 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['GetFileAttributesW'] = true;
+            this.hooksInstalled.GetFileAttributesW = true;
         }
 
         // Hook GetFileTime to spoof file timestamps
-        var getFileTime = Module.findExportByName('kernel32.dll', 'GetFileTime');
-        if (getFileTime) {
+      const getFileTime = Module.findExportByName('kernel32.dll', 'GetFileTime');
+      if (getFileTime) {
             Interceptor.attach(getFileTime, {
                 onEnter: function (args) {
                     this.hFile = args[0];
@@ -1032,7 +1032,7 @@ const CodeIntegrityBypass = {
                     });
                 },
 
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         // Could spoof file times here if needed
                         send({
@@ -1044,19 +1044,19 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['GetFileTime'] = true;
+            this.hooksInstalled.GetFileTime = true;
         }
 
         // Hook CreateFile to monitor file access patterns
-        var createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
-        if (createFile) {
+      const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
+      if (createFile) {
             Interceptor.attach(createFile, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
-                        var fileName = args[0].readUtf16String();
-                        var config = this.parent.parent.config;
+                      const fileName = args[0].readUtf16String();
+                      const config = this.parent.parent.config;
 
-                        // Track files that might be integrity checked
+                      // Track files that might be integrity checked
                         if (
                             fileName.includes('.exe') ||
                             fileName.includes('.dll') ||
@@ -1075,7 +1075,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CreateFileW_Integrity'] = true;
+            this.hooksInstalled.CreateFileW_Integrity = true;
         }
     },
 
@@ -1088,8 +1088,8 @@ const CodeIntegrityBypass = {
         });
 
         // Hook CryptImportKey
-        var cryptImportKey = Module.findExportByName('advapi32.dll', 'CryptImportKey');
-        if (cryptImportKey) {
+      const cryptImportKey = Module.findExportByName('advapi32.dll', 'CryptImportKey');
+      if (cryptImportKey) {
             Interceptor.attach(cryptImportKey, {
                 onEnter: function (args) {
                     // Manipulate key import parameters for bypass
@@ -1118,7 +1118,7 @@ const CodeIntegrityBypass = {
                     });
                 },
 
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'info',
@@ -1129,16 +1129,16 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CryptImportKey'] = true;
+            this.hooksInstalled.CryptImportKey = true;
         }
 
         // Hook CryptVerifySignature for low-level signature verification
-        var cryptVerifySig = Module.findExportByName('advapi32.dll', 'CryptVerifySignature');
-        if (cryptVerifySig) {
+      const cryptVerifySig = Module.findExportByName('advapi32.dll', 'CryptVerifySignature');
+      if (cryptVerifySig) {
             Interceptor.attach(cryptVerifySig, {
                 onLeave: function (retval) {
-                    var config = this.parent.parent.config;
-                    if (config.signatures.enabled) {
+                  const config = this.parent.parent.config;
+                  if (config.signatures.enabled) {
                         retval.replace(1); // TRUE - signature valid
                         send({
                             type: 'bypass',
@@ -1149,7 +1149,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CryptVerifySignature_LowLevel'] = true;
+            this.hooksInstalled.CryptVerifySignature_LowLevel = true;
         }
 
         // Hook BCrypt functions (newer crypto API)
@@ -1164,12 +1164,12 @@ const CodeIntegrityBypass = {
         });
 
         // Hook BCryptVerifySignature
-        var bcryptVerifySignature = Module.findExportByName('bcrypt.dll', 'BCryptVerifySignature');
-        if (bcryptVerifySignature) {
+      const bcryptVerifySignature = Module.findExportByName('bcrypt.dll', 'BCryptVerifySignature');
+      if (bcryptVerifySignature) {
             Interceptor.attach(bcryptVerifySignature, {
                 onLeave: function (retval) {
-                    var config = this.parent.parent.config;
-                    if (config.signatures.enabled) {
+                  const config = this.parent.parent.config;
+                  if (config.signatures.enabled) {
                         retval.replace(0); // STATUS_SUCCESS
                         send({
                             type: 'bypass',
@@ -1180,12 +1180,12 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['BCryptVerifySignature'] = true;
+            this.hooksInstalled.BCryptVerifySignature = true;
         }
 
         // Hook BCryptHash
-        var bcryptHash = Module.findExportByName('bcrypt.dll', 'BCryptHash');
-        if (bcryptHash) {
+      const bcryptHash = Module.findExportByName('bcrypt.dll', 'BCryptHash');
+      if (bcryptHash) {
             Interceptor.attach(bcryptHash, {
                 onEnter: function (args) {
                     this.hAlgorithm = args[0];
@@ -1218,9 +1218,9 @@ const CodeIntegrityBypass = {
 
                 spoofBCryptResult: function () {
                     try {
-                        var config = this.parent.parent.parent.config;
+                      const config = this.parent.parent.parent.config;
 
-                        // Determine hash type by output size and spoof accordingly
+                      // Determine hash type by output size and spoof accordingly
                         if (this.cbOutput === 16 && config.hashAlgorithms.md5.enabled) {
                             var spoofedHash = this.hexToBytes(
                                 config.hashAlgorithms.md5.spoofedHash
@@ -1272,16 +1272,16 @@ const CodeIntegrityBypass = {
                     }
                 },
 
-                hexToBytes: function (hexString) {
-                    var bytes = [];
-                    for (var i = 0; i < hexString.length; i += 2) {
+                hexToBytes: hexString => {
+                  const bytes = [];
+                  for (let i = 0; i < hexString.length; i += 2) {
                         bytes.push(parseInt(hexString.substr(i, 2), 16));
                     }
                     return bytes;
                 },
             });
 
-            this.hooksInstalled['BCryptHash'] = true;
+            this.hooksInstalled.BCryptHash = true;
         }
     },
 
@@ -1294,17 +1294,17 @@ const CodeIntegrityBypass = {
         });
 
         // Hook TPM-related functions if they exist
-        var tpmFunctions = [
-            'Tbsi_Context_Create',
-            'Tbsi_Create_Windows_Key',
-            'Tbsi_Get_TCG_Log',
-            'Tbsip_Context_Create',
-            'Tbsip_Submit_Command',
-        ];
+      const tpmFunctions = [
+        'Tbsi_Context_Create',
+        'Tbsi_Create_Windows_Key',
+        'Tbsi_Get_TCG_Log',
+        'Tbsip_Context_Create',
+        'Tbsip_Submit_Command',
+      ];
 
-        tpmFunctions.forEach((funcName) => {
-            var tpmFunc = Module.findExportByName('tbs.dll', funcName);
-            if (tpmFunc) {
+      tpmFunctions.forEach(funcName => {
+          const tpmFunc = Module.findExportByName('tbs.dll', funcName);
+          if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
                     onEnter: function (args) {
                         // Manipulate TPM function parameters to bypass checks
@@ -1349,13 +1349,13 @@ const CodeIntegrityBypass = {
         });
 
         // Hook NCrypt functions that might use TPM
-        var ncryptFunctions = ['NCryptCreatePersistedKey', 'NCryptDeleteKey', 'NCryptFinalizeKey'];
+      const ncryptFunctions = ['NCryptCreatePersistedKey', 'NCryptDeleteKey', 'NCryptFinalizeKey'];
 
-        ncryptFunctions.forEach((funcName) => {
-            var ncryptFunc = Module.findExportByName('ncrypt.dll', funcName);
-            if (ncryptFunc) {
+      ncryptFunctions.forEach(funcName => {
+          const ncryptFunc = Module.findExportByName('ncrypt.dll', funcName);
+          if (ncryptFunc) {
                 Interceptor.attach(ncryptFunc, {
-                    onLeave: function (retval) {
+                    onLeave: retval => {
                         // Make NCrypt operations succeed
                         retval.replace(0); // ERROR_SUCCESS
                         send({
@@ -1381,10 +1381,10 @@ const CodeIntegrityBypass = {
         });
 
         // Hook SignerSign
-        var signerSign = Module.findExportByName('mssign32.dll', 'SignerSign');
-        if (signerSign) {
+      const signerSign = Module.findExportByName('mssign32.dll', 'SignerSign');
+      if (signerSign) {
             Interceptor.attach(signerSign, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(0); // S_OK
                     send({
                         type: 'bypass',
@@ -1394,14 +1394,14 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['SignerSign'] = true;
+            this.hooksInstalled.SignerSign = true;
         }
 
         // Hook SignerSignEx
-        var signerSignEx = Module.findExportByName('mssign32.dll', 'SignerSignEx');
-        if (signerSignEx) {
+      const signerSignEx = Module.findExportByName('mssign32.dll', 'SignerSignEx');
+      if (signerSignEx) {
             Interceptor.attach(signerSignEx, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(0); // S_OK
                     send({
                         type: 'bypass',
@@ -1411,14 +1411,14 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['SignerSignEx'] = true;
+            this.hooksInstalled.SignerSignEx = true;
         }
 
         // Hook SignerTimeStamp
-        var signerTimeStamp = Module.findExportByName('mssign32.dll', 'SignerTimeStamp');
-        if (signerTimeStamp) {
+      const signerTimeStamp = Module.findExportByName('mssign32.dll', 'SignerTimeStamp');
+      if (signerTimeStamp) {
             Interceptor.attach(signerTimeStamp, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     retval.replace(0); // S_OK
                     send({
                         type: 'bypass',
@@ -1428,7 +1428,7 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['SignerTimeStamp'] = true;
+            this.hooksInstalled.SignerTimeStamp = true;
         }
     },
 
@@ -1441,11 +1441,11 @@ const CodeIntegrityBypass = {
         });
 
         // Hook CertVerifyCertificateChainPolicy
-        var certVerifyChain = Module.findExportByName(
-            'crypt32.dll',
-            'CertVerifyCertificateChainPolicy'
-        );
-        if (certVerifyChain) {
+      const certVerifyChain = Module.findExportByName(
+        'crypt32.dll',
+        'CertVerifyCertificateChainPolicy'
+      );
+      if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
                 onEnter: function (args) {
                     this.pszPolicyOID = args[0];
@@ -1478,14 +1478,14 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CertVerifyCertificateChainPolicy'] = true;
+            this.hooksInstalled.CertVerifyCertificateChainPolicy = true;
         }
 
         // Hook CertGetCertificateChain
-        var certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
-        if (certGetChain) {
+      const certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
+      if (certGetChain) {
             Interceptor.attach(certGetChain, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     if (retval.toInt32() !== 0) {
                         send({
                             type: 'info',
@@ -1496,12 +1496,12 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CertGetCertificateChain'] = true;
+            this.hooksInstalled.CertGetCertificateChain = true;
         }
 
         // Hook CertFreeCertificateChain
-        var certFreeChain = Module.findExportByName('crypt32.dll', 'CertFreeCertificateChain');
-        if (certFreeChain) {
+      const certFreeChain = Module.findExportByName('crypt32.dll', 'CertFreeCertificateChain');
+      if (certFreeChain) {
             Interceptor.attach(certFreeChain, {
                 onEnter: function (args) {
                     // Manipulate certificate chain cleanup
@@ -1524,24 +1524,24 @@ const CodeIntegrityBypass = {
                 },
             });
 
-            this.hooksInstalled['CertFreeCertificateChain'] = true;
+            this.hooksInstalled.CertFreeCertificateChain = true;
         }
     },
 
     // === INSTALLATION SUMMARY ===
     installSummary: function () {
         setTimeout(() => {
-            var categories = {
-                'Hash Functions': 0,
-                'Signature Verification': 0,
-                'PE Checksum': 0,
-                'File Integrity': 0,
-                'Cryptographic APIs': 0,
-                'Certificate Validation': 0,
-                'TPM/Hardware Security': 0,
-            };
+          const categories = {
+            'Hash Functions': 0,
+            'Signature Verification': 0,
+            'PE Checksum': 0,
+            'File Integrity': 0,
+            'Cryptographic APIs': 0,
+            'Certificate Validation': 0,
+            'TPM/Hardware Security': 0,
+          };
 
-            for (var hook in this.hooksInstalled) {
+          for (let hook in this.hooksInstalled) {
                 if (
                     hook.includes('Hash') ||
                     hook.includes('MD5') ||
@@ -1573,12 +1573,12 @@ const CodeIntegrityBypass = {
                 }
             }
 
-            var activeHashAlgorithms = {};
-            var config = this.config;
-            for (var hashType in config.hashAlgorithms) {
+          const activeHashAlgorithms = {};
+          const config = this.config;
+          for (let hashType in config.hashAlgorithms) {
                 if (config.hashAlgorithms[hashType].enabled) {
                     activeHashAlgorithms[hashType] =
-                        config.hashAlgorithms[hashType].spoofedHash.substring(0, 16) + '...';
+                        `${config.hashAlgorithms[hashType].spoofedHash.substring(0, 16)}...`;
                 }
             }
 
@@ -1632,19 +1632,19 @@ const CodeIntegrityBypass = {
             action: 'advanced_integrity_bypass_initialized',
             data: {
                 cfi_features: Object.keys(this.advancedIntegrity.controlFlowIntegrity).filter(
-                    (k) => k !== 'enabled' && this.advancedIntegrity.controlFlowIntegrity[k]
+                    k => k !== 'enabled' && this.advancedIntegrity.controlFlowIntegrity[k]
                 ).length,
                 memory_protection_bypasses: Object.keys(
                     this.advancedIntegrity.memoryProtectionBypass
                 ).filter(
-                    (k) =>
+                    k =>
                         k !== 'enabled' &&
                         k !== 'cet' &&
                         this.advancedIntegrity.memoryProtectionBypass[k]
                 ).length,
                 hypervisor_bypasses: Object.keys(
                     this.advancedIntegrity.hypervisorLevelBypass
-                ).filter((k) => k !== 'enabled' && this.advancedIntegrity.hypervisorLevelBypass[k])
+                ).filter(k => k !== 'enabled' && this.advancedIntegrity.hypervisorLevelBypass[k])
                     .length,
             },
         });
@@ -1686,14 +1686,14 @@ const CodeIntegrityBypass = {
                     ...this.quantumCrypto.postQuantumResistance.hashBasedBypass,
                 ].length,
                 qkd_protocols: Object.keys(this.quantumCrypto.quantumKeyExchange).filter(
-                    (k) =>
+                    k =>
                         k !== 'enabled' &&
                         k !== 'entanglementDetection' &&
                         this.quantumCrypto.quantumKeyExchange[k]
                 ).length,
                 quantum_signature_bypasses: Object.keys(
                     this.quantumCrypto.quantumSignatures
-                ).filter((k) => k !== 'enabled' && this.quantumCrypto.quantumSignatures[k]).length,
+                ).filter(k => k !== 'enabled' && this.quantumCrypto.quantumSignatures[k]).length,
             },
         });
     },
@@ -1733,7 +1733,7 @@ const CodeIntegrityBypass = {
                 tpm_versions: this.hsmBypass.tpmBypass.version.length,
                 hsm_vendors: this.hsmBypass.hsmDevices.supportedVendors.length,
                 enclave_bypasses: Object.keys(this.hsmBypass.secureEnclaves).filter(
-                    (k) => k !== 'enabled' && this.hsmBypass.secureEnclaves[k]
+                    k => k !== 'enabled' && this.hsmBypass.secureEnclaves[k]
                 ).length,
             },
         });
@@ -1771,13 +1771,13 @@ const CodeIntegrityBypass = {
             action: 'zk_proof_bypass_initialized',
             data: {
                 snark_bypasses: Object.keys(this.zkProofBypass.zkSnarks).filter(
-                    (k) => k !== 'enabled' && this.zkProofBypass.zkSnarks[k]
+                    k => k !== 'enabled' && this.zkProofBypass.zkSnarks[k]
                 ).length,
                 stark_bypasses: Object.keys(this.zkProofBypass.zkStarks).filter(
-                    (k) => k !== 'enabled' && this.zkProofBypass.zkStarks[k]
+                    k => k !== 'enabled' && this.zkProofBypass.zkStarks[k]
                 ).length,
                 commitment_bypasses: Object.keys(this.zkProofBypass.commitmentSchemes).filter(
-                    (k) => k !== 'enabled' && this.zkProofBypass.commitmentSchemes[k]
+                    k => k !== 'enabled' && this.zkProofBypass.commitmentSchemes[k]
                 ).length,
             },
         });
@@ -1816,15 +1816,15 @@ const CodeIntegrityBypass = {
             action: 'blockchain_bypass_initialized',
             data: {
                 consensus_mechanisms: Object.keys(this.blockchainBypass.consensusMechanisms).filter(
-                    (k) => k !== 'enabled' && this.blockchainBypass.consensusMechanisms[k]
+                    k => k !== 'enabled' && this.blockchainBypass.consensusMechanisms[k]
                 ).length,
                 smart_contract_attacks: Object.keys(
                     this.blockchainBypass.smartContractSecurity
-                ).filter((k) => k !== 'enabled' && this.blockchainBypass.smartContractSecurity[k])
+                ).filter(k => k !== 'enabled' && this.blockchainBypass.smartContractSecurity[k])
                     .length,
                 crypto_primitive_attacks: Object.keys(
                     this.blockchainBypass.cryptographicPrimitives
-                ).filter((k) => k !== 'enabled' && this.blockchainBypass.cryptographicPrimitives[k])
+                ).filter(k => k !== 'enabled' && this.blockchainBypass.cryptographicPrimitives[k])
                     .length,
             },
         });
@@ -1863,17 +1863,16 @@ const CodeIntegrityBypass = {
             action: 'ml_integrity_bypass_initialized',
             data: {
                 adversarial_attacks: Object.keys(this.mlIntegrityBypass.adversarialAttacks).filter(
-                    (k) => k !== 'enabled' && this.mlIntegrityBypass.adversarialAttacks[k]
+                    k => k !== 'enabled' && this.mlIntegrityBypass.adversarialAttacks[k]
                 ).length,
                 extraction_attacks: Object.keys(
                     this.mlIntegrityBypass.modelExtractionAttacks
-                ).filter((k) => k !== 'enabled' && this.mlIntegrityBypass.modelExtractionAttacks[k])
+                ).filter(k => k !== 'enabled' && this.mlIntegrityBypass.modelExtractionAttacks[k])
                     .length,
                 federated_attacks: Object.keys(
                     this.mlIntegrityBypass.federatedLearningBypass
-                ).filter(
-                    (k) => k !== 'enabled' && this.mlIntegrityBypass.federatedLearningBypass[k]
-                ).length,
+                ).filter(k => k !== 'enabled' && this.mlIntegrityBypass.federatedLearningBypass[k])
+                    .length,
             },
         });
     },
@@ -1909,14 +1908,14 @@ const CodeIntegrityBypass = {
             action: 'homomorphic_bypass_initialized',
             data: {
                 partial_he_bypasses: Object.keys(this.homomorphicBypass.partialHomomorphic).filter(
-                    (k) => k !== 'enabled' && this.homomorphicBypass.partialHomomorphic[k]
+                    k => k !== 'enabled' && this.homomorphicBypass.partialHomomorphic[k]
                 ).length,
                 full_he_bypasses: Object.keys(this.homomorphicBypass.fullyHomomorphic).filter(
-                    (k) => k !== 'enabled' && this.homomorphicBypass.fullyHomomorphic[k]
+                    k => k !== 'enabled' && this.homomorphicBypass.fullyHomomorphic[k]
                 ).length,
                 application_bypasses: Object.keys(
                     this.homomorphicBypass.practicalApplications
-                ).filter((k) => k !== 'enabled' && this.homomorphicBypass.practicalApplications[k])
+                ).filter(k => k !== 'enabled' && this.homomorphicBypass.practicalApplications[k])
                     .length,
             },
         });
@@ -1955,13 +1954,13 @@ const CodeIntegrityBypass = {
             data: {
                 persistence_methods: Object.keys(
                     this.v3EnhancedSecurity.advancedPersistence
-                ).filter((k) => k !== 'enabled' && this.v3EnhancedSecurity.advancedPersistence[k])
+                ).filter(k => k !== 'enabled' && this.v3EnhancedSecurity.advancedPersistence[k])
                     .length,
                 ai_evasion_techniques: Object.keys(this.v3EnhancedSecurity.aiEvasion).filter(
-                    (k) => k !== 'enabled' && this.v3EnhancedSecurity.aiEvasion[k]
+                    k => k !== 'enabled' && this.v3EnhancedSecurity.aiEvasion[k]
                 ).length,
                 nextgen_bypasses: Object.keys(this.v3EnhancedSecurity.nextGenProtections).filter(
-                    (k) => k !== 'enabled' && this.v3EnhancedSecurity.nextGenProtections[k]
+                    k => k !== 'enabled' && this.v3EnhancedSecurity.nextGenProtections[k]
                 ).length,
             },
         });

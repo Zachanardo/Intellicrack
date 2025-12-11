@@ -209,14 +209,107 @@ class IncrementalAnalysisManager:
         self.cache_hits = 0
         self.cache_misses = 0
 
+        # Caching configuration
+        self.enable_caching = self.config.get("enable_caching", True)
+        self.cache_max_age = self.config.get("cache_max_age", 30)  # Days
+        self.cache_max_size = self.config.get("cache_max_file_size", 500 * 1024 * 1024)  # 500MB
+
+        # Primary cache index
+        self.cache: dict[str, dict[str, Any]] = {}
+
+        # Current binary tracking
+        self.current_binary: str | None = None
+        self.current_binary_hash: str | None = None
+
         try:
             self._load_cache_metadata()
         except Exception as e:
             self.logger.warning(f"Failed to load cache metadata: {e}")
-            # Initialize empty metadata
             self._init_empty_cache()
 
         self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
+
+    def _load_cache_metadata(self) -> None:
+        """Load cache metadata from the filesystem.
+
+        Loads the cache index JSON file and individual cache file metadata.
+        Validates cache integrity and removes any corrupted or outdated entries.
+        Also loads chunk cache and file hash mappings for incremental analysis.
+
+        """
+        metadata_path = self.cache_dir / "metadata.json"
+        index_path = self.cache_dir / "index.json"
+
+        if index_path.exists():
+            with index_path.open(encoding="utf-8") as f:
+                self.cache = json.load(f)
+            self.logger.info("Loaded cache index with %d entries", len(self.cache))
+
+        if metadata_path.exists():
+            with metadata_path.open(encoding="utf-8") as f:
+                metadata = json.load(f)
+
+            self.file_hashes = metadata.get("file_hashes", {})
+            self.analysis_cache = metadata.get("analysis_cache", {})
+            self.cache_hits = metadata.get("cache_hits", 0)
+            self.cache_misses = metadata.get("cache_misses", 0)
+
+            chunk_cache_path = self.cache_dir / "chunk_cache.json"
+            if chunk_cache_path.exists():
+                with chunk_cache_path.open(encoding="utf-8") as f:
+                    self.chunk_cache = json.load(f)
+            else:
+                self.chunk_cache = {}
+
+            self.logger.info(
+                "Loaded cache metadata: %d file hashes, %d cached analyses",
+                len(self.file_hashes),
+                len(self.analysis_cache),
+            )
+        else:
+            self._init_empty_cache()
+
+        self._cleanup_invalid_entries()
+
+    def _init_empty_cache(self) -> None:
+        """Initialize empty cache structures.
+
+        Resets all cache-related attributes to empty state and creates
+        the necessary directory structure. Called when no existing cache
+        is found or when cache needs to be reset due to corruption.
+
+        """
+        self.cache = {}
+        self.analysis_cache = {}
+        self.file_hashes = {}
+        self.chunk_cache = {}
+        self.cache_hits = 0
+        self.cache_misses = 0
+
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        metadata = {
+            "file_hashes": {},
+            "analysis_cache": {},
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "version": "1.0",
+            "created": datetime.datetime.now(tz=datetime.UTC).isoformat(),
+        }
+
+        metadata_path = self.cache_dir / "metadata.json"
+        with metadata_path.open("w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, default=str)
+
+        index_path = self.cache_dir / "index.json"
+        with index_path.open("w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2)
+
+        chunk_cache_path = self.cache_dir / "chunk_cache.json"
+        with chunk_cache_path.open("w", encoding="utf-8") as f:
+            json.dump({}, f, indent=2)
+
+        self.logger.info("Initialized empty cache structures")
 
     def _validate_cache_file(self, file_path: str) -> bool:
         """Validate cache file before loading.

@@ -19,12 +19,15 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import csv
 import datetime
 import json
+import logging
 import os
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+
+logger = logging.getLogger(__name__)
 
 try:
     import defusedxml.ElementTree as ET  # noqa: N817

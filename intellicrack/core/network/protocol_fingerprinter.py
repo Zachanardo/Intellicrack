@@ -23,6 +23,7 @@ import logging
 import math
 import os
 import re
+import socket
 import sys
 import time
 import traceback
@@ -422,6 +423,206 @@ class ProtocolFingerprinter:
             self._learn_new_signature(packet_data, port)
 
         return None
+
+    def identify_protocol(self, data_bytes: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
+        """Identify the protocol from raw packet data.
+
+        This is a convenience method that wraps analyze_traffic to provide
+        a simpler interface for protocol identification.
+
+        Args:
+            data_bytes: Raw packet data to analyze.
+            port: Optional port number for context.
+
+        Returns:
+            Dictionary containing protocol identification results:
+            - name: Protocol name (e.g., "FlexLM", "HASP")
+            - protocol_id: Internal protocol identifier
+            - confidence: Confidence percentage (0-100)
+            - description: Protocol description
+            Returns None if no protocol could be identified.
+
+        """
+        if not data_bytes:
+            return None
+
+        result = self.analyze_traffic(data_bytes, port)
+
+        if result:
+            confidence_pct = int(result.get("confidence", 0) * 100)
+
+            return {
+                "name": result.get("name", "Unknown"),
+                "protocol_id": result.get("protocol_id", "unknown"),
+                "confidence": confidence_pct,
+                "description": result.get("description", ""),
+                "header_format": result.get("header_format", []),
+                "response_templates": result.get("response_templates", {}),
+            }
+
+        for protocol_id, signature in self.signatures.items():
+            if self._quick_pattern_match(data_bytes, signature):
+                return {
+                    "name": signature["name"],
+                    "protocol_id": protocol_id,
+                    "confidence": 50,
+                    "description": signature.get("description", ""),
+                    "header_format": signature.get("header_format", []),
+                    "response_templates": signature.get("response_templates", {}),
+                }
+
+        return None
+
+    def _quick_pattern_match(self, data_bytes: bytes | bytearray, signature: dict[str, Any]) -> bool:
+        """Perform quick pattern matching without full analysis.
+
+        Args:
+            data_bytes: Data to check.
+            signature: Protocol signature to match against.
+
+        Returns:
+            True if any pattern matches, False otherwise.
+
+        """
+        patterns = signature.get("patterns", [])
+
+        for pattern in patterns:
+            if not isinstance(pattern, dict):
+                continue
+
+            offset = pattern.get("offset", 0)
+            pattern_bytes = pattern.get("bytes")
+
+            if pattern_bytes is None:
+                continue
+
+            if isinstance(pattern_bytes, str):
+                pattern_bytes = pattern_bytes.encode("utf-8")
+
+            if offset + len(pattern_bytes) <= len(data_bytes):
+                if data_bytes[offset:offset + len(pattern_bytes)] == pattern_bytes:
+                    return True
+
+        return False
+
+    def detect_protocols(self) -> list[dict[str, Any]]:
+        """Detect active license protocols by scanning known license server ports.
+
+        This method probes common license server ports on localhost and nearby network
+        addresses to identify running license servers and their protocols.
+
+        Returns:
+            List of detected protocol dictionaries containing:
+            - name: Protocol name
+            - port: Port number where protocol was detected
+            - confidence: Detection confidence percentage (0-100)
+            - pattern: Sample pattern matched
+            - host: Host address where detected
+
+        """
+        detected = []
+
+        license_server_hosts = ["127.0.0.1", "localhost"]
+
+        for host in license_server_hosts:
+            for port in self.license_ports:
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(0.5)
+                    result = sock.connect_ex((host, port))
+
+                    if result == 0:
+                        probe_data = self._send_protocol_probe(sock, port)
+                        sock.close()
+
+                        if probe_data:
+                            protocol_info = self._identify_protocol_from_response(probe_data, port)
+                            if protocol_info:
+                                protocol_info["host"] = host
+                                detected.append(protocol_info)
+                        else:
+                            for protocol_id, signature in self.signatures.items():
+                                if port in signature.get("ports", []):
+                                    detected.append({
+                                        "name": signature["name"],
+                                        "port": port,
+                                        "confidence": 60,
+                                        "pattern": f"Port match for {signature['name']}",
+                                        "host": host,
+                                        "protocol_id": protocol_id,
+                                    })
+                                    break
+                    else:
+                        sock.close()
+
+                except (TimeoutError, OSError) as e:
+                    self.logger.debug("Port scan error on %s:%d: %s", host, port, e)
+                    continue
+
+        self.logger.info("Protocol detection complete: found %d active protocols", len(detected))
+        return detected
+
+    def _send_protocol_probe(self, sock: socket.socket, port: int) -> bytes | None:
+        """Send appropriate probe packet based on port and capture response.
+
+        Args:
+            sock: Connected socket to license server
+            port: Port number for protocol-specific probing
+
+        Returns:
+            Response bytes from server, or None if no response
+
+        """
+        probe_packets = {
+            27000: b"FEATURE\x00\x01\x00\x00",
+            27001: b"VENDOR_STRING\x00",
+            1947: b"\x00\x01\x02\x03HASP_QUERY\x00",
+            22350: b"CMACT\x00\x01",
+            2080: b"ADSK\x01\x00",
+            1688: b"\x00\x00\x00\x00\x00\x00\x00\x00",
+            5093: b"RMS_QUERY\x00",
+        }
+
+        generic_probe = b"\x00\x01\x00\x00LICENSE_PROBE\x00"
+        probe = probe_packets.get(port, generic_probe)
+
+        try:
+            sock.settimeout(2.0)
+            sock.send(probe)
+            response = sock.recv(4096)
+            return response if response else None
+        except (TimeoutError, OSError):
+            return None
+
+    def _identify_protocol_from_response(self, response: bytes, port: int) -> dict[str, Any] | None:
+        """Identify protocol from server response data.
+
+        Args:
+            response: Raw response bytes from license server
+            port: Port number where response was received
+
+        Returns:
+            Protocol identification dictionary or None if unidentified
+
+        """
+        best_match = None
+        best_confidence = 0.0
+
+        for protocol_id, signature in self.signatures.items():
+            confidence = self._calculate_protocol_confidence(response, port, signature)
+
+            if confidence > best_confidence and confidence >= 0.5:
+                best_confidence = confidence
+                best_match = {
+                    "name": signature["name"],
+                    "port": port,
+                    "confidence": int(confidence * 100),
+                    "pattern": response[:50].hex() if response else "",
+                    "protocol_id": protocol_id,
+                    "description": signature.get("description", ""),
+                }
+
+        return best_match
 
     def fingerprint_packet(self, packet_data: bytes | bytearray, port: int | None = None) -> dict[str, Any] | None:
         """Fingerprint a single packet for protocol identification.

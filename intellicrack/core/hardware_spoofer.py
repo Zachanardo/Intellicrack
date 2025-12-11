@@ -8,6 +8,7 @@ import struct
 import subprocess
 import uuid
 import winreg
+from ctypes import c_void_p
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -994,6 +995,245 @@ class HardwareFingerPrintSpoofer:
             kernel32.VirtualProtect(exec_query_ptr, sizeof(c_void_p), old_protect, byref(old_protect))
 
         return True
+
+    def _create_spoofed_enumerator(
+        self,
+        this: ctypes.c_void_p,
+        hw_class: str,
+        lFlags: int,
+        ppEnum: ctypes.POINTER(ctypes.c_void_p),
+    ) -> int:
+        """Create a spoofed WMI enumerator that returns modified hardware data.
+
+        Args:
+            this: COM object pointer for the WMI service.
+            hw_class: WMI hardware class name (e.g., Win32_Processor).
+            lFlags: WMI operation flags.
+            ppEnum: Pointer to receive the spoofed enumerator.
+
+        Returns:
+            HRESULT status code (0 = S_OK, negative = error).
+
+        """
+        from ctypes import POINTER, byref, c_void_p, cast, pointer
+
+        HRESULT = ctypes.c_long
+        S_OK = 0
+        E_FAIL = -2147467259
+
+        try:
+            if not self.spoofed_hardware:
+                self.spoofed_hardware = self._generate_spoofed_identifiers()
+
+            spoofed_values = self._get_spoofed_values_for_class(hw_class)
+
+            if not spoofed_values:
+                return E_FAIL
+
+            class SpoofedEnumeratorVTable(ctypes.Structure):
+                _fields_ = [
+                    ("QueryInterface", ctypes.CFUNCTYPE(HRESULT, c_void_p, c_void_p, POINTER(c_void_p))),
+                    ("AddRef", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
+                    ("Release", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
+                    ("Reset", ctypes.CFUNCTYPE(HRESULT, c_void_p)),
+                    ("Next", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong))),
+                    ("NextAsync", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_ulong, c_void_p)),
+                    ("Clone", ctypes.CFUNCTYPE(HRESULT, c_void_p, POINTER(c_void_p))),
+                    ("Skip", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong)),
+                ]
+
+            class SpoofedEnumerator(ctypes.Structure):
+                _fields_ = [
+                    ("lpVtbl", POINTER(SpoofedEnumeratorVTable)),
+                    ("ref_count", ctypes.c_ulong),
+                    ("current_index", ctypes.c_ulong),
+                    ("hw_class", ctypes.c_wchar_p),
+                    ("spoofed_data", ctypes.py_object),
+                ]
+
+            enumerator_instance = SpoofedEnumerator()
+            enumerator_instance.ref_count = 1
+            enumerator_instance.current_index = 0
+            enumerator_instance.hw_class = hw_class
+            enumerator_instance.spoofed_data = spoofed_values
+            self._enumerator_ref = enumerator_instance
+
+            def query_interface(this_ptr: c_void_p, riid: c_void_p, ppvObject: POINTER(c_void_p)) -> int:
+                if ppvObject:
+                    ppvObject.contents = this_ptr
+                    return S_OK
+                return E_FAIL
+
+            def add_ref(this_ptr: c_void_p) -> int:
+                return 2
+
+            def release(this_ptr: c_void_p) -> int:
+                return 1
+
+            def reset(this_ptr: c_void_p) -> int:
+                enumerator_instance.current_index = 0
+                return S_OK
+
+            def next_item(
+                this_ptr: c_void_p,
+                lTimeout: ctypes.c_long,
+                uCount: ctypes.c_ulong,
+                apObjects: POINTER(c_void_p),
+                puReturned: POINTER(ctypes.c_ulong),
+            ) -> int:
+                WBEM_S_NO_ERROR = 0
+                WBEM_S_FALSE = 1
+
+                if enumerator_instance.current_index >= len(spoofed_values):
+                    if puReturned:
+                        puReturned.contents = ctypes.c_ulong(0)
+                    return WBEM_S_FALSE
+
+                enumerator_instance.current_index += 1
+                if puReturned:
+                    puReturned.contents = ctypes.c_ulong(1)
+
+                return WBEM_S_NO_ERROR
+
+            def next_async(this_ptr: c_void_p, uCount: ctypes.c_ulong, pSink: c_void_p) -> int:
+                return E_FAIL
+
+            def clone(this_ptr: c_void_p, ppEnum: POINTER(c_void_p)) -> int:
+                return E_FAIL
+
+            def skip(this_ptr: c_void_p, lTimeout: ctypes.c_long, nCount: ctypes.c_ulong) -> int:
+                enumerator_instance.current_index += nCount
+                return S_OK
+
+            vtable = SpoofedEnumeratorVTable()
+            vtable.QueryInterface = ctypes.CFUNCTYPE(HRESULT, c_void_p, c_void_p, POINTER(c_void_p))(query_interface)
+            vtable.AddRef = ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)(add_ref)
+            vtable.Release = ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)(release)
+            vtable.Reset = ctypes.CFUNCTYPE(HRESULT, c_void_p)(reset)
+            vtable.Next = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong))(next_item)
+            vtable.NextAsync = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_ulong, c_void_p)(next_async)
+            vtable.Clone = ctypes.CFUNCTYPE(HRESULT, c_void_p, POINTER(c_void_p))(clone)
+            vtable.Skip = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong)(skip)
+
+            self._vtable_ref = vtable
+            enumerator_instance.lpVtbl = pointer(vtable)
+
+            if ppEnum:
+                ppEnum.contents = cast(pointer(enumerator_instance), c_void_p)
+
+            return S_OK
+
+        except Exception as e:
+            logger.error(f"Failed to create spoofed enumerator: {e}")
+            return E_FAIL
+
+    def _get_spoofed_values_for_class(self, hw_class: str) -> list[dict[str, Any]]:
+        """Get spoofed values for a specific WMI hardware class.
+
+        Args:
+            hw_class: WMI class name.
+
+        Returns:
+            List of dictionaries containing spoofed property values.
+
+        """
+        if not self.spoofed_hardware:
+            return []
+
+        class_mappings: dict[str, list[dict[str, Any]]] = {
+            "Win32_Processor": [
+                {
+                    "ProcessorId": self.spoofed_hardware.cpu_id,
+                    "Name": self.spoofed_hardware.cpu_name,
+                    "Manufacturer": "GenuineIntel",
+                    "NumberOfCores": 8,
+                    "NumberOfLogicalProcessors": 16,
+                }
+            ],
+            "Win32_BaseBoard": [
+                {
+                    "SerialNumber": self.spoofed_hardware.motherboard_serial,
+                    "Manufacturer": self.spoofed_hardware.motherboard_manufacturer,
+                    "Product": "Spoofed Motherboard",
+                }
+            ],
+            "Win32_BIOS": [
+                {
+                    "SerialNumber": self.spoofed_hardware.bios_serial,
+                    "Version": self.spoofed_hardware.bios_version,
+                    "Manufacturer": "American Megatrends Inc.",
+                }
+            ],
+            "Win32_DiskDrive": [
+                {
+                    "SerialNumber": serial,
+                    "Model": model,
+                    "InterfaceType": "SATA",
+                }
+                for serial, model in zip(
+                    self.spoofed_hardware.disk_serial,
+                    self.spoofed_hardware.disk_model,
+                    strict=False,
+                )
+            ],
+            "Win32_NetworkAdapter": [
+                {
+                    "MACAddress": mac,
+                    "Name": f"Spoofed Network Adapter {i}",
+                    "AdapterType": "Ethernet 802.3",
+                }
+                for i, mac in enumerate(self.spoofed_hardware.mac_addresses)
+            ],
+            "Win32_ComputerSystem": [
+                {
+                    "Name": "SPOOFED-PC",
+                    "Manufacturer": "Spoofed Systems",
+                    "Model": "Virtual Machine",
+                    "SystemType": "x64-based PC",
+                }
+            ],
+        }
+
+        return class_mappings.get(hw_class, [])
+
+    def _generate_spoofed_identifiers(self) -> HardwareIdentifiers:
+        """Generate randomized spoofed hardware identifiers.
+
+        Returns:
+            HardwareIdentifiers with randomized values.
+
+        """
+        def random_hex(length: int) -> str:
+            return secrets.token_hex(length // 2).upper()
+
+        def random_mac() -> str:
+            octets = [secrets.randbelow(256) for _ in range(6)]
+            octets[0] = (octets[0] & 0xFE) | 0x02
+            return ":".join(f"{b:02X}" for b in octets)
+
+        def random_serial() -> str:
+            chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            return "".join(secrets.choice(chars) for _ in range(12))
+
+        return HardwareIdentifiers(
+            cpu_id=random_hex(16),
+            cpu_name=f"Intel(R) Core(TM) i{secrets.randbelow(4) + 7}-{secrets.randbelow(9000) + 10000}K CPU @ {secrets.randbelow(20) + 30 / 10:.1f}GHz",
+            motherboard_serial=random_serial(),
+            motherboard_manufacturer=secrets.choice(["ASUSTeK", "Gigabyte", "MSI", "ASRock"]),
+            bios_serial=random_serial(),
+            bios_version=f"F{secrets.randbelow(20) + 1}",
+            disk_serial=[random_serial() for _ in range(2)],
+            disk_model=[f"Samsung SSD {secrets.randbelow(900) + 100} EVO" for _ in range(2)],
+            mac_addresses=[random_mac() for _ in range(2)],
+            system_uuid=str(uuid.uuid4()).upper(),
+            machine_guid="{" + str(uuid.uuid4()).upper() + "}",
+            volume_serial=random_hex(8),
+            product_id=f"{random_hex(5)}-{random_hex(5)}-{random_hex(5)}-{random_hex(5)}",
+            network_adapters=[{"name": f"Adapter {i}", "mac": random_mac()} for i in range(2)],
+            gpu_ids=[random_hex(8) for _ in range(1)],
+            ram_serial=[random_serial() for _ in range(2)],
+            usb_devices=[],
+        )
 
     def _install_registry_hooks(self) -> bool:
         """Install registry query hooks.

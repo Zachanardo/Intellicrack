@@ -27,6 +27,7 @@ import threading
 import time
 from collections.abc import Callable
 from ctypes import c_int, c_ulong
+from datetime import UTC, timezone
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -249,7 +250,7 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
             "Trial license expires soon",
             "Upgrade to full license for continued access",
         ]
-    elif (datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).days < 30:
+    elif (datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=UTC) - datetime.now(UTC)).days < 30:
         response["notices"] = ["License expires within 30 days", "Please renew your license"]
 
     return response
@@ -893,7 +894,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         return {"error": "License ID required for release"}
 
     release_timestamp = time.time()
-    release_datetime = datetime.fromtimestamp(release_timestamp, tz=timezone.utc)
+    release_datetime = datetime.fromtimestamp(release_timestamp, tz=UTC)
 
     # Generate release tracking information
     license_hash = hashlib.sha256(f"{license_id}:release:{release_timestamp}".encode()).hexdigest()
@@ -906,7 +907,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
     if current_license.get("status") == "active":
         last_checkin_str = current_license.get("last_checkin", "")
         try:
-            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
         except (ValueError, TypeError) as e:
@@ -945,7 +946,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
         "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
         "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
-            tzinfo=timezone.utc
+            tzinfo=UTC
         )
         > release_datetime,
     }
@@ -996,10 +997,10 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
             "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
-                tzinfo=timezone.utc
+                tzinfo=UTC
             )
             < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=timezone.utc)
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=UTC)
             < release_datetime + timedelta(days=30),
         },
         "confirmation": {

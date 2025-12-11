@@ -18,9 +18,8 @@
 
 // Production-grade Windows Registry monitor for Frida
 // Comprehensive monitoring with Native API hooks, anti-detection, and intelligent data analysis
-'use strict';
 
-(function () {
+(() => {
     if (Process.platform !== 'windows') {
         send({
             type: 'error',
@@ -96,13 +95,13 @@
     const handleTracker = new Map();
     const keyPathCache = new Map();
     const threadInfo = new Map();
-    const knownLicenseKeys = new Set();
+    const _knownLicenseKeys = new Set();
     const detectedPatterns = new Set();
 
     function initializeHooks() {
-        const ntdll = Process.getModuleByName('ntdll.dll');
-        const advapi32 = Process.getModuleByName('advapi32.dll');
-        const kernel32 = Process.getModuleByName('kernel32.dll');
+        const _ntdll = Process.getModuleByName('ntdll.dll');
+        const _advapi32 = Process.getModuleByName('advapi32.dll');
+        const _kernel32 = Process.getModuleByName('kernel32.dll');
 
         const antiDebugChecks = [
             'NtQueryInformationProcess',
@@ -114,8 +113,8 @@
             'NtContinue',
         ];
 
-        antiDebugChecks.forEach((name) => {
-            let func = Module.findExportByName(null, name);
+        antiDebugChecks.forEach(name => {
+            const func = Module.findExportByName(null, name);
             if (func) {
                 hookAntiDebugFunction(func, name);
             }
@@ -413,7 +412,7 @@
             },
         ];
 
-        regFunctions.forEach((f) => {
+        regFunctions.forEach(f => {
             const func = Module.findExportByName(f.module, f.name);
             if (func) {
                 Interceptor.attach(func, {
@@ -463,7 +462,7 @@
     }
 
     function getKeyPath(handle) {
-        if (!handle || handle.isNull()) return null;
+        if (!handle || handle.isNull()) { return null; }
 
         const cached = keyPathCache.get(handle.toString());
         if (cached && Date.now() - cached.timestamp < config.cacheTimeout) {
@@ -472,7 +471,7 @@
 
         try {
             const NtQueryObject = Module.findExportByName('ntdll.dll', 'NtQueryObject');
-            if (!NtQueryObject) return null;
+            if (!NtQueryObject) { return null; }
 
             const ObjectNameInformation = 1;
             const bufferSize = 1024;
@@ -494,7 +493,7 @@
 
                 if (!bufferPtr.isNull() && length > 0) {
                     const path = bufferPtr.readUtf16String(length / 2);
-                    if (path && path.includes('\\REGISTRY\\')) {
+                    if (path?.includes('\\REGISTRY\\')) {
                         const cleanPath = path
                             .replace('\\REGISTRY\\MACHINE', 'HKLM')
                             .replace('\\REGISTRY\\USER', 'HKU')
@@ -511,25 +510,25 @@
                     }
                 }
             }
-        } catch (e) {}
+        } catch (_e) {}
 
         return null;
     }
 
     function readUnicodeString(ptr) {
-        if (!ptr || ptr.isNull()) return null;
+        if (!ptr || ptr.isNull()) { return null; }
         try {
             const length = ptr.readU16();
             const buffer = ptr.add(8).readPointer();
             if (!buffer.isNull() && length > 0) {
                 return buffer.readUtf16String(length / 2);
             }
-        } catch (e) {}
+        } catch (_e) {}
         return null;
     }
 
     function formatRegData(type, dataPtr, dataSize, truncate = false) {
-        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) return { formatted: null, raw: null };
+        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) { return { formatted: null, raw: null }; }
 
         const maxSize = truncate ? 256 : dataSize;
         const actualSize = Math.min(dataSize, maxSize);
@@ -540,12 +539,12 @@
                 case 2: // REG_EXPAND_SZ
                     return { formatted: dataPtr.readUtf16String(actualSize / 2) };
 
-                case 3: // REG_BINARY
+                case 3: {
+                    // REG_BINARY
                     const bytes = dataPtr.readByteArray(actualSize);
-                    const hex = Array.from(bytes, (b) => ('0' + b.toString(16)).slice(-2)).join(
-                        ' '
-                    );
+                    const hex = Array.from(bytes, b => (`0${b.toString(16)}`).slice(-2)).join(' ');
                     return { formatted: null, raw: hex };
+                }
 
                 case 4: // REG_DWORD
                     if (dataSize >= 4) {
@@ -568,37 +567,39 @@
                                 (dataPtr.add(2).readU8() << 8) |
                                 dataPtr.add(3).readU8()) >>>
                             0;
-                        return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                        return { formatted: `0x${val.toString(16)} (${val})` };
                     }
                     break;
 
-                case 7: // REG_MULTI_SZ
+                case 7: {
+                    // REG_MULTI_SZ
                     const strings = [];
                     let offset = 0;
                     while (offset < actualSize - 2) {
                         const str = dataPtr.add(offset).readUtf16String();
-                        if (!str || str.length === 0) break;
+                        if (!str || str.length === 0) { break; }
                         strings.push(str);
                         offset += (str.length + 1) * 2;
                     }
                     return { formatted: strings.join('\\0') };
+                }
 
                 case 11: // REG_QWORD
                     if (dataSize >= 8) {
                         const low = dataPtr.readU32();
                         const high = dataPtr.add(4).readU32();
                         const val = high * 0x100000000 + low;
-                        return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                        return { formatted: `0x${val.toString(16)} (${val})` };
                     }
                     break;
             }
-        } catch (e) {}
+        } catch (_e) {}
 
         return { formatted: null, raw: null };
     }
 
     function matchesFilters(keyPath, valueName) {
-        if (!keyPath) return false;
+        if (!keyPath) { return false; }
 
         const lowerKey = keyPath.toLowerCase();
         const lowerValue = valueName ? valueName.toLowerCase() : '';
@@ -614,7 +615,7 @@
     }
 
     function detectLicensePattern(keyPath, valueName, data) {
-        if (!config.detectPatterns) return;
+        if (!config.detectPatterns) { return; }
 
         const patterns = [
             {
@@ -633,10 +634,10 @@
             },
         ];
 
-        const dataStr = data && data.formatted ? data.formatted : '';
-        const fullPath = keyPath + '\\' + (valueName || '');
+        const dataStr = data?.formatted ? data.formatted : '';
+        const fullPath = `${keyPath}\\${valueName || ''}`;
 
-        patterns.forEach((p) => {
+        patterns.forEach(p => {
             if (p.regex.test(dataStr) || p.regex.test(fullPath)) {
                 const detection = {
                     type: p.type,
@@ -659,7 +660,7 @@
     }
 
     function getThreadContext() {
-        if (!config.captureThreadInfo) return {};
+        if (!config.captureThreadInfo) { return {}; }
 
         const tid = Process.getCurrentThreadId();
         let info = threadInfo.get(tid);
@@ -671,12 +672,12 @@
             };
 
             try {
-                const thread = Process.enumerateThreads().find((t) => t.id === tid);
+                const thread = Process.enumerateThreads().find(t => t.id === tid);
                 if (thread) {
                     info.state = thread.state;
                     info.context = thread.context;
                 }
-            } catch (e) {}
+            } catch (_e) {}
 
             threadInfo.set(tid, info);
         }
@@ -707,7 +708,7 @@
 
         if (includeBacktrace) {
             const bt = Thread.backtrace(this.context, Backtracer.ACCURATE);
-            evt.backtrace = bt.slice(0, config.maxBacktraceFrames).map((addr) => {
+            evt.backtrace = bt.slice(0, config.maxBacktraceFrames).map(addr => {
                 const mod = Process.findModuleByAddress(addr);
                 const sym = DebugSymbol.fromAddress(addr);
                 return {
@@ -727,8 +728,8 @@
     }
 
     function onNtOpenKeyEnter(args) {
-        const keyHandle = args[0];
-        const desiredAccess = args[1].toInt32();
+        const _keyHandle = args[0];
+        const _desiredAccess = args[1].toInt32();
         const objectAttributes = args[2];
 
         if (!objectAttributes.isNull()) {
@@ -780,10 +781,10 @@
     }
 
     function onNtCreateKeyEnter(args) {
-        const keyHandle = args[0];
-        const desiredAccess = args[1].toInt32();
+        const _keyHandle = args[0];
+        const _desiredAccess = args[1].toInt32();
         const objectAttributes = args[2];
-        const titleIndex = args[3] ? args[3].toInt32() : 0;
+        const _titleIndex = args[3] ? args[3].toInt32() : 0;
         const classPtr = args[4];
         const createOptions = args[5] ? args[5].toInt32() : 0;
         const disposition = args[6];
@@ -820,7 +821,7 @@
                     this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
-            if (this.args && this.args[0]) {
+            if (this.args?.[0]) {
                 const handle = this.args[0].readPointer();
                 const keyPath = getKeyPath(handle);
 
@@ -839,9 +840,9 @@
     function onNtQueryKeyEnter(args) {
         const keyHandle = args[0];
         const infoClass = args[1].toInt32();
-        const keyInfo = args[2];
-        const length = args[3].toInt32();
-        const resultLength = args[4];
+        const _keyInfo = args[2];
+        const _length = args[3].toInt32();
+        const _resultLength = args[4];
 
         this.keyHandle = keyHandle;
         this.infoClass = infoClass;
@@ -901,7 +902,9 @@
 
         if (success && this.keyValueInfo && !this.keyValueInfo.isNull()) {
             try {
-                let dataPtr, dataSize, regType;
+                let dataPtr;
+                let dataSize;
+                let regType;
 
                 switch (this.infoClass) {
                     case 0: // KeyValueBasicInformation
@@ -909,7 +912,8 @@
                         evt.data_type = regType;
                         break;
 
-                    case 1: // KeyValueFullInformation
+                    case 1: {
+                        // KeyValueFullInformation
                         regType = this.keyValueInfo.add(4).readU32();
                         dataSize = this.keyValueInfo.add(8).readU32();
                         const dataOffset = this.keyValueInfo.add(12).readU32();
@@ -920,14 +924,15 @@
 
                         if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, this.valueName, formatted);
                             }
                         }
                         break;
+                    }
 
                     case 2: // KeyValuePartialInformation
                         regType = this.keyValueInfo.add(4).readU32();
@@ -939,8 +944,8 @@
 
                         if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -963,7 +968,7 @@
     function onNtSetValueKeyEnter(args) {
         const keyHandle = args[0];
         const valueNamePtr = args[1];
-        const titleIndex = args[2] ? args[2].toInt32() : 0;
+        const _titleIndex = args[2] ? args[2].toInt32() : 0;
         const type = args[3].toInt32();
         const data = args[4];
         const dataSize = args[5].toInt32();
@@ -998,8 +1003,8 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
-        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
+        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -1077,8 +1082,8 @@
         const index = args[1].toInt32();
         const infoClass = args[2].toInt32();
         const keyInfo = args[3];
-        const length = args[4].toInt32();
-        const resultLength = args[5];
+        const _length = args[4].toInt32();
+        const _resultLength = args[5];
 
         this.keyHandle = keyHandle;
         this.index = index;
@@ -1104,7 +1109,8 @@
 
         if (success && this.keyInfo && !this.keyInfo.isNull()) {
             try {
-                let namePtr, nameLength;
+                let namePtr;
+                let nameLength;
 
                 switch (this.infoClass) {
                     case 0: // KeyBasicInformation
@@ -1115,7 +1121,8 @@
                         }
                         break;
 
-                    case 1: // KeyNodeInformation
+                    case 1: {
+                        // KeyNodeInformation
                         nameLength = this.keyInfo.add(8).readU32();
                         const nameOffset = this.keyInfo.add(24).readU32();
                         namePtr = this.keyInfo.add(nameOffset);
@@ -1123,6 +1130,7 @@
                             evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
                         }
                         break;
+                    }
 
                     case 2: // KeyFullInformation
                         break;
@@ -1142,8 +1150,8 @@
         const index = args[1].toInt32();
         const infoClass = args[2].toInt32();
         const keyValueInfo = args[3];
-        const length = args[4].toInt32();
-        const resultLength = args[5];
+        const _length = args[4].toInt32();
+        const _resultLength = args[5];
 
         this.keyHandle = keyHandle;
         this.index = index;
@@ -1169,7 +1177,11 @@
 
         if (success && this.keyValueInfo && !this.keyValueInfo.isNull()) {
             try {
-                let namePtr, nameLength, dataPtr, dataSize, regType;
+                let namePtr;
+                let nameLength;
+                let dataPtr;
+                let dataSize;
+                let regType;
 
                 switch (this.infoClass) {
                     case 0: // KeyValueBasicInformation
@@ -1183,7 +1195,8 @@
                         evt.data_type = regType;
                         break;
 
-                    case 1: // KeyValueFullInformation
+                    case 1: {
+                        // KeyValueFullInformation
                         regType = this.keyValueInfo.add(4).readU32();
                         dataSize = this.keyValueInfo.add(12).readU32();
                         nameLength = this.keyValueInfo.add(8).readU32();
@@ -1201,14 +1214,15 @@
                         if (dataSize > 0) {
                             dataPtr = this.keyValueInfo.add(dataOffset);
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, evt.value_name, formatted);
                             }
                         }
                         break;
+                    }
 
                     case 2: // KeyValuePartialInformation
                         regType = this.keyValueInfo.add(4).readU32();
@@ -1220,8 +1234,8 @@
 
                         if (dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
                         }
                         break;
                 }
@@ -1277,8 +1291,8 @@
         const valueEntries = args[1];
         const entryCount = args[2].toInt32();
         const valueBuffer = args[3];
-        const bufferLength = args[4] ? args[4].toInt32() : 0;
-        const requiredLength = args[5];
+        const _bufferLength = args[4] ? args[4].toInt32() : 0;
+        const _requiredLength = args[5];
 
         this.keyHandle = keyHandle;
         this.entryCount = entryCount;
@@ -1384,7 +1398,7 @@
 
     function onNtSaveKeyEnter(args) {
         const keyHandle = args[0];
-        const fileHandle = args[1];
+        const _fileHandle = args[1];
 
         this.keyHandle = keyHandle;
         this.keyPath = getKeyPath(keyHandle);
@@ -1410,7 +1424,7 @@
 
     function onNtRestoreKeyEnter(args) {
         const keyHandle = args[0];
-        const fileHandle = args[1];
+        const _fileHandle = args[1];
         const flags = args[2] ? args[2].toInt32() : 0;
 
         this.keyHandle = keyHandle;
@@ -1458,7 +1472,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegOpenKeyExW',
-            parent_key: '0x' + this.parentKey.toString(16),
+            parent_key: `0x${this.parentKey.toString(16)}`,
             sub_key: this.subKey,
             options: this.options,
             access: this.access,
@@ -1509,7 +1523,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegOpenKeyExA',
-            parent_key: '0x' + this.parentKey.toString(16),
+            parent_key: `0x${this.parentKey.toString(16)}`,
             sub_key: this.subKey,
             options: this.options,
             access: this.access,
@@ -1538,11 +1552,11 @@
     function onRegCreateKeyExWEnter(args) {
         const hKey = args[0];
         const lpSubKey = args[1];
-        const reserved = args[2] ? args[2].toInt32() : 0;
+        const _reserved = args[2] ? args[2].toInt32() : 0;
         const lpClass = args[3];
         const dwOptions = args[4] ? args[4].toInt32() : 0;
         const samDesired = args[5] ? args[5].toInt32() : 0;
-        const lpSecurityAttributes = args[6];
+        const _lpSecurityAttributes = args[6];
         const phkResult = args[7];
         const lpdwDisposition = args[8];
 
@@ -1562,7 +1576,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegCreateKeyExW',
-            parent_key: '0x' + this.parentKey.toString(16),
+            parent_key: `0x${this.parentKey.toString(16)}`,
             sub_key: this.subKey,
             class_name: this.className,
             options: this.options,
@@ -1599,11 +1613,11 @@
     function onRegCreateKeyExAEnter(args) {
         const hKey = args[0];
         const lpSubKey = args[1];
-        const reserved = args[2] ? args[2].toInt32() : 0;
+        const _reserved = args[2] ? args[2].toInt32() : 0;
         const lpClass = args[3];
         const dwOptions = args[4] ? args[4].toInt32() : 0;
         const samDesired = args[5] ? args[5].toInt32() : 0;
-        const lpSecurityAttributes = args[6];
+        const _lpSecurityAttributes = args[6];
         const phkResult = args[7];
         const lpdwDisposition = args[8];
 
@@ -1623,7 +1637,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegCreateKeyExA',
-            parent_key: '0x' + this.parentKey.toString(16),
+            parent_key: `0x${this.parentKey.toString(16)}`,
             sub_key: this.subKey,
             class_name: this.className,
             options: this.options,
@@ -1660,7 +1674,7 @@
     function onRegQueryValueExWEnter(args) {
         const hKey = args[0];
         const lpValueName = args[1];
-        const lpReserved = args[2];
+        const _lpReserved = args[2];
         const lpType = args[3];
         const lpData = args[4];
         const lpcbData = args[5];
@@ -1699,8 +1713,8 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
 
                     if (config.performDeepAnalysis) {
                         detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -1719,7 +1733,7 @@
     function onRegQueryValueExAEnter(args) {
         const hKey = args[0];
         const lpValueName = args[1];
-        const lpReserved = args[2];
+        const _lpReserved = args[2];
         const lpType = args[3];
         const lpData = args[4];
         const lpcbData = args[5];
@@ -1758,8 +1772,8 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
 
                     if (config.performDeepAnalysis) {
                         detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -1778,7 +1792,7 @@
     function onRegSetValueExWEnter(args) {
         const hKey = args[0];
         const lpValueName = args[1];
-        const reserved = args[2] ? args[2].toInt32() : 0;
+        const _reserved = args[2] ? args[2].toInt32() : 0;
         const dwType = args[3] ? args[3].toInt32() : 0;
         const lpData = args[4];
         const cbData = args[5] ? args[5].toInt32() : 0;
@@ -1815,8 +1829,8 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
-        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
+        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -1834,7 +1848,7 @@
     function onRegSetValueExAEnter(args) {
         const hKey = args[0];
         const lpValueName = args[1];
-        const reserved = args[2] ? args[2].toInt32() : 0;
+        const _reserved = args[2] ? args[2].toInt32() : 0;
         const dwType = args[3] ? args[3].toInt32() : 0;
         const lpData = args[4];
         const cbData = args[5] ? args[5].toInt32() : 0;
@@ -1871,8 +1885,8 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) evt.data_formatted = this.dataFormatted;
-        if (this.dataRaw) evt.data_preview_hex = this.dataRaw;
+        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
+        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -2016,10 +2030,10 @@
         const dwIndex = args[1] ? args[1].toInt32() : 0;
         const lpName = args[2];
         const lpcchName = args[3];
-        const lpReserved = args[4];
-        const lpClass = args[5];
-        const lpcchClass = args[6];
-        const lpftLastWriteTime = args[7];
+        const _lpReserved = args[4];
+        const _lpClass = args[5];
+        const _lpcchClass = args[6];
+        const _lpftLastWriteTime = args[7];
 
         this.hKey = hKey;
         this.index = dwIndex;
@@ -2060,10 +2074,10 @@
         const dwIndex = args[1] ? args[1].toInt32() : 0;
         const lpName = args[2];
         const lpcchName = args[3];
-        const lpReserved = args[4];
-        const lpClass = args[5];
-        const lpcchClass = args[6];
-        const lpftLastWriteTime = args[7];
+        const _lpReserved = args[4];
+        const _lpClass = args[5];
+        const _lpcchClass = args[6];
+        const _lpftLastWriteTime = args[7];
 
         this.hKey = hKey;
         this.index = dwIndex;
@@ -2104,7 +2118,7 @@
         const dwIndex = args[1] ? args[1].toInt32() : 0;
         const lpValueName = args[2];
         const lpcchValueName = args[3];
-        const lpReserved = args[4];
+        const _lpReserved = args[4];
         const lpType = args[5];
         const lpData = args[6];
         const lpcbData = args[7];
@@ -2150,8 +2164,8 @@
 
                     if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                         const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                        if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                        if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
                     }
                 }
             }
@@ -2169,7 +2183,7 @@
         const dwIndex = args[1] ? args[1].toInt32() : 0;
         const lpValueName = args[2];
         const lpcchValueName = args[3];
-        const lpReserved = args[4];
+        const _lpReserved = args[4];
         const lpType = args[5];
         const lpData = args[6];
         const lpcbData = args[7];
@@ -2215,8 +2229,8 @@
 
                     if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                         const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                        if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                        if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
                     }
                 }
             }
@@ -2269,7 +2283,7 @@
     function onRegSaveKeyWEnter(args) {
         const hKey = args[0];
         const lpFile = args[1];
-        const lpSecurityAttributes = args[2];
+        const _lpSecurityAttributes = args[2];
 
         this.hKey = hKey;
         this.fileName = lpFile.isNull() ? null : lpFile.readUtf16String();
@@ -2300,7 +2314,7 @@
     function onRegSaveKeyAEnter(args) {
         const hKey = args[0];
         const lpFile = args[1];
-        const lpSecurityAttributes = args[2];
+        const _lpSecurityAttributes = args[2];
 
         this.hKey = hKey;
         this.fileName = lpFile.isNull() ? null : lpFile.readAnsiString();
@@ -2411,7 +2425,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegLoadKeyW',
-            parent_key: '0x' + this.hKey.toString(16),
+            parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             file_name: this.fileName,
             success: success,
@@ -2440,7 +2454,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegLoadKeyA',
-            parent_key: '0x' + this.hKey.toString(16),
+            parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             file_name: this.fileName,
             success: success,
@@ -2467,7 +2481,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegUnLoadKeyW',
-            parent_key: '0x' + this.hKey.toString(16),
+            parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             success: success,
             status: retval,
@@ -2493,7 +2507,7 @@
             type: 'registry_operation',
             target: 'registry_monitor',
             function: 'RegUnLoadKeyA',
-            parent_key: '0x' + this.hKey.toString(16),
+            parent_key: `0x${this.hKey.toString(16)}`,
             sub_key: this.subKey,
             success: success,
             status: retval,
@@ -2603,13 +2617,13 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
                 }
             }
         }
 
-        const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
+        const keyPath = this.keyPath + (this.subKey ? `\\${this.subKey}` : '');
         const includeBt =
             config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
@@ -2662,13 +2676,13 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                    if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
+                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
                 }
             }
         }
 
-        const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
+        const keyPath = this.keyPath + (this.subKey ? `\\${this.subKey}` : '');
         const includeBt =
             config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);

@@ -292,7 +292,7 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                         # For other cases, raise an exception
                         error_msg = f"Global '{module}.{name}' is forbidden"
                         logger.error(error_msg)
-                        raise pickle.UnpicklingError(error_msg) from e
+                        raise pickle.UnpicklingError(error_msg) from None
 
                 unpickler = RestrictedUnpickler(f)
                 return unpickler.load()

@@ -1,0 +1,1 @@
+﻿<?xml version="1.0" encoding="UTF-8"?><LintReport tool="cargo-audit" generated="2025-12-10T21:38:29.0299948-07:00"><Summary><TotalFindings>0</TotalFindings><TotalFiles>1</TotalFiles></Summary><Files><File path="Cargo.toml" count="0"></File></Files></LintReport>

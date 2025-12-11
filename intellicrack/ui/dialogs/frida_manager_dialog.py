@@ -226,6 +226,925 @@ class FridaManagerDialog(QDialog):
         # Check Frida availability
         self.check_frida_availability()
 
+    def _load_script_templates(self) -> dict[str, dict[str, str]]:
+        """Load Frida script templates for licensing bypass operations.
+
+        Returns:
+            Dictionary mapping template categories to template definitions,
+            each containing name, description, and script content.
+
+        """
+        templates: dict[str, dict[str, str]] = {}
+
+        scripts_base_path = Path(__file__).parent.parent.parent / "scripts" / "frida"
+
+        template_definitions = {
+            "license_bypass": {
+                "name": "License Bypass",
+                "description": "Generic license validation bypass hooks",
+                "files": ["cloud_licensing_bypass.js", "drm_bypass.js", "keygen_generator.js"],
+            },
+            "anti_debug": {
+                "name": "Anti-Debug Bypass",
+                "description": "Bypass anti-debugging protections",
+                "files": ["anti_debugger.js", "advanced_anti_debug_bypass.js"],
+            },
+            "hardware_spoof": {
+                "name": "Hardware ID Spoofer",
+                "description": "Spoof hardware identifiers for node-locked licenses",
+                "files": ["hwid_spoofer.js", "enhanced_hardware_spoofer.js"],
+            },
+            "network_intercept": {
+                "name": "Network Interception",
+                "description": "Intercept and modify license server communications",
+                "files": ["websocket_interceptor.js", "http3_quic_interceptor.js"],
+            },
+            "ssl_bypass": {
+                "name": "SSL/Certificate Bypass",
+                "description": "Bypass certificate pinning and SSL validation",
+                "files": ["universal_ssl_bypass.js", "certificate_pinning_bypass.js", "openssl_bypass.js", "schannel_bypass.js"],
+            },
+            "memory_analysis": {
+                "name": "Memory Analysis",
+                "description": "Memory dumping and integrity bypass",
+                "files": ["memory_dumper.js", "memory_integrity_bypass.js"],
+            },
+            "protection_bypass": {
+                "name": "Protection Bypass",
+                "description": "Commercial protection system bypasses",
+                "files": ["arxan_bypass.js", "virtualization_bypass.js", "code_integrity_bypass.js"],
+            },
+            "time_manipulation": {
+                "name": "Time Manipulation",
+                "description": "Trial timer and time bomb defusal",
+                "files": ["time_bomb_defuser.js", "ntp_blocker.js"],
+            },
+            "tpm_bypass": {
+                "name": "TPM Bypass",
+                "description": "Trusted Platform Module emulation and bypass",
+                "files": ["tpm_emulator.js", "tpm_command_interceptor.js", "tpm_pcr_manipulator.js"],
+            },
+            "crypto_intercept": {
+                "name": "Crypto Interception",
+                "description": "Cryptographic API hooks for key extraction",
+                "files": ["cryptoapi_bypass.js", "quantum_crypto_handler.js"],
+            },
+            "unpacking": {
+                "name": "Universal Unpacker",
+                "description": "Dump and unpack protected executables",
+                "files": ["universal_unpacker.js", "binary_patcher.js", "binary_patcher_advanced.js"],
+            },
+            "dotnet": {
+                "name": ".NET Bypass Suite",
+                "description": "Bypass .NET licensing and protection",
+                "files": ["dotnet_bypass_suite.js"],
+            },
+            "analysis": {
+                "name": "Analysis Tools",
+                "description": "Protection detection and analysis",
+                "files": ["obfuscation_detector.js", "realtime_protection_detector.js", "behavioral_pattern_analyzer.js"],
+            },
+            "monitoring": {
+                "name": "Monitoring",
+                "description": "Hook effectiveness and bypass tracking",
+                "files": ["hook_effectiveness_monitor.js", "bypass_success_tracker.js", "registry_monitor.js"],
+            },
+        }
+
+        for category_key, category_info in template_definitions.items():
+            category_templates: dict[str, str] = {
+                "name": category_info["name"],
+                "description": category_info["description"],
+                "scripts": {},
+            }
+
+            for script_file in category_info["files"]:
+                script_path = scripts_base_path / script_file
+                if script_path.exists():
+                    try:
+                        script_content = script_path.read_text(encoding="utf-8")
+                        script_name = script_file.replace(".js", "").replace("_", " ").title()
+                        category_templates["scripts"][script_name] = {
+                            "path": str(script_path),
+                            "content": script_content,
+                            "size": len(script_content),
+                        }
+                    except Exception as e:
+                        logger.warning("Failed to load script template %s: %s", script_file, e)
+                else:
+                    logger.debug("Script template not found: %s", script_path)
+
+            if category_templates["scripts"]:
+                templates[category_key] = category_templates
+
+        inline_templates = {
+            "custom": {
+                "name": "Custom Template",
+                "description": "Empty template for custom script development",
+                "scripts": {
+                    "Custom Script": {
+                        "path": None,
+                        "content": '''// Custom Frida Script Template
+// Target: [Enter target binary]
+// Purpose: [Enter purpose]
+
+'use strict';
+
+Java.perform(function() {
+    console.log('[*] Custom script loaded');
+
+    // Add your hooks here
+});
+
+// Windows API hooks
+if (Process.platform === 'windows') {
+    const kernel32 = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+    if (kernel32) {
+        Interceptor.attach(kernel32, {
+            onEnter: function(args) {
+                console.log('[*] IsDebuggerPresent called');
+            },
+            onLeave: function(retval) {
+                retval.replace(0);
+                console.log('[+] IsDebuggerPresent bypassed');
+            }
+        });
+    }
+}
+''',
+                        "size": 0,
+                    }
+                },
+            },
+            "quick_bypass": {
+                "name": "Quick License Bypass",
+                "description": "Minimal license check bypass template",
+                "scripts": {
+                    "Quick Bypass": {
+                        "path": None,
+                        "content": '''// Quick License Bypass Template
+'use strict';
+
+const commonLicensePatterns = [
+    'IsLicensed', 'CheckLicense', 'ValidateLicense', 'IsRegistered',
+    'IsActivated', 'CheckActivation', 'VerifyLicense', 'IsTrialExpired'
+];
+
+Process.enumerateModules().forEach(function(module) {
+    if (module.name.toLowerCase().includes('license') ||
+        module.name.toLowerCase().includes('protect')) {
+        console.log('[*] Suspicious module: ' + module.name);
+    }
+});
+
+commonLicensePatterns.forEach(function(pattern) {
+    Module.enumerateExports(Process.enumerateModules()[0].name).forEach(function(exp) {
+        if (exp.name.includes(pattern)) {
+            console.log('[*] Found license function: ' + exp.name);
+            Interceptor.attach(exp.address, {
+                onLeave: function(retval) {
+                    retval.replace(1);
+                    console.log('[+] Bypassed: ' + exp.name);
+                }
+            });
+        }
+    });
+});
+''',
+                        "size": 0,
+                    }
+                },
+            },
+        }
+
+        templates.update(inline_templates)
+
+        logger.debug("Loaded %d script template categories", len(templates))
+        return templates
+
+    def setup_ui(self) -> None:
+        """Initialize and configure the dialog user interface.
+
+        Sets up the main layout, tab widget with all functional tabs,
+        status bar, and applies the dark theme styling.
+
+        """
+        main_layout = QVBoxLayout(self)
+
+        self.tabs = QTabWidget()
+
+        self.tabs.addTab(self.create_process_tab(), "Process Management")
+        self.tabs.addTab(self.create_scripts_tab(), "Scripts & Hooks")
+        self.tabs.addTab(self.create_ai_generation_tab(), "AI Script Generation")
+        self.tabs.addTab(self.create_protection_tab(), "Protection Detection")
+        self.tabs.addTab(self.create_performance_tab(), "Performance")
+        self.tabs.addTab(self.create_presets_tab(), "Presets & Wizard")
+        self.tabs.addTab(self.create_logs_tab(), "Logs & Analysis")
+
+        main_layout.addWidget(self.tabs)
+
+        self.status_label = QLabel("Ready")
+        self.status_label.setObjectName("statusLabel")
+        main_layout.addWidget(self.status_label)
+
+        self.setLayout(main_layout)
+
+        from ..style_utils import get_default_progress_bar_style
+
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+            QTabWidget::pane {
+                border: 1px solid #444;
+                background-color: #2a2a2a;
+            }
+            QTabBar::tab {
+                background-color: #2a2a2a;
+                color: #ffffff;
+                padding: 8px 16px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: #3a3a3a;
+                border-bottom: 2px solid #0d7377;
+            }
+            QGroupBox {
+                border: 1px solid #444;
+                border-radius: 4px;
+                margin-top: 10px;
+                padding-top: 10px;
+                font-weight: bold;
+            }
+            QGroupBox::title {
+                color: #0d7377;
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 10px;
+            }
+            QPushButton {
+                background-color: #0d7377;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #14868c;
+            }
+            QPushButton:pressed {
+                background-color: #0a5a5e;
+            }
+            QPushButton:disabled {
+                background-color: #444;
+                color: #888;
+            }
+            QTableWidget {
+                background-color: #2a2a2a;
+                color: #ffffff;
+                gridline-color: #444;
+                selection-background-color: #0d7377;
+            }
+            QHeaderView::section {
+                background-color: #333;
+                color: #ffffff;
+                padding: 5px;
+                border: 1px solid #444;
+            }
+            QLineEdit, QComboBox, QSpinBox {
+                background-color: #3a3a3a;
+                color: #ffffff;
+                border: 1px solid #555;
+                padding: 5px;
+                border-radius: 3px;
+            }
+            QCheckBox {
+                color: #ffffff;
+            }
+            QTextEdit {
+                background-color: #1e1e1e;
+                color: #ffffff;
+                border: 1px solid #444;
+                font-family: Consolas, monospace;
+            }
+            QTreeWidget {
+                background-color: #2a2a2a;
+                color: #ffffff;
+                border: 1px solid #444;
+            }
+            QLabel#statusLabel {
+                color: #888;
+                padding: 5px;
+                border-top: 1px solid #444;
+            }
+            QLabel#fridaInfoLabel {
+                color: #0d7377;
+                font-weight: bold;
+            }
+            QPushButton#aiGenerateButton, QPushButton#fridaGenerateButton {
+                background-color: #1a6b1a;
+                font-size: 14px;
+            }
+            QPushButton#aiGenerateButton:hover, QPushButton#fridaGenerateButton:hover {
+                background-color: #228b22;
+            }
+        """
+            + get_default_progress_bar_style()
+        )
+
+        logger.debug("Frida Manager Dialog UI setup complete")
+
+    def setup_connections(self) -> None:
+        """Wire up signal/slot connections for UI elements.
+
+        Connects button clicks, selection changes, and other UI events
+        to their respective handler methods.
+
+        """
+        if hasattr(self, "process_search") and self.process_search:
+            self.process_search.textChanged.connect(self.filter_processes)
+
+        if hasattr(self, "refresh_btn") and self.refresh_btn:
+            self.refresh_btn.clicked.connect(self.refresh_processes)
+
+        if hasattr(self, "process_table") and self.process_table:
+            self.process_table.itemSelectionChanged.connect(self.on_process_selected)
+
+        if hasattr(self, "attach_btn") and self.attach_btn:
+            self.attach_btn.clicked.connect(self.attach_to_process)
+
+        if hasattr(self, "detach_btn") and self.detach_btn:
+            self.detach_btn.clicked.connect(self.detach_from_process)
+
+        if hasattr(self, "spawn_btn") and self.spawn_btn:
+            self.spawn_btn.clicked.connect(self.spawn_process)
+
+        if hasattr(self, "suspend_btn") and self.suspend_btn:
+            self.suspend_btn.clicked.connect(self.suspend_process)
+
+        if hasattr(self, "resume_btn") and self.resume_btn:
+            self.resume_btn.clicked.connect(self.resume_process)
+
+        if hasattr(self, "scripts_list") and self.scripts_list:
+            self.scripts_list.itemDoubleClicked.connect(self.load_selected_script)
+
+        if hasattr(self, "load_script_btn") and self.load_script_btn:
+            self.load_script_btn.clicked.connect(self.load_selected_script)
+
+        if hasattr(self, "add_script_btn") and self.add_script_btn:
+            self.add_script_btn.clicked.connect(self.add_custom_script)
+
+        if hasattr(self, "reload_scripts_btn") and self.reload_scripts_btn:
+            self.reload_scripts_btn.clicked.connect(self.reload_script_list)
+
+        if hasattr(self, "preset_combo") and self.preset_combo:
+            self.preset_combo.currentTextChanged.connect(self.on_preset_selected)
+
+        if hasattr(self, "apply_preset_btn") and self.apply_preset_btn:
+            self.apply_preset_btn.clicked.connect(self.apply_selected_preset)
+
+        if hasattr(self, "start_wizard_btn") and self.start_wizard_btn:
+            self.start_wizard_btn.clicked.connect(self.start_bypass_wizard)
+
+        if hasattr(self, "stop_wizard_btn") and self.stop_wizard_btn:
+            self.stop_wizard_btn.clicked.connect(self.stop_bypass_wizard)
+
+        if hasattr(self, "save_custom_btn") and self.save_custom_btn:
+            self.save_custom_btn.clicked.connect(self.save_custom_config)
+
+        if hasattr(self, "load_custom_btn") and self.load_custom_btn:
+            self.load_custom_btn.clicked.connect(self.load_custom_config)
+
+        if hasattr(self, "log_filter_combo") and self.log_filter_combo:
+            self.log_filter_combo.currentTextChanged.connect(self.filter_logs)
+
+        if hasattr(self, "log_search") and self.log_search:
+            self.log_search.textChanged.connect(self.search_logs)
+
+        if hasattr(self, "clear_logs_btn") and self.clear_logs_btn:
+            self.clear_logs_btn.clicked.connect(self.clear_logs)
+
+        if hasattr(self, "export_logs_btn") and self.export_logs_btn:
+            self.export_logs_btn.clicked.connect(self.export_logs)
+
+        if hasattr(self, "export_analysis_btn") and self.export_analysis_btn:
+            self.export_analysis_btn.clicked.connect(self.export_analysis)
+
+        if hasattr(self, "ai_generate_btn") and self.ai_generate_btn:
+            self.ai_generate_btn.clicked.connect(self.generate_ai_script)
+
+        if hasattr(self, "ai_analyze_btn") and self.ai_analyze_btn:
+            self.ai_analyze_btn.clicked.connect(self.analyze_binary_ai)
+
+        if hasattr(self, "ai_preview_btn") and self.ai_preview_btn:
+            self.ai_preview_btn.clicked.connect(self.preview_ai_script)
+
+        if hasattr(self, "ai_deploy_btn") and self.ai_deploy_btn:
+            self.ai_deploy_btn.clicked.connect(self.deploy_ai_script)
+
+        if hasattr(self, "ai_save_btn") and self.ai_save_btn:
+            self.ai_save_btn.clicked.connect(self.save_ai_script)
+
+        if hasattr(self, "generate_btn") and self.generate_btn:
+            self.generate_btn.clicked.connect(self.generate_ai_scripts)
+
+        if hasattr(self, "save_scripts_btn") and self.save_scripts_btn:
+            self.save_scripts_btn.clicked.connect(self.save_generated_scripts)
+
+        if hasattr(self, "deploy_scripts_btn") and self.deploy_scripts_btn:
+            self.deploy_scripts_btn.clicked.connect(self.deploy_generated_scripts)
+
+        if hasattr(self, "test_qemu_btn") and self.test_qemu_btn:
+            self.test_qemu_btn.clicked.connect(self.test_scripts_in_qemu)
+
+        logger.debug("Frida Manager Dialog connections established")
+
+    def start_process_monitoring(self) -> None:
+        """Start background process monitoring for Frida attachment targets.
+
+        Initializes a timer to periodically refresh the process list and
+        monitor for changes in running processes that could be targets
+        for dynamic instrumentation.
+
+        """
+        self.process_monitor_timer = QTimer(self)
+        self.process_monitor_timer.timeout.connect(self._update_process_monitor)
+        self.process_monitor_timer.start(5000)
+
+        self.performance_timer = QTimer(self)
+        self.performance_timer.timeout.connect(self.update_performance_stats)
+        self.performance_timer.start(2000)
+
+        self._initialize_frida_manager()
+
+        if hasattr(self, "frida_manager") and self.frida_manager:
+            self.connect_structured_message_handlers()
+
+        logger.debug("Process monitoring started with 5s interval")
+
+    def _update_process_monitor(self) -> None:
+        """Update process list in background without blocking UI."""
+        try:
+            from intellicrack.handlers.psutil_handler import psutil
+        except ImportError:
+            return
+
+        current_pids = set()
+        try:
+            for proc in psutil.process_iter(["pid", "name"]):
+                try:
+                    current_pids.add(proc.info["pid"])
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+        except Exception as e:
+            logger.debug("Process monitoring update failed: %s", e)
+            return
+
+        if hasattr(self, "_last_known_pids"):
+            new_pids = current_pids - self._last_known_pids
+            removed_pids = self._last_known_pids - current_pids
+
+            if new_pids or removed_pids:
+                if hasattr(self, "status_label") and self.status_label:
+                    self.status_label.setText(
+                        f"Processes: {len(current_pids)} (+{len(new_pids)}/-{len(removed_pids)})"
+                    )
+
+        self._last_known_pids = current_pids
+
+    def _initialize_frida_manager(self) -> None:
+        """Initialize the FridaManager instance for instrumentation operations."""
+        if hasattr(self, "frida_manager") and self.frida_manager:
+            return
+
+        try:
+            from ...core.frida_manager import FridaManager
+
+            scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "frida"
+            self.frida_manager = FridaManager(script_dir=str(scripts_dir))
+            logger.info("FridaManager initialized successfully")
+        except ImportError as e:
+            logger.warning("Could not initialize FridaManager: %s", e)
+            self.frida_manager = None
+        except Exception as e:
+            logger.error("FridaManager initialization failed: %s", e)
+            self.frida_manager = None
+
+    def msleep(self, milliseconds: int) -> None:
+        """Sleep for specified milliseconds without blocking the event loop.
+
+        Args:
+            milliseconds: Number of milliseconds to sleep.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import (
+            QEventLoop,
+            QTimer as SleepTimer,
+        )
+
+        loop = QEventLoop()
+        SleepTimer.singleShot(milliseconds, loop.quit)
+        loop.exec()
+
+    def check_frida_availability(self) -> bool:
+        """Check if Frida is available and update UI accordingly.
+
+        Returns:
+            True if Frida is available, False otherwise.
+
+        """
+        if not HAS_FRIDA:
+            if hasattr(self, "status_label") and self.status_label:
+                self.status_label.setText("Frida not available - install frida-tools")
+
+            if hasattr(self, "attach_btn") and self.attach_btn:
+                self.attach_btn.setEnabled(False)
+                self.attach_btn.setToolTip("Frida library not installed")
+
+            if hasattr(self, "spawn_btn") and self.spawn_btn:
+                self.spawn_btn.setEnabled(False)
+
+            if hasattr(self, "log_console") and self.log_console:
+                self.log_console.append_output(
+                    "[WARNING] Frida is not available. Install with: pip install frida-tools"
+                )
+
+            logger.warning("Frida is not available for dynamic instrumentation")
+            return False
+
+        try:
+            device_manager = frida.get_device_manager()
+            local_device = frida.get_local_device()
+
+            available_devices: list[str] = []
+            try:
+                for device in device_manager.enumerate_devices():
+                    device_info = f"{device.name} ({device.type})"
+                    available_devices.append(device_info)
+                    if device.type == "usb":
+                        logger.info("USB device available: %s", device.name)
+            except Exception as enum_err:
+                logger.debug("Device enumeration failed: %s", enum_err)
+
+            if hasattr(self, "device_combo") and self.device_combo is not None:
+                self.device_combo.clear()
+                self.device_combo.addItems(available_devices)
+                local_idx = next(
+                    (i for i, d in enumerate(available_devices) if "local" in d.lower()),
+                    0
+                )
+                self.device_combo.setCurrentIndex(local_idx)
+
+            self.available_frida_devices = available_devices
+
+            device_count = len(available_devices)
+            status_msg = f"Frida {frida.__version__} ready - {local_device.name} ({device_count} device(s))"
+
+            if hasattr(self, "status_label") and self.status_label:
+                self.status_label.setText(status_msg)
+
+            if hasattr(self, "log_console") and self.log_console:
+                self.log_console.append_output(f"[INFO] {status_msg}")
+                if device_count > 1:
+                    for dev in available_devices:
+                        self.log_console.append_output(f"[INFO]   - {dev}")
+
+            logger.info("Frida %s available on device: %s (%d total devices)",
+                       frida.__version__, local_device.name, device_count)
+            return True
+
+        except Exception as e:
+            if hasattr(self, "status_label") and self.status_label:
+                self.status_label.setText(f"Frida error: {e}")
+
+            logger.error("Frida initialization check failed: %s", e)
+            return False
+
+    def refresh_process_list(self) -> None:
+        """Refresh the list of running processes for Frida attachment.
+
+        Scans for running processes with accessible executables that can
+        be targeted for dynamic instrumentation.
+
+        """
+        if hasattr(self, "process_worker") and self.process_worker and self.process_worker.isRunning():
+            return
+
+        self.process_worker = ProcessWorker()
+        self.process_worker.process_found.connect(self._on_processes_found)
+        self.process_worker.error.connect(self._on_process_scan_error)
+        self.process_worker.start()
+
+        if hasattr(self, "status_label") and self.status_label:
+            self.status_label.setText("Scanning for processes...")
+
+        if hasattr(self, "refresh_btn") and self.refresh_btn:
+            self.refresh_btn.setEnabled(False)
+
+    def _on_processes_found(self, processes: list[dict]) -> None:
+        """Handle process scan completion.
+
+        Args:
+            processes: List of process dictionaries with pid, name, and path.
+
+        """
+        self.process_list = processes
+
+        if hasattr(self, "process_table") and self.process_table:
+            self.process_table.setRowCount(len(processes))
+
+            for row, proc in enumerate(processes):
+                pid_item = QTableWidgetItem(str(proc.get("pid", "")))
+                name_item = QTableWidgetItem(proc.get("name", ""))
+                path_item = QTableWidgetItem(proc.get("path", ""))
+
+                self.process_table.setItem(row, 0, pid_item)
+                self.process_table.setItem(row, 1, name_item)
+                self.process_table.setItem(row, 2, path_item)
+
+        if hasattr(self, "status_label") and self.status_label:
+            self.status_label.setText(f"Found {len(processes)} processes")
+
+        if hasattr(self, "refresh_btn") and self.refresh_btn:
+            self.refresh_btn.setEnabled(True)
+
+        logger.debug("Process scan completed: %d processes found", len(processes))
+
+    def _on_process_scan_error(self, error_msg: str) -> None:
+        """Handle process scan error.
+
+        Args:
+            error_msg: Description of the error that occurred.
+
+        """
+        if hasattr(self, "status_label") and self.status_label:
+            self.status_label.setText(f"Process scan error: {error_msg}")
+
+        if hasattr(self, "refresh_btn") and self.refresh_btn:
+            self.refresh_btn.setEnabled(True)
+
+        logger.error("Process scan failed: %s", error_msg)
+
+    def load_settings(self) -> None:
+        """Load saved dialog settings from persistent storage.
+
+        Restores user preferences including window geometry, selected presets,
+        hook configurations, and other dialog state.
+
+        """
+        try:
+            from intellicrack.handlers.pyqt6_handler import QSettings
+
+            settings = QSettings("Intellicrack", "FridaManagerDialog")
+
+            geometry = settings.value("geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
+
+            if hasattr(self, "batch_hooks_cb") and self.batch_hooks_cb:
+                batch_enabled = settings.value("batch_hooks_enabled", True, type=bool)
+                self.batch_hooks_cb.setChecked(batch_enabled)
+
+            if hasattr(self, "batch_size_spin") and self.batch_size_spin:
+                batch_size = settings.value("batch_size", 50, type=int)
+                self.batch_size_spin.setValue(batch_size)
+
+            if hasattr(self, "batch_timeout_spin") and self.batch_timeout_spin:
+                batch_timeout = settings.value("batch_timeout", 100, type=int)
+                self.batch_timeout_spin.setValue(batch_timeout)
+
+            if hasattr(self, "selective_cb") and self.selective_cb:
+                selective = settings.value("selective_instrumentation", True, type=bool)
+                self.selective_cb.setChecked(selective)
+
+            if hasattr(self, "auto_adapt_cb") and self.auto_adapt_cb:
+                auto_adapt = settings.value("auto_adaptation", True, type=bool)
+                self.auto_adapt_cb.setChecked(auto_adapt)
+
+            if hasattr(self, "opt_memory_cb") and self.opt_memory_cb:
+                opt_memory = settings.value("optimize_memory", True, type=bool)
+                self.opt_memory_cb.setChecked(opt_memory)
+
+            if hasattr(self, "opt_cpu_cb") and self.opt_cpu_cb:
+                opt_cpu = settings.value("optimize_cpu", True, type=bool)
+                self.opt_cpu_cb.setChecked(opt_cpu)
+
+            if hasattr(self, "cache_cb") and self.cache_cb:
+                cache_enabled = settings.value("result_caching", True, type=bool)
+                self.cache_cb.setChecked(cache_enabled)
+
+            last_preset = settings.value("last_preset", "")
+            if last_preset and hasattr(self, "preset_combo") and self.preset_combo:
+                idx = self.preset_combo.findText(last_preset)
+                if idx >= 0:
+                    self.preset_combo.setCurrentIndex(idx)
+
+            last_binary = settings.value("last_target_binary", "")
+            if last_binary and hasattr(self, "ai_binary_path") and self.ai_binary_path:
+                if Path(last_binary).exists():
+                    self.ai_binary_path.setText(last_binary)
+
+            logger.debug("Settings loaded successfully")
+
+        except Exception as e:
+            logger.warning("Failed to load settings: %s", e)
+
+    def save_settings(self) -> None:
+        """Save current dialog settings to persistent storage."""
+        try:
+            from intellicrack.handlers.pyqt6_handler import QSettings
+
+            settings = QSettings("Intellicrack", "FridaManagerDialog")
+
+            settings.setValue("geometry", self.saveGeometry())
+
+            if hasattr(self, "batch_hooks_cb") and self.batch_hooks_cb:
+                settings.setValue("batch_hooks_enabled", self.batch_hooks_cb.isChecked())
+
+            if hasattr(self, "batch_size_spin") and self.batch_size_spin:
+                settings.setValue("batch_size", self.batch_size_spin.value())
+
+            if hasattr(self, "batch_timeout_spin") and self.batch_timeout_spin:
+                settings.setValue("batch_timeout", self.batch_timeout_spin.value())
+
+            if hasattr(self, "selective_cb") and self.selective_cb:
+                settings.setValue("selective_instrumentation", self.selective_cb.isChecked())
+
+            if hasattr(self, "auto_adapt_cb") and self.auto_adapt_cb:
+                settings.setValue("auto_adaptation", self.auto_adapt_cb.isChecked())
+
+            if hasattr(self, "opt_memory_cb") and self.opt_memory_cb:
+                settings.setValue("optimize_memory", self.opt_memory_cb.isChecked())
+
+            if hasattr(self, "opt_cpu_cb") and self.opt_cpu_cb:
+                settings.setValue("optimize_cpu", self.opt_cpu_cb.isChecked())
+
+            if hasattr(self, "cache_cb") and self.cache_cb:
+                settings.setValue("result_caching", self.cache_cb.isChecked())
+
+            if hasattr(self, "preset_combo") and self.preset_combo:
+                settings.setValue("last_preset", self.preset_combo.currentText())
+
+            if hasattr(self, "ai_binary_path") and self.ai_binary_path:
+                settings.setValue("last_target_binary", self.ai_binary_path.text())
+
+            settings.sync()
+            logger.debug("Settings saved successfully")
+
+        except Exception as e:
+            logger.warning("Failed to save settings: %s", e)
+
+    def generate_ai_scripts(self) -> None:
+        """Generate AI scripts using the AI Script Generation tab settings."""
+        target_binary = ""
+        if hasattr(self, "target_binary_edit") and self.target_binary_edit:
+            target_binary = self.target_binary_edit.text().strip()
+
+        if not target_binary:
+            QMessageBox.warning(self, "Warning", "Please select a target binary first.")
+            return
+
+        if not Path(target_binary).exists():
+            QMessageBox.warning(self, "Warning", "Selected binary file does not exist.")
+            return
+
+        if hasattr(self, "progress_bar") and self.progress_bar:
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setRange(0, 0)
+
+        if hasattr(self, "progress_label") and self.progress_label:
+            self.progress_label.setText("Generating AI scripts...")
+
+        self.start_ai_script_generation(target_binary)
+
+    def save_generated_scripts(self) -> None:
+        """Save AI-generated scripts to the scripts directory."""
+        if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts to save. Generate scripts first.")
+            return
+
+        save_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory to Save Scripts",
+            str(Path(__file__).parent.parent.parent / "scripts" / "frida" / "ai_scripts"),
+        )
+
+        if not save_dir:
+            return
+
+        save_path = Path(save_dir)
+        save_path.mkdir(parents=True, exist_ok=True)
+
+        saved_count = 0
+        for script in self.ai_generated_scripts:
+            try:
+                script_content = script.content if hasattr(script, "content") else str(script)
+                script_name = f"ai_generated_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{saved_count}.js"
+
+                if hasattr(script, "metadata") and hasattr(script.metadata, "script_type"):
+                    script_type = script.metadata.script_type.value.lower().replace(" ", "_")
+                    script_name = f"{script_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.js"
+
+                script_path = save_path / script_name
+                script_path.write_text(script_content, encoding="utf-8")
+                saved_count += 1
+
+                if hasattr(self, "log_console") and self.log_console:
+                    self.log_console.append_output(f"[SAVED] {script_path}")
+
+            except Exception as e:
+                logger.error("Failed to save script: %s", e)
+                if hasattr(self, "log_console") and self.log_console:
+                    self.log_console.append_output(f"[ERROR] Failed to save script: {e}")
+
+        if saved_count > 0:
+            QMessageBox.information(
+                self, "Success", f"Saved {saved_count} scripts to:\n{save_dir}"
+            )
+            if hasattr(self, "save_scripts_btn") and self.save_scripts_btn:
+                self.save_scripts_btn.setEnabled(False)
+
+            self.reload_script_list()
+
+    def deploy_generated_scripts(self) -> None:
+        """Deploy generated scripts to the current Frida session."""
+        if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts to deploy. Generate scripts first.")
+            return
+
+        if not hasattr(self, "current_session") or not self.current_session:
+            QMessageBox.warning(self, "Warning", "No active Frida session. Attach to a process first.")
+            return
+
+        self.deploy_ai_script()
+
+    def test_scripts_in_qemu(self) -> None:
+        """Test generated scripts in a QEMU sandbox environment."""
+        if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts to test. Generate scripts first.")
+            return
+
+        target_binary = ""
+        if hasattr(self, "target_binary_edit") and self.target_binary_edit:
+            target_binary = self.target_binary_edit.text().strip()
+
+        if not target_binary or not Path(target_binary).exists():
+            QMessageBox.warning(self, "Warning", "Please select a valid target binary for QEMU testing.")
+            return
+
+        try:
+            from ...core.processing.qemu_emulator import QEMUEmulator
+
+            qemu = QEMUEmulator()
+
+            if hasattr(self, "progress_label") and self.progress_label:
+                self.progress_label.setText("Initializing QEMU sandbox...")
+
+            if hasattr(self, "progress_bar") and self.progress_bar:
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setRange(0, 0)
+
+            for script in self.ai_generated_scripts:
+                script_content = script.content if hasattr(script, "content") else str(script)
+
+                result = qemu.test_script(
+                    binary_path=target_binary,
+                    script_content=script_content,
+                    timeout=60,
+                )
+
+                if result.get("success"):
+                    if hasattr(self, "log_console") and self.log_console:
+                        self.log_console.append_output(
+                            f"[QEMU] Script test passed: {result.get('message', 'Success')}"
+                        )
+                else:
+                    if hasattr(self, "log_console") and self.log_console:
+                        self.log_console.append_output(
+                            f"[QEMU] Script test failed: {result.get('error', 'Unknown error')}"
+                        )
+
+            if hasattr(self, "progress_label") and self.progress_label:
+                self.progress_label.setText("QEMU testing complete")
+
+            if hasattr(self, "progress_bar") and self.progress_bar:
+                self.progress_bar.setVisible(False)
+
+        except ImportError:
+            QMessageBox.warning(
+                self, "QEMU Not Available",
+                "QEMU emulator is not available. Install QEMU for sandbox testing."
+            )
+        except Exception as e:
+            logger.error("QEMU testing failed: %s", e)
+            QMessageBox.critical(self, "Error", f"QEMU testing failed: {e}")
+
+            if hasattr(self, "progress_bar") and self.progress_bar:
+                self.progress_bar.setVisible(False)
+
     def init_ui(self) -> None:
         """Initialize the user interface."""
         self.setWindowTitle("Frida Manager - Advanced Controls")
@@ -2355,12 +3274,32 @@ class FridaManagerDialog(QDialog):
 
     def closeEvent(self, event: object) -> None:
         """Handle dialog close."""
-        # Clean up Frida manager
-        self.frida_manager.cleanup()
+        self.save_settings()
 
-        # Stop timers
-        if hasattr(self, "monitor_timer"):
+        if hasattr(self, "frida_manager") and self.frida_manager:
+            try:
+                self.frida_manager.cleanup()
+            except Exception as e:
+                logger.warning("FridaManager cleanup failed: %s", e)
+
+        if hasattr(self, "monitor_timer") and self.monitor_timer:
             self.monitor_timer.stop()
+
+        if hasattr(self, "process_monitor_timer") and self.process_monitor_timer:
+            self.process_monitor_timer.stop()
+
+        if hasattr(self, "performance_timer") and self.performance_timer:
+            self.performance_timer.stop()
+
+        if hasattr(self, "process_worker") and self.process_worker:
+            if self.process_worker.isRunning():
+                self.process_worker.requestInterruption()
+                self.process_worker.wait(1000)
+
+        if hasattr(self, "frida_worker") and self.frida_worker:
+            if self.frida_worker.isRunning():
+                self.frida_worker.requestInterruption()
+                self.frida_worker.wait(1000)
 
         event.accept()
 

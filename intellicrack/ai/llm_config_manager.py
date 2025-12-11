@@ -28,6 +28,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -641,6 +642,176 @@ class LLMConfigManager:
             logger.info(f"Exported configuration to {export_path}")
         except Exception as e:
             logger.error(f"Failed to export configuration: {e}")
+
+    def switch_backend(self, backend_name: str) -> bool:
+        """Switch to a different LLM backend.
+
+        Args:
+            backend_name: Name of the backend to switch to (e.g., 'openai', 'anthropic', 'ollama')
+
+        Returns:
+            True if switch was successful, False otherwise
+
+        """
+        from intellicrack.core.config_manager import get_config
+
+        valid_backends = {
+            "openai": LLMProvider.OPENAI,
+            "anthropic": LLMProvider.ANTHROPIC,
+            "google": LLMProvider.GOOGLE,
+            "ollama": LLMProvider.OLLAMA,
+            "local": LLMProvider.LOCAL,
+            "lmstudio": LLMProvider.LMSTUDIO,
+            "openrouter": LLMProvider.OPENROUTER,
+        }
+
+        normalized_name = backend_name.lower().strip()
+
+        if normalized_name not in valid_backends:
+            logger.error(f"Unknown backend: {backend_name}. Valid backends: {list(valid_backends.keys())}")
+            return False
+
+        try:
+            central_config = get_config()
+            current_backend = central_config.get("llm_configuration.active_backend", "")
+
+            if current_backend == normalized_name:
+                logger.info(f"Already using backend: {normalized_name}")
+                return True
+
+            backend_config = central_config.get(f"llm_configuration.backends.{normalized_name}", {})
+
+            if not backend_config:
+                backend_config = self._create_default_backend_config(normalized_name)
+                central_config.set(f"llm_configuration.backends.{normalized_name}", backend_config)
+
+            llm_manager = get_llm_manager()
+
+            provider = valid_backends[normalized_name]
+            api_key = backend_config.get("api_key") or os.environ.get(f"{normalized_name.upper()}_API_KEY", "")
+            api_base = backend_config.get("api_base", "")
+            model_name = backend_config.get("default_model", self._get_default_model_for_backend(normalized_name))
+
+            config = LLMConfig(
+                provider=provider,
+                model_name=model_name,
+                api_key=api_key,
+                api_base=api_base if api_base else None,
+                context_length=backend_config.get("context_length", 4096),
+                temperature=backend_config.get("temperature", 0.7),
+                max_tokens=backend_config.get("max_tokens", 2048),
+                tools_enabled=backend_config.get("tools_enabled", True),
+            )
+
+            backend_id = f"{normalized_name}_default"
+            if llm_manager.register_llm(backend_id, config):
+                central_config.set("llm_configuration.active_backend", normalized_name)
+                central_config.set("llm_configuration.active_backend_id", backend_id)
+                central_config.save()
+
+                logger.info(f"Successfully switched to backend: {normalized_name}")
+                return True
+            logger.error(f"Failed to register backend: {normalized_name}")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error switching to backend {backend_name}: {e}")
+            return False
+
+    def _create_default_backend_config(self, backend_name: str) -> dict[str, Any]:
+        """Create default configuration for a backend.
+
+        Args:
+            backend_name: Name of the backend
+
+        Returns:
+            Default configuration dictionary
+
+        """
+        defaults = {
+            "openai": {
+                "api_base": "https://api.openai.com/v1",
+                "default_model": "gpt-4-turbo-preview",
+                "context_length": 128000,
+                "max_tokens": 4096,
+            },
+            "anthropic": {
+                "api_base": "https://api.anthropic.com",
+                "default_model": "claude-3-sonnet-20240229",
+                "context_length": 200000,
+                "max_tokens": 4096,
+            },
+            "google": {
+                "api_base": "https://generativelanguage.googleapis.com",
+                "default_model": "gemini-pro",
+                "context_length": 32000,
+                "max_tokens": 2048,
+            },
+            "ollama": {
+                "api_base": "http://localhost:11434",
+                "default_model": "llama3",
+                "context_length": 8192,
+                "max_tokens": 2048,
+            },
+            "local": {
+                "api_base": "",
+                "default_model": "local-model",
+                "context_length": 4096,
+                "max_tokens": 2048,
+            },
+            "lmstudio": {
+                "api_base": "http://localhost:1234/v1",
+                "default_model": "local-model",
+                "context_length": 4096,
+                "max_tokens": 2048,
+            },
+            "openrouter": {
+                "api_base": "https://openrouter.ai/api/v1",
+                "default_model": "openai/gpt-3.5-turbo",
+                "context_length": 16000,
+                "max_tokens": 4096,
+            },
+        }
+
+        backend_defaults = defaults.get(backend_name, {
+            "api_base": "",
+            "default_model": "default",
+            "context_length": 4096,
+            "max_tokens": 2048,
+        })
+
+        return {
+            "enabled": True,
+            "api_key": "",
+            "api_base": backend_defaults["api_base"],
+            "default_model": backend_defaults["default_model"],
+            "context_length": backend_defaults["context_length"],
+            "max_tokens": backend_defaults["max_tokens"],
+            "temperature": 0.7,
+            "tools_enabled": True,
+            "created_at": datetime.now().isoformat(),
+        }
+
+    def _get_default_model_for_backend(self, backend_name: str) -> str:
+        """Get the default model name for a backend.
+
+        Args:
+            backend_name: Name of the backend
+
+        Returns:
+            Default model name
+
+        """
+        model_defaults = {
+            "openai": "gpt-4-turbo-preview",
+            "anthropic": "claude-3-sonnet-20240229",
+            "google": "gemini-pro",
+            "ollama": "llama3",
+            "local": "local-model",
+            "lmstudio": "local-model",
+            "openrouter": "openai/gpt-3.5-turbo",
+        }
+        return model_defaults.get(backend_name, "default")
 
     def import_config(self, import_path: str, merge: bool = True) -> None:
         """Import configurations from a file.

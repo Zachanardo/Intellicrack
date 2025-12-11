@@ -22,6 +22,7 @@ import logging
 import os
 import subprocess
 import tempfile
+from pathlib import Path
 from typing import Any
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
@@ -727,7 +728,7 @@ class R2ScriptingEngine:
                 {
                     "type": "registry_bypass",
                     "target": "registry_operations",
-                    "method": "create_fake_registry_entries",
+                    "method": "inject_license_registry_entries",
                     "difficulty": "easy",
                     "success_probability": 0.95,
                 },

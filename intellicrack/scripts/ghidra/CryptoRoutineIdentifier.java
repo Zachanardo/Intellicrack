@@ -32,9 +32,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   private static final Map<String, byte[][]> AES_CONSTANTS = new HashMap<>();
 
   // Detection results
-  private List<CryptoRoutine> detectedRoutines = new ArrayList<>();
-  private Map<Address, CryptoConstant> foundConstants = new HashMap<>();
-  private List<CryptoKey> extractedKeys = new ArrayList<>();
+  private final List<CryptoRoutine> detectedRoutines = new ArrayList<>();
+  private final Map<Address, CryptoConstant> foundConstants = new HashMap<>();
+  private final List<CryptoKey> extractedKeys = new ArrayList<>();
 
   // Analysis state
   private DecompInterface decompiler;
@@ -361,7 +361,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     if (data.length < 16) return false;
 
     // Check first 4 SHA-256 K constants
-    int[] sha256K = {0x428a2f98, 0x71374491, (int) 0xb5c0fbcf, (int) 0xe9b5dba5};
+    int[] sha256K = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5};
 
     ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
     for (int k : sha256K) {
@@ -381,7 +381,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     if (data.length < 16) return false;
 
     // Check first 4 MD5 constants
-    int[] md5K = {(int) 0xd76aa478, (int) 0xe8c7b756, 0x242070db, (int) 0xc1bdceee};
+    int[] md5K = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee};
 
     ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
     for (int k : md5K) {
@@ -708,7 +708,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       }
     } else if (params.length == 4) {
       // Possible encrypt/decrypt(input, inputLen, output, key)
-      if (params.length > 1 && isIntegerType(params[1].getDataType())) {
+      if (isIntegerType(params[1].getDataType())) {
         CryptoEvidence evidence =
             evidenceMap.computeIfAbsent(func.getEntryPoint(), k -> new CryptoEvidence());
         evidence.addEvidence("Block Cipher", 0.5);
@@ -779,7 +779,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         String keyType = identifyKeyType(keySize, data);
         println("  Found potential " + keyType + " key at " + addr);
 
-        extractedKeys.add(new CryptoKey(keyType, "Key Material", data, addr));
+        extractedKeys.add(new CryptoKey(keyType, data, addr));
         break;
       }
     }
@@ -1289,18 +1289,16 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         CodeUnit codeUnit = codeUnitIter.next();
         codeUnitsAnalyzed++;
 
-        if (codeUnit instanceof Instruction) {
-          Instruction instruction = (Instruction) codeUnit;
-          String mnemonic = instruction.getMnemonicString();
+        if (codeUnit instanceof Instruction instruction) {
+            String mnemonic = instruction.getMnemonicString();
           instructionTypes.merge(mnemonic, 1, Integer::sum);
 
           // Analyze for crypto-related instruction patterns
           if (isCryptoRelevantInstruction(instruction)) {
             cryptoRelatedFunctions.add(function);
           }
-        } else if (codeUnit instanceof Data) {
-          Data data = (Data) codeUnit;
-          // Analyze embedded data for crypto constants
+        } else if (codeUnit instanceof Data data) {
+            // Analyze embedded data for crypto constants
           analyzeCryptoDataInFunction(data, function);
         }
 
@@ -1470,14 +1468,12 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       String typeName = dataType.getClass().getSimpleName();
       localDataTypeStats.merge(typeName, 1, Integer::sum);
 
-      if (dataType instanceof Structure) {
-        Structure structure = (Structure) dataType;
-        if (analyzeCryptoStructure(structure)) {
+      if (dataType instanceof Structure structure) {
+          if (analyzeCryptoStructure(structure)) {
           cryptoStructures.add(structure);
         }
-      } else if (dataType instanceof Enum) {
-        Enum enumType = (Enum) dataType;
-        if (analyzeCryptoEnum(enumType)) {
+      } else if (dataType instanceof Enum enumType) {
+          if (analyzeCryptoEnum(enumType)) {
           cryptoEnums.add(enumType);
         }
       }
@@ -2116,7 +2112,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       if (found != null) {
         return true;
       }
-      start = found;
+      start = null;
     }
 
     return false;
@@ -2130,41 +2126,23 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     return sb.toString();
   }
 
-  // Inner classes
-  private static class CryptoConstant {
-    String algorithm;
-    Object value;
-
-    CryptoConstant(String algo, Object val) {
-      this.algorithm = algo;
-      this.value = val;
+    // Inner classes
+    private record CryptoConstant(String algorithm, Object value) {
     }
-  }
 
-  private static class CryptoRoutine {
-    String algorithm;
-    Address address;
-    String reason;
-    double confidence;
-
-    CryptoRoutine(String algo, Address addr, String reason, double conf) {
-      this.algorithm = algo;
-      this.address = addr;
-      this.reason = reason;
-      this.confidence = conf;
+    private record CryptoRoutine(String algorithm, Address address, String reason, double confidence) {
     }
-  }
 
   private static class CryptoKey {
-    String algorithm;
-    String keyType;
+    final String algorithm;
+    final String keyType;
     byte[] keyData;
     BigInteger keyValue;
-    Address address;
+    final Address address;
 
-    CryptoKey(String algo, String type, byte[] data, Address addr) {
+    CryptoKey(String algo, byte[] data, Address addr) {
       this.algorithm = algo;
-      this.keyType = type;
+      this.keyType = "Key Material";
       this.keyData = data;
       this.address = addr;
     }
@@ -2178,7 +2156,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private static final class CryptoEvidence {
-    Map<String, Double> algorithmConfidence = new HashMap<>();
+    final Map<String, Double> algorithmConfidence = new HashMap<>();
 
     void addEvidence(String algorithm, double confidence) {
       algorithmConfidence.put(
@@ -2197,7 +2175,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     }
   }
 
-  private final class CryptoOperationAnalysis {
+  private static final class CryptoOperationAnalysis {
     int xorCount = 0;
     int andCount = 0;
     int orCount = 0;

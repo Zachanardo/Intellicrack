@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 
 # Optional imports for enhanced tutorials

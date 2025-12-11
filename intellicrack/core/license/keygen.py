@@ -646,15 +646,223 @@ class ConstraintExtractor:
     """Extracts license key constraints from binary files."""
 
     def __init__(self, binary_path: Path) -> None:
-        """Initialize the validation analyzer.
+        """Initialize the constraint extractor.
 
         Args:
             binary_path: Path to the binary file to analyze
 
         """
         self.binary_path = Path(binary_path)
-        self.extractor = ConstraintExtractor(binary_path)
+        self.logger = logging.getLogger(__name__)
         self.algorithms: list[ExtractedAlgorithm] = []
+        self._binary_data: bytes | None = None
+        self._md: capstone.Cs | None = None
+
+    def extract_constraints(self) -> list[KeyConstraint]:
+        """Extract license key constraints from the binary file.
+
+        Analyzes the binary to identify validation routines and extracts
+        constraints that govern key format, length, character sets, and
+        validation algorithms.
+
+        Returns:
+            List of KeyConstraint objects describing validation requirements.
+
+        """
+        constraints: list[KeyConstraint] = []
+
+        try:
+            if not self.binary_path.exists():
+                self.logger.error(f"Binary file not found: {self.binary_path}")
+                return constraints
+
+            with open(self.binary_path, "rb") as f:
+                self._binary_data = f.read()
+
+            self._md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+            self._md.detail = True
+
+            constraints.extend(self._extract_string_constraints())
+            constraints.extend(self._extract_crypto_constraints())
+            constraints.extend(self._extract_format_constraints())
+            constraints.extend(self._extract_length_constraints())
+
+        except OSError as e:
+            self.logger.error(f"Failed to read binary file: {e}")
+        except Exception as e:
+            self.logger.error(f"Constraint extraction failed: {e}")
+
+        return constraints
+
+    def _extract_string_constraints(self) -> list[KeyConstraint]:
+        """Extract constraints from string patterns in the binary."""
+        constraints: list[KeyConstraint] = []
+
+        if not self._binary_data:
+            return constraints
+
+        license_patterns = [
+            (b"LICENSE", "license_keyword"),
+            (b"SERIAL", "serial_keyword"),
+            (b"KEY", "key_keyword"),
+            (b"ACTIVATION", "activation_keyword"),
+            (b"REGISTRATION", "registration_keyword"),
+        ]
+
+        format_patterns = [
+            (rb"[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}", "microsoft_format"),
+            (rb"[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}", "standard_format"),
+            (rb"[0-9]{4}-[0-9]{4}-[0-9]{4}", "numeric_format"),
+        ]
+
+        import re
+
+        for pattern, pattern_type in license_patterns:
+            if pattern in self._binary_data:
+                offset = self._binary_data.find(pattern)
+                constraints.append(
+                    KeyConstraint(
+                        constraint_type="keyword",
+                        description=f"Found {pattern_type} at offset {hex(offset)}",
+                        value=pattern.decode("utf-8", errors="ignore"),
+                        confidence=0.6,
+                        source_address=offset,
+                    )
+                )
+
+        for regex_pattern, format_type in format_patterns:
+            matches = list(re.finditer(regex_pattern, self._binary_data))
+            if matches:
+                for match in matches[:3]:
+                    constraints.append(
+                        KeyConstraint(
+                            constraint_type="format",
+                            description=f"Detected {format_type} pattern",
+                            value=format_type,
+                            confidence=0.75,
+                            source_address=match.start(),
+                        )
+                    )
+
+        return constraints
+
+    def _extract_crypto_constraints(self) -> list[KeyConstraint]:
+        """Extract constraints from cryptographic constants."""
+        constraints: list[KeyConstraint] = []
+
+        if not self._binary_data:
+            return constraints
+
+        crypto_signatures = {
+            bytes([0x67, 0x45, 0x23, 0x01]): ("md5", "MD5 initialization constant"),
+            bytes([0x01, 0x23, 0x45, 0x67]): ("md5_be", "MD5 big-endian constant"),
+            bytes([0xF0, 0xE1, 0xD2, 0xC3]): ("sha1", "SHA1 constant"),
+            bytes([0x67, 0xE6, 0x09, 0x6A]): ("sha256", "SHA256 constant"),
+            bytes([0x20, 0x83, 0xB8, 0xED]): ("crc32", "CRC32 polynomial (reversed)"),
+            bytes([0xB7, 0x1D, 0xC1, 0x04]): ("crc32_norm", "CRC32 polynomial (normal)"),
+        }
+
+        for signature, (algo_name, description) in crypto_signatures.items():
+            offset = self._binary_data.find(signature)
+            if offset != -1:
+                constraints.append(
+                    KeyConstraint(
+                        constraint_type="algorithm",
+                        description=description,
+                        value=algo_name,
+                        confidence=0.85,
+                        source_address=offset,
+                    )
+                )
+
+        rsa_exponents = [
+            (b"\x01\x00\x01\x00", 65537, "RSA public exponent 65537"),
+            (b"\x11\x00\x00\x00", 17, "RSA public exponent 17"),
+            (b"\x03\x00\x00\x00", 3, "RSA public exponent 3"),
+        ]
+
+        for pattern, value, description in rsa_exponents:
+            offset = self._binary_data.find(pattern)
+            if offset != -1:
+                constraints.append(
+                    KeyConstraint(
+                        constraint_type="rsa_exponent",
+                        description=description,
+                        value=value,
+                        confidence=0.7,
+                        source_address=offset,
+                    )
+                )
+
+        return constraints
+
+    def _extract_format_constraints(self) -> list[KeyConstraint]:
+        """Extract key format constraints from binary patterns."""
+        constraints: list[KeyConstraint] = []
+
+        if not self._binary_data:
+            return constraints
+
+        separator_patterns = [
+            (b"-", "dash"),
+            (b"_", "underscore"),
+            (b":", "colon"),
+        ]
+
+        for sep, sep_name in separator_patterns:
+            sep_count = self._binary_data.count(sep)
+            if sep_count > 100:
+                constraints.append(
+                    KeyConstraint(
+                        constraint_type="separator",
+                        description=f"Frequent {sep_name} separator detected",
+                        value=sep.decode(),
+                        confidence=0.5,
+                    )
+                )
+
+        return constraints
+
+    def _extract_length_constraints(self) -> list[KeyConstraint]:
+        """Extract key length constraints from comparison operations."""
+        constraints: list[KeyConstraint] = []
+
+        if not self._binary_data or not self._md:
+            return constraints
+
+        common_lengths = [16, 20, 25, 29, 32, 36]
+
+        for length in common_lengths:
+            length_bytes_le = struct.pack("<I", length)
+            length_bytes_be = struct.pack(">I", length)
+
+            for length_pattern in [length_bytes_le, length_bytes_be]:
+                offset = 0
+                while True:
+                    pos = self._binary_data.find(length_pattern, offset)
+                    if pos == -1:
+                        break
+
+                    context_start = max(0, pos - 16)
+                    context_end = min(len(self._binary_data), pos + 20)
+                    context = self._binary_data[context_start:context_end]
+
+                    cmp_indicators = [b"\x83", b"\x3d", b"\x81", b"\x39"]
+                    if any(ind in context for ind in cmp_indicators):
+                        constraints.append(
+                            KeyConstraint(
+                                constraint_type="length",
+                                description=f"Possible key length check: {length}",
+                                value=length,
+                                confidence=0.6,
+                                source_address=pos,
+                            )
+                        )
+                        break
+
+                    offset = pos + 1
+
+        return constraints
 
     def analyze_validation_algorithms(self) -> list[ExtractedAlgorithm]:
         """Analyze and extract validation algorithms from constraints.
@@ -663,7 +871,7 @@ class ConstraintExtractor:
             List of extracted validation algorithms
 
         """
-        constraints = self.extractor.extract_constraints()
+        constraints = self.extract_constraints()
 
         algorithm_types = self._group_constraints_by_algorithm(constraints)
 

@@ -4,10 +4,14 @@ Provides comprehensive interface for the Frida Bypass Wizard with real-time moni
 """
 
 import json
+import logging
 import os
 from datetime import datetime
 
 import psutil
+
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import (

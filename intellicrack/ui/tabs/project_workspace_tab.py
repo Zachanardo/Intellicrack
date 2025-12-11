@@ -19,7 +19,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
 
 from intellicrack.handlers.pyqt6_handler import (
     QFileDialog,

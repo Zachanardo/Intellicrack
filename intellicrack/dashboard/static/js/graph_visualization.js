@@ -92,7 +92,7 @@ class IntellicrakGraphVisualization {
             .data(['arrow-function', 'arrow-reference', 'arrow-data'])
             .enter()
             .append('marker')
-            .attr('id', (d) => d)
+            .attr('id', d => d)
             .attr('viewBox', '0 -5 10 10')
             .attr('refX', 20)
             .attr('refY', 0)
@@ -112,7 +112,7 @@ class IntellicrakGraphVisualization {
                 'link',
                 d3
                     .forceLink()
-                    .id((d) => d.id)
+                    .id(d => d.id)
                     .distance(this.options.linkDistance)
             )
             .force('charge', d3.forceManyBody().strength(this.options.chargeStrength))
@@ -124,7 +124,7 @@ class IntellicrakGraphVisualization {
             )
             .force(
                 'collision',
-                d3.forceCollide().radius((d) => this.getNodeRadius(d) + 5)
+                d3.forceCollide().radius(d => this.getNodeRadius(d) + 5)
             )
             .on('tick', () => this.tick());
 
@@ -137,7 +137,7 @@ class IntellicrakGraphVisualization {
         this.zoom = d3
             .zoom()
             .scaleExtent([0.1, 10])
-            .on('zoom', (event) => {
+            .on('zoom', event => {
                 this.mainGroup.attr('transform', event.transform);
             });
 
@@ -310,32 +310,32 @@ class IntellicrakGraphVisualization {
         const linksArray = Array.from(this.links.values());
 
         // Update links
-        const links = this.linkGroup.selectAll('.link').data(linksArray, (d) => d.id);
+        const links = this.linkGroup.selectAll('.link').data(linksArray, d => d.id);
 
         links.exit().remove();
 
         const linksEnter = links
             .enter()
             .append('line')
-            .attr('class', (d) => `link link-${d.type}`)
-            .attr('stroke', (d) => this.getLinkColor(d))
-            .attr('stroke-width', (d) => Math.sqrt(d.strength) * 2)
+            .attr('class', d => `link link-${d.type}`)
+            .attr('stroke', d => this.getLinkColor(d))
+            .attr('stroke-width', d => Math.sqrt(d.strength) * 2)
             .attr('stroke-opacity', 0.6)
-            .attr('marker-end', (d) => `url(#arrow-${d.type})`);
+            .attr('marker-end', d => `url(#arrow-${d.type})`);
 
         links.merge(linksEnter);
 
         // Update nodes
-        const nodes = this.nodeGroup.selectAll('.node').data(nodesArray, (d) => d.id);
+        const nodes = this.nodeGroup.selectAll('.node').data(nodesArray, d => d.id);
 
         nodes.exit().remove();
 
         const nodesEnter = nodes
             .enter()
             .append('circle')
-            .attr('class', (d) => `node node-${d.type}`)
-            .attr('r', (d) => this.getNodeRadius(d))
-            .attr('fill', (d) => this.getNodeColor(d))
+            .attr('class', d => `node node-${d.type}`)
+            .attr('r', d => this.getNodeRadius(d))
+            .attr('fill', d => this.getNodeColor(d))
             .attr('stroke', '#fff')
             .attr('stroke-width', 2)
             .call(this.drag())
@@ -348,8 +348,8 @@ class IntellicrakGraphVisualization {
 
         // Update labels
         const labels = this.labelGroup.selectAll('.label').data(
-            nodesArray.filter((d) => d.size > 2),
-            (d) => d.id
+            nodesArray.filter(d => d.size > 2),
+            d => d.id
         );
 
         labels.exit().remove();
@@ -362,7 +362,7 @@ class IntellicrakGraphVisualization {
             .attr('dy', -15)
             .attr('fill', '#fff')
             .attr('font-size', '10px')
-            .text((d) => this.truncateLabel(d.label));
+            .text(d => this.truncateLabel(d.label));
 
         labels.merge(labelsEnter);
 
@@ -380,22 +380,22 @@ class IntellicrakGraphVisualization {
         // Update link positions
         this.linkGroup
             .selectAll('.link')
-            .attr('x1', (d) => d.source.x)
-            .attr('y1', (d) => d.source.y)
-            .attr('x2', (d) => d.target.x)
-            .attr('y2', (d) => d.target.y);
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
 
         // Update node positions
         this.nodeGroup
             .selectAll('.node')
-            .attr('cx', (d) => d.x)
-            .attr('cy', (d) => d.y);
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y);
 
         // Update label positions
         this.labelGroup
             .selectAll('.label')
-            .attr('x', (d) => d.x)
-            .attr('y', (d) => d.y);
+            .attr('x', d => d.x)
+            .attr('y', d => d.y);
     }
 
     drag() {
@@ -482,7 +482,7 @@ class IntellicrakGraphVisualization {
             { label: 'Node Details', action: () => this.showNodeDetails(node) },
         ];
 
-        menuItems.forEach((item) => {
+        menuItems.forEach(item => {
             this.contextMenu
                 .append('div')
                 .attr('class', 'menu-item')
@@ -534,7 +534,7 @@ class IntellicrakGraphVisualization {
 
         // Remove child nodes
         const childNodes = this.getChildNodes(node.id);
-        childNodes.forEach((child) => {
+        childNodes.forEach(child => {
             this.removeNode(child.id);
         });
     }
@@ -558,20 +558,20 @@ class IntellicrakGraphVisualization {
 
         // Highlight connected nodes and links
         const connected = this.getConnectedNodes(node.id);
-        connected.forEach((nodeId) => {
+        connected.forEach(nodeId => {
             this.nodeGroup.select(`[id="${nodeId}"]`).attr('opacity', 1);
         });
 
         // Highlight node itself
         this.nodeGroup
             .selectAll('.node')
-            .filter((d) => d.id === node.id)
+            .filter(d => d.id === node.id)
             .attr('opacity', 1);
 
         // Highlight connected links
         this.linkGroup
             .selectAll('.link')
-            .filter((d) => connected.has(d.source.id) || connected.has(d.target.id))
+            .filter(d => connected.has(d.source.id) || connected.has(d.target.id))
             .attr('opacity', 0.8);
     }
 
@@ -587,7 +587,7 @@ class IntellicrakGraphVisualization {
             }
         });
 
-        linksToRemove.forEach((linkId) => this.links.delete(linkId));
+        linksToRemove.forEach(linkId => this.links.delete(linkId));
 
         // Update statistics
         this.stats.nodeCount--;
@@ -605,7 +605,7 @@ class IntellicrakGraphVisualization {
 
     getChildNodes(parentId) {
         const children = new Set();
-        this.links.forEach((link) => {
+        this.links.forEach(link => {
             if (link.source.id === parentId) {
                 children.add(link.target);
             }
@@ -615,7 +615,7 @@ class IntellicrakGraphVisualization {
 
     getConnectedNodes(nodeId) {
         const connected = new Set();
-        this.links.forEach((link) => {
+        this.links.forEach(link => {
             if (link.source.id === nodeId) {
                 connected.add(link.target.id);
             } else if (link.target.id === nodeId) {
@@ -664,7 +664,7 @@ class IntellicrakGraphVisualization {
                 cluster.add(current);
 
                 const connected = this.getConnectedNodes(current);
-                connected.forEach((connectedId) => {
+                connected.forEach(connectedId => {
                     if (!visited.has(connectedId)) {
                         stack.push(connectedId);
                     }
@@ -693,7 +693,7 @@ class IntellicrakGraphVisualization {
         // Export graph data
         return {
             nodes: Array.from(this.nodes.values()),
-            links: Array.from(this.links.values()).map((link) => ({
+            links: Array.from(this.links.values()).map(link => ({
                 ...link,
                 source: link.source.id,
                 target: link.target.id,
@@ -707,12 +707,12 @@ class IntellicrakGraphVisualization {
         this.clear();
 
         // Import nodes
-        graphData.nodes.forEach((node) => {
+        graphData.nodes.forEach(node => {
             this.nodes.set(node.id, node);
         });
 
         // Import links
-        graphData.links.forEach((link) => {
+        graphData.links.forEach(link => {
             this.links.set(link.id, link);
         });
 
@@ -739,7 +739,7 @@ class IntellicrakGraphVisualization {
 
     applyForceLayout() {
         // Reset fixed positions
-        this.nodes.forEach((node) => {
+        this.nodes.forEach(node => {
             node.fx = null;
             node.fy = null;
         });
@@ -754,7 +754,7 @@ class IntellicrakGraphVisualization {
         const angleStep = (2 * Math.PI) / this.nodes.size;
 
         let angle = 0;
-        this.nodes.forEach((node) => {
+        this.nodes.forEach(node => {
             node.x = center.x + radius * Math.cos(angle);
             node.y = center.y + radius * Math.sin(angle);
             node.fx = node.x;
@@ -770,7 +770,7 @@ class IntellicrakGraphVisualization {
         const roots = [];
         const hasIncoming = new Set();
 
-        this.links.forEach((link) => {
+        this.links.forEach(link => {
             hasIncoming.add(link.target.id || link.target);
         });
 
@@ -799,15 +799,15 @@ class IntellicrakGraphVisualization {
 
     computeLevels(roots) {
         const levels = [roots];
-        const visited = new Set(roots.map((n) => n.id));
+        const visited = new Set(roots.map(n => n.id));
 
         while (true) {
             const currentLevel = levels[levels.length - 1];
             const nextLevel = [];
 
-            currentLevel.forEach((node) => {
+            currentLevel.forEach(node => {
                 const children = this.getChildNodes(node.id);
-                children.forEach((child) => {
+                children.forEach(child => {
                     if (!visited.has(child.id)) {
                         visited.add(child.id);
                         nextLevel.push(child);
@@ -828,7 +828,7 @@ class IntellicrakGraphVisualization {
         const cellHeight = this.height / (Math.ceil(this.nodes.size / cols) + 1);
 
         let i = 0;
-        this.nodes.forEach((node) => {
+        this.nodes.forEach(node => {
             const row = Math.floor(i / cols);
             const col = i % cols;
 

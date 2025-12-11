@@ -1,8 +1,12 @@
 """Trial Reset Engine Dialog - Production-ready implementation."""
 
 import json
+import logging
 from datetime import datetime
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 from PyQt6.QtCore import QEvent, QThread, pyqtSignal
 from PyQt6.QtGui import QFont

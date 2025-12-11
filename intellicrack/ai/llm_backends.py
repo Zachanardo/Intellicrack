@@ -130,6 +130,7 @@ class LLMProvider(Enum):
 
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    GOOGLE = "google"
     LLAMACPP = "llamacpp"
     OLLAMA = "ollama"
     HUGGINGFACE = "huggingface"
@@ -426,6 +427,99 @@ class AnthropicBackend(LLMBackend):
         """Shutdown Anthropic backend."""
         super().shutdown()
         self.client = None
+
+
+class GoogleBackend(LLMBackend):
+    """Google AI (Gemini) API backend."""
+
+    def __init__(self, config: LLMConfig) -> None:
+        """Initialize Google AI backend with configuration.
+
+        Args:
+            config: LLM configuration object
+
+        """
+        super().__init__(config)
+        self.client: Any = None
+        self.model: Any = None
+
+    def initialize(self) -> bool:
+        """Initialize Google AI client."""
+        try:
+            import google.generativeai as genai
+
+            from ..utils.secrets_manager import get_secret
+
+            if not self.config.api_key:
+                api_key = get_secret("GOOGLE_API_KEY")
+                if not api_key:
+                    logger.error("Google API key not provided")
+                    return False
+            else:
+                api_key = self.config.api_key
+
+            genai.configure(api_key=api_key)
+            self.client = genai
+            self.model = genai.GenerativeModel(self.config.model_name or "gemini-pro")
+            self.is_initialized = True
+            logger.info("Google AI backend initialized with model: %s", self.config.model_name)
+            return True
+
+        except ImportError:
+            logger.exception("google-generativeai package not installed. Install with: pip install google-generativeai")
+            return False
+        except (OSError, ValueError, RuntimeError):
+            logger.exception("Failed to initialize Google AI backend")
+            return False
+
+    def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
+        """Send chat to Google AI API."""
+        if not self.is_initialized:
+            raise RuntimeError("Backend not initialized")
+
+        try:
+            history: list[dict[str, Any]] = []
+            system_instruction = None
+
+            for msg in messages:
+                if msg.role == "system":
+                    system_instruction = msg.content
+                elif msg.role == "user":
+                    history.append({"role": "user", "parts": [msg.content]})
+                elif msg.role == "assistant":
+                    history.append({"role": "model", "parts": [msg.content]})
+
+            if system_instruction:
+                self.model = self.client.GenerativeModel(
+                    self.config.model_name or "gemini-pro",
+                    system_instruction=system_instruction,
+                )
+
+            chat = self.model.start_chat(history=history[:-1] if history else [])
+            last_message = history[-1]["parts"][0] if history else ""
+
+            generation_config = {
+                "temperature": self.config.temperature,
+                "max_output_tokens": self.config.max_tokens,
+            }
+
+            response = chat.send_message(last_message, generation_config=generation_config)
+
+            return LLMResponse(
+                content=response.text if hasattr(response, "text") else str(response),
+                finish_reason="stop",
+                model=self.config.model_name,
+            )
+
+        except (OSError, ValueError, RuntimeError):
+            logger.exception("Google AI API error")
+            raise
+
+    def shutdown(self) -> None:
+        """Shutdown Google AI backend."""
+        super().shutdown()
+        self.client = None
+        self.model = None
 
 
 class LlamaCppBackend(LLMBackend):
@@ -2014,6 +2108,7 @@ class LLMManager:
         backend_classes = {
             LLMProvider.OPENAI: OpenAIBackend,
             LLMProvider.ANTHROPIC: AnthropicBackend,
+            LLMProvider.GOOGLE: GoogleBackend,
             LLMProvider.LLAMACPP: LlamaCppBackend,
             LLMProvider.OLLAMA: OllamaBackend,
             LLMProvider.LOCAL_GGUF: LocalGGUFBackend,
@@ -2592,6 +2687,73 @@ Please analyze this script and return validation results in JSON format."""
         """List all available LLM IDs (alias for ``get_available_llms``)."""
         return self.get_available_llms()
 
+    def add_provider(self, provider: LLMProvider, config: LLMConfig) -> bool:
+        """Add an LLM provider with the given configuration.
+
+        Creates a unique LLM ID based on the provider and model name, then
+        registers the backend using the standard registration process.
+
+        Args:
+            provider: The LLM provider type (e.g., LLMProvider.OPENAI).
+            config: LLM configuration object with model settings.
+
+        Returns:
+            True if the provider was successfully added and registered.
+
+        """
+        with self.lock:
+            llm_id = f"{provider.value}-{config.model_name}" if config.model_name else provider.value
+            logger.info("Adding provider %s with ID: %s", provider.value, llm_id)
+            return self.register_llm(llm_id, config)
+
+    def get_provider(self, provider: str | LLMProvider) -> LLMBackend | None:
+        """Get an LLM backend by provider name or type.
+
+        Searches for a registered backend matching the given provider. If
+        multiple backends exist for the same provider, returns the first match.
+
+        Args:
+            provider: Provider name as string or LLMProvider enum.
+
+        Returns:
+            The LLMBackend instance if found, None otherwise.
+
+        """
+        with self.lock:
+            provider_value = provider.value if isinstance(provider, LLMProvider) else provider
+
+            for llm_id, config in self.configs.items():
+                if config.provider.value == provider_value:
+                    return self.get_llm(llm_id)
+
+            for llm_id in self.backends:
+                if llm_id.startswith(provider_value):
+                    return self.backends[llm_id]
+
+            for llm_id in self.lazy_wrappers:
+                if llm_id.startswith(provider_value):
+                    if self.lazy_manager:
+                        return self.lazy_manager.get_model(llm_id)
+
+            logger.debug("No backend found for provider: %s", provider_value)
+            return None
+
+    def list_models(self) -> list[str]:
+        """List all available model names.
+
+        Returns a list of model names from all registered LLM configurations.
+        This includes both immediately loaded and lazy-loaded models.
+
+        Returns:
+            List of model name strings.
+
+        """
+        model_names: list[str] = []
+        for config in self.configs.values():
+            if config.model_name and config.model_name not in model_names:
+                model_names.append(config.model_name)
+        return model_names
+
 
 # Convenience functions for creating common configurations
 def create_openai_config(model_name: str = "gpt-4", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
@@ -2608,6 +2770,16 @@ def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_
     """Create Anthropic configuration."""
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,
+        model_name=model_name,
+        api_key=api_key,
+        **kwargs,
+    )
+
+
+def create_google_config(model_name: str = "gemini-pro", api_key: str | None = None, **kwargs: Any) -> LLMConfig:
+    """Create Google AI configuration."""
+    return LLMConfig(
+        provider=LLMProvider.GOOGLE,
         model_name=model_name,
         api_key=api_key,
         **kwargs,

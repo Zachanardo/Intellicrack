@@ -21,19 +21,24 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import base64
 import os
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from types import TracebackType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.path_resolver import get_qemu_images_dir
 
 from .base_snapshot_handler import BaseSnapshotHandler
+
+
+if TYPE_CHECKING:
+    import types
 
 
 """
@@ -1145,6 +1150,213 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "established_connections": [],
             }
 
+    def _query_dns_cache(self) -> list[dict[str, Any]]:
+        """Query DNS cache from the guest VM via QEMU guest agent.
+
+        Returns:
+            List of DNS cache entries with domain, IP address, and TTL information.
+
+        """
+        dns_entries: list[dict[str, Any]] = []
+
+        if not self.qemu_process or not self.monitor_socket:
+            return dns_entries
+
+        try:
+            if self.architecture == "windows":
+                dns_cmd = {
+                    "execute": "guest-exec",
+                    "arguments": {
+                        "path": "C:\\Windows\\System32\\cmd.exe",
+                        "arg": ["/c", "ipconfig", "/displaydns"],
+                        "capture-output": True,
+                    },
+                }
+                result = self._send_qmp_command(dns_cmd)
+
+                if result and "return" in result:
+                    pid = result["return"].get("pid")
+                    if pid:
+                        status_cmd = {
+                            "execute": "guest-exec-status",
+                            "arguments": {"pid": pid},
+                        }
+                        import time
+                        time.sleep(0.5)
+                        status = self._send_qmp_command(status_cmd)
+                        if status and "return" in status:
+                            output = status["return"].get("out-data", b"")
+                            if isinstance(output, bytes):
+                                output = base64.b64decode(output).decode("utf-8", errors="ignore")
+                            dns_entries = self._parse_windows_dns_cache(output)
+            else:
+                cache_files = [
+                    "/var/cache/nscd/hosts",
+                    "/etc/hosts",
+                ]
+                for cache_file in cache_files:
+                    cat_cmd = {
+                        "execute": "guest-exec",
+                        "arguments": {
+                            "path": "/bin/cat",
+                            "arg": [cache_file],
+                            "capture-output": True,
+                        },
+                    }
+                    result = self._send_qmp_command(cat_cmd)
+                    if result and "return" in result:
+                        pid = result["return"].get("pid")
+                        if pid:
+                            status_cmd = {
+                                "execute": "guest-exec-status",
+                                "arguments": {"pid": pid},
+                            }
+                            import time
+                            time.sleep(0.3)
+                            status = self._send_qmp_command(status_cmd)
+                            if status and "return" in status:
+                                output = status["return"].get("out-data", b"")
+                                if isinstance(output, bytes):
+                                    output = base64.b64decode(output).decode("utf-8", errors="ignore")
+                                dns_entries.extend(self._parse_linux_dns_cache(output, cache_file))
+
+                dig_cmd = {
+                    "execute": "guest-exec",
+                    "arguments": {
+                        "path": "/usr/bin/getent",
+                        "arg": ["ahostsv4"],
+                        "capture-output": True,
+                    },
+                }
+                result = self._send_qmp_command(dig_cmd)
+                if result and "return" in result:
+                    pid = result["return"].get("pid")
+                    if pid:
+                        status_cmd = {
+                            "execute": "guest-exec-status",
+                            "arguments": {"pid": pid},
+                        }
+                        import time
+                        time.sleep(0.3)
+                        status = self._send_qmp_command(status_cmd)
+                        if status and "return" in status:
+                            output = status["return"].get("out-data", b"")
+                            if isinstance(output, bytes):
+                                output = base64.b64decode(output).decode("utf-8", errors="ignore")
+                            dns_entries.extend(self._parse_getent_output(output))
+
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as e:
+            self.logger.debug(f"DNS cache query failed: {e}")
+
+        return dns_entries
+
+    def _parse_windows_dns_cache(self, output: str) -> list[dict[str, Any]]:
+        """Parse Windows ipconfig /displaydns output.
+
+        Args:
+            output: Raw output from ipconfig /displaydns command.
+
+        Returns:
+            List of parsed DNS entries.
+
+        """
+        entries: list[dict[str, Any]] = []
+        current_entry: dict[str, Any] = {}
+
+        for line in output.split("\n"):
+            line = line.strip()
+            if not line:
+                if current_entry:
+                    entries.append(current_entry)
+                    current_entry = {}
+                continue
+
+            if "Record Name" in line and ":" in line:
+                current_entry["domain"] = line.split(":", 1)[1].strip()
+            elif "Record Type" in line and ":" in line:
+                current_entry["record_type"] = line.split(":", 1)[1].strip()
+            elif "Time To Live" in line and ":" in line:
+                try:
+                    current_entry["ttl"] = int(line.split(":", 1)[1].strip())
+                except ValueError:
+                    current_entry["ttl"] = 0
+            elif ("A (Host) Record" in line or "AAAA Record" in line) and ":" in line:
+                current_entry["ip_address"] = line.split(":", 1)[1].strip()
+
+        if current_entry:
+            entries.append(current_entry)
+
+        return entries
+
+    def _parse_linux_dns_cache(self, output: str, source_file: str) -> list[dict[str, Any]]:
+        """Parse Linux DNS cache files (/etc/hosts format or nscd cache).
+
+        Args:
+            output: Content of the DNS cache file.
+            source_file: Path to the source file for attribution.
+
+        Returns:
+            List of parsed DNS entries.
+
+        """
+        entries: list[dict[str, Any]] = []
+
+        for line in output.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            parts = line.split()
+            if len(parts) >= 2:
+                ip_address = parts[0]
+                for hostname in parts[1:]:
+                    if hostname.startswith("#"):
+                        break
+                    entries.append({
+                        "domain": hostname,
+                        "ip_address": ip_address,
+                        "source": source_file,
+                        "ttl": -1,
+                    })
+
+        return entries
+
+    def _parse_getent_output(self, output: str) -> list[dict[str, Any]]:
+        """Parse getent ahostsv4 output.
+
+        Args:
+            output: Output from getent command.
+
+        Returns:
+            List of parsed DNS entries.
+
+        """
+        entries: list[dict[str, Any]] = []
+        seen_domains: set[str] = set()
+
+        for line in output.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+
+            parts = line.split()
+            if len(parts) >= 3:
+                ip_address = parts[0]
+                record_type = parts[1]
+                domain = parts[2]
+
+                if domain not in seen_domains:
+                    seen_domains.add(domain)
+                    entries.append({
+                        "domain": domain,
+                        "ip_address": ip_address,
+                        "record_type": record_type,
+                        "source": "getent",
+                        "ttl": -1,
+                    })
+
+        return entries
+
     def _analyze_filesystem_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
         """Analyze filesystem changes between snapshots."""
         try:
@@ -2116,7 +2328,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "processes_created": [],
             }
 
-    def __enter__(self) -> "QEMUEmulator":
+    def __enter__(self) -> QEMUSystemEmulator:
         """Context manager entry.
 
         Returns:

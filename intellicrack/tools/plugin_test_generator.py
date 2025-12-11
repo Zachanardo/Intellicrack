@@ -1,5 +1,9 @@
 """Plugin test generator for creating automated tests for plugins."""
 
+import ast
+from pathlib import Path
+from typing import Any
+
 """
 Plugin Unit Test Generator for Intellicrack.
 
@@ -462,7 +466,7 @@ if __name__ == '__main__':
             (
                 "        # Test with None parameters",
                 "        with self.assertRaises((TypeError, ValueError, AttributeError)):",
-                f"            {await_prefix}self.plugin.{method_name}({none_params})",
+                f"            {'await ' if is_async else ''}self.plugin.{method_name}({none_params})",
                 "        # Test with empty parameters",
             )
         )
@@ -483,7 +487,7 @@ if __name__ == '__main__':
             empty_str = ", ".join(empty_params)
             test_lines.extend(
                 (
-                    f"        result = {await_prefix}self.plugin.{method_name}({empty_str})",
+                    f"        result = {'await ' if is_async else ''}self.plugin.{method_name}({empty_str})",
                     "        # Should handle empty inputs gracefully",
                 )
             )
@@ -1185,17 +1189,784 @@ class MockDataGenerator:
             },
         }
 
+    def create_test_binary(self, binary_type: str = "pe") -> bytes:
+        """Create a test binary file with realistic PE/ELF structure for plugin testing.
+
+        Args:
+            binary_type: Type of binary to create. Supported: 'pe', 'elf', 'macho', 'generic'.
+
+        Returns:
+            bytes: Valid binary data with proper format headers and sections.
+
+        """
+        binary_type_lower = binary_type.lower()
+
+        if binary_type_lower == "pe":
+            return self._create_pe_binary()
+        elif binary_type_lower == "elf":
+            return self._create_elf_binary()
+        elif binary_type_lower == "macho":
+            return self._create_macho_binary()
+        else:
+            return self.create_mock_binary(binary_type)
+
+    def _create_pe_binary(self) -> bytes:
+        """Create a valid PE binary with enhanced licensing-related structures.
+
+        Returns:
+            bytes: A minimal but valid PE executable with code section.
+
+        """
+        result = bytearray(self.pe_template)
+
+        text_section_header = bytearray([
+            0x2E, 0x74, 0x65, 0x78, 0x74, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00,
+            0x00, 0x02, 0x00, 0x00,
+            0x00, 0x02, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00, 0x60,
+        ])
+
+        data_section_header = bytearray([
+            0x2E, 0x64, 0x61, 0x74, 0x61, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00,
+            0x00, 0x20, 0x00, 0x00,
+            0x00, 0x02, 0x00, 0x00,
+            0x00, 0x04, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x40, 0x00, 0x00, 0xC0,
+        ])
+
+        rdata_section_header = bytearray([
+            0x2E, 0x72, 0x64, 0x61, 0x74, 0x61, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00,
+            0x00, 0x30, 0x00, 0x00,
+            0x00, 0x02, 0x00, 0x00,
+            0x00, 0x06, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x40, 0x00, 0x00, 0x40,
+        ])
+
+        result.extend(text_section_header)
+        result.extend(data_section_header)
+        result.extend(rdata_section_header)
+
+        while len(result) < 0x200:
+            result.append(0x00)
+
+        code_section = bytearray([
+            0x55,
+            0x8B, 0xEC,
+            0x83, 0xEC, 0x10,
+            0x6A, 0x00,
+            0x68, 0x00, 0x30, 0x40, 0x00,
+            0x68, 0x10, 0x30, 0x40, 0x00,
+            0x6A, 0x00,
+            0xE8, 0x00, 0x00, 0x00, 0x00,
+            0x85, 0xC0,
+            0x74, 0x02,
+            0xEB, 0x05,
+            0xB8, 0x01, 0x00, 0x00, 0x00,
+            0x83, 0xC4, 0x10,
+            0x5D,
+            0xC3,
+        ])
+
+        while len(code_section) < 0x200:
+            code_section.append(0x90)
+
+        result.extend(code_section)
+
+        data_section = bytearray()
+        license_strings = [
+            b"LICENSE_KEY\x00",
+            b"TRIAL_EXPIRED\x00",
+            b"ACTIVATION_REQUIRED\x00",
+            b"SERIAL_NUMBER\x00",
+            b"REGISTRATION\x00",
+            b"HWID_CHECK\x00",
+        ]
+        for s in license_strings:
+            data_section.extend(s)
+
+        while len(data_section) < 0x200:
+            data_section.append(0x00)
+
+        result.extend(data_section)
+
+        rdata_section = bytearray()
+        import_names = [
+            b"kernel32.dll\x00",
+            b"GetModuleHandleA\x00",
+            b"LoadLibraryA\x00",
+            b"GetProcAddress\x00",
+            b"VirtualProtect\x00",
+            b"IsDebuggerPresent\x00",
+            b"CheckRemoteDebuggerPresent\x00",
+        ]
+        for name in import_names:
+            rdata_section.extend(name)
+
+        while len(rdata_section) < 0x200:
+            rdata_section.append(0x00)
+
+        result.extend(rdata_section)
+
+        return bytes(result)
+
+    def _create_elf_binary(self) -> bytes:
+        """Create a valid ELF binary for testing.
+
+        Returns:
+            bytes: A minimal but valid ELF executable.
+
+        """
+        result = bytearray(self.elf_template)
+
+        program_header = bytearray([
+            0x01, 0x00, 0x00, 0x00,
+            0x05, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ])
+
+        code = bytearray([
+            0x48, 0xC7, 0xC0, 0x3C, 0x00, 0x00, 0x00,
+            0x48, 0xC7, 0xC7, 0x00, 0x00, 0x00, 0x00,
+            0x0F, 0x05,
+        ])
+
+        result.extend(program_header)
+        result.extend(code)
+
+        while len(result) < 0x200:
+            result.append(0x00)
+
+        return bytes(result)
+
+    def _create_macho_binary(self) -> bytes:
+        """Create a valid Mach-O binary for testing.
+
+        Returns:
+            bytes: A minimal but valid Mach-O executable.
+
+        """
+        macho_header = bytearray([
+            0xFE, 0xED, 0xFA, 0xCF,
+            0x01, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x03,
+            0x02, 0x00, 0x00, 0x00,
+            0x02, 0x00, 0x00, 0x00,
+            0x98, 0x00, 0x00, 0x00,
+            0x85, 0x00, 0x20, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+        ])
+
+        segment_command = bytearray([
+            0x19, 0x00, 0x00, 0x00,
+            0x48, 0x00, 0x00, 0x00,
+            0x5F, 0x5F, 0x54, 0x45, 0x58, 0x54, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x10, 0x00, 0x00,
+            0x07, 0x00, 0x00, 0x00,
+            0x05, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+        ])
+
+        unix_thread = bytearray([
+            0x05, 0x00, 0x00, 0x00,
+            0x2A, 0x00, 0x00, 0x00,
+            0x04, 0x00, 0x00, 0x00,
+            0x2A, 0x00, 0x00, 0x00,
+        ])
+
+        unix_thread.extend([0x00] * (168 - 16))
+
+        result = macho_header + segment_command + unix_thread
+
+        code = bytearray([
+            0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x02,
+            0x48, 0xC7, 0xC7, 0x00, 0x00, 0x00, 0x00,
+            0x0F, 0x05,
+        ])
+
+        while len(result) < 0x1000:
+            result.append(0x00)
+
+        for i, b in enumerate(code):
+            result[0x1000 + i] = b
+
+        while len(result) < 0x1010:
+            result.append(0x00)
+
+        return bytes(result)
+
+    def create_test_network_data(self) -> dict:
+        """Create realistic network capture data for testing license server communication.
+
+        Returns:
+            dict: Network capture data with packets, conversations, and protocol analysis.
+
+        """
+        import time
+
+        current_time = time.time()
+
+        license_request = {
+            "timestamp": current_time,
+            "src": "192.168.1.100",
+            "dst": "license.software.com",
+            "src_ip": "192.168.1.100",
+            "dst_ip": "203.0.113.50",
+            "sport": 49152,
+            "dport": 443,
+            "protocol": "HTTPS",
+            "flags": "PSH,ACK",
+            "length": 256,
+            "payload_hex": "17030300f1...",
+            "tls_info": {
+                "version": "TLS 1.3",
+                "cipher_suite": "TLS_AES_256_GCM_SHA384",
+                "sni": "license.software.com",
+            },
+            "application_data": {
+                "type": "license_validation",
+                "product_id": "PROD-12345",
+                "machine_id": "HWID-ABCDEF123456",
+                "request_type": "activation",
+            },
+        }
+
+        license_response = {
+            "timestamp": current_time + 0.15,
+            "src": "license.software.com",
+            "dst": "192.168.1.100",
+            "src_ip": "203.0.113.50",
+            "dst_ip": "192.168.1.100",
+            "sport": 443,
+            "dport": 49152,
+            "protocol": "HTTPS",
+            "flags": "PSH,ACK",
+            "length": 512,
+            "payload_hex": "17030301f8...",
+            "tls_info": {
+                "version": "TLS 1.3",
+                "cipher_suite": "TLS_AES_256_GCM_SHA384",
+            },
+            "application_data": {
+                "type": "license_response",
+                "status": "valid",
+                "expiry_date": "2025-12-31",
+                "features": ["feature_a", "feature_b", "feature_c"],
+                "signature": "RSA2048_SIGNATURE_PLACEHOLDER",
+            },
+        }
+
+        heartbeat_request = {
+            "timestamp": current_time + 60,
+            "src": "192.168.1.100",
+            "dst": "license.software.com",
+            "src_ip": "192.168.1.100",
+            "dst_ip": "203.0.113.50",
+            "sport": 49153,
+            "dport": 443,
+            "protocol": "HTTPS",
+            "flags": "PSH,ACK",
+            "length": 128,
+            "application_data": {
+                "type": "heartbeat",
+                "session_id": "SESSION-789XYZ",
+                "uptime": 3600,
+            },
+        }
+
+        flexlm_request = {
+            "timestamp": current_time + 120,
+            "src": "192.168.1.100",
+            "dst": "flexlm.internal.corp",
+            "src_ip": "192.168.1.100",
+            "dst_ip": "10.0.0.50",
+            "sport": 49200,
+            "dport": 27000,
+            "protocol": "FlexLM",
+            "flags": "PSH,ACK",
+            "length": 384,
+            "flexlm_data": {
+                "message_type": "CHECKOUT",
+                "feature": "CAD_PREMIUM",
+                "version": "2025.0",
+                "count": 1,
+                "vendor": "ACME_VENDOR",
+            },
+        }
+
+        dns_query = {
+            "timestamp": current_time - 0.5,
+            "src": "192.168.1.100",
+            "dst": "8.8.8.8",
+            "sport": 53124,
+            "dport": 53,
+            "protocol": "DNS",
+            "flags": "",
+            "length": 64,
+            "dns_data": {
+                "query_type": "A",
+                "query_name": "license.software.com",
+                "response": "203.0.113.50",
+                "ttl": 3600,
+            },
+        }
+
+        packets = [dns_query, license_request, license_response, heartbeat_request, flexlm_request]
+
+        return {
+            "capture_start": current_time - 1,
+            "capture_end": current_time + 180,
+            "capture_duration": 181,
+            "interface": "Ethernet",
+            "total_packets": len(packets),
+            "total_bytes": sum(p["length"] for p in packets),
+            "protocols": {
+                "DNS": 1,
+                "HTTPS": 3,
+                "FlexLM": 1,
+            },
+            "hosts": {
+                "192.168.1.100": {"role": "client", "packets_sent": 4, "packets_recv": 1},
+                "license.software.com": {"role": "license_server", "ip": "203.0.113.50"},
+                "flexlm.internal.corp": {"role": "flexlm_server", "ip": "10.0.0.50"},
+            },
+            "conversations": [
+                {
+                    "src": "192.168.1.100:49152",
+                    "dst": "203.0.113.50:443",
+                    "protocol": "HTTPS",
+                    "purpose": "license_validation",
+                    "packets": 2,
+                    "bytes": 768,
+                    "duration": 0.15,
+                },
+                {
+                    "src": "192.168.1.100:49153",
+                    "dst": "203.0.113.50:443",
+                    "protocol": "HTTPS",
+                    "purpose": "heartbeat",
+                    "packets": 1,
+                    "bytes": 128,
+                },
+                {
+                    "src": "192.168.1.100:49200",
+                    "dst": "10.0.0.50:27000",
+                    "protocol": "FlexLM",
+                    "purpose": "license_checkout",
+                    "packets": 1,
+                    "bytes": 384,
+                },
+            ],
+            "license_servers_detected": [
+                {
+                    "type": "cloud",
+                    "host": "license.software.com",
+                    "ip": "203.0.113.50",
+                    "port": 443,
+                    "protocol": "HTTPS/REST",
+                },
+                {
+                    "type": "flexlm",
+                    "host": "flexlm.internal.corp",
+                    "ip": "10.0.0.50",
+                    "port": 27000,
+                    "protocol": "FlexLM",
+                    "vendor_daemon_port": 27001,
+                },
+            ],
+            "packets": packets,
+            "analysis": {
+                "license_type": "hybrid",
+                "online_validation_required": True,
+                "heartbeat_interval": 60,
+                "offline_grace_period": 86400,
+                "anti_tampering": ["certificate_pinning", "tls_fingerprint"],
+            },
+        }
+
+    def create_test_registry_data(self) -> dict:
+        """Create realistic Windows registry data for license storage testing.
+
+        Returns:
+            dict: Registry data structure with license-related keys and values.
+
+        """
+        import time
+
+        install_timestamp = int(time.time()) - (90 * 86400)
+        last_run_timestamp = int(time.time()) - 3600
+
+        registry_data = {
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion": {
+                "ProgramFilesDir": "C:\\Program Files",
+                "CommonFilesDir": "C:\\Program Files\\Common Files",
+                "ProductName": "Windows 10 Pro",
+                "CurrentBuild": "19045",
+                "EditionID": "Professional",
+                "InstallDate": install_timestamp,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApplication": {
+                "InstallPath": "C:\\Program Files\\TestApplication",
+                "Version": "2025.1.0.0",
+                "InstallDate": install_timestamp,
+                "Language": "en-US",
+                "LicenseType": "TRIAL",
+                "LicenseKey": "",
+                "TrialDaysRemaining": 14,
+                "TrialStartDate": install_timestamp,
+                "LastValidation": last_run_timestamp,
+                "MachineID": "HWID-A1B2C3D4E5F6",
+                "Features": {
+                    "Premium": 0,
+                    "Basic": 1,
+                    "Cloud": 0,
+                    "Export": 1,
+                },
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApplication\\Activation": {
+                "ActivationStatus": 0,
+                "ActivationServer": "https://activate.testapp.com/api/v2",
+                "LastActivationAttempt": 0,
+                "ActivationRetryCount": 0,
+                "OfflineActivationAllowed": 1,
+                "GracePeriodDays": 7,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApplication\\Security": {
+                "IntegrityCheck": 1,
+                "DebuggerDetection": 1,
+                "VMDetection": 0,
+                "TamperProtection": 1,
+                "LastIntegrityCheck": last_run_timestamp,
+                "IntegrityHash": "SHA256:abcdef1234567890...",
+            },
+            "HKEY_CURRENT_USER\\Software\\TestApplication": {
+                "LastRun": last_run_timestamp,
+                "RunCount": 42,
+                "TotalUsageMinutes": 1250,
+                "LastProject": "C:\\Users\\TestUser\\Documents\\Project1.tap",
+                "RecentFiles": [
+                    "C:\\Users\\TestUser\\Documents\\File1.tap",
+                    "C:\\Users\\TestUser\\Documents\\File2.tap",
+                ],
+                "Preferences": {
+                    "Theme": "dark",
+                    "AutoUpdate": True,
+                    "SendAnalytics": False,
+                    "Language": "en-US",
+                },
+            },
+            "HKEY_CURRENT_USER\\Software\\TestApplication\\License": {
+                "UserEmail": "user@example.com",
+                "SubscriptionType": "trial",
+                "SubscriptionExpiry": install_timestamp + (30 * 86400),
+                "OfflineToken": "",
+                "SessionToken": "eyJhbGciOiJIUzI1NiIs...",
+                "TokenExpiry": last_run_timestamp + 86400,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\FLEXlm License Manager": {
+                "LM_LICENSE_FILE": "@license-server.company.com",
+                "VENDOR_LICENSE_FILE": "27000@flexlm.internal.corp",
+                "FLEXLM_TIMEOUT": 30,
+                "FLEXLM_DIAGNOSTICS": 0,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\SafeNet Sentinel": {
+                "InstallDir": "C:\\Program Files\\SafeNet Sentinel\\Sentinel RMS",
+                "Version": "9.7.0",
+                "CloudServerURL": "https://cloud.sentinel.gemalto.com",
+                "LicenseServerPort": 5093,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\WIBU-SYSTEMS\\CodeMeter": {
+                "InstallDir": "C:\\Program Files\\CodeMeter\\Runtime",
+                "RuntimeVersion": "7.60",
+                "ServerSearchList": "localhost;codemeter.internal.corp",
+                "WebAdminPort": 22352,
+                "NetworkServerPort": 22350,
+            },
+            "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography": {
+                "MachineGuid": "{12345678-1234-1234-1234-123456789ABC}",
+            },
+        }
+
+        return registry_data
+
 
 class PluginTestRunner:
-    """Runs plugin tests and collects results"""
+    """Runs plugin tests and collects results."""
 
-    def __init__(self):
-        self.results = []
+    def __init__(self) -> None:
+        """Initialize PluginTestRunner with test state tracking."""
+        self.results: list[dict[str, Any]] = []
+        self.generator = PluginTestGenerator()
+        self._test_output_dir: Path | None = None
 
-    def run_tests(self, test_file, options=None):
-        """Run tests from a test file"""
-        # Implementation would actually run the tests
-        return {"total": 10, "passed": 8, "failed": 1, "skipped": 1, "duration": 2.5, "details": []}
+    def generate_and_run_tests(self, plugin_path: str) -> dict[str, Any]:
+        """Generate tests for a plugin and optionally run them.
+
+        Args:
+            plugin_path: Path to the plugin file to generate tests for.
+
+        Returns:
+            Dictionary containing test generation results with keys:
+                - test_file: Path to generated test file
+                - test_code: Generated test code content
+                - plugin_name: Name of the plugin
+                - class_name: Name of the main plugin class
+                - generation_success: Whether test generation succeeded
+                - error: Error message if generation failed
+        """
+        from datetime import datetime
+        from pathlib import Path as PathLib
+
+        result: dict[str, Any] = {
+            "test_file": "",
+            "test_code": "",
+            "plugin_name": "",
+            "class_name": "",
+            "generation_success": False,
+            "generation_time": datetime.now().isoformat(),
+            "error": None,
+        }
+
+        try:
+            plugin_path_obj = PathLib(plugin_path)
+            if not plugin_path_obj.exists():
+                result["error"] = f"Plugin file not found: {plugin_path}"
+                return result
+
+            if not plugin_path_obj.suffix == ".py":
+                result["error"] = f"Expected Python file, got: {plugin_path_obj.suffix}"
+                return result
+
+            plugin_name = plugin_path_obj.stem
+            class_name = "".join(word.capitalize() for word in plugin_name.split("_"))
+
+            result["plugin_name"] = plugin_name
+            result["class_name"] = class_name
+
+            test_code = self.generator.generate_tests_for_file(str(plugin_path_obj))
+
+            if not test_code or len(test_code.strip()) < 100:
+                result["error"] = "Generated test code was empty or too short"
+                return result
+
+            result["test_code"] = test_code
+
+            if self._test_output_dir:
+                test_dir = PathLib(self._test_output_dir)
+            else:
+                test_dir = plugin_path_obj.parent / "tests"
+                test_dir.mkdir(exist_ok=True)
+
+            test_file_path = test_dir / f"test_{plugin_name}.py"
+
+            with open(test_file_path, "w", encoding="utf-8") as f:
+                f.write(test_code)
+
+            result["test_file"] = str(test_file_path)
+            result["generation_success"] = True
+
+            self.results.append(result)
+
+            return result
+
+        except SyntaxError as e:
+            result["error"] = f"Syntax error parsing plugin: {e}"
+            return result
+        except PermissionError as e:
+            result["error"] = f"Permission denied: {e}"
+            return result
+        except OSError as e:
+            result["error"] = f"File system error: {e}"
+            return result
+        except Exception as e:
+            result["error"] = f"Unexpected error generating tests: {e}"
+            return result
+
+    def run_tests(self, test_file: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Run tests from a test file.
+
+        Args:
+            test_file: Path to the test file to execute.
+            options: Optional configuration for test execution.
+
+        Returns:
+            Dictionary containing test execution results.
+        """
+        import subprocess
+        import sys
+        import time
+        from pathlib import Path as PathLib
+
+        options = options or {}
+
+        result: dict[str, Any] = {
+            "total": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "duration": 0.0,
+            "details": [],
+            "stdout": "",
+            "stderr": "",
+            "returncode": -1,
+        }
+
+        test_path = PathLib(test_file)
+        if not test_path.exists():
+            result["details"].append({"error": f"Test file not found: {test_file}"})
+            return result
+
+        cmd = [sys.executable, "-m", "pytest", str(test_path), "-v", "--tb=short"]
+
+        if options.get("coverage", False):
+            plugin_dir = options.get("plugin_dir", test_path.parent.parent)
+            cmd.extend(["--cov", str(plugin_dir), "--cov-report=term-missing"])
+
+        if options.get("timeout"):
+            cmd.extend(["--timeout", str(options["timeout"])])
+
+        if options.get("markers"):
+            for marker in options["markers"]:
+                cmd.extend(["-m", marker])
+
+        start_time = time.time()
+
+        try:
+            process = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=options.get("max_timeout", 300),
+                cwd=str(test_path.parent),
+            )
+
+            result["duration"] = time.time() - start_time
+            result["stdout"] = process.stdout
+            result["stderr"] = process.stderr
+            result["returncode"] = process.returncode
+
+            self._parse_pytest_output(process.stdout, result)
+
+        except subprocess.TimeoutExpired:
+            result["duration"] = time.time() - start_time
+            result["details"].append({"error": "Test execution timed out"})
+        except FileNotFoundError:
+            result["details"].append({"error": "pytest not found - install with: pip install pytest"})
+        except Exception as e:
+            result["details"].append({"error": f"Test execution failed: {e}"})
+
+        self.results.append(result)
+        return result
+
+    def _parse_pytest_output(self, output: str, result: dict[str, Any]) -> None:
+        """Parse pytest output to extract test statistics.
+
+        Args:
+            output: Raw pytest stdout output.
+            result: Result dictionary to update with parsed data.
+        """
+        import re
+
+        summary_pattern = r"(\d+) passed"
+        match = re.search(summary_pattern, output)
+        if match:
+            result["passed"] = int(match.group(1))
+
+        failed_pattern = r"(\d+) failed"
+        match = re.search(failed_pattern, output)
+        if match:
+            result["failed"] = int(match.group(1))
+
+        skipped_pattern = r"(\d+) skipped"
+        match = re.search(skipped_pattern, output)
+        if match:
+            result["skipped"] = int(match.group(1))
+
+        error_pattern = r"(\d+) error"
+        match = re.search(error_pattern, output)
+        if match:
+            result["errors"] = int(match.group(1))
+
+        result["total"] = result["passed"] + result["failed"] + result["skipped"] + result["errors"]
+
+        test_lines = []
+        for line in output.split("\n"):
+            if "PASSED" in line or "FAILED" in line or "SKIPPED" in line or "ERROR" in line:
+                test_name_match = re.search(r"(test_\w+)", line)
+                if test_name_match:
+                    status = "passed"
+                    if "FAILED" in line:
+                        status = "failed"
+                    elif "SKIPPED" in line:
+                        status = "skipped"
+                    elif "ERROR" in line:
+                        status = "error"
+
+                    test_lines.append({
+                        "name": test_name_match.group(1),
+                        "status": status,
+                        "line": line.strip(),
+                    })
+
+        result["details"] = test_lines
+
+    def set_output_directory(self, output_dir: str | Path) -> None:
+        """Set the output directory for generated test files.
+
+        Args:
+            output_dir: Directory path where test files should be written.
+        """
+        from pathlib import Path as PathLib
+        self._test_output_dir = PathLib(output_dir)
+        self._test_output_dir.mkdir(parents=True, exist_ok=True)
+
+    def get_test_summary(self) -> dict[str, Any]:
+        """Get a summary of all test runs.
+
+        Returns:
+            Dictionary containing aggregated test statistics.
+        """
+        if not self.results:
+            return {
+                "total_runs": 0,
+                "total_tests": 0,
+                "total_passed": 0,
+                "total_failed": 0,
+                "total_skipped": 0,
+                "average_duration": 0.0,
+            }
+
+        return {
+            "total_runs": len(self.results),
+            "total_tests": sum(r.get("total", 0) for r in self.results),
+            "total_passed": sum(r.get("passed", 0) for r in self.results),
+            "total_failed": sum(r.get("failed", 0) for r in self.results),
+            "total_skipped": sum(r.get("skipped", 0) for r in self.results),
+            "average_duration": sum(r.get("duration", 0.0) for r in self.results) / len(self.results),
+        }
 
 
 class TestCoverageAnalyzer:

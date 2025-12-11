@@ -91,7 +91,7 @@ function detectTLSLibraries() {
     return detected;
 }
 
-function loadBypassScript(scriptName, scriptContent) {
+function _loadBypassScript(scriptName, scriptContent) {
     try {
         log(`Loading bypass script: ${scriptName}`);
         eval(scriptContent);
@@ -186,7 +186,7 @@ function activateGenericBypass() {
                     if (isLikelyCertFunc) {
                         try {
                             Interceptor.attach(exp.address, {
-                                onEnter: function (args) {
+                                onEnter: function (_args) {
                                     this.funcName = name;
                                 },
                                 onLeave: function (retval) {
@@ -205,9 +205,9 @@ function activateGenericBypass() {
                             log(`Generic hook installed: ${module.name}!${name}`);
 
                             if (hooksInstalled >= 50) {
-                                return;
+
                             }
-                        } catch (e) {}
+                        } catch (_e) {}
                     }
                 }
             });

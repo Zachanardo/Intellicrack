@@ -282,6 +282,412 @@ class LicenseAnalyzer:
             logger.debug(f"Exception during attach to process: {e}", exc_info=True)
             return False
 
+    def attach_pid(self, pid: int) -> bool:
+        """Attach to a process by its process ID.
+
+        Opens a handle to the specified process with full access rights for
+        memory reading, writing, and manipulation. Used by GUI components
+        for attaching to running processes for license analysis.
+
+        Args:
+            pid: Process ID (integer) of the target process.
+
+        Returns:
+            True if successfully attached to the process, False otherwise.
+
+        """
+        logger.debug(f"Attempting to attach to process with PID: {pid}")
+
+        if self.process_handle:
+            logger.debug("Detaching from previous process before attaching to new one.")
+            self.detach()
+
+        try:
+            target_pid = int(pid) if not isinstance(pid, int) else pid
+
+            if not psutil.pid_exists(target_pid):
+                logger.error(f"Process with PID {target_pid} does not exist")
+                return False
+
+            self.pid = target_pid
+            self.process_handle = kernel32.OpenProcess(
+                ProcessAccess.PROCESS_ALL_ACCESS,
+                False,
+                self.pid,
+            )
+
+            if not self.process_handle:
+                error_code = ctypes.get_last_error()
+                logger.error(f"Failed to open process {self.pid}. Error code: {error_code}")
+                self.pid = None
+                return False
+
+            proc = psutil.Process(target_pid)
+            proc_name = proc.name() if hasattr(proc, "name") else "unknown"
+            logger.info(f"Successfully attached to process {self.pid} ({proc_name})")
+            return True
+
+        except ValueError as e:
+            logger.error(f"Invalid PID value: {pid}")
+            logger.debug(f"ValueError during attach_pid: {e}")
+            return False
+        except psutil.NoSuchProcess:
+            logger.error(f"Process {pid} no longer exists")
+            return False
+        except psutil.AccessDenied:
+            logger.error(f"Access denied to process {pid} - administrator privileges may be required")
+            return False
+        except Exception as e:
+            logger.error(f"Error attaching to process {pid}: {e}")
+            logger.debug(f"Exception during attach_pid: {e}", exc_info=True)
+            return False
+
+    def attach_to_process(self, pid: int) -> bool:
+        """Attach to a target process by PID for license analysis.
+
+        Alias for attach_pid to maintain API compatibility with different
+        calling conventions used across the codebase.
+
+        Args:
+            pid: Process ID of the target process.
+
+        Returns:
+            True if successfully attached, False otherwise.
+
+        """
+        return self.attach_pid(pid)
+
+    def detach_from_process(self) -> None:
+        """Detach from the currently attached process.
+
+        Closes the process handle and clears internal state. Alias for
+        the detach method for API compatibility.
+
+        """
+        self.detach()
+
+    def enumerate_memory_regions(self) -> list[dict[str, Any]]:
+        """Enumerate all memory regions in the attached process.
+
+        Scans the virtual address space of the attached process and returns
+        information about each committed memory region including base address,
+        size, protection flags, and region type.
+
+        Returns:
+            List of dictionaries containing memory region information with keys:
+                - base_address: Starting address of the region
+                - size: Size of the region in bytes
+                - protection: Memory protection flags (read/write/execute)
+                - type: Memory type (private, mapped, image)
+                - state: Memory state description
+                - is_executable: Boolean if region has execute permission
+                - is_writable: Boolean if region has write permission
+                - is_readable: Boolean if region has read permission
+
+        """
+        if not self.process_handle:
+            logger.debug("No process attached. Cannot enumerate memory regions.")
+            return []
+
+        regions = []
+        address = 0
+        max_address = 0x7FFFFFFFFFFFFFFF if ctypes.sizeof(ctypes.c_voidp) == 8 else 0x7FFFFFFF
+
+        class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
+            _fields_ = [
+                ("BaseAddress", ctypes.c_void_p),
+                ("AllocationBase", ctypes.c_void_p),
+                ("AllocationProtect", ctypes.wintypes.DWORD),
+                ("RegionSize", ctypes.c_size_t),
+                ("State", ctypes.wintypes.DWORD),
+                ("Protect", ctypes.wintypes.DWORD),
+                ("Type", ctypes.wintypes.DWORD),
+            ]
+
+        mbi = MEMORY_BASIC_INFORMATION()
+
+        while address < max_address:
+            result = kernel32.VirtualQueryEx(
+                self.process_handle,
+                ctypes.c_void_p(address),
+                ctypes.byref(mbi),
+                ctypes.sizeof(mbi),
+            )
+
+            if not result:
+                break
+
+            if mbi.State == 0x1000:  # MEM_COMMIT
+                region_type = "unknown"
+                if mbi.Type == 0x20000:
+                    region_type = "private"
+                elif mbi.Type == 0x40000:
+                    region_type = "mapped"
+                elif mbi.Type == 0x1000000:
+                    region_type = "image"
+
+                regions.append({
+                    "base_address": mbi.BaseAddress,
+                    "size": mbi.RegionSize,
+                    "protection": mbi.Protect,
+                    "type": region_type,
+                    "state": "committed",
+                    "is_executable": bool(mbi.Protect & 0xF0),
+                    "is_writable": bool(mbi.Protect & 0x0C),
+                    "is_readable": bool(mbi.Protect & 0x06),
+                })
+
+            if mbi.RegionSize > 0:
+                address = mbi.BaseAddress + mbi.RegionSize
+            else:
+                address += 0x1000
+
+        logger.info(f"Enumerated {len(regions)} memory regions")
+        return regions
+
+    def find_serial_validation(self) -> list[dict[str, Any]]:
+        """Find potential serial number validation routines in memory.
+
+        Scans executable memory regions for patterns commonly associated with
+        serial number validation including string comparisons, hash verifications,
+        and checksum calculations.
+
+        Returns:
+            List of dictionaries containing potential serial validation locations:
+                - address: Memory address of the potential validation code
+                - type: Type of validation pattern detected
+                - pattern: Hex string of matched byte pattern
+                - context: Surrounding code context if available
+                - confidence: Confidence level (high, medium, low)
+
+        """
+        if not self.process_handle:
+            logger.debug("No process attached. Cannot find serial validation.")
+            return []
+
+        validations = []
+
+        serial_patterns = [
+            {
+                "name": "string_compare",
+                "bytes": b"\x8b\x45",
+                "mask": None,
+                "description": "Load parameter for comparison",
+            },
+            {
+                "name": "length_check",
+                "bytes": b"\x83\xf8",
+                "mask": None,
+                "description": "Compare length with immediate",
+            },
+            {
+                "name": "checksum_loop",
+                "bytes": b"\x0f\xb6",
+                "mask": None,
+                "description": "Zero-extend byte for checksum",
+            },
+            {
+                "name": "xor_validation",
+                "bytes": b"\x33\xc0",
+                "mask": None,
+                "description": "XOR accumulator for hash",
+            },
+        ]
+
+        regions = self._get_memory_regions()
+        exec_regions = [r for r in regions if r["protection"] & 0x10]
+
+        for region in exec_regions:
+            memory = self.read_memory(region["base_address"], min(region["size"], 0x50000))
+            if not memory:
+                continue
+
+            for pattern_info in serial_patterns:
+                offset = 0
+                while True:
+                    idx = memory.find(pattern_info["bytes"], offset)
+                    if idx == -1:
+                        break
+
+                    addr = region["base_address"] + idx
+                    context = self._analyze_serial_validation_context(addr, memory[max(0, idx - 20):idx + 50])
+
+                    if context:
+                        validations.append({
+                            "address": addr,
+                            "type": pattern_info["name"],
+                            "pattern": pattern_info["bytes"].hex(),
+                            "description": pattern_info["description"],
+                            "context": context,
+                            "confidence": context.get("confidence", "low"),
+                        })
+
+                    offset = idx + 1
+
+        logger.info(f"Found {len(validations)} potential serial validation locations")
+        return validations
+
+    def _analyze_serial_validation_context(
+        self, address: int, context_bytes: bytes
+    ) -> dict[str, Any] | None:
+        """Analyze code context around a potential serial validation pattern."""
+        if len(context_bytes) < 10:
+            return None
+
+        context = {
+            "has_loop": False,
+            "has_comparison": False,
+            "has_string_op": False,
+            "confidence": "low",
+        }
+
+        loop_patterns = [b"\xe2", b"\x75", b"\x74", b"\x0f\x85", b"\x0f\x84"]
+        for pattern in loop_patterns:
+            if pattern in context_bytes:
+                context["has_loop"] = True
+                break
+
+        compare_patterns = [b"\x3b", b"\x39", b"\x83\xf8", b"\x83\xf9", b"\x3c", b"\x3d"]
+        for pattern in compare_patterns:
+            if pattern in context_bytes:
+                context["has_comparison"] = True
+                break
+
+        string_patterns = [b"\xf3\xa6", b"\xf2\xae", b"\xf3\xa4"]
+        for pattern in string_patterns:
+            if pattern in context_bytes:
+                context["has_string_op"] = True
+                break
+
+        score = sum([context["has_loop"], context["has_comparison"], context["has_string_op"]])
+        if score >= 2:
+            context["confidence"] = "high"
+        elif score == 1:
+            context["confidence"] = "medium"
+
+        return context if score > 0 else None
+
+    def find_trial_checks(self) -> list[dict[str, Any]]:
+        """Find potential trial period checking routines in memory.
+
+        Scans for patterns associated with trial limitation mechanisms including
+        date comparisons, counter checks, and time-based validation routines.
+
+        Returns:
+            List of dictionaries containing potential trial check locations:
+                - address: Memory address of the potential trial check
+                - type: Type of trial check pattern detected
+                - pattern: Hex string of matched byte pattern
+                - description: Description of the check type
+                - confidence: Confidence level (high, medium, low)
+
+        """
+        if not self.process_handle:
+            logger.debug("No process attached. Cannot find trial checks.")
+            return []
+
+        trial_checks = []
+
+        trial_patterns = [
+            {
+                "name": "time_api_call",
+                "bytes": b"\xff\x15",
+                "description": "Indirect call (possibly GetSystemTime/GetLocalTime)",
+            },
+            {
+                "name": "filetime_compare",
+                "bytes": b"\x2b\xc1",
+                "description": "Subtract for time difference calculation",
+            },
+            {
+                "name": "days_calculation",
+                "bytes": b"\xb8\x80\x51\x01\x00",
+                "description": "Load 86400 (seconds per day)",
+            },
+            {
+                "name": "trial_counter",
+                "bytes": b"\xff\x05",
+                "description": "Increment counter",
+            },
+            {
+                "name": "trial_decrement",
+                "bytes": b"\xff\x0d",
+                "description": "Decrement counter",
+            },
+            {
+                "name": "expiry_check",
+                "bytes": b"\x3b\x05",
+                "description": "Compare with memory value (expiry date)",
+            },
+        ]
+
+        regions = self._get_memory_regions()
+        exec_regions = [r for r in regions if r["protection"] & 0x10]
+
+        for region in exec_regions:
+            memory = self.read_memory(region["base_address"], min(region["size"], 0x50000))
+            if not memory:
+                continue
+
+            for pattern_info in trial_patterns:
+                offset = 0
+                while True:
+                    idx = memory.find(pattern_info["bytes"], offset)
+                    if idx == -1:
+                        break
+
+                    addr = region["base_address"] + idx
+                    confidence = self._evaluate_trial_check_confidence(
+                        memory[max(0, idx - 30):idx + 50]
+                    )
+
+                    if confidence != "none":
+                        trial_checks.append({
+                            "address": addr,
+                            "type": pattern_info["name"],
+                            "pattern": pattern_info["bytes"].hex(),
+                            "description": pattern_info["description"],
+                            "confidence": confidence,
+                        })
+
+                    offset = idx + 1
+
+        logger.info(f"Found {len(trial_checks)} potential trial check locations")
+        return trial_checks
+
+    def _evaluate_trial_check_confidence(self, context_bytes: bytes) -> str:
+        """Evaluate confidence level for a trial check pattern match."""
+        if len(context_bytes) < 20:
+            return "none"
+
+        indicators = 0
+
+        time_strings = [b"trial", b"Trial", b"TRIAL", b"expire", b"Expire", b"days", b"Days"]
+        for s in time_strings:
+            if s in context_bytes:
+                indicators += 2
+                break
+
+        jump_patterns = [b"\x74", b"\x75", b"\x0f\x84", b"\x0f\x85", b"\x7c", b"\x7d", b"\x7e", b"\x7f"]
+        for pattern in jump_patterns:
+            if pattern in context_bytes:
+                indicators += 1
+                break
+
+        compare_patterns = [b"\x3b", b"\x39", b"\x83\xf8", b"\x83\xf9"]
+        for pattern in compare_patterns:
+            if pattern in context_bytes:
+                indicators += 1
+                break
+
+        if indicators >= 3:
+            return "high"
+        elif indicators >= 2:
+            return "medium"
+        elif indicators >= 1:
+            return "low"
+        return "none"
+
     def find_license_checks(self) -> list[dict[str, Any]]:
         """Scan memory for potential license check locations."""
         if not self.process_handle:

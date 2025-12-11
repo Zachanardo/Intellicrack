@@ -23,6 +23,7 @@ import logging
 import mmap
 import os
 from collections import OrderedDict
+from pathlib import Path
 
 
 logger = logging.getLogger("Intellicrack.HexView")

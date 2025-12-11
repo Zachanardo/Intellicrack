@@ -29,7 +29,11 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from ..utils.logger import get_logger
 
@@ -305,7 +309,7 @@ class ModelCacheManager:
     def get(
         self,
         model_id: str,
-        load_function: (lambda: tuple[object, object | None]) | None = None,
+        load_function: "Callable[[], tuple[object, object | None]] | None" = None,
     ) -> tuple[object, object | None] | None:
         """Get a model from cache or load it.
 
@@ -636,6 +640,63 @@ class ModelCacheManager:
                 logger.error(f"Failed to clear disk cache: {e}")
 
         logger.info("Cleared model cache")
+
+    def cache_model(
+        self,
+        name: str,
+        model: object,
+        tokenizer: object | None = None,
+    ) -> None:
+        """Cache a model by name.
+
+        This is a convenience wrapper around `put()` that provides a simpler interface
+        for caching models with just a name identifier.
+
+        Args:
+            name: Unique name identifier for the model
+            model: The model object to cache (PyTorch, TensorFlow, ONNX, etc.)
+            tokenizer: Optional tokenizer associated with the model
+
+        """
+        self.put(
+            model_id=name,
+            model=model,
+            tokenizer=tokenizer,
+            model_type="auto",
+        )
+
+    def get_model(self, name: str) -> object | None:
+        """Get a cached model by name.
+
+        This is a convenience wrapper that retrieves a model from cache without
+        providing a load function. Returns None if the model is not cached.
+
+        Args:
+            name: The model name identifier
+
+        Returns:
+            The cached model object, or None if not found in cache
+
+        """
+        if name in self.cache:
+            entry = self.cache.pop(name)
+            entry.last_accessed = datetime.now()
+            entry.access_count += 1
+            self.cache[name] = entry
+
+            self.stats["hits"] += 1
+            logger.info(f"Cache hit for model: {name}")
+
+            return entry.model_object
+
+        self.stats["misses"] += 1
+
+        if self.enable_disk_cache and name in self.disk_index:
+            result = self._load_from_disk(name)
+            if result:
+                return result[0]
+
+        return None
 
     def get_stats(self) -> dict[str, Any]:
         """Get cache statistics.

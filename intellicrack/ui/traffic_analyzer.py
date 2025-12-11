@@ -92,6 +92,190 @@ class TrafficAnalyzer:
             log_error(error_msg)
             main_window.log_message(error_msg)
 
+    def analyze_network_traffic(self) -> dict[str, object] | None:
+        """Analyze current network traffic for license-related communications.
+
+        Captures and analyzes network traffic to detect license server communications,
+        activation requests, and other protection-related network activity.
+
+        Returns:
+            Dictionary containing analysis results with protocol_stats, top_conversations,
+            license_traffic, and connection_info, or None if analysis fails.
+
+        """
+        try:
+            import socket
+            from collections import defaultdict
+
+            results: dict[str, object] = {
+                "protocol_stats": defaultdict(int),
+                "top_conversations": [],
+                "license_traffic": [],
+                "connection_info": [],
+                "analysis_timestamp": time.time(),
+            }
+
+            try:
+                import psutil
+
+                connections = psutil.net_connections(kind="inet")
+
+                connection_counts: dict[tuple[str, str], int] = defaultdict(int)
+                protocol_map = {socket.SOCK_STREAM: "TCP", socket.SOCK_DGRAM: "UDP"}
+
+                license_ports = {
+                    443, 80, 8080, 8443,
+                    27000, 27001, 27002, 27003, 27004, 27005,
+                    5093, 7788, 1947,
+                    2080, 8090, 9000,
+                    1688, 1689,
+                }
+
+                license_keywords = [
+                    "license", "activation", "auth", "register", "serial",
+                    "flexlm", "hasp", "sentinel", "widevine", "denuvo",
+                ]
+
+                for conn in connections:
+                    try:
+                        protocol = protocol_map.get(conn.type, "OTHER")
+                        results["protocol_stats"][protocol] += 1
+
+                        if conn.laddr and conn.raddr:
+                            src = f"{conn.laddr.ip}:{conn.laddr.port}"
+                            dst = f"{conn.raddr.ip}:{conn.raddr.port}"
+                            connection_counts[src, dst] += 1
+
+                            remote_port = conn.raddr.port
+                            if remote_port in license_ports:
+                                license_conn = {
+                                    "src": src,
+                                    "dst": dst,
+                                    "port": remote_port,
+                                    "protocol": protocol,
+                                    "status": conn.status,
+                                    "reason": "Known license port",
+                                }
+                                results["license_traffic"].append(license_conn)
+
+                            conn_info = {
+                                "local": src,
+                                "remote": dst,
+                                "protocol": protocol,
+                                "status": conn.status,
+                                "pid": conn.pid,
+                            }
+
+                            if conn.pid:
+                                try:
+                                    proc = psutil.Process(conn.pid)
+                                    proc_name = proc.name().lower()
+                                    conn_info["process"] = proc.name()
+
+                                    if any(kw in proc_name for kw in license_keywords):
+                                        license_conn = {
+                                            "src": src,
+                                            "dst": dst,
+                                            "process": proc.name(),
+                                            "protocol": protocol,
+                                            "reason": "License-related process",
+                                        }
+                                        if license_conn not in results["license_traffic"]:
+                                            results["license_traffic"].append(license_conn)
+                                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                                    pass
+
+                            results["connection_info"].append(conn_info)
+
+                    except Exception:
+                        continue
+
+                sorted_convs = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)
+                for (src, dst), count in sorted_convs[:20]:
+                    results["top_conversations"].append({
+                        "src": src,
+                        "dst": dst,
+                        "packets": count,
+                    })
+
+            except ImportError:
+                if platform.system() == "Windows":
+                    try:
+                        import subprocess
+
+                        netstat_result = subprocess.run(
+                            ["netstat", "-an"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10,
+                            shell=False,
+                        )
+
+                        if netstat_result.returncode == 0:
+                            lines = netstat_result.stdout.strip().split("\n")
+                            for line in lines[4:]:
+                                parts = line.split()
+                                if len(parts) >= 4:
+                                    protocol = parts[0]
+                                    results["protocol_stats"][protocol] += 1
+
+                                    if len(parts) >= 3:
+                                        local_addr = parts[1]
+                                        remote_addr = parts[2]
+
+                                        if ":" in remote_addr:
+                                            try:
+                                                remote_port = int(remote_addr.split(":")[-1])
+                                                if remote_port in {443, 80, 27000, 27001, 5093, 7788, 1947}:
+                                                    results["license_traffic"].append({
+                                                        "local": local_addr,
+                                                        "remote": remote_addr,
+                                                        "protocol": protocol,
+                                                        "reason": "Known license port",
+                                                    })
+                                            except ValueError:
+                                                pass
+
+                    except Exception as e:
+                        self.logger.warning("Netstat fallback failed: %s", e)
+                else:
+                    try:
+                        import subprocess
+
+                        ss_result = subprocess.run(
+                            ["ss", "-tunap"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10,
+                            shell=False,
+                        )
+
+                        if ss_result.returncode == 0:
+                            lines = ss_result.stdout.strip().split("\n")
+                            for line in lines[1:]:
+                                parts = line.split()
+                                if parts:
+                                    protocol = parts[0]
+                                    results["protocol_stats"][protocol] += 1
+
+                    except Exception as e:
+                        self.logger.warning("ss fallback failed: %s", e)
+
+            results["protocol_stats"] = dict(results["protocol_stats"])
+            results["total_connections"] = sum(results["protocol_stats"].values())
+            results["license_connection_count"] = len(results["license_traffic"])
+
+            if results["total_connections"] > 0:
+                log_info(f"Traffic analysis complete: {results['total_connections']} connections analyzed")
+                return results
+
+            return None
+
+        except Exception as e:
+            self.logger.error("Network traffic analysis failed: %s", e)
+            log_error(f"Traffic analysis error: {e}")
+            return None
+
 
 class NetworkTrafficAnalysisDialog(QDialog):
     """Comprehensive network traffic analysis dialog with real-time capture and visualization."""

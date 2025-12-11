@@ -37,11 +37,11 @@ dependencies = [
   # Core ML/AI
   "accelerate",
   "anthropic",
-  "openai>=2.5.0,<3",
+  "openai>=2.9.0,<3",
   "torch",
   "torchvision",
   "torchaudio",
-  "transformers>=4.57.1,<5",
+  "transformers>=4.57.3,<5",
   "huggingface-hub",
   "safetensors",
   "peft",
@@ -49,8 +49,8 @@ dependencies = [
   "bitsandbytes",
 
   # Binary Analysis
-  "angr>=9.2.180,<10",
-  "claripy>=9.2.180,<10",
+  "angr>=9.2.186,<10",
+  "claripy>=9.2.186,<10",
   "capstone",
   "keystone-engine>=0.9.2,<0.10",
   "binwalk3>=3.1.3,<4",
@@ -60,13 +60,13 @@ dependencies = [
   "yara-python>=4.5.4,<5",
   "ppdeep",
   "py-tlsh==4.7.2",
-  "lief>=0.17.0,<0.18",
+  "lief>=0.17.1,<0.18",
   "pefile>=2024.8.26,<2025",
   "pyelftools>=0.32,<0.33",
   "z3-solver",
   "r2pipe>=1.9.6,<2",
-  "frida>=17.4.0,<18",
-  "frida-tools>=14.4.5,<15",
+  "frida>=17.5.1",
+  "frida-tools>=14.5.0",
   # Emulation & Analysis
   "qiling>=1.4.6,<2",
   "unicorn>=2.1.4,<3",
@@ -83,18 +83,18 @@ dependencies = [
   "pyopenssl",
 
   # Web & HTTP
-  "aiohttp>=3.13.1,<4",
+  "aiohttp>=3.13.2,<4",
   "requests>=2.32.5,<3",
   "urllib3>=2.6.0,<3",
   "defusedxml>=0.7.1,<0.8",
   "xmltodict",
   "boto3",
-  "azure-storage-blob>=12.27.0,<13",
-  "fastapi>=0.120.4,<0.122",
+  "azure-storage-blob>=12.27.1,<13",
+  "fastapi>=0.121.3,<0.122",
   "httpie>=3.2.4,<4",
 
   "dpctl",
-  "pyopencl>=2025.2.6,<2026",
+  "pyopencl>=2025.2.7,<2026",
   "tensorflow>=2.20.0,<3",
   "numba==0.62.1",
   "tf2onnx",
@@ -105,15 +105,15 @@ dependencies = [
   # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
 
   # Database & Storage
-  "pymongo>=4.15.3,<5",
+  "pymongo>=4.15.5,<5",
   "psycopg2-binary>=2.9.11,<3",
 
   # GUI & Visualization
   "matplotlib>=3.10.7,<4",
-  "pyqt6>=6.9.1,<7",
-  "pyqt6-sip>=13.10.2,<14",
+  "pyqt6>=6.10.1,<7",
+  "pyqt6-sip>=13.10.3,<14",
   "pyqtgraph",
-  "pillow>=11.0.0,<13",
+  "pillow>=12.0.0,<13",
   "cairocffi>=1.7.1,<2",
   "graphviz>=0.21,<0.22",
 
@@ -133,30 +133,30 @@ dependencies = [
   "flask-cors>=6.0.1,<7",
   "jinja2>=3.1.6,<4",
   "pdfkit>=1.0.0,<2",
-  "reportlab>=4.4.4,<5",
+  "reportlab>=4.4.5,<5",
   "weasyprint>=66.0,<67",
-  "tinycss2>=1.4.0,<2",
+  "tinycss2>=1.5.1,<2",
   "xlsxwriter>=3.2.9,<4",
 
-  "fsspec>=2025.9.0,<2026",
-  "aiobotocore>=2.25.0,<3",
+  "fsspec>=2025.12.0,<2026",
+  "aiobotocore>=2.26.0,<3",
 
   # Data Science
   "pandas>=2.3.3,<3",
   "scikit-learn>=1.7.2,<2",
-  "scipy>=1.16.2,<2",
-  "onnx>=1.19.1,<2",
+  "scipy>=1.16.3,<2",
+  "onnx>=1.20.0,<2",
   "numpy",
   "seaborn>=0.13.2,<0.14",
-  "onnxruntime>=1.23.1,<2",
+  "onnxruntime>=1.23.2,<2",
   "joblib>=1.5.2,<2",
-  "networkx>=3.5,<4",
+  "networkx>=3.6,<4",
   "plotly",
   "pyarrow==22.0.0",
 
   # Data Validation & APIs
-  "pydantic>=2.12.3,<3",
-  "pydantic-core>=2.41.4,<3",
+  "pydantic>=2.12.5,<3",
+  "pydantic-core>=2.41.5,<3",
   "jsonschema>=4.25.1,<5",
   "pyjwt>=2.10.1,<3",
   "pyyaml",
@@ -164,29 +164,29 @@ dependencies = [
   "uvicorn>=0.38.0,<0.39",
 
   # Core Utilities
-  "macholib>=1.16.3,<2",
+  "macholib>=1.16.4,<2",
   "nltk>=3.9.2,<4",
-  "regex>=2025.9.18,<2026",
+  "regex>=2025.11.3,<2026",
   "rich>=14.2.0,<15",
   "tqdm>=4.67.1,<5",
   "cffi>=2.0.0,<3",
 
-  "jiter>=0.11.1,<0.13",
+  "jiter>=0.12.0,<0.13",
   "importlib-metadata>=8.7.0,<9",
   "importlib-resources==6.5.2",
   "idna>=3.11,<4",
-  "keyring>=25.6.0,<26",
+  "keyring>=25.7.0,<26",
   "jmespath>=1.0.1,<2",
   "hyperframe>=6.1.0,<7",
   "ply>=3.11,<4",
-  "narwhals>=2.8.0,<3",
-  "matplotlib-inline>=0.1.7,<0.3",
-  "pycairo>=1.28.0,<2",
-  "xyzservices>=2025.4.0,<2026",
-  "google-auth>=2.41.1,<3",
+  "narwhals>=2.13.0,<3",
+  "matplotlib-inline>=0.2.1,<0.3",
+  "pycairo>=1.29.0,<2",
+  "xyzservices>=2025.11.0,<2026",
+  "google-auth>=2.43.0,<3",
   "markdown-it-py>=4.0.0,<5",
-  "ml-dtypes>=0.5.3,<0.6",
-  "protobuf>=6.33.0,<7",
+  "ml-dtypes>=0.5.4,<0.6",
+  "protobuf>=6.33.2,<7",
   "tensorboard>=2.20.0,<3",
 
   # Task Management
@@ -194,7 +194,7 @@ dependencies = [
   "click-didyoumean==0.3.1",
   "click-plugins==1.1.1.2",
   "click-repl==0.3.0",
-  "python-dotenv>=1.1.1,<2",
+  "python-dotenv>=1.2.1,<2",
 
   # Distributed Computing & Task Queue
   "celery==5.5.3",
@@ -204,9 +204,9 @@ dependencies = [
   # Additional Core Dependencies
   "pwntools",
   "ropgadget>=7.7,<8",
-  "archinfo>=9.2.180,<10",
-  "cle>=9.2.180,<10",
-  "pyvex>=9.2.180,<10",
+  "archinfo>=9.2.186,<10",
+  "cle>=9.2.186,<10",
+  "pyvex>=9.2.186,<10",
   "ailment>=9.2.158,<10",
   "mulpyplexer>=0.9,<0.10",
   "ghidra-bridge>=1.0.0,<2",
@@ -222,8 +222,8 @@ dependencies = [
   "python-registry>=1.3.1,<2",
   "pymem>=1.14.0,<2",
   "attrs>=25.4.0,<26",
-  "beautifulsoup4>=4.14.2,<5",
-  "bokeh>=3.8.0,<4",
+  "beautifulsoup4>=4.14.3,<5",
+  "bokeh>=3.8.1,<4",
   "charset-normalizer>=3.4.4,<4",
   "colorama",
   "decorator>=5.2.1,<6",
@@ -231,26 +231,26 @@ dependencies = [
   "dnspython>=2.8.0,<3",
   "exceptiongroup",
   "filelock",
-  "fonttools>=4.60.1,<5",
+  "fonttools>=4.61.0,<5",
   "frozenlist>=1.8.0,<2",
   "gitdb>=4.0.12,<5",
   "gitpython>=3.1.45,<4",
-  "greenlet>=3.2.4,<4",
+  "greenlet>=3.3.0,<4",
   "h11>=0.16.0,<0.17",
   "h2>=4.3.0,<5",
   "httpcore>=1.0.9,<2",
   "httptools>=0.7.1,<0.8",
   "httpx>=0.28.1,<0.29",
   "humanfriendly>=10.0,<11",
-  "ipython>=9.6.0,<10",
+  "ipython>=9.8.0,<10",
   "isort>=7.0.0,<8",
   "itsdangerous>=2.2.0,<3",
   "kiwisolver>=1.4.9,<2",
   "lxml>=6.0.2,<7",
-  "lz4>=4.4.4,<5",
+  "lz4>=4.4.5,<5",
   "brotli>=1.2.0,<2",
-  "markdown>=3.9,<4",
-  "markupsafe>=2.1.0,<4",
+  "markdown>=3.10,<4",
+  "markupsafe>=3.0.3,<4",
   "more-itertools>=10.8.0,<11",
   "msgpack",
   "multidict>=6.7.0,<7",
@@ -258,17 +258,17 @@ dependencies = [
   "oauthlib>=3.3.1,<4",
   "packaging",
   "pathspec>=0.12.1,<0.13",
-  "platformdirs>=4.5.0,<5",
+  "platformdirs>=4.5.1,<5",
   "pluggy",
   "prometheus-client>=0.23.1,<0.24",
   "prompt-toolkit>=3.0.52,<4",
   "pyasn1>=0.6.1,<0.7",
   "pyasn1-modules>=0.4.2,<0.5",
   "pycodestyle>=2.14.0,<3",
-  "pydantic-settings>=2.11.0,<3",
+  "pydantic-settings>=2.12.0,<3",
   "pyparsing>=3.2.5,<4",
   "python-dateutil>=2.9.0.post0,<3",
-  "python-levenshtein>=0.27.1,<0.28",
+  "python-levenshtein>=0.27.3,<0.28",
   "python-multipart>=0.0.20,<0.0.21",
   "pytz>=2025.2,<2026",
   "referencing>=0.37.0,<0.38",
@@ -278,10 +278,10 @@ dependencies = [
   "sniffio>=1.3.1,<2",
   "sortedcontainers>=2.4.0,<3",
   "soupsieve>=2.8,<3",
-  "starlette>=0.49.1,<0.51",
+  "starlette>=0.50.0,<0.51",
   "anyio>=4.11.0,<5",
   "sympy>=1.14.0,<2",
-  "termcolor>=3.1.0,<4",
+  "termcolor>=3.2.0,<4",
   "threadpoolctl>=3.6.0,<4",
   "tomlkit>=0.13.3,<0.14",
   "tornado>=6.5.2,<7",
@@ -290,11 +290,11 @@ dependencies = [
   "tzdata>=2025.2,<2026",
   "wcwidth",
   "websockets",
-  "werkzeug>=3.1.3,<4",
+  "werkzeug>=3.1.4,<4",
   "wrapt",
   "yarl>=1.22.0,<2",
   "zipp>=3.23.0,<4",
-  "zope-event>=6.0,<7",
+  "zope-event>=6.1,<7",
   "zope-interface>=8.1.1,<9",
 
   # Local AI/LLM support
@@ -303,12 +303,12 @@ dependencies = [
   "langchain-core",
   "langchain-community",
   "langgraph>=1.0.4,<2",
-  "langsmith>=0.4.43,<1",
+  "langsmith>=0.4.56,<1",
 
   # Monitoring & Logging
   "loguru",
-  "sentry-sdk>=2.42.0,<3",
-  "structlog>=25.4.0,<26",
+  "sentry-sdk>=2.47.0,<3",
+  "structlog>=25.5.0,<26",
 ]
 
 [project.urls]
@@ -712,7 +712,6 @@ reportUnusedClass = "none"
 reportUnusedImport = "none"
 reportUnusedFunction = "none"
 reportUnusedVariable = "none"
-reportDuplicateString = "none"
 reportUntypedFunctionDecorator = "warning"
 reportUntypedClassDecorator = "warning"
 reportUntypedBaseClass = "warning"
@@ -740,7 +739,6 @@ reportOptionalContextManager = "error"
 reportOptionalOperand = "error"
 reportTypedDictNotRequiredAccess = "warning"
 reportMatchNotExhaustive = "warning"
-reportShadowedImports = "warning"
 
 [[tool.pyright.executionEnvironments]]
 root = "intellicrack"

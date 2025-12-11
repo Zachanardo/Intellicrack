@@ -33,17 +33,17 @@ const winhttp = Process.getModuleByName('winhttp.dll');
 if (!winhttp) {
     logError('WinHTTP module not found');
 } else {
-    log('WinHTTP module found at: ' + winhttp.base);
+    log(`WinHTTP module found at: ${winhttp.base}`);
 
     try {
         const WinHttpSetOption = Module.findExportByName('winhttp.dll', 'WinHttpSetOption');
         if (WinHttpSetOption) {
             Interceptor.attach(WinHttpSetOption, {
                 onEnter: function (args) {
-                    const hInternet = args[0];
+                    const _hInternet = args[0];
                     const dwOption = args[1].toInt32();
                     const lpBuffer = args[2];
-                    const dwBufferLength = args[3].toInt32();
+                    const _dwBufferLength = args[3].toInt32();
 
                     if (dwOption === WINHTTP_OPTION_SECURITY_FLAGS) {
                         const originalFlags = lpBuffer.readU32();
@@ -69,7 +69,7 @@ if (!winhttp) {
             log('Successfully hooked WinHttpSetOption');
         }
     } catch (e) {
-        logError('Failed to hook WinHttpSetOption: ' + e.message);
+        logError(`Failed to hook WinHttpSetOption: ${e.message}`);
     }
 
     try {
@@ -80,16 +80,16 @@ if (!winhttp) {
                     const hRequest = args[0];
                     const lpszHeaders = args[1];
                     const dwHeadersLength = args[2].toInt32();
-                    const lpOptional = args[3];
+                    const _lpOptional = args[3];
                     const dwOptionalLength = args[4].toInt32();
                     const dwTotalLength = args[5].toInt32();
-                    const dwContext = args[6];
+                    const _dwContext = args[6];
 
                     let headers = '';
                     if (!lpszHeaders.isNull() && dwHeadersLength !== 0) {
                         try {
                             headers = lpszHeaders.readUtf16String();
-                        } catch (e) {
+                        } catch (_e) {
                             headers = '<unable to read>';
                         }
                     }
@@ -118,7 +118,7 @@ if (!winhttp) {
             log('Successfully hooked WinHttpSendRequest');
         }
     } catch (e) {
-        logError('Failed to hook WinHttpSendRequest: ' + e.message);
+        logError(`Failed to hook WinHttpSendRequest: ${e.message}`);
     }
 
     try {
@@ -130,7 +130,7 @@ if (!winhttp) {
             Interceptor.attach(WinHttpReceiveResponse, {
                 onEnter: function (args) {
                     const hRequest = args[0];
-                    const lpReserved = args[1];
+                    const _lpReserved = args[1];
 
                     log(`WinHttpReceiveResponse called - hRequest: ${hRequest}`);
                     this.hRequest = hRequest;
@@ -151,7 +151,7 @@ if (!winhttp) {
             log('Successfully hooked WinHttpReceiveResponse');
         }
     } catch (e) {
-        logError('Failed to hook WinHttpReceiveResponse: ' + e.message);
+        logError(`Failed to hook WinHttpReceiveResponse: ${e.message}`);
     }
 
     try {
@@ -159,7 +159,7 @@ if (!winhttp) {
         if (WinHttpQueryOption) {
             Interceptor.attach(WinHttpQueryOption, {
                 onEnter: function (args) {
-                    const hInternet = args[0];
+                    const _hInternet = args[0];
                     const dwOption = args[1].toInt32();
                     const lpBuffer = args[2];
                     const lpdwBufferLength = args[3];
@@ -183,14 +183,14 @@ if (!winhttp) {
             log('Successfully hooked WinHttpQueryOption');
         }
     } catch (e) {
-        logError('Failed to hook WinHttpQueryOption: ' + e.message);
+        logError(`Failed to hook WinHttpQueryOption: ${e.message}`);
     }
 }
 
 try {
     var kernel32 = Process.getModuleByName('kernel32.dll');
 } catch (e) {
-    logError('Failed to get kernel32.dll: ' + e.message);
+    logError(`Failed to get kernel32.dll: ${e.message}`);
 }
 
 rpc.exports = {

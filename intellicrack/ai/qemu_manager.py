@@ -27,6 +27,7 @@ import tempfile
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from io import StringIO
@@ -3405,3 +3406,839 @@ exit 0
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error executing command: %s", e)
             return None
+
+    def copy_file_to_vm(self, binary_path: str, vm_binary_path: str) -> bool:
+        """Copy a file from host to a running VM using SFTP.
+
+        Args:
+            binary_path: Local path to the file to copy
+            vm_binary_path: Destination path inside the VM
+
+        Returns:
+            True if file was copied successfully, False otherwise
+
+        """
+        local_path = Path(binary_path)
+        if not local_path.exists():
+            self.logger.error("Source file does not exist: %s", binary_path)
+            return False
+
+        if not local_path.is_file():
+            self.logger.error("Source path is not a file: %s", binary_path)
+            return False
+
+        running_snapshot = self._get_running_snapshot()
+        if running_snapshot is None:
+            self.logger.error("No running VM found for file copy operation")
+            return False
+
+        ssh_client = self._get_ssh_connection(running_snapshot)
+        if ssh_client is None:
+            self.logger.error(
+                "Failed to get SSH connection to %s for file copy",
+                running_snapshot.vm_name,
+            )
+            return False
+
+        sftp_client = None
+        try:
+            sftp_client = ssh_client.open_sftp()
+
+            remote_dir = str(Path(vm_binary_path).parent)
+            if remote_dir and remote_dir not in {"/", "."}:
+                try:
+                    sftp_client.stat(remote_dir)
+                except FileNotFoundError:
+                    mkdir_result = self._execute_command_in_vm(
+                        running_snapshot,
+                        f"mkdir -p {remote_dir}",
+                    )
+                    if mkdir_result["exit_code"] != 0:
+                        self.logger.warning(
+                            "Could not create remote directory %s: %s",
+                            remote_dir,
+                            mkdir_result["stderr"],
+                        )
+
+            sftp_client.put(str(local_path), vm_binary_path)
+
+            try:
+                sftp_client.chmod(vm_binary_path, 0o755)
+            except Exception as chmod_e:
+                self.logger.debug("Could not set executable permission: %s", chmod_e)
+
+            self.logger.info(
+                "Successfully copied %s to %s on VM %s",
+                binary_path,
+                vm_binary_path,
+                running_snapshot.vm_name,
+            )
+            return True
+
+        except FileNotFoundError as e:
+            self.logger.error("Source file not found during copy: %s: %s", binary_path, e)
+            return False
+
+        except paramiko.SFTPError as e:
+            self.logger.error(
+                "SFTP error copying %s to %s: %s",
+                binary_path,
+                vm_binary_path,
+                e,
+            )
+            return False
+
+        except Exception as e:
+            self.logger.exception(
+                "Unexpected error copying %s to VM: %s",
+                binary_path,
+                e,
+            )
+            return False
+
+        finally:
+            if sftp_client:
+                try:
+                    sftp_client.close()
+                except Exception as close_e:
+                    self.logger.debug("Error closing SFTP client: %s", close_e)
+
+    def _get_running_snapshot(self) -> QEMUSnapshot | None:
+        """Get the first running snapshot from active snapshots.
+
+        Returns:
+            QEMUSnapshot instance if a running VM is found, None otherwise
+
+        """
+        for snapshot in self.snapshots.values():
+            if snapshot.vm_process is not None and snapshot.vm_process.poll() is None:
+                return snapshot
+        return None
+
+    def start_vm(self, timeout: int = 120) -> bool:
+        """Start the QEMU VM and wait for it to be ready.
+
+        Args:
+            timeout: Maximum time in seconds to wait for VM to become ready
+
+        Returns:
+            True if VM started successfully and is ready, False otherwise
+
+        """
+        self.logger.info("Starting VM with timeout=%d seconds", timeout)
+
+        if self.is_vm_running():
+            self.logger.info("VM is already running")
+            return True
+
+        if self.qemu_process is not None and self.qemu_process.poll() is None:
+            self.logger.info("QEMU process already running, checking readiness...")
+            return self._wait_for_boot(timeout)
+
+        try:
+            arch_info = self.SUPPORTED_ARCHITECTURES.get(self.architecture, {})
+            qemu_binary = arch_info.get("qemu", "qemu-system-x86_64")
+
+            cmd = self._build_qemu_command(
+                qemu_binary=qemu_binary,
+                headless=True,
+                enable_snapshot=False,
+            )
+
+            self.logger.info("Starting QEMU with command: %s", " ".join(cmd))
+
+            self.qemu_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            time.sleep(3)
+
+            if self.qemu_process.poll() is not None:
+                _stdout, stderr = self.qemu_process.communicate(timeout=5)
+                stderr_str = stderr.decode(errors="replace") if isinstance(stderr, bytes) else str(stderr)
+                self.logger.error("QEMU process exited early: %s", stderr_str)
+                log_vm_operation("start", "default_vm", success=False, error=stderr_str)
+                return False
+
+            if not self._wait_for_boot(timeout):
+                self.logger.error("VM did not become ready within timeout")
+                self.stop_vm()
+                return False
+
+            log_vm_operation("start", "default_vm", success=True)
+            self.logger.info("VM started successfully and is ready")
+            return True
+
+        except FileNotFoundError as e:
+            self.logger.error("QEMU binary not found: %s", e)
+            log_vm_operation("start", "default_vm", success=False, error=str(e))
+            return False
+
+        except subprocess.SubprocessError as e:
+            self.logger.error("Failed to start QEMU subprocess: %s", e)
+            log_vm_operation("start", "default_vm", success=False, error=str(e))
+            return False
+
+        except Exception as e:
+            self.logger.exception("Unexpected error starting VM: %s", e)
+            log_vm_operation("start", "default_vm", success=False, error=str(e))
+            return False
+
+    def stop_vm(self) -> bool:
+        """Stop the running QEMU VM.
+
+        Returns:
+            True if VM was stopped successfully, False otherwise
+
+        """
+        if self.qemu_process is None:
+            self.logger.info("No VM process to stop")
+            return True
+
+        try:
+            if self.qemu_process.poll() is None:
+                self.logger.info("Sending termination signal to QEMU process")
+                self.qemu_process.terminate()
+
+                try:
+                    self.qemu_process.wait(timeout=10)
+                    self.logger.info("QEMU process terminated gracefully")
+                except subprocess.TimeoutExpired:
+                    self.logger.warning("QEMU did not terminate gracefully, forcing kill")
+                    self.qemu_process.kill()
+                    self.qemu_process.wait(timeout=5)
+
+            self.qemu_process = None
+            log_vm_operation("stop", "default_vm", success=True)
+            return True
+
+        except Exception as e:
+            self.logger.error("Error stopping VM: %s", e)
+            log_vm_operation("stop", "default_vm", success=False, error=str(e))
+            return False
+
+    def is_vm_running(self) -> bool:
+        """Check if the QEMU VM is currently running.
+
+        Returns:
+            True if VM is running, False otherwise
+
+        """
+        if self.qemu_process is not None and self.qemu_process.poll() is None:
+            return True
+
+        return any(
+            snapshot.vm_process is not None and snapshot.vm_process.poll() is None
+            for snapshot in self.snapshots.values()
+        )
+
+    def validate_ghidra_script(
+        self,
+        snapshot_id: str,
+        script_content: str,
+        binary_path: str,
+    ) -> ExecutionResult:
+        """Validate and execute a Ghidra script in a QEMU VM environment.
+
+        This method uploads the script and binary to a VM, executes the Ghidra
+        analysis in headless mode, and returns the execution results.
+
+        Args:
+            snapshot_id: ID of the VM snapshot to use for execution
+            script_content: The Ghidra script content to validate and execute
+            binary_path: Path to the binary to analyze
+
+        Returns:
+            ExecutionResult containing success status, output, and any errors
+
+        """
+        if snapshot_id not in self.snapshots:
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Snapshot not found: {snapshot_id}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
+        snapshot = self.snapshots[snapshot_id]
+        start_time = time.time()
+
+        try:
+            if snapshot.vm_process is None or snapshot.vm_process.poll() is not None:
+                self.logger.info("Starting VM for Ghidra script validation")
+                self._start_vm_for_snapshot(snapshot)
+                if not self._wait_for_vm_ready(snapshot, timeout=120):
+                    runtime_ms = int((time.time() - start_time) * 1000)
+                    return ExecutionResult(
+                        success=False,
+                        output="",
+                        error="Failed to start VM for Ghidra script validation",
+                        exit_code=-1,
+                        runtime_ms=runtime_ms,
+                    )
+
+            shared_dir = Path(snapshot.disk_path).parent / "shared"
+            shared_dir.mkdir(exist_ok=True)
+
+            script_extension = ".java" if "extends GhidraScript" in script_content else ".py"
+            script_filename = f"ghidra_script_{int(time.time())}{script_extension}"
+            script_path = shared_dir / script_filename
+            script_path.write_text(script_content, encoding="utf-8")
+
+            binary_filename = Path(binary_path).name
+            if Path(binary_path).exists():
+                shutil.copy2(binary_path, shared_dir / binary_filename)
+
+            ghidra_project_name = f"validation_{snapshot_id}"
+
+            runner_script = f"""#!/bin/bash
+cd /tmp
+mount -t 9p -o trans=virtio shared /mnt 2>/dev/null || true
+
+if [ -d "/mnt" ]; then
+    cp /mnt/{script_filename} . 2>/dev/null || echo "Script copy failed"
+    cp /mnt/{binary_filename} . 2>/dev/null || echo "Binary copy failed"
+fi
+
+GHIDRA_INSTALL=""
+for gpath in /opt/ghidra* /usr/share/ghidra* /home/*/ghidra*; do
+    if [ -d "$gpath" ]; then
+        GHIDRA_INSTALL="$gpath"
+        break
+    fi
+done
+
+if [ -z "$GHIDRA_INSTALL" ] && command -v analyzeHeadless &> /dev/null; then
+    echo "[+] Found analyzeHeadless in PATH"
+    ANALYZE_CMD="analyzeHeadless"
+else
+    ANALYZE_CMD="$GHIDRA_INSTALL/support/analyzeHeadless"
+fi
+
+if [ ! -x "$ANALYZE_CMD" ] && ! command -v analyzeHeadless &> /dev/null; then
+    echo "ERROR: Ghidra not found in VM"
+    echo "Please install Ghidra in /opt/ghidra or ensure analyzeHeadless is in PATH"
+    exit 1
+fi
+
+echo "[+] Starting Ghidra headless analysis"
+echo "[+] Binary: {binary_filename}"
+echo "[+] Script: {script_filename}"
+
+mkdir -p /tmp/ghidra_projects
+
+if [ -n "$GHIDRA_INSTALL" ]; then
+    "$ANALYZE_CMD" /tmp/ghidra_projects {ghidra_project_name} \\
+        -import ./{binary_filename} \\
+        -postScript ./{script_filename} \\
+        -deleteProject \\
+        -noanalysis 2>&1
+else
+    analyzeHeadless /tmp/ghidra_projects {ghidra_project_name} \\
+        -import ./{binary_filename} \\
+        -postScript ./{script_filename} \\
+        -deleteProject \\
+        -noanalysis 2>&1
+fi
+
+GHIDRA_EXIT=$?
+
+if [ $GHIDRA_EXIT -eq 0 ]; then
+    echo "[+] Ghidra analysis completed successfully"
+else
+    echo "[-] Ghidra analysis failed with exit code: $GHIDRA_EXIT"
+fi
+
+exit $GHIDRA_EXIT
+"""
+
+            result = self._execute_in_vm_real(snapshot, runner_script)
+
+            runtime_ms = int((time.time() - start_time) * 1000)
+
+            success = result["exit_code"] == 0 and self._analyze_ghidra_output(
+                result["stdout"],
+                result["stderr"],
+            )
+
+            snapshot.test_results.append({
+                "type": "ghidra_validation",
+                "script_name": script_filename,
+                "binary": binary_filename,
+                "success": success,
+                "runtime_ms": runtime_ms,
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            return ExecutionResult(
+                success=success,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
+                runtime_ms=runtime_ms,
+            )
+
+        except Exception as e:
+            self.logger.exception("Exception during Ghidra script validation: %s", e)
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Ghidra validation failed: {e!s}",
+                exit_code=-1,
+                runtime_ms=runtime_ms,
+            )
+
+    def validate_frida_script(
+        self,
+        snapshot_id: str,
+        script_content: str,
+        binary_path: str,
+    ) -> ExecutionResult:
+        """Validate and execute a Frida script in a QEMU VM environment.
+
+        This method uploads the script and binary to a VM, executes the Frida
+        script against the target binary, and returns the execution results.
+
+        Args:
+            snapshot_id: ID of the VM snapshot to use for execution
+            script_content: The Frida script content to validate and execute
+            binary_path: Path to the binary to instrument
+
+        Returns:
+            ExecutionResult containing success status, output, and any errors
+
+        """
+        if snapshot_id not in self.snapshots:
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Snapshot not found: {snapshot_id}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
+        snapshot = self.snapshots[snapshot_id]
+        start_time = time.time()
+
+        try:
+            if snapshot.vm_process is None or snapshot.vm_process.poll() is not None:
+                self.logger.info("Starting VM for Frida script validation")
+                self._start_vm_for_snapshot(snapshot)
+                if not self._wait_for_vm_ready(snapshot, timeout=120):
+                    runtime_ms = int((time.time() - start_time) * 1000)
+                    return ExecutionResult(
+                        success=False,
+                        output="",
+                        error="Failed to start VM for Frida script validation",
+                        exit_code=-1,
+                        runtime_ms=runtime_ms,
+                    )
+
+            shared_dir = Path(snapshot.disk_path).parent / "shared"
+            shared_dir.mkdir(exist_ok=True)
+
+            script_filename = f"frida_script_{int(time.time())}.js"
+            script_path = shared_dir / script_filename
+            script_path.write_text(script_content, encoding="utf-8")
+
+            binary_filename = Path(binary_path).name
+            if Path(binary_path).exists():
+                shutil.copy2(binary_path, shared_dir / binary_filename)
+
+            runner_script = f"""#!/bin/bash
+cd /tmp
+mount -t 9p -o trans=virtio shared /mnt 2>/dev/null || true
+
+if [ -d "/mnt" ]; then
+    cp /mnt/{script_filename} . 2>/dev/null || echo "Script copy failed"
+    cp /mnt/{binary_filename} . 2>/dev/null || echo "Binary copy failed"
+    chmod +x ./{binary_filename} 2>/dev/null || true
+fi
+
+if ! command -v frida &> /dev/null; then
+    echo "ERROR: Frida not installed in VM"
+    echo "Install with: pip install frida-tools"
+    exit 1
+fi
+
+echo "[+] Starting Frida script validation"
+echo "[+] Target binary: {binary_filename}"
+echo "[+] Script: {script_filename}"
+
+./{binary_filename} &
+TARGET_PID=$!
+sleep 2
+
+if ! ps -p $TARGET_PID > /dev/null 2>&1; then
+    echo "[-] Failed to start target binary"
+    exit 1
+fi
+
+echo "[+] Attaching Frida to PID $TARGET_PID"
+
+timeout 60 frida -p $TARGET_PID -l {script_filename} --no-pause 2>&1
+FRIDA_EXIT=$?
+
+kill $TARGET_PID 2>/dev/null || true
+
+if [ $FRIDA_EXIT -eq 0 ] || [ $FRIDA_EXIT -eq 124 ]; then
+    echo "[+] Frida script execution completed"
+    exit 0
+else
+    echo "[-] Frida script failed with exit code: $FRIDA_EXIT"
+    exit $FRIDA_EXIT
+fi
+"""
+
+            result = self._execute_in_vm_real(snapshot, runner_script)
+
+            runtime_ms = int((time.time() - start_time) * 1000)
+
+            success = result["exit_code"] == 0 and self._analyze_frida_output(
+                result["stdout"],
+                result["stderr"],
+            )
+
+            snapshot.test_results.append({
+                "type": "frida_validation",
+                "script_name": script_filename,
+                "binary": binary_filename,
+                "success": success,
+                "runtime_ms": runtime_ms,
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            return ExecutionResult(
+                success=success,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
+                runtime_ms=runtime_ms,
+            )
+
+        except Exception as e:
+            self.logger.exception("Exception during Frida script validation: %s", e)
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Frida validation failed: {e!s}",
+                exit_code=-1,
+                runtime_ms=runtime_ms,
+            )
+
+    def test_frida_script_with_callback(
+        self,
+        snapshot_id: str,
+        script_content: str,
+        binary_path: str,
+        output_callback: Callable[[str], None],
+    ) -> ExecutionResult:
+        """Execute Frida script in QEMU VM with real-time output streaming.
+
+        This method runs a Frida script against a target binary in an isolated
+        QEMU virtual machine environment, streaming output in real-time through
+        the provided callback function. Used by UI components for live monitoring.
+
+        Args:
+            snapshot_id: QEMU VM snapshot identifier for the test environment.
+            script_content: Frida JavaScript code to inject into target process.
+            binary_path: Full path to target binary for instrumentation.
+            output_callback: Function called with each line of output for real-time
+                monitoring of script execution progress and results.
+
+        Returns:
+            ExecutionResult containing success status, output, error messages,
+            exit code, and runtime in milliseconds.
+
+        """
+        if snapshot_id not in self.snapshots:
+            output_callback("[ERROR] Snapshot not found")
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"Snapshot not found: {snapshot_id}",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
+        snapshot = self.snapshots[snapshot_id]
+        start_time = time.time()
+        collected_output: list[str] = []
+
+        try:
+            output_callback("[*] Preparing Frida script execution environment...")
+
+            if snapshot.vm_process is None or snapshot.vm_process.poll() is not None:
+                output_callback("[*] Starting VM for Frida script test...")
+                self._start_vm_for_snapshot(snapshot)
+                if not self._wait_for_vm_ready(snapshot, timeout=120):
+                    output_callback("[ERROR] VM failed to become ready")
+                    runtime_ms = int((time.time() - start_time) * 1000)
+                    return ExecutionResult(
+                        success=False,
+                        output="",
+                        error="Failed to start VM for Frida script test",
+                        exit_code=-1,
+                        runtime_ms=runtime_ms,
+                    )
+
+            shared_dir = Path(snapshot.disk_path).parent / "shared"
+            shared_dir.mkdir(exist_ok=True)
+
+            script_filename = f"frida_callback_test_{int(time.time())}.js"
+            script_path = shared_dir / script_filename
+            script_path.write_text(script_content, encoding="utf-8")
+            output_callback(f"[*] Script written: {script_filename}")
+
+            binary_filename = Path(binary_path).name
+            if Path(binary_path).exists():
+                shutil.copy2(binary_path, shared_dir / binary_filename)
+                output_callback(f"[*] Binary copied: {binary_filename}")
+            else:
+                output_callback(f"[WARNING] Binary not found locally: {binary_path}")
+
+            runner_script = f"""#!/bin/bash
+set -o pipefail
+cd /tmp
+
+mount -t 9p -o trans=virtio shared /mnt 2>/dev/null || true
+
+if [ -d "/mnt" ]; then
+    cp /mnt/{script_filename} . 2>/dev/null && echo "[*] Script copied from shared folder"
+    cp /mnt/{binary_filename} . 2>/dev/null && echo "[*] Binary copied from shared folder"
+    chmod +x ./{binary_filename} 2>/dev/null
+fi
+
+if ! command -v frida &> /dev/null; then
+    echo "[ERROR] Frida not installed in VM"
+    echo "[INFO] Install with: pip install frida-tools"
+    exit 1
+fi
+
+echo "[*] Starting target process: {binary_filename}"
+
+if [ ! -f "./{binary_filename}" ]; then
+    echo "[ERROR] Target binary not found"
+    exit 1
+fi
+
+./{binary_filename} &
+TARGET_PID=$!
+sleep 2
+
+if ! ps -p $TARGET_PID > /dev/null 2>&1; then
+    echo "[ERROR] Target process failed to start"
+    exit 1
+fi
+
+echo "[*] Target process started with PID: $TARGET_PID"
+echo "[*] Attaching Frida to process..."
+
+timeout 60 frida -p $TARGET_PID -l {script_filename} --no-pause 2>&1 || FRIDA_TIMEOUT=$?
+
+if ps -p $TARGET_PID > /dev/null 2>&1; then
+    echo "[+] SUCCESS: Process still running after Frida injection"
+    kill $TARGET_PID 2>/dev/null || true
+else
+    echo "[*] Process terminated during Frida execution"
+fi
+
+echo "[*] Frida script test completed"
+exit 0
+"""
+
+            output_callback("[*] Executing Frida script in VM...")
+
+            ssh_client = self._get_ssh_connection(snapshot)
+            if not ssh_client:
+                output_callback("[ERROR] Failed to establish SSH connection")
+                runtime_ms = int((time.time() - start_time) * 1000)
+                return ExecutionResult(
+                    success=False,
+                    output="\n".join(collected_output),
+                    error="SSH connection failed",
+                    exit_code=-1,
+                    runtime_ms=runtime_ms,
+                )
+
+            script_remote_path = f"/tmp/run_frida_{int(time.time())}.sh"
+            self._upload_file_to_vm(snapshot, runner_script, script_remote_path)
+
+            _stdin, stdout, stderr = ssh_client.exec_command(
+                f"chmod +x {script_remote_path} && bash {script_remote_path}",
+                timeout=120,
+            )
+
+            for line in iter(stdout.readline, ""):
+                if line:
+                    clean_line = line.strip()
+                    output_callback(clean_line)
+                    collected_output.append(clean_line)
+
+            exit_code = stdout.channel.recv_exit_status()
+
+            stderr_content = stderr.read().decode("utf-8", errors="replace")
+            if stderr_content.strip():
+                for line in stderr_content.strip().split("\n"):
+                    output_callback(f"[STDERR] {line}")
+                    collected_output.append(f"[STDERR] {line}")
+
+            runtime_ms = int((time.time() - start_time) * 1000)
+
+            success = exit_code == 0 or self._analyze_frida_output(
+                "\n".join(collected_output),
+                stderr_content,
+            )
+
+            output_callback(f"[*] Execution completed in {runtime_ms}ms (success={success})")
+
+            snapshot.test_results.append({
+                "type": "frida_callback_test",
+                "script_name": script_filename,
+                "binary": binary_filename,
+                "success": success,
+                "runtime_ms": runtime_ms,
+                "timestamp": datetime.now().isoformat(),
+            })
+
+            return ExecutionResult(
+                success=success,
+                output="\n".join(collected_output),
+                error=stderr_content,
+                exit_code=exit_code,
+                runtime_ms=runtime_ms,
+            )
+
+        except Exception as e:
+            runtime_ms = int((time.time() - start_time) * 1000)
+            error_msg = f"Frida callback test failed: {e!s}"
+            output_callback(f"[ERROR] {error_msg}")
+            self.logger.exception("Exception in test_frida_script_with_callback: %s", e)
+
+            return ExecutionResult(
+                success=False,
+                output="\n".join(collected_output),
+                error=error_msg,
+                exit_code=-1,
+                runtime_ms=runtime_ms,
+            )
+
+    def execute_in_vm(self, command: str, timeout: int = 300) -> ExecutionResult:
+        """Execute a command inside the running VM.
+
+        This method is the primary entry point for executing arbitrary commands
+        within the QEMU VM environment.
+
+        Args:
+            command: The command to execute inside the VM
+            timeout: Maximum execution time in seconds
+
+        Returns:
+            ExecutionResult containing success status, output, and any errors
+
+        """
+        start_time = time.time()
+
+        running_snapshot = self._get_running_snapshot()
+        if running_snapshot is None:
+            if not self.is_vm_running():
+                return ExecutionResult(
+                    success=False,
+                    output="",
+                    error="No VM is currently running",
+                    exit_code=-1,
+                    runtime_ms=0,
+                )
+
+            if self.qemu_process is not None:
+                self.logger.warning(
+                    "VM process running but no snapshot available, trying monitor command"
+                )
+                result = self.execute_guest_command_via_monitor(command, timeout=timeout)
+                runtime_ms = int((time.time() - start_time) * 1000)
+                if result is not None:
+                    return ExecutionResult(
+                        success=True,
+                        output=result,
+                        error="",
+                        exit_code=0,
+                        runtime_ms=runtime_ms,
+                    )
+                return ExecutionResult(
+                    success=False,
+                    output="",
+                    error="Monitor command execution failed",
+                    exit_code=-1,
+                    runtime_ms=runtime_ms,
+                )
+
+        try:
+            result = self._execute_command_in_vm(running_snapshot, command, timeout=timeout)
+            runtime_ms = int((time.time() - start_time) * 1000)
+
+            return ExecutionResult(
+                success=result["exit_code"] == 0,
+                output=result["stdout"],
+                error=result["stderr"],
+                exit_code=result["exit_code"],
+                runtime_ms=runtime_ms,
+            )
+
+        except Exception as e:
+            self.logger.exception("Exception during VM command execution: %s", e)
+            runtime_ms = int((time.time() - start_time) * 1000)
+            return ExecutionResult(
+                success=False,
+                output="",
+                error=f"VM execution failed: {e!s}",
+                exit_code=-1,
+                runtime_ms=runtime_ms,
+            )
+
+    def _save_metadata(self) -> None:
+        """Save snapshot metadata to persistent storage.
+
+        Persists current snapshot information to a JSON file for recovery
+        after restarts.
+
+        """
+        import json
+
+        metadata_path = self.working_dir / "snapshot_metadata.json"
+
+        try:
+            metadata = {
+                "last_updated": datetime.now().isoformat(),
+                "snapshot_count": len(self.snapshots),
+                "snapshots": {},
+            }
+
+            for snapshot_id, snapshot in self.snapshots.items():
+                metadata["snapshots"][snapshot_id] = {
+                    "vm_name": snapshot.vm_name,
+                    "disk_path": snapshot.disk_path,
+                    "binary_path": snapshot.binary_path,
+                    "created_at": snapshot.created_at.isoformat(),
+                    "ssh_port": snapshot.ssh_port,
+                    "vnc_port": snapshot.vnc_port,
+                    "version": snapshot.version,
+                    "parent_snapshot": snapshot.parent_snapshot,
+                    "children_snapshots": list(snapshot.children_snapshots),
+                    "test_results_count": len(snapshot.test_results),
+                    "memory_usage": snapshot.memory_usage,
+                    "disk_usage": snapshot.disk_usage,
+                    "network_isolated": snapshot.network_isolated,
+                }
+
+            with open(metadata_path, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=2)
+
+            self.logger.debug("Saved snapshot metadata to %s", metadata_path)
+
+        except Exception as e:
+            self.logger.error("Failed to save snapshot metadata: %s", e)

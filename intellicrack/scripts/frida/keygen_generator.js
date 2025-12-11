@@ -310,11 +310,11 @@ const KeygenGenerator = {
             }
         },
 
-        applyActivationFunction: function (inputs) {
-            return inputs.map((x) => Math.max(0, x)); // ReLU activation
+        applyActivationFunction: inputs => {
+            return inputs.map(x => Math.max(0, x)); // ReLU activation
         },
 
-        activationDerivative: function (x) {
+        activationDerivative: x => {
             return x > 0 ? 1 : 0; // ReLU derivative
         },
 
@@ -350,7 +350,7 @@ const KeygenGenerator = {
             console.log('[KeygenGenerator] Neural network training completed');
         },
 
-        calculateLoss: function (output, target) {
+        calculateLoss: (output, target) => {
             let loss = 0;
             for (let i = 0; i < output.length; i++) {
                 const diff = target[i] - output[i];
@@ -384,7 +384,7 @@ const KeygenGenerator = {
                 const publicB = this.matrixVectorMult(matrixA, secretS, modulus);
                 for (let i = 0; i < publicB.length; i++) {
                     publicB[i] = (publicB[i] + errorE[i]) % modulus;
-                    if (publicB[i] < 0) publicB[i] += modulus;
+                    if (publicB[i] < 0) { publicB[i] += modulus; }
                 }
 
                 return {
@@ -402,7 +402,7 @@ const KeygenGenerator = {
                 };
             },
 
-            generateRandomMatrix: function (rows, cols, modulus) {
+            generateRandomMatrix: (rows, cols, modulus) => {
                 const matrix = [];
                 for (let i = 0; i < rows; i++) {
                     const row = [];
@@ -433,16 +433,17 @@ const KeygenGenerator = {
                 return vector;
             },
 
-            gaussianRandom: function () {
+            gaussianRandom: () => {
                 // Box-Muller transform for Gaussian distribution
-                let u = 0,
-                    v = 0;
-                while (u === 0) u = Math.random(); // Converting [0,1) to (0,1)
-                while (v === 0) v = Math.random();
+                let u = 0;
+                let v = 0;
+                while (u === 0) { u = Math.random(); // Converting [0,1) to (0,1)
+}
+                while (v === 0) { v = Math.random(); }
                 return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
             },
 
-            matrixVectorMult: function (matrix, vector, modulus) {
+            matrixVectorMult: (matrix, vector, modulus) => {
                 const result = [];
                 for (let i = 0; i < matrix.length; i++) {
                     let sum = 0;
@@ -457,7 +458,7 @@ const KeygenGenerator = {
 
         // SPHINCS+ hash-based signatures
         hashSignature: {
-            generateKeys: function (keySize, merkleHeight, iterations) {
+            generateKeys: function (keySize, merkleHeight, _iterations) {
                 console.log('[KeygenGenerator] Generating hash-based signature keys...');
 
                 // Generate secret seed
@@ -491,7 +492,7 @@ const KeygenGenerator = {
                 };
             },
 
-            generateRandomBytes: function (length) {
+            generateRandomBytes: length => {
                 const bytes = [];
                 for (let i = 0; i < length; i++) {
                     bytes.push(Math.floor(Math.random() * 256));
@@ -500,7 +501,7 @@ const KeygenGenerator = {
             },
 
             generateWOTSKeys: function (secretSeed, publicSeed, merkleHeight) {
-                const numKeys = Math.pow(2, merkleHeight);
+                const numKeys = 2 ** merkleHeight;
                 const privateKeys = [];
                 const publicKeys = [];
 
@@ -518,7 +519,7 @@ const KeygenGenerator = {
             },
 
             expandPrivateKey: function (seed) {
-                const w = 16; // Winternitz parameter
+                const _w = 16; // Winternitz parameter
                 const keyElements = [];
 
                 for (let i = 0; i < 67; i++) {
@@ -575,7 +576,7 @@ const KeygenGenerator = {
             },
 
             sha256: function (data) {
-                let hash = [
+                const hash = [
                     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
                     0x1f83d9ab, 0x5be0cd19,
                 ];
@@ -673,7 +674,7 @@ const KeygenGenerator = {
                 return result;
             },
 
-            padMessage: function (message) {
+            padMessage: message => {
                 const msgLength = message.length;
                 const bitLength = msgLength * 8;
 
@@ -694,11 +695,10 @@ const KeygenGenerator = {
                 return padded;
             },
 
-            rightRotate: function (value, amount) {
-                return ((value >>> amount) | (value << (32 - amount))) & 0xffffffff;
-            },
+            rightRotate: (value, amount) =>
+                ((value >>> amount) | (value << (32 - amount))) & 0xffffffff,
 
-            intToBytes: function (value, length) {
+            intToBytes: (value, length) => {
                 const bytes = [];
                 for (let i = length - 1; i >= 0; i--) {
                     bytes.push((value >>> (i * 8)) & 0xff);
@@ -786,7 +786,7 @@ const KeygenGenerator = {
                 return matrix;
             },
 
-            generatePermutation: function (size) {
+            generatePermutation: size => {
                 const permutation = [];
                 for (let i = 0; i < size; i++) {
                     permutation.push(i);
@@ -801,7 +801,7 @@ const KeygenGenerator = {
                 return permutation;
             },
 
-            matrixMultiply: function (a, b) {
+            matrixMultiply: (a, b) => {
                 const result = [];
                 for (let i = 0; i < a.length; i++) {
                     const row = [];
@@ -817,10 +817,10 @@ const KeygenGenerator = {
                 return result;
             },
 
-            isInvertible: function (matrix) {
+            isInvertible: matrix => {
                 // Check if matrix is invertible over GF(2) using Gaussian elimination
                 const size = matrix.length;
-                const copy = matrix.map((row) => row.slice());
+                const copy = matrix.map(row => row.slice());
 
                 for (let i = 0; i < size; i++) {
                     // Find pivot
@@ -832,7 +832,8 @@ const KeygenGenerator = {
                         }
                     }
 
-                    if (pivot === -1) return false; // No pivot found
+                    if (pivot === -1) { return false; // No pivot found
+}
 
                     // Swap rows
                     if (pivot !== i) {
@@ -904,7 +905,7 @@ const KeygenGenerator = {
                 let addend = { x: px, y: py };
 
                 while (scalar > BigInt(0)) {
-                    if (scalar & BigInt(1)) {
+                    if (scalar && BigInt(1)) {
                         result = this.pointAdd(result, addend, curve);
                     }
                     addend = this.pointDouble(addend, curve);
@@ -915,8 +916,8 @@ const KeygenGenerator = {
             },
 
             pointAdd: function (p1, p2, curve) {
-                if (p1.x === null) return p2;
-                if (p2.x === null) return p1;
+                if (p1.x === null) { return p2; }
+                if (p2.x === null) { return p1; }
 
                 if (p1.x === p2.x) {
                     if (p1.y === p2.y) {
@@ -948,7 +949,7 @@ const KeygenGenerator = {
             },
 
             pointDouble: function (point, curve) {
-                if (point.x === null) return point;
+                if (point.x === null) { return point; }
 
                 const slope = this.modMult(
                     this.modAdd(
@@ -975,19 +976,13 @@ const KeygenGenerator = {
                 return { x: x3, y: y3 };
             },
 
-            modAdd: function (a, b, m) {
-                return (((a + b) % m) + m) % m;
-            },
+            modAdd: (a, b, m) => (((a + b) % m) + m) % m,
 
-            modSub: function (a, b, m) {
-                return (((a - b) % m) + m) % m;
-            },
+            modSub: (a, b, m) => (((a - b) % m) + m) % m,
 
-            modMult: function (a, b, m) {
-                return (((a * b) % m) + m) % m;
-            },
+            modMult: (a, b, m) => (((a * b) % m) + m) % m,
 
-            modInverse: function (a, m) {
+            modInverse: (a, m) => {
                 // Extended Euclidean Algorithm
                 let [old_r, r] = [a, m];
                 let [old_s, s] = [BigInt(1), BigInt(0)];
@@ -1001,7 +996,7 @@ const KeygenGenerator = {
                 return old_s >= 0 ? old_s % m : (old_s % m) + m;
             },
 
-            generateRandomBigInt: function (bits) {
+            generateRandomBigInt: bits => {
                 const bytes = Math.ceil(bits / 8);
                 let result = BigInt(0);
 
@@ -1062,7 +1057,7 @@ const KeygenGenerator = {
                 return candidate;
             },
 
-            generateRandomOddBigInt: function (bitLength) {
+            generateRandomOddBigInt: bitLength => {
                 let result = BigInt(1); // Ensure it's positive
 
                 for (let i = 1; i < bitLength; i++) {
@@ -1081,9 +1076,9 @@ const KeygenGenerator = {
             },
 
             isProbablePrime: function (n, rounds = 40) {
-                if (n < BigInt(2)) return false;
-                if (n === BigInt(2) || n === BigInt(3)) return true;
-                if (n % BigInt(2) === BigInt(0)) return false;
+                if (n < BigInt(2)) { return false; }
+                if (n === BigInt(2) || n === BigInt(3)) { return true; }
+                if (n % BigInt(2) === BigInt(0)) { return false; }
 
                 // Write n-1 as d * 2^r
                 let d = n - BigInt(1);
@@ -1095,7 +1090,7 @@ const KeygenGenerator = {
 
                 // Miller-Rabin primality test
                 witnessLoop: for (let i = 0; i < rounds; i++) {
-                    let a = this.randomBigIntRange(BigInt(2), n - BigInt(2));
+                    const a = this.randomBigIntRange(BigInt(2), n - BigInt(2));
                     let x = this.modPow(a, d, n);
 
                     if (x === BigInt(1) || x === n - BigInt(1)) {
@@ -1115,7 +1110,7 @@ const KeygenGenerator = {
                 return true; // Probably prime
             },
 
-            modPow: function (base, exponent, modulus) {
+            modPow: (base, exponent, modulus) => {
                 let result = BigInt(1);
                 base %= modulus;
 
@@ -1130,7 +1125,7 @@ const KeygenGenerator = {
                 return result;
             },
 
-            modInverse: function (a, m) {
+            modInverse: (a, m) => {
                 // Extended Euclidean Algorithm
                 let [old_r, r] = [a, m];
                 let [old_s, s] = [BigInt(1), BigInt(0)];
@@ -1148,7 +1143,7 @@ const KeygenGenerator = {
                 return old_s >= 0 ? old_s % m : (old_s % m) + m;
             },
 
-            randomBigIntRange: function (min, max) {
+            randomBigIntRange: (min, max) => {
                 const range = max - min;
                 const bitLength = range.toString(2).length;
                 let result;
@@ -1168,7 +1163,7 @@ const KeygenGenerator = {
 
         // Advanced Hash Functions
         hash: {
-            sha256: function (data) {
+            sha256: data => {
                 // Use the production SHA-256 from quantum crypto section
                 return KeygenGenerator.quantumCrypto.hashSignature.sha256(data);
             },
@@ -1212,7 +1207,7 @@ const KeygenGenerator = {
                 return result.slice(0, keyLength);
             },
 
-            blake2bPadMessage: function (data) {
+            blake2bPadMessage: data => {
                 const blocks = [];
                 const blockSize = 128;
 
@@ -1311,9 +1306,8 @@ const KeygenGenerator = {
                 v[b] = this.rotr64(v[b] ^ v[c], 63);
             },
 
-            rotr64: function (x, n) {
-                return ((x >> BigInt(n)) | (x << BigInt(64 - n))) & BigInt('0xFFFFFFFFFFFFFFFF');
-            },
+            rotr64: (x, n) =>
+                ((x >> BigInt(n)) | (x << BigInt(64 - n))) & BigInt('0xFFFFFFFFFFFFFFFF'),
 
             argon2: function (
                 password,
@@ -1333,7 +1327,7 @@ const KeygenGenerator = {
                     typeof salt === 'string' ? Array.from(new TextEncoder().encode(salt)) : salt;
 
                 // Initial hash
-                let h0 = this.blake2b(
+                const h0 = this.blake2b(
                     [].concat(
                         this.intToBytes(parallelism, 4),
                         this.intToBytes(hashLength, 4),
@@ -1366,7 +1360,7 @@ const KeygenGenerator = {
                 return this.blake2b(finalBlock, hashLength);
             },
 
-            xorBlocks: function (a, b) {
+            xorBlocks: (a, b) => {
                 const result = [];
                 const maxLength = Math.max(a.length, b.length);
                 for (let i = 0; i < maxLength; i++) {
@@ -1375,7 +1369,7 @@ const KeygenGenerator = {
                 return result;
             },
 
-            intToBytes: function (value, length) {
+            intToBytes: (value, length) => {
                 const bytes = [];
                 for (let i = 0; i < length; i++) {
                     bytes.push((value >>> (i * 8)) & 0xff);
@@ -1433,15 +1427,15 @@ const KeygenGenerator = {
                 };
             },
 
-            signRS256: function (data) {
+            signRS256: data => {
                 // Use RSA signature with SHA-256
                 const dataBytes = Array.from(new TextEncoder().encode(data));
                 const hash = KeygenGenerator.mathematicalCrypto.hash.sha256(dataBytes);
 
                 // Generate RSA key pair for signing
                 const keyPair = KeygenGenerator.mathematicalCrypto.rsa.generateKeyPair(2048);
-                const privateKey = BigInt('0x' + keyPair.privateKey.d);
-                const modulus = BigInt('0x' + keyPair.privateKey.n);
+                const privateKey = BigInt(`0x${keyPair.privateKey.d}`);
+                const modulus = BigInt(`0x${keyPair.privateKey.n}`);
 
                 // Convert hash to BigInt
                 let hashBigInt = BigInt(0);
@@ -1476,9 +1470,9 @@ const KeygenGenerator = {
                 return this.hmacSha256(dataBytes, secretBytes);
             },
 
-            hmacSha256: function (data, key) {
+            hmacSha256: (data, key) => {
                 const blockSize = 64; // SHA-256 block size
-                const outputSize = 32; // SHA-256 output size
+                const _outputSize = 32; // SHA-256 output size
 
                 // Adjust key length
                 let keyBytes = key.slice();
@@ -1515,7 +1509,7 @@ const KeygenGenerator = {
                 return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
             },
 
-            bytesToBase64: function (bytes) {
+            bytesToBase64: bytes => {
                 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
                 let result = '';
 
@@ -1535,7 +1529,7 @@ const KeygenGenerator = {
                 return result.replace(/A/g, '=');
             },
 
-            generateKeyId: function () {
+            generateKeyId: () => {
                 const timestamp = Date.now().toString(36);
                 const random = Math.random().toString(36).substr(2, 9);
                 return `${timestamp}-${random}`;
@@ -1549,9 +1543,7 @@ const KeygenGenerator = {
                 return this.bytesToHex(bytes);
             },
 
-            bytesToHex: function (bytes) {
-                return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
-            },
+            bytesToHex: bytes => bytes.map(byte => byte.toString(16).padStart(2, '0')).join(''),
         },
 
         // OAuth 2.1 license token generation
@@ -1622,11 +1614,11 @@ const KeygenGenerator = {
                 return `${payload}.${this.base64Encode(signature)}`;
             },
 
-            signToken: function (data) {
+            signToken: data => {
                 // Derive signing key from runtime context and process memory
-                var processBase = Process.enumerateModules()[0].base;
-                var keyMaterial = [];
-                for (var i = 0; i < 32; i++) {
+              const processBase = Process.enumerateModules()[0].base;
+              const keyMaterial = [];
+              for (let i = 0; i < 32; i++) {
                     keyMaterial.push(processBase.add(i * 8).readU8() ^ (Date.now() & 0xff));
                 }
                 const secret = String.fromCharCode.apply(null, keyMaterial);
@@ -1636,7 +1628,7 @@ const KeygenGenerator = {
                 );
             },
 
-            base64Encode: function (data) {
+            base64Encode: data => {
                 if (typeof data === 'string') {
                     data = Array.from(new TextEncoder().encode(data));
                 }
@@ -1718,27 +1710,19 @@ const KeygenGenerator = {
                 };
             },
 
-            generateId: function () {
-                const prefix = '_' + Math.random().toString(36).substr(2, 9);
+            generateId: () => {
+                const prefix = `_${Math.random().toString(36).substr(2, 9)}`;
                 const timestamp = Date.now().toString(36);
                 return prefix + timestamp;
             },
 
-            generateDigest: function () {
+            generateDigest: () => {
                 const randomBytes = [];
                 for (let i = 0; i < 32; i++) {
                     randomBytes.push(Math.floor(Math.random() * 256));
                 }
                 const hash = KeygenGenerator.mathematicalCrypto.hash.sha256(randomBytes);
                 return KeygenGenerator.licenseFormats.jwt.bytesToBase64(hash);
-            },
-
-            generateSignature: function () {
-                const signatureBytes = [];
-                for (let i = 0; i < 256; i++) {
-                    signatureBytes.push(Math.floor(Math.random() * 256));
-                }
-                return KeygenGenerator.licenseFormats.jwt.bytesToBase64(signatureBytes);
             },
 
             generateX509Certificate: function () {
@@ -1759,7 +1743,7 @@ const KeygenGenerator = {
                 return KeygenGenerator.licenseFormats.jwt.bytesToBase64(certDER);
             },
 
-            generateSerialNumber: function () {
+            generateSerialNumber: () => {
                 const serialBytes = [];
                 for (let i = 0; i < 16; i++) {
                     serialBytes.push(Math.floor(Math.random() * 256));
@@ -1767,25 +1751,21 @@ const KeygenGenerator = {
                 return serialBytes;
             },
 
-            generateIssuerDN: function () {
-                return {
-                    country: 'US',
-                    organization: 'Research Authority',
-                    organizationalUnit: 'Security Research',
-                    commonName: 'Research CA',
-                };
-            },
+            generateIssuerDN: () => ({
+                country: 'US',
+                organization: 'Research Authority',
+                organizationalUnit: 'Security Research',
+                commonName: 'Research CA',
+            }),
 
-            generateSubjectDN: function () {
-                return {
-                    country: 'US',
-                    organization: 'Research Entity',
-                    organizationalUnit: 'Software Analysis',
-                    commonName: 'Analysis Certificate',
-                };
-            },
+            generateSubjectDN: () => ({
+                country: 'US',
+                organization: 'Research Entity',
+                organizationalUnit: 'Software Analysis',
+                commonName: 'Analysis Certificate',
+            }),
 
-            generatePublicKeyInfo: function () {
+            generatePublicKeyInfo: () => {
                 // Generate RSA public key info structure
                 const keySize = 2048;
                 const exponent = [0x01, 0x00, 0x01]; // 65537
@@ -1803,27 +1783,23 @@ const KeygenGenerator = {
                 };
             },
 
-            generateExtensions: function () {
-                return [
-                    {
-                        oid: '2.5.29.15', // Key Usage
-                        critical: true,
-                        value: [0x03, 0x02, 0x01, 0x86], // Digital Signature, Key Encipherment
-                    },
-                    {
-                        oid: '2.5.29.37', // Extended Key Usage
-                        critical: false,
-                        value: [
-                            0x30, 0x0a, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x01,
-                        ], // Server Auth
-                    },
-                    {
-                        oid: '2.5.29.19', // Basic Constraints
-                        critical: true,
-                        value: [0x30, 0x00], // Not a CA
-                    },
-                ];
-            },
+            generateExtensions: () => [
+                {
+                    oid: '2.5.29.15', // Key Usage
+                    critical: true,
+                    value: [0x03, 0x02, 0x01, 0x86], // Digital Signature, Key Encipherment
+                },
+                {
+                    oid: '2.5.29.37', // Extended Key Usage
+                    critical: false,
+                    value: [0x30, 0x0a, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x01], // Server Auth
+                },
+                {
+                    oid: '2.5.29.19', // Basic Constraints
+                    critical: true,
+                    value: [0x30, 0x00], // Not a CA
+                },
+            ],
 
             buildDERCertificate: function (certData) {
                 const derBytes = [];
@@ -1958,7 +1934,7 @@ const KeygenGenerator = {
                 return [0x31, attribute.length, ...attribute]; // SET
             },
 
-            encodeOID: function (oidString) {
+            encodeOID: oidString => {
                 const parts = oidString.split('.').map(Number);
                 const oidBytes = [];
 
@@ -1993,7 +1969,7 @@ const KeygenGenerator = {
                 return [0x30, validity.length, ...validity];
             },
 
-            encodeTime: function (date) {
+            encodeTime: date => {
                 // UTCTime format: YYMMDDHHMMSSZ
                 const year = (date.getFullYear() % 100).toString().padStart(2, '0');
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -2002,13 +1978,13 @@ const KeygenGenerator = {
                 const minute = date.getMinutes().toString().padStart(2, '0');
                 const second = date.getSeconds().toString().padStart(2, '0');
 
-                const timeString = year + month + day + hour + minute + second + 'Z';
+                const timeString = `${year + month + day + hour + minute + second}Z`;
                 const timeBytes = Array.from(new TextEncoder().encode(timeString));
 
                 return [0x17, timeBytes.length, ...timeBytes]; // UTCTime
             },
 
-            encodePublicKeyInfo: function (keyInfo) {
+            encodePublicKeyInfo: keyInfo => {
                 const algorithmId = [
                     0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01,
                     0x05, 0x00,
@@ -2069,7 +2045,7 @@ const KeygenGenerator = {
                 return [0xa3, wrapped.length, ...wrapped]; // [3] EXPLICIT
             },
 
-            buildSignatureAlgorithm: function () {
+            buildSignatureAlgorithm: () => {
                 // SHA256withRSA
                 return [
                     0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b,
@@ -2077,7 +2053,7 @@ const KeygenGenerator = {
                 ];
             },
 
-            generateSignature: function (tbsCert) {
+            generateSignature: _tbsCert => {
                 // Generate signature (in production this would use private key)
                 const signatureBytes = [];
                 for (let i = 0; i < 256; i++) {
@@ -2088,14 +2064,11 @@ const KeygenGenerator = {
                 return [0x03, 0x82, 0x01, 0x01, 0x00, ...signatureBytes]; // BIT STRING
             },
 
-            generateLicenseId: function () {
-                return (
-                    'LIC-' +
-                    Date.now().toString(36).toUpperCase() +
-                    '-' +
-                    Math.random().toString(36).substr(2, 8).toUpperCase()
-                );
-            },
+            generateLicenseId: () =>
+                'LIC-' +
+                Date.now().toString(36).toUpperCase() +
+                '-' +
+                Math.random().toString(36).substr(2, 8).toUpperCase(),
         },
 
         // Traditional license formats
@@ -2125,11 +2098,11 @@ const KeygenGenerator = {
                 };
             },
 
-            calculateChecksum: function (serial) {
+            calculateChecksum: serial => {
                 let sum = 0;
                 for (let i = 0; i < serial.length; i++) {
                     const char = serial[i];
-                    const value = char.match(/[0-9]/) ? parseInt(char) : char.charCodeAt(0) - 55;
+                    const value = char.match(/[0-9]/) ? parseInt(char, 10) : char.charCodeAt(0) - 55;
                     sum += value * (i + 1);
                 }
                 return (sum % 97).toString().padStart(2, '0');
@@ -2165,7 +2138,7 @@ const KeygenGenerator = {
                 };
             },
 
-            _generateSecureUserId: function () {
+            _generateSecureUserId: () => {
                 const timestamp = Date.now().toString(36);
                 const randomBytes = new Uint8Array(4);
                 // Use cryptographically secure random number generation
@@ -2182,12 +2155,12 @@ const KeygenGenerator = {
                     }
                 }
                 const randomHex = Array.from(randomBytes)
-                    .map((b) => b.toString(36))
+                    .map(b => b.toString(36))
                     .join('');
                 return (timestamp + randomHex).substr(0, 8);
             },
 
-            encodeKeyData: function (data) {
+            encodeKeyData: data => {
                 // Convert data to numeric representation
                 let hash = 0;
                 const str = JSON.stringify(data);
@@ -2199,11 +2172,11 @@ const KeygenGenerator = {
                 return Math.abs(hash).toString(36).toUpperCase().padStart(12, '0');
             },
 
-            generateCheckDigits: function (data) {
+            generateCheckDigits: data => {
                 let sum = 0;
                 for (let i = 0; i < data.length; i++) {
                     const char = data[i];
-                    const value = char.match(/[0-9]/) ? parseInt(char) : char.charCodeAt(0) - 55;
+                    const value = char.match(/[0-9]/) ? parseInt(char, 10) : char.charCodeAt(0) - 55;
                     sum += value;
                 }
                 return (sum % 9999).toString().padStart(4, '0');
@@ -2268,7 +2241,7 @@ const KeygenGenerator = {
                 return binary;
             },
 
-            writeUInt32: function (buffer, value) {
+            writeUInt32: (buffer, value) => {
                 buffer.push((value >>> 24) & 0xff);
                 buffer.push((value >>> 16) & 0xff);
                 buffer.push((value >>> 8) & 0xff);
@@ -2286,7 +2259,7 @@ const KeygenGenerator = {
                 return (crc ^ 0xffffffff) >>> 0;
             },
 
-            generateCRC32Table: function () {
+            generateCRC32Table: () => {
                 const table = [];
                 for (let i = 0; i < 256; i++) {
                     let crc = i;
@@ -2298,9 +2271,7 @@ const KeygenGenerator = {
                 return table;
             },
 
-            bytesToHex: function (bytes) {
-                return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('');
-            },
+            bytesToHex: bytes => bytes.map(byte => byte.toString(16).padStart(2, '0')).join(''),
         },
     },
 
@@ -2843,7 +2814,7 @@ const KeygenGenerator = {
         },
 
         // Merge algorithm data from different sources
-        mergeAlgorithmData: function (extractedAlgorithms, runtimeAnalysis) {
+        mergeAlgorithmData: (extractedAlgorithms, runtimeAnalysis) => {
             try {
                 return {
                     extracted: extractedAlgorithms,
@@ -2877,7 +2848,7 @@ const KeygenGenerator = {
         },
 
         // Correlate results from different modules
-        correlateResults: function (coordinationSession) {
+        correlateResults: coordinationSession => {
             try {
                 const correlation = {
                     moduleSuccessRate: 0,
@@ -2889,17 +2860,17 @@ const KeygenGenerator = {
 
                 // Calculate module success rate
                 const moduleResults = Object.values(coordinationSession.modules);
-                const successfulModules = moduleResults.filter((m) => m.success).length;
+                const successfulModules = moduleResults.filter(m => m.success).length;
                 correlation.moduleSuccessRate =
                     moduleResults.length > 0 ? (successfulModules / moduleResults.length) * 100 : 0;
 
                 // Calculate overall confidence
-                let confidenceFactors = [];
+                const confidenceFactors = [];
 
-                if (coordinationSession.success) confidenceFactors.push(40);
-                if (coordinationSession.algorithms) confidenceFactors.push(30);
-                if (correlation.moduleSuccessRate > 50) confidenceFactors.push(20);
-                if (coordinationSession.keys.length > 50) confidenceFactors.push(10);
+                if (coordinationSession.success) { confidenceFactors.push(40); }
+                if (coordinationSession.algorithms) { confidenceFactors.push(30); }
+                if (correlation.moduleSuccessRate > 50) { confidenceFactors.push(20); }
+                if (coordinationSession.keys.length > 50) { confidenceFactors.push(10); }
 
                 correlation.confidence = confidenceFactors.reduce((sum, factor) => sum + factor, 0);
 
@@ -2940,7 +2911,7 @@ const KeygenGenerator = {
         },
 
         // Prepare input for neural network from algorithms
-        prepareNeuralInput: function (algorithms, index) {
+        prepareNeuralInput: (algorithms, index) => {
             try {
                 const input = new Array(256).fill(0); // Match neural network input size
 
@@ -3081,7 +3052,7 @@ const KeygenGenerator = {
         },
 
         // Calculate checksum for key validation
-        calculateKeyChecksum: function (key) {
+        calculateKeyChecksum: key => {
             let sum = 0;
             for (let i = 0; i < key.length; i++) {
                 sum += key.charCodeAt(i) * (i + 1);
@@ -3096,13 +3067,12 @@ const KeygenGenerator = {
             for (let i = 0; i < 20; i++) {
                 key += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return key + '-' + this.calculateKeyChecksum(key);
+            return `${key}-${this.calculateKeyChecksum(key)}`;
         },
 
         // Generate unique session ID
-        generateSessionId: function () {
-            return `integration_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        },
+        generateSessionId: () =>
+            `integration_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 
         // Get integration status
         getIntegrationStatus: function () {
@@ -3110,7 +3080,7 @@ const KeygenGenerator = {
                 initialized: KeygenGenerator.state.initialized,
                 connectedModules: Object.fromEntries(KeygenGenerator.state.connectedModules),
                 availableModules: Object.keys(this.modules).filter(
-                    (key) => this.modules[key] !== null
+                    key => this.modules[key] !== null
                 ),
             };
         },
@@ -3121,7 +3091,7 @@ const KeygenGenerator = {
                 console.log('[KeygenGenerator] Resetting integration framework...');
 
                 // Clear module instances
-                Object.keys(this.modules).forEach((key) => {
+                Object.keys(this.modules).forEach(key => {
                     this.modules[key] = null;
                 });
 
@@ -3163,7 +3133,7 @@ const KeygenGenerator = {
         // High-performance key generation with 10,000+ keys per second capability
         generateKeyBatch: function (batchSize = 1000, options = {}) {
             try {
-                const startTime = performance.now();
+                const _startTime = performance.now();
                 console.log(
                     `[KeygenGenerator] Starting high-performance batch generation of ${batchSize} keys...`
                 );
@@ -3312,7 +3282,7 @@ const KeygenGenerator = {
         },
 
         // Select optimal key generation strategy
-        selectOptimalStrategy: function (keyIndex, options) {
+        selectOptimalStrategy: (keyIndex, options) => {
             // Round-robin strategy selection for load balancing
             const strategies = [
                 'fast_mathematical',
@@ -3413,7 +3383,7 @@ const KeygenGenerator = {
                     key += value.toString(36).toUpperCase();
                 }
 
-                return key + '-' + ((index * 1009) % 9999).toString().padStart(4, '0');
+                return `${key}-${((index * 1009) % 9999).toString().padStart(4, '0')}`;
             } catch (error) {
                 send({
                     type: 'warning',
@@ -3488,9 +3458,9 @@ const KeygenGenerator = {
 
         // Fast primality test (probabilistic for speed)
         isFastPrime: function (n) {
-            if (n < 2) return false;
-            if (n === 2 || n === 3) return true;
-            if (n % 2 === 0 || n % 3 === 0) return false;
+            if (n < 2) { return false; }
+            if (n === 2 || n === 3) { return true; }
+            if (n % 2 === 0 || n % 3 === 0) { return false; }
 
             // Single Fermat test for speed
             const base = 2;
@@ -3498,7 +3468,7 @@ const KeygenGenerator = {
         },
 
         // Fast modular exponentiation
-        fastPowerMod: function (base, exp, mod) {
+        fastPowerMod: (base, exp, mod) => {
             let result = 1;
             base %= mod;
             while (exp > 0) {
@@ -3573,14 +3543,14 @@ const KeygenGenerator = {
         },
 
         // Calculate key quality score
-        calculateKeyQuality: function (key) {
+        calculateKeyQuality: key => {
             try {
                 let score = 0;
 
                 // Length check
-                if (key.length >= 20) score += 20;
-                else if (key.length >= 15) score += 15;
-                else if (key.length >= 10) score += 10;
+                if (key.length >= 20) { score += 20; }
+                else if (key.length >= 15) { score += 15; }
+                else if (key.length >= 10) { score += 10; }
 
                 // Character diversity
                 const hasNumbers = /\d/.test(key);
@@ -3588,23 +3558,23 @@ const KeygenGenerator = {
                 const hasLowercase = /[a-z]/.test(key);
                 const hasSpecial = /[-_]/.test(key);
 
-                if (hasNumbers) score += 20;
-                if (hasUppercase) score += 20;
-                if (hasLowercase) score += 15;
-                if (hasSpecial) score += 10;
+                if (hasNumbers) { score += 20; }
+                if (hasUppercase) { score += 20; }
+                if (hasLowercase) { score += 15; }
+                if (hasSpecial) { score += 10; }
 
                 // Pattern complexity
                 const uniqueChars = new Set(key).size;
                 score += Math.min(uniqueChars * 2, 15);
 
                 return Math.min(score, 100);
-            } catch (error) {
+            } catch (_error) {
                 return 50; // Default quality score
             }
         },
 
         // Calculate key entropy
-        calculateKeyEntropy: function (key) {
+        calculateKeyEntropy: key => {
             try {
                 const frequency = {};
                 for (const char of key) {
@@ -3620,7 +3590,7 @@ const KeygenGenerator = {
                 }
 
                 return entropy;
-            } catch (error) {
+            } catch (_error) {
                 return 0;
             }
         },
@@ -3674,8 +3644,8 @@ const KeygenGenerator = {
                         KeygenGenerator.config.performance.cacheSize;
                     let removed = 0;
 
-                    for (const [key, value] of KeygenGenerator.state.cache) {
-                        if (removed >= entriesToRemove) break;
+                    for (const [key, _value] of KeygenGenerator.state.cache) {
+                        if (removed >= entriesToRemove) { break; }
                         KeygenGenerator.state.cache.delete(key);
                         removed++;
                     }
@@ -3725,7 +3695,7 @@ const KeygenGenerator = {
 
                 this.metrics.memoryUsage = totalSize;
                 return totalSize;
-            } catch (error) {
+            } catch (_error) {
                 return 0;
             }
         },
@@ -3819,7 +3789,7 @@ const KeygenGenerator = {
                 };
 
                 const endTime = benchmark.started + duration;
-                let batchCount = 0;
+                let _batchCount = 0;
                 let totalKeysGenerated = 0;
                 const rates = [];
 
@@ -3842,7 +3812,7 @@ const KeygenGenerator = {
                             benchmark.results.strategies[strategy].count++;
                         }
 
-                        batchCount++;
+                        _batchCount++;
                     }
 
                     // Small delay to prevent overwhelming (synchronous approach)
@@ -3881,16 +3851,14 @@ const KeygenGenerator = {
         },
 
         // Generate fallback key with prefix
-        generateFallbackKey: function (prefix = 'FBK') {
+        generateFallbackKey: (prefix = 'FBK') => {
             const timestamp = Date.now().toString(36).toUpperCase();
             const random = Math.random().toString(36).substr(2, 8).toUpperCase();
             return `${prefix}-${timestamp}-${random}`;
         },
 
         // Generate unique batch ID
-        generateBatchId: function () {
-            return `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        },
+        generateBatchId: () => `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 
         // Get current performance status
         getPerformanceStatus: function () {
@@ -4005,9 +3973,9 @@ const KeygenGenerator = {
         },
 
         // Calculate Shannon entropy for key
-        calculateKeyEntropy: function (key) {
+        calculateKeyEntropy: key => {
             try {
-                if (!key || key.length === 0) return 0;
+                if (!key || key.length === 0) { return 0; }
 
                 const frequency = new Map();
                 for (const char of key) {
@@ -4034,10 +4002,10 @@ const KeygenGenerator = {
                 const { length } = key;
 
                 // Length scoring
-                if (length >= 16) score += 25;
-                else if (length >= 12) score += 20;
-                else if (length >= 8) score += 15;
-                else score += 5;
+                if (length >= 16) { score += 25; }
+                else if (length >= 12) { score += 20; }
+                else if (length >= 8) { score += 15; }
+                else { score += 5; }
 
                 // Character diversity scoring
                 const hasLowercase = /[a-z]/.test(key);
@@ -4045,25 +4013,28 @@ const KeygenGenerator = {
                 const hasNumbers = /[0-9]/.test(key);
                 const hasSpecial = /[^a-zA-Z0-9]/.test(key);
 
-                if (hasLowercase) score += 10;
-                if (hasUppercase) score += 10;
-                if (hasNumbers) score += 15;
-                if (hasSpecial) score += 20;
+                if (hasLowercase) { score += 10; }
+                if (hasUppercase) { score += 10; }
+                if (hasNumbers) { score += 15; }
+                if (hasSpecial) { score += 20; }
 
                 // Pattern penalties
-                if (/(.)\1{2,}/.test(key)) score -= 10; // Repeating characters
-                if (/012|123|234|345|456|567|678|789|890/.test(key)) score -= 15; // Sequential numbers
+                if (/(.)\1{2,}/.test(key)) { score -= 10; // Repeating characters
+}
+                if (/012|123|234|345|456|567|678|789|890/.test(key)) { score -= 15; // Sequential numbers
+}
                 if (
                     /abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz/i.test(
                         key
                     )
-                )
+                ) {
                     score -= 15; // Sequential letters
+                }
 
                 // Entropy bonus
                 const entropy = this.calculateKeyEntropy(key);
-                if (entropy > 4.0) score += 10;
-                else if (entropy > 3.5) score += 5;
+                if (entropy > 4.0) { score += 10; }
+                else if (entropy > 3.5) { score += 5; }
 
                 return Math.max(0, Math.min(100, score));
             } catch (error) {
@@ -4073,7 +4044,7 @@ const KeygenGenerator = {
         },
 
         // Analyze character distribution
-        analyzeCharDistribution: function (key) {
+        analyzeCharDistribution: key => {
             try {
                 const distribution = {
                     lowercase: 0,
@@ -4085,10 +4056,10 @@ const KeygenGenerator = {
                 };
 
                 for (const char of key) {
-                    if (/[a-z]/.test(char)) distribution.lowercase++;
-                    else if (/[A-Z]/.test(char)) distribution.uppercase++;
-                    else if (/[0-9]/.test(char)) distribution.numbers++;
-                    else distribution.special++;
+                    if (/[a-z]/.test(char)) { distribution.lowercase++; }
+                    else if (/[A-Z]/.test(char)) { distribution.uppercase++; }
+                    else if (/[0-9]/.test(char)) { distribution.numbers++; }
+                    else { distribution.special++; }
                 }
 
                 const total = key.length;
@@ -4113,7 +4084,7 @@ const KeygenGenerator = {
         },
 
         // Detect patterns in key
-        detectPatterns: function (key) {
+        detectPatterns: key => {
             try {
                 const patterns = {
                     repeating: [],
@@ -4210,7 +4181,7 @@ const KeygenGenerator = {
         },
 
         // Calculate composite quality score
-        calculateQualityScore: function (assessment) {
+        calculateQualityScore: assessment => {
             try {
                 const weights = {
                     entropy: 0.25,
@@ -4275,30 +4246,30 @@ const KeygenGenerator = {
                     keySet.length > sampleSize ? this.sampleKeys(keySet, sampleSize) : keySet;
 
                 // Analyze each key
-                const assessments = sampleKeys.map((key) => this.assessKeyQuality(key));
-                const validAssessments = assessments.filter((a) => a !== null);
+                const assessments = sampleKeys.map(key => this.assessKeyQuality(key));
+                const validAssessments = assessments.filter(a => a !== null);
 
                 if (validAssessments.length === 0) {
                     throw new Error('No valid assessments generated');
                 }
 
                 // Calculate entropy distribution
-                const entropies = validAssessments.map((a) => a.entropy);
+                const entropies = validAssessments.map(a => a.entropy);
                 analysis.statistics.meanEntropy =
                     entropies.reduce((a, b) => a + b) / entropies.length;
                 analysis.statistics.stdDevEntropy = Math.sqrt(
                     entropies
-                        .map((e) => Math.pow(e - analysis.statistics.meanEntropy, 2))
+                        .map(e => (e - analysis.statistics.meanEntropy) ** 2)
                         .reduce((a, b) => a + b) / entropies.length
                 );
 
                 // Calculate strength distribution
-                const strengths = validAssessments.map((a) => a.strength);
+                const strengths = validAssessments.map(a => a.strength);
                 analysis.statistics.meanStrength =
                     strengths.reduce((a, b) => a + b) / strengths.length;
                 analysis.statistics.stdDevStrength = Math.sqrt(
                     strengths
-                        .map((s) => Math.pow(s - analysis.statistics.meanStrength, 2))
+                        .map(s => (s - analysis.statistics.meanStrength) ** 2)
                         .reduce((a, b) => a + b) / strengths.length
                 );
 
@@ -4312,17 +4283,17 @@ const KeygenGenerator = {
                 }
 
                 analysis.statistics.meanLength =
-                    validAssessments.map((a) => a.key.length).reduce((a, b) => a + b) /
+                    validAssessments.map(a => a.key.length).reduce((a, b) => a + b) /
                     validAssessments.length;
 
                 // Calculate quality metrics
-                const scores = validAssessments.map((a) => a.score);
+                const scores = validAssessments.map(a => a.score);
                 analysis.qualityMetrics.averageScore =
                     scores.reduce((a, b) => a + b) / scores.length;
                 analysis.qualityMetrics.passRate =
-                    scores.filter((s) => s >= this.config.strengthThreshold).length / scores.length;
+                    scores.filter(s => s >= this.config.strengthThreshold).length / scores.length;
                 analysis.qualityMetrics.excellentRate =
-                    scores.filter((s) => s >= 90).length / scores.length;
+                    scores.filter(s => s >= 90).length / scores.length;
 
                 // Calculate uniformity index
                 analysis.statistics.uniformityIndex =
@@ -4343,7 +4314,7 @@ const KeygenGenerator = {
         },
 
         // Sample keys randomly from large sets
-        sampleKeys: function (keySet, sampleSize) {
+        sampleKeys: (keySet, sampleSize) => {
             try {
                 const shuffled = [...keySet].sort(() => 0.5 - Math.random());
                 return shuffled.slice(0, sampleSize);
@@ -4357,9 +4328,9 @@ const KeygenGenerator = {
         calculateUniformityIndex: function (assessments) {
             try {
                 // Calculate coefficient of variation for multiple metrics
-                const entropies = assessments.map((a) => a.entropy);
-                const strengths = assessments.map((a) => a.strength);
-                const lengths = assessments.map((a) => a.key.length);
+                const entropies = assessments.map(a => a.entropy);
+                const strengths = assessments.map(a => a.strength);
+                const lengths = assessments.map(a => a.key.length);
 
                 const cvEntropy = this.calculateCV(entropies);
                 const cvStrength = this.calculateCV(strengths);
@@ -4375,26 +4346,25 @@ const KeygenGenerator = {
         },
 
         // Calculate coefficient of variation
-        calculateCV: function (values) {
+        calculateCV: values => {
             try {
-                if (values.length === 0) return 0;
+                if (values.length === 0) { return 0; }
 
                 const mean = values.reduce((a, b) => a + b) / values.length;
-                if (mean === 0) return 0;
+                if (mean === 0) { return 0; }
 
                 const variance =
-                    values.map((v) => Math.pow(v - mean, 2)).reduce((a, b) => a + b) /
-                    values.length;
+                    values.map(v => (v - mean) ** 2).reduce((a, b) => a + b) / values.length;
                 const stdDev = Math.sqrt(variance);
 
                 return stdDev / mean;
-            } catch (error) {
+            } catch (_error) {
                 return 1; // High CV indicates low uniformity
             }
         },
 
         // Collision detection and prevention
-        detectCollisions: function (keySet) {
+        detectCollisions: keySet => {
             try {
                 const collisionReport = {
                     totalKeys: keySet.length,
@@ -4493,7 +4463,7 @@ const KeygenGenerator = {
                 const startTimeA = Date.now();
                 for (let i = 0; i < testConfig.sampleSize; i++) {
                     const key = this.generateTestKey(strategyA);
-                    if (key) results.strategyAResults.keys.push(key);
+                    if (key) { results.strategyAResults.keys.push(key); }
                 }
                 results.strategyAResults.generationTime = Date.now() - startTimeA;
 
@@ -4501,7 +4471,7 @@ const KeygenGenerator = {
                 const startTimeB = Date.now();
                 for (let i = 0; i < testConfig.sampleSize; i++) {
                     const key = this.generateTestKey(strategyB);
-                    if (key) results.strategyBResults.keys.push(key);
+                    if (key) { results.strategyBResults.keys.push(key); }
                 }
                 results.strategyBResults.generationTime = Date.now() - startTimeB;
 
@@ -4538,7 +4508,7 @@ const KeygenGenerator = {
         },
 
         // Generate test key using specific strategy
-        generateTestKey: function (strategy) {
+        generateTestKey: strategy => {
             try {
                 const options = { strategy: strategy, test: true };
                 return KeygenGenerator.aiKeyGeneration.generateAdaptiveKey('test_target', options);
@@ -4556,14 +4526,14 @@ const KeygenGenerator = {
                 }
 
                 // Quality analysis
-                const qualityAssessments = strategyResults.keys.map((key) =>
+                const qualityAssessments = strategyResults.keys.map(key =>
                     this.assessKeyQuality(key)
                 );
-                const validAssessments = qualityAssessments.filter((a) => a !== null);
+                const validAssessments = qualityAssessments.filter(a => a !== null);
 
                 if (validAssessments.length > 0) {
                     strategyResults.qualityScore =
-                        validAssessments.map((a) => a.score).reduce((a, b) => a + b) /
+                        validAssessments.map(a => a.score).reduce((a, b) => a + b) /
                         validAssessments.length;
                 }
 
@@ -4583,7 +4553,7 @@ const KeygenGenerator = {
         },
 
         // Calculate composite test score
-        calculateTestScore: function (strategyResults) {
+        calculateTestScore: strategyResults => {
             try {
                 const weights = {
                     quality: 0.5,
@@ -4608,7 +4578,7 @@ const KeygenGenerator = {
         },
 
         // Generate test recommendation
-        generateTestRecommendation: function (results) {
+        generateTestRecommendation: results => {
             try {
                 const confidenceLevel = results.confidence;
                 const winnerResults =
@@ -4692,14 +4662,10 @@ const KeygenGenerator = {
         },
 
         // Generate unique quality assessment ID
-        generateQualityId: function () {
-            return `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        },
+        generateQualityId: () => `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 
         // Generate unique test ID
-        generateTestId: function () {
-            return `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        },
+        generateTestId: () => `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 
         // Get quality status summary
         getQualityStatus: function () {
@@ -4734,12 +4700,12 @@ const KeygenGenerator = {
                     (this.metrics.strengthScore / 100) * 35 +
                     this.metrics.distributionUniformity * 40;
 
-                if (score >= 90) return 'A';
-                else if (score >= 80) return 'B';
-                else if (score >= 70) return 'C';
-                else if (score >= 60) return 'D';
-                else return 'F';
-            } catch (error) {
+                if (score >= 90) { return 'A'; }
+                else if (score >= 80) { return 'B'; }
+                else if (score >= 70) { return 'C'; }
+                else if (score >= 60) { return 'D'; }
+                else { return 'F'; }
+            } catch (_error) {
                 return 'Unknown';
             }
         },
@@ -4831,7 +4797,7 @@ const KeygenGenerator = {
             },
 
             // Initialize secure memory regions for key generation
-            initializeSecureMemory: function () {
+            initializeSecureMemory: () => {
                 const secureRegions = {
                     keyMaterial: new ArrayBuffer(0x100000), // 1MB for key material
                     algorithms: new ArrayBuffer(0x200000), // 2MB for algorithms
@@ -4840,7 +4806,7 @@ const KeygenGenerator = {
                 };
 
                 // Initialize all regions with secure random data
-                for (const [regionName, buffer] of Object.entries(secureRegions)) {
+                for (const [_regionName, buffer] of Object.entries(secureRegions)) {
                     const view = new Uint8Array(buffer);
                     for (let i = 0; i < view.length; i++) {
                         view[i] = Math.floor(Math.random() * 256);
@@ -4887,7 +4853,7 @@ const KeygenGenerator = {
             },
 
             // Calculate component checksum for integrity verification
-            calculateComponentChecksum: function (componentName) {
+            calculateComponentChecksum: componentName => {
                 try {
                     // Gather actual component data for checksum calculation
                     const module =
@@ -4947,7 +4913,7 @@ const KeygenGenerator = {
             },
 
             // Handle integrity violations
-            handleIntegrityViolation: function (violation) {
+            handleIntegrityViolation: violation => {
                 switch (violation.severity) {
                     case 'critical':
                         console.error(
@@ -4990,7 +4956,7 @@ const KeygenGenerator = {
             },
 
             // Setup debugger detection mechanisms
-            setupDebuggerDetection: function () {
+            setupDebuggerDetection: () => {
                 const hooks = [];
 
                 try {
@@ -4999,7 +4965,6 @@ const KeygenGenerator = {
                         () => {
                             // Timing-based detection
                             const start = performance.now();
-                            debugger; // This line triggers debugger if present
                             const end = performance.now();
                             return end - start > 100; // Suspicious if too slow
                         },
@@ -5008,7 +4973,7 @@ const KeygenGenerator = {
                             try {
                                 throw new Error('Debug check');
                             } catch (e) {
-                                const hasDebugger = e.stack && e.stack.includes('debugger');
+                                const hasDebugger = e.stack?.includes('debugger');
                                 send({
                                     type: 'debug',
                                     component:
@@ -5050,7 +5015,7 @@ const KeygenGenerator = {
                             // Silent handling for security
                         }
                     }
-                } catch (error) {
+                } catch (_error) {
                     // Silent error handling for security
                 }
 
@@ -5058,7 +5023,7 @@ const KeygenGenerator = {
             },
 
             // Setup memory protection mechanisms
-            setupMemoryProtection: function () {
+            setupMemoryProtection: () => {
                 const guards = {
                     allocatedRegions: new Map(),
                     protectedRegions: new Set(),
@@ -5106,7 +5071,7 @@ const KeygenGenerator = {
             },
 
             // Calculate function checksum for integrity
-            calculateFunctionChecksum: function (functionName) {
+            calculateFunctionChecksum: functionName => {
                 try {
                     const funcString = functionName + Date.now().toString();
                     let hash = 0;
@@ -5118,7 +5083,7 @@ const KeygenGenerator = {
                     }
 
                     return Math.abs(hash).toString(16);
-                } catch (error) {
+                } catch (_error) {
                     return 'checksum_error';
                 }
             },
@@ -5144,7 +5109,7 @@ const KeygenGenerator = {
             },
 
             // Generate secure unique identifier
-            generateSecureId: function () {
+            generateSecureId: () => {
                 const timestamp = Date.now().toString(36);
                 const random = Math.random().toString(36).substr(2, 12);
                 const counter = Math.floor(Math.random() * 0xffff).toString(16);
@@ -5216,7 +5181,7 @@ const KeygenGenerator = {
             },
 
             // Generate decryption key for workflows
-            generateDecryptionKey: function () {
+            generateDecryptionKey: () => {
                 const keyLength = 32;
                 let key = '';
 
@@ -5295,7 +5260,7 @@ const KeygenGenerator = {
             },
 
             // Generate real obfuscation operations for control flow protection
-            generateObfuscationOperations: function () {
+            generateObfuscationOperations: () => {
                 const operations = [];
                 const count = Math.floor(Math.random() * 10) + 5;
 
@@ -5344,7 +5309,7 @@ const KeygenGenerator = {
             },
 
             // XOR encryption for string obfuscation
-            xorEncryptString: function (str, key) {
+            xorEncryptString: (str, key) => {
                 const encrypted = [];
 
                 for (let i = 0; i < str.length; i++) {
@@ -5358,7 +5323,7 @@ const KeygenGenerator = {
             },
 
             // Generate decryption key
-            generateDecryptionKey: function () {
+            generateDecryptionKey: () => {
                 const keyLength = 16;
                 let key = '';
 
@@ -5409,7 +5374,7 @@ const KeygenGenerator = {
             },
 
             // Create opaque predicates for obfuscation
-            createOpaquePredicates: function () {
+            createOpaquePredicates: () => {
                 const predicates = {
                     alwaysTrue: [],
                     alwaysFalse: [],
@@ -5533,13 +5498,13 @@ const KeygenGenerator = {
                             details: memoryPattern.details,
                         });
                     }
-                } catch (error) {
+                } catch (_error) {
                     // Silent error handling for security
                 }
             },
 
             // Scan for suspicious memory patterns
-            scanMemoryPatterns: function () {
+            scanMemoryPatterns: () => {
                 try {
                     // Perform real memory pattern analysis
                     const patterns = {
@@ -5549,13 +5514,13 @@ const KeygenGenerator = {
                     };
 
                     // Scan actual process memory for patterns
-                    var ranges = Process.enumerateRanges('r--');
-                    for (var i = 0; i < Math.min(ranges.length, 10); i++) {
+                  const ranges = Process.enumerateRanges('r--');
+                  for (let i = 0; i < Math.min(ranges.length, 10); i++) {
                         try {
-                            var bytes = ranges[i].base.readByteArray(
-                                Math.min(ranges[i].size, 1024)
-                            );
-                            if (bytes) {
+                          const bytes = ranges[i].base.readByteArray(
+                            Math.min(ranges[i].size, 1024)
+                          );
+                          if (bytes) {
                                 patterns.confidence = Math.min(100, patterns.confidence + 10);
                             }
                         } catch (e) {
@@ -5577,8 +5542,8 @@ const KeygenGenerator = {
                     // Perform real signature detection in memory
                     for (const signature of debuggerSignatures) {
                         // Search for signature in loaded modules
-                        var modules = Process.enumerateModules();
-                        for (var m = 0; m < modules.length; m++) {
+                      const modules = Process.enumerateModules();
+                      for (let m = 0; m < modules.length; m++) {
                             if (modules[m].name.toLowerCase().indexOf(signature) !== -1) {
                                 patterns.suspicious = true;
                                 patterns.details = `Debugger ${signature} module detected: ${modules[m].name}`;
@@ -5590,11 +5555,11 @@ const KeygenGenerator = {
                         // Search for signature in process environment
                         if (Process.platform === 'windows') {
                             try {
-                                var kernel32 = Module.findExportByName(
-                                    'kernel32.dll',
-                                    'GetEnvironmentVariableA'
-                                );
-                                if (kernel32) {
+                              const kernel32 = Module.findExportByName(
+                                'kernel32.dll',
+                                'GetEnvironmentVariableA'
+                              );
+                              if (kernel32) {
                                     patterns.confidence += 0.05;
                                 }
                             } catch (e) {
@@ -5612,7 +5577,7 @@ const KeygenGenerator = {
                     }
 
                     return patterns;
-                } catch (error) {
+                } catch (_error) {
                     return { suspicious: false, details: '', confidence: 0 };
                 }
             },
@@ -5665,7 +5630,7 @@ const KeygenGenerator = {
             },
 
             // Calculate function hash for hook detection
-            calculateFunctionHash: function (funcString) {
+            calculateFunctionHash: funcString => {
                 let hash = 0;
                 for (let i = 0; i < funcString.length; i++) {
                     const char = funcString.charCodeAt(i);

@@ -1,11 +1,11 @@
 const SSL_VERIFY_NONE = 0x00;
-const SSL_VERIFY_PEER = 0x01;
+const _SSL_VERIFY_PEER = 0x01;
 const X509_V_OK = 0;
-const X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT = 18;
-const X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN = 19;
-const X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY = 20;
-const X509_V_ERR_CERT_UNTRUSTED = 27;
-const X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE = 21;
+const _X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT = 18;
+const _X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN = 19;
+const _X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY = 20;
+const _X509_V_ERR_CERT_UNTRUSTED = 27;
+const _X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE = 21;
 
 const connections = [];
 const certificates = [];
@@ -65,7 +65,7 @@ function findOpenSSLModule() {
 
                 return module;
             }
-        } catch (e) {}
+        } catch (_e) {}
     }
 
     return null;
@@ -98,7 +98,7 @@ if (!openssl_module) {
                     this.originalMode = mode;
                     this.ctx = ctx;
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     log(
                         `SSL_CTX_set_verify: Forced mode to SSL_VERIFY_NONE for context ${this.ctx}`
                     );
@@ -107,7 +107,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_CTX_set_verify');
         }
     } catch (e) {
-        logError('Failed to hook SSL_CTX_set_verify: ' + e.message);
+        logError(`Failed to hook SSL_CTX_set_verify: ${e.message}`);
     }
 
     try {
@@ -117,7 +117,7 @@ if (!openssl_module) {
                 onEnter: function (args) {
                     const ssl = args[0];
                     const mode = args[1].toInt32();
-                    const callback = args[2];
+                    const _callback = args[2];
 
                     log(
                         `SSL_set_verify: Original mode=0x${mode.toString(16)} for SSL object ${ssl}`
@@ -128,14 +128,14 @@ if (!openssl_module) {
 
                     this.ssl = ssl;
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     log(`SSL_set_verify: Forced mode to SSL_VERIFY_NONE for SSL ${this.ssl}`);
                 },
             });
             log('Successfully hooked SSL_set_verify');
         }
     } catch (e) {
-        logError('Failed to hook SSL_set_verify: ' + e.message);
+        logError(`Failed to hook SSL_set_verify: ${e.message}`);
     }
 
     try {
@@ -176,7 +176,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_get_verify_result');
         }
     } catch (e) {
-        logError('Failed to hook SSL_get_verify_result: ' + e.message);
+        logError(`Failed to hook SSL_get_verify_result: ${e.message}`);
     }
 
     try {
@@ -186,7 +186,7 @@ if (!openssl_module) {
         );
         if (SSL_CTX_set_cert_verify_callback) {
             const always_succeed_callback = new NativeCallback(
-                (x509_ctx, arg) => {
+                (_x509_ctx, _arg) => {
                     log('Custom verify callback invoked - returning success (1)');
                     return 1;
                 },
@@ -198,7 +198,7 @@ if (!openssl_module) {
                 onEnter: function (args) {
                     const ctx = args[0];
                     const callback = args[1];
-                    const arg = args[2];
+                    const _arg = args[2];
 
                     log(
                         `SSL_CTX_set_cert_verify_callback: Replacing callback ${callback} with always-succeed callback`
@@ -209,7 +209,7 @@ if (!openssl_module) {
                     this.ctx = ctx;
                     this.originalCallback = callback;
                 },
-                onLeave: function (retval) {
+                onLeave: function (_retval) {
                     log(
                         `SSL_CTX_set_cert_verify_callback: Callback replaced for context ${this.ctx}`
                     );
@@ -218,7 +218,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_CTX_set_cert_verify_callback');
         }
     } catch (e) {
-        logError('Failed to hook SSL_CTX_set_cert_verify_callback: ' + e.message);
+        logError(`Failed to hook SSL_CTX_set_cert_verify_callback: ${e.message}`);
     }
 
     try {
@@ -229,7 +229,7 @@ if (!openssl_module) {
         if (SSL_CTX_load_verify_locations) {
             Interceptor.attach(SSL_CTX_load_verify_locations, {
                 onEnter: args => {
-                    const ctx = args[0];
+                    const _ctx = args[0];
                     const CAfile = args[1];
                     const CApath = args[2];
 
@@ -239,13 +239,13 @@ if (!openssl_module) {
                     if (!CAfile.isNull()) {
                         try {
                             cafile_str = CAfile.readCString();
-                        } catch (e) {}
+                        } catch (_e) {}
                     }
 
                     if (!CApath.isNull()) {
                         try {
                             capath_str = CApath.readCString();
-                        } catch (e) {}
+                        } catch (_e) {}
                     }
 
                     log(
@@ -263,7 +263,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_CTX_load_verify_locations');
         }
     } catch (e) {
-        logError('Failed to hook SSL_CTX_load_verify_locations: ' + e.message);
+        logError(`Failed to hook SSL_CTX_load_verify_locations: ${e.message}`);
     }
 
     try {
@@ -295,7 +295,7 @@ if (!openssl_module) {
                                 log('X509_verify_cert: Set error to X509_V_OK in context');
                             }
                         } catch (e) {
-                            logError('Failed to set X509 error: ' + e.message);
+                            logError(`Failed to set X509 error: ${e.message}`);
                         }
                     }
                 },
@@ -303,7 +303,7 @@ if (!openssl_module) {
             log('Successfully hooked X509_verify_cert');
         }
     } catch (e) {
-        logError('Failed to hook X509_verify_cert: ' + e.message);
+        logError(`Failed to hook X509_verify_cert: ${e.message}`);
     }
 
     try {
@@ -329,7 +329,7 @@ if (!openssl_module) {
             log('Successfully hooked X509_STORE_CTX_get_error');
         }
     } catch (e) {
-        logError('Failed to hook X509_STORE_CTX_get_error: ' + e.message);
+        logError(`Failed to hook X509_STORE_CTX_get_error: ${e.message}`);
     }
 
     try {
@@ -340,7 +340,7 @@ if (!openssl_module) {
         if (SSL_CTX_set_verify_depth) {
             Interceptor.attach(SSL_CTX_set_verify_depth, {
                 onEnter: args => {
-                    const ctx = args[0];
+                    const _ctx = args[0];
                     const depth = args[1].toInt32();
 
                     log(`SSL_CTX_set_verify_depth: Original depth=${depth}, setting to 100`);
@@ -350,7 +350,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_CTX_set_verify_depth');
         }
     } catch (e) {
-        logError('Failed to hook SSL_CTX_set_verify_depth: ' + e.message);
+        logError(`Failed to hook SSL_CTX_set_verify_depth: ${e.message}`);
     }
 
     try {
@@ -361,7 +361,7 @@ if (!openssl_module) {
         if (SSL_set_verify_depth) {
             Interceptor.attach(SSL_set_verify_depth, {
                 onEnter: args => {
-                    const ssl = args[0];
+                    const _ssl = args[0];
                     const depth = args[1].toInt32();
 
                     log(`SSL_set_verify_depth: Original depth=${depth}, setting to 100`);
@@ -371,7 +371,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_set_verify_depth');
         }
     } catch (e) {
-        logError('Failed to hook SSL_set_verify_depth: ' + e.message);
+        logError(`Failed to hook SSL_set_verify_depth: ${e.message}`);
     }
 
     if (is_boringssl) {
@@ -382,7 +382,7 @@ if (!openssl_module) {
             );
             if (SSL_set_custom_verify) {
                 const boringssl_always_succeed = new NativeCallback(
-                    (ssl, out_alert) => {
+                    (_ssl, _out_alert) => {
                         log(
                             'BoringSSL custom verify callback invoked - returning ssl_verify_ok (1)'
                         );
@@ -394,9 +394,9 @@ if (!openssl_module) {
 
                 Interceptor.attach(SSL_set_custom_verify, {
                     onEnter: args => {
-                        const ssl = args[0];
+                        const _ssl = args[0];
                         const mode = args[1].toInt32();
-                        const callback = args[2];
+                        const _callback = args[2];
 
                         log(`SSL_set_custom_verify (BoringSSL): mode=${mode}, replacing callback`);
 
@@ -407,7 +407,7 @@ if (!openssl_module) {
                 log('Successfully hooked SSL_set_custom_verify (BoringSSL)');
             }
         } catch (e) {
-            logError('Failed to hook SSL_set_custom_verify: ' + e.message);
+            logError(`Failed to hook SSL_set_custom_verify: ${e.message}`);
         }
 
         try {
@@ -417,7 +417,7 @@ if (!openssl_module) {
             );
             if (SSL_CTX_set_custom_verify) {
                 const boringssl_ctx_always_succeed = new NativeCallback(
-                    (ssl, out_alert) => {
+                    (_ssl, _out_alert) => {
                         log(
                             'BoringSSL CTX custom verify callback invoked - returning ssl_verify_ok (1)'
                         );
@@ -429,9 +429,9 @@ if (!openssl_module) {
 
                 Interceptor.attach(SSL_CTX_set_custom_verify, {
                     onEnter: args => {
-                        const ctx = args[0];
+                        const _ctx = args[0];
                         const mode = args[1].toInt32();
-                        const callback = args[2];
+                        const _callback = args[2];
 
                         log(
                             `SSL_CTX_set_custom_verify (BoringSSL): mode=${mode}, replacing callback`
@@ -444,7 +444,7 @@ if (!openssl_module) {
                 log('Successfully hooked SSL_CTX_set_custom_verify (BoringSSL)');
             }
         } catch (e) {
-            logError('Failed to hook SSL_CTX_set_custom_verify: ' + e.message);
+            logError(`Failed to hook SSL_CTX_set_custom_verify: ${e.message}`);
         }
     }
 
@@ -481,7 +481,7 @@ if (!openssl_module) {
             log('Successfully hooked SSL_connect');
         }
     } catch (e) {
-        logError('Failed to hook SSL_connect: ' + e.message);
+        logError(`Failed to hook SSL_connect: ${e.message}`);
     }
 }
 

@@ -282,6 +282,67 @@ class AILearningDatabase:
 
             return records
 
+    def get_recent_records(self, limit: int = 1000) -> list[dict[str, Any]]:
+        """Get recent learning records as dictionaries for ML processing.
+
+        Args:
+            limit: Maximum number of records to retrieve
+
+        Returns:
+            List of dictionaries containing record data with exploit information
+
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                SELECT record_id, task_type, input_hash, output_hash, success,
+                       confidence, execution_time, memory_usage, error_message,
+                       context, metadata, timestamp, learned_patterns, improvement_suggestions
+                FROM learning_records
+                ORDER BY timestamp DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+
+            records = []
+            for row in cursor.fetchall():
+                context = json.loads(row[9]) if row[9] else {}
+                metadata = json.loads(row[10]) if row[10] else {}
+
+                exploit_data = {
+                    "technique": context.get("technique", metadata.get("technique")),
+                    "target_type": context.get("target_type", metadata.get("target_type")),
+                    "complexity": context.get("complexity", metadata.get("complexity", "medium")),
+                    "payload_size": context.get("payload_size", metadata.get("payload_size", 0)),
+                    "target_entropy": context.get("target_entropy", metadata.get("target_entropy", 0.0)),
+                    "protection_level": context.get("protection_level", metadata.get("protection_level", 0)),
+                    "binary_size": context.get("binary_size", metadata.get("binary_size", 0)),
+                    "import_count": context.get("import_count", metadata.get("import_count", 0)),
+                    "section_count": context.get("section_count", metadata.get("section_count", 0)),
+                }
+
+                record = {
+                    "record_id": row[0],
+                    "task_type": row[1],
+                    "input_hash": row[2],
+                    "output_hash": row[3],
+                    "success": bool(row[4]),
+                    "confidence": row[5],
+                    "execution_time": row[6],
+                    "memory_usage": row[7],
+                    "error_message": row[8],
+                    "context": context,
+                    "metadata": metadata,
+                    "timestamp": row[11],
+                    "learned_patterns": json.loads(row[12]) if row[12] else [],
+                    "improvement_suggestions": json.loads(row[13]) if row[13] else [],
+                    "exploit_data": exploit_data,
+                }
+                records.append(record)
+
+            return records
+
     def get_pattern_rules(self, pattern_name: str | None = None) -> list[PatternRule]:
         """Get pattern rules from database."""
         with sqlite3.connect(self.db_path) as conn:
@@ -622,6 +683,80 @@ class PatternEvolutionEngine:
             self.pattern_cache[rule.pattern_name].append(rule)
 
         self.last_cache_update = datetime.now()
+
+    def add_pattern(
+        self,
+        pattern_type: str,
+        pattern_data: dict[str, Any],
+        source: str,
+    ) -> PatternRule:
+        """Add a new pattern discovered through ML or manual analysis.
+
+        Args:
+            pattern_type: Type of pattern (e.g., 'anomaly_based', 'success_pattern')
+            pattern_data: Dictionary containing pattern characteristics and features
+            source: Source of the pattern discovery (e.g., 'ml_discovery', 'manual')
+
+        Returns:
+            The created PatternRule object
+
+        """
+        feature_vector = pattern_data.get("feature_vector", [])
+        important_features = pattern_data.get("important_features", [])
+        technique = pattern_data.get("technique", "unknown")
+        target_type = pattern_data.get("target_type", "unknown")
+        confidence = pattern_data.get("confidence", 0.5)
+
+        feature_sig = hashlib.md5(str(feature_vector).encode()).hexdigest()[:8]
+        pattern_name = f"{pattern_type}_{technique}_{target_type}_{feature_sig}"
+
+        condition_parts = []
+        if technique and technique != "unknown":
+            condition_parts.append(f"technique == '{technique}'")
+        if target_type and target_type != "unknown":
+            condition_parts.append(f"target_type == '{target_type}'")
+        if important_features:
+            top_features = important_features[:3]
+            condition_parts.append(f"important_features contains {top_features}")
+
+        condition = " AND ".join(condition_parts) if condition_parts else f"{pattern_type}_detected"
+
+        action_map = {
+            "anomaly_based": "apply_anomaly_strategy",
+            "success_pattern": "apply_success_strategy",
+            "failure_avoidance": "avoid_failure_conditions",
+            "optimization": "optimize_execution",
+        }
+        action = action_map.get(pattern_type, "apply_learned_strategy")
+
+        timestamp = int(datetime.now().timestamp())
+        rule = PatternRule(
+            rule_id=f"{pattern_type}_{source}_{timestamp}_{feature_sig}",
+            pattern_name=pattern_name,
+            condition=condition,
+            action=action,
+            confidence=confidence,
+            success_rate=confidence,
+            usage_count=0,
+            created_at=datetime.now(),
+            effectiveness_score=confidence * 0.9,
+        )
+
+        self.database.save_pattern_rule(rule)
+
+        if pattern_name not in self.pattern_cache:
+            self.pattern_cache[pattern_name] = []
+        self.pattern_cache[pattern_name].append(rule)
+
+        logger.info(
+            "Added new pattern: %s (type=%s, source=%s, confidence=%.2f)",
+            pattern_name,
+            pattern_type,
+            source,
+            confidence,
+        )
+
+        return rule
 
     def get_applicable_patterns(self, context: dict[str, Any]) -> list[PatternRule]:
         """Get patterns applicable to current context."""

@@ -135,12 +135,10 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtQueryInformationProcessAdvanced: function () {
-        if (!this.config.kernelHooks.ntQueryInformationProcess) return;
+        if (!this.config.kernelHooks.ntQueryInformationProcess) { return; }
 
         const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfo) {
-            const self = this;
-
             Interceptor.attach(ntQueryInfo, {
                 onEnter: function (args) {
                     this.processHandle = args[0];
@@ -207,17 +205,17 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['NtQueryInformationProcess'] = true;
+            this.hooksInstalled.NtQueryInformationProcess = true;
         }
     },
 
     hookNtSetInformationThreadAdvanced: function () {
-        if (!this.config.kernelHooks.ntSetInformationThread) return;
+        if (!this.config.kernelHooks.ntSetInformationThread) { return; }
 
         const ntSetInfoThread = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
         if (ntSetInfoThread) {
             Interceptor.attach(ntSetInfoThread, {
-                onEnter: function (args) {
+                onEnter: args => {
                     const infoClass = args[1].toInt32();
 
                     if (infoClass === 17) {
@@ -242,12 +240,12 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['NtSetInformationThread'] = true;
+            this.hooksInstalled.NtSetInformationThread = true;
         }
     },
 
     hookNtQuerySystemInformationAdvanced: function () {
-        if (!this.config.kernelHooks.ntQuerySystemInformation) return;
+        if (!this.config.kernelHooks.ntQuerySystemInformation) { return; }
 
         const ntQuerySysInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntQuerySysInfo) {
@@ -284,12 +282,12 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['NtQuerySystemInformation'] = true;
+            this.hooksInstalled.NtQuerySystemInformation = true;
         }
     },
 
     hookNtCloseAntiDebug: function () {
-        if (!this.config.kernelHooks.ntClose) return;
+        if (!this.config.kernelHooks.ntClose) { return; }
 
         const ntClose = Module.findExportByName('ntdll.dll', 'NtClose');
         if (ntClose) {
@@ -314,27 +312,18 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['NtClose'] = true;
+            this.hooksInstalled.NtClose = true;
         }
     },
 
     hookNtYieldExecution: function () {
-        if (!this.config.kernelHooks.ntYieldExecution) return;
+        if (!this.config.kernelHooks.ntYieldExecution) { return; }
 
         const ntYield = Module.findExportByName('ntdll.dll', 'NtYieldExecution');
         if (ntYield) {
-            Interceptor.replace(
-                ntYield,
-                new NativeCallback(
-                    function () {
-                        return 0;
-                    },
-                    'int',
-                    []
-                )
-            );
+            Interceptor.replace(ntYield, new NativeCallback(() => 0, 'int', []));
 
-            this.hooksInstalled['NtYieldExecution'] = true;
+            this.hooksInstalled.NtYieldExecution = true;
         }
     },
 
@@ -353,10 +342,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookRdtsc: function () {
-        if (!this.config.timingNeutralization.rdtscEmulation) return;
+        if (!this.config.timingNeutralization.rdtscEmulation) { return; }
 
         try {
-            const self = this;
             const rdtscPattern = '0F 31';
 
             const matches = Memory.scanSync(
@@ -366,16 +354,16 @@ const advancedAntiDebugBypass = {
             );
 
             let patchCount = 0;
-            matches.forEach((match) => {
+            matches.forEach(match => {
                 try {
-                    Memory.patchCode(match.address, 2, (code) => {
+                    Memory.patchCode(match.address, 2, code => {
                         const writer = new X86Writer(code, { pc: match.address });
                         writer.putNopPadding(2);
                         writer.flush();
                     });
                     patchCount++;
-                } catch (e) {
-                    return;
+                } catch (_e) {
+
                 }
             });
 
@@ -388,8 +376,8 @@ const advancedAntiDebugBypass = {
                 });
             }
 
-            this.hooksInstalled['RDTSC'] = true;
-        } catch (e) {
+            this.hooksInstalled.RDTSC = true;
+        } catch (_e) {
             send({
                 type: 'warning',
                 target: 'RDTSC',
@@ -399,7 +387,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookRdtscp: function () {
-        if (!this.config.timingNeutralization.rdtscpEmulation) return;
+        if (!this.config.timingNeutralization.rdtscpEmulation) { return; }
 
         try {
             const rdtscpPattern = '0F 01 F9';
@@ -411,16 +399,16 @@ const advancedAntiDebugBypass = {
             );
 
             let patchCount = 0;
-            matches.forEach((match) => {
+            matches.forEach(match => {
                 try {
-                    Memory.patchCode(match.address, 3, (code) => {
+                    Memory.patchCode(match.address, 3, code => {
                         const writer = new X86Writer(code, { pc: match.address });
                         writer.putNopPadding(3);
                         writer.flush();
                     });
                     patchCount++;
-                } catch (e) {
-                    return;
+                } catch (_e) {
+
                 }
             });
 
@@ -433,8 +421,8 @@ const advancedAntiDebugBypass = {
                 });
             }
 
-            this.hooksInstalled['RDTSCP'] = true;
-        } catch (e) {
+            this.hooksInstalled.RDTSCP = true;
+        } catch (_e) {
             send({
                 type: 'warning',
                 target: 'RDTSCP',
@@ -444,7 +432,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookQueryPerformanceCounter: function () {
-        if (!this.config.timingNeutralization.qpcNormalization) return;
+        if (!this.config.timingNeutralization.qpcNormalization) { return; }
 
         const qpc = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
         if (qpc) {
@@ -468,22 +456,21 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['QueryPerformanceCounter'] = true;
+            this.hooksInstalled.QueryPerformanceCounter = true;
         }
     },
 
     hookGetTickCount: function () {
-        if (!this.config.timingNeutralization.qpcNormalization) return;
+        if (!this.config.timingNeutralization.qpcNormalization) { return; }
 
         const gtc = Module.findExportByName('kernel32.dll', 'GetTickCount');
         if (gtc) {
-            const self = this;
             let tickBase = null;
 
             Interceptor.replace(
                 gtc,
                 new NativeCallback(
-                    function () {
+                    () => {
                         if (tickBase === null) {
                             tickBase = Date.now();
                         }
@@ -495,7 +482,7 @@ const advancedAntiDebugBypass = {
                 )
             );
 
-            this.hooksInstalled['GetTickCount'] = true;
+            this.hooksInstalled.GetTickCount = true;
         }
 
         const gtc64 = Module.findExportByName('kernel32.dll', 'GetTickCount64');
@@ -505,7 +492,7 @@ const advancedAntiDebugBypass = {
             Interceptor.replace(
                 gtc64,
                 new NativeCallback(
-                    function () {
+                    () => {
                         if (tickBase === null) {
                             tickBase = Date.now();
                         }
@@ -517,19 +504,19 @@ const advancedAntiDebugBypass = {
                 )
             );
 
-            this.hooksInstalled['GetTickCount64'] = true;
+            this.hooksInstalled.GetTickCount64 = true;
         }
     },
 
     hookSleepFunctions: function () {
-        if (!this.config.timingNeutralization.sleepAcceleration) return;
+        if (!this.config.timingNeutralization.sleepAcceleration) { return; }
 
         const sleep = Module.findExportByName('kernel32.dll', 'Sleep');
         if (sleep) {
             Interceptor.replace(
                 sleep,
                 new NativeCallback(
-                    function (dwMilliseconds) {
+                    dwMilliseconds => {
                         const accelerated = Math.floor(dwMilliseconds / 10);
                         send({
                             type: 'bypass',
@@ -538,14 +525,14 @@ const advancedAntiDebugBypass = {
                             original: dwMilliseconds,
                             accelerated: accelerated,
                         });
-                        return;
+
                     },
                     'void',
                     ['uint32']
                 )
             );
 
-            this.hooksInstalled['Sleep'] = true;
+            this.hooksInstalled.Sleep = true;
         }
     },
 
@@ -561,7 +548,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookCpuid: function () {
-        if (!this.config.hypervisorDetection.spoofCpuid) return;
+        if (!this.config.hypervisorDetection.spoofCpuid) { return; }
 
         try {
             const cpuidPattern = '0F A2';
@@ -573,10 +560,10 @@ const advancedAntiDebugBypass = {
             );
 
             let patchCount = 0;
-            matches.forEach((match) => {
+            matches.forEach(match => {
                 try {
                     Interceptor.attach(match.address, {
-                        onLeave: function (retval) {
+                        onLeave: function (_retval) {
                             if (this.context.eax === 0x40000000) {
                                 this.context.ebx = 0;
                                 this.context.ecx = 0;
@@ -592,8 +579,8 @@ const advancedAntiDebugBypass = {
                         },
                     });
                     patchCount++;
-                } catch (e) {
-                    return;
+                } catch (_e) {
+
                 }
             });
 
@@ -606,8 +593,8 @@ const advancedAntiDebugBypass = {
                 });
             }
 
-            this.hooksInstalled['CPUID'] = true;
-        } catch (e) {
+            this.hooksInstalled.CPUID = true;
+        } catch (_e) {
             send({
                 type: 'warning',
                 target: 'CPUID',
@@ -617,7 +604,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookVmxInstructions: function () {
-        if (!this.config.hypervisorDetection.hideVmxInstructions) return;
+        if (!this.config.hypervisorDetection.hideVmxInstructions) { return; }
 
         send({
             type: 'info',
@@ -625,7 +612,7 @@ const advancedAntiDebugBypass = {
             target: 'VMX',
         });
 
-        this.hooksInstalled['VMX'] = true;
+        this.hooksInstalled.VMX = true;
     },
 
     hookScyllaHideResistant: function () {
@@ -640,7 +627,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookInlineHookDetection: function () {
-        if (!this.config.scyllaHideResistant.inlineHookDetection) return;
+        if (!this.config.scyllaHideResistant.inlineHookDetection) { return; }
 
         send({
             type: 'info',
@@ -648,16 +635,16 @@ const advancedAntiDebugBypass = {
             target: 'InlineHookDetection',
         });
 
-        this.hooksInstalled['InlineHookDetection'] = true;
+        this.hooksInstalled.InlineHookDetection = true;
     },
 
     hookProcessHollowing: function () {
-        if (!this.config.scyllaHideResistant.processHollowing) return;
+        if (!this.config.scyllaHideResistant.processHollowing) { return; }
 
         const ntUnmapViewOfSection = Module.findExportByName('ntdll.dll', 'NtUnmapViewOfSection');
         if (ntUnmapViewOfSection) {
             Interceptor.attach(ntUnmapViewOfSection, {
-                onEnter: function (args) {
+                onEnter: args => {
                     send({
                         type: 'warning',
                         target: 'NtUnmapViewOfSection',
@@ -668,7 +655,7 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['ProcessHollowing'] = true;
+            this.hooksInstalled.ProcessHollowing = true;
         }
     },
 
@@ -687,7 +674,7 @@ const advancedAntiDebugBypass = {
         const rtlComputeCrc32 = Module.findExportByName('ntdll.dll', 'RtlComputeCrc32');
         if (rtlComputeCrc32) {
             Interceptor.attach(rtlComputeCrc32, {
-                onLeave: function (retval) {
+                onLeave: retval => {
                     send({
                         type: 'bypass',
                         target: 'RtlComputeCrc32',
@@ -697,7 +684,7 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['RtlComputeCrc32'] = true;
+            this.hooksInstalled.RtlComputeCrc32 = true;
         }
     },
 
@@ -725,7 +712,7 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['VirtualProtect'] = true;
+            this.hooksInstalled.VirtualProtect = true;
         }
     },
 
@@ -744,7 +731,7 @@ const advancedAntiDebugBypass = {
         const addVeh = Module.findExportByName('kernel32.dll', 'AddVectoredExceptionHandler');
         if (addVeh) {
             Interceptor.attach(addVeh, {
-                onEnter: function (args) {
+                onEnter: args => {
                     send({
                         type: 'info',
                         target: 'AddVectoredExceptionHandler',
@@ -755,7 +742,7 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['AddVectoredExceptionHandler'] = true;
+            this.hooksInstalled.AddVectoredExceptionHandler = true;
         }
     },
 
@@ -765,7 +752,7 @@ const advancedAntiDebugBypass = {
             Interceptor.replace(
                 setUnhandled,
                 new NativeCallback(
-                    function (lpTopLevelExceptionFilter) {
+                    lpTopLevelExceptionFilter => {
                         send({
                             type: 'bypass',
                             target: 'SetUnhandledExceptionFilter',
@@ -779,12 +766,12 @@ const advancedAntiDebugBypass = {
                 )
             );
 
-            this.hooksInstalled['SetUnhandledExceptionFilter'] = true;
+            this.hooksInstalled.SetUnhandledExceptionFilter = true;
         }
     },
 
     manipulatePebDeep: function () {
-        if (!this.config.scyllaHideResistant.deepPebManipulation) return;
+        if (!this.config.scyllaHideResistant.deepPebManipulation) { return; }
 
         send({
             type: 'info',
@@ -834,7 +821,7 @@ const advancedAntiDebugBypass = {
     },
 
     hookTlsCallbacks: function () {
-        if (!this.config.scyllaHideResistant.tlsCallbackProtection) return;
+        if (!this.config.scyllaHideResistant.tlsCallbackProtection) { return; }
 
         send({
             type: 'info',
@@ -842,7 +829,7 @@ const advancedAntiDebugBypass = {
             category: 'tls',
         });
 
-        this.hooksInstalled['TLSCallbacks'] = true;
+        this.hooksInstalled.TLSCallbacks = true;
     },
 
     hookMemoryOperations: function () {
@@ -866,22 +853,22 @@ const advancedAntiDebugBypass = {
                 },
             });
 
-            this.hooksInstalled['VirtualQuery'] = true;
+            this.hooksInstalled.VirtualQuery = true;
         }
     },
 
-    readTsc: function () {
+    readTsc: () => {
         try {
             return Date.now() * 1000000;
-        } catch (e) {
+        } catch (_e) {
             return 0;
         }
     },
 
-    readQpc: function () {
+    readQpc: () => {
         try {
             return uint64(Date.now() * 10000);
-        } catch (e) {
+        } catch (_e) {
             return null;
         }
     },
@@ -911,19 +898,19 @@ const advancedAntiDebugBypass = {
             type: 'summary',
             message: `Successfully installed ${hookCount} advanced bypass techniques`,
             categories: {
-                kernel: Object.keys(this.hooksInstalled).filter((k) => k.startsWith('Nt')).length,
+                kernel: Object.keys(this.hooksInstalled).filter(k => k.startsWith('Nt')).length,
                 timing: Object.keys(this.hooksInstalled).filter(
-                    (k) =>
+                    k =>
                         k.includes('RDTSC') ||
                         k.includes('Qpc') ||
                         k.includes('Tick') ||
                         k.includes('Sleep')
                 ).length,
                 hypervisor: Object.keys(this.hooksInstalled).filter(
-                    (k) => k.includes('CPUID') || k.includes('VMX')
+                    k => k.includes('CPUID') || k.includes('VMX')
                 ).length,
                 integrity: Object.keys(this.hooksInstalled).filter(
-                    (k) => k.includes('Crc') || k.includes('Virtual')
+                    k => k.includes('Crc') || k.includes('Virtual')
                 ).length,
             },
         });
@@ -932,16 +919,14 @@ const advancedAntiDebugBypass = {
 
 if (typeof rpc !== 'undefined') {
     rpc.exports = {
-        getStatus: function () {
-            return {
-                name: advancedAntiDebugBypass.name,
-                version: advancedAntiDebugBypass.version,
-                hooks: Object.keys(advancedAntiDebugBypass.hooksInstalled),
-                active: true,
-            };
-        },
+        getStatus: () => ({
+            name: advancedAntiDebugBypass.name,
+            version: advancedAntiDebugBypass.version,
+            hooks: Object.keys(advancedAntiDebugBypass.hooksInstalled),
+            active: true,
+        }),
 
-        disableHook: function (hookName) {
+        disableHook: hookName => {
             if (advancedAntiDebugBypass.hooksInstalled[hookName]) {
                 delete advancedAntiDebugBypass.hooksInstalled[hookName];
                 return { success: true, message: `Hook ${hookName} disabled` };

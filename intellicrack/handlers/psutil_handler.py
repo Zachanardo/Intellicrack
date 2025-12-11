@@ -17,15 +17,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
 import sys
 import time
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 """
@@ -349,12 +355,12 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid, msg=error_msg)
             return self._ppid
 
-        def parent(self) -> "FallbackProcess | None":
+        def parent(self) -> FallbackProcess | None:
             """Get parent process."""
             ppid = self.ppid()
             return FallbackProcess(ppid) if ppid is not None else None
 
-        def children(self, recursive: bool = False) -> list["FallbackProcess"]:
+        def children(self, recursive: bool = False) -> list[FallbackProcess]:
             """Get child processes."""
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
@@ -504,7 +510,7 @@ except ImportError as e:
             # Simplified CPU measurement
             return 0.0
 
-        def memory_info(self) -> "MemInfo":
+        def memory_info(self) -> object:
             """Get memory information."""
             if self._gone:
                 error_msg = f"process no longer exists (pid={self._pid})"
@@ -606,7 +612,7 @@ except ImportError as e:
             logger.debug(f"Failed to get CPU count: {e}")
             return 1
 
-    def cpu_freq(percpu: bool = False) -> "CPUFreq | list[CPUFreq]":
+    def cpu_freq(percpu: bool = False) -> object:
         """Get CPU frequency."""
 
         class CPUFreq:  # noqa: B903 - Must match psutil API for compatibility
@@ -620,7 +626,7 @@ except ImportError as e:
 
         return [freq] if percpu else freq
 
-    def cpu_stats() -> "CPUStats":
+    def cpu_stats() -> object:
         """Get CPU statistics."""
 
         class CPUStats:
@@ -632,7 +638,7 @@ except ImportError as e:
 
         return CPUStats()
 
-    def virtual_memory() -> "VirtualMemory":
+    def virtual_memory() -> object:
         """Get virtual memory statistics."""
 
         class VirtualMemory:
@@ -695,7 +701,7 @@ except ImportError as e:
 
         return VirtualMemory()
 
-    def swap_memory() -> "SwapMemory":
+    def swap_memory() -> object:
         """Get swap memory statistics."""
 
         class SwapMemory:
@@ -709,7 +715,7 @@ except ImportError as e:
 
         return SwapMemory()
 
-    def disk_usage(path: str) -> "DiskUsage":
+    def disk_usage(path: str) -> object:
         """Get disk usage statistics."""
 
         class DiskUsage:
@@ -734,7 +740,7 @@ except ImportError as e:
             logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
-    def disk_partitions(all: bool = False) -> list["DiskPartition"]:
+    def disk_partitions(all: bool = False) -> list[object]:
         """Get disk partitions."""
 
         class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility
@@ -760,7 +766,7 @@ except ImportError as e:
 
         return partitions
 
-    def disk_io_counters(perdisk: bool = False) -> "DiskIOCounters | dict[str, DiskIOCounters]":
+    def disk_io_counters(perdisk: bool = False) -> object:
         """Get disk I/O statistics."""
 
         class DiskIOCounters:
@@ -774,7 +780,7 @@ except ImportError as e:
 
         return {"sda": DiskIOCounters()} if perdisk else DiskIOCounters()
 
-    def net_io_counters(pernic: bool = False) -> "NetIOCounters | dict[str, NetIOCounters]":
+    def net_io_counters(pernic: bool = False) -> object:
         """Get network I/O statistics."""
 
         class NetIOCounters:
@@ -811,7 +817,7 @@ except ImportError as e:
         """Get logged in users."""
         return []
 
-    def process_iter(attrs: list[str] | None = None) -> list["FallbackProcess"]:
+    def process_iter(attrs: list[str] | None = None) -> list[FallbackProcess]:
         """Iterate over all processes."""
         processes: list[FallbackProcess] = []
 
@@ -878,10 +884,10 @@ except ImportError as e:
                 return False
 
     def wait_procs(
-        procs: list["FallbackProcess"],
+        procs: list[FallbackProcess],
         timeout: float | None = None,
-        callback: Callable[["FallbackProcess"], None] | None = None,
-    ) -> tuple[list["FallbackProcess"], list["FallbackProcess"]]:
+        callback: Callable[[FallbackProcess], None] | None = None,
+    ) -> tuple[list[FallbackProcess], list[FallbackProcess]]:
         """Wait for processes to terminate."""
         gone: list[FallbackProcess] = []
         alive: list[FallbackProcess] = list(procs)
