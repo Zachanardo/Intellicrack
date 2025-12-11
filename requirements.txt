@@ -513,7 +513,7 @@ unicodecsv==0.14.1
 unicorn==2.1.4
 unique_log_filter==0.1.0
 unix_ar==0.2.1
-urllib3==2.5.0
+urllib3==2.6.1
 urwid==2.6.15
 uvicorn==0.38.0
 vine==5.1.0
