@@ -1,841 +1,841 @@
-﻿51 findings in src\process_manager.rs
+51 findings in src\process_manager.rs
 
-  --> src\process_manager.rs:17:1
+src\process_manager.rs:17:1: [warning] more than 3 bools in a struct
 
-   --> src\process_manager.rs:129:5
+src\process_manager.rs:129:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:145:5
+src\process_manager.rs:145:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:164:5
+src\process_manager.rs:164:5: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-   --> src\process_manager.rs:185:5
+src\process_manager.rs:185:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:203:5
+src\process_manager.rs:203:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:212:28
+src\process_manager.rs:212:28: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:203:5
+src\process_manager.rs:203:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:203:5
+src\process_manager.rs:203:5: [warning] this function has too many lines (101/100)
 
-   --> src\process_manager.rs:207:22
+src\process_manager.rs:207:22: [warning] this argument is passed by value, but not consumed in the function body
 
-   --> src\process_manager.rs:345:5
+src\process_manager.rs:345:5: [warning] this function's return value is unnecessary
 
-   --> src\process_manager.rs:388:33
+src\process_manager.rs:388:33: [warning] these match arms have identical bodies
 
-   --> src\process_manager.rs:424:5
+src\process_manager.rs:424:5: [warning] this function has too many lines (130/100)
 
-   --> src\process_manager.rs:424:5
+src\process_manager.rs:424:5: [warning] this function's return value is unnecessary
 
-   --> src\process_manager.rs:539:29
+src\process_manager.rs:539:29: [warning] temporary with significant `Drop` can be early dropped
 
-   --> src\process_manager.rs:553:35
+src\process_manager.rs:553:35: [warning] casting `usize` to `u32` may truncate the value on targets with 64-bit wide pointers
 
-   --> src\process_manager.rs:582:5
+src\process_manager.rs:582:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:583:29
+src\process_manager.rs:583:29: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:582:5
+src\process_manager.rs:582:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:592:17
+src\process_manager.rs:592:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\process_manager.rs:595:13
+src\process_manager.rs:595:13: [warning] variables can be used directly in the `format!` string
 
-   --> src\process_manager.rs:600:5
+src\process_manager.rs:600:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:601:25
+src\process_manager.rs:601:25: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:606:5
+src\process_manager.rs:606:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:607:25
+src\process_manager.rs:607:25: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:611:5
+src\process_manager.rs:611:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:613:29
+src\process_manager.rs:613:29: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:611:5
+src\process_manager.rs:611:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:629:17
+src\process_manager.rs:629:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\process_manager.rs:634:5
+src\process_manager.rs:634:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:635:29
+src\process_manager.rs:635:29: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:669:5
+src\process_manager.rs:669:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:674:37
+src\process_manager.rs:674:37: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:669:5
+src\process_manager.rs:669:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:718:5
+src\process_manager.rs:718:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:719:21
+src\process_manager.rs:719:21: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:732:5
+src\process_manager.rs:732:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:733:23
+src\process_manager.rs:733:23: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:756:5
+src\process_manager.rs:756:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:759:28
+src\process_manager.rs:759:28: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:756:5
+src\process_manager.rs:756:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\process_manager.rs:802:5
+src\process_manager.rs:802:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:803:11
+src\process_manager.rs:803:11: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:807:5
+src\process_manager.rs:807:5: [warning] docs for function which may panic missing `# Panics` section
 
-   --> src\process_manager.rs:808:25
+src\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section
 
-    --> src\process_manager.rs:1153:25
+src\process_manager.rs:1153:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\process_manager.rs:1157:32
+src\process_manager.rs:1157:32: [warning] variables can be used directly in the `format!` string
 
-    --> src\process_manager.rs:1165:25
+src\process_manager.rs:1165:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\process_manager.rs:1169:29
+src\process_manager.rs:1169:29: [warning] variables can be used directly in the `format!` string
 
-    --> src\process_manager.rs:1198:9
+src\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\process_manager.rs:185:5
+src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
 
 
 31 findings in src\dependencies.rs
 
-  --> src\dependencies.rs:37:1
+src\dependencies.rs:37:1: [warning] more than 3 bools in a struct
 
-  --> src\dependencies.rs:48:1
+src\dependencies.rs:48:1: [warning] more than 3 bools in a struct
 
-   --> src\dependencies.rs:103:14
+src\dependencies.rs:103:14: [warning] casting `usize` to `f64` causes a loss of precision on targets with 64-bit wide pointers (`usize` is 64 bits
 
-   --> src\dependencies.rs:103:41
+src\dependencies.rs:103:41: [warning] casting `usize` to `f64` causes a loss of precision on targets with 64-bit wide pointers (`usize` is 64 bits
 
-   --> src\dependencies.rs:121:5
+src\dependencies.rs:121:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\dependencies.rs:326:21
+src\dependencies.rs:326:21: [warning] `if _ { .. } else { .. }` is an expression
 
-   --> src\dependencies.rs:580:28
+src\dependencies.rs:580:28: [warning] casting `usize` to `u32` may truncate the value on targets with 64-bit wide pointers
 
-   --> src\dependencies.rs:645:5
+src\dependencies.rs:645:5: [warning] this function has too many lines (140/100)
 
-   --> src\dependencies.rs:757:36
+src\dependencies.rs:757:36: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\dependencies.rs:758:35
+src\dependencies.rs:758:35: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\dependencies.rs:759:35
+src\dependencies.rs:759:35: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\dependencies.rs:760:41
+src\dependencies.rs:760:41: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\dependencies.rs:760:57
+src\dependencies.rs:760:57: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\dependencies.rs:809:5
+src\dependencies.rs:809:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\dependencies.rs:822:5
+src\dependencies.rs:822:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\dependencies.rs:840:5
+src\dependencies.rs:840:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\dependencies.rs:858:5
+src\dependencies.rs:858:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\dependencies.rs:871:5
+src\dependencies.rs:871:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-    --> src\dependencies.rs:1435:25
+src\dependencies.rs:1435:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\dependencies.rs:1445:25
+src\dependencies.rs:1445:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\dependencies.rs:1457:25
+src\dependencies.rs:1457:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\dependencies.rs:1469:25
+src\dependencies.rs:1469:25: [warning] variables can be used directly in the `format!` string
 
-    --> src\dependencies.rs:1478:25
+src\dependencies.rs:1478:25: [warning] variables can be used directly in the `format!` string
 
-   --> src\dependencies.rs:160:5
+src\dependencies.rs:160:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:226:5
+src\dependencies.rs:226:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:306:5
+src\dependencies.rs:306:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:383:5
+src\dependencies.rs:383:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:420:5
+src\dependencies.rs:420:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:493:5
+src\dependencies.rs:493:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:590:5
+src\dependencies.rs:590:5: [warning] unused `async` for function with no await statements
 
-   --> src\dependencies.rs:645:5
+src\dependencies.rs:645:5: [warning] unused `async` for function with no await statements
 
 
 27 findings in src\environment.rs
 
-  --> src\environment.rs:25:59
+src\environment.rs:25:59: [warning] item in documentation is missing backticks
 
-  --> src\environment.rs:25:68
+src\environment.rs:25:68: [warning] item in documentation is missing backticks
 
-  --> src\environment.rs:26:5
+src\environment.rs:26:5: [warning] item in documentation is missing backticks
 
-  --> src\environment.rs:26:55
+src\environment.rs:26:55: [warning] item in documentation is missing backticks
 
-  --> src\environment.rs:43:60
+src\environment.rs:43:60: [warning] item in documentation is missing backticks
 
-  --> src\environment.rs:66:5
+src\environment.rs:66:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\environment.rs:105:5
+src\environment.rs:105:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:131:34
+src\environment.rs:131:34: [warning] unused `self` argument
 
-   --> src\environment.rs:131:5
+src\environment.rs:131:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:150:33
+src\environment.rs:150:33: [warning] unused `self` argument
 
-   --> src\environment.rs:150:5
+src\environment.rs:150:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:163:35
+src\environment.rs:163:35: [warning] unused `self` argument
 
-   --> src\environment.rs:163:5
+src\environment.rs:163:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:200:5
+src\environment.rs:200:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:281:43
+src\environment.rs:281:43: [warning] unused `self` argument
 
-   --> src\environment.rs:281:5
+src\environment.rs:281:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:324:62
+src\environment.rs:324:62: [warning] redundant closure
 
-   --> src\environment.rs:324:66
+src\environment.rs:324:66: [warning] calling `to_string` on `&&str`
 
-   --> src\environment.rs:348:28
+src\environment.rs:348:28: [warning] unused `self` argument
 
-   --> src\environment.rs:348:5
+src\environment.rs:348:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:393:34
+src\environment.rs:393:34: [warning] unused `self` argument
 
-   --> src\environment.rs:393:5
+src\environment.rs:393:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:495:5
+src\environment.rs:495:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:515:37
+src\environment.rs:515:37: [warning] unused `self` argument
 
-   --> src\environment.rs:515:5
+src\environment.rs:515:5: [warning] this function's return value is unnecessary
 
-   --> src\environment.rs:534:5
+src\environment.rs:534:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\environment.rs:549:5
+src\environment.rs:549:5: [warning] docs for function returning `Result` missing `# Errors` section
 
 
 26 findings in src\python_integration.rs
 
-  --> src\python_integration.rs:29:5
+src\python_integration.rs:29:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:148:5
+src\python_integration.rs:148:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:161:28
+src\python_integration.rs:161:28: [warning] unused `self` argument
 
-   --> src\python_integration.rs:161:5
+src\python_integration.rs:161:5: [warning] this function's return value is unnecessary
 
-   --> src\python_integration.rs:183:40
+src\python_integration.rs:183:40: [warning] unused `self` argument
 
-   --> src\python_integration.rs:203:34
+src\python_integration.rs:203:34: [warning] unused `self` argument
 
-   --> src\python_integration.rs:209:13
+src\python_integration.rs:209:13: [warning] variables can be used directly in the `format!` string
 
-   --> src\python_integration.rs:222:17
+src\python_integration.rs:222:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\python_integration.rs:230:18
+src\python_integration.rs:230:18: [warning] item in documentation is missing backticks
 
-   --> src\python_integration.rs:234:40
+src\python_integration.rs:234:40: [warning] unused `self` argument
 
-   --> src\python_integration.rs:257:23
+src\python_integration.rs:257:23: [warning] unused `self` argument
 
-   --> src\python_integration.rs:290:17
+src\python_integration.rs:290:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\python_integration.rs:299:34
+src\python_integration.rs:299:34: [warning] unused `self` argument
 
-   --> src\python_integration.rs:299:5
+src\python_integration.rs:299:5: [warning] this function's return value is unnecessary
 
-   --> src\python_integration.rs:312:36
+src\python_integration.rs:312:36: [warning] this pattern matching can be expressed using `matches!`
 
-   --> src\python_integration.rs:362:5
+src\python_integration.rs:362:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:367:65
+src\python_integration.rs:367:65: [warning] unnecessary `Debug` formatting in `bail!` args
 
-   --> src\python_integration.rs:404:69
+src\python_integration.rs:404:69: [warning] item in documentation is missing backticks
 
-   --> src\python_integration.rs:494:5
+src\python_integration.rs:494:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:540:5
+src\python_integration.rs:540:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:551:5
+src\python_integration.rs:551:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:564:5
+src\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\python_integration.rs:161:28
+src\python_integration.rs:795:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\python_integration.rs:795:9
+src\python_integration.rs:852:9: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
-   --> src\python_integration.rs:852:9
+src\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string
 
-   --> src\python_integration.rs:896:27
+src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
 
 
 25 findings in src\diagnostics.rs
 
-  --> src\diagnostics.rs:63:5
+src\diagnostics.rs:63:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\diagnostics.rs:190:29
+src\diagnostics.rs:190:29: [warning] casting `u64` to `f64` causes a loss of precision (`u64` is 64 bits wide, but `f64`'s mantissa is only 52
 
-   --> src\diagnostics.rs:415:18
+src\diagnostics.rs:415:18: [warning] function call inside of `map_or`
 
-   --> src\diagnostics.rs:471:5
+src\diagnostics.rs:471:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\diagnostics.rs:492:5
+src\diagnostics.rs:492:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\diagnostics.rs:545:5
+src\diagnostics.rs:545:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\diagnostics.rs:701:40
+src\diagnostics.rs:701:40: [warning] this argument is passed by value, but not consumed in the function body
 
-   --> src\diagnostics.rs:720:58
+src\diagnostics.rs:720:58: [warning] casting `u64` to `i64` may wrap around the value
 
-   --> src\diagnostics.rs:762:5
+src\diagnostics.rs:762:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\diagnostics.rs:793:9
+src\diagnostics.rs:793:9: [warning] `format!(..)` appended to existing `String`
 
-   --> src\diagnostics.rs:794:9
+src\diagnostics.rs:794:9: [warning] `format!(..)` appended to existing `String`
 
-   --> src\diagnostics.rs:795:9
+src\diagnostics.rs:795:9: [warning] `format!(..)` appended to existing `String`
 
-   --> src\diagnostics.rs:796:9
+src\diagnostics.rs:796:9: [warning] `format!(..)` appended to existing `String`
 
-   --> src\diagnostics.rs:804:62
+src\diagnostics.rs:804:62: [warning] casting `u64` to `i64` may wrap around the value
 
-   --> src\diagnostics.rs:809:13
+src\diagnostics.rs:809:13: [warning] `format!(..)` appended to existing `String`
 
-   --> src\diagnostics.rs:846:9
+src\diagnostics.rs:846:9: [warning] strict comparison of `f32` or `f64`
 
-   --> src\diagnostics.rs:847:9
+src\diagnostics.rs:847:9: [warning] strict comparison of `f32` or `f64`
 
-   --> src\diagnostics.rs:883:9
+src\diagnostics.rs:883:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\diagnostics.rs:925:9
+src\diagnostics.rs:925:9: [warning] strict comparison of `f32` or `f64`
 
-   --> src\diagnostics.rs:926:9
+src\diagnostics.rs:926:9: [warning] strict comparison of `f32` or `f64`
 
-   --> src\diagnostics.rs:984:30
+src\diagnostics.rs:984:30: [warning] redundant clone
 
-   --> src\diagnostics.rs:984:23
+src\diagnostics.rs:984:23: [warning] redundant clone
 
-   --> src\diagnostics.rs:990:9
+src\diagnostics.rs:990:9: [warning] strict comparison of `f32` or `f64`
 
-    --> src\diagnostics.rs:1273:9
+src\diagnostics.rs:1273:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-    --> src\diagnostics.rs:1321:9
+src\diagnostics.rs:1321:9: [warning] strict comparison of `f32` or `f64`
 
 
 25 findings in benches\startup_optimization_benchmarks.rs
 
-  --> benches\startup_optimization_benchmarks.rs:36:17
+benches\startup_optimization_benchmarks.rs:36:17: [warning] unneeded unit expression
 
- --> benches\startup_optimization_benchmarks.rs:8:19
+benches\startup_optimization_benchmarks.rs:8:19: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:16:19
+benches\startup_optimization_benchmarks.rs:16:19: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:21:19
+benches\startup_optimization_benchmarks.rs:21:19: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:36:17
+benches\startup_optimization_benchmarks.rs:36:17: [warning] consider adding a `;` to the last statement for consistent formatting
 
-  --> benches\startup_optimization_benchmarks.rs:38:14
+benches\startup_optimization_benchmarks.rs:38:14: [warning] matching over `()` is more explicit
 
-  --> benches\startup_optimization_benchmarks.rs:38:17
+benches\startup_optimization_benchmarks.rs:38:17: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:48:19
+benches\startup_optimization_benchmarks.rs:48:19: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:57:19
+benches\startup_optimization_benchmarks.rs:57:19: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:93:13
+benches\startup_optimization_benchmarks.rs:93:13: [warning] passing a unit value to a function
 
-  --> benches\startup_optimization_benchmarks.rs:95:13
+benches\startup_optimization_benchmarks.rs:95:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:105:13
+benches\startup_optimization_benchmarks.rs:105:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:107:13
+benches\startup_optimization_benchmarks.rs:107:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:116:19
+benches\startup_optimization_benchmarks.rs:116:19: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:127:19
+benches\startup_optimization_benchmarks.rs:127:19: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:133:13
+benches\startup_optimization_benchmarks.rs:133:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:135:13
+benches\startup_optimization_benchmarks.rs:135:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:167:13
+benches\startup_optimization_benchmarks.rs:167:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:169:13
+benches\startup_optimization_benchmarks.rs:169:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:181:22
+benches\startup_optimization_benchmarks.rs:181:22: [warning] it is more concise to loop over references to containers instead of using explicit iteration methods
 
-   --> benches\startup_optimization_benchmarks.rs:188:25
+benches\startup_optimization_benchmarks.rs:188:25: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:206:19
+benches\startup_optimization_benchmarks.rs:206:19: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:217:19
+benches\startup_optimization_benchmarks.rs:217:19: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:223:13
+benches\startup_optimization_benchmarks.rs:223:13: [warning] passing a unit value to a function
 
-   --> benches\startup_optimization_benchmarks.rs:225:13
+benches\startup_optimization_benchmarks.rs:225:13: [warning] passing a unit value to a function
 
 
 21 findings in src\tensorflow_validator.rs
 
-   --> src\tensorflow_validator.rs:237:29
+src\tensorflow_validator.rs:237:29: [warning] this `continue` expression is redundant
 
-  --> src\tensorflow_validator.rs:11:5
+src\tensorflow_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\tensorflow_validator.rs:11:5
+src\tensorflow_validator.rs:11:5: [warning] this function has too many lines (146/100)
 
-   --> src\tensorflow_validator.rs:363:5
+src\tensorflow_validator.rs:363:5: [warning] this function has too many lines (104/100)
 
-   --> src\tensorflow_validator.rs:590:5
+src\tensorflow_validator.rs:590:5: [warning] this function has too many lines (108/100)
 
-   --> src\tensorflow_validator.rs:175:5
+src\tensorflow_validator.rs:774:45: [warning] redundant closure
 
-   --> src\tensorflow_validator.rs:202:5
+src\tensorflow_validator.rs:792:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:250:5
+src\tensorflow_validator.rs:817:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:363:5
+src\tensorflow_validator.rs:838:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:481:5
+src\tensorflow_validator.rs:859:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:590:5
+src\tensorflow_validator.rs:877:13: [warning] binding to `_` prefixed variable with no side-effect
 
-   --> src\tensorflow_validator.rs:774:45
+src\tensorflow_validator.rs:941:25: [warning] variables can be used directly in the `format!` string
 
-   --> src\tensorflow_validator.rs:792:9
+src\tensorflow_validator.rs:1056:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:817:9
+src\tensorflow_validator.rs:1084:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:838:9
+src\tensorflow_validator.rs:1127:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\tensorflow_validator.rs:859:9
+src\tensorflow_validator.rs:175:5: [warning] unused `async` for function with no await statements
 
-   --> src\tensorflow_validator.rs:877:13
+src\tensorflow_validator.rs:202:5: [warning] unused `async` for function with no await statements
 
-   --> src\tensorflow_validator.rs:941:25
+src\tensorflow_validator.rs:250:5: [warning] unused `async` for function with no await statements
 
-    --> src\tensorflow_validator.rs:1056:9
+src\tensorflow_validator.rs:363:5: [warning] unused `async` for function with no await statements
 
-    --> src\tensorflow_validator.rs:1084:9
+src\tensorflow_validator.rs:481:5: [warning] unused `async` for function with no await statements
 
-    --> src\tensorflow_validator.rs:1127:9
+src\tensorflow_validator.rs:590:5: [warning] unused `async` for function with no await statements
 
 
 19 findings in src\tool_discovery.rs
 
-   --> src\tool_discovery.rs:466:10
+src\tool_discovery.rs:466:10: [warning] redundant else block
 
-   --> src\tool_discovery.rs:103:48
+src\tool_discovery.rs:103:48: [warning] you are deriving `PartialEq` and can implement `Eq`
 
-   --> src\tool_discovery.rs:114:23
+src\tool_discovery.rs:114:23: [warning] item in documentation is missing backticks
 
-   --> src\tool_discovery.rs:123:15
+src\tool_discovery.rs:123:15: [warning] item in documentation is missing backticks
 
-   --> src\tool_discovery.rs:124:12
+src\tool_discovery.rs:124:12: [warning] this method could have a `#[must_use]` attribute
 
-   --> src\tool_discovery.rs:159:12
+src\tool_discovery.rs:159:12: [warning] this method could have a `#[must_use]` attribute
 
-   --> src\tool_discovery.rs:164:12
+src\tool_discovery.rs:164:12: [warning] this method could have a `#[must_use]` attribute
 
-   --> src\tool_discovery.rs:232:1
+src\tool_discovery.rs:232:1: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-   --> src\tool_discovery.rs:359:7
+src\tool_discovery.rs:359:7: [warning] item in documentation is missing backticks
 
-   --> src\tool_discovery.rs:402:37
+src\tool_discovery.rs:402:37: [warning] calling `to_string` on `&&str`
 
-   --> src\tool_discovery.rs:432:23
+src\tool_discovery.rs:432:23: [warning] item in documentation is missing backticks
 
-   --> src\tool_discovery.rs:535:24
+src\tool_discovery.rs:535:24: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:575:34
+src\tool_discovery.rs:575:34: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:577:27
+src\tool_discovery.rs:577:27: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:583:34
+src\tool_discovery.rs:583:34: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:585:27
+src\tool_discovery.rs:585:27: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:842:1
+src\tool_discovery.rs:842:1: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\tool_discovery.rs:917:26
+src\tool_discovery.rs:917:26: [warning] variables can be used directly in the `format!` string
 
-   --> src\tool_discovery.rs:930:5
-
-
-18 findings in src\preflight_checks.rs
-
-  --> src\preflight_checks.rs:23:30
-
-  --> src\preflight_checks.rs:74:9
-
-   --> src\preflight_checks.rs:252:1
-
-   --> src\preflight_checks.rs:260:48
-
-   --> src\preflight_checks.rs:260:52
-
-   --> src\preflight_checks.rs:293:1
-
-   --> src\preflight_checks.rs:301:44
-
-   --> src\preflight_checks.rs:301:48
-
-   --> src\preflight_checks.rs:309:9
-
-   --> src\preflight_checks.rs:346:13
-
-   --> src\preflight_checks.rs:346:31
-
-   --> src\preflight_checks.rs:354:13
-
-   --> src\preflight_checks.rs:354:31
-
-   --> src\preflight_checks.rs:401:1
-
-   --> src\preflight_checks.rs:411:5
-
-   --> src\preflight_checks.rs:417:5
-
-   --> src\preflight_checks.rs:346:31
-
-   --> src\preflight_checks.rs:489:18
+src\tool_discovery.rs:930:5: [warning] unnecessary boolean `not` operation
 
 
 18 findings in src\lib.rs
 
-   --> src\lib.rs:301:51
+src\lib.rs:301:51: [warning] long literal lacking separators
 
-   --> src\lib.rs:301:51
+src\lib.rs:72:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\lib.rs:72:5
+src\lib.rs:100:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\lib.rs:100:5
+src\lib.rs:140:37: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:140:37
+src\lib.rs:171:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:171:17
+src\lib.rs:205:39: [warning] used underscore-prefixed binding
 
-   --> src\lib.rs:205:39
+src\lib.rs:196:13: [warning] used underscore-prefixed binding
 
-   --> src\lib.rs:196:13
+src\lib.rs:267:39: [warning] unused `self` argument
 
-   --> src\lib.rs:267:39
+src\lib.rs:314:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:314:17
+src\lib.rs:316:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:316:17
+src\lib.rs:321:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:321:17
+src\lib.rs:322:28: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:322:28
+src\lib.rs:333:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:333:17
+src\lib.rs:339:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:339:17
+src\lib.rs:357:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\lib.rs:357:17
+src\lib.rs:365:1: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\lib.rs:365:1
+src\lib.rs:100:5: [warning] unused `async` for function with no await statements
 
-   --> src\lib.rs:100:5
+src\lib.rs:301:51: [warning] long literal lacking separators
+
+
+18 findings in src\preflight_checks.rs
+
+src\preflight_checks.rs:23:30: [warning] item in documentation is missing backticks
+
+src\preflight_checks.rs:74:9: [warning] item in documentation is missing backticks
+
+src\preflight_checks.rs:252:1: [warning] this function's return value is unnecessarily wrapped by `Result`
+
+src\preflight_checks.rs:260:48: [warning] redundant closure
+
+src\preflight_checks.rs:260:52: [warning] calling `to_string` on `&&str`
+
+src\preflight_checks.rs:293:1: [warning] this function's return value is unnecessarily wrapped by `Result`
+
+src\preflight_checks.rs:301:44: [warning] redundant closure
+
+src\preflight_checks.rs:301:48: [warning] calling `to_string` on `&&str`
+
+src\preflight_checks.rs:309:9: [warning] unnecessary boolean `not` operation
+
+src\preflight_checks.rs:346:13: [warning] `format!(..)` appended to existing `String`
+
+src\preflight_checks.rs:346:31: [warning] variables can be used directly in the `format!` string
+
+src\preflight_checks.rs:354:13: [warning] `format!(..)` appended to existing `String`
+
+src\preflight_checks.rs:354:31: [warning] variables can be used directly in the `format!` string
+
+src\preflight_checks.rs:401:1: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\preflight_checks.rs:411:5: [warning] unnecessary boolean `not` operation
+
+src\preflight_checks.rs:417:5: [warning] unnecessary boolean `not` operation
+
+src\preflight_checks.rs:489:18: [warning] this expression always evaluates to false
+
+src\preflight_checks.rs:346:31: [warning] variables can be used directly in the `format!` string
 
 
 15 findings in tests\integration.rs
 
-   --> tests\integration.rs:481:1
+tests\integration.rs:481:1: [warning] `#[ignore]` without reason
 
-  --> tests\integration.rs:76:17
+tests\integration.rs:76:17: [warning] consider adding a `;` to the last statement for consistent formatting
 
-   --> tests\integration.rs:102:21
+tests\integration.rs:102:21: [warning] this boolean expression contains a logic bug
 
-   --> tests\integration.rs:102:21
+tests\integration.rs:102:21: [warning] this boolean expression contains a logic bug
 
-   --> tests\integration.rs:106:29
+tests\integration.rs:106:29: [warning] variables can be used directly in the `format!` string
 
-   --> tests\integration.rs:107:13
+tests\integration.rs:107:13: [warning] variables can be used directly in the `format!` string
 
-   --> tests\integration.rs:136:20
+tests\integration.rs:136:20: [warning] called `map(<f>).unwrap_or(<a>)` on an `Option` value
 
-   --> tests\integration.rs:305:5
+tests\integration.rs:305:5: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> tests\integration.rs:333:31
+tests\integration.rs:333:31: [warning] casting `usize` to `isize` may wrap around the value
 
-   --> tests\integration.rs:380:5
+tests\integration.rs:380:5: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> tests\integration.rs:433:9
+tests\integration.rs:433:9: [warning] these match arms have identical bodies
 
-   --> tests\integration.rs:432:5
+tests\integration.rs:432:5: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> tests\integration.rs:474:13
+tests\integration.rs:474:13: [warning] temporary with significant `Drop` can be early dropped
 
-   --> tests\integration.rs:503:5
+tests\integration.rs:503:5: [warning] variables can be used directly in the `format!` string
 
-   --> tests\integration.rs:526:25
-
-
-14 findings in src\process_optimization.rs
-
- --> src\process_optimization.rs:8:58
-
-   --> src\process_optimization.rs:100:12
-
-   --> src\process_optimization.rs:100:5
-
-   --> src\process_optimization.rs:133:1
-
-   --> src\process_optimization.rs:159:1
-
-   --> src\process_optimization.rs:170:13
-
-   --> src\process_optimization.rs:191:13
-
-   --> src\process_optimization.rs:191:13
-
-   --> src\process_optimization.rs:192:13
-
-   --> src\process_optimization.rs:206:26
-
-   --> src\process_optimization.rs:295:1
-
-   --> src\process_optimization.rs:322:53
-
-   --> src\process_optimization.rs:345:38
-
-   --> src\process_optimization.rs:377:1
+tests\integration.rs:526:25: [warning] useless use of `vec!`
 
 
 14 findings in src\flask_validator.rs
 
-   --> src\flask_validator.rs:203:29
+src\flask_validator.rs:203:29: [warning] this `continue` expression is redundant
 
-  --> src\flask_validator.rs:11:5
+src\flask_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\flask_validator.rs:11:5
+src\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)
 
-   --> src\flask_validator.rs:550:45
+src\flask_validator.rs:550:45: [warning] redundant closure
 
-   --> src\flask_validator.rs:568:9
+src\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\flask_validator.rs:590:9
+src\flask_validator.rs:590:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\flask_validator.rs:610:9
+src\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
-   --> src\flask_validator.rs:627:13
+src\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect
 
-   --> src\flask_validator.rs:682:25
+src\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string
 
-   --> src\flask_validator.rs:141:5
+src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
 
-   --> src\flask_validator.rs:168:5
+src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
 
-   --> src\flask_validator.rs:216:5
+src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
 
-   --> src\flask_validator.rs:304:5
+src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
 
-   --> src\flask_validator.rs:384:5
+src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
 
 
 14 findings in src\security.rs
 
-   --> src\security.rs:933:64
+src\security.rs:933:64: [warning] long literal lacking separators
 
-  --> src\security.rs:11:1
+src\security.rs:11:1: [warning] more than 3 bools in a struct
 
-  --> src\security.rs:62:5
+src\security.rs:62:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\security.rs:72:5
+src\security.rs:72:5: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-   --> src\security.rs:189:5
+src\security.rs:189:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\security.rs:203:5
+src\security.rs:203:5: [warning] this function's return value is unnecessary
 
-   --> src\security.rs:251:43
+src\security.rs:251:43: [warning] unused `self` argument
 
-   --> src\security.rs:255:12
+src\security.rs:255:12: [warning] this pattern matching can be expressed using `matches!`
 
-   --> src\security.rs:328:5
+src\security.rs:328:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\security.rs:352:17
+src\security.rs:352:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\security.rs:373:17
+src\security.rs:373:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\security.rs:394:5
+src\security.rs:394:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\security.rs:420:17
+src\security.rs:420:17: [warning] variables can be used directly in the `format!` string
 
-   --> src\security.rs:431:5
+src\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+
+14 findings in src\process_optimization.rs
+
+src\process_optimization.rs:8:58: [warning] item in documentation is missing backticks
+
+src\process_optimization.rs:100:12: [warning] this method could have a `#[must_use]` attribute
+
+src\process_optimization.rs:100:5: [warning] this could be a `const fn`
+
+src\process_optimization.rs:133:1: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\process_optimization.rs:159:1: [warning] this function's return value is unnecessarily wrapped by `Result`
+
+src\process_optimization.rs:170:13: [warning] implicit borrow as raw pointer
+
+src\process_optimization.rs:191:13: [warning] casting from `*mut u8` to a more-strictly-aligned pointer (`*mut
+
+src\process_optimization.rs:191:13: [warning] `as` casting between raw pointers without changing their constness
+
+src\process_optimization.rs:192:13: [warning] implicit borrow as raw pointer
+
+src\process_optimization.rs:206:26: [warning] casting from `*mut u8` to a more-strictly-aligned pointer (`*const
+
+src\process_optimization.rs:295:1: [warning] this function's return value is unnecessary
+
+src\process_optimization.rs:322:53: [warning] casting `usize` to `u32` may truncate the value on targets with 64-bit wide pointers
+
+src\process_optimization.rs:345:38: [warning] item in documentation is missing backticks
+
+src\process_optimization.rs:377:1: [warning] docs for function returning `Result` missing `# Errors` section
 
 
 11 findings in tests\preflight_checks_tests.rs
 
- --> tests\preflight_checks_tests.rs:4:1
+tests\preflight_checks_tests.rs:4:1: [warning] `#[ignore]` without reason
 
-   --> tests\preflight_checks_tests.rs:105:1
+tests\preflight_checks_tests.rs:105:1: [warning] `#[ignore]` without reason
 
-  --> tests\preflight_checks_tests.rs:8:5
+tests\preflight_checks_tests.rs:8:5: [warning] variables can be used directly in the `format!` string
 
-  --> tests\preflight_checks_tests.rs:21:5
+tests\preflight_checks_tests.rs:21:5: [warning] variables can be used directly in the `format!` string
 
-  --> tests\preflight_checks_tests.rs:52:32
+tests\preflight_checks_tests.rs:52:32: [warning] redundant closure
 
-   --> tests\preflight_checks_tests.rs:97:5
+tests\preflight_checks_tests.rs:97:5: [warning] variables can be used directly in the `format!` string
 
-   --> tests\preflight_checks_tests.rs:141:25
+tests\preflight_checks_tests.rs:141:25: [warning] variables can be used directly in the `format!` string
 
-   --> tests\preflight_checks_tests.rs:155:12
+tests\preflight_checks_tests.rs:155:12: [warning] matching over `()` is more explicit
 
-   --> tests\preflight_checks_tests.rs:157:29
+tests\preflight_checks_tests.rs:157:29: [warning] variables can be used directly in the `format!` string
 
-   --> tests\preflight_checks_tests.rs:179:5
+tests\preflight_checks_tests.rs:179:5: [warning] variables can be used directly in the `format!` string
 
-   --> tests\preflight_checks_tests.rs:180:5
+tests\preflight_checks_tests.rs:180:5: [warning] variables can be used directly in the `format!` string
 
 
 10 findings in src\startup_checks.rs
 
-  --> src\startup_checks.rs:91:5
+src\startup_checks.rs:91:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\startup_checks.rs:97:5
+src\startup_checks.rs:97:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\startup_checks.rs:172:5
+src\startup_checks.rs:1592:13: [warning] consider adding a `;` to the last statement for consistent formatting
 
-   --> src\startup_checks.rs:372:5
+src\startup_checks.rs:172:5: [warning] unused `async` for function with no await statements
 
-   --> src\startup_checks.rs:665:5
+src\startup_checks.rs:372:5: [warning] unused `async` for function with no await statements
 
-   --> src\startup_checks.rs:809:5
+src\startup_checks.rs:665:5: [warning] unused `async` for function with no await statements
 
-   --> src\startup_checks.rs:937:5
+src\startup_checks.rs:809:5: [warning] unused `async` for function with no await statements
 
-   --> src\startup_checks.rs:942:5
+src\startup_checks.rs:937:5: [warning] unused `async` for function with no await statements
 
-    --> src\startup_checks.rs:1020:5
+src\startup_checks.rs:942:5: [warning] unused `async` for function with no await statements
 
-    --> src\startup_checks.rs:1592:13
+src\startup_checks.rs:1020:5: [warning] unused `async` for function with no await statements
 
 
 9 findings in benches\process_benchmarks.rs
 
-  --> benches\process_benchmarks.rs:96:53
+benches\process_benchmarks.rs:96:53: [warning] variables can be used directly in the `format!` string
 
-   --> benches\process_benchmarks.rs:171:41
+benches\process_benchmarks.rs:171:41: [warning] variables can be used directly in the `format!` string
 
-   --> benches\process_benchmarks.rs:211:33
+benches\process_benchmarks.rs:211:33: [warning] variables can be used directly in the `format!` string
 
-   --> benches\process_benchmarks.rs:245:5
+benches\process_benchmarks.rs:245:5: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
-   --> benches\process_benchmarks.rs:246:5
+benches\process_benchmarks.rs:246:5: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
-   --> benches\process_benchmarks.rs:350:14
+benches\process_benchmarks.rs:350:14: [warning] redundant closure
 
-   --> benches\process_benchmarks.rs:411:33
+benches\process_benchmarks.rs:411:33: [warning] it is more concise to loop over references to containers instead of using explicit iteration methods
 
-   --> benches\process_benchmarks.rs:413:13
+benches\process_benchmarks.rs:413:13: [warning] variables can be used directly in the `format!` string
 
-   --> benches\process_benchmarks.rs:438:61
+benches\process_benchmarks.rs:438:61: [warning] variables can be used directly in the `format!` string
 
 
 7 findings in src\gil_safety.rs
 
-  --> src\gil_safety.rs:21:5
+src\gil_safety.rs:21:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\gil_safety.rs:41:5
+src\gil_safety.rs:41:5: [warning] this function's return value is unnecessary
 
-  --> src\gil_safety.rs:73:5
+src\gil_safety.rs:73:5: [warning] this function's return value is unnecessary
 
-   --> src\gil_safety.rs:146:5
+src\gil_safety.rs:146:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\gil_safety.rs:175:5
+src\gil_safety.rs:175:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\gil_safety.rs:502:13
+src\gil_safety.rs:502:13: [warning] variables can be used directly in the `format!` string
 
-   --> src\gil_safety.rs:547:25
+src\gil_safety.rs:547:25: [warning] variables can be used directly in the `format!` string
 
 
 6 findings in src\platform.rs
 
-  --> src\platform.rs:47:35
+src\platform.rs:47:35: [warning] you are deriving `serde::Deserialize` on a type that has methods using `unsafe`
 
-  --> src\platform.rs:60:5
+src\platform.rs:60:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\platform.rs:116:5
+src\platform.rs:116:5: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-   --> src\platform.rs:261:5
+src\platform.rs:261:5: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-   --> src\platform.rs:340:5
+src\platform.rs:340:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-   --> src\platform.rs:651:28
+src\platform.rs:651:28: [warning] variables can be used directly in the `format!` string
 
 
 5 findings in benches\dependency_benchmarks.rs
 
-   --> benches\dependency_benchmarks.rs:175:21
+benches\dependency_benchmarks.rs:175:21: [warning] casting `usize` to `f64` causes a loss of precision on targets with 64-bit wide pointers (`usize` is 64 bits
 
-   --> benches\dependency_benchmarks.rs:180:27
+benches\dependency_benchmarks.rs:180:27: [warning] casting `usize` to `f64` causes a loss of precision on targets with 64-bit wide pointers (`usize` is 64 bits
 
-   --> benches\dependency_benchmarks.rs:232:86
+benches\dependency_benchmarks.rs:232:86: [warning] avoid using `collect()` when not needed
 
-   --> benches\dependency_benchmarks.rs:258:24
+benches\dependency_benchmarks.rs:258:24: [warning] it is more concise to loop over references to containers instead of using explicit iteration methods
 
-   --> benches\dependency_benchmarks.rs:260:13
-
-
-4 findings in benches\performance_benchmarks.rs
-
-   --> benches\performance_benchmarks.rs:116:9
-
-   --> benches\performance_benchmarks.rs:180:78
-
-   --> benches\performance_benchmarks.rs:179:17
-
-   --> benches\performance_benchmarks.rs:190:18
-
-
-4 findings in src\main.rs
-
-  --> src\main.rs:21:7
-
-  --> src\main.rs:39:9
-
-   --> src\main.rs:123:13
-
-   --> src\main.rs:148:9
+benches\dependency_benchmarks.rs:260:13: [warning] variables can be used directly in the `format!` string
 
 
 4 findings in tests\process_optimization_tests.rs
 
-  --> tests\process_optimization_tests.rs:78:5
+tests\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string
 
-   --> tests\process_optimization_tests.rs:105:83
+tests\process_optimization_tests.rs:105:83: [warning] redundant clone
 
-   --> tests\process_optimization_tests.rs:105:76
+tests\process_optimization_tests.rs:105:76: [warning] redundant clone
 
-   --> tests\process_optimization_tests.rs:127:32
+tests\process_optimization_tests.rs:127:32: [warning] redundant closure
 
 
-3 findings in tests\tool_discovery_tests.rs
+4 findings in benches\performance_benchmarks.rs
 
-  --> tests\tool_discovery_tests.rs:70:5
+benches\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect
 
-  --> tests\tool_discovery_tests.rs:91:13
+benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed binding
 
-   --> tests\tool_discovery_tests.rs:139:27
+benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
+
+benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
+
+
+4 findings in src\main.rs
+
+src\main.rs:21:7: [warning] this function has too many lines (144/100)
+
+src\main.rs:39:9: [warning] variables can be used directly in the `format!` string
+
+src\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope
+
+src\main.rs:148:9: [warning] variables can be used directly in the `format!` string
 
 
 3 findings in src\intel_gpu.rs
 
-  --> src\intel_gpu.rs:27:1
+src\intel_gpu.rs:27:1: [warning] docs for function returning `Result` missing `# Errors` section
 
-  --> src\intel_gpu.rs:47:1
+src\intel_gpu.rs:47:1: [warning] this function's return value is unnecessarily wrapped by `Result`
 
-  --> src\intel_gpu.rs:74:8
+src\intel_gpu.rs:74:8: [warning] this function could have a `#[must_use]` attribute
+
+
+3 findings in tests\tool_discovery_tests.rs
+
+tests\tool_discovery_tests.rs:70:5: [warning] variables can be used directly in the `format!` string
+
+tests\tool_discovery_tests.rs:91:13: [warning] variables can be used directly in the `format!` string
+
+tests\tool_discovery_tests.rs:139:27: [warning] redundant closure

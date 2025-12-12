@@ -187,7 +187,8 @@ class TrafficAnalyzer:
 
                             results["connection_info"].append(conn_info)
 
-                    except Exception:
+                    except Exception as e:
+                        log_error(f"Error analyzing network connection: {e}")
                         continue
 
                 sorted_convs = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)

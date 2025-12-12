@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -26,30 +28,37 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
+
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 logger = logging.getLogger(__name__)
 
-# Terminal manager import removed as it was not being used
 HAS_TERMINAL_MANAGER = False
 
+_joblib: ModuleType | None = None
+JOBLIB_AVAILABLE = False
 try:
-    import joblib
-
+    import joblib as _joblib_module
+    _joblib = _joblib_module
     JOBLIB_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in additional_runners: %s", e)
-    joblib = None
+    _joblib = None
     JOBLIB_AVAILABLE = False
 
+_psutil: ModuleType | None = None
+PSUTIL_AVAILABLE = False
 try:
-    from intellicrack.handlers.psutil_handler import psutil
-
+    from intellicrack.handlers.psutil_handler import psutil as _psutil_module
+    _psutil = _psutil_module
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in additional_runners: %s", e)
-    psutil = None
+    _psutil = None
     PSUTIL_AVAILABLE = False
 
 
@@ -85,7 +94,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None, 
             "license_analysis",
         ]
 
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "output_dir": output_dir,
         "timestamp": time.time(),
@@ -182,7 +191,7 @@ def run_deep_license_analysis(binary_path: str) -> dict[str, Any]:
         Dict containing license analysis results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "license_mechanisms": [],
         "validation_routines": [],
@@ -241,12 +250,13 @@ def run_detect_packing(binary_path: str) -> dict[str, Any]:
         from ...core.analysis.core_analysis import detect_packing
         from .distributed_processing import run_distributed_entropy_analysis
 
-        results = {
+        results: dict[str, Any] = {
             "binary": binary_path,
             "packing_detected": False,
             "packers_found": [],
             "indicators": [],
         }
+        indicators: list[str] = []
 
         # Use existing detect_packing function
         packing_result = detect_packing(binary_path)
@@ -256,7 +266,8 @@ def run_detect_packing(binary_path: str) -> dict[str, Any]:
         entropy_results = run_distributed_entropy_analysis(binary_path)
         if entropy_results.get("statistics", {}).get("average_entropy", 0) > 7.0:
             results["packing_detected"] = True
-            results["indicators"].append("High entropy detected")
+            indicators.append("High entropy detected")
+        results["indicators"] = indicators
 
         return results
 
@@ -297,7 +308,7 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
         Dict containing cracking results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "target_type": target_type or "auto",
         "analysis_phase": {},
@@ -370,7 +381,7 @@ def run_full_autonomous_mode(binary_path: str, config: dict[str, Any] | None = N
             "verify": True,
         }
 
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "config": config,
         "phases": {},
@@ -421,7 +432,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: str | None = None) ->
         Dict containing Ghidra analysis status
 
     """
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "ghidra_path": ghidra_path,
         "launched": False,
@@ -518,7 +529,9 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
 
         # Analyze all functions
         functions = explorer.get_functions()
-        results = {
+        license_checks_found: list[dict[str, Any]] = []
+        functions_analyzed = 0
+        results: dict[str, Any] = {
             "binary": binary_path,
             "functions_analyzed": 0,
             "license_checks_found": [],
@@ -528,11 +541,11 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
         for func in functions:
             try:
                 if cfg := explorer.analyze_function(func["name"]):
-                    results["functions_analyzed"] += 1
+                    functions_analyzed += 1
 
                     # Look for license check patterns
                     if _is_license_check_pattern(cfg):
-                        results["license_checks_found"].append(
+                        license_checks_found.append(
                             {
                                 "function": func["name"],
                                 "address": func["address"],
@@ -543,6 +556,8 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error analyzing function {func['name']}: {e}")
 
+        results["functions_analyzed"] = functions_analyzed
+        results["license_checks_found"] = license_checks_found
         # Generate output
         if output_format == "dot":
             results["visualization"] = explorer.export_dot("cfg_output.dot")
@@ -673,7 +688,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[st
         Dict containing validation results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "path": dataset_path,
         "type": dataset_type,
         "valid": False,
@@ -723,7 +738,7 @@ def verify_hash(file_path: str, expected_hash: str, algorithm: str = "sha256") -
         Dict containing verification results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "file": file_path,
         "algorithm": algorithm,
         "expected": expected_hash,
@@ -759,7 +774,7 @@ def run_external_command(command: str | list[str], timeout: int = 60) -> dict[st
         Dict containing command results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "command": command,
         "executed": False,
     }
@@ -822,7 +837,7 @@ def create_sample_plugins() -> dict[str, Any]:
     plugin_dir = os.path.join(str(Path.cwd()), "intellicrack", "plugins", "samples")
     os.makedirs(plugin_dir, exist_ok=True)
 
-    results = {
+    results: dict[str, Any] = {
         "plugin_dir": plugin_dir,
         "plugins_created": [],
     }
@@ -906,7 +921,7 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> dict[str, Any]:
         Dict containing model loading results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "model_path": model_path,
         "model_type": model_type,
         "loaded": False,
@@ -926,12 +941,12 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> dict[str, Any]:
 
         # Load based on type
         if model_type == "sklearn":
-            if not JOBLIB_AVAILABLE:
+            if not JOBLIB_AVAILABLE or _joblib is None:
                 results["error"] = "joblib not available for sklearn model loading"
                 results["loaded"] = False
                 return results
 
-            model = joblib.load(model_path)
+            model = _joblib.load(model_path)
             results["loaded"] = True
             results["model_info"] = {
                 "type": type(model).__name__,
@@ -958,14 +973,17 @@ def get_target_process_pid(process_name: str) -> int | None:
         Process ID or None
 
     """
-    if not PSUTIL_AVAILABLE:
+    if not PSUTIL_AVAILABLE or _psutil is None:
         logger.warning("psutil not available for process detection")
         return None
 
     try:
-        for proc in psutil.process_iter(["pid", "name"]):
+        for proc in _psutil.process_iter(["pid", "name"]):
             if process_name.lower() in proc.info["name"].lower():
-                return proc.info["pid"]
+                pid_val = proc.info["pid"]
+                if isinstance(pid_val, int):
+                    return pid_val
+                return None
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting process PID: %s", e)
@@ -1142,9 +1160,9 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
 
     """
     """Detect dongle-related processes."""
-    processes = []
+    processes: list[dict[str, Any]] = []
 
-    if not PSUTIL_AVAILABLE:
+    if not PSUTIL_AVAILABLE or _psutil is None:
         logger.debug("psutil not available for process detection")
         return processes
 
@@ -1163,7 +1181,7 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
             "rockey",
         ]
 
-        for proc in psutil.process_iter(["pid", "name", "exe"]):
+        for proc in _psutil.process_iter(["pid", "name", "exe"]):
             try:
                 proc_name = proc.info["name"].lower() if proc.info["name"] else ""
                 proc_exe = proc.info["exe"].lower() if proc.info["exe"] else ""
@@ -1179,7 +1197,7 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
                         },
                     )
 
-            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            except Exception as e:
                 logger.error("Error in additional_runners: %s", e)
                 continue
     except (OSError, ValueError, RuntimeError) as e:
@@ -1405,7 +1423,7 @@ def detect_hardware_dongles() -> dict[str, Any]:
         Dict containing dongle detection results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "dongles_found": [],
         "usb_devices": [],
     }
@@ -1467,7 +1485,10 @@ def detect_local_tpm_protection(binary_path: str) -> dict[str, Any]:
     try:
         from ..protection.protection_detection import detect_tpm_protection as tpm_detect
 
-        return tpm_detect(binary_path)
+        result = tpm_detect(binary_path)
+        if isinstance(result, dict):
+            return result
+        return {"result": result}
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error detecting TPM protection: %s", e)
         return {"error": str(e)}
@@ -1492,41 +1513,43 @@ def run_local_protection_scan(binary_path: str) -> dict[str, Any]:
             detect_vm_detection,
         )
 
-        results = {
+        protections: dict[str, Any] = {}
+        results: dict[str, Any] = {
             "status": "success",
-            "protections": {},
+            "protections": protections,
         }
 
         # Detect packing
         packing = detect_packing(binary_path)
         if packing.get("packing_detected"):
-            results["protections"]["packing"] = packing
+            protections["packing"] = packing
 
         # Detect commercial protections
         commercial = detect_commercial_protections(binary_path)
         if commercial.get("protections_found"):
-            results["protections"]["commercial"] = commercial
+            protections["commercial"] = commercial
 
         # Detect anti-debugging
         anti_debug = detect_anti_debugging(binary_path)
         if anti_debug.get("techniques_found"):
-            results["protections"]["anti_debugging"] = anti_debug
+            protections["anti_debugging"] = anti_debug
 
         # Detect VM detection
         vm_detect = detect_vm_detection(binary_path)
         if vm_detect.get("vm_detection_found"):
-            results["protections"]["vm_detection"] = vm_detect
+            protections["vm_detection"] = vm_detect
 
         # Detect TPM
         tpm = detect_tpm_protection(binary_path)
         if tpm.get("tpm_detected"):
-            results["protections"]["tpm"] = tpm
+            protections["tpm"] = tpm
 
+        results["protections"] = protections
         # Summary
         results["summary"] = {
-            "total_protections": len(results["protections"]),
-            "protection_types": list(results["protections"].keys()),
-            "protection_level": "high" if len(results["protections"]) > 3 else ("medium" if len(results["protections"]) > 1 else "low"),
+            "total_protections": len(protections),
+            "protection_types": list(protections.keys()),
+            "protection_level": "high" if len(protections) > 3 else ("medium" if len(protections) > 1 else "low"),
         }
 
         return results
@@ -1550,7 +1573,7 @@ def _generate_analysis_summary(analyses: dict[str, Any]) -> dict[str, Any]:
 
     """
     """Generate summary from analysis results."""
-    summary = {
+    summary: dict[str, Any] = {
         "total_analyses": len(analyses),
         "successful": sum(bool("error" not in a) for a in analyses.values()),
         "issues_found": [],
@@ -1630,7 +1653,7 @@ def _verify_crack(binary_path: str) -> dict[str, Any]:
         Dict containing verification results
 
     """
-    verification_result = {
+    verification_result: dict[str, Any] = {
         "verified": False,
         "confidence": 0.0,
         "methods_used": [],
@@ -1728,7 +1751,7 @@ def _verify_static_analysis(binary_path: str) -> dict[str, Any]:
 
     """
     """Verify crack through static analysis."""
-    result = {"success": False, "confidence": 0.0, "checks": []}
+    result: dict[str, Any] = {"success": False, "confidence": 0.0, "checks": []}
 
     try:
         if not os.path.exists(binary_path):
@@ -1789,7 +1812,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
     """
     """Verify crack through controlled execution testing."""
-    result = {"success": False, "confidence": 0.0, "tests": []}
+    result: dict[str, Any] = {"success": False, "confidence": 0.0, "tests": []}
 
     try:
         import platform
@@ -1923,7 +1946,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
 
     """
     """Verify that protection mechanisms have been bypassed."""
-    result = {"bypassed": False, "confidence": 0.0, "protections": []}
+    result: dict[str, Any] = {"bypassed": False, "confidence": 0.0, "protections": []}
 
     try:
         # Check for common protection mechanisms that should be disabled
@@ -2006,7 +2029,7 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
 
     """
     """Verify that license checks have been bypassed."""
-    result = {"bypassed": False, "confidence": 0.0, "license_checks": []}
+    result: dict[str, Any] = {"bypassed": False, "confidence": 0.0, "license_checks": []}
 
     try:
         # Check for evidence of successful license bypass
@@ -2091,7 +2114,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
 
     """
     """Verify the integrity and validity of applied patches."""
-    result = {"valid": False, "confidence": 0.0, "integrity_checks": []}
+    result: dict[str, Any] = {"valid": False, "confidence": 0.0, "integrity_checks": []}
 
     try:
         # Check 1: File exists and is readable
@@ -2326,7 +2349,11 @@ def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in license pattern analysis: %s", e)
         # Fallback to simple heuristic
-        return cfg.get("complexity", 0) > 10 and cfg.get("branches", 0) > 5
+        complexity = cfg.get("complexity", 0)
+        branches = cfg.get("branches", 0)
+        if isinstance(complexity, (int, float)) and isinstance(branches, (int, float)):
+            return complexity > 10 and branches > 5
+        return False
 
 
 def _identify_license_related_calls(function_calls: list[str]) -> int:
@@ -2435,7 +2462,7 @@ def _parse_tool_output(tool_name: str, output: str) -> dict[str, Any]:
 
     """
     """Parse tool-specific output."""
-    parsed = {}
+    parsed: dict[str, Any] = {}
 
     if tool_name == "file":
         parsed["file_type"] = output.strip()
@@ -2525,15 +2552,18 @@ def run_rop_gadget_finder(binary_path: str) -> dict[str, Any]:
 
         generator = ROPChainGenerator()
         generator.binary_path = binary_path
-        gadgets = generator.find_gadgets()
+        success = generator.find_gadgets()
 
-        # Ensure gadgets is iterable, default to empty list if not
-        if not gadgets or not isinstance(gadgets, (list, tuple)):
-            gadgets = []
+        # Get gadgets from the generator's gadgets property
+        gadgets_list: list[Any] = []
+        if success:
+            generator_gadgets = getattr(generator, "gadgets", [])
+            if isinstance(generator_gadgets, (list, tuple)):
+                gadgets_list = list(generator_gadgets)
 
         # Simple categorization based on gadget patterns
-        categories = {"ret": 0, "pop": 0, "mov": 0, "other": 0}
-        for gadget in gadgets:
+        categories: dict[str, int] = {"ret": 0, "pop": 0, "mov": 0, "other": 0}
+        for gadget in gadgets_list:
             gadget_str = str(gadget).lower()
             if "ret" in gadget_str:
                 categories["ret"] += 1
@@ -2546,8 +2576,8 @@ def run_rop_gadget_finder(binary_path: str) -> dict[str, Any]:
 
         return {
             "status": "success",
-            "gadgets": gadgets,
-            "total": len(gadgets),
+            "gadgets": gadgets_list,
+            "total": len(gadgets_list),
             "categories": categories,
         }
 
@@ -2646,7 +2676,7 @@ def run_import_export_analysis(binary_path: str) -> dict[str, Any]:
             "exec",
         ]
 
-        dangerous_imports = []
+        dangerous_imports: list[dict[str, str]] = []
         for dll, funcs in imports.items():
             dangerous_imports.extend({"dll": dll, "function": func} for func in funcs if any(api in func for api in dangerous_apis))
         return {
@@ -2700,7 +2730,7 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
         pattern_results = analyze_patterns(binary_path, weak_crypto_patterns)
 
         # Analyze strings for hardcoded keys
-        hardcoded_keys = []
+        hardcoded_keys: list[Any] = []
         if pattern_results.get("strings"):
             hardcoded_keys.extend(
                 string
@@ -2892,17 +2922,21 @@ def run_ml_similarity_search(binary_path: str, database: str | None = None) -> d
     try:
         from ...core.analysis import SimilaritySearcher
 
-        searcher = SimilaritySearcher()
+        searcher_class = SimilaritySearcher
+        if not callable(searcher_class):
+            return {"status": "error", "message": "SimilaritySearcher is not available"}
+        searcher = searcher_class()
         if database:
             searcher.load_database(database)
 
         similar = searcher.find_similar(binary_path, threshold=0.8)
+        similar_list: list[Any] = list(similar) if similar else []
 
         return {
             "status": "success",
-            "similar_binaries": similar,
-            "total_found": len(similar),
-            "best_match": similar[0] if similar else None,
+            "similar_binaries": similar_list,
+            "total_found": len(similar_list),
+            "best_match": similar_list[0] if similar_list else None,
         }
 
     except (OSError, ValueError, RuntimeError) as e:

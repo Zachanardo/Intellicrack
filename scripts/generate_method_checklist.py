@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 def main() -> None:
+    """Run git diff and generate markdown checklist."""
     result = subprocess.run(
         ["git", "diff", "HEAD", "--", "*.py"],
         capture_output=True,

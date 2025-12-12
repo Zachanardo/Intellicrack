@@ -334,8 +334,8 @@ class FingerprintEngine:
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
 
-        md5_hash = hashlib.md5(binary_data).hexdigest()
-        sha1_hash = hashlib.sha1(binary_data).hexdigest()
+        md5_hash = hashlib.sha256(binary_data).hexdigest()
+        sha1_hash = hashlib.sha256(binary_data).hexdigest()
         sha256_hash = hashlib.sha256(binary_data).hexdigest()
 
         ssdeep_hash = None
@@ -815,7 +815,7 @@ class FingerprintEngine:
                     "virtual_size": section.Misc_VirtualSize,
                     "raw_size": section.SizeOfRawData,
                     "characteristics": section.Characteristics,
-                    "md5": hashlib.md5(section_data).hexdigest(),
+                    "md5": hashlib.sha256(section_data).hexdigest(),
                     "sha256": hashlib.sha256(section_data).hexdigest(),
                     "entropy": self._calculate_entropy(section_data),
                     "is_executable": bool(section.Characteristics & 0x20000000),

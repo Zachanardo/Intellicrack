@@ -1,416 +1,528 @@
-﻿{
-    "files":  [
-                  {
-                      "path":  ".\\intellicrack\\scripts\\frida\\qodana.yaml",
-                      "findings":  [
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:1:2       warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:4:2       warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "4"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:12:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "12"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:16:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "16"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:17:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "17"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:20:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "20"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:21:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "21"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:26:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "26"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:27:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "27"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:29:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "29"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:30:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "30"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:37:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "37"
-                                       },
-                                       {
-                                           "column":  "2",
-                                           "raw":  ".\\intellicrack\\scripts\\frida\\qodana.yaml:45:2      warning  missing starting space in comment  (comments)",
-                                           "message":  "warning  missing starting space in comment  (comments)\r",
-                                           "line":  "45"
-                                       }
-                                   ],
-                      "count":  13
-                  },
-                  {
-                      "path":  ".\\.serena\\project.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "85",
-                                           "raw":  ".\\.serena\\project.yml:1:85      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "82",
-                                           "raw":  ".\\.serena\\project.yml:41:82     error    trailing spaces  (trailing-spaces)",
-                                           "message":  "error    trailing spaces  (trailing-spaces)\r",
-                                           "line":  "41"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:51:121    warning  line too long (125 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (125 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "51"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:52:121    warning  line too long (137 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (137 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "52"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:53:121    warning  line too long (146 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (146 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "53"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:63:121    warning  line too long (125 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (125 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "63"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:64:121    warning  line too long (146 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (146 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "64"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.serena\\project.yml:75:121    warning  line too long (123 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (123 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "75"
-                                       }
-                                   ],
-                      "count":  8
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\claude-type-fix-oauth.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "51",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:1:51      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:90:121    warning  line too long (144 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (144 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "90"
-                                       },
-                                       {
-                                           "column":  "1",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:191:1     error    syntax error: could not find expected \u0027:\u0027 (syntax)",
-                                           "message":  "error    syntax error: could not find expected \u0027:\u0027 (syntax)\r",
-                                           "line":  "191"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:443:121   warning  line too long (126 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (126 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "443"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:452:121   warning  line too long (123 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (123 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "452"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:462:121   warning  line too long (141 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (141 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "462"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-type-fix-oauth.yml:513:121   warning  line too long (122 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (122 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "513"
-                                       }
-                                   ],
-                      "count":  7
-                  },
-                  {
-                      "path":  ".\\.sourcery.yaml",
-                      "findings":  [
-                                       {
-                                           "column":  "56",
-                                           "raw":  ".\\.sourcery.yaml:1:56      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "1",
-                                           "raw":  ".\\.sourcery.yaml:15:1      error    wrong indentation: expected 2 but found 0  (indentation)",
-                                           "message":  "error    wrong indentation: expected 2 but found 0  (indentation)\r",
-                                           "line":  "15"
-                                       },
-                                       {
-                                           "column":  "3",
-                                           "raw":  ".\\.sourcery.yaml:33:3      error    wrong indentation: expected 4 but found 2  (indentation)",
-                                           "message":  "error    wrong indentation: expected 4 but found 2  (indentation)\r",
-                                           "line":  "33"
-                                       },
-                                       {
-                                           "column":  "3",
-                                           "raw":  ".\\.sourcery.yaml:36:3      error    wrong indentation: expected 4 but found 2  (indentation)",
-                                           "message":  "error    wrong indentation: expected 4 but found 2  (indentation)\r",
-                                           "line":  "36"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.sourcery.yaml:39:121    warning  line too long (168 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (168 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "39"
-                                       }
-                                   ],
-                      "count":  5
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\claude.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "18",
-                                           "raw":  ".\\.github\\workflows\\claude.yml:1:18      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude.yml:19:121    warning  line too long (136 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (136 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "19"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude.yml:43:121    warning  line too long (157 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (157 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "43"
-                                       },
-                                       {
-                                           "column":  "1",
-                                           "raw":  ".\\.github\\workflows\\claude.yml:50:1      error    too many blank lines (1 \u003e 0)  (empty-lines)",
-                                           "message":  "error    too many blank lines (1 \u003e 0)  (empty-lines)\r",
-                                           "line":  "50"
-                                       }
-                                   ],
-                      "count":  4
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\claude-code-review.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "25",
-                                           "raw":  ".\\.github\\workflows\\claude-code-review.yml:1:25      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-code-review.yml:50:121    warning  line too long (127 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (127 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "50"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\claude-code-review.yml:56:121    warning  line too long (183 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (183 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "56"
-                                       },
-                                       {
-                                           "column":  "1",
-                                           "raw":  ".\\.github\\workflows\\claude-code-review.yml:57:1      error    too many blank lines (1 \u003e 0)  (empty-lines)",
-                                           "message":  "error    too many blank lines (1 \u003e 0)  (empty-lines)\r",
-                                           "line":  "57"
-                                       }
-                                   ],
-                      "count":  4
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\ci.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "9",
-                                           "raw":  ".\\.github\\workflows\\ci.yml:1:9       error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\ci.yml:45:121    warning  line too long (130 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (130 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "45"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\ci.yml:269:121   warning  line too long (138 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (138 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "269"
-                                       }
-                                   ],
-                      "count":  3
-                  },
-                  {
-                      "path":  ".\\config\\startup_optimization.yaml",
-                      "findings":  [
-                                       {
-                                           "column":  "54",
-                                           "raw":  ".\\config\\startup_optimization.yaml:1:54      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "1",
-                                           "raw":  ".\\config\\startup_optimization.yaml:62:1      warning  comment not indented like content  (comments-indentation)",
-                                           "message":  "warning  comment not indented like content  (comments-indentation)\r",
-                                           "line":  "62"
-                                       },
-                                       {
-                                           "column":  "85",
-                                           "raw":  ".\\config\\startup_optimization.yaml:79:85     error    no new line character at the end of file  (new-line-at-end-of-file)",
-                                           "message":  "error    no new line character at the end of file  (new-line-at-end-of-file)\r",
-                                           "line":  "79"
-                                       }
-                                   ],
-                      "count":  3
-                  },
-                  {
-                      "path":  ".\\.pre-commit-config.yaml",
-                      "findings":  [
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.pre-commit-config.yaml:32:121    warning  line too long (165 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (165 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "32"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.pre-commit-config.yaml:49:121    warning  line too long (123 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (123 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "49"
-                                       }
-                                   ],
-                      "count":  2
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\qodana_code_quality.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "13",
-                                           "raw":  ".\\.github\\workflows\\qodana_code_quality.yml:1:13      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\qodana_code_quality.yml:20:121    warning  line too long (125 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (125 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "20"
-                                       }
-                                   ],
-                      "count":  2
-                  },
-                  {
-                      "path":  ".\\qodana.yaml",
-                      "findings":  [
-                                       {
-                                           "column":  "117",
-                                           "raw":  ".\\qodana.yaml:1:117     error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       },
-                                       {
-                                           "column":  "34",
-                                           "raw":  ".\\qodana.yaml:10:34     error    no new line character at the end of file  (new-line-at-end-of-file)",
-                                           "message":  "error    no new line character at the end of file  (new-line-at-end-of-file)\r",
-                                           "line":  "10"
-                                       }
-                                   ],
-                      "count":  2
-                  },
-                  {
-                      "path":  ".\\.yamllint",
-                      "findings":  [
-                                       {
-                                           "column":  "17",
-                                           "raw":  ".\\.yamllint:1:17      error    wrong new line character: expected \\n  (new-lines)",
-                                           "message":  "error    wrong new line character: expected \\n  (new-lines)\r",
-                                           "line":  "1"
-                                       }
-                                   ],
-                      "count":  1
-                  },
-                  {
-                      "path":  ".\\.github\\workflows\\python-ci.yml",
-                      "findings":  [
-                                       {
-                                           "column":  "121",
-                                           "raw":  ".\\.github\\workflows\\python-ci.yml:44:121    warning  line too long (121 \u003e 120 characters)  (line-length)",
-                                           "message":  "warning  line too long (121 \u003e 120 characters)  (line-length)\r",
-                                           "line":  "44"
-                                       }
-                                   ],
-                      "count":  1
-                  }
-              ],
-    "total_findings":  55,
-    "generated":  "2025-12-10T21:38:39.0032611-07:00",
-    "total_files":  13,
-    "tool":  "yamllint"
+{
+  "tool": "yamllint",
+  "generated": "2025-12-11T23:03:18.227977",
+  "total_findings": 56,
+  "total_files": 12,
+  "files": [
+    {
+      "path": ".\\intellicrack\\scripts\\frida\\qodana.yaml",
+      "count": 13,
+      "findings": [
+        {
+          "line": 1,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:1:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 4,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:4:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 12,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:12:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 16,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:16:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 17,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:17:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 20,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:20:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 21,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:21:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 26,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:26:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 27,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:27:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 29,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:29:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 30,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:30:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 37,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:37:2: [warning] missing starting space in comment  (comments)"
+        },
+        {
+          "line": 45,
+          "column": 2,
+          "severity": "warning",
+          "code": "",
+          "message": "missing starting space in comment  (comments)",
+          "raw": ".\\intellicrack\\scripts\\frida\\qodana.yaml:45:2: [warning] missing starting space in comment  (comments)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.serena\\project.yml",
+      "count": 8,
+      "findings": [
+        {
+          "line": 1,
+          "column": 85,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.serena\\project.yml:1:85: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 41,
+          "column": 82,
+          "severity": "error",
+          "code": "",
+          "message": "trailing spaces  (trailing-spaces)",
+          "raw": ".\\.serena\\project.yml:41:82: [error] trailing spaces  (trailing-spaces)"
+        },
+        {
+          "line": 51,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (125 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:51:121: [warning] line too long (125 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 52,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (137 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:52:121: [warning] line too long (137 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 53,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (146 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:53:121: [warning] line too long (146 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 63,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (125 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:63:121: [warning] line too long (125 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 64,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (146 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:64:121: [warning] line too long (146 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 75,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (123 > 120 characters)  (line-length)",
+          "raw": ".\\.serena\\project.yml:75:121: [warning] line too long (123 > 120 characters)  (line-length)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\claude-type-fix-oauth.yml",
+      "count": 7,
+      "findings": [
+        {
+          "line": 1,
+          "column": 51,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:1:51: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 90,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (144 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:90:121: [warning] line too long (144 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 191,
+          "column": 1,
+          "severity": "error",
+          "code": "",
+          "message": "syntax error: could not find expected ':' (syntax)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:191:1: [error] syntax error: could not find expected ':' (syntax)"
+        },
+        {
+          "line": 443,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (126 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:443:121: [warning] line too long (126 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 452,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (123 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:452:121: [warning] line too long (123 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 462,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (141 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:462:121: [warning] line too long (141 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 513,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (122 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-type-fix-oauth.yml:513:121: [warning] line too long (122 > 120 characters)  (line-length)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.sourcery.yaml",
+      "count": 6,
+      "findings": [
+        {
+          "line": 1,
+          "column": 56,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.sourcery.yaml:1:56: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 15,
+          "column": 1,
+          "severity": "error",
+          "code": "",
+          "message": "wrong indentation: expected 2 but found 0  (indentation)",
+          "raw": ".\\.sourcery.yaml:15:1: [error] wrong indentation: expected 2 but found 0  (indentation)"
+        },
+        {
+          "line": 33,
+          "column": 3,
+          "severity": "error",
+          "code": "",
+          "message": "wrong indentation: expected 4 but found 2  (indentation)",
+          "raw": ".\\.sourcery.yaml:33:3: [error] wrong indentation: expected 4 but found 2  (indentation)"
+        },
+        {
+          "line": 36,
+          "column": 3,
+          "severity": "error",
+          "code": "",
+          "message": "wrong indentation: expected 4 but found 2  (indentation)",
+          "raw": ".\\.sourcery.yaml:36:3: [error] wrong indentation: expected 4 but found 2  (indentation)"
+        },
+        {
+          "line": 39,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (168 > 120 characters)  (line-length)",
+          "raw": ".\\.sourcery.yaml:39:121: [warning] line too long (168 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 1,
+          "column": 17,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.sourcery.yaml:1:17: [error] wrong new line character: expected \\n  (new-lines)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\claude-code-review.yml",
+      "count": 4,
+      "findings": [
+        {
+          "line": 1,
+          "column": 25,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.github\\workflows\\claude-code-review.yml:1:25: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 50,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (127 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-code-review.yml:50:121: [warning] line too long (127 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 56,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (183 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude-code-review.yml:56:121: [warning] line too long (183 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 57,
+          "column": 1,
+          "severity": "error",
+          "code": "",
+          "message": "too many blank lines (1 > 0)  (empty-lines)",
+          "raw": ".\\.github\\workflows\\claude-code-review.yml:57:1: [error] too many blank lines (1 > 0)  (empty-lines)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\claude.yml",
+      "count": 4,
+      "findings": [
+        {
+          "line": 1,
+          "column": 18,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.github\\workflows\\claude.yml:1:18: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 19,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (136 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude.yml:19:121: [warning] line too long (136 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 43,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (157 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\claude.yml:43:121: [warning] line too long (157 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 50,
+          "column": 1,
+          "severity": "error",
+          "code": "",
+          "message": "too many blank lines (1 > 0)  (empty-lines)",
+          "raw": ".\\.github\\workflows\\claude.yml:50:1: [error] too many blank lines (1 > 0)  (empty-lines)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.pre-commit-config.yaml",
+      "count": 3,
+      "findings": [
+        {
+          "line": 1,
+          "column": 7,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.pre-commit-config.yaml:1:7: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 40,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (165 > 120 characters)  (line-length)",
+          "raw": ".\\.pre-commit-config.yaml:40:121: [warning] line too long (165 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 57,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (123 > 120 characters)  (line-length)",
+          "raw": ".\\.pre-commit-config.yaml:57:121: [warning] line too long (123 > 120 characters)  (line-length)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\ci.yml",
+      "count": 3,
+      "findings": [
+        {
+          "line": 1,
+          "column": 9,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.github\\workflows\\ci.yml:1:9: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 45,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (130 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\ci.yml:45:121: [warning] line too long (130 > 120 characters)  (line-length)"
+        },
+        {
+          "line": 269,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (138 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\ci.yml:269:121: [warning] line too long (138 > 120 characters)  (line-length)"
+        }
+      ]
+    },
+    {
+      "path": ".\\config\\startup_optimization.yaml",
+      "count": 3,
+      "findings": [
+        {
+          "line": 1,
+          "column": 54,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\config\\startup_optimization.yaml:1:54: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 62,
+          "column": 1,
+          "severity": "warning",
+          "code": "",
+          "message": "comment not indented like content  (comments-indentation)",
+          "raw": ".\\config\\startup_optimization.yaml:62:1: [warning] comment not indented like content  (comments-indentation)"
+        },
+        {
+          "line": 79,
+          "column": 85,
+          "severity": "error",
+          "code": "",
+          "message": "no new line character at the end of file  (new-line-at-end-of-file)",
+          "raw": ".\\config\\startup_optimization.yaml:79:85: [error] no new line character at the end of file  (new-line-at-end-of-file)"
+        }
+      ]
+    },
+    {
+      "path": ".\\qodana.yaml",
+      "count": 2,
+      "findings": [
+        {
+          "line": 1,
+          "column": 117,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\qodana.yaml:1:117: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 10,
+          "column": 34,
+          "severity": "error",
+          "code": "",
+          "message": "no new line character at the end of file  (new-line-at-end-of-file)",
+          "raw": ".\\qodana.yaml:10:34: [error] no new line character at the end of file  (new-line-at-end-of-file)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\qodana_code_quality.yml",
+      "count": 2,
+      "findings": [
+        {
+          "line": 1,
+          "column": 13,
+          "severity": "error",
+          "code": "",
+          "message": "wrong new line character: expected \\n  (new-lines)",
+          "raw": ".\\.github\\workflows\\qodana_code_quality.yml:1:13: [error] wrong new line character: expected \\n  (new-lines)"
+        },
+        {
+          "line": 20,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (125 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\qodana_code_quality.yml:20:121: [warning] line too long (125 > 120 characters)  (line-length)"
+        }
+      ]
+    },
+    {
+      "path": ".\\.github\\workflows\\python-ci.yml",
+      "count": 1,
+      "findings": [
+        {
+          "line": 44,
+          "column": 121,
+          "severity": "warning",
+          "code": "",
+          "message": "line too long (121 > 120 characters)  (line-length)",
+          "raw": ".\\.github\\workflows\\python-ci.yml:44:121: [warning] line too long (121 > 120 characters)  (line-length)"
+        }
+      ]
+    }
+  ]
 }

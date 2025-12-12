@@ -215,9 +215,9 @@ class JWTManipulator:
                 return secret
             except jwt.InvalidSignatureError:
                 continue
-            except Exception:  # noqa: S112
+            except Exception as e:
+                logger.debug("Ignored exception in subscription bypass: %s", e)
                 continue
-
         return None
 
     def modify_jwt_claims(self, token: str, modifications: dict[str, Any]) -> dict[str, Any]:
@@ -912,9 +912,8 @@ class SubscriptionValidationBypass:
                                 break
                 except FileNotFoundError:
                     continue
-                except PermissionError:
-                    continue
-                except Exception:
+                except Exception as e:
+                    logger.debug("Ignored exception in subscription bypass (registry access): %s", e)
                     continue
 
         if result["found"]:
@@ -1039,7 +1038,7 @@ class SubscriptionValidationBypass:
                 except (OSError, PermissionError):
                     pass
 
-            for _server_type, (server_name, patterns) in config_patterns.items():
+            for server_name, patterns in config_patterns.values():
                 for pattern in patterns:
                     try:
                         for config_file in base_dir.rglob(pattern):
@@ -1063,9 +1062,10 @@ class SubscriptionValidationBypass:
                                                     host = word.split("@")[-1].strip()
                                                     if host and host not in result["server_endpoints"]:
                                                         result["server_endpoints"].append(host)
-                                except Exception:
-                                    continue
-                    except Exception:
+                                except Exception as e:
+                                    logger.debug("Ignored exception in subscription bypass (inner): %s", e)
+                    except Exception as e:
+                        logger.debug("Ignored exception in subscription bypass (outer): %s", e)
                         continue
 
         common_ports = [27000, 27001, 5053, 8090, 22350, 1947]
@@ -1206,7 +1206,7 @@ class SubscriptionValidationBypass:
                     continue
 
         if result["found"]:
-            result["token_type"] = "OAuth 2.0 / JWT"
+            result["auth_scheme"] = "OAuth 2.0 / JWT"
             result["bypass_method"] = {
                 "technique": "Token Injection / Modification",
                 "description": "Inject forged OAuth tokens with extended validity and enterprise tier claims",
@@ -1274,7 +1274,8 @@ class SubscriptionValidationBypass:
                                 "protocol": server_type,
                             }
                             break
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Ignored exception in subscription bypass (floating license check): %s", e)
                         continue
 
                 if result["found"]:

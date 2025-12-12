@@ -66,7 +66,7 @@ try:
     QThread = _QThread
     QDialog = _QDialog
     QWidget = _QWidget
-    pyqtSignal = _pyqtSignal
+    PyqtSignal = _pyqtSignal
 
 except ImportError:
     logger.warning("PyQt6 not available for distributed processing UI")
@@ -520,7 +520,7 @@ except ImportError:
             """Repaint widget display in console mode."""
             logger.debug(f"Widget {self._object_name} repainted")
 
-    class pyqtSignal:  # type: ignore[no-redef]  # noqa: N801
+    class PyqtSignal:  # type: ignore[no-redef]
         """Fully functional signal implementation for PyQt6 compatibility.
 
         Provides complete signal/slot mechanism using Python's native
@@ -735,9 +735,9 @@ class DistributedTask:
 class DistributedWorkerThread(QThread):
     """Worker thread for distributed processing tasks."""
 
-    progress_updated = pyqtSignal(str, float) if HAS_PYQT6 else None
-    task_completed = pyqtSignal(str, dict) if HAS_PYQT6 else None
-    task_failed = pyqtSignal(str, str) if HAS_PYQT6 else None
+    progress_updated = PyqtSignal(str, float) if HAS_PYQT6 else None
+    task_completed = PyqtSignal(str, dict) if HAS_PYQT6 else None
+    task_failed = PyqtSignal(str, str) if HAS_PYQT6 else None
 
     def __init__(self, worker_id: str, task_queue: list[DistributedTask]) -> None:
         """Initialize distributed worker thread.

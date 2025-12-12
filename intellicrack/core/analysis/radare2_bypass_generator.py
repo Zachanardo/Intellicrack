@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import re
 import struct
+import zlib
 from contextlib import AbstractContextManager
 from typing import Any
 
@@ -66,11 +67,12 @@ class R2BypassGenerator:
             Context manager yielding an R2Session instance for radare2 operations.
 
         """
-        return r2_session(binary_path, self.radare2_path)
+        session: AbstractContextManager[R2Session] = r2_session(binary_path, self.radare2_path)
+        return session
 
     def generate_comprehensive_bypass(self) -> dict[str, Any]:
         """Generate comprehensive license bypass solutions."""
-        result = {
+        result: dict[str, Any] = {
             "binary_path": self.binary_path,
             "bypass_strategies": [],
             "automated_patches": [],
@@ -87,40 +89,28 @@ class R2BypassGenerator:
 
         try:
             with r2_session(self.binary_path, self.radare2_path) as r2:
-                # Analyze license validation mechanisms
                 license_analysis = self._analyze_license_mechanisms(r2)
 
-                # Generate bypass strategies
                 result["bypass_strategies"] = self._generate_bypass_strategies(license_analysis)
 
-                # Generate automated patches
                 result["automated_patches"] = self._generate_automated_patches(r2, license_analysis)
 
-                # Generate keygen algorithms
                 result["keygen_algorithms"] = self._generate_keygen_algorithms(license_analysis)
 
-                # Generate registry modifications
                 result["registry_modifications"] = self._generate_registry_modifications(license_analysis)
 
-                # Generate file modifications
                 result["file_modifications"] = self._generate_file_modifications(license_analysis)
 
-                # Generate memory patches
                 result["memory_patches"] = self._generate_memory_patches(r2, license_analysis)
 
-                # Generate API hooks
                 result["api_hooks"] = self._generate_api_hooks(license_analysis)
 
-                # Generate validation bypasses
                 result["validation_bypasses"] = self._generate_validation_bypasses(license_analysis)
 
-                # Calculate success probabilities
                 result["success_probability"] = self._calculate_success_probabilities(result)
 
-                # Generate implementation guide
                 result["implementation_guide"] = self._generate_implementation_guide(result)
 
-                # Assess risks
                 result["risk_assessment"] = self._assess_bypass_risks(result)
 
         except R2Exception as e:
@@ -149,7 +139,7 @@ class R2BypassGenerator:
 
     def _analyze_license_mechanisms(self, r2: R2Session) -> dict[str, Any]:
         """Analyze license validation mechanisms in detail."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "validation_functions": [],
             "crypto_operations": [],
             "string_patterns": [],
@@ -347,7 +337,7 @@ class R2BypassGenerator:
 
     def _analyze_validation_apis(self, r2: R2Session) -> dict[str, list[dict[str, Any]]]:
         """Analyze API calls used in validation."""
-        api_analysis = {
+        api_analysis: dict[str, list[dict[str, Any]]] = {
             "registry_operations": [],
             "file_operations": [],
             "network_operations": [],
@@ -528,41 +518,36 @@ class R2BypassGenerator:
                 # Identify critical decision points
                 decision_points = self._identify_decision_points(r2, func_addr, cfg_analysis)
 
-                # Generate patches for each decision point
                 for decision_point in decision_points:
-                    # Determine optimal patch strategy
                     patch_strategy = self._determine_patch_strategy(r2, decision_point, cfg_analysis)
 
-                    # Generate sophisticated patch based on strategy
+                    patch_result: dict[str, Any] | None = None
                     if patch_strategy["type"] == "register_manipulation":
-                        patch = self._generate_register_patch(r2, decision_point, patch_strategy)
+                        patch_result = self._generate_register_patch(r2, decision_point, patch_strategy)
                     elif patch_strategy["type"] == "stack_manipulation":
-                        patch = self._generate_stack_patch(r2, decision_point, patch_strategy)
+                        patch_result = self._generate_stack_patch(r2, decision_point, patch_strategy)
                     elif patch_strategy["type"] == "control_flow_redirect":
-                        patch = self._generate_flow_redirect_patch(r2, decision_point, patch_strategy)
+                        patch_result = self._generate_flow_redirect_patch(r2, decision_point, patch_strategy)
                     elif patch_strategy["type"] == "memory_value_override":
-                        patch = self._generate_memory_override_patch(r2, decision_point, patch_strategy)
+                        patch_result = self._generate_memory_override_patch(r2, decision_point, patch_strategy)
                     elif patch_strategy["type"] == "return_value_injection":
-                        patch = self._generate_return_injection_patch(r2, decision_point, patch_strategy)
+                        patch_result = self._generate_return_injection_patch(r2, decision_point, patch_strategy)
                     else:
-                        # Fallback to traditional bypass
-                        patch = self._create_binary_patch(r2, func_info, decision_point)
+                        patch_result = self._create_binary_patch(r2, func_info, decision_point)
 
-                    if patch:
-                        # Add metadata about patch sophistication
-                        patch["sophistication_level"] = patch_strategy.get("sophistication", "basic")
-                        patch["confidence"] = patch_strategy.get("confidence", 0.5)
-                        patch["side_effects"] = patch_strategy.get("side_effects", [])
-                        patches.append(patch)
+                    if patch_result is not None:
+                        patch_result["sophistication_level"] = patch_strategy.get("sophistication", "basic")
+                        patch_result["confidence"] = patch_strategy.get("confidence", 0.5)
+                        patch_result["side_effects"] = patch_strategy.get("side_effects", [])
+                        patches.append(patch_result)
 
-                # Also process traditional bypass points for completeness
                 bypass_points = func_info.get("bypass_points", [])
                 for bypass_point in bypass_points:
-                    # Check if already patched by sophisticated method
                     if not self._is_already_patched(bypass_point, patches):
-                        if patch := self._create_binary_patch(r2, func_info, bypass_point):
-                            patch["sophistication_level"] = "basic"
-                            patches.append(patch)
+                        basic_patch = self._create_binary_patch(r2, func_info, bypass_point)
+                        if basic_patch is not None:
+                            basic_patch["sophistication_level"] = "basic"
+                            patches.append(basic_patch)
 
             except Exception as e:
                 logger.error(f"Error generating patches for function at {hex(func_addr)}: {e}")
@@ -619,7 +604,7 @@ class R2BypassGenerator:
         Extracts constants, S-boxes, round functions, and key schedules
         from the binary to understand the exact crypto implementation.
         """
-        analysis = {
+        analysis: dict[str, Any] = {
             "constants": [],
             "s_boxes": [],
             "round_functions": [],
@@ -634,33 +619,28 @@ class R2BypassGenerator:
                 if not func_addr:
                     return analysis
 
-                # Analyze function for crypto constants
                 r2.cmd(f"s {hex(func_addr)}")
                 r2.cmdj("axtj")
 
-                # Look for common crypto constants
-                # MD5 initialization values
                 md5_constants = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476]
-                # SHA1 initialization values
                 sha1_constants = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
-                # AES S-box values (first few)
 
-                # Search for these constants in the function
                 func_bytes = r2.cmd(f"p8 {crypto_op.get('size', 1024)} @ {hex(func_addr)}")
 
-                # Check for MD5 constants
+                constants_list: list[dict[str, str]] = analysis["constants"]
                 for const in md5_constants:
                     if f"{const:x}" in func_bytes.lower():
-                        analysis["constants"].append({"type": "MD5", "value": f"{const:x}"})
+                        constants_list.append({"type": "MD5", "value": f"{const:x}"})
 
-                # Check for SHA constants
                 for const in sha1_constants:
                     if f"{const:x}" in func_bytes.lower():
-                        analysis["constants"].append({"type": "SHA1", "value": f"{const:x}"})
+                        constants_list.append({"type": "SHA1", "value": f"{const:x}"})
 
-                if sbox_pattern := r2.cmd(f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}"):
+                sbox_pattern = r2.cmd(f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}")
+                if sbox_pattern:
                     logger.debug(f"S-box pattern found at {hex(func_addr)}: {sbox_pattern}")
-                    analysis["s_boxes"].append(
+                    s_boxes_list: list[dict[str, Any]] = analysis["s_boxes"]
+                    s_boxes_list.append(
                         {
                             "type": "AES",
                             "address": func_addr,
@@ -669,20 +649,23 @@ class R2BypassGenerator:
                         },
                     )
 
-                if loops := r2.cmdj(f"aflj @ {hex(func_addr)}"):
+                loops = r2.cmdj(f"aflj @ {hex(func_addr)}")
+                if loops:
+                    round_functions_list: list[dict[str, Any]] = analysis["round_functions"]
                     for loop in loops:
-                        if loop.get("nbbs", 0) > 10:  # Crypto rounds typically have many basic blocks
-                            analysis["round_functions"].append(
+                        if loop.get("nbbs", 0) > 10:
+                            loop_offset = loop.get("offset", 0)
+                            round_functions_list.append(
                                 {
-                                    "address": loop.get("offset"),
-                                    "iterations": self._analyze_loop_iterations(r2, loop.get("offset")),
+                                    "address": loop_offset,
+                                    "iterations": self._analyze_loop_iterations(r2, loop_offset),
                                 },
                             )
 
-                if key_expansion := self._find_key_expansion(r2, func_addr):
+                key_expansion = self._find_key_expansion(r2, func_addr)
+                if key_expansion:
                     analysis["key_schedule"] = key_expansion
 
-                # Look for IVs and salts
                 analysis["initialization_vectors"] = self._find_ivs(r2, func_addr)
                 analysis["salt_values"] = self._find_salts(r2, func_addr)
 
@@ -714,11 +697,11 @@ class R2BypassGenerator:
                 "description": f"Generates valid keys using {algorithm} hash of input components",
             },
             "hash_construction": hash_construction,
-            "validation_logic": self._extract_validation_logic(crypto_op),
+            "validation_logic": self._extract_crypto_validation_logic(crypto_op),
             "test_vectors": self._generate_test_vectors(algorithm, hash_construction),
         }
 
-    def _generate_hash_keygen_code(self, algorithm: str, construction: dict, details: dict) -> str:
+    def _generate_hash_keygen_code(self, algorithm: str, construction: dict[str, Any], details: dict[str, Any]) -> str:
         """Generate actual working keygen code for hash-based validation."""
         code = f'''#!/usr/bin/env python3
 """
@@ -824,13 +807,14 @@ if __name__ == "__main__":
 
     def _analyze_hash_construction(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
         """Analyze how the hash input is constructed from user data."""
-        construction = {
+        components: list[str] = []
+        construction: dict[str, Any] = {
             "uses_username": False,
             "uses_hwid": False,
             "uses_date": False,
             "format": "concatenated",
             "transformation": None,
-            "components": [],
+            "components": components,
         }
 
         try:
@@ -839,23 +823,21 @@ if __name__ == "__main__":
                 if not func_addr:
                     return construction
 
-                # Analyze function calls and string references
                 r2.cmd(f"s {hex(func_addr)}")
                 strings = r2.cmdj("izj")
                 r2.cmdj("axtj")
 
-                # Look for common patterns
                 for s in strings:
                     string_val = s.get("string", "").lower()
                     if "user" in string_val or "name" in string_val:
                         construction["uses_username"] = True
-                        construction["components"].append("username")
+                        components.append("username")
                     if "hardware" in string_val or "hwid" in string_val or "machine" in string_val:
                         construction["uses_hwid"] = True
-                        construction["components"].append("hardware_id")
+                        components.append("hardware_id")
                     if "date" in string_val or "expire" in string_val:
                         construction["uses_date"] = True
-                        construction["components"].append("date")
+                        components.append("date")
 
                 # Analyze string operations to determine format
                 disasm = r2.cmd(f"pdf @ {hex(func_addr)}")
@@ -1021,16 +1003,16 @@ if __name__ == "__main__":
             logger.debug(f"Failed to find salts: {e}")
         return salts
 
-    def _extract_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
+    def _extract_crypto_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
         """Extract the validation logic from crypto operation."""
         return {
-            "comparison_type": "equality",  # or "substring", "pattern"
+            "comparison_type": "equality",
             "validation_steps": ["hash_input", "compare_with_stored", "return_result"],
         }
 
-    def _generate_test_vectors(self, algorithm: str, construction: dict) -> list[dict]:
+    def _generate_test_vectors(self, algorithm: str, construction: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate test vectors for validation."""
-        vectors = []
+        vectors: list[dict[str, Any]] = []
         if construction.get("uses_username"):
             vectors.append(
                 {
@@ -1040,7 +1022,7 @@ if __name__ == "__main__":
             )
         return vectors
 
-    def _generate_aes_keygen_code(self, crypto_details: dict) -> str:
+    def _generate_aes_keygen_code(self, crypto_details: dict[str, Any]) -> str:
         """Generate AES keygen implementation code."""
         return '''#!/usr/bin/env python3
 """AES-based License Keygen"""
@@ -1060,18 +1042,17 @@ if __name__ == "__main__":
     print(f"License Key: {key}")
 '''
 
-    def _analyze_key_derivation(self, crypto_op: dict) -> dict:
+    def _analyze_key_derivation(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
         """Analyze key derivation function."""
         return {"method": "PBKDF2", "iterations": 10000, "salt_size": 16}
 
-    def _identify_aes_mode(self, crypto_details: dict) -> str:
+    def _identify_aes_mode(self, crypto_details: dict[str, Any]) -> str:
         """Identify AES operation mode."""
         return "CBC" if crypto_details.get("initialization_vectors") else "ECB"
 
-    def _extract_rsa_modulus(self, crypto_op: dict) -> str:
+    def _extract_rsa_modulus(self, crypto_op: dict[str, Any]) -> str | None:
         """Extract RSA modulus from binary."""
         try:
-            # Get the address from crypto operation
             addr = crypto_op.get("address", 0)
             if not addr:
                 return None
@@ -1141,38 +1122,35 @@ if __name__ == "__main__":
                                                     "c9",
                                                     "c8",
                                                 ]:
-                                                    return hex_str
+                                                    return str(hex_str)
 
-                # Alternative: Look for imports of RSA-related functions
                 imports = r2.get_imports()
-                if rsa_imports := [
+                rsa_imports = [
                     imp for imp in imports if any(x in imp.get("name", "").lower() for x in ["rsa", "bignum", "bn_", "modexp", "publickey"])
-                ]:
-                    # Found RSA-related imports, search for large constants nearby
+                ]
+                if rsa_imports:
                     for imp in rsa_imports:
-                        if imp_addr := imp.get("plt", 0) or imp.get("addr", 0):
-                            # Search for xrefs to this import
+                        imp_addr = imp.get("plt", 0) or imp.get("addr", 0)
+                        if imp_addr:
                             xrefs_cmd = f"axtj @ {hex(imp_addr)}"
                             xrefs = r2._execute_command(xrefs_cmd, expect_json=True)
 
-                            if xrefs:
-                                for xref in xrefs[:5]:  # Check first 5 references
+                            if xrefs and isinstance(xrefs, list):
+                                for xref in xrefs[:5]:
                                     ref_addr = xref.get("from", 0)
                                     if ref_addr:
-                                        # Look for large constants near the call
                                         const_cmd = f"aoj @ {hex(ref_addr)}"
                                         const_data = r2._execute_command(const_cmd, expect_json=True)
 
                                         if const_data and isinstance(const_data, list):
                                             for op in const_data:
-                                                if op.get("bytes", "") and len(op["bytes"]) > 64:
-                                                    # Potential modulus found
-                                                    return op["bytes"]
+                                                op_bytes = op.get("bytes", "")
+                                                if op_bytes and len(op_bytes) > 64:
+                                                    return str(op_bytes)
 
-                # If still not found, try generic big number search
-                # Look for sequences of non-zero bytes that could be a modulus
                 bignum_cmd = f"/ \\xff[\\x00-\\xff]{{127,}} @ {hex(addr)}-0x10000"
-                if bignum_results := r2._execute_command(bignum_cmd):
+                bignum_results = r2._execute_command(bignum_cmd)
+                if bignum_results:
                     lines = bignum_results.strip().split("\n")
                     for line in lines:
                         if "hit" in line.lower():
@@ -1180,12 +1158,11 @@ if __name__ == "__main__":
                             if len(parts) > 1:
                                 hit_addr = int(parts[0], 16) if "0x" in parts[0] else None
                                 if hit_addr:
-                                    # Read the big number
                                     for test_size in [128, 256, 512]:
                                         read_cmd = f"p8 {test_size} @ {hex(hit_addr)}"
                                         hex_data = r2._execute_command(read_cmd)
                                         if hex_data and len(hex_data.strip()) >= test_size * 2:
-                                            return hex_data.strip()
+                                            return str(hex_data.strip())
 
         except Exception as e:
             self.logger.debug(f"Failed to extract RSA modulus: {e}")
@@ -1193,7 +1170,7 @@ if __name__ == "__main__":
         # Return None if extraction failed - caller should handle this
         return None
 
-    def _generate_rsa_keygen_code(self, modulus: str, crypto_details: dict) -> str:
+    def _generate_rsa_keygen_code(self, modulus: str | None, crypto_details: dict[str, Any]) -> str:
         """Generate RSA keygen implementation."""
         return '''#!/usr/bin/env python3
 """RSA-based License Keygen"""
@@ -1213,15 +1190,15 @@ if __name__ == "__main__":
     print(f"License: {signature}")
 '''
 
-    def _identify_rsa_padding(self, crypto_details: dict) -> str:
+    def _identify_rsa_padding(self, crypto_details: dict[str, Any]) -> str:
         """Identify RSA padding scheme."""
         return "PKCS1"
 
-    def _analyze_custom_crypto(self, crypto_op: dict) -> dict:
+    def _analyze_custom_crypto(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
         """Analyze custom cryptographic algorithm."""
         return {"operations": ["xor", "rotate", "substitute"], "key_size": 16, "rounds": 4}
 
-    def _generate_custom_keygen_code(self, custom_logic: dict, crypto_details: dict) -> str:
+    def _generate_custom_keygen_code(self, custom_logic: dict[str, Any], crypto_details: dict[str, Any]) -> str:
         """Generate custom algorithm keygen."""
         return '''#!/usr/bin/env python3
 """Customize Algorithm Keygen"""
@@ -1244,7 +1221,7 @@ if __name__ == "__main__":
     print(f"License: {key.encode().hex()}")
 '''
 
-    def _generate_generic_keygen_code(self, crypto_op: dict, crypto_details: dict) -> str:
+    def _generate_generic_keygen_code(self, crypto_op: dict[str, Any], crypto_details: dict[str, Any]) -> str:
         """Generate generic pattern-based keygen."""
         return '''#!/usr/bin/env python3
 """Provide Pattern-based Keygen"""
@@ -1270,7 +1247,7 @@ if __name__ == "__main__":
     print(f"License Key: {key}")
 '''
 
-    def _analyze_key_patterns(self, crypto_op: dict) -> dict:
+    def _analyze_key_patterns(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
         """Analyze key patterns from binary."""
         return {"format": "4x4-segmented", "charset": "alphanumeric_uppercase", "length": 16}
 
@@ -1655,7 +1632,7 @@ void apply_patch() {{
             "tools": "API hooking or system time manipulation",
         }
 
-    def _generate_registry_bypass_implementation(self, license_analysis: dict[str, Any]) -> dict[str, str]:
+    def _generate_registry_bypass_implementation(self, license_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate registry bypass implementation based on license analysis."""
         # Extract registry-related patterns from license analysis
         registry_patterns = license_analysis.get("registry_patterns", [])
@@ -1997,7 +1974,7 @@ void apply_patch() {{
             binary_data.extend(serial_bytes)
 
             # Hardware ID (8 bytes)
-            hw_id = int(hashlib.crc32(machine_id.encode())) & 0xFFFFFFFF
+            hw_id = zlib.crc32(machine_id.encode()) & 0xFFFFFFFF
             binary_data.extend(hw_id.to_bytes(4, "little"))
             binary_data.extend((hw_id ^ 0xDEADBEEF).to_bytes(4, "little"))
 
@@ -2013,10 +1990,9 @@ void apply_patch() {{
             features = 0xFFFFFFFF  # All features enabled
             binary_data.extend(features.to_bytes(4, "little"))
 
-            # Signature (32 bytes)
             sig_data = serial_bytes + hw_id.to_bytes(4, "little") + timestamp.to_bytes(8, "little")
-            signature = hashlib.sha256(sig_data).digest()
-            binary_data.extend(signature)
+            binary_signature = hashlib.sha256(sig_data).digest()
+            binary_data.extend(binary_signature)
 
             # Padding to 256 bytes
             while len(binary_data) < 256:
@@ -2044,7 +2020,7 @@ void apply_patch() {{
 
         # Default INI format with comprehensive data
         signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
-        checksum = hashlib.crc32(f"{serial}{machine_id}".encode()) & 0xFFFFFFFF
+        checksum = zlib.crc32(f"{serial}{machine_id}".encode()) & 0xFFFFFFFF
 
         return f"""# License File
 [License]
@@ -2112,38 +2088,32 @@ Compatible=1.0,1.5,2.0"""
     def _get_original_bytes(self, r2: R2Session, func_addr: int) -> str:
         """Get original bytes at function address."""
         try:
-            # Get first few bytes of function
             bytes_data = r2._execute_command(f"p8 16 @ {hex(func_addr)}")
-            return bytes_data.strip() if bytes_data else "00" * 16
+            if bytes_data:
+                return str(bytes_data.strip())
+            return "00" * 16
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_bypass_generator: %s", e)
             return "00" * 16
 
     def _generate_patch_bytes(self, func_info: dict[str, Any]) -> str:
         """Generate patch bytes for function based on function characteristics."""
-        # Extract function information
-        func_name = func_info.get("function", {}).get("name", "")
-        func_size = func_info.get("function", {}).get("size", 0)
-        func_type = func_info.get("function", {}).get("type", "")
+        func_name: str = func_info.get("function", {}).get("name", "")
+        func_size: int = func_info.get("function", {}).get("size", 0)
+        func_type: str = func_info.get("function", {}).get("type", "")
 
-        # Customize patch based on function characteristics
         if "license" in func_name.lower() or "check" in func_name.lower():
-            # For license check functions, return success (1)
-            return "b8010000c3"  # mov eax, 1; ret
+            return "b8010000c3"
         if "validate" in func_name.lower() or "verify" in func_name.lower():
-            # For validation functions, return success (1)
-            return "b8010000c3"  # mov eax, 1; ret
+            return "b8010000c3"
         if "trial" in func_name.lower() or "expire" in func_name.lower():
-            # For trial/expiration functions, return false (0)
-            return "b8000000c3"  # mov eax, 0; ret
+            return "b8000000c3"
         if func_size and func_size < 10:
-            # For small functions, use simple NOP
-            return "90" * min(func_size, 5)  # NOP padding
+            nop_count = min(func_size, 5)
+            return "90" * nop_count
         if func_type == "bool" or "bool" in func_name.lower():
-            # For boolean functions, return true
-            return "b8010000c3"  # mov eax, 1; ret
-        # Default: return success for unknown functions
-        return "b8010000c3"  # mov eax, 1; ret
+            return "b8010000c3"
+        return "b8010000c3"
 
     def _generate_registry_hook_code(self, reg_op: dict[str, Any]) -> str:
         """Generate registry hook code with real license data generation."""
@@ -3095,14 +3065,12 @@ def generate_key():
             "recommended_precautions": self._get_recommended_precautions(strategies),
         }
 
-    def _calculate_risk_level(self, strategies: list, mechanisms: dict) -> str:
+    def _calculate_risk_level(self, strategies: list[dict[str, Any]], mechanisms: dict[str, Any]) -> str:
         """Calculate overall risk level based on strategies and mechanisms."""
         risk_score = 0
 
-        # Base risk from number of strategies
         risk_score += len(strategies) * 10
 
-        # Add risk based on complexity of mechanisms
         if mechanisms.get("crypto_operations"):
             risk_score += 30
         if mechanisms.get("hardware_checks"):
@@ -3114,9 +3082,9 @@ def generate_key():
             return "LOW"
         return "MEDIUM" if risk_score < 60 else "HIGH"
 
-    def _get_recommended_precautions(self, strategies: list) -> list:
+    def _get_recommended_precautions(self, strategies: list[dict[str, Any]]) -> list[str]:
         """Get recommended precautions based on strategies."""
-        precautions = ["Always backup original files"]
+        precautions: list[str] = ["Always backup original files"]
 
         for strategy in strategies:
             method = strategy.get("strategy", "")
@@ -3418,7 +3386,7 @@ def generate_key():
 
     def _analyze_condition(self, r2: R2Session, address: int, disasm: str) -> dict[str, Any]:
         """Analyze the condition being checked at a decision point."""
-        condition = {
+        condition: dict[str, Any] = {
             "type": "unknown",
             "register": None,
             "memory_address": None,
@@ -3502,14 +3470,15 @@ def generate_key():
 
     def _find_entry_validation_checks(self, r2: R2Session, func_addr: int) -> list[dict[str, Any]]:
         """Find validation checks at function entry."""
-        entry_checks = []
+        entry_checks: list[dict[str, Any]] = []
 
         try:
-            if disasm := r2._execute_command(f"pd 20 @ {hex(func_addr)}"):
+            disasm = r2._execute_command(f"pd 20 @ {hex(func_addr)}")
+            if disasm:
                 lines = disasm.split("\n")[:20]
                 entry_checks.extend(
                     {
-                        "address": func_addr + (i * 4),  # Approximate
+                        "address": func_addr + (i * 4),
                         "type": "entry_validation",
                         "line": line,
                         "line_number": i,
@@ -3564,21 +3533,19 @@ def generate_key():
 
     def _find_loop_exit(self, decision_point: dict[str, Any], cfg: dict[str, Any]) -> int:
         """Find the exit point of a loop."""
-        # Find the block after the loop
-        addr = decision_point["address"]
+        addr: int = decision_point["address"]
         block = cfg["blocks"].get(addr, {})
 
-        # Simple heuristic: take the false branch as loop exit
-        if len(block.get("successors", [])) > 1:
-            return block["successors"][1]
+        successors = block.get("successors", [])
+        if len(successors) > 1:
+            return int(successors[1])
 
-        # Otherwise, find the next block in address order
-        sorted_blocks = sorted(cfg["blocks"].keys())
+        sorted_blocks: list[int] = sorted(cfg["blocks"].keys())
         idx = sorted_blocks.index(addr) if addr in sorted_blocks else -1
         if idx >= 0 and idx < len(sorted_blocks) - 1:
-            return sorted_blocks[idx + 1]
+            return int(sorted_blocks[idx + 1])
 
-        return addr + 100  # Fallback
+        return addr + 100
 
     def _generate_register_set_instructions(self, register: str, value: int) -> str:
         """Generate machine code to set a register to a specific value."""

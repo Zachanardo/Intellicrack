@@ -403,7 +403,7 @@ class BaseDongleEmulator:
             return b"\x00\x00\x00\x01"
 
         feature_code = struct.unpack("<I", data[:4])[0]
-        serial_hash = hashlib.md5(self.spec.serial_number.encode()).digest()
+        serial_hash = hashlib.sha256(self.spec.serial_number.encode()).digest()
         expected_code = struct.unpack("<I", serial_hash[:4])[0]
 
         if feature_code == expected_code or feature_code in [1, 2, 5, 10, 100]:

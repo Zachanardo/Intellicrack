@@ -19,12 +19,7 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
-
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
-
+import defusedxml.ElementTree as ET
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -2475,7 +2470,7 @@ class OfflineActivationEmulator:
         """Validate license expiration status."""
         expiry_date = None
 
-        if "expiry_date" in license_data and license_data["expiry_date"]:
+        if license_data.get("expiry_date"):
             try:
                 expiry_str = license_data["expiry_date"]
                 if "T" in expiry_str:
@@ -2501,7 +2496,7 @@ class OfflineActivationEmulator:
             result["hardware_match"] = True
             return
 
-        if "hardware_id" in license_data and license_data["hardware_id"]:
+        if license_data.get("hardware_id"):
             if hardware_id:
                 result["hardware_match"] = license_data["hardware_id"] == hardware_id
                 if not result["hardware_match"]:
@@ -2538,7 +2533,7 @@ class OfflineActivationEmulator:
 
     def _extract_license_features(self, license_data: dict[str, Any], result: dict[str, Any]) -> None:
         """Extract and populate licensed features."""
-        if "features" in license_data and license_data["features"]:
+        if license_data.get("features"):
             result["features"] = license_data["features"]
 
     def export_license_file(

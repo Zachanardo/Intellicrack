@@ -38,6 +38,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import StandardScaler
 
+from intellicrack.data import SUCCESS_RATES_DB
 from intellicrack.handlers.matplotlib_handler import PdfPages, plt
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
@@ -505,9 +506,9 @@ class PerformanceMetrics:
 class EventTracker:
     """Event tracking and database management."""
 
-    def __init__(self, db_path: str = "intellicrack_success_rates.db") -> None:
+    def __init__(self, db_path: str = "") -> None:
         """Initialize event tracker with SQLite database and threading support."""
-        self.db_path = db_path
+        self.db_path = db_path if db_path else str(SUCCESS_RATES_DB)
         self.lock = threading.Lock()
         self.initialize_database()
 
@@ -1013,9 +1014,9 @@ class ReportGenerator:
 class SuccessRateAnalyzer:
     """Run success rate analysis engine."""
 
-    def __init__(self, db_path: str = "intellicrack_success_rates.db") -> None:
+    def __init__(self, db_path: str = "") -> None:
         """Initialize comprehensive success rate analyzer with all statistical components."""
-        self.event_tracker = EventTracker(db_path)
+        self.event_tracker = EventTracker(db_path if db_path else str(SUCCESS_RATES_DB))
         self.bayesian_analyzer = BayesianAnalyzer()
         self.survival_analyzer = SurvivalAnalyzer()
         self.time_series_analyzer = TimeSeriesAnalyzer()
@@ -1388,7 +1389,7 @@ def get_success_rate_analyzer(db_path: str | None = None) -> SuccessRateAnalyzer
     global _global_analyzer
 
     if _global_analyzer is None:
-        _global_analyzer = SuccessRateAnalyzer(db_path or "intellicrack_success_rates.db")
+        _global_analyzer = SuccessRateAnalyzer(db_path or str(SUCCESS_RATES_DB))
 
     return _global_analyzer
 

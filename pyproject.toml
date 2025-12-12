@@ -231,7 +231,7 @@ dependencies = [
   "dnspython>=2.8.0,<3",
   "exceptiongroup",
   "filelock",
-  "fonttools>=4.61.0,<5",
+  "fonttools>=4.61.1,<5",
   "frozenlist>=1.8.0,<2",
   "gitdb>=4.0.12,<5",
   "gitpython>=3.1.45,<4",
@@ -1339,6 +1339,9 @@ exclude_dirs = [
   "Screenshots",
 ]
 skips = ["B101", "B601"]
+
+[tool.uv]
+link-mode = "copy"
 
 [tool.uv.sources]
 python-fx = { git = "https://github.com/Zachanardo/pyfx.git" }

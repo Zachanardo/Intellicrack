@@ -6,6 +6,7 @@ from pathlib import Path
 
 
 def main() -> None:
+    """Select random methods from checklist for review."""
     content = Path("METHOD_IMPLEMENTATION_CHECKLIST.md").read_text(encoding="utf-8")
 
     file_pattern = re.compile(r"^## (.+?) \(")

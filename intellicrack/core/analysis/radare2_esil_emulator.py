@@ -361,7 +361,7 @@ class RadareESILEmulator:
             try:
                 result = self._session.execute(f"?v ${register}")
                 if not isinstance(result, str):
-                    raise RuntimeError(f"Unexpected result type for register {register}")
+                    raise TypeError(f"Unexpected result type for register {register}")
                 return int(result.strip(), 0)
             except Exception as e:
                 logger.error(f"Failed to read register {register}: {e}")
@@ -421,7 +421,7 @@ class RadareESILEmulator:
             try:
                 result = self._session.execute(f"p8 {size} @ {address}")
                 if not isinstance(result, str):
-                    raise RuntimeError(f"Unexpected result type for memory read at 0x{address:x}")
+                    raise TypeError(f"Unexpected result type for memory read at 0x{address:x}")
                 return bytes.fromhex(result.strip())
             except Exception as e:
                 logger.error(f"Failed to read memory at 0x{address:x}: {e}")
@@ -564,7 +564,7 @@ class RadareESILEmulator:
 
                 inst = inst_info[0]
                 if not isinstance(inst, dict):
-                    raise RuntimeError("Invalid instruction format")
+                    raise TypeError("Invalid instruction format")
                 offset_val = inst.get("offset", 0)
                 inst_addr = int(offset_val) if isinstance(offset_val, (int, float)) else 0
                 esil_val = inst.get("esil", "")
@@ -960,7 +960,7 @@ class RadareESILEmulator:
 
         """
         operand_raw = self._eval_node(node.operand)
-        operand = int(operand_raw) if isinstance(operand_raw, bool) else int(operand_raw)
+        operand = int(operand_raw)
         if isinstance(node.op, ast.UAdd):
             return +operand
         if isinstance(node.op, ast.USub):
@@ -1023,7 +1023,7 @@ class RadareESILEmulator:
             if isinstance(target, str):
                 result = self._session.execute(f"?v {target}")
                 if not isinstance(result, str):
-                    raise RuntimeError(f"Could not resolve target: {target}")
+                    raise TypeError(f"Could not resolve target: {target}")
                 target_addr = int(result.strip(), 0)
             else:
                 target_addr = target

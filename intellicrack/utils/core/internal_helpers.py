@@ -2883,7 +2883,7 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
 
     elif data_type == "float16":
         # Half precision embeddings
-        for i in range(total_elements):
+        for _ in range(total_elements):
             val = random.gauss(0, 0.02)  # Smaller range for fp16
             val = max(-0.1, min(0.1, val))
             # Pack as half precision (approximated with struct)
@@ -2929,7 +2929,7 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
         std_dev = 0.02
 
     if data_type == "float16":
-        for i in range(total_elements):
+        for _ in range(total_elements):
             weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
             data.extend(struct.pack("e", weight))
 
@@ -2944,8 +2944,7 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
 
             data.extend(struct.pack("f", weight))
 
-    elif data_type == "int8":
-        for i in range(total_elements):
+        for _ in range(total_elements):
             # Quantized weights typically in range [-128, 127]
             weight = random.gauss(0, 20)  # Scale for int8 range
             weight = max(-128, min(127, int(weight)))

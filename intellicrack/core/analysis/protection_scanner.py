@@ -25,6 +25,7 @@ from intellicrack.core.analysis.binary_pattern_detector import BinaryPatternDete
 from intellicrack.core.analysis.polymorphic_analyzer import MutationType, PolymorphicAnalyzer
 from intellicrack.core.analysis.vmprotect_detector import VMProtectDetector
 from intellicrack.core.analysis.yara_pattern_engine import YaraPatternEngine
+from intellicrack.data import PROTECTION_SIGNATURES_DB
 from intellicrack.ml.pattern_evolution_tracker import PatternEvolutionTracker
 from intellicrack.utils.logger import get_logger
 
@@ -107,9 +108,9 @@ class ProtectionSignature:
 class DynamicSignatureExtractor:
     """Extracts protection signatures dynamically from binaries."""
 
-    def __init__(self, db_path: str = "protection_signatures.db") -> None:
+    def __init__(self, db_path: str = "") -> None:
         """Initialize the dynamic signature extractor."""
-        self.db_path = db_path
+        self.db_path = db_path if db_path else str(PROTECTION_SIGNATURES_DB)
         self.signatures: dict[str, list[DynamicSignature]] = defaultdict(list)
         self.pattern_tracker = PatternEvolutionTracker()
         self.binary_detector = BinaryPatternDetector()

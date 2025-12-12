@@ -12,6 +12,14 @@ repos:
 
   - repo: local
     hooks:
+      - id: generate-requirements
+        name: Generate requirements.txt from pixi environment
+        entry: bash -c 'pixi run generate-requirements && git add requirements.txt'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
       - id: rust-fmt
         name: Rust code formatting (cargo fmt)
         entry: cargo fmt --manifest-path intellicrack-launcher/Cargo.toml -- --check

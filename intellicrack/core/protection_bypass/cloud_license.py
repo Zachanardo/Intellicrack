@@ -39,6 +39,8 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
+
 
 if TYPE_CHECKING:
     import jwt
@@ -163,13 +165,20 @@ class TLSInterceptor:
     def _init_ca(self) -> None:
         """Initialize or load CA certificate and private key for signing intercepted certificates.
 
-        Generates a new 4096-bit RSA CA certificate if one doesn't exist, or loads existing CA from disk.
+        First tries to load bundled package CA from data/certificates/, then falls back to user home
+        directory (~/.intellicrack/certs/). Generates a new 4096-bit RSA CA certificate if neither exists.
         """
-        ca_path = Path.home() / ".intellicrack" / "certs"
-        ca_path.mkdir(parents=True, exist_ok=True)
+        ca_cert_file: Path
+        ca_key_file: Path
 
-        ca_cert_file = ca_path / "intellicrack-ca.crt"
-        ca_key_file = ca_path / "intellicrack-ca.key"
+        if CA_CERT_PATH.exists() and CA_KEY_PATH.exists():
+            ca_cert_file = CA_CERT_PATH
+            ca_key_file = CA_KEY_PATH
+        else:
+            ca_path = Path.home() / ".intellicrack" / "certs"
+            ca_path.mkdir(parents=True, exist_ok=True)
+            ca_cert_file = ca_path / "intellicrack-ca.crt"
+            ca_key_file = ca_path / "intellicrack-ca.key"
 
         if ca_cert_file.exists() and ca_key_file.exists():
             with open(ca_cert_file, "rb") as f:
@@ -312,9 +321,11 @@ class TLSInterceptor:
         """Get path to CA certificate file for installing as trusted root.
 
         Returns:
-            Path to Intellicrack CA certificate in user's home directory
+            Path to Intellicrack CA certificate (package bundled or user home)
 
         """
+        if CA_CERT_PATH.exists():
+            return CA_CERT_PATH
         return Path.home() / ".intellicrack" / "certs" / "intellicrack-ca.crt"
 
 

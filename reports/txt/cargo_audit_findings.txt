@@ -1,1 +1,3 @@
-﻿No findings.
+1 findings in Cargo.toml
+
+Cargo.toml: [unmaintained] dotenv - dotenv is Unmaintained (RUSTSEC-2021-0141)

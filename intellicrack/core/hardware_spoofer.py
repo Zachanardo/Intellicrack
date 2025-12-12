@@ -1,5 +1,7 @@
 """Hardware fingerprint spoofing for bypassing hardware-based license checks."""
 
+from __future__ import annotations
+
 import ctypes
 import datetime
 import platform
@@ -11,13 +13,17 @@ import winreg
 from ctypes import c_void_p
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import netifaces
 
 from intellicrack.handlers.wmi_handler import wmi
 from intellicrack.utils.logger import get_logger
 
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from ctypes import _NamedFuncPointer, _Pointer
 
 logger = get_logger(__name__)
 
@@ -63,10 +69,39 @@ class HardwareFingerPrintSpoofer:
         self.original_hardware: HardwareIdentifiers | None = None
         self.spoofed_hardware: HardwareIdentifiers | None = None
         self.wmi_client: Any = wmi.WMI() if platform.system() == "Windows" else None
-        self.spoof_methods: dict[str, Any] = self._initialize_spoof_methods()
+        self.spoof_methods: dict[str, Callable[..., None]] = self._initialize_spoof_methods()
         self.hooks_installed: bool = False
+        self.original_exec_query: int | None = None
+        self.exec_query_hook: Any = None
+        self._enumerator_ref: Any = None
+        self._vtable_ref: Any = None
+        self.original_RegQueryValueExW: Any = None
+        self.original_RegGetValueW: Any = None
+        self.original_RegEnumValueW: Any = None
+        self.RegQueryValueExW_hook: Any = None
+        self.RegGetValueW_hook: Any = None
+        self.original_RegQueryValueExW_trampoline: Any = None
+        self.original_GetVolumeInformation: Any = None
+        self.original_GetSystemInfo: Any = None
+        self.original_GlobalMemoryStatusEx: Any = None
+        self.original_GetComputerNameExW: Any = None
+        self.GetVolumeInformationW_hook: Any = None
+        self.GetSystemInfo_hook: Any = None
+        self.GlobalMemoryStatusEx_hook: Any = None
+        self.GetComputerNameExW_hook: Any = None
+        self.original_SetupDiGetClassDevsW: Any = None
+        self.original_SetupDiGetDeviceRegistryPropertyW: Any = None
+        self.original_SetupDiEnumDeviceInfo: Any = None
+        self.original_SetupDiGetDeviceInstanceIdW: Any = None
+        self.SetupDiGetDeviceRegistryPropertyW_hook: Any = None
+        self.SetupDiGetDeviceInstanceIdW_hook: Any = None
+        self.original_GetAdaptersInfo: Any = None
+        self.original_GetAdaptersAddresses: Any = None
+        self.original_GetIfTable: Any = None
+        self.GetAdaptersInfo_hook: Any = None
+        self.GetAdaptersAddresses_hook: Any = None
 
-    def _initialize_spoof_methods(self) -> dict[str, Any]:
+    def _initialize_spoof_methods(self) -> dict[str, Callable[..., None]]:
         """Initialize spoofing methods for different hardware components.
 
         Returns:
@@ -123,16 +158,16 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
-                    return cpu.ProcessorId.strip()
+                    cpu_id: str = cpu.ProcessorId.strip()
+                    return cpu_id
             else:
-                # Linux fallback
                 with open("/proc/cpuinfo") as f:
                     for line in f:
                         if "serial" in line.lower():
                             return line.split(":")[1].strip()
         except OSError as e:
             logger.debug(f"Failed to retrieve CPU ID from /proc/cpuinfo: {e}")
-        return "BFEBFBFF000306C3"  # Default Intel CPU ID
+        return "BFEBFBFF000306C3"
 
     def _get_cpu_name(self) -> str:
         """Get CPU name from system or generate realistic spoof value.
@@ -144,7 +179,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
-                    return cpu.Name.strip()
+                    cpu_name: str = cpu.Name.strip()
+                    return cpu_name
         except AttributeError as e:
             logger.debug(f"WMI CPU name query failed: {e}")
 
@@ -166,7 +202,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
-                    return board.SerialNumber.strip()
+                    serial: str = board.SerialNumber.strip()
+                    return serial
         except Exception as e:
             logger.debug(f"Failed to retrieve motherboard serial via WMI: {e}")
         return "MB-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(12))
@@ -181,7 +218,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
-                    return board.Manufacturer.strip()
+                    manufacturer: str = board.Manufacturer.strip()
+                    return manufacturer
         except Exception as e:
             logger.debug(f"Failed to retrieve motherboard manufacturer via WMI: {e}")
         return "ASUSTeK COMPUTER INC."
@@ -196,7 +234,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
-                    return bios.SerialNumber.strip()
+                    serial: str = bios.SerialNumber.strip()
+                    return serial
         except Exception as e:
             logger.debug(f"Failed to retrieve BIOS serial via WMI: {e}")
         return "BIOS-" + "".join(secrets.choice("0123456789") for _ in range(10))
@@ -211,7 +250,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
-                    return bios.SMBIOSBIOSVersion.strip()
+                    version: str = bios.SMBIOSBIOSVersion.strip()
+                    return version
         except Exception as e:
             logger.debug(f"Failed to retrieve BIOS version via WMI: {e}")
         return "2.17.1246"
@@ -223,7 +263,7 @@ class HardwareFingerPrintSpoofer:
             List of disk serial number strings.
 
         """
-        serials = []
+        serials: list[str] = []
         try:
             if self.wmi_client:
                 serials.extend(disk.SerialNumber.strip() for disk in self.wmi_client.Win32_PhysicalMedia() if disk.SerialNumber)
@@ -242,7 +282,7 @@ class HardwareFingerPrintSpoofer:
             List of disk model name strings.
 
         """
-        models = []
+        models: list[str] = []
         try:
             if self.wmi_client:
                 models.extend(disk.Model.strip() for disk in self.wmi_client.Win32_DiskDrive() if disk.Model)
@@ -261,7 +301,7 @@ class HardwareFingerPrintSpoofer:
             List of MAC address strings without colons.
 
         """
-        macs = []
+        macs: list[str] = []
         try:
             for interface in netifaces.interfaces():
                 addrs = netifaces.ifaddresses(interface)
@@ -290,7 +330,8 @@ class HardwareFingerPrintSpoofer:
         try:
             if self.wmi_client:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
-                    return system.UUID.strip()
+                    system_uuid: str = system.UUID.strip()
+                    return system_uuid
         except Exception as e:
             logger.debug(f"Failed to retrieve system UUID via WMI: {e}")
         return str(uuid.uuid4()).upper()
@@ -304,7 +345,8 @@ class HardwareFingerPrintSpoofer:
         """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
-                return winreg.QueryValueEx(key, "MachineGuid")[0]
+                guid: str = winreg.QueryValueEx(key, "MachineGuid")[0]
+                return guid
         except Exception as e:
             logger.debug(f"Failed to retrieve machine GUID from registry: {e}")
         return str(uuid.uuid4()).upper()
@@ -335,7 +377,8 @@ class HardwareFingerPrintSpoofer:
         """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
-                return winreg.QueryValueEx(key, "ProductId")[0]
+                product_id: str = winreg.QueryValueEx(key, "ProductId")[0]
+                return product_id
         except Exception as e:
             logger.debug(f"Failed to retrieve Windows product ID from registry: {e}")
         return "00000-00000-00000-AAOEM"
@@ -347,7 +390,7 @@ class HardwareFingerPrintSpoofer:
             List of dictionaries containing network adapter information.
 
         """
-        adapters = []
+        adapters: list[dict[str, str]] = []
         try:
             if self.wmi_client:
                 adapters.extend(
@@ -372,7 +415,7 @@ class HardwareFingerPrintSpoofer:
             List of GPU PNP device ID strings.
 
         """
-        gpu_ids = []
+        gpu_ids: list[str] = []
         try:
             if self.wmi_client:
                 gpu_ids.extend(gpu.PNPDeviceID for gpu in self.wmi_client.Win32_VideoController())
@@ -380,7 +423,7 @@ class HardwareFingerPrintSpoofer:
             logger.debug(f"Failed to retrieve GPU IDs via WMI: {e}")
 
         if not gpu_ids:
-            gpu_ids.append("PCI\\VEN_10DE&DEV_1B80&SUBSYS_85AA1043&REV_A1")  # GTX 1080
+            gpu_ids.append("PCI\\VEN_10DE&DEV_1B80&SUBSYS_85AA1043&REV_A1")
 
         return gpu_ids
 
@@ -391,7 +434,7 @@ class HardwareFingerPrintSpoofer:
             List of RAM serial number strings.
 
         """
-        serials = []
+        serials: list[str] = []
         try:
             if self.wmi_client:
                 serials.extend(
@@ -414,7 +457,7 @@ class HardwareFingerPrintSpoofer:
             List of dictionaries containing USB device identification data.
 
         """
-        devices = []
+        devices: list[dict[str, str]] = []
         try:
             if self.wmi_client:
                 devices.extend({"device_id": usb.DeviceID, "pnp_id": usb.PNPDeviceID} for usb in self.wmi_client.Win32_USBHub())
@@ -435,26 +478,33 @@ class HardwareFingerPrintSpoofer:
         """
         preserve = preserve or []
 
+        if self.original_hardware is None:
+            self.capture_original_hardware()
+
+        original = self.original_hardware
+        if original is None:
+            raise RuntimeError("Failed to capture original hardware identifiers")
+
         spoofed = HardwareIdentifiers(
-            cpu_id=self.original_hardware.cpu_id if "cpu" in preserve else self._generate_cpu_id(),
-            cpu_name=self.original_hardware.cpu_name if "cpu" in preserve else self._generate_cpu_name(),
-            motherboard_serial=self.original_hardware.motherboard_serial if "motherboard" in preserve else self._generate_mb_serial(),
-            motherboard_manufacturer=self.original_hardware.motherboard_manufacturer
+            cpu_id=original.cpu_id if "cpu" in preserve else self._generate_cpu_id(),
+            cpu_name=original.cpu_name if "cpu" in preserve else self._generate_cpu_name(),
+            motherboard_serial=original.motherboard_serial if "motherboard" in preserve else self._generate_mb_serial(),
+            motherboard_manufacturer=original.motherboard_manufacturer
             if "motherboard" in preserve
             else self._generate_mb_manufacturer(),
-            bios_serial=self.original_hardware.bios_serial if "bios" in preserve else self._generate_bios_serial(),
-            bios_version=self.original_hardware.bios_version if "bios" in preserve else self._generate_bios_version(),
-            disk_serial=self.original_hardware.disk_serial if "disk" in preserve else self._generate_disk_serials(),
-            disk_model=self.original_hardware.disk_model if "disk" in preserve else self._generate_disk_models(),
-            mac_addresses=self.original_hardware.mac_addresses if "mac" in preserve else self._generate_mac_addresses(),
-            system_uuid=self.original_hardware.system_uuid if "uuid" in preserve else str(uuid.uuid4()).upper(),
-            machine_guid=self.original_hardware.machine_guid if "guid" in preserve else str(uuid.uuid4()).upper(),
-            volume_serial=self.original_hardware.volume_serial if "volume" in preserve else self._generate_volume_serial(),
-            product_id=self.original_hardware.product_id if "product" in preserve else self._generate_product_id(),
-            network_adapters=self.original_hardware.network_adapters if "network" in preserve else self._generate_network_adapters(),
-            gpu_ids=self.original_hardware.gpu_ids if "gpu" in preserve else self._generate_gpu_ids(),
-            ram_serial=self.original_hardware.ram_serial if "ram" in preserve else self._generate_ram_serials(),
-            usb_devices=self.original_hardware.usb_devices if "usb" in preserve else self._generate_usb_devices(),
+            bios_serial=original.bios_serial if "bios" in preserve else self._generate_bios_serial(),
+            bios_version=original.bios_version if "bios" in preserve else self._generate_bios_version(),
+            disk_serial=original.disk_serial if "disk" in preserve else self._generate_disk_serials(),
+            disk_model=original.disk_model if "disk" in preserve else self._generate_disk_models(),
+            mac_addresses=original.mac_addresses if "mac" in preserve else self._generate_mac_addresses(),
+            system_uuid=original.system_uuid if "uuid" in preserve else str(uuid.uuid4()).upper(),
+            machine_guid=original.machine_guid if "guid" in preserve else str(uuid.uuid4()).upper(),
+            volume_serial=original.volume_serial if "volume" in preserve else self._generate_volume_serial(),
+            product_id=original.product_id if "product" in preserve else self._generate_product_id(),
+            network_adapters=original.network_adapters if "network" in preserve else self._generate_network_adapters(),
+            gpu_ids=original.gpu_ids if "gpu" in preserve else self._generate_gpu_ids(),
+            ram_serial=original.ram_serial if "ram" in preserve else self._generate_ram_serials(),
+            usb_devices=original.usb_devices if "usb" in preserve else self._generate_usb_devices(),
         )
 
         self.spoofed_hardware = spoofed
@@ -468,11 +518,11 @@ class HardwareFingerPrintSpoofer:
 
         """
         intel_ids = [
-            "BFEBFBFF000306C3",  # i7-4770K
-            "BFEBFBFF000906EA",  # i9-9900K
-            "BFEBFBFF000A0671",  # i7-11700K
-            "BFEBFBFF000506E3",  # i7-6700K
-            "BFEBFBFF000806EC",  # i7-10700K
+            "BFEBFBFF000306C3",
+            "BFEBFBFF000906EA",
+            "BFEBFBFF000A0671",
+            "BFEBFBFF000506E3",
+            "BFEBFBFF000806EC",
         ]
         return secrets.choice(intel_ids)
 
@@ -550,7 +600,7 @@ class HardwareFingerPrintSpoofer:
 
         """
         prefixes = ["WD", "ST", "SAMSUNG", "CRUCIAL", "KINGSTON"]
-        serials = []
+        serials: list[str] = []
         for _ in range(secrets.randbelow(3) + 1):
             prefix = secrets.choice(prefixes)
             serial = f"{prefix}-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(10))
@@ -582,16 +632,16 @@ class HardwareFingerPrintSpoofer:
 
         """
         ouis = [
-            "00:50:56",  # VMware
-            "00:1B:21",  # Intel
-            "00:E0:4C",  # Realtek
-            "B8:27:EB",  # Raspberry Pi
-            "00:16:3E",  # Xen
-            "52:54:00",  # QEMU
-            "00:25:90",  # Super Micro
+            "00:50:56",
+            "00:1B:21",
+            "00:E0:4C",
+            "B8:27:EB",
+            "00:16:3E",
+            "52:54:00",
+            "00:25:90",
         ]
 
-        macs = []
+        macs: list[str] = []
         for _ in range(secrets.randbelow(3) + 1):
             oui = secrets.choice(ouis)
             nic = ":".join(["".join(secrets.choice("0123456789ABCDEF") for _ in range(2)) for _ in range(3)])
@@ -656,11 +706,11 @@ class HardwareFingerPrintSpoofer:
 
         """
         gpu_ids = [
-            "PCI\\VEN_10DE&DEV_2206&SUBSYS_38361458",  # RTX 3080
-            "PCI\\VEN_10DE&DEV_2204&SUBSYS_40901458",  # RTX 3090
-            "PCI\\VEN_10DE&DEV_1E07&SUBSYS_13181043",  # RTX 2080 Ti
-            "PCI\\VEN_1002&DEV_731F&SUBSYS_E4111DA2",  # RX 6900 XT
-            "PCI\\VEN_1002&DEV_73BF&SUBSYS_23181462",  # RX 6800 XT
+            "PCI\\VEN_10DE&DEV_2206&SUBSYS_38361458",
+            "PCI\\VEN_10DE&DEV_2204&SUBSYS_40901458",
+            "PCI\\VEN_10DE&DEV_1E07&SUBSYS_13181043",
+            "PCI\\VEN_1002&DEV_731F&SUBSYS_E4111DA2",
+            "PCI\\VEN_1002&DEV_73BF&SUBSYS_23181462",
         ]
         return [secrets.choice(gpu_ids)]
 
@@ -684,15 +734,15 @@ class HardwareFingerPrintSpoofer:
             {
                 "device_id": "USB\\VID_046D&PID_C52B",
                 "pnp_id": "USB\\VID_046D&PID_C52B\\6&2A9E9F2D&0&1",
-            },  # Logitech receiver
+            },
             {
                 "device_id": "USB\\VID_1532&PID_0084",
                 "pnp_id": "USB\\VID_1532&PID_0084\\6&3A7B9C1E&0&2",
-            },  # Razer mouse
+            },
             {
                 "device_id": "USB\\VID_0951&PID_1666",
                 "pnp_id": "USB\\VID_0951&PID_1666\\001A92053B93F4A0A7C0EA09",
-            },  # Kingston USB
+            },
         ]
 
         num_devices = secrets.randbelow(3) + 1
@@ -728,16 +778,16 @@ class HardwareFingerPrintSpoofer:
             True if registry modifications were successful, False otherwise.
 
         """
+        if self.spoofed_hardware is None:
+            return False
+
         try:
-            # Spoof machine GUID
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, self.spoofed_hardware.machine_guid)
 
-            # Spoof product ID
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
                 winreg.SetValueEx(key, "ProductId", 0, winreg.REG_SZ, self.spoofed_hardware.product_id)
 
-            # Spoof system info
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation") as key:
                 winreg.SetValueEx(key, "ComputerHardwareId", 0, winreg.REG_SZ, self.spoofed_hardware.system_uuid)
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, "Spoofed System")
@@ -749,7 +799,6 @@ class HardwareFingerPrintSpoofer:
                     self.spoofed_hardware.motherboard_manufacturer,
                 )
 
-            # Spoof network adapters
             self._spoof_network_registry()
 
             return True
@@ -759,8 +808,10 @@ class HardwareFingerPrintSpoofer:
 
     def _spoof_network_registry(self) -> None:
         """Spoof network adapter registry entries."""
+        if self.spoofed_hardware is None:
+            return
+
         try:
-            # Enumerate network adapters
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}",
@@ -770,9 +821,7 @@ class HardwareFingerPrintSpoofer:
                     try:
                         subkey_name = winreg.EnumKey(key, i)
                         if subkey_name.isdigit():
-                            # Open adapter key
                             with winreg.OpenKey(key, subkey_name, 0, winreg.KEY_ALL_ACCESS) as subkey:
-                                # Check if it's a physical adapter
                                 try:
                                     characteristics = winreg.QueryValueEx(subkey, "Characteristics")[0]
                                     if characteristics & 0x4 and self.spoofed_hardware.mac_addresses:
@@ -794,20 +843,14 @@ class HardwareFingerPrintSpoofer:
 
         """
         try:
-            # Load required DLLs
-
-            # Install inline hooks
             self._install_wmi_hooks()
             self._install_registry_hooks()
             self._install_deviceiocontrol_hooks()
 
-            # Install additional kernel32 hooks
             self._hook_kernel32_dll()
 
-            # Install SetupAPI hooks
             self._hook_setupapi_dll()
 
-            # Install network adapter hooks
             self._hook_iphlpapi_dll()
 
             self.hooks_installed = True
@@ -825,31 +868,23 @@ class HardwareFingerPrintSpoofer:
         """
         from ctypes import POINTER, byref, c_void_p, cast, sizeof
 
-        # COM interface definitions
         CLSID_WbemLocator = "{4590F811-1D3A-11D0-891F-00AA004B2E24}"
         IID_IWbemLocator = "{DC12A687-737F-11CF-884D-00AA004B2E24}"
 
-        # WMI namespace
         WMI_NAMESPACE = r"\\.\root\cimv2"
 
-        # IWbemServices vtable indices
         IWBEMSERVICES_EXECQUERY = 20
 
-        # Define COM types
         HRESULT = ctypes.c_long
 
-        # Load COM libraries
         ole32 = ctypes.windll.ole32
         oleaut32 = ctypes.windll.oleaut32
 
-        # Initialize COM
-        hr = ole32.CoInitializeEx(None, 0x0)  # COINIT_MULTITHREADED
+        ole32.CoInitializeEx(None, 0x0)
 
-        # Create WbemLocator
         clsid = uuid.UUID(CLSID_WbemLocator)
         iid = uuid.UUID(IID_IWbemLocator)
 
-        # Convert to Windows GUID structure
         class GUID(ctypes.Structure):
             _fields_ = [
                 ("Data1", ctypes.c_ulong),
@@ -883,7 +918,7 @@ class HardwareFingerPrintSpoofer:
         hr = ole32.CoCreateInstance(
             byref(clsid_guid),
             None,
-            1,  # CLSCTX_INPROC_SERVER
+            1,
             byref(iid_guid),
             byref(locator),
         )
@@ -891,28 +926,31 @@ class HardwareFingerPrintSpoofer:
         if hr != 0:
             return False
 
-        # Get IWbemServices pointer
         services = c_void_p()
         namespace_bstr = oleaut32.SysAllocString(WMI_NAMESPACE)
 
-        # Call ConnectServer through vtable
-        vtable = cast(locator, POINTER(c_void_p)).contents
-        connect_server = cast(vtable.value + 3 * sizeof(c_void_p), POINTER(c_void_p)).contents
+        vtable_ptr = cast(locator, POINTER(c_void_p))
+        vtable = vtable_ptr.contents
+        if vtable.value is None:
+            return False
+        connect_server_ptr = cast(vtable.value + 3 * sizeof(c_void_p), POINTER(c_void_p))
+        connect_server = connect_server_ptr.contents
 
-        # Create function prototype
         ConnectServerFunc = ctypes.WINFUNCTYPE(
             HRESULT,
-            c_void_p,  # this
-            c_void_p,  # namespace
-            c_void_p,  # user
-            c_void_p,  # password
-            c_void_p,  # locale
-            ctypes.c_long,  # security flags
-            c_void_p,  # authority
-            c_void_p,  # context
-            POINTER(c_void_p),  # services
+            c_void_p,
+            c_void_p,
+            c_void_p,
+            c_void_p,
+            c_void_p,
+            ctypes.c_long,
+            c_void_p,
+            c_void_p,
+            POINTER(c_void_p),
         )
 
+        if connect_server.value is None:
+            return False
         connect_func = ConnectServerFunc(connect_server.value)
         hr = connect_func(locator, namespace_bstr, None, None, None, 0, None, None, byref(services))
 
@@ -921,21 +959,21 @@ class HardwareFingerPrintSpoofer:
         if hr != 0 or not services:
             return False
 
-        # Now hook the ExecQuery method
-        services_vtable = cast(services, POINTER(c_void_p)).contents
+        services_vtable_ptr = cast(services, POINTER(c_void_p))
+        services_vtable = services_vtable_ptr.contents
+        if services_vtable.value is None:
+            return False
         exec_query_ptr = cast(services_vtable.value + IWBEMSERVICES_EXECQUERY * sizeof(c_void_p), POINTER(c_void_p))
 
-        # Store original function
         self.original_exec_query = exec_query_ptr.contents.value
 
-        # Create hooked function
         def hooked_exec_query(
             this: c_void_p,
             strQueryLanguage: c_void_p,
             strQuery: c_void_p,
             lFlags: int,
             pCtx: c_void_p,
-            ppEnum: POINTER(c_void_p),
+            ppEnum: Any,
         ) -> int:
             """Intercept WMI ExecQuery to return spoofed hardware information.
 
@@ -951,12 +989,10 @@ class HardwareFingerPrintSpoofer:
                 HRESULT status code.
 
             """
-            # Convert BSTR query to Python string
             if strQuery:
                 query_ptr = cast(strQuery, POINTER(ctypes.c_wchar))
                 query = ctypes.wstring_at(query_ptr)
 
-                # Check if querying hardware
                 hardware_queries = [
                     "Win32_BaseBoard",
                     "Win32_Processor",
@@ -968,27 +1004,26 @@ class HardwareFingerPrintSpoofer:
 
                 for hw_class in hardware_queries:
                     if hw_class.lower() in query.lower():
-                        # Return spoofed enumerator
                         return self._create_spoofed_enumerator(this, hw_class, lFlags, ppEnum)
 
-            # Call original for non-hardware queries
             ExecQueryFunc = ctypes.WINFUNCTYPE(HRESULT, c_void_p, c_void_p, c_void_p, ctypes.c_long, c_void_p, POINTER(c_void_p))
+            if self.original_exec_query is None:
+                return -2147467259
             original = ExecQueryFunc(self.original_exec_query)
-            return original(this, strQueryLanguage, strQuery, lFlags, pCtx, ppEnum)
+            result: int = original(this, strQueryLanguage, strQuery, lFlags, pCtx, ppEnum)
+            return result
 
-        # Create callback
         self.exec_query_hook = ctypes.WINFUNCTYPE(HRESULT, c_void_p, c_void_p, c_void_p, ctypes.c_long, c_void_p, POINTER(c_void_p))(
             hooked_exec_query,
         )
 
-        # Patch vtable with VirtualProtect
         kernel32 = ctypes.windll.kernel32
         old_protect = ctypes.c_ulong()
 
         if kernel32.VirtualProtect(
             exec_query_ptr,
             sizeof(c_void_p),
-            0x40,  # PAGE_EXECUTE_READWRITE
+            0x40,
             byref(old_protect),
         ):
             exec_query_ptr.contents = cast(self.exec_query_hook, c_void_p)
@@ -1001,7 +1036,7 @@ class HardwareFingerPrintSpoofer:
         this: ctypes.c_void_p,
         hw_class: str,
         lFlags: int,
-        ppEnum: ctypes.POINTER(ctypes.c_void_p),
+        ppEnum: Any,
     ) -> int:
         """Create a spoofed WMI enumerator that returns modified hardware data.
 
@@ -1015,7 +1050,7 @@ class HardwareFingerPrintSpoofer:
             HRESULT status code (0 = S_OK, negative = error).
 
         """
-        from ctypes import POINTER, byref, c_void_p, cast, pointer
+        from ctypes import POINTER, c_void_p, cast, pointer
 
         HRESULT = ctypes.c_long
         S_OK = 0
@@ -1058,7 +1093,7 @@ class HardwareFingerPrintSpoofer:
             enumerator_instance.spoofed_data = spoofed_values
             self._enumerator_ref = enumerator_instance
 
-            def query_interface(this_ptr: c_void_p, riid: c_void_p, ppvObject: POINTER(c_void_p)) -> int:
+            def query_interface(this_ptr: c_void_p, riid: c_void_p, ppvObject: Any) -> int:
                 if ppvObject:
                     ppvObject.contents = this_ptr
                     return S_OK
@@ -1078,8 +1113,8 @@ class HardwareFingerPrintSpoofer:
                 this_ptr: c_void_p,
                 lTimeout: ctypes.c_long,
                 uCount: ctypes.c_ulong,
-                apObjects: POINTER(c_void_p),
-                puReturned: POINTER(ctypes.c_ulong),
+                apObjects: Any,
+                puReturned: Any,
             ) -> int:
                 WBEM_S_NO_ERROR = 0
                 WBEM_S_FALSE = 1
@@ -1098,7 +1133,7 @@ class HardwareFingerPrintSpoofer:
             def next_async(this_ptr: c_void_p, uCount: ctypes.c_ulong, pSink: c_void_p) -> int:
                 return E_FAIL
 
-            def clone(this_ptr: c_void_p, ppEnum: POINTER(c_void_p)) -> int:
+            def clone(this_ptr: c_void_p, ppEnum_inner: Any) -> int:
                 return E_FAIL
 
             def skip(this_ptr: c_void_p, lTimeout: ctypes.c_long, nCount: ctypes.c_ulong) -> int:
@@ -1244,11 +1279,9 @@ class HardwareFingerPrintSpoofer:
         """
         from ctypes import POINTER, byref, c_ulong, c_void_p, cast, create_string_buffer, wintypes
 
-        # Load advapi32.dll for registry functions
         advapi32 = ctypes.windll.advapi32
         kernel32 = ctypes.windll.kernel32
 
-        # Function prototypes
         HKEY = wintypes.HANDLE
         LPCWSTR = wintypes.LPCWSTR
         DWORD = wintypes.DWORD
@@ -1256,15 +1289,11 @@ class HardwareFingerPrintSpoofer:
         LPBYTE = POINTER(ctypes.c_ubyte)
         LONG = ctypes.c_long
 
-        # Store original function pointers
         self.original_RegQueryValueExW = advapi32.RegQueryValueExW
         self.original_RegGetValueW = advapi32.RegGetValueW if hasattr(advapi32, "RegGetValueW") else None
         self.original_RegEnumValueW = advapi32.RegEnumValueW
 
-        # Hardware-related registry paths to intercept
-
-        # Create inline hook for RegQueryValueExW
-        def create_inline_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
+        def create_inline_hook(target_func: Any, hook_func: Any) -> bool:
             """Create inline hook to replace target function with hook function.
 
             Args:
@@ -1275,7 +1304,6 @@ class HardwareFingerPrintSpoofer:
                 True if hook installation succeeded, False otherwise.
 
             """
-            # x64 inline hook - JMP [RIP+0] ; address
             hook_bytes = bytearray(
                 [
                     0xFF,
@@ -1283,7 +1311,6 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # JMP [RIP+0]
                     0x00,
                     0x00,
                     0x00,
@@ -1291,36 +1318,33 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # 8-byte address
+                    0x00,
+                    0x00,
                 ],
             )
 
-            # Get function address
             func_addr = cast(target_func, c_void_p).value
             hook_addr = cast(hook_func, c_void_p).value
 
-            # Write hook address into JMP instruction
-            import struct
+            if func_addr is None or hook_addr is None:
+                return False
 
             struct.pack_into("<Q", hook_bytes, 6, hook_addr)
 
-            # Change memory protection
             old_protect = c_ulong()
             if kernel32.VirtualProtect(func_addr, len(hook_bytes), 0x40, byref(old_protect)):
-                # Write hook bytes
                 ctypes.memmove(func_addr, bytes(hook_bytes), len(hook_bytes))
                 kernel32.VirtualProtect(func_addr, len(hook_bytes), old_protect, byref(old_protect))
                 return True
             return False
 
-        # Create hooked RegQueryValueExW
         def hooked_RegQueryValueExW(
             hKey: c_void_p,
             lpValueName: c_void_p,
             lpReserved: c_void_p,
-            lpType: c_void_p,
+            lpType: Any,
             lpData: c_void_p,
-            lpcbData: c_void_p,
+            lpcbData: Any,
         ) -> int:
             """Intercept RegQueryValueExW to return spoofed registry values.
 
@@ -1336,12 +1360,10 @@ class HardwareFingerPrintSpoofer:
                 Registry operation result code.
 
             """
-            # Convert value name to Python string
             if lpValueName:
                 value_name = ctypes.wstring_at(lpValueName)
 
-                # Check for hardware-related values
-                hardware_values = {
+                hardware_values: dict[str, str | None] = {
                     "MachineGuid": self.spoofed_hardware.machine_guid if self.spoofed_hardware else None,
                     "ProductId": self.spoofed_hardware.product_id if self.spoofed_hardware else None,
                     "ComputerHardwareId": self.spoofed_hardware.system_uuid if self.spoofed_hardware else None,
@@ -1356,31 +1378,28 @@ class HardwareFingerPrintSpoofer:
 
                 spoofed_value = hardware_values.get(value_name)
                 if spoofed_value:
-                    # Convert to bytes
-                    if isinstance(spoofed_value, str):
-                        value_bytes = spoofed_value.encode("utf-16-le") + b"\x00\x00"
-                    else:
-                        value_bytes = spoofed_value
+                    value_bytes = spoofed_value.encode("utf-16-le") + b"\x00\x00"
 
-                    # Set type to REG_SZ
                     if lpType:
-                        lpType.contents = 1  # REG_SZ
+                        type_val = ctypes.c_ulong(1)
+                        ctypes.memmove(lpType, byref(type_val), ctypes.sizeof(ctypes.c_ulong))
 
-                    # Copy data if buffer provided
                     if lpData and lpcbData:
                         required_size = len(value_bytes)
-                        if lpcbData.contents >= required_size:
+                        current_size = ctypes.cast(lpcbData, POINTER(ctypes.c_ulong)).contents.value
+                        if current_size >= required_size:
                             ctypes.memmove(lpData, value_bytes, required_size)
-                        lpcbData.contents = required_size
+                        size_val = ctypes.c_ulong(required_size)
+                        ctypes.memmove(lpcbData, byref(size_val), ctypes.sizeof(ctypes.c_ulong))
                     elif lpcbData:
-                        lpcbData.contents = len(value_bytes)
+                        size_val = ctypes.c_ulong(len(value_bytes))
+                        ctypes.memmove(lpcbData, byref(size_val), ctypes.sizeof(ctypes.c_ulong))
 
-                    return 0  # ERROR_SUCCESS
+                    return 0
 
-            # Call original function
-            return self.original_RegQueryValueExW(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData)
+            result: int = self.original_RegQueryValueExW(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData)
+            return result
 
-        # Create RegGetValueW hook if available (Vista+)
         if self.original_RegGetValueW:
 
             def hooked_RegGetValueW(
@@ -1388,9 +1407,9 @@ class HardwareFingerPrintSpoofer:
                 lpSubKey: c_void_p,
                 lpValue: c_void_p,
                 dwFlags: wintypes.DWORD,
-                pdwType: c_void_p,
+                pdwType: Any,
                 pvData: c_void_p,
-                pcbData: c_void_p,
+                pcbData: Any,
             ) -> int:
                 """Intercept RegGetValueW to return spoofed registry values.
 
@@ -1407,11 +1426,10 @@ class HardwareFingerPrintSpoofer:
                     Registry operation result code.
 
                 """
-                # Similar logic to RegQueryValueExW
                 if lpValue:
                     value_name = ctypes.wstring_at(lpValue)
 
-                    hardware_values = {
+                    hardware_values: dict[str, str | None] = {
                         "MachineGuid": self.spoofed_hardware.machine_guid if self.spoofed_hardware else None,
                         "ProductId": self.spoofed_hardware.product_id if self.spoofed_hardware else None,
                         "ComputerHardwareId": self.spoofed_hardware.system_uuid if self.spoofed_hardware else None,
@@ -1422,50 +1440,48 @@ class HardwareFingerPrintSpoofer:
                         value_bytes = spoofed_value.encode("utf-16-le") + b"\x00\x00"
 
                         if pdwType:
-                            pdwType.contents = 1  # REG_SZ
+                            type_val = ctypes.c_ulong(1)
+                            ctypes.memmove(pdwType, byref(type_val), ctypes.sizeof(ctypes.c_ulong))
 
                         if pvData and pcbData:
                             required_size = len(value_bytes)
-                            if pcbData.contents >= required_size:
+                            current_size = ctypes.cast(pcbData, POINTER(ctypes.c_ulong)).contents.value
+                            if current_size >= required_size:
                                 ctypes.memmove(pvData, value_bytes, required_size)
-                            pcbData.contents = required_size
+                            size_val = ctypes.c_ulong(required_size)
+                            ctypes.memmove(pcbData, byref(size_val), ctypes.sizeof(ctypes.c_ulong))
                         elif pcbData:
-                            pcbData.contents = len(value_bytes)
+                            size_val = ctypes.c_ulong(len(value_bytes))
+                            ctypes.memmove(pcbData, byref(size_val), ctypes.sizeof(ctypes.c_ulong))
 
-                        return 0  # ERROR_SUCCESS
+                        return 0
 
-                return self.original_RegGetValueW(hKey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData)
+                result: int = self.original_RegGetValueW(hKey, lpSubKey, lpValue, dwFlags, pdwType, pvData, pcbData)
+                return result
 
-        # Create function types
         RegQueryValueExW_func = ctypes.WINFUNCTYPE(LONG, HKEY, LPCWSTR, LPDWORD, LPDWORD, LPBYTE, LPDWORD)
 
         if self.original_RegGetValueW:
             RegGetValueW_func = ctypes.WINFUNCTYPE(LONG, HKEY, LPCWSTR, LPCWSTR, DWORD, LPDWORD, c_void_p, LPDWORD)
 
-        # Create callbacks
         self.RegQueryValueExW_hook = RegQueryValueExW_func(hooked_RegQueryValueExW)
         if self.original_RegGetValueW:
             self.RegGetValueW_hook = RegGetValueW_func(hooked_RegGetValueW)
 
-        # Install inline hooks using Microsoft Detours pattern
-        # First, create a trampoline for the original function
-        trampoline_size = 14  # Size of JMP [RIP] instruction
+        trampoline_size = 14
 
-        # Allocate executable memory for trampoline
         trampoline = kernel32.VirtualAlloc(
             None,
             trampoline_size * 2,
-            0x3000,  # MEM_COMMIT | MEM_RESERVE
-            0x40,  # PAGE_EXECUTE_READWRITE
+            0x3000,
+            0x40,
         )
 
         if trampoline:
-            # Copy original bytes to trampoline
             original_bytes = create_string_buffer(trampoline_size)
             ctypes.memmove(original_bytes, self.original_RegQueryValueExW, trampoline_size)
             ctypes.memmove(trampoline, original_bytes, trampoline_size)
 
-            # Add jump back to original function + trampoline_size
             jump_back = bytearray(
                 [
                     0xFF,
@@ -1473,28 +1489,27 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # JMP [RIP+0]
+                    0x00,
                 ],
             )
-            jump_addr = cast(self.original_RegQueryValueExW, c_void_p).value + trampoline_size
-            jump_back.extend(struct.pack("<Q", jump_addr))
+            original_addr = cast(self.original_RegQueryValueExW, c_void_p).value
+            if original_addr is not None:
+                jump_addr = original_addr + trampoline_size
+                jump_back.extend(struct.pack("<Q", jump_addr))
 
-            ctypes.memmove(trampoline + trampoline_size, bytes(jump_back), len(jump_back))
+                ctypes.memmove(trampoline + trampoline_size, bytes(jump_back), len(jump_back))
 
-            # Store trampoline as new "original" function
-            self.original_RegQueryValueExW_trampoline = cast(trampoline, RegQueryValueExW_func)
+                self.original_RegQueryValueExW_trampoline = cast(trampoline, RegQueryValueExW_func)
 
-            # Now install the actual hook
-            success = create_inline_hook(self.original_RegQueryValueExW, self.RegQueryValueExW_hook)
+                success = create_inline_hook(self.original_RegQueryValueExW, self.RegQueryValueExW_hook)
 
-            if success and self.original_RegGetValueW:
-                create_inline_hook(self.original_RegGetValueW, self.RegGetValueW_hook)
+                if success and self.original_RegGetValueW:
+                    create_inline_hook(self.original_RegGetValueW, self.RegGetValueW_hook)
 
         return True
 
     def _install_deviceiocontrol_hooks(self) -> None:
         """Install DeviceIoControl hooks."""
-        # Hook DeviceIoControl to intercept hardware queries
 
     def _hook_kernel32_dll(self) -> bool:
         """Install hooks for kernel32.dll hardware detection functions.
@@ -1507,14 +1522,12 @@ class HardwareFingerPrintSpoofer:
 
         kernel32 = ctypes.windll.kernel32
 
-        # Store original functions
         self.original_GetVolumeInformation = kernel32.GetVolumeInformationW
         self.original_GetSystemInfo = kernel32.GetSystemInfo
         self.original_GlobalMemoryStatusEx = kernel32.GlobalMemoryStatusEx
         self.original_GetComputerNameExW = kernel32.GetComputerNameExW
 
-        # Create inline hook helper
-        def install_inline_hook(target_addr: int, hook_func: c_void_p) -> bool:
+        def install_inline_hook(target_addr: int, hook_func: Any) -> bool:
             """Install inline hook at target address.
 
             Args:
@@ -1525,7 +1538,6 @@ class HardwareFingerPrintSpoofer:
                 True if hook installation succeeded, False otherwise.
 
             """
-            # x64 JMP [RIP+0] ; address
             jmp_code = bytearray(
                 [
                     0xFF,
@@ -1533,7 +1545,6 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # JMP [RIP+0]
                     0x00,
                     0x00,
                     0x00,
@@ -1541,12 +1552,14 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # 8-byte address
+                    0x00,
+                    0x00,
                 ],
             )
 
             hook_addr = cast(hook_func, c_void_p).value
-            import struct
+            if hook_addr is None:
+                return False
 
             struct.pack_into("<Q", jmp_code, 6, hook_addr)
 
@@ -1557,17 +1570,16 @@ class HardwareFingerPrintSpoofer:
                 return True
             return False
 
-        # Hook GetVolumeInformationW
         def hooked_GetVolumeInformationW(
             lpRootPathName: wintypes.LPCWSTR,
             lpVolumeNameBuffer: wintypes.LPWSTR,
             nVolumeNameSize: wintypes.DWORD,
-            lpVolumeSerialNumber: POINTER(wintypes.DWORD),
-            lpMaximumComponentLength: POINTER(wintypes.DWORD),
-            lpFileSystemFlags: POINTER(wintypes.DWORD),
+            lpVolumeSerialNumber: Any,
+            lpMaximumComponentLength: Any,
+            lpFileSystemFlags: Any,
             lpFileSystemNameBuffer: wintypes.LPWSTR,
             nFileSystemNameSize: wintypes.DWORD,
-        ) -> wintypes.BOOL:
+        ) -> int:
             """Intercept GetVolumeInformationW to return spoofed volume serial.
 
             Args:
@@ -1584,8 +1596,7 @@ class HardwareFingerPrintSpoofer:
                 Non-zero if successful, zero on failure.
 
             """
-            # Call original first
-            result = self.original_GetVolumeInformation(
+            result: int = self.original_GetVolumeInformation(
                 lpRootPathName,
                 lpVolumeNameBuffer,
                 nVolumeNameSize,
@@ -1596,14 +1607,13 @@ class HardwareFingerPrintSpoofer:
                 nFileSystemNameSize,
             )
 
-            # Spoof volume serial if requested
             if result and lpVolumeSerialNumber and self.spoofed_hardware:
                 serial_int = int(self.spoofed_hardware.volume_serial, 16)
-                lpVolumeSerialNumber.contents = serial_int
+                serial_val = ctypes.c_ulong(serial_int)
+                ctypes.memmove(lpVolumeSerialNumber, byref(serial_val), ctypes.sizeof(ctypes.c_ulong))
 
             return result
 
-        # Hook GetSystemInfo
         def hooked_GetSystemInfo(lpSystemInfo: c_void_p) -> None:
             """Intercept GetSystemInfo to return spoofed processor count.
 
@@ -1611,16 +1621,16 @@ class HardwareFingerPrintSpoofer:
                 lpSystemInfo: Output system info structure pointer.
 
             """
-            # Call original
             self.original_GetSystemInfo(lpSystemInfo)
 
-            # Modify processor information if spoofing
             if self.spoofed_hardware and lpSystemInfo:
-                processor_count_ptr = cast(cast(lpSystemInfo, c_void_p).value + 32, POINTER(wintypes.DWORD))
-                processor_count_ptr.contents = 8  # Spoof 8 processors
+                lpSystemInfo_value = cast(lpSystemInfo, c_void_p).value
+                if lpSystemInfo_value is not None:
+                    processor_count_ptr = cast(lpSystemInfo_value + 32, POINTER(wintypes.DWORD))
+                    proc_count_val = ctypes.c_ulong(8)
+                    ctypes.memmove(processor_count_ptr, byref(proc_count_val), ctypes.sizeof(ctypes.c_ulong))
 
-        # Hook GlobalMemoryStatusEx
-        def hooked_GlobalMemoryStatusEx(lpBuffer: c_void_p) -> wintypes.BOOL:
+        def hooked_GlobalMemoryStatusEx(lpBuffer: c_void_p) -> int:
             """Intercept GlobalMemoryStatusEx to return spoofed RAM size.
 
             Args:
@@ -1630,19 +1640,18 @@ class HardwareFingerPrintSpoofer:
                 Non-zero if successful, zero on failure.
 
             """
-            result = self.original_GlobalMemoryStatusEx(lpBuffer)
+            result: int = self.original_GlobalMemoryStatusEx(lpBuffer)
 
             if result and lpBuffer and self.spoofed_hardware:
-                # MEMORYSTATUSEX structure
-                # ullTotalPhys at offset 8
-                total_phys_ptr = cast(cast(lpBuffer, c_void_p).value + 8, POINTER(ctypes.c_ulonglong))
-                # Spoof 32GB RAM
-                total_phys_ptr.contents = 32 * 1024 * 1024 * 1024
+                lpBuffer_value = cast(lpBuffer, c_void_p).value
+                if lpBuffer_value is not None:
+                    total_phys_ptr = cast(lpBuffer_value + 8, POINTER(ctypes.c_ulonglong))
+                    phys_mem_val = ctypes.c_ulonglong(32 * 1024 * 1024 * 1024)
+                    ctypes.memmove(total_phys_ptr, byref(phys_mem_val), ctypes.sizeof(ctypes.c_ulonglong))
 
             return result
 
-        # Hook GetComputerNameExW
-        def hooked_GetComputerNameExW(NameType: wintypes.DWORD, lpBuffer: wintypes.LPWSTR, nSize: POINTER(wintypes.DWORD)) -> wintypes.BOOL:
+        def hooked_GetComputerNameExW(NameType: wintypes.DWORD, lpBuffer: wintypes.LPWSTR, nSize: Any) -> int:
             """Intercept GetComputerNameExW to return spoofed computer name.
 
             Args:
@@ -1654,23 +1663,26 @@ class HardwareFingerPrintSpoofer:
                 Non-zero if successful, zero on failure.
 
             """
-            # For hardware IDs, return spoofed value
-            if NameType == 5 and self.spoofed_hardware:  # ComputerNamePhysicalDnsHostname
+            name_type_value = NameType if isinstance(NameType, int) else int(NameType)
+            if name_type_value == 5 and self.spoofed_hardware:
                 spoofed_name = f"PC-{self.spoofed_hardware.machine_guid[:8]}"
                 if lpBuffer and nSize:
                     name_bytes = spoofed_name.encode("utf-16-le") + b"\x00\x00"
                     required_size = len(name_bytes) // 2
-                    if nSize.contents >= required_size:
+                    current_size = ctypes.cast(nSize, POINTER(ctypes.c_ulong)).contents.value
+                    if current_size >= required_size:
                         ctypes.memmove(lpBuffer, name_bytes, len(name_bytes))
-                        nSize.contents = required_size - 1
+                        size_val = ctypes.c_ulong(required_size - 1)
+                        ctypes.memmove(nSize, byref(size_val), ctypes.sizeof(ctypes.c_ulong))
                         return 1
-                    nSize.contents = required_size
-                    ctypes.windll.kernel32.SetLastError(122)  # ERROR_INSUFFICIENT_BUFFER
+                    req_size_val = ctypes.c_ulong(required_size)
+                    ctypes.memmove(nSize, byref(req_size_val), ctypes.sizeof(ctypes.c_ulong))
+                    ctypes.windll.kernel32.SetLastError(122)
                     return 0
 
-            return self.original_GetComputerNameExW(NameType, lpBuffer, nSize)
+            result: int = self.original_GetComputerNameExW(NameType, lpBuffer, nSize)
+            return result
 
-        # Create function types
         GetVolumeInformationW_func = ctypes.WINFUNCTYPE(
             wintypes.BOOL,
             wintypes.LPCWSTR,
@@ -1689,20 +1701,24 @@ class HardwareFingerPrintSpoofer:
 
         GetComputerNameExW_func = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.DWORD, wintypes.LPWSTR, POINTER(wintypes.DWORD))
 
-        # Create callbacks
         self.GetVolumeInformationW_hook = GetVolumeInformationW_func(hooked_GetVolumeInformationW)
         self.GetSystemInfo_hook = GetSystemInfo_func(hooked_GetSystemInfo)
         self.GlobalMemoryStatusEx_hook = GlobalMemoryStatusEx_func(hooked_GlobalMemoryStatusEx)
         self.GetComputerNameExW_hook = GetComputerNameExW_func(hooked_GetComputerNameExW)
 
-        # Install hooks
-        install_inline_hook(
-            cast(self.original_GetVolumeInformation, c_void_p).value,
-            self.GetVolumeInformationW_hook,
-        )
-        install_inline_hook(cast(self.original_GetSystemInfo, c_void_p).value, self.GetSystemInfo_hook)
-        install_inline_hook(cast(self.original_GlobalMemoryStatusEx, c_void_p).value, self.GlobalMemoryStatusEx_hook)
-        install_inline_hook(cast(self.original_GetComputerNameExW, c_void_p).value, self.GetComputerNameExW_hook)
+        original_vol_addr = cast(self.original_GetVolumeInformation, c_void_p).value
+        original_sys_addr = cast(self.original_GetSystemInfo, c_void_p).value
+        original_mem_addr = cast(self.original_GlobalMemoryStatusEx, c_void_p).value
+        original_name_addr = cast(self.original_GetComputerNameExW, c_void_p).value
+
+        if original_vol_addr is not None:
+            install_inline_hook(original_vol_addr, self.GetVolumeInformationW_hook)
+        if original_sys_addr is not None:
+            install_inline_hook(original_sys_addr, self.GetSystemInfo_hook)
+        if original_mem_addr is not None:
+            install_inline_hook(original_mem_addr, self.GlobalMemoryStatusEx_hook)
+        if original_name_addr is not None:
+            install_inline_hook(original_name_addr, self.GetComputerNameExW_hook)
 
         return True
 
@@ -1718,29 +1734,26 @@ class HardwareFingerPrintSpoofer:
         try:
             setupapi = ctypes.windll.setupapi
         except (AttributeError, OSError):
-            return False  # SetupAPI not available
+            return False
 
         kernel32 = ctypes.windll.kernel32
 
-        # Store original functions
         self.original_SetupDiGetClassDevsW = setupapi.SetupDiGetClassDevsW
         self.original_SetupDiGetDeviceRegistryPropertyW = setupapi.SetupDiGetDeviceRegistryPropertyW
         self.original_SetupDiEnumDeviceInfo = setupapi.SetupDiEnumDeviceInfo
         self.original_SetupDiGetDeviceInstanceIdW = setupapi.SetupDiGetDeviceInstanceIdW
 
-        # Device property constants
         SPDRP_HARDWAREID = 0x00000001
 
-        # Hook SetupDiGetDeviceRegistryPropertyW
         def hooked_SetupDiGetDeviceRegistryPropertyW(
             DeviceInfoSet: wintypes.HANDLE,
             DeviceInfoData: c_void_p,
             Property: wintypes.DWORD,
-            PropertyRegDataType: POINTER(wintypes.DWORD),
+            PropertyRegDataType: Any,
             PropertyBuffer: c_void_p,
             PropertyBufferSize: wintypes.DWORD,
-            RequiredSize: POINTER(wintypes.DWORD),
-        ) -> wintypes.BOOL:
+            RequiredSize: Any,
+        ) -> int:
             """Intercept SetupDiGetDeviceRegistryPropertyW to return spoofed device properties.
 
             Args:
@@ -1756,26 +1769,29 @@ class HardwareFingerPrintSpoofer:
                 Non-zero if successful, zero on failure.
 
             """
-            # For hardware IDs, return spoofed values
-            if Property == SPDRP_HARDWAREID and self.spoofed_hardware and self.spoofed_hardware.gpu_ids:
+            property_value = Property if isinstance(Property, int) else int(Property)
+            if property_value == SPDRP_HARDWAREID and self.spoofed_hardware and self.spoofed_hardware.gpu_ids:
                 hw_id = self.spoofed_hardware.gpu_ids[0]
                 hw_bytes = hw_id.encode("utf-16-le") + b"\x00\x00\x00\x00"
 
                 if PropertyRegDataType:
-                    PropertyRegDataType.contents = 7  # REG_MULTI_SZ
+                    type_val = ctypes.c_ulong(7)
+                    ctypes.memmove(PropertyRegDataType, byref(type_val), ctypes.sizeof(ctypes.c_ulong))
 
-                if PropertyBuffer and PropertyBufferSize and PropertyBufferSize >= len(hw_bytes):
+                buffer_size = PropertyBufferSize if isinstance(PropertyBufferSize, int) else int(PropertyBufferSize)
+                if PropertyBuffer and buffer_size >= len(hw_bytes):
                     ctypes.memmove(PropertyBuffer, hw_bytes, len(hw_bytes))
                     if RequiredSize:
-                        RequiredSize.contents = len(hw_bytes)
+                        req_size_val = ctypes.c_ulong(len(hw_bytes))
+                        ctypes.memmove(RequiredSize, byref(req_size_val), ctypes.sizeof(ctypes.c_ulong))
                     return 1
 
                 if RequiredSize:
-                    RequiredSize.contents = len(hw_bytes)
+                    req_size_val = ctypes.c_ulong(len(hw_bytes))
+                    ctypes.memmove(RequiredSize, byref(req_size_val), ctypes.sizeof(ctypes.c_ulong))
                 return 0
 
-            # Call original for other properties
-            return self.original_SetupDiGetDeviceRegistryPropertyW(
+            result: int = self.original_SetupDiGetDeviceRegistryPropertyW(
                 DeviceInfoSet,
                 DeviceInfoData,
                 Property,
@@ -1784,15 +1800,15 @@ class HardwareFingerPrintSpoofer:
                 PropertyBufferSize,
                 RequiredSize,
             )
+            return result
 
-        # Hook SetupDiGetDeviceInstanceIdW
         def hooked_SetupDiGetDeviceInstanceIdW(
             DeviceInfoSet: wintypes.HANDLE,
             DeviceInfoData: c_void_p,
             DeviceInstanceId: wintypes.LPWSTR,
             DeviceInstanceIdSize: wintypes.DWORD,
-            RequiredSize: POINTER(wintypes.DWORD),
-        ) -> wintypes.BOOL:
+            RequiredSize: Any,
+        ) -> int:
             """Intercept SetupDiGetDeviceInstanceIdW to return spoofed device instance IDs.
 
             Args:
@@ -1806,32 +1822,34 @@ class HardwareFingerPrintSpoofer:
                 Non-zero if successful, zero on failure.
 
             """
-            # Generate spoofed device instance ID if needed
             if not self.spoofed_hardware or not self.spoofed_hardware.usb_devices:
-                return self.original_SetupDiGetDeviceInstanceIdW(
+                result: int = self.original_SetupDiGetDeviceInstanceIdW(
                     DeviceInfoSet,
                     DeviceInfoData,
                     DeviceInstanceId,
                     DeviceInstanceIdSize,
                     RequiredSize,
                 )
+                return result
 
             device = self.spoofed_hardware.usb_devices[0]
             instance_id = device["pnp_id"]
             id_bytes = instance_id.encode("utf-16-le") + b"\x00\x00"
 
-            if DeviceInstanceId and DeviceInstanceIdSize and DeviceInstanceIdSize >= len(id_bytes) // 2:
+            id_size = DeviceInstanceIdSize if isinstance(DeviceInstanceIdSize, int) else int(DeviceInstanceIdSize)
+            if DeviceInstanceId and id_size >= len(id_bytes) // 2:
                 ctypes.memmove(DeviceInstanceId, id_bytes, len(id_bytes))
                 if RequiredSize:
-                    RequiredSize.contents = len(id_bytes) // 2
+                    req_size_val = ctypes.c_ulong(len(id_bytes) // 2)
+                    ctypes.memmove(RequiredSize, byref(req_size_val), ctypes.sizeof(ctypes.c_ulong))
                 return 1
 
             if RequiredSize:
-                RequiredSize.contents = len(id_bytes) // 2
+                req_size_val = ctypes.c_ulong(len(id_bytes) // 2)
+                ctypes.memmove(RequiredSize, byref(req_size_val), ctypes.sizeof(ctypes.c_ulong))
             return 0
 
-        # Create inline hook installer
-        def install_setupapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
+        def install_setupapi_hook(target_func: Any, hook_func: Any) -> bool:
             """Install inline hook for SetupAPI function.
 
             Args:
@@ -1849,7 +1867,6 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # JMP [RIP+0]
                     0x00,
                     0x00,
                     0x00,
@@ -1857,16 +1874,21 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # address
+                    0x00,
+                    0x00,
                 ],
             )
 
             hook_addr = cast(hook_func, c_void_p).value
-            import struct
+            if hook_addr is None:
+                return False
 
             struct.pack_into("<Q", jmp_code, 6, hook_addr)
 
             func_addr = cast(target_func, c_void_p).value
+            if func_addr is None:
+                return False
+
             old_protect = c_ulong()
             if kernel32.VirtualProtect(func_addr, len(jmp_code), 0x40, byref(old_protect)):
                 ctypes.memmove(func_addr, bytes(jmp_code), len(jmp_code))
@@ -1874,7 +1896,6 @@ class HardwareFingerPrintSpoofer:
                 return True
             return False
 
-        # Create function types
         SetupDiGetDeviceRegistryPropertyW_func = ctypes.WINFUNCTYPE(
             wintypes.BOOL,
             wintypes.HANDLE,
@@ -1895,11 +1916,9 @@ class HardwareFingerPrintSpoofer:
             POINTER(wintypes.DWORD),
         )
 
-        # Create callbacks
         self.SetupDiGetDeviceRegistryPropertyW_hook = SetupDiGetDeviceRegistryPropertyW_func(hooked_SetupDiGetDeviceRegistryPropertyW)
         self.SetupDiGetDeviceInstanceIdW_hook = SetupDiGetDeviceInstanceIdW_func(hooked_SetupDiGetDeviceInstanceIdW)
 
-        # Install hooks
         install_setupapi_hook(
             self.original_SetupDiGetDeviceRegistryPropertyW,
             self.SetupDiGetDeviceRegistryPropertyW_hook,
@@ -1924,13 +1943,11 @@ class HardwareFingerPrintSpoofer:
 
         kernel32 = ctypes.windll.kernel32
 
-        # Store original functions
         self.original_GetAdaptersInfo = iphlpapi.GetAdaptersInfo
         self.original_GetAdaptersAddresses = iphlpapi.GetAdaptersAddresses
         self.original_GetIfTable = iphlpapi.GetIfTable
 
-        # IP_ADAPTER_INFO structure
-        class IP_ADAPTER_INFO(ctypes.Structure):  # noqa: N801
+        class IP_ADAPTER_INFO(ctypes.Structure):
             pass
 
         IP_ADAPTER_INFO._fields_ = [
@@ -1954,8 +1971,7 @@ class HardwareFingerPrintSpoofer:
             ("LeaseExpires", ctypes.c_ulong),
         ]
 
-        # Hook GetAdaptersInfo
-        def hooked_GetAdaptersInfo(pAdapterInfo: c_void_p, pOutBufLen: POINTER(wintypes.ULONG)) -> wintypes.DWORD:
+        def hooked_GetAdaptersInfo(pAdapterInfo: c_void_p, pOutBufLen: Any) -> int:
             """Intercept GetAdaptersInfo to return spoofed MAC addresses.
 
             Args:
@@ -1966,38 +1982,33 @@ class HardwareFingerPrintSpoofer:
                 Windows API return code.
 
             """
-            # Call original
-            result = self.original_GetAdaptersInfo(pAdapterInfo, pOutBufLen)
+            result: int = self.original_GetAdaptersInfo(pAdapterInfo, pOutBufLen)
 
-            # Modify MAC addresses if successful
             if result == 0 and pAdapterInfo and self.spoofed_hardware:
-                current = cast(pAdapterInfo, POINTER(IP_ADAPTER_INFO))
+                current: _Pointer[IP_ADAPTER_INFO] | None = cast(pAdapterInfo, POINTER(IP_ADAPTER_INFO))
                 adapter_idx = 0
 
                 while current:
                     if adapter_idx < len(self.spoofed_hardware.mac_addresses):
-                        # Convert MAC string to bytes
                         mac_str = self.spoofed_hardware.mac_addresses[adapter_idx]
                         mac_bytes = bytes.fromhex(mac_str)
 
-                        # Update MAC address
                         current.contents.AddressLength = len(mac_bytes)
                         for i in range(len(mac_bytes)):
                             current.contents.Address[i] = mac_bytes[i]
 
                     adapter_idx += 1
-                    current = current.contents.Next
+                    current = current.contents.Next if current.contents.Next else None
 
             return result
 
-        # Hook GetAdaptersAddresses
         def hooked_GetAdaptersAddresses(
             Family: wintypes.ULONG,
             Flags: wintypes.ULONG,
             Reserved: c_void_p,
             pAdapterAddresses: c_void_p,
-            pOutBufLen: POINTER(wintypes.ULONG),
-        ) -> wintypes.ULONG:
+            pOutBufLen: Any,
+        ) -> int:
             """Intercept GetAdaptersAddresses to return spoofed MAC addresses.
 
             Args:
@@ -2011,35 +2022,30 @@ class HardwareFingerPrintSpoofer:
                 Windows API return code.
 
             """
-            result = self.original_GetAdaptersAddresses(Family, Flags, Reserved, pAdapterAddresses, pOutBufLen)
+            result: int = self.original_GetAdaptersAddresses(Family, Flags, Reserved, pAdapterAddresses, pOutBufLen)
 
             if result == 0 and pAdapterAddresses and self.spoofed_hardware:
-                # Walk through adapter list and modify MACs
-                current = pAdapterAddresses
+                current_val = cast(pAdapterAddresses, c_void_p).value
                 adapter_idx = 0
 
-                # IP_ADAPTER_ADDRESSES has PhysicalAddress at offset 160
-                while current and adapter_idx < len(self.spoofed_hardware.mac_addresses):
+                while current_val is not None and adapter_idx < len(self.spoofed_hardware.mac_addresses):
                     mac_str = self.spoofed_hardware.mac_addresses[adapter_idx]
                     mac_bytes = bytes.fromhex(mac_str)
 
-                    # Update physical address
-                    phys_addr_ptr = cast(current + 160, POINTER(ctypes.c_ubyte))
-                    phys_len_ptr = cast(current + 168, POINTER(wintypes.DWORD))
+                    phys_addr_ptr = cast(current_val + 160, POINTER(ctypes.c_ubyte))
+                    phys_len_ptr = cast(current_val + 168, POINTER(wintypes.DWORD))
 
-                    phys_len_ptr.contents = len(mac_bytes)
+                    ctypes.memmove(phys_len_ptr, ctypes.c_ulong(len(mac_bytes)), ctypes.sizeof(ctypes.c_ulong))
                     for i in range(len(mac_bytes)):
                         phys_addr_ptr[i] = mac_bytes[i]
 
-                    # Move to next adapter
-                    next_ptr = cast(current, POINTER(c_void_p))
-                    current = next_ptr.contents
+                    next_ptr = cast(current_val, POINTER(c_void_p))
+                    current_val = next_ptr.contents.value
                     adapter_idx += 1
 
             return result
 
-        # Create inline hook installer
-        def install_iphlpapi_hook(target_func: c_void_p, hook_func: c_void_p) -> bool:
+        def install_iphlpapi_hook(target_func: Any, hook_func: Any) -> bool:
             """Install inline hook for IP Helper API function.
 
             Args:
@@ -2057,7 +2063,6 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # JMP [RIP+0]
                     0x00,
                     0x00,
                     0x00,
@@ -2065,16 +2070,21 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                     0x00,
                     0x00,
-                    0x00,  # address
+                    0x00,
+                    0x00,
                 ],
             )
 
             hook_addr = cast(hook_func, c_void_p).value
-            import struct
+            if hook_addr is None:
+                return False
 
             struct.pack_into("<Q", jmp_code, 6, hook_addr)
 
             func_addr = cast(target_func, c_void_p).value
+            if func_addr is None:
+                return False
+
             old_protect = c_ulong()
             if kernel32.VirtualProtect(func_addr, len(jmp_code), 0x40, byref(old_protect)):
                 ctypes.memmove(func_addr, bytes(jmp_code), len(jmp_code))
@@ -2082,7 +2092,6 @@ class HardwareFingerPrintSpoofer:
                 return True
             return False
 
-        # Create function types
         GetAdaptersInfo_func = ctypes.WINFUNCTYPE(wintypes.DWORD, c_void_p, POINTER(wintypes.ULONG))
 
         GetAdaptersAddresses_func = ctypes.WINFUNCTYPE(
@@ -2094,11 +2103,9 @@ class HardwareFingerPrintSpoofer:
             POINTER(wintypes.ULONG),
         )
 
-        # Create callbacks
         self.GetAdaptersInfo_hook = GetAdaptersInfo_func(hooked_GetAdaptersInfo)
         self.GetAdaptersAddresses_hook = GetAdaptersAddresses_func(hooked_GetAdaptersAddresses)
 
-        # Install hooks
         install_iphlpapi_hook(self.original_GetAdaptersInfo, self.GetAdaptersInfo_hook)
         install_iphlpapi_hook(self.original_GetAdaptersAddresses, self.GetAdaptersAddresses_hook)
 
@@ -2112,10 +2119,8 @@ class HardwareFingerPrintSpoofer:
 
         """
         try:
-            # Find and patch WMI data structures in memory
             self._patch_wmi_memory()
 
-            # Patch SMBIOS tables
             self._patch_smbios_tables()
 
             return True
@@ -2132,13 +2137,11 @@ class HardwareFingerPrintSpoofer:
         """
         kernel32 = ctypes.windll.kernel32
 
-        # Process access rights
         PROCESS_VM_READ = 0x0010
         PROCESS_VM_WRITE = 0x0020
         PROCESS_VM_OPERATION = 0x0008
         PROCESS_QUERY_INFORMATION = 0x0400
 
-        # Find all WMI provider processes
         wmi_pids = self._find_wmi_processes()
 
         for pid in wmi_pids:
@@ -2147,7 +2150,6 @@ class HardwareFingerPrintSpoofer:
                 False,
                 pid,
             ):
-                # Patch different hardware information types
                 self._patch_processor_info(kernel32, hProcess)
                 self._patch_motherboard_info(kernel32, hProcess)
                 self._patch_bios_info(kernel32, hProcess)
@@ -2167,13 +2169,11 @@ class HardwareFingerPrintSpoofer:
 
         kernel32 = ctypes.windll.kernel32
 
-        processes = []
-        # Create snapshot of all processes
-        hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
+        processes: list[int] = []
+        hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)
         if hSnapshot == -1:
             return processes
 
-        # Process entry structure
         class PROCESSENTRY32(ctypes.Structure):
             _fields_ = [
                 ("dwSize", wintypes.DWORD),
@@ -2191,21 +2191,18 @@ class HardwareFingerPrintSpoofer:
         pe32 = PROCESSENTRY32()
         pe32.dwSize = sizeof(PROCESSENTRY32)
 
-        # Get first process
         if kernel32.Process32First(hSnapshot, byref(pe32)):
             while True:
-                # Check if process is wmiprvse.exe
                 if b"wmiprvse.exe" in pe32.szExeFile.lower():
                     processes.append(pe32.th32ProcessID)
 
-                # Get next process
                 if not kernel32.Process32Next(hSnapshot, byref(pe32)):
                     break
 
         kernel32.CloseHandle(hSnapshot)
         return processes
 
-    def _patch_processor_info(self, kernel32: c_void_p, hProcess: int) -> None:
+    def _patch_processor_info(self, kernel32: Any, hProcess: int) -> None:
         """Patch processor information in WMI process memory.
 
         Args:
@@ -2214,7 +2211,6 @@ class HardwareFingerPrintSpoofer:
 
         """
         if self.spoofed_hardware and self.spoofed_hardware.cpu_id:
-            # Pattern for finding CIM_Processor instances in memory
             processor_patterns = [
                 b"ProcessorId",
                 b"Name\x00Intel",
@@ -2222,22 +2218,19 @@ class HardwareFingerPrintSpoofer:
                 b"Win32_Processor",
             ]
 
-            # Find ProcessorId strings
             for pattern in processor_patterns:
                 matches = self._scan_memory_for_pattern(kernel32, hProcess, pattern)
 
                 for match in matches:
-                    # Look for actual CPU ID near the pattern
                     if self.original_hardware and self.original_hardware.cpu_id:
                         old_id = self.original_hardware.cpu_id.encode("utf-16-le")
                         new_id = self.spoofed_hardware.cpu_id.encode("utf-16-le")
 
-                        # Try to patch nearby memory
-                        for offset in range(-512, 512, 2):  # Unicode alignment
+                        for offset in range(-512, 512, 2):
                             patch_addr = match + offset
                             self._patch_memory_value(kernel32, hProcess, patch_addr, old_id, new_id)
 
-    def _patch_motherboard_info(self, kernel32: c_void_p, hProcess: int) -> None:
+    def _patch_motherboard_info(self, kernel32: Any, hProcess: int) -> None:
         """Patch motherboard information in WMI process memory.
 
         Args:
@@ -2261,12 +2254,11 @@ class HardwareFingerPrintSpoofer:
                         old_serial = self.original_hardware.motherboard_serial.encode("utf-16-le")
                         new_serial = self.spoofed_hardware.motherboard_serial.encode("utf-16-le")
 
-                        # Patch serial numbers near pattern
                         for offset in range(-512, 512, 2):
                             patch_addr = match + offset
                             self._patch_memory_value(kernel32, hProcess, patch_addr, old_serial, new_serial)
 
-    def _patch_bios_info(self, kernel32: c_void_p, hProcess: int) -> None:
+    def _patch_bios_info(self, kernel32: Any, hProcess: int) -> None:
         """Patch BIOS information in WMI process memory.
 
         Args:
@@ -2287,7 +2279,7 @@ class HardwareFingerPrintSpoofer:
                         patch_addr = match + offset
                         self._patch_memory_value(kernel32, hProcess, patch_addr, old_bios, new_bios)
 
-    def _scan_memory_for_pattern(self, kernel32: c_void_p, hProcess: int, pattern: bytes) -> list[int]:
+    def _scan_memory_for_pattern(self, kernel32: Any, hProcess: int, pattern: bytes) -> list[int]:
         """Scan process memory for pattern.
 
         Args:
@@ -2302,7 +2294,6 @@ class HardwareFingerPrintSpoofer:
         matches: list[int] = []
         from ctypes import byref, c_void_p, create_string_buffer, sizeof, wintypes
 
-        # Get system info for memory ranges
         class SystemInfo(ctypes.Structure):
             _fields_ = [
                 ("wProcessorArchitecture", wintypes.WORD),
@@ -2321,7 +2312,6 @@ class HardwareFingerPrintSpoofer:
         sysinfo = SystemInfo()
         kernel32.GetSystemInfo(byref(sysinfo))
 
-        # Memory basic information structure
         class MemoryBasicInformation(ctypes.Structure):
             _fields_ = [
                 ("BaseAddress", c_void_p),
@@ -2333,18 +2323,21 @@ class HardwareFingerPrintSpoofer:
                 ("Type", wintypes.DWORD),
             ]
 
-        # Scan memory regions
-        address = sysinfo.lpMinimumApplicationAddress
-        max_address = sysinfo.lpMaximumApplicationAddress
+        min_addr = sysinfo.lpMinimumApplicationAddress
+        max_addr = sysinfo.lpMaximumApplicationAddress
 
-        while address < max_address:
+        if min_addr is None or max_addr is None:
+            return matches
+
+        address = min_addr
+
+        while address < max_addr:
             mbi = MemoryBasicInformation()
             result = kernel32.VirtualQueryEx(hProcess, address, byref(mbi), sizeof(mbi))
 
             if result == 0:
                 break
 
-            # Check if region is readable
             MEM_COMMIT = 0x1000
             PAGE_READWRITE = 0x04
             PAGE_READONLY = 0x02
@@ -2355,27 +2348,25 @@ class HardwareFingerPrintSpoofer:
                 PAGE_READONLY,
                 PAGE_EXECUTE_READWRITE,
             ]:
-                # Read memory region
                 buffer = create_string_buffer(mbi.RegionSize)
                 bytes_read = ctypes.c_size_t()
 
-                if kernel32.ReadProcessMemory(hProcess, mbi.BaseAddress, buffer, mbi.RegionSize, byref(bytes_read)):
-                    # Search for pattern
+                base_addr = mbi.BaseAddress
+                if base_addr is not None and kernel32.ReadProcessMemory(hProcess, base_addr, buffer, mbi.RegionSize, byref(bytes_read)):
                     data = buffer.raw[: bytes_read.value]
                     offset = 0
                     while True:
                         pos = data.find(pattern, offset)
                         if pos == -1:
                             break
-                        matches.append(mbi.BaseAddress + pos)
+                        matches.append(base_addr + pos)
                         offset = pos + 1
 
-            # Move to next region
-            address = ctypes.c_void_p(address + mbi.RegionSize)
+            address += mbi.RegionSize
 
         return matches
 
-    def _patch_memory_value(self, kernel32: c_void_p, hProcess: int, address: int, old_value: bytes, new_value: bytes) -> bool:
+    def _patch_memory_value(self, kernel32: Any, hProcess: int, address: int, old_value: bytes, new_value: bytes) -> bool:
         """Patch a value at given address.
 
         Args:
@@ -2391,7 +2382,6 @@ class HardwareFingerPrintSpoofer:
         """
         from ctypes import byref, create_string_buffer, wintypes
 
-        # Read current value to verify
         buffer = create_string_buffer(len(old_value))
         bytes_read = ctypes.c_size_t()
 
@@ -2404,14 +2394,12 @@ class HardwareFingerPrintSpoofer:
                 hProcess,
                 address,
                 len(new_value),
-                0x40,  # PAGE_EXECUTE_READWRITE
+                0x40,
                 byref(old_protect),
             ):
-                # Write new value
                 bytes_written = ctypes.c_size_t()
-                success = kernel32.WriteProcessMemory(hProcess, address, new_value, len(new_value), byref(bytes_written))
+                success: bool = kernel32.WriteProcessMemory(hProcess, address, new_value, len(new_value), byref(bytes_written))
 
-                # Restore protection
                 kernel32.VirtualProtectEx(hProcess, address, len(new_value), old_protect, byref(old_protect))
 
                 return success
@@ -2420,8 +2408,6 @@ class HardwareFingerPrintSpoofer:
 
     def _patch_smbios_tables(self) -> None:
         """Patch SMBIOS tables in memory."""
-        # Locate SMBIOS tables
-        # Patch hardware information
 
     def _apply_driver_spoof(self) -> bool:
         """Apply spoofing via kernel driver.
@@ -2430,8 +2416,6 @@ class HardwareFingerPrintSpoofer:
             False as driver spoofing is not implemented.
 
         """
-        # This requires a kernel driver to intercept hardware queries
-        # Driver would need to be signed for modern Windows
         return False
 
     def _apply_virtual_spoof(self) -> bool:
@@ -2441,8 +2425,6 @@ class HardwareFingerPrintSpoofer:
             False as virtualization spoofing is not implemented.
 
         """
-        # Create virtual hardware layer
-        # Requires hypervisor-level access
         return False
 
     def _spoof_cpu(self, cpu_id: str | None = None, cpu_name: str | None = None) -> None:
@@ -2458,12 +2440,11 @@ class HardwareFingerPrintSpoofer:
         if not cpu_name:
             cpu_name = self._generate_cpu_name()
 
-        # Update registry
         try:
             with winreg.CreateKey(
                 winreg.HKEY_LOCAL_MACHINE,
                 r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
-            ) as key:  # pragma: allowlist secret
+            ) as key:
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
         except Exception as e:
@@ -2482,7 +2463,6 @@ class HardwareFingerPrintSpoofer:
         if not manufacturer:
             manufacturer = self._generate_mb_manufacturer()
 
-        # Registry modifications for motherboard
         try:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation") as key:
                 winreg.SetValueEx(key, "SystemManufacturer", 0, winreg.REG_SZ, manufacturer)
@@ -2505,7 +2485,6 @@ class HardwareFingerPrintSpoofer:
         if not version:
             version = self._generate_bios_version()
 
-        # BIOS registry entries
         try:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\BIOS") as key:
                 winreg.SetValueEx(key, "BIOSVersion", 0, winreg.REG_MULTI_SZ, [version])
@@ -2524,8 +2503,6 @@ class HardwareFingerPrintSpoofer:
         if not serials:
             serials = self._generate_disk_serials()
 
-        # Disk spoofing requires driver-level access
-        # Registry entries for disk info
         try:
             for i, serial in enumerate(serials):
                 with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\IDE\\Disk{i}") as key:
@@ -2543,7 +2520,6 @@ class HardwareFingerPrintSpoofer:
         if not mac_addresses:
             mac_addresses = self._generate_mac_addresses()
 
-        # Apply MAC address spoofing
         self._spoof_network_registry()
 
     def _spoof_system_uuid(self, uuid_str: str | None = None) -> None:
@@ -2572,10 +2548,8 @@ class HardwareFingerPrintSpoofer:
         if not gpu_ids:
             gpu_ids = self._generate_gpu_ids()
 
-        # GPU spoofing via registry
         try:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video"):
-                # Update GPU entries
                 pass
         except Exception as e:
             logger.debug(f"Failed to spoof GPU information in registry: {e}")
@@ -2590,8 +2564,6 @@ class HardwareFingerPrintSpoofer:
         if not serials:
             serials = self._generate_ram_serials()
 
-        # RAM spoofing requires SMBIOS table modification
-
     def _spoof_usb(self, devices: list[dict[str, str]] | None = None) -> None:
         """Spoof USB device information.
 
@@ -2602,7 +2574,6 @@ class HardwareFingerPrintSpoofer:
         if not devices:
             devices = self._generate_usb_devices()
 
-        # USB device spoofing via registry
         try:
             pass
         except Exception as e:
@@ -2619,17 +2590,14 @@ class HardwareFingerPrintSpoofer:
             return False
 
         try:
-            # Restore registry values
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, self.original_hardware.machine_guid)
 
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
                 winreg.SetValueEx(key, "ProductId", 0, winreg.REG_SZ, self.original_hardware.product_id)
 
-            # Remove network address overrides
             self._remove_network_spoofing()
 
-            # Unhook if hooks were installed
             if self.hooks_installed:
                 self._remove_hooks()
 
@@ -2652,7 +2620,6 @@ class HardwareFingerPrintSpoofer:
                         if subkey_name.isdigit():
                             with winreg.OpenKey(key, subkey_name, 0, winreg.KEY_ALL_ACCESS) as subkey:
                                 try:
-                                    # Delete NetworkAddress to restore original MAC
                                     winreg.DeleteValue(subkey, "NetworkAddress")
                                 except OSError as e:
                                     logger.debug(f"Failed to delete NetworkAddress for adapter {subkey_name}: {e}")
@@ -2664,7 +2631,6 @@ class HardwareFingerPrintSpoofer:
 
     def _remove_hooks(self) -> None:
         """Remove installed hooks."""
-        # Restore original function pointers
         self.hooks_installed = False
 
     def export_configuration(self) -> dict[str, Any]:
@@ -2677,7 +2643,7 @@ class HardwareFingerPrintSpoofer:
         return {
             "original": self._hardware_to_dict(self.original_hardware) if self.original_hardware else None,
             "spoofed": self._hardware_to_dict(self.spoofed_hardware) if self.spoofed_hardware else None,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.datetime.now().isoformat(),
         }
 
     def _hardware_to_dict(self, hardware: HardwareIdentifiers) -> dict[str, Any]:

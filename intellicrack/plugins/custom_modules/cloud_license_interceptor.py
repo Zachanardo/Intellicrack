@@ -48,6 +48,7 @@ from urllib.parse import parse_qs, urlparse
 
 import jwt
 
+from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.handlers.aiohttp_handler import aiohttp
 from intellicrack.handlers.cryptography_handler import NameOID, hashes, load_pem_private_key, rsa, serialization, x509
 from intellicrack.handlers.sqlite3_handler import sqlite3
@@ -120,8 +121,8 @@ class InterceptorConfig:
     upstream_timeout: int = 30
     cache_ttl: int = 3600
     enable_ssl_interception: bool = True
-    ca_cert_path: str = "ca-cert.pem"
-    ca_key_path: str = "ca-key.pem"
+    ca_cert_path: str = field(default_factory=lambda: str(CA_CERT_PATH))
+    ca_key_path: str = field(default_factory=lambda: str(CA_KEY_PATH))
     stealth_mode: bool = True
     fallback_mode: bool = True
     log_level: str = "INFO"

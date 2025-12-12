@@ -19,16 +19,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
 import math
-
-
-logger = logging.getLogger(__name__)
-import contextlib
 import os
 import shutil
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from intellicrack.core.monitoring.monitor_event import MonitorEvent
+
+logger = logging.getLogger(__name__)
 
 from intellicrack.core.license_snapshot import LicenseSnapshot
 from intellicrack.core.license_validation_bypass import LicenseValidationBypass
@@ -120,7 +125,22 @@ class AnalysisTab(BaseTab):
     analysis_completed = pyqtSignal(str)
     protection_detected = pyqtSignal(str, str)
 
-    def __init__(self, shared_context: object | None = None, parent: QWidget | None = None) -> None:
+    current_binary: str | None
+    current_file_path: str | None
+    analysis_results: dict[str, Any]
+    embedded_hex_viewer: QWidget | None
+    snapshots: dict[str, dict[str, Any]]
+    comparison_results: list[dict[str, Any]]
+    attached_pid: int | None
+    monitoring_session: MonitoringSession | None
+    entropy_visualizer: Any
+    structure_visualizer: Any
+    snapshot_thread: Any
+    fallback_entropy_results: QTextEdit
+    entropy_stats_label: QLabel
+    fallback_structure_results: QTextEdit
+
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize analysis tab with binary analysis and reverse engineering tools.
 
         Args:
@@ -140,18 +160,24 @@ class AnalysisTab(BaseTab):
         self.license_snapshot = LicenseSnapshot()
         self.license_validation_bypass = LicenseValidationBypass()
         self.monitoring_session = None
+        self.snapshot_thread = None
 
-        # Connect to app_context signals for binary loading
-        if self.app_context:
-            self.app_context.binary_loaded.connect(self.on_binary_loaded)
-            self.app_context.binary_unloaded.connect(self.on_binary_unloaded)
-
-            if current_binary := self.app_context.get_current_binary():
-                self.on_binary_loaded(current_binary)
+        app_ctx = self.app_context
+        if app_ctx is not None:
+            if hasattr(app_ctx, "binary_loaded") and app_ctx.binary_loaded is not None:
+                app_ctx.binary_loaded.connect(self.on_binary_loaded)
+            if hasattr(app_ctx, "binary_unloaded") and app_ctx.binary_unloaded is not None:
+                app_ctx.binary_unloaded.connect(self.on_binary_unloaded)
+            if hasattr(app_ctx, "get_current_binary"):
+                current_binary = app_ctx.get_current_binary()
+                if current_binary:
+                    self.on_binary_loaded(current_binary)
 
     def setup_content(self) -> None:
         """Set up the Analysis tab content with clean, organized interface."""
-        main_layout = self.layout()  # Use existing layout from BaseTab
+        main_layout = self.layout()
+        if main_layout is None:
+            main_layout = QVBoxLayout(self)
 
         # Create horizontal splitter for analysis controls and results
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -867,7 +893,7 @@ class AnalysisTab(BaseTab):
             profile_name: Name of the analysis profile to apply.
 
         """
-        profiles = {
+        profiles: dict[str, dict[str, Any]] = {
             "Quick Scan": {
                 "description": "Fast basic analysis for quick overview. Includes basic static analysis and signature detection.",
                 "static": {
@@ -974,45 +1000,50 @@ class AnalysisTab(BaseTab):
         }
 
         profile = profiles.get(profile_name, profiles["Custom"])
-        self.profile_description.setText(profile["description"])
+        description = profile.get("description", "")
+        if isinstance(description, str):
+            self.profile_description.setText(description)
 
-        # Don't update checkboxes for Custom profile
         if profile_name == "Custom":
             return
 
-        # Update checkboxes based on profile
-        if profile["static"]:
-            self.disassembly_cb.setChecked(profile["static"]["disassembly"])
-            self.string_analysis_cb.setChecked(profile["static"]["strings"])
-            self.imports_analysis_cb.setChecked(profile["static"]["imports"])
-            self.entropy_analysis_cb.setChecked(profile["static"]["entropy"])
-            self.signature_analysis_cb.setChecked(profile["static"]["signatures"])
+        static_cfg = profile.get("static")
+        if isinstance(static_cfg, dict):
+            self.disassembly_cb.setChecked(bool(static_cfg.get("disassembly", False)))
+            self.string_analysis_cb.setChecked(bool(static_cfg.get("strings", False)))
+            self.imports_analysis_cb.setChecked(bool(static_cfg.get("imports", False)))
+            self.entropy_analysis_cb.setChecked(bool(static_cfg.get("entropy", False)))
+            self.signature_analysis_cb.setChecked(bool(static_cfg.get("signatures", False)))
 
-        if profile["dynamic"]:
-            self.api_monitoring_cb.setChecked(profile["dynamic"]["api"])
-            self.memory_monitoring_cb.setChecked(profile["dynamic"]["memory"])
-            self.file_monitoring_cb.setChecked(profile["dynamic"]["file"])
-            self.network_monitoring_cb.setChecked(profile["dynamic"]["network"])
+        dynamic_cfg = profile.get("dynamic")
+        if isinstance(dynamic_cfg, dict):
+            self.api_monitoring_cb.setChecked(bool(dynamic_cfg.get("api", False)))
+            self.memory_monitoring_cb.setChecked(bool(dynamic_cfg.get("memory", False)))
+            self.file_monitoring_cb.setChecked(bool(dynamic_cfg.get("file", False)))
+            self.network_monitoring_cb.setChecked(bool(dynamic_cfg.get("network", False)))
 
-        if profile["protection"]:
-            self.packer_detection_cb.setChecked(profile["protection"]["packer"])
-            self.obfuscation_detection_cb.setChecked(profile["protection"]["obfuscation"])
-            self.anti_debug_detection_cb.setChecked(profile["protection"]["antidebug"])
-            self.vm_detection_cb.setChecked(profile["protection"]["vm"])
-            self.license_check_detection_cb.setChecked(profile["protection"]["license"])
+        protection_cfg = profile.get("protection")
+        if isinstance(protection_cfg, dict):
+            self.packer_detection_cb.setChecked(bool(protection_cfg.get("packer", False)))
+            self.obfuscation_detection_cb.setChecked(bool(protection_cfg.get("obfuscation", False)))
+            self.anti_debug_detection_cb.setChecked(bool(protection_cfg.get("antidebug", False)))
+            self.vm_detection_cb.setChecked(bool(protection_cfg.get("vm", False)))
+            self.license_check_detection_cb.setChecked(bool(protection_cfg.get("license", False)))
 
-        if profile["engines"]:
-            self.symbolic_execution_cb.setChecked(profile["engines"]["symbolic"])
-            self.concolic_execution_cb.setChecked(profile["engines"]["concolic"])
-            self.emulation_cb.setChecked(profile["engines"]["emulation"])
-            self.sandbox_execution_cb.setChecked(profile["engines"]["sandbox"])
+        engines_cfg = profile.get("engines")
+        if isinstance(engines_cfg, dict):
+            self.symbolic_execution_cb.setChecked(bool(engines_cfg.get("symbolic", False)))
+            self.concolic_execution_cb.setChecked(bool(engines_cfg.get("concolic", False)))
+            self.emulation_cb.setChecked(bool(engines_cfg.get("emulation", False)))
+            self.sandbox_execution_cb.setChecked(bool(engines_cfg.get("sandbox", False)))
 
     def run_analysis(self) -> None:
         """Run analysis based on current settings."""
         if not self.current_binary:
             # Try to get binary from app context
-            if hasattr(self, "app_context") and self.app_context:
-                current_binary_info = self.app_context.get_current_binary()
+            app_ctx = self.app_context
+            if app_ctx is not None and hasattr(app_ctx, "get_current_binary"):
+                current_binary_info = app_ctx.get_current_binary()
                 if current_binary_info and current_binary_info.get("path"):
                     self.current_binary = current_binary_info["path"]
                     self.current_file_path = current_binary_info["path"]
@@ -1025,7 +1056,7 @@ class AnalysisTab(BaseTab):
                 return
 
         profile = self.analysis_profile_combo.currentText()
-        self.log_activity(f"Starting {profile} on {os.path.basename(self.current_binary)}")
+        self.log_activity(f"Starting {profile} on {os.path.basename(self.current_file_path or "")}")
 
         # Update UI state
         self.run_analysis_btn.setEnabled(False)
@@ -1092,9 +1123,10 @@ class AnalysisTab(BaseTab):
 
             def run_static_analysis(task: object | None = None) -> dict[str, object]:
                 try:
-                    results = {
-                        "binary": self.current_binary,
-                        "file_name": os.path.basename(self.current_binary),
+                    binary_path = self.current_file_path if self.current_file_path else ""
+                    results: dict[str, object] = {
+                        "binary": binary_path,
+                        "file_name": os.path.basename(binary_path) if binary_path else "",
                     }
 
                     if self.disassembly_cb.isChecked():
@@ -1122,10 +1154,10 @@ class AnalysisTab(BaseTab):
                         # Extract cryptographic keys using LicenseValidationBypass
                         self.log_activity("Extracting cryptographic keys...")
                         try:
-                            extracted_keys = self.license_validation_bypass.extract_all_keys(self.current_binary)
+                            extracted_keys = self.license_validation_bypass.extract_all_keys(binary_path) if binary_path else {}
 
                             # Process extracted keys
-                            key_results = {
+                            key_results: dict[str, int | list[dict[str, Any]]] = {
                                 "total_keys_found": 0,
                                 "rsa_keys": [],
                                 "ecc_keys": [],
@@ -1145,7 +1177,8 @@ class AnalysisTab(BaseTab):
                                         }
                                         for key in keys
                                     ]
-                                    key_results["total_keys_found"] += len(keys)
+                                    total = key_results.get("total_keys_found", 0)
+                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
 
                                 elif key_type == "ecc" and keys:
                                     key_results["ecc_keys"] = [
@@ -1157,7 +1190,8 @@ class AnalysisTab(BaseTab):
                                         }
                                         for key in keys
                                     ]
-                                    key_results["total_keys_found"] += len(keys)
+                                    total = key_results.get("total_keys_found", 0)
+                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
 
                                 elif key_type == "symmetric" and keys:
                                     key_results["symmetric_keys"] = [
@@ -1169,11 +1203,12 @@ class AnalysisTab(BaseTab):
                                         }
                                         for key in keys
                                     ]
-                                    key_results["total_keys_found"] += len(keys)
+                                    total = key_results.get("total_keys_found", 0)
+                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
 
                             # Extract certificates
                             try:
-                                certs = self.license_validation_bypass.extract_certificates(self.current_binary)
+                                certs = self.license_validation_bypass.extract_certificates(binary_path) if binary_path else []
                                 if certs:
                                     key_results["certificates"] = [
                                         {
@@ -1184,7 +1219,8 @@ class AnalysisTab(BaseTab):
                                         }
                                         for cert in certs
                                     ]
-                                    key_results["total_keys_found"] += len(certs)
+                                    cert_total = key_results.get("total_keys_found", 0)
+                                    key_results["total_keys_found"] = (cert_total if isinstance(cert_total, int) else 0) + len(certs)
                             except Exception as cert_error:
                                 self.log_activity(f"Certificate extraction error: {cert_error!s}")
 
@@ -1205,10 +1241,10 @@ class AnalysisTab(BaseTab):
                             sub_bypass = SubscriptionValidationBypass()
 
                             # Detect subscription type
-                            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
-                            sub_type = sub_bypass.detect_subscription_type(product_name)
+                            product_name = os.path.splitext(os.path.basename(self.current_file_path or ""))[0]
+                            sub_type = sub_bypass.detect_subscription_type(product_name) if product_name else None
 
-                            bypass_results = {
+                            bypass_results: dict[str, Any] = {
                                 "detected_type": sub_type.value if sub_type else "unknown",
                                 "bypass_methods": [],
                             }
@@ -1264,10 +1300,10 @@ class AnalysisTab(BaseTab):
                                     )
 
                                 # Check for specific bypass opportunities
-                                bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name)
-                                bypass_results["local_server"] = sub_bypass._check_local_server_config(product_name)
-                                bypass_results["oauth_tokens"] = sub_bypass._check_oauth_tokens(product_name)
-                                bypass_results["floating_license"] = sub_bypass._check_floating_license(product_name)
+                                bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name) if product_name else {}
+                                bypass_results["local_server"] = sub_bypass._check_local_server_config(product_name) if product_name else {}
+                                bypass_results["oauth_tokens"] = sub_bypass._check_oauth_tokens(product_name) if product_name else {}
+                                bypass_results["floating_license"] = sub_bypass._check_floating_license(product_name) if product_name else {}
 
                             results["subscription_bypass"] = bypass_results
                             self.log_activity(f"Subscription type detected: {bypass_results['detected_type']}")
@@ -1294,9 +1330,11 @@ class AnalysisTab(BaseTab):
                     return
                 # Display crypto key extraction results
                 if "crypto_keys" in results:
-                    key_data = results["crypto_keys"]
-                    if not key_data.get("error"):
-                        self.results_display.append("\n=== CRYPTOGRAPHIC KEYS EXTRACTED ===\n")
+                    key_data_raw = results["crypto_keys"]
+                    if isinstance(key_data_raw, dict):
+                        key_data: dict[str, Any] = key_data_raw
+                        if not key_data.get("error"):
+                            self.results_display.append("\n=== CRYPTOGRAPHIC KEYS EXTRACTED ===\n")
                         self.results_display.append(f"Total keys found: {key_data.get('total_keys_found', 0)}\n")
 
                         # Display RSA keys
@@ -1341,9 +1379,11 @@ class AnalysisTab(BaseTab):
 
                 # Display subscription validation bypass results
                 if "subscription_bypass" in results:
-                    bypass_data = results["subscription_bypass"]
-                    if not bypass_data.get("error"):
-                        self.results_display.append("\n=== SUBSCRIPTION VALIDATION BYPASS ===\n")
+                    bypass_data_raw = results["subscription_bypass"]
+                    if isinstance(bypass_data_raw, dict):
+                        bypass_data: dict[str, Any] = bypass_data_raw
+                        if not bypass_data.get("error"):
+                            self.results_display.append("\n=== SUBSCRIPTION VALIDATION BYPASS ===\n")
                         self.results_display.append(f"Detected Type: {bypass_data.get('detected_type', 'Unknown')}\n")
 
                         # Display bypass methods
@@ -1367,29 +1407,39 @@ class AnalysisTab(BaseTab):
 
                         # Store bypass results for later use
                         self.analysis_results["subscription_bypass"] = bypass_data
-                    else:
-                        self.results_display.append(f"\nSubscription bypass error: {bypass_data['error']}\n")
+                    elif isinstance(bypass_data_raw, dict) and bypass_data_raw.get("error"):
+                        self.results_display.append(f"\nSubscription bypass error: {bypass_data_raw.get('error', 'Unknown')}\n")
 
                 # Display other static analysis results
                 if "strings" in results:
-                    self.results_display.append(f"\nStrings: {results['strings'].get('total', 0)} found\n")
-                    if results["strings"].get("suspicious"):
-                        self.results_display.append(f"  Suspicious: {', '.join(results['strings']['suspicious'])}\n")
+                    strings_val = results["strings"]
+                    if isinstance(strings_val, dict):
+                        self.results_display.append(f"\nStrings: {strings_val.get('total', 0)} found\n")
+                        suspicious = strings_val.get("suspicious")
+                        if suspicious and isinstance(suspicious, list):
+                            self.results_display.append(f"  Suspicious: {', '.join(str(s) for s in suspicious)}\n")
 
                 if "entropy" in results:
-                    self.results_display.append(f"\nEntropy: {results['entropy'].get('overall', 0):.2f}\n")
-                    if results["entropy"].get("high_entropy_sections"):
-                        self.results_display.append(f"  High entropy sections: {results['entropy']['high_entropy_sections']}\n")
+                    entropy_val = results["entropy"]
+                    if isinstance(entropy_val, dict):
+                        overall = entropy_val.get("overall", 0)
+                        self.results_display.append(f"\nEntropy: {float(overall) if overall else 0:.2f}\n")
+                        high_sections = entropy_val.get("high_entropy_sections")
+                        if high_sections:
+                            self.results_display.append(f"  High entropy sections: {high_sections}\n")
 
                 self.log_activity("Static analysis completed successfully")
 
             # Submit task
-            task_id = self.task_manager.submit_callable(
-                run_static_analysis,
-                description=f"Static analysis of {os.path.basename(self.current_binary)}",
-                callback=on_static_analysis_complete,
-            )
-            self.log_activity(f"Static analysis task submitted: {task_id[:8]}...")
+            binary_name = os.path.basename(self.current_file_path) if self.current_file_path else "unknown"
+            tm = self.task_manager
+            if tm is not None and hasattr(tm, "submit_callable"):
+                task_id = tm.submit_callable(
+                    run_static_analysis,
+                    description=f"Static analysis of {binary_name}",
+                    callback=on_static_analysis_complete,
+                )
+                self.log_activity(f"Static analysis task submitted: {str(task_id)[:8]}...")
         else:
             self.results_display.append("Static analysis components not available\n")
 
@@ -1414,18 +1464,15 @@ class AnalysisTab(BaseTab):
 
         # Perform actual dynamic analysis
         try:
-            from ...core.analysis.dynamic_analyzer import DynamicAnalyzer
-
-            analyzer = DynamicAnalyzer()
+            from ...core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
 
             if hasattr(self, "current_file_path") and self.current_file_path:
-                if results := analyzer.analyze(
-                    binary_path=self.current_file_path,
-                    monitoring_options=monitoring,
-                ):
+                analyzer = AdvancedDynamicAnalyzer(self.current_file_path)
+                results = analyzer.run_comprehensive_analysis()
+                if results:
                     self.results_display.append("Dynamic Analysis Results:\n")
-                    for result in results:
-                        self.results_display.append(f"   {result}\n")
+                    for key, value in results.items():
+                        self.results_display.append(f"   {key}: {value}\n")
                 else:
                     self.results_display.append("No dynamic analysis results found.\n")
             else:
@@ -1525,10 +1572,15 @@ class AnalysisTab(BaseTab):
             detector = ProtectionDetector()
 
             if hasattr(self, "current_file_path") and self.current_file_path:
-                if results := detector.detect_protections(binary_path=self.current_file_path, detection_types=detections):
+                analysis = detector.detect_protections(self.current_file_path, deep_scan=True)
+                if analysis and analysis.detections:
                     self.results_display.append("Protection Detection Results:\n")
-                    for protection, details in results.items():
-                        self.results_display.append(f"   {protection}: {details}\n")
+                    for detection in analysis.detections:
+                        self.results_display.append(f"   {detection.name}: {detection.type.value} (confidence: {detection.confidence:.1f}%)\n")
+                    if analysis.is_packed:
+                        self.results_display.append("   Binary is packed\n")
+                    if analysis.is_protected:
+                        self.results_display.append("   Binary has protection\n")
                 else:
                     self.results_display.append("No protections detected.\n")
             else:
@@ -1672,13 +1724,13 @@ class AnalysisTab(BaseTab):
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
-        self.log_activity(f"Opening hex viewer for {os.path.basename(self.current_binary)}")
+        self.log_activity(f"Opening hex viewer for {os.path.basename(self.current_file_path or "")}")
 
         try:
             from intellicrack.hexview.hex_dialog import HexViewerDialog
 
-            hex_dialog = HexViewerDialog(self.current_binary, parent=self)
-            hex_dialog.setWindowTitle(f"Hex Viewer - {os.path.basename(self.current_binary)}")
+            hex_dialog = HexViewerDialog(parent=self, file_path=self.current_file_path or "")
+            hex_dialog.setWindowTitle(f"Hex Viewer - {os.path.basename(self.current_file_path or "")}")
             hex_dialog.show()
 
         except ImportError as e:
@@ -1688,7 +1740,7 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Error opening hex viewer: {e}")
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
-    def on_binary_loaded(self, binary_info: dict[str, object]) -> None:
+    def on_binary_loaded(self, binary_info: dict[str, Any]) -> None:
         """Handle binary loaded signal from app_context.
 
         Args:
@@ -1696,14 +1748,16 @@ class AnalysisTab(BaseTab):
 
         """
         if isinstance(binary_info, dict):
-            self.current_binary = binary_info.get("path")
-            self.current_file_path = binary_info.get("path")
+            path = binary_info.get("path")
+            if isinstance(path, str):
+                self.current_binary = path
+                self.current_file_path = path
 
             # Update UI to show binary is loaded
             if hasattr(self, "binary_info_label"):
                 file_name = binary_info.get("name", "Unknown")
                 file_size = binary_info.get("size", 0)
-                self.binary_info_label.setText(f"<b>Loaded:</b> {file_name} ({self._format_size(file_size)})")
+                self.binary_info_label.setText(f"<b>Loaded:</b> {file_name} ({self._format_size(int(file_size) if file_size else 0)})")
 
             # Automatically embed hex viewer if available
             self.embed_hex_viewer()
@@ -1720,10 +1774,13 @@ class AnalysisTab(BaseTab):
             self.embedded_hex_viewer = None
             if hasattr(self, "hex_view_container"):
                 layout = self.hex_view_container.layout()
-                while layout.count():
-                    child = layout.takeAt(0)
-                    if child.widget():
-                        child.widget().deleteLater()
+                if layout is not None:
+                    while layout.count():
+                        child = layout.takeAt(0)
+                        if child is not None:
+                            widget = child.widget()
+                            if widget is not None:
+                                widget.deleteLater()
 
         # Update UI
         if hasattr(self, "binary_info_label"):
@@ -1741,11 +1798,12 @@ class AnalysisTab(BaseTab):
             str: Human-readable file size string.
 
         """
+        size_float: float = float(size_bytes)
         for unit in ["B", "KB", "MB", "GB"]:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.1f} TB"
+            if size_float < 1024.0:
+                return f"{size_float:.1f} {unit}"
+            size_float /= 1024.0
+        return f"{size_float:.1f} TB"
 
     def embed_hex_viewer(self) -> None:
         """Embed hex viewer in the results panel."""
@@ -1758,34 +1816,42 @@ class AnalysisTab(BaseTab):
 
             # Clear the hex view container
             layout = self.hex_view_container.layout()
-            while layout.count():
-                child = layout.takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
+            if layout is not None:
+                while layout.count():
+                    child = layout.takeAt(0)
+                    if child is not None:
+                        widget = child.widget()
+                        if widget is not None:
+                            widget.deleteLater()
 
-            # Create embedded hex viewer
-            self.embedded_hex_viewer = HexViewerWidget()
+                # Create embedded hex viewer
+                self.embedded_hex_viewer = HexViewerWidget()
 
-            if self.embedded_hex_viewer.load_file(self.current_binary):
-                layout.addWidget(self.embedded_hex_viewer)
-                # Hide status label since hex viewer is now loaded
-                if hasattr(self, "hex_status_label"):
-                    self.hex_status_label.hide()
-                self.results_tabs.setCurrentWidget(self.hex_view_container)
-                self.log_activity("Hex viewer embedded successfully")
-            else:
-                error_label = QLabel(f"Failed to load file: {self.current_binary}")
-                error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                layout.addWidget(error_label)
+                binary_path = self.current_file_path or ""
+                if self.embedded_hex_viewer.load_file(binary_path):
+                    layout.addWidget(self.embedded_hex_viewer)
+                    # Hide status label since hex viewer is now loaded
+                    if hasattr(self, "hex_status_label"):
+                        self.hex_status_label.hide()
+                    self.results_tabs.setCurrentWidget(self.hex_view_container)
+                    self.log_activity("Hex viewer embedded successfully")
+                else:
+                    error_label = QLabel(f"Failed to load file: {binary_path}")
+                    error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    layout.addWidget(error_label)
 
         except ImportError:
             error_label = QLabel("Hex viewer module not available")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.hex_view_container.layout().addWidget(error_label)
+            hex_layout = self.hex_view_container.layout()
+            if hex_layout is not None:
+                hex_layout.addWidget(error_label)
         except Exception as e:
             error_label = QLabel(f"Error: {e!s}")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.hex_view_container.layout().addWidget(error_label)
+            hex_layout = self.hex_view_container.layout()
+            if hex_layout is not None:
+                hex_layout.addWidget(error_label)
 
     def view_disassembly(self) -> None:
         """View disassembly in separate window with real disassembly functionality."""
@@ -1793,14 +1859,14 @@ class AnalysisTab(BaseTab):
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
-        self.log_activity(f"Opening disassembly viewer for {os.path.basename(self.current_binary)}")
+        self.log_activity(f"Opening disassembly viewer for {os.path.basename(self.current_file_path or "")}")
 
         try:
             # Create disassembly window
             from intellicrack.handlers.pyqt6_handler import QDialog, QFont, QPlainTextEdit
 
             disasm_dialog = QDialog(self)
-            disasm_dialog.setWindowTitle(f"Disassembly - {os.path.basename(self.current_binary)}")
+            disasm_dialog.setWindowTitle(f"Disassembly - {os.path.basename(self.current_file_path or "")}")
             disasm_dialog.resize(900, 700)
 
             layout = QVBoxLayout(disasm_dialog)
@@ -1869,7 +1935,7 @@ class AnalysisTab(BaseTab):
                     base_address = 0x0
 
                 # Disassemble
-                disasm_output = [f"; Disassembly of {os.path.basename(self.current_binary)}"]
+                disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or "")}"]
                 disasm_output.append(f"; Architecture: {cs.arch}")
                 disasm_output.append(f"; Mode: {cs.mode}")
                 disasm_output.append("; " + "=" * 60)
@@ -1945,7 +2011,7 @@ class AnalysisTab(BaseTab):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Disassembly",
-            f"{os.path.splitext(os.path.basename(self.current_binary))[0]}_disasm.asm",
+            f"{os.path.splitext(os.path.basename(self.current_file_path or ""))[0]}_disasm.asm",
             "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)",
         )
 
@@ -2055,7 +2121,7 @@ class AnalysisTab(BaseTab):
             # Create progress dialog
             progress = QProgressDialog("Capturing system state...", "Cancel", 0, 100, self)
             progress.setWindowTitle("License Snapshot in Progress")
-            progress.setWindowModality(2)  # Qt.WindowModal
+            progress.setWindowModality(Qt.WindowModality.ApplicationModal)  # Qt.WindowModal
             progress.show()
 
             # Capture snapshot in separate thread to avoid UI freeze
@@ -2079,7 +2145,8 @@ class AnalysisTab(BaseTab):
                 def run(self) -> None:
                     try:
                         self.progress.emit(10, "Capturing system info...")
-                        snapshot_data = self.snapshot_obj.capture_full_snapshot(self.name)
+                        snapshot_result = self.snapshot_obj.capture_full_snapshot(self.name) if hasattr(self.snapshot_obj, "capture_full_snapshot") else {}
+                        snapshot_data: dict[str, Any] = snapshot_result if isinstance(snapshot_result, dict) else {}
                         self.progress.emit(100, "Snapshot complete")
                         self.finished.emit(snapshot_data)
                     except Exception as e:
@@ -2101,38 +2168,51 @@ class AnalysisTab(BaseTab):
                 if message:
                     self.log_activity(f"Snapshot: {message}")
 
-            def on_snapshot_complete(snapshot_data: dict[str, object]) -> None:
+            def on_snapshot_complete(snapshot_data_raw: object) -> None:
                 """Handle completion of snapshot capture.
 
                 Args:
-                    snapshot_data: Dictionary containing captured snapshot information.
+                    snapshot_data_raw: Dictionary containing captured snapshot information.
 
                 """
                 progress.close()
+
+                # Type check the snapshot data
+                snapshot_data: dict[str, Any] = snapshot_data_raw if isinstance(snapshot_data_raw, dict) else {}
 
                 # Store snapshot
                 self.snapshots[snapshot_name] = snapshot_data
 
                 # Show summary
+                processes = snapshot_data.get('processes', [])
+                registry = snapshot_data.get('registry', {})
+                files = snapshot_data.get('files', {})
+                services = snapshot_data.get('services', [])
+                network = snapshot_data.get('network', {})
+                certificates = snapshot_data.get('certificates', [])
+                drivers = snapshot_data.get('drivers', [])
+
                 summary = [
                     f"Snapshot '{snapshot_name}' captured successfully!",
                     "",
                     "License Analysis Summary:",
-                    f" Processes scanned: {len(snapshot_data.get('processes', []))}",
-                    f" Registry keys analyzed: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
-                    f" License files found: {len(snapshot_data.get('files', {}).get('license_files', []))}",
-                    f" Services monitored: {len(snapshot_data.get('services', []))}",
-                    f" Network connections: {len(snapshot_data.get('network', {}).get('connections', []))}",
-                    f" Certificates detected: {len(snapshot_data.get('certificates', []))}",
-                    f" Protection drivers: {len(snapshot_data.get('drivers', []))}",
+                    f" Processes scanned: {len(processes) if isinstance(processes, list) else 0}",
+                    f" Registry keys analyzed: {sum(len(v) for v in registry.values()) if isinstance(registry, dict) else 0}",
+                    f" License files found: {len(files.get('license_files', [])) if isinstance(files, dict) else 0}",
+                    f" Services monitored: {len(services) if isinstance(services, list) else 0}",
+                    f" Network connections: {len(network.get('connections', [])) if isinstance(network, dict) else 0}",
+                    f" Certificates detected: {len(certificates) if isinstance(certificates, list) else 0}",
+                    f" Protection drivers: {len(drivers) if isinstance(drivers, list) else 0}",
                 ]
 
                 # Check for license-specific findings
-                if snapshot_data.get("loaded_dlls"):
-                    summary.append(f" License DLLs loaded: {len(snapshot_data['loaded_dlls'])}")
+                loaded_dlls = snapshot_data.get("loaded_dlls")
+                if loaded_dlls and isinstance(loaded_dlls, list):
+                    summary.append(f" License DLLs loaded: {len(loaded_dlls)}")
 
-                if snapshot_data.get("mutexes"):
-                    summary.append(f" License mutexes found: {len(snapshot_data['mutexes'])}")
+                mutexes = snapshot_data.get("mutexes")
+                if mutexes and isinstance(mutexes, list):
+                    summary.append(f" License mutexes found: {len(mutexes)}")
 
                 # Log detailed findings
                 self.log_activity("=" * 50)
@@ -2333,7 +2413,7 @@ class AnalysisTab(BaseTab):
                 QMessageBox.information(self, "Export Successful", f"Results exported to:\n{file_path}")
 
             except Exception as e:
-                self.log_activity(f"Export failed: {e}", is_error=True)
+                self.log_activity(f"Export failed: {e}")
                 QMessageBox.critical(self, "Export Failed", f"Failed to export results: {e!s}")
 
     def create_fallback_entropy_visualizer(self) -> QWidget:
@@ -2359,7 +2439,7 @@ class AnalysisTab(BaseTab):
 
         # Statistics display
         stats_group = QFrame()
-        stats_group.setFrameStyle(QFrame.StyledPanel)
+        stats_group.setFrameStyle(QFrame.Shape.StyledPanel)
         stats_layout = QVBoxLayout(stats_group)
         stats_layout.addWidget(QLabel("Entropy Statistics:"))
 
@@ -2465,7 +2545,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             error_msg = f"Error during entropy analysis: {e!s}"
             self.fallback_entropy_results.setPlainText(error_msg)
-            self.log_activity(error_msg, is_error=True)
+            self.log_activity(error_msg)
 
     def analyze_binary_entropy(self) -> None:
         """Perform detailed binary entropy analysis for license protection detection."""
@@ -2549,7 +2629,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             error_msg = f"Error during comprehensive entropy analysis: {e!s}"
             self.fallback_entropy_results.setPlainText(error_msg)
-            self.log_activity(error_msg, is_error=True)
+            self.log_activity(error_msg)
 
     def analyze_binary_structure(self) -> None:
         """Perform detailed binary structure analysis for license protection detection."""
@@ -2605,7 +2685,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             error_msg = f"Error during structure analysis: {e!s}"
             self.fallback_structure_results.setPlainText(error_msg)
-            self.log_activity(error_msg, is_error=True)
+            self.log_activity(error_msg)
 
     def export_structure_analysis(self) -> None:
         """Export structure analysis results to file."""
@@ -2630,7 +2710,7 @@ class AnalysisTab(BaseTab):
 
         except Exception as e:
             error_msg = f"Export failed: {e!s}"
-            self.log_activity(error_msg, is_error=True)
+            self.log_activity(error_msg)
             QMessageBox.critical(self, "Export Failed", error_msg)
 
     def detect_license_protection(self) -> None:
@@ -2724,7 +2804,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             error_msg = f"Error during protection detection: {e!s}"
             self.fallback_structure_results.setPlainText(error_msg)
-            self.log_activity(error_msg, is_error=True)
+            self.log_activity(error_msg)
 
     def calculate_shannon_entropy(self, data: bytes | bytearray) -> float:
         """Calculate Shannon entropy of data block.
@@ -3005,7 +3085,7 @@ class AnalysisTab(BaseTab):
         self.log_activity("Detecting license checks...")
         self.license_display.clear()
 
-        license_checks_found = []
+        license_checks_found: list[str] = []
 
         try:
             with open(self.current_file_path, "rb") as f:
@@ -3176,7 +3256,7 @@ class AnalysisTab(BaseTab):
                 {
                     "method": "License Server Emulation",
                     "description": "Create local license server to validate requests",
-                    "port": self._detect_license_port(),
+                    "port": str(self._detect_license_port()),
                     "risk": "High",
                     "effectiveness": "Very High",
                 },
@@ -3216,9 +3296,11 @@ class AnalysisTab(BaseTab):
             self.bypass_display.append(f"Effectiveness: {strategy['effectiveness']}")
 
             if addresses := strategy.get("addresses"):
-                self.bypass_display.append(f"Target Addresses: {', '.join(hex(addr) for addr in addresses[:5])}")
+                self.bypass_display.append(f"Target Addresses: {', '.join(hex(int(addr)) for addr in addresses[:5] if isinstance(addr, (int, float)))}")
             if "apis" in strategy:
-                self.bypass_display.append(f"Target APIs: {', '.join(strategy['apis'])}")
+                apis = strategy.get('apis')
+                if apis and isinstance(apis, list):
+                    self.bypass_display.append(f"Target APIs: {', '.join(str(a) for a in apis)}")
             if "port" in strategy:
                 self.bypass_display.append(f"License Port: {strategy['port']}")
 
@@ -3244,8 +3326,9 @@ class AnalysisTab(BaseTab):
             )
             return
 
-        bypass_data = self.analysis_results["subscription_bypass"]
-        detected_type = bypass_data.get("detected_type", "unknown")
+        bypass_data_raw = self.analysis_results.get("subscription_bypass")
+        bypass_data: dict[str, Any] = bypass_data_raw if isinstance(bypass_data_raw, dict) else {}
+        detected_type = str(bypass_data.get("detected_type", "unknown"))
 
         if detected_type == "unknown":
             QMessageBox.warning(self, "Warning", "No subscription scheme detected")
@@ -3259,7 +3342,7 @@ class AnalysisTab(BaseTab):
 
             sub_bypass = SubscriptionValidationBypass()
 
-            product_name = os.path.splitext(os.path.basename(self.current_binary))[0]
+            product_name = os.path.splitext(os.path.basename(self.current_file_path or ""))[0]
 
             if bypass_success := sub_bypass.bypass_subscription(product_name):
                 logger.info(f"Subscription bypass executed for {product_name} (result: {bypass_success})")
@@ -3407,20 +3490,24 @@ class AnalysisTab(BaseTab):
 
         if self.monitoring_session:
             try:
-                stats = self.monitoring_session.get_stats()
+                stats_raw = self.monitoring_session.get_stats()
                 self.monitoring_session.stop()
 
                 self.monitor_log.append("\n" + "=" * 60)
                 self.monitor_log.append("LICENSE MONITORING STOPPED")
                 self.monitor_log.append("=" * 60)
 
+                stats: dict[str, Any] = stats_raw if isinstance(stats_raw, dict) else {}
                 frida_status = stats.get("frida_server", {})
-                agg_stats = stats.get("aggregator", {})
-                events_by_source = agg_stats.get("events_by_source", {})
+                agg_stats_raw = stats.get("aggregator", {})
+                agg_stats: dict[str, Any] = agg_stats_raw if isinstance(agg_stats_raw, dict) else {}
+                events_by_source_raw = agg_stats.get("events_by_source", {})
+                events_by_source: dict[str, Any] = events_by_source_raw if isinstance(events_by_source_raw, dict) else {}
 
                 self.monitor_log.append("\nSession Information:")
-                self.monitor_log.append(f" frida-server version: {frida_status.get('version', 'unknown')}")
-                self.monitor_log.append(f" Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
+                if isinstance(frida_status, dict):
+                    self.monitor_log.append(f" frida-server version: {frida_status.get('version', 'unknown')}")
+                    self.monitor_log.append(f" Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
 
                 self.monitor_log.append("\nMonitoring Summary:")
                 self.monitor_log.append(f" Total events captured: {agg_stats.get('total_events', 0)}")
@@ -3441,14 +3528,14 @@ class AnalysisTab(BaseTab):
         self.start_monitor_btn.setEnabled(True)
         self.stop_monitor_btn.setEnabled(False)
 
-    def _on_monitoring_event(self, event: object) -> None:
+    def _on_monitoring_event(self, event: MonitorEvent) -> None:
         """Handle monitoring event from session.
 
         Args:
             event: MonitorEvent instance containing event data.
 
         """
-        event_dict = event.to_dict()
+        event_dict: dict[str, Any] = event.to_dict() if hasattr(event, 'to_dict') else {}
 
         timestamp = datetime.fromtimestamp(event_dict["timestamp"]).strftime("%H:%M:%S.%f")[:-3]
         source = event_dict["source"].upper()
@@ -3598,8 +3685,10 @@ class AnalysisTab(BaseTab):
 
         if dialog.exec() == QDialog.DialogCode.Accepted:
             if first_list.currentItem() and second_list.currentItem():
-                snapshot1_name = first_list.currentItem().text()
-                snapshot2_name = second_list.currentItem().text()
+                first_item = first_list.currentItem()
+                snapshot1_name = first_item.text() if first_item else ""
+                second_item = second_list.currentItem()
+                snapshot2_name = second_item.text() if second_item else ""
 
                 if snapshot1_name == snapshot2_name:
                     QMessageBox.warning(self, "Invalid Selection", "Please select two different snapshots.")
@@ -3724,7 +3813,8 @@ class AnalysisTab(BaseTab):
         layout.addWidget(button_box)
 
         if dialog.exec() == QDialog.DialogCode.Accepted and snapshot_list.currentItem():
-            snapshot_name = snapshot_list.currentItem().text()
+            current_item = snapshot_list.currentItem()
+            snapshot_name = current_item.text() if current_item else ""
 
             # Get export file path
             file_path, _ = QFileDialog.getSaveFileName(
@@ -3891,7 +3981,9 @@ class AnalysisTab(BaseTab):
                             if entry.name:
                                 func_lower = entry.name.lower()
                                 if any(kw in func_lower for kw in license_keywords):
-                                    api_calls.append(f"{dll_name}!{entry.name}")
+                                    dll_str = dll_name.decode() if isinstance(dll_name, bytes) else str(dll_name)
+                                    name_str = entry.name.decode() if isinstance(entry.name, bytes) else str(entry.name)
+                                    api_calls.append(f"{dll_str}!{name_str}")
 
             except Exception:
                 pass

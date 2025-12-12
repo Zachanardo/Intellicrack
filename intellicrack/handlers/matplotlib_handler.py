@@ -17,22 +17,51 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
+import os
 import traceback
 import types
-from collections.abc import Callable
-from typing import Any, Optional, Union
+from collections.abc import Callable, Iterable, Sized
+from typing import Any, Protocol, TypeVar
 
 from intellicrack.utils.logger import logger
 
 
-# Matplotlib availability detection and import handling
+class _ImageDrawProtocol(Protocol):
+    def rectangle(
+        self,
+        xy: list[tuple[int, int]] | tuple[tuple[int, int], tuple[int, int]],
+        fill: str | None = ...,
+        outline: str | None = ...,
+    ) -> None: ...
+    def text(
+        self,
+        xy: tuple[int, int],
+        text: str,
+        fill: str | None = ...,
+        anchor: str | None = ...,
+    ) -> None: ...
+    def line(
+        self,
+        xy: list[tuple[float, float]],
+        fill: str | None = ...,
+        width: int = ...,
+    ) -> None: ...
+
+
+_T = TypeVar("_T")
+
+HAS_MATPLOTLIB: bool = False
+MATPLOTLIB_VERSION: str | None = None
+
+qt_backend_name: str | None = None
+FigureCanvasQTAgg: type[Any] | None = None
+qt_backend_error: BaseException | None = None
+_canvas_tk_class: type[Any] | None = None
+
 try:
     import matplotlib as mpl
-
-    # Determine which Qt backend to use based on available PyQt versions
-    qt_backend_name = None
-    FigureCanvasQTAgg = None
-    qt_backend_error = None
 
     # Check Qt availability and try appropriate matplotlib backends
     # First try the generic QtAgg backend (works with both Qt5 and Qt6)
@@ -44,11 +73,10 @@ try:
             qt_backend_name = "QtAgg"
             logger.debug("Successfully loaded generic QtAgg backend for matplotlib")
         except ImportError:
-            # QtAgg not available, try Qt5Agg
             try:
                 import matplotlib.backends.backend_qt5agg as backend_qt5agg_module
 
-                FigureCanvasQTAgg = backend_qt5agg_module.FigureCanvasQTAgg
+                FigureCanvasQTAgg = getattr(backend_qt5agg_module, "FigureCanvasQTAgg", None)
                 qt_backend_name = "Qt5Agg"
                 logger.debug("Successfully loaded Qt5Agg backend for matplotlib")
             except ImportError as e:
@@ -120,30 +148,29 @@ try:
         logger.warning(f"No Qt backend for matplotlib available, some GUI features may be limited. Last error: {qt_backend_error}")
         logger.debug(f"Full traceback for Qt backend import failure: {traceback.format_exc()}")
 
-    # Try to import Tk backend but don't fail if Tk is not available
     try:
-        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as _TkCanvasClass
+        _canvas_tk_class = _TkCanvasClass
     except ImportError:
-        FigureCanvasTkAgg = None
+        pass
 
     HAS_MATPLOTLIB = True
-    MATPLOTLIB_VERSION = mpl.__version__
+    MATPLOTLIB_VERSION = str(mpl.__version__)
 
-    # If Qt backend was not available, create a basic fallback
     if FigureCanvasQTAgg is None:
 
-        class FigureCanvasQTAgg:
+        class _FallbackQtCanvas:
             """Production-ready Qt canvas fallback when Qt backend is not available."""
 
-            def __init__(self, figure: object) -> None:
+            def __init__(self, figure: Any) -> None:
                 """Initialize Qt canvas with matplotlib figure.
 
                 Args:
                     figure: Matplotlib figure object to render on the Qt canvas.
 
                 """
-                self.figure: object = figure
-                self._size_policy: tuple[object, ...] | None = None
+                self.figure: Any = figure
+                self._size_policy: tuple[Any, ...] | None = None
 
             def draw(self) -> None:
                 """Draw the Qt canvas using fallback rendering."""
@@ -152,7 +179,7 @@ try:
                 else:
                     logger.debug("Qt canvas fallback draw() - no rendering available")
 
-            def setSizePolicy(self, *args: object) -> None:
+            def setSizePolicy(self, *args: Any) -> None:
                 """Set size policy for Qt widget compatibility.
 
                 Args:
@@ -170,10 +197,10 @@ try:
                 """Repaint the canvas."""
                 self.draw()
 
+        FigureCanvasQTAgg = _FallbackQtCanvas
+
 except ImportError as e:
     logger.error("Matplotlib not available, using fallback implementations: %s", e)
-    HAS_MATPLOTLIB = False
-    MATPLOTLIB_VERSION = None
 
     # Production-ready fallback implementations for Intellicrack's visualization needs
 
@@ -211,7 +238,7 @@ except ImportError as e:
             nrows: int,
             ncols: int,
             index: int,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> "FallbackAxes":
             """Add a subplot to the figure.
 
@@ -225,12 +252,12 @@ except ImportError as e:
                 The created FallbackAxes subplot object.
 
             """
-            ax = FallbackAxes(self, nrows, ncols, index, **kwargs)
+            ax = FallbackAxes(self, nrows, ncols, index)
             self.axes.append(ax)
             self._current_axes = ax
             return ax
 
-        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: object) -> "FallbackAxes":
+        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: Any) -> "FallbackAxes":
             """Add axes at the given position.
 
             Args:
@@ -241,12 +268,12 @@ except ImportError as e:
                 The created FallbackAxes object.
 
             """
-            ax = FallbackAxes(self, rect=rect, **kwargs)
+            ax = FallbackAxes(self, rect=rect)
             self.axes.append(ax)
             self._current_axes = ax
             return ax
 
-        def suptitle(self, title: str, **kwargs: object) -> None:
+        def suptitle(self, title: str, **kwargs: Any) -> None:
             """Set the figure's super title.
 
             Args:
@@ -312,11 +339,11 @@ except ImportError as e:
 
         def savefig(
             self,
-            fname: str | object,
+            fname: str | os.PathLike[str],
             dpi: int | None = None,
             format: str | None = None,
             bbox_inches: str | None = None,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Save the figure to a file.
 
@@ -328,18 +355,19 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments for save formatting.
 
             """
-            if format is None and isinstance(fname, str):
-                file_format = fname.split(".")[-1].lower()
+            fname_str = str(fname)
+            if format is None:
+                file_format: str = fname_str.split(".")[-1].lower()
             else:
                 file_format = format
 
             svg_content = self._generate_svg()
 
             if file_format == "svg":
-                with open(fname, "w") as f:
+                with open(fname_str, "w") as f:
                     f.write(svg_content)
             elif file_format in ["png", "jpg", "jpeg"]:
-                self._save_raster(fname, format, dpi or self.dpi)
+                self._save_raster(fname_str, file_format, dpi or self.dpi)
 
         def _generate_svg(self) -> str:
             """Generate SVG representation of the figure.
@@ -365,7 +393,7 @@ except ImportError as e:
             svg += "</svg>"
             return svg
 
-        def _save_raster(self, fname: str | object, format: str, dpi: int) -> None:
+        def _save_raster(self, fname: str, format: str, dpi: int) -> None:
             """Save as raster image using PIL or pure Python bitmap generation.
 
             Args:
@@ -377,7 +405,7 @@ except ImportError as e:
             try:
                 from PIL import Image, ImageDraw, ImageFont
 
-                _ = ImageFont.__name__  # Verify ImageFont is properly imported for future text rendering capabilities
+                _ = ImageFont.__name__
 
                 width = int(self.figsize[0] * dpi)
                 height = int(self.figsize[1] * dpi)
@@ -385,10 +413,8 @@ except ImportError as e:
                 img = Image.new("RGB", (width, height), color="white")
                 draw = ImageDraw.Draw(img)
 
-                # Draw border
                 draw.rectangle([(0, 0), (width - 1, height - 1)], outline="black")
 
-                # Draw title
                 if self._suptitle:
                     draw.text((width // 2, 20), self._suptitle, fill="black", anchor="mt")
 
@@ -568,7 +594,8 @@ except ImportError as e:
             """
             if not self._current_axes and not self.axes:
                 self.add_subplot(1, 1, 1)
-            return self._current_axes or self.axes[0]
+            result: FallbackAxes = self._current_axes if self._current_axes is not None else self.axes[0]
+            return result
 
     class FallbackAxes:
         """Functional axes implementation for plotting."""
@@ -599,12 +626,12 @@ except ImportError as e:
             self.index: int = index
             self.rect: tuple[float, float, float, float] | None = rect
 
-            self.lines: list[dict[str, object]] = []
-            self.bars: list[dict[str, object]] = []
-            self.patches: list[dict[str, object]] = []
-            self.texts: list[dict[str, object]] = []
-            self.images: list[dict[str, object]] = []
-            self.scatter_data: list[dict[str, object]] = []
+            self.lines: list[dict[str, Any]] = []
+            self.bars: list[dict[str, Any]] = []
+            self.patches: list[dict[str, Any]] = []
+            self.texts: list[dict[str, Any]] = []
+            self.images: list[dict[str, Any]] = []
+            self.scatter_data: list[dict[str, Any]] = []
 
             self.title: str = ""
             self.xlabel_text: str = ""
@@ -614,7 +641,13 @@ except ImportError as e:
             self.legend_items: list[tuple[str, str]] = []
             self.grid_enabled: bool = False
 
-        def plot(self, x: object | None = None, y: object | None = None, *args: object, **kwargs: object) -> None:
+        def plot(
+            self,
+            x: Iterable[float] | None = None,
+            y: Iterable[float] | None = None,
+            *args: Any,
+            **kwargs: Any,
+        ) -> None:
             """Plot lines on the axes.
 
             Args:
@@ -627,20 +660,26 @@ except ImportError as e:
             if x is None and y is None:
                 return
 
-            if y is None:
-                y = x
-                x = list(range(len(y)))
+            x_data: list[float]
+            y_data: list[float]
 
-            color: str = kwargs.get("color", "blue")
-            linestyle: str = kwargs.get("linestyle", "-")
-            marker: str = kwargs.get("marker", "")
-            label: str = kwargs.get("label", "")
-            linewidth: int = kwargs.get("linewidth", 1)
+            if y is None:
+                y_data = list(x) if x is not None else []
+                x_data = list(range(len(y_data)))
+            else:
+                x_data = list(x) if x is not None else []
+                y_data = list(y)
+
+            color: str = str(kwargs.get("color", "blue"))
+            linestyle: str = str(kwargs.get("linestyle", "-"))
+            marker: str = str(kwargs.get("marker", ""))
+            label: str = str(kwargs.get("label", ""))
+            linewidth: int = int(kwargs.get("linewidth", 1))
 
             self.lines.append(
                 {
-                    "x": list(x),
-                    "y": list(y),
+                    "x": x_data,
+                    "y": y_data,
                     "color": color,
                     "linestyle": linestyle,
                     "marker": marker,
@@ -652,17 +691,17 @@ except ImportError as e:
             if label:
                 self.legend_items.append((label, color))
 
-            self._update_limits(x, y)
+            self._update_limits(x_data, y_data)
 
         def scatter(
             self,
-            x: object,
-            y: object,
+            x: Iterable[float],
+            y: Iterable[float],
             s: int | None = None,
             c: str | None = None,
             marker: str = "o",
             alpha: float = 1.0,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Create scatter plot on the axes.
 
@@ -676,32 +715,36 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments including label.
 
             """
+            x_data = list(x)
+            y_data = list(y)
+            label_val = str(kwargs.get("label", ""))
+
             self.scatter_data.append(
                 {
-                    "x": list(x),
-                    "y": list(y),
+                    "x": x_data,
+                    "y": y_data,
                     "s": s if s is not None else 20,
                     "c": c if c is not None else "blue",
                     "marker": marker,
                     "alpha": alpha,
-                    "label": kwargs.get("label", ""),
+                    "label": label_val,
                 },
             )
 
-            if kwargs.get("label"):
-                self.legend_items.append((kwargs["label"], c or "blue"))
+            if label_val:
+                self.legend_items.append((label_val, c or "blue"))
 
-            self._update_limits(x, y)
+            self._update_limits(x_data, y_data)
 
         def bar(
             self,
-            x: object,
-            height: object,
+            x: Iterable[float] | float,
+            height: Iterable[float] | float,
             width: float = 0.8,
             bottom: float | None = None,
             color: str = "blue",
             label: str = "",
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Create bar plot on the axes.
 
@@ -715,15 +758,23 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            if not hasattr(x, "__iter__"):
-                x = [x]
-            if not hasattr(height, "__iter__"):
-                height = [height]
+            x_data: list[float]
+            height_data: list[float]
+
+            if isinstance(x, (int, float)):
+                x_data = [float(x)]
+            else:
+                x_data = list(x)
+
+            if isinstance(height, (int, float)):
+                height_data = [float(height)]
+            else:
+                height_data = list(height)
 
             self.bars.append(
                 {
-                    "x": list(x),
-                    "height": list(height),
+                    "x": x_data,
+                    "height": height_data,
                     "width": width,
                     "bottom": bottom,
                     "color": color,
@@ -734,36 +785,36 @@ except ImportError as e:
             if label:
                 self.legend_items.append((label, color))
 
-            self._update_limits(x, height)
+            self._update_limits(x_data, height_data)
 
         def hist(
             self,
-            x: object,
+            x: Iterable[float],
             bins: int = 10,
-            range: tuple[float, float] | None = None,
+            hist_range: tuple[float, float] | None = None,
             density: bool = False,
             color: str = "blue",
             label: str = "",
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Create histogram on the axes.
 
             Args:
                 x: Data values for the histogram.
                 bins: Number of histogram bins.
-                range: Tuple of (min, max) values for histogram range.
+                hist_range: Tuple of (min, max) values for histogram range.
                 density: If True, normalize histogram to form a probability density.
                 color: Bar color.
                 label: Legend label.
                 **kwargs: Additional keyword arguments.
 
             """
-            # Calculate histogram
-            value_range = (min(x), max(x)) if range is None else range
-            bin_edges = [value_range[0] + i * (value_range[1] - value_range[0]) / bins for i in range(bins + 1)]
-            counts = [0] * bins
+            x_data = list(x)
+            value_range: tuple[float, float] = (min(x_data), max(x_data)) if hist_range is None else hist_range
+            bin_edges: list[float] = [value_range[0] + i * (value_range[1] - value_range[0]) / bins for i in range(bins + 1)]
+            counts: list[float] = [0.0] * bins
 
-            for val in x:
+            for val in x_data:
                 if value_range[0] <= val <= value_range[1]:
                     bin_idx = min(
                         int((val - value_range[0]) / (value_range[1] - value_range[0]) * bins),
@@ -773,14 +824,13 @@ except ImportError as e:
 
             if density:
                 total = sum(counts)
-                bin_width = (value_range[1] - value_range[0]) / bins
-                counts = [c / (total * bin_width) if total > 0 else 0 for c in counts]
+                bwidth = (value_range[1] - value_range[0]) / bins
+                counts = [c / (total * bwidth) if total > 0 else 0.0 for c in counts]
 
-            # Store as bars
-            bin_centers = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(bins)]
-            bin_width = (value_range[1] - value_range[0]) / bins
+            bin_centers: list[float] = [(bin_edges[i] + bin_edges[i + 1]) / 2 for i in range(bins)]
+            final_bin_width = (value_range[1] - value_range[0]) / bins
 
-            self.bar(bin_centers, counts, width=bin_width, color=color, label=label)
+            self.bar(bin_centers, counts, width=final_bin_width, color=color, label=label)
 
         def imshow(
             self,
@@ -997,7 +1047,7 @@ except ImportError as e:
             self.legend_items.clear()
             self.grid_enabled = False
 
-        def _update_limits(self, x_data: object, y_data: object) -> None:
+        def _update_limits(self, x_data: list[float], y_data: list[float]) -> None:
             """Update axis limits based on data.
 
             Args:
@@ -1005,15 +1055,13 @@ except ImportError as e:
                 y_data: Y-axis data to process.
 
             """
-            if hasattr(x_data, "__iter__"):
-                x_min, x_max = min(x_data), max(x_data)
-            else:
-                x_min = x_max = x_data
+            if not x_data or not y_data:
+                return
 
-            if hasattr(y_data, "__iter__"):
-                y_min, y_max = min(y_data), max(y_data)
-            else:
-                y_min = y_max = y_data
+            x_min: float = min(x_data)
+            x_max: float = max(x_data)
+            y_min: float = min(y_data)
+            y_max: float = max(y_data)
 
             if self.xlim is None:
                 self.xlim = (x_min, x_max)
@@ -1081,50 +1129,65 @@ except ImportError as e:
                     svg += f'<line x1="{x_pos}" y1="0" x2="{x_pos}" y2="{height}" stroke="gray" stroke-width="0.5" opacity="0.5"/>\n'
                     svg += f'<line x1="0" y1="{y_pos}" x2="{width}" y2="{y_pos}" stroke="gray" stroke-width="0.5" opacity="0.5"/>\n'
 
-            # Draw lines
             for line in self.lines:
-                if len(line["x"]) < 2:
+                line_x = line.get("x")
+                line_y = line.get("y")
+                if not isinstance(line_x, list) or not isinstance(line_y, list):
+                    continue
+                if len(line_x) < 2:
                     continue
 
-                points = []
-                for i in range(len(line["x"])):
+                points: list[str] = []
+                for i in range(len(line_x)):
                     if self.xlim and self.ylim:
-                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (float(line_x[i]) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
                         points.append(f"{x_norm * width},{y_norm * height}")
 
                 if points:
+                    line_color = str(line.get("color", "black"))
+                    lw = int(line.get("linewidth", 1))
                     svg += (
-                        f'<polyline points="{" ".join(points)}" fill="none" stroke="{line["color"]}" stroke-width="{line["linewidth"]}"/>\n'
+                        f'<polyline points="{" ".join(points)}" fill="none" stroke="{line_color}" stroke-width="{lw}"/>\n'
                     )
 
-            # Draw bars
             for bar_group in self.bars:
-                for x, h in zip(bar_group["x"], bar_group["height"], strict=False):
+                bar_x_list = bar_group.get("x")
+                bar_h_list = bar_group.get("height")
+                if not isinstance(bar_x_list, list) or not isinstance(bar_h_list, list):
+                    continue
+                bar_w = float(bar_group.get("width", 0.8))
+                bar_color = str(bar_group.get("color", "blue"))
+                for bx, bh in zip(bar_x_list, bar_h_list, strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        h_norm = h / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (float(bx) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        h_norm = float(bh) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
 
-                        bar_x = x_norm * width - bar_group["width"] * width / (2 * (self.xlim[1] - self.xlim[0]))
-                        bar_width = bar_group["width"] * width / (self.xlim[1] - self.xlim[0])
-                        bar_height = h_norm * height
-                        bar_y = height - bar_height
+                        rect_x = x_norm * width - bar_w * width / (2 * (self.xlim[1] - self.xlim[0]))
+                        rect_width = bar_w * width / (self.xlim[1] - self.xlim[0])
+                        rect_height = h_norm * height
+                        rect_y = height - rect_height
 
-                        svg += f'<rect x="{bar_x}" y="{bar_y}" width="{bar_width}" height="{bar_height}" fill="{bar_group["color"]}"/>\n'
+                        svg += f'<rect x="{rect_x}" y="{rect_y}" width="{rect_width}" height="{rect_height}" fill="{bar_color}"/>\n'
 
-            # Draw scatter points
             for scatter in self.scatter_data:
-                for x, y in zip(scatter["x"], scatter["y"], strict=False):
+                sc_x = scatter.get("x")
+                sc_y = scatter.get("y")
+                if not isinstance(sc_x, list) or not isinstance(sc_y, list):
+                    continue
+                sc_color = str(scatter.get("c", "blue"))
+                sc_alpha = float(scatter.get("alpha", 1.0))
+                for sx, sy in zip(sc_x, sc_y, strict=False):
                     if self.xlim and self.ylim:
-                        x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (y - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (float(sx) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (float(sy) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
 
-                        svg += f'<circle cx="{x_norm * width}" cy="{y_norm * height}" r="3" fill="{scatter["c"]}" opacity="{scatter["alpha"]}"/>\n'
+                        svg += f'<circle cx="{x_norm * width}" cy="{y_norm * height}" r="3" fill="{sc_color}" opacity="{sc_alpha}"/>\n'
 
             svg += "</g>\n"
             return svg
 
-        def _draw_on_image(self, draw: object, fig_width: int, fig_height: int) -> None:
+        def _draw_on_image(self, draw: _ImageDrawProtocol, fig_width: int, fig_height: int) -> None:
             """Draw axes content on PIL image.
 
             Args:
@@ -1133,7 +1196,6 @@ except ImportError as e:
                 fig_height: Figure height in pixels.
 
             """
-            # Calculate axes position
             if self.rect:
                 x = int(self.rect[0] * fig_width)
                 y = int(self.rect[1] * fig_height)
@@ -1152,28 +1214,31 @@ except ImportError as e:
                 x = int(col * (fig_width / cols) + width * 0.1)
                 y = int(row * (fig_height / rows) + height * 0.1)
 
-            # Draw axes box
             draw.rectangle([(x, y), (x + width, y + height)], outline="black")
 
-            # Draw title
             if self.title:
                 draw.text((x + width // 2, y - 10), self.title, fill="black", anchor="mt")
 
-            # Draw lines
             for line in self.lines:
-                if len(line["x"]) < 2:
+                line_x = line.get("x")
+                line_y = line.get("y")
+                if not isinstance(line_x, list) or not isinstance(line_y, list):
+                    continue
+                if len(line_x) < 2:
                     continue
 
-                points = []
-                for i in range(len(line["x"])):
+                points: list[tuple[float, float]] = []
+                for i in range(len(line_x)):
                     if self.xlim and self.ylim:
-                        x_norm = (line["x"][i] - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (line["y"][i] - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        x_norm = (float(line_x[i]) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
+                        y_norm = 1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
                         points.append((x + x_norm * width, y + y_norm * height))
 
                 if len(points) > 1:
+                    line_color = str(line.get("color", "black"))
+                    line_width = int(line.get("linewidth", 1))
                     for i in range(len(points) - 1):
-                        draw.line([points[i], points[i + 1]], fill=line["color"], width=line["linewidth"])
+                        draw.line([points[i], points[i + 1]], fill=line_color, width=line_width)
 
     class FallbackCanvas:
         """Functional canvas implementation for figure rendering."""
@@ -1294,7 +1359,7 @@ except ImportError as e:
             width: float,
             height: float,
             angle: float = 0.0,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Initialize rectangle.
 
@@ -1310,15 +1375,15 @@ except ImportError as e:
             self.width: float = width
             self.height: float = height
             self.angle: float = angle
-            self.facecolor: str = kwargs.get("facecolor", "blue")
-            self.edgecolor: str = kwargs.get("edgecolor", "black")
-            self.linewidth: int = kwargs.get("linewidth", 1)
-            self.alpha: float = kwargs.get("alpha", 1.0)
+            self.facecolor: str = str(kwargs.get("facecolor", "blue"))
+            self.edgecolor: str = str(kwargs.get("edgecolor", "black"))
+            self.linewidth: int = int(kwargs.get("linewidth", 1))
+            self.alpha: float = float(kwargs.get("alpha", 1.0))
 
     class FallbackCircle:
         """Circle patch implementation."""
 
-        def __init__(self, xy: tuple[float, float], radius: float, **kwargs: object) -> None:
+        def __init__(self, xy: tuple[float, float], radius: float, **kwargs: Any) -> None:
             """Initialize circle.
 
             Args:
@@ -1329,15 +1394,15 @@ except ImportError as e:
             """
             self.xy: tuple[float, float] = xy
             self.radius: float = radius
-            self.facecolor: str = kwargs.get("facecolor", "blue")
-            self.edgecolor: str = kwargs.get("edgecolor", "black")
-            self.linewidth: int = kwargs.get("linewidth", 1)
-            self.alpha: float = kwargs.get("alpha", 1.0)
+            self.facecolor: str = str(kwargs.get("facecolor", "blue"))
+            self.edgecolor: str = str(kwargs.get("edgecolor", "black"))
+            self.linewidth: int = int(kwargs.get("linewidth", 1))
+            self.alpha: float = float(kwargs.get("alpha", 1.0))
 
     class FallbackPolygon:
         """Polygon patch implementation."""
 
-        def __init__(self, xy: object, closed: bool = True, **kwargs: object) -> None:
+        def __init__(self, xy: Iterable[tuple[float, float]], closed: bool = True, **kwargs: Any) -> None:
             """Initialize polygon.
 
             Args:
@@ -1346,12 +1411,12 @@ except ImportError as e:
                 **kwargs: Additional properties like facecolor, edgecolor, linewidth, alpha.
 
             """
-            self.xy: Any = xy
+            self.xy: list[tuple[float, float]] = list(xy)
             self.closed: bool = closed
-            self.facecolor: str = kwargs.get("facecolor", "blue")
-            self.edgecolor: str = kwargs.get("edgecolor", "black")
-            self.linewidth: int = kwargs.get("linewidth", 1)
-            self.alpha: float = kwargs.get("alpha", 1.0)
+            self.facecolor: str = str(kwargs.get("facecolor", "blue"))
+            self.edgecolor: str = str(kwargs.get("edgecolor", "black"))
+            self.linewidth: int = int(kwargs.get("linewidth", 1))
+            self.alpha: float = float(kwargs.get("alpha", 1.0))
 
     class FallbackFuncFormatter:
         """Function formatter for axis ticks."""
@@ -1387,7 +1452,7 @@ except ImportError as e:
             steps: list[int] | None = None,
             min_n_ticks: int = 2,
             prune: str | None = None,
-            **kwargs: object,
+            **kwargs: Any,
         ) -> None:
             """Initialize locator.
 
@@ -1403,16 +1468,16 @@ except ImportError as e:
             self.steps: list[int] | None = steps
             self.min_n_ticks: int = min_n_ticks
             self.prune: str | None = prune
-            self.integer: bool = kwargs.get("integer", False)
+            self.integer: bool = bool(kwargs.get("integer", False))
 
     class FallbackPdfPages:
         """Functional multi-page PDF writer for matplotlib figures."""
 
         def __init__(
             self,
-            filename: str | object,
+            filename: str | os.PathLike[str],
             keep_empty: bool = True,
-            metadata: dict[str, object] | None = None,
+            metadata: dict[str, Any] | None = None,
         ) -> None:
             """Initialize PDF writer.
 
@@ -1422,10 +1487,10 @@ except ImportError as e:
                 metadata: Optional metadata dictionary for the PDF.
 
             """
-            self.filename: str | object = filename
+            self.filename: str = str(filename)
             self.keep_empty: bool = keep_empty
-            self.metadata: dict[str, object] = metadata or {}
-            self.pages: list[dict[str, object]] = []
+            self.metadata: dict[str, Any] = metadata or {}
+            self.pages: list[dict[str, Any]] = []
             self.closed: bool = False
 
         def __enter__(self) -> "FallbackPdfPages":
@@ -1453,7 +1518,7 @@ except ImportError as e:
             """
             self.close()
 
-        def savefig(self, figure: object | None = None, **kwargs: object) -> None:
+        def savefig(self, figure: Any = None, **kwargs: Any) -> None:
             """Save current figure to PDF page.
 
             Args:
@@ -1474,7 +1539,7 @@ except ImportError as e:
             else:
                 pdf_stream = self._generate_basic_pdf_stream()
 
-            page_data: dict[str, object] = {
+            page_data: dict[str, Any] = {
                 "figure": figure,
                 "timestamp": self._get_timestamp(),
                 "kwargs": kwargs,
@@ -1625,8 +1690,8 @@ startxref
 
         def __init__(self) -> None:
             """Initialize pyplot interface."""
-            self._figures: dict[int, object] = {}
-            self._current_figure: object | None = None
+            self._figures: dict[int, FallbackFigure] = {}
+            self._current_figure: FallbackFigure | None = None
             self._figure_counter: int = 0
 
         def figure(
@@ -1634,8 +1699,8 @@ startxref
             num: int | None = None,
             figsize: tuple[float, float] = (8, 6),
             dpi: int = 100,
-            **kwargs: object,
-        ) -> object:
+            **kwargs: Any,
+        ) -> FallbackFigure:
             """Create or activate a figure.
 
             Args:
@@ -1653,12 +1718,12 @@ startxref
                 num = self._figure_counter
 
             if num not in self._figures:
-                self._figures[num] = FallbackFigure(figsize, dpi, **kwargs)
+                self._figures[num] = FallbackFigure(figsize, dpi)
 
             self._current_figure = self._figures[num]
             return self._current_figure
 
-        def gcf(self) -> object:
+        def gcf(self) -> FallbackFigure:
             """Get current figure.
 
             Returns:
@@ -1666,10 +1731,10 @@ startxref
 
             """
             if self._current_figure is None:
-                self.figure()
+                return self.figure()
             return self._current_figure
 
-        def gca(self) -> object:
+        def gca(self) -> FallbackAxes:
             """Get current axes.
 
             Returns:
@@ -1679,7 +1744,7 @@ startxref
             fig = self.gcf()
             return fig.gca()
 
-        def subplot(self, nrows: int, ncols: int, index: int) -> object:
+        def subplot(self, nrows: int, ncols: int, index: int) -> FallbackAxes:
             """Create subplot.
 
             Args:
@@ -1699,8 +1764,8 @@ startxref
             nrows: int = 1,
             ncols: int = 1,
             figsize: tuple[float, float] = (8, 6),
-            **kwargs: object,
-        ) -> tuple[object, object] | tuple[object, list[object]] | tuple[object, list[list[object]]]:
+            **kwargs: Any,
+        ) -> tuple[FallbackFigure, FallbackAxes | list[FallbackAxes] | list[list[FallbackAxes]]]:
             """Create figure and subplots.
 
             Args:
@@ -1719,18 +1784,18 @@ startxref
                 if ncols == 1:
                     ax = fig.add_subplot(1, 1, 1)
                     return fig, ax
-                axes = [fig.add_subplot(1, ncols, i + 1) for i in range(ncols)]
-                return fig, axes
+                axes_1d: list[FallbackAxes] = [fig.add_subplot(1, ncols, i + 1) for i in range(ncols)]
+                return fig, axes_1d
             if ncols == 1:
-                axes = [fig.add_subplot(nrows, 1, i + 1) for i in range(nrows)]
-                return fig, axes
-            axes = []
+                axes_col: list[FallbackAxes] = [fig.add_subplot(nrows, 1, i + 1) for i in range(nrows)]
+                return fig, axes_col
+            axes_2d: list[list[FallbackAxes]] = []
             for i in range(nrows):
-                row = [fig.add_subplot(nrows, ncols, i * ncols + j + 1) for j in range(ncols)]
-                axes.append(row)
-            return fig, axes
+                row: list[FallbackAxes] = [fig.add_subplot(nrows, ncols, i * ncols + j + 1) for j in range(ncols)]
+                axes_2d.append(row)
+            return fig, axes_2d
 
-        def plot(self, *args: object, **kwargs: object) -> None:
+        def plot(self, *args: Any, **kwargs: Any) -> None:
             """Plot on current axes.
 
             Args:
@@ -1739,9 +1804,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.plot(*args, **kwargs)
+            ax.plot(*args, **kwargs)
 
-        def scatter(self, x: object, y: object, **kwargs: object) -> None:
+        def scatter(self, x: Iterable[float], y: Iterable[float], **kwargs: Any) -> None:
             """Scatter plot on current axes.
 
             Args:
@@ -1751,9 +1816,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.scatter(x, y, **kwargs)
+            ax.scatter(x, y, **kwargs)
 
-        def bar(self, x: object, height: object, **kwargs: object) -> None:
+        def bar(self, x: Iterable[float] | float, height: Iterable[float] | float, **kwargs: Any) -> None:
             """Bar plot on current axes.
 
             Args:
@@ -1763,9 +1828,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.bar(x, height, **kwargs)
+            ax.bar(x, height, **kwargs)
 
-        def hist(self, x: object, bins: int = 10, **kwargs: object) -> None:
+        def hist(self, x: Iterable[float], bins: int = 10, **kwargs: Any) -> None:
             """Histogram on current axes.
 
             Args:
@@ -1775,9 +1840,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.hist(x, bins, **kwargs)
+            ax.hist(x, bins, **kwargs)
 
-        def imshow(self, X: object, **kwargs: object) -> None:
+        def imshow(self, X: Any, **kwargs: Any) -> None:
             """Show image on current axes.
 
             Args:
@@ -1786,9 +1851,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.imshow(X, **kwargs)
+            ax.imshow(X, **kwargs)
 
-        def contour(self, *args: object, **kwargs: object) -> None:
+        def contour(self, *args: Any, **kwargs: Any) -> None:
             """Contour plot on current axes.
 
             Args:
@@ -1797,9 +1862,9 @@ startxref
 
             """
             ax = self.gca()
-            return ax.contour(*args, **kwargs)
+            ax.contour(*args, **kwargs)
 
-        def title(self, label: str, **kwargs: object) -> None:
+        def title(self, label: str, **kwargs: Any) -> None:
             """Set title of current axes.
 
             Args:
@@ -1810,7 +1875,7 @@ startxref
             ax = self.gca()
             ax.set_title(label, **kwargs)
 
-        def xlabel(self, label: str, **kwargs: object) -> None:
+        def xlabel(self, label: str, **kwargs: Any) -> None:
             """Set xlabel of current axes.
 
             Args:
@@ -1821,7 +1886,7 @@ startxref
             ax = self.gca()
             ax.set_xlabel(label, **kwargs)
 
-        def ylabel(self, label: str, **kwargs: object) -> None:
+        def ylabel(self, label: str, **kwargs: Any) -> None:
             """Set ylabel of current axes.
 
             Args:
@@ -1832,7 +1897,7 @@ startxref
             ax = self.gca()
             ax.set_ylabel(label, **kwargs)
 
-        def xlim(self, *args: object, **kwargs: object) -> tuple[float, float] | None:
+        def xlim(self, *args: Any, **kwargs: Any) -> tuple[float, float] | None:
             """Set xlim of current axes.
 
             Args:
@@ -1848,7 +1913,7 @@ startxref
                 ax.set_xlim(*args, **kwargs)
             return ax.xlim
 
-        def ylim(self, *args: object, **kwargs: object) -> tuple[float, float] | None:
+        def ylim(self, *args: Any, **kwargs: Any) -> tuple[float, float] | None:
             """Set ylim of current axes.
 
             Args:
@@ -1864,7 +1929,7 @@ startxref
                 ax.set_ylim(*args, **kwargs)
             return ax.ylim
 
-        def legend(self, *args: object, **kwargs: object) -> None:
+        def legend(self, *args: Any, **kwargs: Any) -> None:
             """Add legend to current axes.
 
             Args:
@@ -1875,7 +1940,7 @@ startxref
             ax = self.gca()
             ax.legend(*args, **kwargs)
 
-        def grid(self, visible: bool = True, **kwargs: object) -> None:
+        def grid(self, visible: bool = True, **kwargs: Any) -> None:
             """Enable grid on current axes.
 
             Args:
@@ -1891,7 +1956,7 @@ startxref
             fig = self.gcf()
             fig.tight_layout()
 
-        def savefig(self, fname: str | object, **kwargs: object) -> None:
+        def savefig(self, fname: str | os.PathLike[str], **kwargs: Any) -> None:
             """Save current figure.
 
             Args:
@@ -1945,20 +2010,7 @@ startxref
             ax = self.gca()
             ax.clear()
 
-    # Create module instances
-    plt = FallbackPyplot()
-
-    # Assign classes
-    Figure = FallbackFigure
-    Axes = FallbackAxes
-    FigureCanvasQTAgg = FallbackFigureCanvasQTAgg
-    FigureCanvasTkAgg = FallbackFigureCanvasTkAgg
-    Rectangle = FallbackRectangle
-    Circle = FallbackCircle
-    Polygon = FallbackPolygon
-    FuncFormatter = FallbackFuncFormatter
-    MaxNLocator = FallbackMaxNLocator
-    PdfPages = FallbackPdfPages
+    _fallback_plt_instance = FallbackPyplot()
 
     class FallbackMatplotlib:
         """Fallback matplotlib module."""
@@ -1966,45 +2018,128 @@ startxref
         class Pyplot:
             """Pyplot submodule for FallbackMatplotlib."""
 
-            figure = staticmethod(plt.figure)
-            gcf = staticmethod(plt.gcf)
-            gca = staticmethod(plt.gca)
-            subplot = staticmethod(plt.subplot)
-            subplots = staticmethod(plt.subplots)
-            plot = staticmethod(plt.plot)
-            scatter = staticmethod(plt.scatter)
-            bar = staticmethod(plt.bar)
-            hist = staticmethod(plt.hist)
-            imshow = staticmethod(plt.imshow)
-            contour = staticmethod(plt.contour)
-            title = staticmethod(plt.title)
-            xlabel = staticmethod(plt.xlabel)
-            ylabel = staticmethod(plt.ylabel)
-            xlim = staticmethod(plt.xlim)
-            ylim = staticmethod(plt.ylim)
-            legend = staticmethod(plt.legend)
-            grid = staticmethod(plt.grid)
-            tight_layout = staticmethod(plt.tight_layout)
-            savefig = staticmethod(plt.savefig)
-            show = staticmethod(plt.show)
-            close = staticmethod(plt.close)
-            clf = staticmethod(plt.clf)
-            cla = staticmethod(plt.cla)
+            figure = staticmethod(_fallback_plt_instance.figure)
+            gcf = staticmethod(_fallback_plt_instance.gcf)
+            gca = staticmethod(_fallback_plt_instance.gca)
+            subplot = staticmethod(_fallback_plt_instance.subplot)
+            subplots = staticmethod(_fallback_plt_instance.subplots)
+            plot = staticmethod(_fallback_plt_instance.plot)
+            scatter = staticmethod(_fallback_plt_instance.scatter)
+            bar = staticmethod(_fallback_plt_instance.bar)
+            hist = staticmethod(_fallback_plt_instance.hist)
+            imshow = staticmethod(_fallback_plt_instance.imshow)
+            contour = staticmethod(_fallback_plt_instance.contour)
+            title = staticmethod(_fallback_plt_instance.title)
+            xlabel = staticmethod(_fallback_plt_instance.xlabel)
+            ylabel = staticmethod(_fallback_plt_instance.ylabel)
+            xlim = staticmethod(_fallback_plt_instance.xlim)
+            ylim = staticmethod(_fallback_plt_instance.ylim)
+            legend = staticmethod(_fallback_plt_instance.legend)
+            grid = staticmethod(_fallback_plt_instance.grid)
+            tight_layout = staticmethod(_fallback_plt_instance.tight_layout)
+            savefig = staticmethod(_fallback_plt_instance.savefig)
+            show = staticmethod(_fallback_plt_instance.show)
+            close = staticmethod(_fallback_plt_instance.close)
+            clf = staticmethod(_fallback_plt_instance.clf)
+            cla = staticmethod(_fallback_plt_instance.cla)
 
         __version__: str = "0.0.0-fallback"
 
-        pyplot: "FallbackMatplotlib.Pyplot" = Pyplot
+        pyplot: type["FallbackMatplotlib.Pyplot"] = Pyplot
 
         @staticmethod
-        def use(backend: str, **kwargs: object) -> None:
+        def use(backend: str, **kwargs: Any) -> None:
             """Set the matplotlib backend (fallback does nothing)."""
             pass
 
-    mpl = FallbackMatplotlib()
+    _fallback_mpl = FallbackMatplotlib()
 
 
-# Create compatibility alias
 MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
+
+
+def get_plt() -> Any:
+    """Get pyplot module or fallback."""
+    if HAS_MATPLOTLIB:
+        import matplotlib.pyplot as _mpl_plt
+        return _mpl_plt
+    return _fallback_plt_instance
+
+
+def get_figure_class() -> type[Any]:
+    """Get Figure class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.figure import Figure as _MplFigure
+        return _MplFigure
+    return FallbackFigure
+
+
+def get_axes_class() -> type[Any]:
+    """Get Axes class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.axes import Axes as _MplAxes
+        return _MplAxes
+    return FallbackAxes
+
+
+def get_rectangle_class() -> type[Any]:
+    """Get Rectangle class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.patches import Rectangle as _MplRectangle
+        return _MplRectangle
+    return FallbackRectangle
+
+
+def get_circle_class() -> type[Any]:
+    """Get Circle class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.patches import Circle as _MplCircle
+        return _MplCircle
+    return FallbackCircle
+
+
+def get_polygon_class() -> type[Any]:
+    """Get Polygon class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.patches import Polygon as _MplPolygon
+        return _MplPolygon
+    return FallbackPolygon
+
+
+def get_funcformatter_class() -> type[Any]:
+    """Get FuncFormatter class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.ticker import FuncFormatter as _MplFuncFormatter
+        return _MplFuncFormatter
+    return FallbackFuncFormatter
+
+
+def get_maxnlocator_class() -> type[Any]:
+    """Get MaxNLocator class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.ticker import MaxNLocator as _MplMaxNLocator
+        return _MplMaxNLocator
+    return FallbackMaxNLocator
+
+
+def get_pdfpages_class() -> type[Any]:
+    """Get PdfPages class or fallback."""
+    if HAS_MATPLOTLIB:
+        from matplotlib.backends.backend_pdf import PdfPages as _MplPdfPages
+        return _MplPdfPages
+    return FallbackPdfPages
+
+
+def get_mpl() -> Any:
+    """Get matplotlib module or fallback."""
+    if HAS_MATPLOTLIB:
+        import matplotlib as _matplotlib
+        return _matplotlib
+    return _fallback_mpl
+
+
+# Export FigureCanvasTkAgg - use the loaded class or fallback
+FigureCanvasTkAgg: type[Any] = _canvas_tk_class if _canvas_tk_class is not None else FallbackFigureCanvasQTAgg.FallbackFigureCanvasTkAgg
 
 # Export all matplotlib objects and availability flag
 __all__ = [

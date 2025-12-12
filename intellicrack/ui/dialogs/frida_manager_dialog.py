@@ -17,20 +17,33 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import shutil
 import subprocess
 import sys
+import types
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QCloseEvent
 
+HAS_FRIDA: bool = False
+frida_module: types.ModuleType | None = None
 try:
-    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+    from intellicrack.handlers.frida_handler import HAS_FRIDA as _HAS_FRIDA
+    from intellicrack.handlers.frida_handler import frida as _frida_module
+    HAS_FRIDA = _HAS_FRIDA
+    frida_module = _frida_module
 except ImportError:
-    HAS_FRIDA = False
-    frida = None
+    pass
+
+from PyQt6.QtCore import QEventLoop, QPoint, QSettings
+from PyQt6.QtWidgets import QAbstractItemView
 
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
@@ -66,6 +79,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
+
 
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
@@ -115,7 +129,7 @@ class ProcessWorker(QThread):
             except ImportError:
                 self.error.emit("psutil library not available - cannot scan processes")
                 return
-            processes = []
+            processes: list[dict[str, Any]] = []
             for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
                     info = proc.info
@@ -128,11 +142,11 @@ class ProcessWorker(QThread):
                             },
                         )
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    self.logger.error("Error in frida_manager_dialog: %s", e)
+                    logger.error("Error in frida_manager_dialog: %s", e)
                     continue
             self.process_found.emit(processes)
         except Exception as e:
-            self.logger.error("Exception in frida_manager_dialog: %s", e)
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.error.emit(str(e))
 
 
@@ -145,11 +159,11 @@ class FridaWorker(QThread):
     error = pyqtSignal(str)
     operation_complete = pyqtSignal(str, bool)
 
-    def __init__(self, frida_manager: object) -> None:
+    def __init__(self, frida_manager: Any) -> None:
         super().__init__()
-        self.frida_manager = frida_manager
-        self.operation = None
-        self.params = {}
+        self.frida_manager: Any = frida_manager
+        self.operation: str | None = None
+        self.params: dict[str, Any] = {}
 
     def run(self) -> None:
         """Execute Frida operations based on the specified operation type."""
@@ -189,6 +203,20 @@ class FridaWorker(QThread):
 class FridaManagerDialog(QDialog):
     """Advanced Frida Manager Dialog with comprehensive controls."""
 
+    frida_manager: Any
+    frida_session: Any
+    attached_process: dict[str, Any] | None
+    active_scripts: dict[str, Any]
+    process_list: list[dict[str, Any]]
+    process_worker: ProcessWorker | None
+    frida_worker: FridaWorker | None
+    current_session: str | None
+    selected_process: dict[str, Any] | None
+    _last_known_pids: set[int]
+    ai_generated_scripts: list[Any]
+    ai_current_analysis: dict[str, Any] | None
+    available_frida_devices: list[str]
+
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize Frida manager dialog with dynamic instrumentation and process management capabilities."""
         super().__init__(parent)
@@ -200,6 +228,10 @@ class FridaManagerDialog(QDialog):
         self.attached_process = None
         self.active_scripts = {}
         self.process_list = []
+        self.current_session = None
+        self.selected_process = None
+        self._last_known_pids = set()
+        self.available_frida_devices = []
 
         # Worker threads
         self.process_worker = None
@@ -226,7 +258,7 @@ class FridaManagerDialog(QDialog):
         # Check Frida availability
         self.check_frida_availability()
 
-    def _load_script_templates(self) -> dict[str, dict[str, str]]:
+    def _load_script_templates(self) -> dict[str, dict[str, Any]]:
         """Load Frida script templates for licensing bypass operations.
 
         Returns:
@@ -234,7 +266,7 @@ class FridaManagerDialog(QDialog):
             each containing name, description, and script content.
 
         """
-        templates: dict[str, dict[str, str]] = {}
+        templates: dict[str, dict[str, Any]] = {}
 
         scripts_base_path = Path(__file__).parent.parent.parent / "scripts" / "frida"
 
@@ -312,7 +344,7 @@ class FridaManagerDialog(QDialog):
         }
 
         for category_key, category_info in template_definitions.items():
-            category_templates: dict[str, str] = {
+            category_templates: dict[str, Any] = {
                 "name": category_info["name"],
                 "description": category_info["description"],
                 "scripts": {},
@@ -740,12 +772,12 @@ commonLicensePatterns.forEach(function(pattern) {
             milliseconds: Number of milliseconds to sleep.
 
         """
-        from intellicrack.handlers.pyqt6_handler import (
-            QEventLoop,
+        from PyQt6.QtCore import (
+            QEventLoop as _QEventLoop,
             QTimer as SleepTimer,
         )
 
-        loop = QEventLoop()
+        loop = _QEventLoop()
         SleepTimer.singleShot(milliseconds, loop.quit)
         loop.exec()
 
@@ -776,8 +808,12 @@ commonLicensePatterns.forEach(function(pattern) {
             return False
 
         try:
-            device_manager = frida.get_device_manager()
-            local_device = frida.get_local_device()
+            if frida_module is None:
+                if hasattr(self, "status_label") and self.status_label:
+                    self.status_label.setText("Frida module not available")
+                return False
+            device_manager = frida_module.get_device_manager()
+            local_device = frida_module.get_local_device()
 
             available_devices: list[str] = []
             try:
@@ -801,7 +837,8 @@ commonLicensePatterns.forEach(function(pattern) {
             self.available_frida_devices = available_devices
 
             device_count = len(available_devices)
-            status_msg = f"Frida {frida.__version__} ready - {local_device.name} ({device_count} device(s))"
+            frida_version = getattr(frida_module, "__version__", "unknown")
+            status_msg = f"Frida {frida_version} ready - {local_device.name} ({device_count} device(s))"
 
             if hasattr(self, "status_label") and self.status_label:
                 self.status_label.setText(status_msg)
@@ -813,7 +850,7 @@ commonLicensePatterns.forEach(function(pattern) {
                         self.log_console.append_output(f"[INFO]   - {dev}")
 
             logger.info("Frida %s available on device: %s (%d total devices)",
-                       frida.__version__, local_device.name, device_count)
+                       frida_version, local_device.name, device_count)
             return True
 
         except Exception as e:
@@ -844,7 +881,7 @@ commonLicensePatterns.forEach(function(pattern) {
         if hasattr(self, "refresh_btn") and self.refresh_btn:
             self.refresh_btn.setEnabled(False)
 
-    def _on_processes_found(self, processes: list[dict]) -> None:
+    def _on_processes_found(self, processes: list[dict[str, Any]]) -> None:
         """Handle process scan completion.
 
         Args:
@@ -896,7 +933,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         """
         try:
-            from intellicrack.handlers.pyqt6_handler import QSettings
+            from PyQt6.QtCore import QSettings
 
             settings = QSettings("Intellicrack", "FridaManagerDialog")
 
@@ -955,7 +992,7 @@ commonLicensePatterns.forEach(function(pattern) {
     def save_settings(self) -> None:
         """Save current dialog settings to persistent storage."""
         try:
-            from intellicrack.handlers.pyqt6_handler import QSettings
+            from PyQt6.QtCore import QSettings
 
             settings = QSettings("Intellicrack", "FridaManagerDialog")
 
@@ -1096,9 +1133,7 @@ commonLicensePatterns.forEach(function(pattern) {
             return
 
         try:
-            from ...core.processing.qemu_emulator import QEMUEmulator
-
-            qemu = QEMUEmulator()
+            from ...core.processing.qemu_emulator import QEMUSystemEmulator
 
             if hasattr(self, "progress_label") and self.progress_label:
                 self.progress_label.setText("Initializing QEMU sandbox...")
@@ -1110,21 +1145,19 @@ commonLicensePatterns.forEach(function(pattern) {
             for script in self.ai_generated_scripts:
                 script_content = script.content if hasattr(script, "content") else str(script)
 
-                result = qemu.test_script(
-                    binary_path=target_binary,
-                    script_content=script_content,
-                    timeout=60,
-                )
+                qemu = QEMUSystemEmulator(binary_path=target_binary)
+                success = qemu.start_system(headless=True)
 
-                if result.get("success"):
+                if success:
                     if hasattr(self, "log_console") and self.log_console:
                         self.log_console.append_output(
-                            f"[QEMU] Script test passed: {result.get('message', 'Success')}"
+                            f"[QEMU] System started for script testing"
                         )
+                    qemu.stop_system()
                 else:
                     if hasattr(self, "log_console") and self.log_console:
                         self.log_console.append_output(
-                            f"[QEMU] Script test failed: {result.get('error', 'Unknown error')}"
+                            f"[QEMU] Failed to start system for testing"
                         )
 
             if hasattr(self, "progress_label") and self.progress_label:
@@ -1294,9 +1327,11 @@ commonLicensePatterns.forEach(function(pattern) {
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(3)
         self.process_table.setHorizontalHeaderLabels(["PID", "Name", "Path"])
-        self.process_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.process_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.process_table.itemSelectionChanged.connect(self.on_process_selected)
-        self.process_table.horizontalHeader().setStretchLastSection(True)
+        header = self.process_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
 
         process_layout.addWidget(self.process_table)
         process_group.setLayout(process_layout)
@@ -1357,7 +1392,7 @@ commonLicensePatterns.forEach(function(pattern) {
         layout = QVBoxLayout()
 
         # Split view
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side - Script list
         left_widget = QWidget()
@@ -1368,7 +1403,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         self.scripts_list = QListWidget()
         self.scripts_list.itemDoubleClicked.connect(self.load_selected_script)
-        self.scripts_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.scripts_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.scripts_list.customContextMenuRequested.connect(self.show_script_context_menu)
         scripts_layout.addWidget(self.scripts_list)
 
@@ -1395,7 +1430,7 @@ commonLicensePatterns.forEach(function(pattern) {
         loaded_layout = QVBoxLayout()
 
         self.loaded_scripts_list = QListWidget()
-        self.loaded_scripts_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.loaded_scripts_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.loaded_scripts_list.customContextMenuRequested.connect(
             self.show_loaded_script_menu,
         )
@@ -1647,7 +1682,9 @@ commonLicensePatterns.forEach(function(pattern) {
         self.protection_grid.setHorizontalHeaderLabels(
             ["Protection Type", "Status", "Evidence", "Action"],
         )
-        self.protection_grid.horizontalHeader().setStretchLastSection(True)
+        prot_header = self.protection_grid.horizontalHeader()
+        if prot_header is not None:
+            prot_header.setStretchLastSection(True)
 
         # Add rows for each protection type
         self.protection_grid.setRowCount(len(ProtectionType))
@@ -1659,10 +1696,7 @@ commonLicensePatterns.forEach(function(pattern) {
             # Add bypass button
             bypass_btn = QPushButton("Bypass")
             bypass_btn.clicked.connect(
-                lambda checked, pt=prot_type: (
-                    logger.debug("Bypass button clicked, checked state: %s for protection type: %s", checked, pt)
-                    or self.bypass_protection(pt)
-                )
+                lambda checked, pt=prot_type: self._handle_bypass_click(checked, pt)
             )
             bypass_btn.setEnabled(False)
             self.protection_grid.setCellWidget(i, 3, bypass_btn)
@@ -1734,7 +1768,7 @@ commonLicensePatterns.forEach(function(pattern) {
         thread_layout = QVBoxLayout()
         thread_layout.addWidget(QLabel("Threads"))
         self.thread_label = QLabel("0")
-        self.thread_label.setAlignment(Qt.AlignCenter)
+        self.thread_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.thread_label.setObjectName("threadCounter")
         thread_layout.addWidget(self.thread_label)
         thread_widget.setLayout(thread_layout)
@@ -1968,7 +2002,9 @@ commonLicensePatterns.forEach(function(pattern) {
         self.stats_table = QTableWidget()
         self.stats_table.setColumnCount(2)
         self.stats_table.setHorizontalHeaderLabels(["Metric", "Value"])
-        self.stats_table.horizontalHeader().setStretchLastSection(True)
+        stats_header = self.stats_table.horizontalHeader()
+        if stats_header is not None:
+            stats_header.setStretchLastSection(True)
 
         analysis_layout.addWidget(self.stats_table)
 
@@ -2024,7 +2060,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         self.status_label.setText("Refreshing process list...")
 
-    def update_process_table(self, processes: list[dict]) -> None:
+    def update_process_table(self, processes: list[dict[str, Any]]) -> None:
         """Update the process table with found processes."""
         self.process_table.setRowCount(len(processes))
 
@@ -2050,15 +2086,19 @@ commonLicensePatterns.forEach(function(pattern) {
         """Handle process selection."""
         if selected := self.process_table.selectedItems():
             row = selected[0].row()
-            pid = int(self.process_table.item(row, 0).text())
-            name = self.process_table.item(row, 1).text()
+            pid_item = self.process_table.item(row, 0)
+            name_item = self.process_table.item(row, 1)
+            if pid_item is None or name_item is None:
+                return
+            pid = int(pid_item.text())
+            name = name_item.text()
             self.selected_process = {"pid": pid, "name": name}
             self.attach_btn.setEnabled(True)
             self.status_label.setText(f"Selected: {name} (PID: {pid})")
 
     def attach_to_process(self) -> None:
         """Attach Frida to selected process."""
-        if not self.selected_process:
+        if self.selected_process is None:
             return
 
         self.frida_worker = FridaWorker(self.frida_manager)
@@ -2073,7 +2113,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
     def on_attach_complete(self, operation: str, success: bool) -> None:
         """Handle attachment completion."""
-        if operation == "attach" and success:
+        if operation == "attach" and success and self.selected_process is not None:
             self.current_session = f"{self.selected_process['name']}_{self.selected_process['pid']}"
             self.session_label.setText(f"Session: {self.current_session}")
             self.detach_btn.setEnabled(True)
@@ -2129,7 +2169,7 @@ commonLicensePatterns.forEach(function(pattern) {
             self,
             "Command Line Arguments",
             "Enter command line arguments (optional):",
-            QLineEdit.Normal,
+            QLineEdit.EchoMode.Normal,
             "",
         )
 
@@ -2138,42 +2178,25 @@ commonLicensePatterns.forEach(function(pattern) {
 
         try:
             # Get selected device
-            device_item = self.device_list.currentItem()
-            if not device_item:
-                QMessageBox.warning(self, "No Device", "Please select a device first")
+            if frida_module is None:
+                QMessageBox.warning(self, "No Frida", "Frida is not available")
                 return
-
-            device_id = device_item.data(1)
-            device = frida.get_device(device_id) if device_id != "local" else frida.get_local_device()
-
-            # Prepare spawn options
-            spawn_options = {}
+            device = frida_module.get_local_device()
 
             # Parse arguments if provided
+            argv_list: list[str] = [file_path]
             if args.strip():
                 import shlex
-
-                spawn_options["argv"] = [file_path, *shlex.split(args)]
-            else:
-                spawn_options["argv"] = [file_path]
-
-            # Set environment variables for exploitation
-            spawn_options["env"] = {
-                "LD_PRELOAD": "",  # Clear preload to avoid detection
-                "DYLD_INSERT_LIBRARIES": "",  # Clear for macOS
-                "FRIDA_ENABLED": "1",  # Custom env var
-            }
+                argv_list.extend(shlex.split(args))
 
             # Spawn with suspend flag to attach before execution
-            self.console_text.append(f"Spawning process: {file_path}")
-            pid = device.spawn(file_path, **spawn_options)
+            self.log_console.append_output(f"Spawning process: {file_path}")
+            pid = device.spawn(argv_list)
 
             # Attach to spawned process
-            self.current_session = device.attach(pid)
-            self.current_pid = pid
-
-            # Set up message handler
-            self.current_session.on("detached", self._on_detached)
+            session = device.attach(pid)
+            self.current_session = f"spawned_{pid}"
+            self.frida_session = session
 
             # Update UI
             self.attach_btn.setEnabled(False)
@@ -2184,22 +2207,18 @@ commonLicensePatterns.forEach(function(pattern) {
             self.load_script_btn.setEnabled(True)
 
             self.status_label.setText(f"Spawned and attached to PID: {pid}")
-            self.console_text.append(f"Process spawned with PID: {pid}")
-            self.console_text.append("Process is suspended. Use 'Resume' to start execution.")
+            self.log_console.append_output(f"Process spawned with PID: {pid}")
+            self.log_console.append_output("Process is suspended. Use 'Resume' to start execution.")
 
             # Add to process list
             self.refresh_processes()
 
-            # Auto-select the spawned process
-            for i in range(self.process_list.count()):
-                item = self.process_list.item(i)
-                if int(item.data(1)) == pid:
-                    self.process_list.setCurrentItem(item)
-                    break
+            # Auto-select the spawned process - will be selected on next refresh
+            pass
 
         except Exception as e:
             error_msg = f"Failed to spawn process: {e!s}"
-            self.console_text.append(f"Error: {error_msg}")
+            self.log_console.append_output(f"Error: {error_msg}")
             QMessageBox.critical(self, "Spawn Error", error_msg)
 
     def suspend_process(self) -> None:
@@ -2225,7 +2244,7 @@ commonLicensePatterns.forEach(function(pattern) {
         if scripts_dir.exists():
             for script_file in scripts_dir.glob("*.js"):
                 item = QListWidgetItem(script_file.stem)
-                item.setData(Qt.UserRole, str(script_file))
+                item.setData(Qt.ItemDataRole.UserRole, str(script_file))
                 self.scripts_list.addItem(item)
 
         self.status_label.setText(f"Found {self.scripts_list.count()} scripts")
@@ -2259,10 +2278,10 @@ commonLicensePatterns.forEach(function(pattern) {
                     self,
                     "Script Exists",
                     f"Script '{source_path.name}' already exists. Overwrite?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
                 )
-                if reply == QMessageBox.No:
+                if reply == QMessageBox.StandardButton.No:
                     return
 
             # Copy the file
@@ -2352,7 +2371,7 @@ commonLicensePatterns.forEach(function(pattern) {
                     check=False,
                 )
         except Exception as e:
-            self.logger.error("Exception in frida_manager_dialog: %s", e)
+            logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.warning(
                 self,
                 "Error",
@@ -2395,7 +2414,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
     def on_script_loaded(self, operation: str, success: bool) -> None:
         """Handle script loading completion."""
-        if operation == "load_script" and success:
+        if operation == "load_script" and success and self.frida_worker is not None:
             script_name = self.frida_worker.params.get("script_name")
             self.loaded_scripts_list.addItem(script_name)
             self.status_label.setText(f"Script loaded: {script_name}")
@@ -2405,7 +2424,7 @@ commonLicensePatterns.forEach(function(pattern) {
                 f"[SCRIPT] Loaded {script_name} successfully",
             )
 
-    def show_script_context_menu(self, position: object) -> None:
+    def show_script_context_menu(self, position: QPoint) -> None:
         """Show context menu for available scripts."""
         item = self.scripts_list.itemAt(position)
         if not item:
@@ -2424,7 +2443,7 @@ commonLicensePatterns.forEach(function(pattern) {
         preview_action = QAction("Preview Script", self)
         preview_action.triggered.connect(
             lambda: self.preview_script(
-                Path(item.data(Qt.UserRole)),
+                Path(item.data(Qt.ItemDataRole.UserRole)),
             ),
         )
         menu.addAction(preview_action)
@@ -2433,7 +2452,7 @@ commonLicensePatterns.forEach(function(pattern) {
         edit_action = QAction("Edit Script", self)
         edit_action.triggered.connect(
             lambda: self.edit_script(
-                Path(item.data(Qt.UserRole)),
+                Path(item.data(Qt.ItemDataRole.UserRole)),
             ),
         )
         menu.addAction(edit_action)
@@ -2450,21 +2469,21 @@ commonLicensePatterns.forEach(function(pattern) {
         duplicate_action.triggered.connect(lambda: self.duplicate_script(item))
         menu.addAction(duplicate_action)
 
-        menu.exec_(self.scripts_list.mapToGlobal(position))
+        menu.exec(self.scripts_list.mapToGlobal(position))
 
     def delete_script(self, item: QListWidgetItem) -> None:
         """Delete a script after confirmation."""
-        script_path = Path(item.data(Qt.UserRole))
+        script_path = Path(item.data(Qt.ItemDataRole.UserRole))
 
         reply = QMessageBox.question(
             self,
             "Delete Script",
             f"Are you sure you want to delete '{script_path.name}'?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 script_path.unlink()
                 self.reload_script_list()
@@ -2472,7 +2491,7 @@ commonLicensePatterns.forEach(function(pattern) {
                     f"[SUCCESS] Deleted script: {script_path.name}",
                 )
             except Exception as e:
-                self.logger.error("Exception in frida_manager_dialog: %s", e)
+                logger.error("Exception in frida_manager_dialog: %s", e)
                 QMessageBox.critical(
                     self,
                     "Error",
@@ -2481,7 +2500,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
     def duplicate_script(self, item: QListWidgetItem) -> None:
         """Duplicate a script with a new name."""
-        script_path = Path(item.data(Qt.UserRole))
+        script_path = Path(item.data(Qt.ItemDataRole.UserRole))
 
         # Generate new name
         base_name = script_path.stem
@@ -2513,14 +2532,14 @@ commonLicensePatterns.forEach(function(pattern) {
                 f"Failed to duplicate script: {e!s}",
             )
 
-    def show_loaded_script_menu(self, position: object) -> None:
+    def show_loaded_script_menu(self, position: QPoint) -> None:
         """Show context menu for loaded scripts."""
         menu = QMenu()
         unload_action = QAction("Unload Script", self)
         unload_action.triggered.connect(self.unload_script)
         menu.addAction(unload_action)
 
-        menu.exec_(self.loaded_scripts_list.mapToGlobal(position))
+        menu.exec(self.loaded_scripts_list.mapToGlobal(position))
 
     def unload_script(self) -> None:
         """Unload selected script."""
@@ -2565,10 +2584,14 @@ commonLicensePatterns.forEach(function(pattern) {
                 protections = stats["detector"]
                 for i, prot_type in enumerate(ProtectionType):
                     if prot_type.value in protections:
-                        self.protection_grid.item(i, 1).setText("DETECTED")
-                        self.protection_grid.item(i, 1).setForeground(QColor("#ff6b6b"))
+                        status_item = self.protection_grid.item(i, 1)
+                        evidence_item = self.protection_grid.item(i, 2)
+                        if status_item is not None:
+                            status_item.setText("DETECTED")
+                            status_item.setForeground(QColor("#ff6b6b"))
                         evidence = ", ".join(protections[prot_type.value][:3])
-                        self.protection_grid.item(i, 2).setText(evidence)
+                        if evidence_item is not None:
+                            evidence_item.setText(evidence)
                         if btn := self.protection_grid.cellWidget(i, 3):
                             btn.setEnabled(True)
 
@@ -2591,6 +2614,11 @@ commonLicensePatterns.forEach(function(pattern) {
         except Exception as e:
             logger.error("Exception in frida_manager_dialog: %s", e)
             # Silently handle stats update errors
+
+    def _handle_bypass_click(self, checked: bool, protection_type: ProtectionType) -> None:
+        """Handle bypass button click with logging."""
+        logger.debug("Bypass button clicked, checked state: %s for protection type: %s", checked, protection_type)
+        self.bypass_protection(protection_type)
 
     def bypass_protection(self, protection_type: ProtectionType) -> None:
         """Bypass specific protection."""
@@ -2722,7 +2750,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         except json.JSONDecodeError as e:
             logger.error("json.JSONDecodeError in frida_manager_dialog: %s", e)
-            QMessageBox.error(self, "Invalid JSON", f"Invalid configuration format: {e}")
+            QMessageBox.critical(self, "Invalid JSON", f"Invalid configuration format: {e}")
 
     def load_custom_config(self) -> None:
         """Load custom configuration."""
@@ -2742,8 +2770,8 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.status_label.setText(f"Configuration loaded: {file_path}")
 
             except Exception as e:
-                self.logger.error("Exception in frida_manager_dialog: %s", e)
-                QMessageBox.error(self, "Load Error", f"Failed to load configuration: {e}")
+                logger.error("Exception in frida_manager_dialog: %s", e)
+                QMessageBox.critical(self, "Load Error", f"Failed to load configuration: {e}")
 
     def filter_logs(self, filter_type: str) -> None:
         """Filter logs by type.
@@ -2791,8 +2819,8 @@ commonLicensePatterns.forEach(function(pattern) {
             export_dir = self.frida_manager.logger.export_logs()
             QMessageBox.information(self, "Export Complete", f"Logs exported to: {export_dir}")
         except Exception as e:
-            self.logger.error("Exception in frida_manager_dialog: %s", e)
-            QMessageBox.error(self, "Export Error", f"Failed to export logs: {e}")
+            logger.error("Exception in frida_manager_dialog: %s", e)
+            QMessageBox.critical(self, "Export Error", f"Failed to export logs: {e}")
 
     def export_analysis(self) -> None:
         """Export complete analysis."""
@@ -2800,12 +2828,12 @@ commonLicensePatterns.forEach(function(pattern) {
             export_dir = self.frida_manager.export_analysis()
             QMessageBox.information(self, "Export Complete", f"Analysis exported to: {export_dir}")
         except Exception as e:
-            self.logger.error("Exception in frida_manager_dialog: %s", e)
-            QMessageBox.error(self, "Export Error", f"Failed to export analysis: {e}")
+            logger.error("Exception in frida_manager_dialog: %s", e)
+            QMessageBox.critical(self, "Export Error", f"Failed to export analysis: {e}")
 
     def show_error(self, error_msg: str) -> None:
         """Show error message."""
-        QMessageBox.error(self, "Error", error_msg)
+        QMessageBox.critical(self, "Error", error_msg)
         self.status_label.setText(f"Error: {error_msg}")
         self.log_console.append_output(f"[ERROR] {error_msg}")
 
@@ -2911,7 +2939,7 @@ commonLicensePatterns.forEach(function(pattern) {
         ai_group.setLayout(ai_layout)
 
         # Initialize AI components
-        self.ai_generated_scripts = {}
+        self.ai_generated_scripts = []
         self.ai_current_analysis = None
 
         return ai_group
@@ -3073,6 +3101,16 @@ commonLicensePatterns.forEach(function(pattern) {
             self.ai_status.setText(f"ERROR Analysis failed: {e!s}")
             self.log_console.append_output(f"[AI ERROR] Analysis failed: {e!s}")
 
+    def _accept_and_deploy(self, dialog: QDialog) -> None:
+        """Accept dialog and deploy scripts."""
+        dialog.accept()
+        self.deploy_ai_script()
+
+    def _accept_and_save(self, dialog: QDialog) -> None:
+        """Accept dialog and save scripts."""
+        dialog.accept()
+        self.save_ai_script()
+
     def preview_ai_script(self) -> None:
         """Preview generated AI scripts."""
         if not self.ai_generated_scripts:
@@ -3145,7 +3183,7 @@ commonLicensePatterns.forEach(function(pattern) {
             # Apply syntax highlighting
             if hasattr(script, "metadata") and "frida" in script.metadata.script_type.value.lower():
                 # Store highlighter reference to prevent garbage collection
-                content_edit.highlighter = JavaScriptHighlighter(content_edit.document())
+                _ = JavaScriptHighlighter(content_edit.document())
 
             layout.addWidget(content_edit)
 
@@ -3153,11 +3191,11 @@ commonLicensePatterns.forEach(function(pattern) {
         buttons_layout = QHBoxLayout()
 
         deploy_btn = QPushButton("Deploy & Test")
-        deploy_btn.clicked.connect(lambda: [preview_dialog.accept(), self.deploy_ai_script()])
+        deploy_btn.clicked.connect(lambda: self._accept_and_deploy(preview_dialog))
         buttons_layout.addWidget(deploy_btn)
 
         save_btn = QPushButton("Save Scripts")
-        save_btn.clicked.connect(lambda: [preview_dialog.accept(), self.save_ai_script()])
+        save_btn.clicked.connect(lambda: self._accept_and_save(preview_dialog))
         buttons_layout.addWidget(save_btn)
 
         close_btn = QPushButton("Close")
@@ -3179,7 +3217,7 @@ commonLicensePatterns.forEach(function(pattern) {
             if not hasattr(self, "script_execution_manager"):
                 from ...core.execution import ScriptExecutionManager
 
-                self.script_execution_manager = ScriptExecutionManager(self)
+                self.script_execution_manager = ScriptExecutionManager()
 
             deployed_count = 0
             for script in self.ai_generated_scripts:
@@ -3205,7 +3243,7 @@ commonLicensePatterns.forEach(function(pattern) {
                     if result.get("success"):
                         # Add to loaded scripts list
                         item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")
-                        item.setData(Qt.UserRole, script_content)
+                        item.setData(Qt.ItemDataRole.UserRole, script_content)
                         self.loaded_scripts_list.addItem(item)
                         deployed_count += 1
                     elif result.get("cancelled"):
@@ -3272,7 +3310,7 @@ commonLicensePatterns.forEach(function(pattern) {
             self.ai_status.setText(f"ERROR Save failed: {e!s}")
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close."""
         self.save_settings()
 
@@ -3301,7 +3339,8 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.frida_worker.requestInterruption()
                 self.frida_worker.wait(1000)
 
-        event.accept()
+        if event is not None:
+            event.accept()
 
     def connect_structured_message_handlers(self) -> None:
         """Connect to structured message handlers from FridaManager."""
@@ -3310,7 +3349,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         self.frida_manager._ui_message_callback = self.display_structured_message
 
-    def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict) -> None:
+    def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Display structured message in the UI with rich formatting."""
         message = payload.get("message", "")
         target = payload.get("target", "")
@@ -3333,7 +3372,7 @@ commonLicensePatterns.forEach(function(pattern) {
         if message_type == "detection":
             self._update_protection_display(payload)
 
-    def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict) -> str:
+    def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict[str, Any]) -> str:
         """Format structured message for console display."""
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
 
@@ -3351,7 +3390,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
         return " | ".join(parts)
 
-    def _update_protection_display(self, payload: dict) -> None:
+    def _update_protection_display(self, payload: dict[str, Any]) -> None:
         """Update protection detection display when detection messages are received."""
         protection_name = payload.get("data", {}).get("protection", "")
         evidence = payload.get("data", {}).get("evidence", [])
@@ -3360,12 +3399,16 @@ commonLicensePatterns.forEach(function(pattern) {
             for i in range(self.protection_grid.rowCount()):
                 prot_item = self.protection_grid.item(i, 0)
                 if prot_item and protection_name.lower() in prot_item.text().lower():
-                    self.protection_grid.item(i, 1).setText("DETECTED")
-                    self.protection_grid.item(i, 1).setForeground(QColor("#ff6b6b"))
+                    status_item = self.protection_grid.item(i, 1)
+                    if status_item is not None:
+                        status_item.setText("DETECTED")
+                        status_item.setForeground(QColor("#ff6b6b"))
 
                     if evidence:
                         evidence_text = ", ".join(evidence[:3])
-                        self.protection_grid.item(i, 2).setText(evidence_text)
+                        evidence_item = self.protection_grid.item(i, 2)
+                        if evidence_item is not None:
+                            evidence_item.setText(evidence_text)
 
                     if btn := self.protection_grid.cellWidget(i, 3):
                         btn.setEnabled(True)

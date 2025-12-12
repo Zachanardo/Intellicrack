@@ -1,3 +1,4 @@
+"""Analyze test coverage for Intellicrack."""
 import os
 from pathlib import Path
 
@@ -18,6 +19,7 @@ for f in test_dir.rglob('*.py'):
 
 
 def get_module_name(path):
+    """Get the module name from the file path."""
     parts = path.split('/')
     name = parts[-1].replace('.py', '')
     return name

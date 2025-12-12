@@ -630,7 +630,7 @@ class UnifiedProtectionWidget(QWidget):
                 if protection.get("version"):
                     details += f"   Version: {protection['version']}\n"
 
-                if "details" in protection and protection["details"]:
+                if protection.get("details"):
                     details += "   Details:\n"
                     for key, value in protection["details"].items():
                         details += f"      {key}: {value}\n"

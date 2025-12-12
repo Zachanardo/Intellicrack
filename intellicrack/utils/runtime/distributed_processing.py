@@ -18,23 +18,57 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
+import contextlib
 import json
 import logging
 import multiprocessing
 import os
 import time
-from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 from ..analysis.entropy_utils import calculate_byte_entropy
 
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import ModuleType
+
+
+def _check_torch_available() -> bool:
+    """Return TORCH_AVAILABLE in a way that prevents mypy type narrowing."""
+    return TORCH_AVAILABLE
+
+
 logger = logging.getLogger(__name__)
 
-# Try to import optional dependencies
+
+def _is_torch_cuda_available() -> bool:
+    """Check if torch CUDA is available at runtime.
+
+    This function exists to prevent mypy from statically narrowing
+    the TORCH_AVAILABLE and torch checks, which causes false
+    'unreachable code' errors.
+    """
+    if not _check_torch_available():
+        return False
+    torch_mod: Any = torch
+    if torch_mod is None:
+        return False
+    try:
+        return bool(torch_mod.cuda.is_available())
+    except Exception:
+        return False
+
+
+NUMPY_AVAILABLE: bool = False
+np: ModuleType | None = None
+
 try:
     from intellicrack.handlers.numpy_handler import (
         HAS_NUMPY as NUMPY_AVAILABLE,
@@ -45,30 +79,72 @@ except ImportError as e:
     NUMPY_AVAILABLE = False
     np = None
 
-# Try to import GPU autoloader
-GPU_AUTOLOADER_AVAILABLE = False
-get_device = None
-get_gpu_info = None
-to_device = None
-memory_allocated = None
-memory_reserved = None
-empty_cache = None
-gpu_autoloader = None
+GPU_AUTOLOADER_AVAILABLE: bool = False
+_get_device: Callable[[], str | None] | None = None
+_get_gpu_info: Callable[[], dict[str, Any]] | None = None
+_to_device: Callable[[Any], Any] | None = None
+_gpu_autoloader: Any = None
 
 try:
-    from ..gpu_autoloader import empty_cache, get_device, get_gpu_info, gpu_autoloader, memory_allocated, memory_reserved, to_device
+    from ..gpu_autoloader import (
+        get_device as _imported_get_device,
+        get_gpu_info as _imported_get_gpu_info,
+        gpu_autoloader as _imported_gpu_autoloader,
+        to_device as _imported_to_device,
+    )
 
     GPU_AUTOLOADER_AVAILABLE = True
+    _get_device = cast("Callable[[], str | None]", _imported_get_device)
+    _get_gpu_info = cast("Callable[[], dict[str, Any]]", _imported_get_gpu_info)
+    _to_device = cast("Callable[[Any], Any]", _imported_to_device)
+    _gpu_autoloader = _imported_gpu_autoloader
 except ImportError:
     pass
+
+
+def _get_torch_memory_allocated() -> int:
+    """Get torch CUDA memory allocated in bytes."""
+    if not _is_torch_cuda_available():
+        return 0
+    torch_mod: Any = torch
+    if torch_mod is None:
+        return 0
+    try:
+        return int(torch_mod.cuda.memory_allocated())
+    except Exception:
+        return 0
+
+
+def _get_torch_memory_reserved() -> int:
+    """Get torch CUDA memory reserved in bytes."""
+    if not _is_torch_cuda_available():
+        return 0
+    torch_mod: Any = torch
+    if torch_mod is None:
+        return 0
+    try:
+        return int(torch_mod.cuda.memory_reserved())
+    except Exception:
+        return 0
+
+
+def _torch_empty_cache() -> None:
+    """Clear torch CUDA cache."""
+    if not _is_torch_cuda_available():
+        return
+    torch_mod: Any = torch
+    if torch_mod is None:
+        return
+    with contextlib.suppress(Exception):
+        torch_mod.cuda.empty_cache()
 
 
 def process_binary_chunks(
     binary_path: str,
     chunk_size: int = 1024 * 1024,
-    processor_func: Callable | None = None,
+    processor_func: Callable[[bytes, dict[str, Any]], dict[str, Any]] | None = None,
     num_workers: int | None = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Process a binary file in chunks using multiple workers.
 
     Args:
@@ -87,7 +163,7 @@ def process_binary_chunks(
     if processor_func is None:
         processor_func = _default_chunk_processor
 
-    results = {
+    results: dict[str, Any] = {
         "file": binary_path,
         "file_size": os.path.getsize(binary_path),
         "chunk_size": chunk_size,
@@ -97,23 +173,21 @@ def process_binary_chunks(
         "chunk_results": [],
     }
 
-    # Add GPU memory monitoring if available
-    if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
+    if _is_torch_cuda_available():
         initial_gpu_memory = {
-            "allocated_mb": memory_allocated() / (1024 * 1024),
-            "reserved_mb": memory_reserved() / (1024 * 1024),
+            "allocated_mb": _get_torch_memory_allocated() / (1024 * 1024),
+            "reserved_mb": _get_torch_memory_reserved() / (1024 * 1024),
         }
         results["initial_gpu_memory"] = initial_gpu_memory
 
     start_time = time.time()
 
     try:
-        # Calculate chunks
-        file_size = results["file_size"]
-        chunks = []
+        file_size: int = cast("int", results["file_size"])
+        chunks: list[dict[str, int]] = []
 
         for offset in range(0, file_size, chunk_size):
-            chunk_info = {
+            chunk_info: dict[str, int] = {
                 "index": len(chunks),
                 "offset": offset,
                 "size": min(chunk_size, file_size - offset),
@@ -122,21 +196,22 @@ def process_binary_chunks(
 
         results["total_chunks"] = len(chunks)
 
-        # Process chunks in parallel
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            # Submit all chunk processing tasks
-            future_to_chunk = {executor.submit(process_chunk, binary_path, chunk, processor_func): chunk for chunk in chunks}
+            future_to_chunk = {
+                executor.submit(process_chunk, binary_path, chunk, processor_func): chunk
+                for chunk in chunks
+            }
 
-            # Collect results as they complete
+            chunk_results_list: list[dict[str, Any]] = cast("list[dict[str, Any]]", results["chunk_results"])
             for future in as_completed(future_to_chunk):
                 chunk = future_to_chunk[future]
                 try:
                     chunk_result = future.result()
-                    results["chunk_results"].append(chunk_result)
-                    results["chunks_processed"] += 1
+                    chunk_results_list.append(chunk_result)
+                    results["chunks_processed"] = cast("int", results["chunks_processed"]) + 1
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Error processing chunk {chunk['index']}: {e}")
-                    results["chunk_results"].append(
+                    chunk_results_list.append(
                         {
                             "chunk": chunk,
                             "error": str(e),
@@ -145,36 +220,36 @@ def process_binary_chunks(
 
         results["processing_time"] = time.time() - start_time
 
-        # Add final GPU memory monitoring if available
-        if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
+        if _is_torch_cuda_available():
             final_gpu_memory = {
-                "allocated_mb": memory_allocated() / (1024 * 1024),
-                "reserved_mb": memory_reserved() / (1024 * 1024),
+                "allocated_mb": _get_torch_memory_allocated() / (1024 * 1024),
+                "reserved_mb": _get_torch_memory_reserved() / (1024 * 1024),
             }
             results["final_gpu_memory"] = final_gpu_memory
 
-            # Calculate memory usage delta
             if "initial_gpu_memory" in results:
+                initial_mem = cast("dict[str, float]", results["initial_gpu_memory"])
                 results["gpu_memory_delta"] = {
-                    "allocated_delta_mb": final_gpu_memory["allocated_mb"] - results["initial_gpu_memory"]["allocated_mb"],
-                    "reserved_delta_mb": final_gpu_memory["reserved_mb"] - results["initial_gpu_memory"]["reserved_mb"],
+                    "allocated_delta_mb": final_gpu_memory["allocated_mb"] - initial_mem["allocated_mb"],
+                    "reserved_delta_mb": final_gpu_memory["reserved_mb"] - initial_mem["reserved_mb"],
                 }
 
-        # Aggregate results
-        results["aggregated"] = _aggregate_chunk_results(results["chunk_results"])
+        results["aggregated"] = _aggregate_chunk_results(chunk_results_list)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in binary chunk processing: %s", e)
         results["error"] = str(e)
 
-        # Cleanup GPU memory on error if available
-        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-            empty_cache()
+        _torch_empty_cache()
 
     return results
 
 
-def process_chunk(binary_path: str, chunk_info: dict[str, object], processor_func: Callable) -> dict[str, object]:
+def process_chunk(
+    binary_path: str,
+    chunk_info: dict[str, int],
+    processor_func: Callable[[bytes, dict[str, Any]], dict[str, Any]],
+) -> dict[str, Any]:
     """Process a single chunk of a binary file.
 
     Args:
@@ -191,8 +266,7 @@ def process_chunk(binary_path: str, chunk_info: dict[str, object], processor_fun
             f.seek(chunk_info["offset"])
             data = f.read(chunk_info["size"])
 
-        # Process the chunk
-        result = processor_func(data, chunk_info)
+        result = processor_func(data, cast("dict[str, Any]", chunk_info))
 
         return {
             "chunk": chunk_info,
@@ -209,7 +283,10 @@ def process_chunk(binary_path: str, chunk_info: dict[str, object], processor_fun
         }
 
 
-def process_distributed_results(results: list[dict[str, object]], aggregation_func: Callable | None = None) -> dict[str, object]:
+def process_distributed_results(
+    results: list[dict[str, Any]],
+    aggregation_func: Callable[[list[dict[str, Any]]], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Process and aggregate results from distributed processing.
 
     Args:
@@ -223,37 +300,34 @@ def process_distributed_results(results: list[dict[str, object]], aggregation_fu
     if aggregation_func is None:
         aggregation_func = _default_aggregation
 
-    aggregated = {
+    aggregated: dict[str, Any] = {
         "total_results": len(results),
         "successful": 0,
         "failed": 0,
         "aggregated_data": {},
     }
 
-    # Separate successful and failed results
-    successful_results = []
-    failed_results = []
+    successful_results: list[dict[str, Any]] = []
+    failed_results: list[dict[str, Any]] = []
 
     for result in results:
         if result.get("success", False):
             successful_results.append(result)
-            aggregated["successful"] += 1
+            aggregated["successful"] = cast("int", aggregated["successful"]) + 1
         else:
             failed_results.append(result)
-            aggregated["failed"] += 1
+            aggregated["failed"] = cast("int", aggregated["failed"]) + 1
 
-    # Aggregate successful results
     if successful_results:
         aggregated["aggregated_data"] = aggregation_func(successful_results)
 
-    # Include error summary
     if failed_results:
         aggregated["errors"] = [
             {
                 "chunk": r.get("chunk", {}),
                 "error": r.get("error", "Unknown error"),
             }
-            for r in failed_results[:10]  # Limit to first 10 errors
+            for r in failed_results[:10]
         ]
 
     return aggregated
@@ -262,8 +336,8 @@ def process_distributed_results(results: list[dict[str, object]], aggregation_fu
 def run_distributed_analysis(
     binary_path: str,
     analysis_type: str = "comprehensive",
-    config: dict[str, object] | None = None,
-) -> dict[str, object]:
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Run distributed analysis on a binary.
 
     Args:
@@ -278,16 +352,15 @@ def run_distributed_analysis(
     if config is None:
         config = {
             "num_workers": multiprocessing.cpu_count(),
-            "chunk_size": 1024 * 1024,  # 1MB chunks
-            "timeout": 3600,  # 1 hour
+            "chunk_size": 1024 * 1024,
+            "timeout": 3600,
             "backend": "multiprocessing",
         }
 
-    # Apply GPU optimization if available
-    if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
-        gpu_autoloader()
+    if GPU_AUTOLOADER_AVAILABLE and _gpu_autoloader is not None:
+        _gpu_autoloader()
 
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "analysis_type": analysis_type,
         "config": config,
@@ -295,56 +368,54 @@ def run_distributed_analysis(
         "analyses": {},
     }
 
-    # Add initial GPU device info if available
-    if GPU_AUTOLOADER_AVAILABLE and get_device and get_gpu_info:
-        results["gpu_device"] = get_device()
-        results["gpu_info"] = get_gpu_info()
+    if GPU_AUTOLOADER_AVAILABLE and _get_device is not None and _get_gpu_info is not None:
+        results["gpu_device"] = _get_device()
+        results["gpu_info"] = _get_gpu_info()
 
     try:
-        # Define analysis tasks
-        analysis_tasks = {
+        analysis_tasks: dict[str, Callable[[], dict[str, Any]]] = {
             "entropy": lambda: run_distributed_entropy_analysis(binary_path, config),
-            "patterns": lambda: run_distributed_pattern_search(binary_path, config),
+            "patterns": lambda: run_distributed_pattern_search(binary_path, None, config),
             "strings": lambda: _distributed_string_extraction(binary_path, config),
             "hashing": lambda: _distributed_hash_calculation(binary_path, config),
         }
 
+        tasks_to_run: list[str]
         if analysis_type == "comprehensive":
-            tasks_to_run = analysis_tasks.keys()
+            tasks_to_run = list(analysis_tasks.keys())
         else:
             tasks_to_run = [analysis_type] if analysis_type in analysis_tasks else []
 
-        # Run selected analyses
+        analyses_dict: dict[str, Any] = cast("dict[str, Any]", results["analyses"])
         with ThreadPoolExecutor(max_workers=len(tasks_to_run)) as executor:
             future_to_task = {executor.submit(analysis_tasks[task]): task for task in tasks_to_run}
 
             for future in as_completed(future_to_task):
                 task = future_to_task[future]
                 try:
-                    results["analyses"][task] = future.result()
+                    analyses_dict[task] = future.result()
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in %s analysis: %s", task, e)
-                    results["analyses"][task] = {"error": str(e)}
+                    analyses_dict[task] = {"error": str(e)}
 
         results["end_time"] = time.time()
-        results["total_time"] = results["end_time"] - results["start_time"]
+        results["total_time"] = cast("float", results["end_time"]) - cast("float", results["start_time"])
 
-        # Cleanup GPU cache after processing if available
-        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-            empty_cache()
+        _torch_empty_cache()
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in distributed analysis: %s", e)
         results["error"] = str(e)
 
-        # Cleanup GPU memory on error if available
-        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-            empty_cache()
+        _torch_empty_cache()
 
     return results
 
 
-def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object] | None = None) -> dict[str, object]:
+def run_distributed_entropy_analysis(
+    binary_path: str,
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Run distributed entropy analysis on a binary.
 
     Args:
@@ -358,16 +429,14 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object]
     if config is None:
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
-    def entropy_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
+    def entropy_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
         """Calculate entropy for a chunk."""
         if not data:
             return {"entropy": 0.0}
 
-        # Calculate entropy using shared utility
         entropy = calculate_byte_entropy(data)
 
-        # Calculate byte frequency
-        freq = {}
+        freq: dict[int, int] = {}
         for byte in data:
             freq[byte] = freq.get(byte, 0) + 1
 
@@ -378,17 +447,23 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object]
             "offset": chunk_info["offset"],
         }
 
-    # Process chunks
+    chunk_size_val: int = config.get("chunk_size", 1024 * 1024)
+    num_workers_val: int | None = config.get("num_workers")
+
     results = process_binary_chunks(
         binary_path,
-        chunk_size=config.get("chunk_size", 1024 * 1024),
+        chunk_size=chunk_size_val,
         processor_func=entropy_processor,
-        num_workers=config.get("num_workers"),
+        num_workers=num_workers_val,
     )
 
-    # Calculate overall statistics
     if results.get("aggregated"):
-        entropies = [r["result"]["entropy"] for r in results["chunk_results"] if r.get("success") and "entropy" in r.get("result", {})]
+        chunk_results_list = cast("list[dict[str, Any]]", results["chunk_results"])
+        entropies = [
+            r["result"]["entropy"]
+            for r in chunk_results_list
+            if r.get("success") and "entropy" in r.get("result", {})
+        ]
 
         if entropies:
             results["statistics"] = {
@@ -398,7 +473,6 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object]
                 "high_entropy_chunks": sum(bool(e > 7.0) for e in entropies),
             }
 
-            # Check for potential packing/encryption
             if results["statistics"]["average_entropy"] > 7.0:
                 results["indicators"] = ["Possible packing or encryption detected"]
 
@@ -408,8 +482,8 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, object]
 def run_distributed_pattern_search(
     binary_path: str,
     patterns: list[bytes] | None = None,
-    config: dict[str, object] | None = None,
-) -> dict[str, object]:
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Run distributed pattern search on a binary.
 
     Args:
@@ -422,7 +496,6 @@ def run_distributed_pattern_search(
 
     """
     if patterns is None:
-        # Default patterns for license/protection detection
         patterns = [
             b"license",
             b"LICENSE",
@@ -446,21 +519,23 @@ def run_distributed_pattern_search(
     if config is None:
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
-    def pattern_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
-        """Search for _patterns in a chunk."""
-        found_patterns = []
+    patterns_to_search = patterns
 
-        for pattern in patterns:
-            # Use common utility for pattern searching
+    def pattern_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
+        """Search for _patterns in a chunk."""
+        found_patterns: list[dict[str, Any]] = []
+
+        for pattern in patterns_to_search:
             from ..binary.binary_io import find_all_pattern_offsets
 
             offsets = find_all_pattern_offsets(data, pattern)
+            chunk_offset: int = chunk_info["offset"]
             for pos in offsets:
                 found_patterns.append(
                     {
                         "pattern": pattern.hex(),
                         "pattern_text": pattern.decode("utf-8", errors="ignore"),
-                        "offset": chunk_info["offset"] + pos,
+                        "offset": chunk_offset + pos,
                         "context_before": data[max(0, pos - 10) : pos].hex(),
                         "context_after": data[pos + len(pattern) : pos + len(pattern) + 10].hex(),
                     },
@@ -468,25 +543,26 @@ def run_distributed_pattern_search(
 
         return {
             "patterns_found": len(found_patterns),
-            "matches": found_patterns[:100],  # Limit to prevent memory issues
+            "matches": found_patterns[:100],
         }
 
-    # Process chunks
+    chunk_size_val: int = config.get("chunk_size", 1024 * 1024)
+    num_workers_val: int | None = config.get("num_workers")
+
     results = process_binary_chunks(
         binary_path,
-        chunk_size=config.get("chunk_size", 1024 * 1024),
+        chunk_size=chunk_size_val,
         processor_func=pattern_processor,
-        num_workers=config.get("num_workers"),
+        num_workers=num_workers_val,
     )
 
-    # Aggregate all pattern matches
-    all_matches = []
-    for chunk_result in results.get("chunk_results", []):
+    all_matches: list[dict[str, Any]] = []
+    chunk_results_list = cast("list[dict[str, Any]]", results.get("chunk_results", []))
+    for chunk_result in chunk_results_list:
         if chunk_result.get("success") and "matches" in chunk_result.get("result", {}):
             all_matches.extend(chunk_result["result"]["matches"])
 
-    # Group by pattern
-    pattern_summary = {}
+    pattern_summary: dict[str, dict[str, Any]] = {}
     for match in all_matches:
         pattern_text = match["pattern_text"]
         if pattern_text not in pattern_summary:
@@ -504,7 +580,7 @@ def run_distributed_pattern_search(
     return results
 
 
-def extract_binary_info(binary_path: str) -> dict[str, object]:
+def extract_binary_info(binary_path: str) -> dict[str, Any]:
     """Extract basic information from a binary file.
 
     Args:
@@ -514,19 +590,17 @@ def extract_binary_info(binary_path: str) -> dict[str, object]:
         Dict containing binary information
 
     """
-    info = {
+    info: dict[str, Any] = {
         "path": binary_path,
         "size": os.path.getsize(binary_path),
         "name": os.path.basename(binary_path),
     }
 
     try:
-        # Get file times
         stat = Path(binary_path).stat()
         info["created"] = time.ctime(stat.st_ctime)
         info["modified"] = time.ctime(stat.st_mtime)
 
-        # Calculate hash
         import hashlib
 
         sha256 = hashlib.sha256()
@@ -537,7 +611,6 @@ def extract_binary_info(binary_path: str) -> dict[str, object]:
 
         info["sha256"] = sha256.hexdigest()
 
-        # Detect format
         with open(binary_path, "rb") as f:
             magic = f.read(4)
 
@@ -557,7 +630,7 @@ def extract_binary_info(binary_path: str) -> dict[str, object]:
     return info
 
 
-def extract_binary_features(binary_path: str) -> dict[str, object]:
+def extract_binary_features(binary_path: str) -> dict[str, Any]:
     """Extract features from a binary for analysis.
 
     Args:
@@ -567,7 +640,7 @@ def extract_binary_features(binary_path: str) -> dict[str, object]:
         Dict containing extracted features
 
     """
-    features = {
+    features: dict[str, Any] = {
         "file_size": 0,
         "entropy": 0.0,
         "strings_count": 0,
@@ -576,20 +649,14 @@ def extract_binary_features(binary_path: str) -> dict[str, object]:
     }
 
     try:
-        # Basic file info
         features["file_size"] = os.path.getsize(binary_path)
 
-        # Calculate overall entropy
         entropy_result = run_distributed_entropy_analysis(binary_path)
         if "statistics" in entropy_result:
             features["entropy"] = entropy_result["statistics"]["average_entropy"]
 
-        # Extract strings count
         strings_result = _distributed_string_extraction(binary_path, {"min_length": 4})
         features["strings_count"] = strings_result.get("total_strings", 0)
-
-        # Format-specific features would go here
-        # (PE imports, sections, etc.)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error extracting features: %s", e)
@@ -598,7 +665,11 @@ def extract_binary_features(binary_path: str) -> dict[str, object]:
     return features
 
 
-def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] | None = None) -> dict[str, object]:
+def run_gpu_accelerator(
+    task_type: str,
+    data: dict[str, Any],
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Run GPU-accelerated processing for supported tasks.
 
     Args:
@@ -610,13 +681,12 @@ def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] 
         Dict containing GPU processing results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "task_type": task_type,
         "gpu_available": False,
         "backend": "cpu",
     }
 
-    # Check for GPU availability
     gpu_backends = _check_gpu_backends()
 
     if not gpu_backends["available"]:
@@ -627,13 +697,15 @@ def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] 
     results["gpu_available"] = True
     results["backend"] = gpu_backends["backend"]
 
+    effective_config: dict[str, Any] = config if config is not None else {}
+
     try:
         if task_type == "pattern_matching":
-            results["result"] = _gpu_pattern_matching(data, config)
+            results["result"] = _gpu_pattern_matching(data, effective_config)
         elif task_type == "crypto":
-            results["result"] = _gpu_crypto_operations(data, config)
+            results["result"] = _gpu_crypto_operations(data, effective_config)
         elif task_type == "ml_inference":
-            results["result"] = _gpu_ml_inference(data, config)
+            results["result"] = _gpu_ml_inference(data, effective_config)
         else:
             results["error"] = f"Unsupported GPU task type: {task_type}"
 
@@ -645,7 +717,11 @@ def run_gpu_accelerator(task_type: str, data: object, config: dict[str, object] 
     return results
 
 
-def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, force_full: bool = False) -> dict[str, object]:
+def run_incremental_analysis(
+    binary_path: str,
+    cache_dir: str | None = None,
+    force_full: bool = False,
+) -> dict[str, Any]:
     """Run incremental analysis using cached results when possible.
 
     Args:
@@ -660,7 +736,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, for
     if cache_dir is None:
         cache_dir = os.path.join(os.path.dirname(binary_path), ".intellicrack_cache")
 
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "cache_dir": cache_dir,
         "cached_results": {},
@@ -669,7 +745,6 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, for
         "cache_misses": 0,
     }
 
-    # Calculate file hash for cache key
     import hashlib
 
     with open(binary_path, "rb") as f:
@@ -677,44 +752,40 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, for
 
     results["file_hash"] = file_hash
 
-    # Create cache directory
     os.makedirs(cache_dir, exist_ok=True)
     cache_file = os.path.join(cache_dir, f"{file_hash}.json")
 
-    # Load cached results if available and not forcing full analysis
+    cached_results_dict: dict[str, Any] = cast("dict[str, Any]", results["cached_results"])
     if os.path.exists(cache_file) and not force_full:
         try:
             with open(cache_file, encoding="utf-8") as f:
                 cached_data = json.load(f)
 
-            # Verify file hasn't changed
             if cached_data.get("file_size") == os.path.getsize(binary_path):
-                results["cached_results"] = cached_data.get("analyses", {})
-                results["cache_hits"] = len(results["cached_results"])
+                cached_results_dict.update(cached_data.get("analyses", {}))
+                results["cache_hits"] = len(cached_results_dict)
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error loading cache: %s", e)
 
-    # Determine what analyses need to be run
     required_analyses = ["entropy", "patterns", "strings", "features"]
-    analyses_to_run = []
+    analyses_to_run: list[str] = []
 
     for analysis in required_analyses:
-        if analysis not in results["cached_results"]:
+        if analysis not in cached_results_dict:
             analyses_to_run.append(analysis)
-            results["cache_misses"] += 1
+            results["cache_misses"] = cast("int", results["cache_misses"]) + 1
 
-    # Run missing analyses
+    new_results_dict: dict[str, Any] = cast("dict[str, Any]", results["new_results"])
     if analyses_to_run:
         new_analyses = run_distributed_analysis(
             binary_path,
             analysis_type="comprehensive",
         )
 
-        results["new_results"] = new_analyses.get("analyses", {})
+        new_results_dict.update(new_analyses.get("analyses", {}))
 
-        # Update cache
-        all_results = {**results["cached_results"], **results["new_results"]}
+        all_results: dict[str, Any] = {**cached_results_dict, **new_results_dict}
 
         cache_data = {
             "file_hash": file_hash,
@@ -729,13 +800,15 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None, for
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error saving cache: %s", e)
 
-    # Combine all results
-    results["all_results"] = {**results["cached_results"], **results["new_results"]}
+    results["all_results"] = {**cached_results_dict, **new_results_dict}
 
     return results
 
 
-def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -> dict[str, object]:
+def run_memory_optimized_analysis(
+    binary_path: str,
+    max_memory_mb: int = 1024,
+) -> dict[str, Any]:
     """Run memory-optimized analysis for large binaries.
 
     Args:
@@ -748,16 +821,13 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
     """
     file_size = os.path.getsize(binary_path)
 
-    # Calculate optimal chunk size based on memory limit
-    # Reserve 50% for processing overhead
     available_memory = max_memory_mb * 1024 * 1024 * 0.5
     num_workers = multiprocessing.cpu_count()
     chunk_size = int(available_memory / num_workers)
 
-    # Ensure reasonable chunk size
-    chunk_size = max(1024 * 1024, min(chunk_size, 100 * 1024 * 1024))  # 1MB to 100MB
+    chunk_size = max(1024 * 1024, min(chunk_size, 100 * 1024 * 1024))
 
-    results = {
+    results: dict[str, Any] = {
         "binary": binary_path,
         "file_size": file_size,
         "max_memory_mb": max_memory_mb,
@@ -765,8 +835,7 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
         "num_workers": num_workers,
     }
 
-    # Run analysis with memory constraints
-    config = {
+    config: dict[str, Any] = {
         "chunk_size": chunk_size,
         "num_workers": num_workers,
         "memory_limit": max_memory_mb,
@@ -777,7 +846,10 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
     return results
 
 
-def run_pdf_report_generator(analysis_results: dict[str, object], output_path: str | None = None) -> dict[str, object]:
+def run_pdf_report_generator(
+    analysis_results: dict[str, Any],
+    output_path: str | None = None,
+) -> dict[str, Any]:
     """Generate a PDF report from analysis results.
 
     Args:
@@ -791,26 +863,24 @@ def run_pdf_report_generator(analysis_results: dict[str, object], output_path: s
     if output_path is None:
         output_path = "intellicrack_report.pdf"
 
-    results = {
+    results: dict[str, Any] = {
         "output_path": output_path,
         "status": "pending",
     }
 
     try:
-        # Check if PDF generation is available
         from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 
         generator = PDFReportGenerator()
 
-        # Add sections based on analysis results
         if "binary" in analysis_results:
             generator.add_section("Binary Information", str(analysis_results.get("binary", {})))
 
-        if "analyses" in analysis_results:
-            for analysis_type, data in analysis_results["analyses"].items():
+        analyses_data = analysis_results.get("analyses")
+        if isinstance(analyses_data, dict):
+            for analysis_type, data in analyses_data.items():
                 generator.add_section(f"{analysis_type.title()} Analysis", str(data))
 
-        # Generate PDF
         generator.generate_report(output_path=output_path)
 
         results["status"] = "success"
@@ -828,10 +898,7 @@ def run_pdf_report_generator(analysis_results: dict[str, object], output_path: s
     return results
 
 
-# Helper functions
-
-
-def _default_chunk_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
+def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
     """Calculate basic statistics for a data chunk.
 
     Args:
@@ -849,7 +916,7 @@ def _default_chunk_processor(data: bytes, chunk_info: dict[str, object]) -> dict
     }
 
 
-def _default_aggregation(results: list[dict[str, object]]) -> dict[str, object]:
+def _default_aggregation(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate results from multiple chunk processing operations.
 
     Args:
@@ -864,8 +931,9 @@ def _default_aggregation(results: list[dict[str, object]]) -> dict[str, object]:
 
     for result in results:
         if "result" in result:
-            total_size += result["result"].get("size", 0)
-            total_non_zero += result["result"].get("non_zero_bytes", 0)
+            result_data = result["result"]
+            total_size += result_data.get("size", 0)
+            total_non_zero += result_data.get("non_zero_bytes", 0)
 
     return {
         "total_size": total_size,
@@ -874,7 +942,7 @@ def _default_aggregation(results: list[dict[str, object]]) -> dict[str, object]:
     }
 
 
-def _aggregate_chunk_results(chunk_results: list[dict[str, object]]) -> dict[str, object]:
+def _aggregate_chunk_results(chunk_results: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate results from chunk processing operations.
 
     Args:
@@ -890,7 +958,10 @@ def _aggregate_chunk_results(chunk_results: list[dict[str, object]]) -> dict[str
         return {"error": "No successful chunk processing"}
 
 
-def _distributed_string_extraction(binary_path: str, config: dict[str, object]) -> dict[str, object]:
+def _distributed_string_extraction(
+    binary_path: str,
+    config: dict[str, Any],
+) -> dict[str, Any]:
     """Extract strings from binary using distributed processing.
 
     Args:
@@ -901,17 +972,18 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, object]) 
         Dict containing extracted strings and statistics
 
     """
-    min_length = config.get("min_length", 4)
+    min_length: int = config.get("min_length", 4)
 
-    def string_processor(data: bytes, chunk_info: dict[str, object]) -> dict[str, object]:
+    def string_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
         """Extract printable strings from chunk."""
-        strings = []
-        current = []
+        strings: list[dict[str, Any]] = []
+        current: list[str] = []
         current_offset = 0
+        chunk_offset: int = chunk_info["offset"]
 
         for i, byte in enumerate(data):
-            if 32 <= byte <= 126:  # Printable ASCII
-                if not current:  # Start of new string
+            if 32 <= byte <= 126:
+                if not current:
                     current_offset = i
                 current.append(chr(byte))
             else:
@@ -919,47 +991,53 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, object]) 
                     strings.append(
                         {
                             "text": "".join(current),
-                            "offset": chunk_info["offset"] + current_offset,
+                            "offset": chunk_offset + current_offset,
                         },
                     )
                 current = []
 
-        # Don't forget last string
         if len(current) >= min_length:
             strings.append(
                 {
                     "text": "".join(current),
-                    "offset": chunk_info["offset"] + current_offset,
+                    "offset": chunk_offset + current_offset,
                 },
             )
 
         return {
             "strings_count": len(strings),
-            "strings": strings[:100],  # Limit to prevent memory issues
-            "chunk_offset": chunk_info["offset"],
+            "strings": strings[:100],
+            "chunk_offset": chunk_offset,
         }
+
+    chunk_size_val: int = config.get("chunk_size", 1024 * 1024)
+    num_workers_val: int | None = config.get("num_workers")
 
     results = process_binary_chunks(
         binary_path,
-        chunk_size=config.get("chunk_size", 1024 * 1024),
+        chunk_size=chunk_size_val,
         processor_func=string_processor,
-        num_workers=config.get("num_workers"),
+        num_workers=num_workers_val,
     )
 
-    # Aggregate strings
-    all_strings = []
-    for chunk_result in results.get("chunk_results", []):
+    all_strings: list[dict[str, Any]] = []
+    chunk_results_list = cast("list[dict[str, Any]]", results.get("chunk_results", []))
+    for chunk_result in chunk_results_list:
         if chunk_result.get("success") and "strings" in chunk_result.get("result", {}):
             all_strings.extend(chunk_result["result"]["strings"])
 
     results["total_strings"] = len(all_strings)
-    results["unique_strings"] = len(set(all_strings))
-    results["sample_strings"] = list(set(all_strings))[:50]
+    string_texts = [s.get("text", "") for s in all_strings if isinstance(s, dict)]
+    results["unique_strings"] = len(set(string_texts))
+    results["sample_strings"] = list(set(string_texts))[:50]
 
     return results
 
 
-def _distributed_hash_calculation(binary_path: str, config: dict[str, object]) -> dict[str, object]:
+def _distributed_hash_calculation(
+    binary_path: str,
+    config: dict[str, Any],
+) -> dict[str, Any]:
     """Calculate multiple hash algorithms using distributed processing.
 
     Args:
@@ -972,32 +1050,32 @@ def _distributed_hash_calculation(binary_path: str, config: dict[str, object]) -
     """
     import hashlib
 
-    # For hash calculation, we need sequential processing
-    # but can parallelize multiple hash algorithms
-    # Get algorithms from config or use defaults
-    algorithms = config.get("hash_algorithms", ["md5", "sha1", "sha256", "sha512"])
-    chunk_size = config.get("chunk_size", 8192)
-    max_workers = config.get("max_workers", len(algorithms))
+    algorithms_config = config.get("hash_algorithms", ["md5", "sha1", "sha256", "sha512"])
+    algorithms: list[str] = algorithms_config if isinstance(algorithms_config, list) else ["md5", "sha1", "sha256", "sha512"]
+    chunk_size: int = config.get("chunk_size", 8192)
+    max_workers_config = config.get("max_workers", len(algorithms))
+    max_workers: int = max_workers_config if isinstance(max_workers_config, int) else len(algorithms)
 
-    results = {"hashes": {}, "config_used": config}
+    results: dict[str, Any] = {"hashes": {}, "config_used": config}
 
     def calculate_hash(algo: str) -> tuple[str, str]:
         """Calculate hash for given algorithm."""
         h = hashlib.new(algo)
 
         with open(binary_path, "rb") as f:
-            while chunk := f.read(chunk_size):
-                h.update(chunk)
+            while file_chunk := f.read(chunk_size):
+                h.update(file_chunk)
 
         return algo, h.hexdigest()
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_algo = {executor.submit(calculate_hash, algo): algo for algo in algorithms}
 
+        hashes_dict: dict[str, str] = cast("dict[str, str]", results["hashes"])
         for future in as_completed(future_to_algo):
             try:
                 algo, hash_value = future.result()
-                results["hashes"][algo] = hash_value
+                hashes_dict[algo] = hash_value
             except (OSError, ValueError, RuntimeError) as e:
                 algo = future_to_algo[future]
                 logger.error("Error calculating %s: %s", algo, e)
@@ -1005,42 +1083,42 @@ def _distributed_hash_calculation(binary_path: str, config: dict[str, object]) -
     return results
 
 
-def _check_gpu_backends() -> dict[str, object]:
+def _check_gpu_backends() -> dict[str, Any]:
     """Check for available GPU acceleration backends.
 
     Returns:
         Dict containing GPU availability and device information
 
     """
-    backends = {
+    backends: dict[str, Any] = {
         "available": False,
         "backend": None,
         "devices": [],
     }
 
-    # Check for CUDA
-    if TORCH_AVAILABLE:
-        try:
-            if torch.cuda.is_available():
+    if _is_torch_cuda_available():
+        torch_mod: Any = torch
+        if torch_mod is not None:
+            try:
                 backends["available"] = True
                 backends["backend"] = "cuda"
-                backends["devices"] = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
+                backends["devices"] = [f"cuda:{i}" for i in range(torch_mod.cuda.device_count())]
                 return backends
-        except Exception as e:
-            logger.debug("CUDA backend check failed: %s", e)
-    else:
+            except Exception as e:
+                logger.debug("CUDA backend check failed: %s", e)
+    if not _check_torch_available():
         logger.debug("CUDA backend not available: PyTorch not installed")
 
-    # Check for OpenCL
     try:
         import pyopencl as cl
 
         if platforms := cl.get_platforms():
             backends["available"] = True
             backends["backend"] = "opencl"
+            device_list: list[str] = cast("list[str]", backends["devices"])
             for platform in platforms:
                 devices = platform.get_devices()
-                backends["devices"].extend([d.name for d in devices])
+                device_list.extend([d.name for d in devices])
             return backends
     except ImportError:
         logger.debug("OpenCL backend not available: pyopencl not installed")
@@ -1048,7 +1126,7 @@ def _check_gpu_backends() -> dict[str, object]:
     return backends
 
 
-def _run_cpu_fallback(task_type: str, data: object) -> dict[str, object]:
+def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
     """Execute CPU fallback processing when GPU is unavailable.
 
     Args:
@@ -1059,12 +1137,9 @@ def _run_cpu_fallback(task_type: str, data: object) -> dict[str, object]:
         Dict containing CPU processing results
 
     """
-    import time
-
     start_time = time.time()
 
-    # Process data based on task type
-    result = {
+    result: dict[str, Any] = {
         "backend": "cpu",
         "task_type": task_type,
         "message": "Processed on CPU",
@@ -1074,32 +1149,27 @@ def _run_cpu_fallback(task_type: str, data: object) -> dict[str, object]:
         },
     }
 
-    # Perform basic CPU processing based on task type
     if task_type == "hash_calculation" and isinstance(data, (str, bytes)):
         import hashlib
 
-        if isinstance(data, str):
-            data = data.encode()
-        result["cpu_hash"] = hashlib.sha256(data).hexdigest()
+        hash_data = data.encode() if isinstance(data, str) else data
+        result["cpu_hash"] = hashlib.sha256(hash_data).hexdigest()
 
     elif task_type == "analysis" and hasattr(data, "__len__"):
-        # Basic analysis on CPU
+        data_len = len(data)
         result["analysis"] = {
-            "item_count": len(data),
-            "complexity": "low" if len(data) < 1000 else "medium" if len(data) < 10000 else "high",
+            "item_count": data_len,
+            "complexity": "low" if data_len < 1000 else "medium" if data_len < 10000 else "high",
         }
 
     elif task_type == "pattern_matching" and isinstance(data, (str, bytes)):
-        # Simple pattern matching
-        if isinstance(data, bytes):
-            data = data.decode("utf-8", errors="ignore")
+        search_str = data.decode("utf-8", errors="ignore") if isinstance(data, bytes) else data
 
         patterns = ["license", "trial", "crack", "serial", "key"]
-        matches = [pattern for pattern in patterns if pattern in data.lower()]
+        matches = [pattern for pattern in patterns if pattern in search_str.lower()]
         result["pattern_matches"] = matches
 
     else:
-        # Generic processing
         result["processed"] = True
         result["data_summary"] = str(data)[:100] if data else "No data"
 
@@ -1107,7 +1177,10 @@ def _run_cpu_fallback(task_type: str, data: object) -> dict[str, object]:
     return result
 
 
-def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
+def _gpu_pattern_matching(
+    data: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
     """Execute GPU-accelerated pattern matching operations.
 
     Args:
@@ -1120,48 +1193,46 @@ def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) ->
     """
     start_time = time.time()
     patterns_found = 0
+    backend = "cpu"
 
     try:
-        # Check if GPU libraries are available
         gpu_available = False
         device_str = "cpu"
 
-        if GPU_AUTOLOADER_AVAILABLE:
-            gpu_info = get_gpu_info()
-            if gpu_info["available"]:
+        if GPU_AUTOLOADER_AVAILABLE and _get_gpu_info is not None and _get_device is not None:
+            gpu_info = _get_gpu_info()
+            if gpu_info.get("available"):
                 gpu_available = True
-                device_str = get_device()
-        elif TORCH_AVAILABLE and torch.cuda.is_available():
+                device_result = _get_device()
+                device_str = device_result if device_result is not None else "cpu"
+        elif _is_torch_cuda_available():
             gpu_available = True
             device_str = "cuda"
 
-        # Convert patterns and data to GPU tensors for fast matching
-        patterns = config.get("patterns", [])
-        search_data = data.get("data", b"")
+        patterns: list[bytes] = config.get("patterns", [])
+        search_data: bytes = data.get("data", b"")
 
-        if gpu_available:
+        torch_mod: Any = torch
+        if gpu_available and _check_torch_available() and torch_mod is not None:
             if patterns and search_data:
-                # Simple GPU pattern matching using PyTorch
-                device = torch.device(device_str)
+                device = torch_mod.device(device_str)
 
-                # Convert data to tensor
-                data_tensor = torch.tensor(list(search_data), dtype=torch.uint8)
-                if GPU_AUTOLOADER_AVAILABLE and to_device:
-                    data_tensor = to_device(data_tensor)
+                data_tensor = torch_mod.tensor(list(search_data), dtype=torch_mod.uint8)
+                if GPU_AUTOLOADER_AVAILABLE and _to_device is not None:
+                    data_tensor = _to_device(data_tensor)
                 else:
                     data_tensor = data_tensor.to(device)
 
                 for pattern in patterns:
                     if isinstance(pattern, (bytes, bytearray)):
-                        pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8)
-                        if GPU_AUTOLOADER_AVAILABLE and to_device:
-                            pattern_tensor = to_device(pattern_tensor)
+                        pattern_tensor = torch_mod.tensor(list(pattern), dtype=torch_mod.uint8)
+                        if GPU_AUTOLOADER_AVAILABLE and _to_device is not None:
+                            pattern_tensor = _to_device(pattern_tensor)
                         else:
                             pattern_tensor = pattern_tensor.to(device)
-                        # Use convolution for pattern matching
                         if len(pattern) <= len(search_data):
                             for i in range(len(search_data) - len(pattern) + 1):
-                                if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor):
+                                if torch_mod.equal(data_tensor[i : i + len(pattern)], pattern_tensor):
                                     patterns_found += 1
                                     break
 
@@ -1175,12 +1246,11 @@ def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) ->
 
     except ImportError as e:
         logger.error("Import error in distributed_processing: %s", e)
-        # No PyTorch, use basic pattern matching
-        patterns = config.get("patterns", [])
-        search_data = data.get("data", b"")
+        patterns_list: list[bytes] = config.get("patterns", [])
+        search_bytes: bytes = data.get("data", b"")
 
-        for pattern_ in patterns:
-            if pattern_ in search_data:
+        for pattern_ in patterns_list:
+            if pattern_ in search_bytes:
                 patterns_found += 1
 
         backend = "cpu"
@@ -1192,7 +1262,10 @@ def _gpu_pattern_matching(data: dict[str, object], config: dict[str, object]) ->
     }
 
 
-def _gpu_crypto_operations(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
+def _gpu_crypto_operations(
+    data: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
     """Execute GPU-accelerated cryptographic operations.
 
     Args:
@@ -1205,39 +1278,39 @@ def _gpu_crypto_operations(data: dict[str, object], config: dict[str, object]) -
     """
     import hashlib
 
-    operation = config.get("operation", "hash")
-    input_data = data.get("data", b"")
+    operation: str = config.get("operation", "hash")
+    input_data: bytes = data.get("data", b"")
     start_time = time.time()
+    result_str: str
+    backend: str
 
     try:
-        # Try GPU acceleration with CuPy
         import cupy as cp
 
         if operation == "hash":
-            # GPU-accelerated hashing (simplified)
-            # In practice, would use specialized GPU crypto libraries
             data_gpu = cp.asarray(list(input_data), dtype=cp.uint8)
-            # Simple hash computation on GPU
             hash_value = int(cp.sum(data_gpu) % (2**32))
-            result = f"{hash_value:08x}"
+            result_str = f"{hash_value:08x}"
         else:
-            # Other crypto operations
-            result = hashlib.sha256(input_data).hexdigest()
+            result_str = hashlib.sha256(input_data).hexdigest()
         backend = "cuda"
     except ImportError as e:
         logger.error("Import error in distributed_processing: %s", e)
-        result = hashlib.sha256(input_data).hexdigest()
+        result_str = hashlib.sha256(input_data).hexdigest()
         backend = "cpu"
 
     return {
         "operation": operation,
-        "result": result,
+        "result": result_str,
         "processing_time": time.time() - start_time,
         "backend": backend,
     }
 
 
-def _gpu_ml_inference(data: dict[str, object], config: dict[str, object]) -> dict[str, object]:
+def _gpu_ml_inference(
+    data: dict[str, Any],
+    config: dict[str, Any],
+) -> dict[str, Any]:
     """Execute GPU-accelerated machine learning inference.
 
     Args:
@@ -1249,70 +1322,75 @@ def _gpu_ml_inference(data: dict[str, object], config: dict[str, object]) -> dic
 
     """
     start_time = time.time()
+    predictions: list[float] = [0.5]
+    confidence: float = 0.0
+    backend: str = "cpu"
+
+    if not _check_torch_available():
+        return {
+            "error": "PyTorch not available",
+            "backend": "cpu",
+            "processing_time": time.time() - start_time,
+        }
+
+    torch_mod: Any = torch
+    if torch_mod is None:
+        return {
+            "error": "PyTorch not available",
+            "backend": "cpu",
+            "processing_time": time.time() - start_time,
+        }
 
     try:
-        if not TORCH_AVAILABLE:
-            return {
-                "error": "PyTorch not available",
-                "backend": "cpu",
-                "processing_time": time.time() - start_time,
-            }
-
-        # Check for GPU availability
-        if GPU_AUTOLOADER_AVAILABLE:
-            device_str = get_device()
-            gpu_info = get_gpu_info()
-            backend = gpu_info.get("gpu_type", device_str)
-        elif torch.cuda.is_available():
+        device_str: str
+        if GPU_AUTOLOADER_AVAILABLE and _get_device is not None and _get_gpu_info is not None:
+            device_result = _get_device()
+            device_str = device_result if device_result is not None else "cpu"
+            gpu_info = _get_gpu_info()
+            backend = str(gpu_info.get("gpu_type", device_str))
+        elif _is_torch_cuda_available():
             device_str = "cuda"
             backend = "cuda"
         else:
             device_str = "cpu"
             backend = "cpu"
 
-        device = torch.device(device_str)
+        device = torch_mod.device(device_str)
 
-        # Get model and features
         model_path = config.get("model_path")
         features = data.get("features", [])
 
-        if model_path and os.path.exists(model_path) and features:
-            # Load model
-            model = torch.load(model_path, map_location=device)
+        if model_path is not None and os.path.exists(str(model_path)) and features:
+            model = torch_mod.load(str(model_path), map_location=device)
             model.eval()
 
-            # Convert features to tensor
-            features_tensor = torch.tensor(features, dtype=torch.float32)
-            if GPU_AUTOLOADER_AVAILABLE and to_device:
-                features_tensor = to_device(features_tensor)
+            features_tensor = torch_mod.tensor(features, dtype=torch_mod.float32)
+            if GPU_AUTOLOADER_AVAILABLE and _to_device is not None:
+                features_tensor = _to_device(features_tensor)
             else:
                 features_tensor = features_tensor.to(device)
             if len(features_tensor.shape) == 1:
                 features_tensor = features_tensor.unsqueeze(0)
 
-            # Run inference
-            with torch.no_grad():
+            with torch_mod.no_grad():
                 output = model(features_tensor)
                 if hasattr(output, "cpu"):
                     predictions = output.cpu().numpy().tolist()
                 else:
                     predictions = [output.item()]
 
-                # Calculate confidence (softmax for classification)
-                if len(predictions) > 1:
+                if len(predictions) > 1 and np is not None:
                     exp_scores = np.exp(predictions)
                     confidence = float(np.max(exp_scores / np.sum(exp_scores)))
                 else:
                     confidence = abs(predictions[0])
         else:
-            # No model or features, return default
             predictions = [0.5]
             confidence = 0.0
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.debug("GPU ML inference fallback: %s", e)
-        # Simple fallback prediction
-        predictions = [0.5]  # Neutral prediction
+        predictions = [0.5]
         confidence = 0.0
         backend = "cpu"
 
@@ -1324,13 +1402,12 @@ def _gpu_ml_inference(data: dict[str, object], config: dict[str, object]) -> dic
     }
 
 
-# Dask distributed processing implementation
 def run_dask_distributed_analysis(
     binary_path: str,
-    analysis_func: Callable,
+    analysis_func: Callable[[bytes], dict[str, Any]],
     chunk_size: int = 1024 * 1024,
     n_partitions: int | None = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Run distributed binary analysis using Dask for large-scale processing.
 
     Args:
@@ -1347,107 +1424,108 @@ def run_dask_distributed_analysis(
         import dask
         import dask.array as da
         import dask.bag as db
-        from dask.distributed import Client, as_completed
+        from dask.distributed import (
+            Client,
+            as_completed as dask_as_completed,
+        )
     except ImportError:
         return {
             "error": "Dask not available",
             "suggestion": "Install with: pip install dask[distributed]",
         }
 
+    if np is None:
+        return {
+            "error": "NumPy not available",
+            "suggestion": "Install with: pip install numpy",
+        }
+
     start_time = time.time()
-    results = {
+    results: dict[str, Any] = {
         "framework": "dask",
         "binary_path": binary_path,
         "chunk_size": chunk_size,
     }
 
     try:
-        # Read binary data
         with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         results["file_size"] = len(binary_data)
 
-        # Convert to Dask array
-        data_array = da.from_array(np.frombuffer(binary_data, dtype=np.uint8), chunks=chunk_size)
+        from_array_func: Any = da.from_array
+        data_array = from_array_func(np.frombuffer(binary_data, dtype=np.uint8), chunks=chunk_size)
 
-        # Perform basic analysis on the Dask array
         results["array_shape"] = data_array.shape
         results["array_chunks"] = len(data_array.chunks[0])
 
         if n_partitions is None:
             n_partitions = max(1, len(binary_data) // chunk_size)
 
-        # Create Dask bag from chunks
-        chunks = []
+        chunks: list[dict[str, Any]] = []
         for i in range(0, len(binary_data), chunk_size):
-            chunk = binary_data[i : i + chunk_size]
+            chunk_data = binary_data[i : i + chunk_size]
             chunks.append(
                 {
-                    "data": chunk,
+                    "data": chunk_data,
                     "offset": i,
-                    "size": len(chunk),
+                    "size": len(chunk_data),
                 },
             )
 
-        bag = db.from_sequence(chunks, npartitions=n_partitions)
+        from_sequence_func: Any = db.from_sequence
+        bag = from_sequence_func(chunks, npartitions=n_partitions)
 
-        # Try to use distributed client if available
+        client: Client | None = None
         try:
-            # Check if a client is already running
-            client = Client.current()
+            client_current_func: Any = Client.current
+            client = client_current_func()
             results["distributed_mode"] = "existing_client"
         except ValueError:
-            # No client running, use local scheduler
             client = None
             results["distributed_mode"] = "local_threads"
 
-        # Apply analysis function to each chunk
-        if client:
-            # Use distributed client with as_completed for progress tracking
+        chunk_results: list[dict[str, Any]]
+        if client is not None:
             futures = []
-            for chunk in chunks:
+            for chunk_item in chunks:
                 future = client.submit(
                     lambda c: {
                         "offset": c["offset"],
                         "size": c["size"],
                         "result": analysis_func(c["data"]),
                     },
-                    chunk,
+                    chunk_item,
                 )
                 futures.append(future)
 
-            # Gather results as they complete
             chunk_results = []
-            for future in as_completed(futures):
+            as_completed_func: Any = dask_as_completed
+            for future in as_completed_func(futures):
                 result = future.result()
                 chunk_results.append(result)
         else:
-            # Use local scheduler
             with dask.config.set(scheduler="threads"):
                 analyzed = bag.map(
-                    lambda chunk: {
-                        "offset": chunk["offset"],
-                        "size": chunk["size"],
-                        "result": analysis_func(chunk["data"]),
+                    lambda chunk_item: {
+                        "offset": chunk_item["offset"],
+                        "size": chunk_item["size"],
+                        "result": analysis_func(chunk_item["data"]),
                     },
                 )
 
-                # Compute results
-                chunk_results = analyzed.compute()
+                chunk_results = list(analyzed.compute())
 
-        # Aggregate results
         results["chunk_results"] = chunk_results
         results["num_chunks"] = len(chunk_results)
 
-        # Calculate statistics if entropy analysis
         if chunk_results and "entropy" in chunk_results[0].get("result", {}):
             entropies = [r["result"]["entropy"] for r in chunk_results]
             results["entropy_stats"] = {
-                "mean": np.mean(entropies),
-                "std": np.std(entropies),
-                "max": np.max(entropies),
-                "min": np.min(entropies),
+                "mean": float(np.mean(entropies)),
+                "std": float(np.std(entropies)),
+                "max": float(np.max(entropies)),
+                "min": float(np.min(entropies)),
             }
 
         results["processing_time"] = time.time() - start_time
@@ -1461,13 +1539,12 @@ def run_dask_distributed_analysis(
     return results
 
 
-# Celery distributed processing implementation
 def run_celery_distributed_analysis(
     binary_path: str,
     task_name: str = "binary_analysis",
     chunk_size: int = 1024 * 1024,
     queue_name: str = "intellicrack",
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Run distributed binary analysis using Celery task queue.
 
     Args:
@@ -1485,8 +1562,14 @@ def run_celery_distributed_analysis(
     except ImportError:
         return {"error": "Celery not available", "suggestion": "Install with: pip install celery"}
 
+    if np is None:
+        return {
+            "error": "NumPy not available",
+            "suggestion": "Install with: pip install numpy",
+        }
+
     start_time = time.time()
-    results = {
+    results: dict[str, Any] = {
         "framework": "celery",
         "binary_path": binary_path,
         "task_name": task_name,
@@ -1494,25 +1577,20 @@ def run_celery_distributed_analysis(
     }
 
     try:
-        # Initialize Celery app
         from intellicrack.utils.service_utils import get_service_url
 
         redis_url = get_service_url("redis_server")
         app = Celery("intellicrack", broker=f"{redis_url}/0")
 
-        # Define task inline
-        @app.task(name=f"intellicrack.{task_name}")
-        def analyze_chunk(chunk_data: dict[str, object]) -> dict[str, object]:
+        def _analyze_chunk_impl(chunk_data: dict[str, Any]) -> dict[str, Any]:
             """Analyze a binary chunk."""
-            from ..analysis.entropy_utils import calculate_byte_entropy
+            data_bytes: bytes = chunk_data["data"]
+            entropy = calculate_byte_entropy(data_bytes)
+            patterns_found: list[str] = []
 
-            entropy = calculate_byte_entropy(chunk_data["data"])
-            patterns_found = []
-
-            # Search for common patterns
             patterns = [b"LICENSE", b"TRIAL", b"EXPIRE", b"SERIAL"]
             for pattern in patterns:
-                if pattern in chunk_data["data"]:
+                if pattern in data_bytes:
                     patterns_found.append(pattern.decode())
 
             return {
@@ -1522,44 +1600,42 @@ def run_celery_distributed_analysis(
                 "patterns": patterns_found,
             }
 
-        # Read binary and create chunks
+        task_decorator: Any = app.task(name=f"intellicrack.{task_name}")
+        analyze_chunk: Any = task_decorator(_analyze_chunk_impl)
+
         with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         results["file_size"] = len(binary_data)
 
-        chunks = []
+        chunks: list[dict[str, Any]] = []
         for i in range(0, len(binary_data), chunk_size):
-            chunk = {
+            chunk_item: dict[str, Any] = {
                 "data": binary_data[i : i + chunk_size],
                 "offset": i,
                 "size": min(chunk_size, len(binary_data) - i),
             }
-            chunks.append(chunk)
+            chunks.append(chunk_item)
 
-        # Create group of tasks
-        job = group(analyze_chunk.s(chunk) for chunk in chunks)
+        job = group(analyze_chunk.s(chunk_item) for chunk_item in chunks)
         result = job.apply_async(queue=queue_name)
 
-        # Wait for results with timeout
-        chunk_results = result.get(timeout=300)  # 5 minute timeout
+        chunk_results: list[dict[str, Any]] = result.get(timeout=300)
 
         results["chunk_results"] = chunk_results
         results["num_chunks"] = len(chunk_results)
         results["processing_time"] = time.time() - start_time
         results["success"] = True
 
-        # Aggregate entropy statistics
         if chunk_results:
             entropies = [r["entropy"] for r in chunk_results]
             results["entropy_stats"] = {
-                "mean": np.mean(entropies),
-                "max": np.max(entropies),
-                "min": np.min(entropies),
+                "mean": float(np.mean(entropies)),
+                "max": float(np.max(entropies)),
+                "min": float(np.min(entropies)),
             }
 
-            # Collect all patterns found
-            all_patterns = []
+            all_patterns: list[str] = []
             for r in chunk_results:
                 all_patterns.extend(r.get("patterns", []))
             results["patterns_found"] = list(set(all_patterns))
@@ -1573,13 +1649,12 @@ def run_celery_distributed_analysis(
     return results
 
 
-# Joblib parallel processing implementation
 def run_joblib_parallel_analysis(
     binary_path: str,
-    analysis_funcs: list[Callable],
+    analysis_funcs: list[Callable[[bytes], dict[str, Any]]],
     n_jobs: int = -1,
     backend: str = "threading",
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Run parallel binary analysis using joblib for multi-core processing.
 
     Args:
@@ -1599,7 +1674,7 @@ def run_joblib_parallel_analysis(
         return {"error": "Joblib not available", "suggestion": "Install with: pip install joblib"}
 
     start_time = time.time()
-    results = {
+    results: dict[str, Any] = {
         "framework": "joblib",
         "binary_path": binary_path,
         "backend": backend,
@@ -1607,14 +1682,16 @@ def run_joblib_parallel_analysis(
     }
 
     try:
-        # Read binary data once
         with open(binary_path, "rb") as f:
             binary_data = f.read()
 
         results["file_size"] = len(binary_data)
 
-        # Define analysis tasks
-        def run_analysis(func: Callable, data: bytes, func_name: str) -> dict[str, object]:
+        def run_analysis(
+            func: Callable[[bytes], dict[str, Any]],
+            data: bytes,
+            func_name: str,
+        ) -> dict[str, Any]:
             """Run a single analysis function."""
             try:
                 result = func(data)
@@ -1631,20 +1708,20 @@ def run_joblib_parallel_analysis(
                     "error": str(e),
                 }
 
-        # Run analyses in parallel
         with Parallel(n_jobs=n_jobs, backend=backend) as parallel:
-            analysis_results = parallel(delayed(run_analysis)(func, binary_data, func.__name__) for func in analysis_funcs)
+            analysis_results: list[dict[str, Any]] = parallel(
+                delayed(run_analysis)(func, binary_data, func.__name__) for func in analysis_funcs
+            )
 
         results["analyses"] = analysis_results
         results["successful_analyses"] = sum(bool(r["success"]) for r in analysis_results)
         results["failed_analyses"] = sum(bool(not r["success"]) for r in analysis_results)
 
-        # Aggregate results by type
-        aggregated = {}
-        for result in analysis_results:
-            if result["success"] and "result" in result:
-                func_name = result["function"]
-                aggregated[func_name] = result["result"]
+        aggregated: dict[str, Any] = {}
+        for result_item in analysis_results:
+            if result_item["success"] and "result" in result_item:
+                func_name = result_item["function"]
+                aggregated[func_name] = result_item["result"]
 
         results["aggregated_results"] = aggregated
         results["processing_time"] = time.time() - start_time
@@ -1658,8 +1735,12 @@ def run_joblib_parallel_analysis(
     return results
 
 
-# Joblib memory-mapped file processing
-def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1) -> dict[str, object]:
+def run_joblib_mmap_analysis(
+    binary_path: str,
+    window_size: int = 4096,
+    step_size: int = 1024,
+    n_jobs: int = -1,
+) -> dict[str, Any]:
     """Run memory-mapped parallel analysis using joblib for efficient large file processing.
 
     Args:
@@ -1679,8 +1760,14 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
     except ImportError:
         return {"error": "Joblib not available", "suggestion": "Install with: pip install joblib"}
 
+    if np is None:
+        return {
+            "error": "NumPy not available",
+            "suggestion": "Install with: pip install numpy",
+        }
+
     start_time = time.time()
-    results = {
+    results: dict[str, Any] = {
         "framework": "joblib_mmap",
         "binary_path": binary_path,
         "window_size": window_size,
@@ -1691,30 +1778,27 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
         file_size = os.path.getsize(binary_path)
         results["file_size"] = file_size
 
-        # Define window analysis function
-        def analyze_window(offset: int, window_size: int, file_path: str) -> dict[str, object]:
+        def analyze_window(
+            offset: int,
+            win_size: int,
+            file_path: str,
+        ) -> dict[str, Any]:
             """Analyze a window of the file using memory mapping."""
             with (
                 open(file_path, "rb") as f,
                 mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped,
             ):
-                # Read window data
-                end = min(offset + window_size, len(mmapped))
+                end = min(offset + win_size, len(mmapped))
                 window_data = mmapped[offset:end]
-
-                # Calculate entropy
-                from ..analysis.entropy_utils import calculate_byte_entropy
 
                 entropy = calculate_byte_entropy(window_data)
 
-                # Check for high entropy (possible encryption/packing)
                 is_packed = entropy > 7.5
 
-                # Search for strings
-                ascii_strings = []
+                ascii_strings: list[str] = []
                 current_string = b""
                 for byte in window_data:
-                    if 32 <= byte <= 126:  # Printable ASCII
+                    if 32 <= byte <= 126:
                         current_string += bytes([byte])
                     else:
                         if len(current_string) >= 4:
@@ -1726,36 +1810,36 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
                     "entropy": entropy,
                     "is_packed": is_packed,
                     "string_count": len(ascii_strings),
-                    "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
+                    "notable_strings": [
+                        s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])
+                    ],
                 }
 
-        # Generate window offsets
         offsets = list(range(0, file_size - window_size + 1, step_size))
 
-        # Run parallel analysis
         with Parallel(n_jobs=n_jobs, backend="threading") as parallel:
-            window_results = parallel(delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets)
+            window_results: list[dict[str, Any]] = parallel(
+                delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets
+            )
 
         results["window_results"] = window_results
         results["num_windows"] = len(window_results)
 
-        # Aggregate statistics
         entropies = [w["entropy"] for w in window_results]
         packed_regions = [w for w in window_results if w["is_packed"]]
 
         results["statistics"] = {
-            "avg_entropy": np.mean(entropies),
-            "max_entropy": np.max(entropies),
-            "min_entropy": np.min(entropies),
+            "avg_entropy": float(np.mean(entropies)),
+            "max_entropy": float(np.max(entropies)),
+            "min_entropy": float(np.min(entropies)),
             "packed_regions": len(packed_regions),
             "packed_percentage": (len(packed_regions) / len(window_results)) * 100,
         }
 
-        # Collect notable strings
-        all_notable_strings = []
+        all_notable_strings: list[str] = []
         for w in window_results:
             all_notable_strings.extend(w.get("notable_strings", []))
-        results["notable_strings"] = list(set(all_notable_strings))[:50]  # Top 50 unique
+        results["notable_strings"] = list(set(all_notable_strings))[:50]
 
         results["processing_time"] = time.time() - start_time
         results["success"] = True
@@ -1768,7 +1852,6 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
     return results
 
 
-# Export all functions
 __all__ = [
     "extract_binary_features",
     "extract_binary_info",

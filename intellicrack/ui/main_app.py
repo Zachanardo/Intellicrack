@@ -36,11 +36,16 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import contextlib
 import logging
 import os
 import traceback
+from collections.abc import Callable, Sized
 from functools import partial
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.ai.model_manager_module import ModelManager
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
@@ -80,7 +85,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
-from intellicrack.plugins import run_frida_plugin_from_file, run_ghidra_plugin_from_file
+from intellicrack.plugins.plugin_system import run_frida_plugin_from_file, run_ghidra_plugin_from_file
 from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
@@ -98,12 +103,25 @@ from intellicrack.ui.tabs.tools_tab import ToolsTab
 from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 from intellicrack.ui.theme_manager import get_theme_manager
 from intellicrack.ui.traffic_analyzer import TrafficAnalyzer, clear_network_capture, start_network_capture, stop_network_capture
-from intellicrack.utils import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
+from intellicrack.utils.runtime.runner_functions import (
+    run_frida_script,
+    run_qemu_analysis,
+    run_selected_analysis,
+    run_ssl_tls_interceptor,
+)
 from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
-from intellicrack.utils.log_message import log_message
 from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
+
+if TYPE_CHECKING:
+    from intellicrack.ai.coordination_layer import AICoordinationLayer
+    from intellicrack.ai.orchestrator import AIOrchestrator
+    from intellicrack.ai.script_generation_agent import AIAgent
+    from intellicrack.core.network.license_server_emulator import NetworkLicenseServerEmulator
+    from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
+    from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
+    from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 
 
 CONFIG = get_config()
@@ -243,47 +261,43 @@ class IntellicrackApp(QMainWindow):
 
     def _initialize_ui_attributes(self) -> None:
         """Initialize all UI-related attributes to None."""
-        # UI component attributes (only attributes that are actually used)
-        self.activity_log = None
-        self.assistant_status = None
-        self.binary_info_group = None
-        self.capture_thread = None
-        self.chat_display = None
-        self.disasm_text = None
-        self.log_filter = None
-        self.log_output = None
-        self.program_info = None
-        self.recent_files_list = None
-        self.report_viewer = None
-        self.traffic_analyzer = None
+        self.activity_log: QTextEdit | None = None
+        self.assistant_status: QLabel | None = None
+        self.binary_info_group: QWidget | None = None
+        self.capture_thread: object | None = None
+        self.chat_display: QTextEdit | None = None
+        self.disasm_text: QTextEdit | None = None
+        self.log_filter: QWidget | None = None
+        self.log_output: QTextEdit | None = None
+        self.program_info: QWidget | None = None
+        self.recent_files_list: QWidget | None = None
+        self.report_viewer: QTextEdit | None = None
+        self.traffic_analyzer: TrafficAnalyzer | None = None
 
-        # Collection attributes
-        self._hex_viewer_dialogs = []
-        self.ai_conversation_history = []
-        self.log_access_history = []
-        self.reports = []
+        self._hex_viewer_dialogs: list[QWidget] = []
+        self.ai_conversation_history: list[dict[str, str]] = []
+        self.log_access_history: list[str] = []
+        self.reports: list[dict[str, Any]] = []
 
     def _initialize_core_components(self) -> None:
         """Initialize core application components and managers."""
-        # Initialize logger first
         self.logger = logging.getLogger("IntellicrackLogger.Main")
         self.logger.info("IntellicrackApp constructor called. Initializing main application window.")
 
-        # Initialize core components
         self.app_context = get_app_context()
         self.task_manager = get_task_manager()
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
-        # Initialize ModelManager
-        models_dir = CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
-        if ModelManager is not None:
-            self.model_manager = ModelManager(models_dir)
-        else:
-            self.model_manager = None
-            self.logger.warning("ModelManager not available - AI features will be limited")
+        config_dict = cast(dict[str, Any], CONFIG)
+        model_repos = config_dict.get("model_repositories", {})
+        local_config = model_repos.get("local", {}) if isinstance(model_repos, dict) else {}
+        models_dir = local_config.get("models_directory", "models") if isinstance(local_config, dict) else "models"
+        self.model_manager: ModelManager | None = ModelManager(str(models_dir))
 
     def _initialize_ai_orchestrator(self) -> None:
         """Initialize AI orchestration and coordination components."""
+        self.ai_orchestrator: AIOrchestrator | None = None
+        self.ai_coordinator: AICoordinationLayer | None = None
         try:
             self.logger.info("Initializing AI Orchestrator for agentic environment...")
             from ..ai.orchestrator import get_orchestrator
@@ -291,23 +305,18 @@ class IntellicrackApp(QMainWindow):
             self.ai_orchestrator = get_orchestrator()
             self.logger.info("AI Orchestrator initialized successfully - agentic environment ready")
 
-            # Initialize coordination layer for intelligent AI workflows
-            from ..ai.coordination_layer import AICoordinationLayer
+            from ..ai.coordination_layer import AICoordinationLayer as AICoordLayer
 
-            self.ai_coordinator = AICoordinationLayer(
+            self.ai_coordinator = AICoordLayer(
                 shared_context=self.ai_orchestrator.shared_context,
                 event_bus=self.ai_orchestrator.event_bus,
             )
             self.logger.info("AI Coordination Layer initialized successfully")
 
-            # Set up AI event subscriptions for UI integration
             self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
             self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
 
-            # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
-
             self.logger.info("Exploitation Orchestrator initialized successfully")
-
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -372,7 +381,8 @@ class IntellicrackApp(QMainWindow):
                     icon = QIcon(icon_path)
                     if not icon.isNull():
                         self.setWindowIcon(icon)
-                        if app := QApplication.instance():
+                        app = QApplication.instance()
+                        if app is not None and hasattr(app, "setWindowIcon"):
                             app.setWindowIcon(icon)
                         icon_loaded = True
                         break
@@ -384,192 +394,168 @@ class IntellicrackApp(QMainWindow):
 
     def _initialize_application_properties(self) -> None:
         """Initialize important application properties and variables."""
-        # Initialize important properties
-        self.binary_path = None
-        self.selected_model_path = CONFIG.get("selected_model_path", None)
+        self.binary_path: str | None = None
+        config_dict = cast(dict[str, Any], CONFIG)
+        selected_path = config_dict.get("selected_model_path", None)
+        self.selected_model_path: str | None = str(selected_path) if selected_path is not None else None
 
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText(os.path.basename(self.selected_model_path))
-            self.update_output.emit(log_message(f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"))
+            self.update_output.emit(f"[AI Model] Loaded saved model path from config: {self.selected_model_path}")
         else:
             self.selected_model_path = None
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText("None")
-            self.update_output.emit(log_message("[AI Model] No saved model path found or path is invalid."))
+            self.update_output.emit("[AI Model] No saved model path found or path is invalid.")
 
-        # Initialize application state variables
-        self.chat_history = []
-        self.frida_sessions = {}
-        self.auto_patch_attempted = False
-        self.potential_patches = []
-        self.recent_files = []
+        self.chat_history: list[dict[str, str]] = []
+        self.frida_sessions: dict[str, Any] = {}
+        self.auto_patch_attempted: bool = False
+        self.potential_patches: list[dict[str, Any]] = []
+        self.recent_files: list[str] = []
 
-        # Initialize analyzer instance variables
-        self.dynamic_analyzer = None
-        self.ml_predictor = None
-        self.analyze_results = []
-        self.patches = []
-        self.binary_info = None
+        self.dynamic_analyzer: object | None = None
+        self.ml_predictor: object | None = None
+        self.analyze_results: list[dict[str, Any]] = []
+        self.patches: list[dict[str, Any]] = []
+        self.binary_info: dict[str, Any] | None = None
 
     def _bind_external_functions(self) -> None:
         """Bind external function wrappers as instance methods using partial."""
-        # Connect external function wrappers as instance methods using partial
-        self.inject_comprehensive_api_hooks = partial(inject_comprehensive_api_hooks, self)
-        self.run_frida_plugin_from_file = partial(run_frida_plugin_from_file, self)
-        self.run_ghidra_plugin_from_file = partial(run_ghidra_plugin_from_file, self)
-        self.setup_memory_patching = partial(setup_memory_patching, self)
-        self.run_rop_chain_generator = partial(run_rop_chain_generator, self)
-        self.run_automated_patch_agent = partial(run_automated_patch_agent, self)
+        self.inject_comprehensive_api_hooks: Callable[..., Any] = partial(inject_comprehensive_api_hooks, self)
+        self.run_frida_plugin_from_file_bound: Callable[..., Any] = partial(run_frida_plugin_from_file, self)
+        self.run_ghidra_plugin_from_file_bound: Callable[..., Any] = partial(run_ghidra_plugin_from_file, self)
+        self.setup_memory_patching_ref: Callable[..., Any] = setup_memory_patching
+        self.run_rop_chain_generator_bound: Callable[..., Any] = partial(run_rop_chain_generator, self)
+        self.run_automated_patch_agent_ref: Callable[..., Any] = run_automated_patch_agent
 
-        # Add all runner functions
-        self.run_ssl_tls_interceptor = partial(run_ssl_tls_interceptor, self)
-        self.run_cloud_license_hooker = partial(run_cloud_license_hooker, self)
-        self.run_cfg_explorer = partial(CfgExplorerInner().run_cfg_explorer_inner, self)
-        self.run_concolic_execution = partial(run_concolic_execution, self)
-        self.run_enhanced_protection_scan = partial(run_enhanced_protection_scan, self)
-        self.run_visual_network_traffic_analyzer = partial(TrafficAnalyzer().run_visual_network_traffic_analyzer, self)
-        self.run_multi_format_analysis = partial(run_multi_format_analysis, self)
-        self.run_distributed_processing = partial(DistributedProcessing().run_distributed_processing, self)
-        self.run_gpu_accelerated_analysis = partial(GpuAnalysis().run_gpu_accelerated_analysis, self)
-        self.run_advanced_ghidra_analysis = partial(run_advanced_ghidra_analysis, self)
-        self.run_symbolic_execution = partial(SymbolicExecution().run_symbolic_execution, self)
-        self.run_incremental_analysis = partial(run_incremental_analysis, self)
-        self.run_memory_optimized_analysis = partial(run_memory_optimized_analysis, self)
-        self.run_taint_analysis = partial(run_taint_analysis, self)
-        self.run_qemu_analysis = partial(run_qemu_analysis, self)
-        self.run_selected_analysis_partial = partial(run_selected_analysis, self)
-        self.run_network_license_emulator = partial(run_network_license_emulator, self)
-        self.run_frida_analysis = partial(run_frida_analysis, self)
-        self.run_dynamic_instrumentation = partial(run_dynamic_instrumentation, self)
-        self.run_frida_script = partial(run_frida_script, self)
+        self.run_ssl_tls_interceptor_bound: Callable[..., dict[str, object]] = partial(run_ssl_tls_interceptor, self)
+        self.run_cloud_license_hooker_bound: Callable[..., Any] = partial(run_cloud_license_hooker, self)
+        self.run_cfg_explorer: Callable[..., Any] = partial(CfgExplorerInner().run_cfg_explorer_inner, self)
+        self.run_concolic_execution_bound: Callable[..., Any] = partial(run_concolic_execution, self)
+        self.run_enhanced_protection_scan_bound: Callable[..., Any] = partial(run_enhanced_protection_scan, self)
+        self.run_visual_network_traffic_analyzer: Callable[..., Any] = partial(TrafficAnalyzer().run_visual_network_traffic_analyzer, self)
+        self.run_multi_format_analysis_bound: Callable[..., Any] = partial(run_multi_format_analysis, self)
+        self.run_distributed_processing: Callable[..., Any] = partial(DistributedProcessing().run_distributed_processing, self)
+        self.run_gpu_accelerated_analysis: Callable[..., Any] = partial(GpuAnalysis().run_gpu_accelerated_analysis, self)
+        self.run_advanced_ghidra_analysis_bound: Callable[..., Any] = partial(run_advanced_ghidra_analysis, self)
+        self.run_symbolic_execution: Callable[..., Any] = partial(SymbolicExecution().run_symbolic_execution, self)
+        self.run_incremental_analysis_bound: Callable[..., Any] = partial(run_incremental_analysis, self)
+        self.run_memory_optimized_analysis_ref: Callable[..., Any] = run_memory_optimized_analysis
+        self.run_taint_analysis_bound: Callable[..., Any] = partial(run_taint_analysis, self)
+        self.run_qemu_analysis_bound: Callable[..., dict[str, object]] = partial(run_qemu_analysis, self)
+        self.run_selected_analysis_partial: Callable[..., dict[str, object]] = partial(run_selected_analysis, self)
+        self.run_network_license_emulator_ref: Callable[..., Any] = run_network_license_emulator
+        self.run_frida_analysis_bound: Callable[..., Any] = partial(run_frida_analysis, self)
+        self.run_dynamic_instrumentation_bound: Callable[..., Any] = partial(run_dynamic_instrumentation, self)
+        self.run_frida_script_bound: Callable[..., dict[str, object]] = partial(run_frida_script, self)
 
     def _bind_exploitation_handlers(self) -> None:
         """Bind exploitation handler methods from separate module."""
         from . import exploitation_handlers
 
-        self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
-        self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
+        self.cleanup_exploitation: Callable[..., Any] = partial(exploitation_handlers.cleanup_exploitation, self)
+        self.save_exploitation_output: Callable[..., Any] = partial(exploitation_handlers.save_exploitation_output, self)
 
     def _bind_class_methods(self) -> None:
         """Bind standalone method definitions to the class."""
-        # Bind network and license server methods
-        self.__class__.start_network_capture = start_network_capture
-        self.__class__.stop_network_capture = stop_network_capture
-        self.__class__.clear_network_capture = clear_network_capture
-        self.__class__.launch_protocol_tool = launch_protocol_tool
-        self.__class__.update_protocol_tool_description = update_protocol_tool_description
-
-        # Bind report-related methods
-        self.__class__.generate_report = generate_report
-        self.__class__.view_report = view_report
+        setattr(self.__class__, "start_network_capture", start_network_capture)
+        setattr(self.__class__, "stop_network_capture", stop_network_capture)
+        setattr(self.__class__, "clear_network_capture", clear_network_capture)
+        setattr(self.__class__, "launch_protocol_tool", launch_protocol_tool)
+        setattr(self.__class__, "update_protocol_tool_description", update_protocol_tool_description)
+        setattr(self.__class__, "generate_report", generate_report)
+        setattr(self.__class__, "view_report", view_report)
 
     def _initialize_analyzer_engines(self) -> None:
         """Initialize various analyzer engines with graceful fallbacks."""
-        # Initialize AI components
+        self.ai_agent: AIAgent | None = None
         try:
-            from ..ai.script_generation_agent import AIAgent
+            from ..ai.script_generation_agent import AIAgent as AIAgentClass
 
-            self.ai_agent = AIAgent()
+            self.ai_agent = AIAgentClass()
             logger.info("AIAgent initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
-            self.ai_agent = None
             logger.warning("Failed to initialize AIAgent: %s", e)
 
+        self.memory_optimized_loader: MemoryOptimizedBinaryLoader | None = None
         try:
-            self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
+            self.memory_optimized_loader = MemoryOptimizedBinaryLoader()
         except (OSError, ValueError, RuntimeError) as e:
-            self.memory_optimized_loader = None
             logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
 
-        try:
-            # Use lazy initialization - create symbolic execution engine when needed with actual binary
-            self.symbolic_execution_engine = None
-            logger.info("SymbolicExecutionEngine will be initialized when binary is loaded")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.symbolic_execution_engine = None
-            logger.warning("Failed to prepare SymbolicExecutionEngine: %s", e)
+        self.symbolic_execution_engine: object | None = None
+        logger.info("SymbolicExecutionEngine will be initialized when binary is loaded")
 
+        self.taint_analysis_engine: TaintAnalysisEngine | None = None
         try:
-            self.taint_analysis_engine = TaintAnalysisEngine() if TaintAnalysisEngine else None
+            self.taint_analysis_engine = TaintAnalysisEngine()
         except (OSError, ValueError, RuntimeError) as e:
-            self.taint_analysis_engine = None
             logger.warning("Failed to initialize TaintAnalysisEngine: %s", e)
 
-        try:
-            # Use lazy initialization - create concolic execution engine when needed with actual binary
-            self.concolic_execution_engine = None
-            logger.info("ConcolicExecutionEngine will be initialized when binary is loaded")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.concolic_execution_engine = None
-            logger.warning("Failed to prepare ConcolicExecutionEngine: %s", e)
+        self.concolic_execution_engine: object | None = None
+        logger.info("ConcolicExecutionEngine will be initialized when binary is loaded")
 
+        self.rop_chain_generator: ROPChainGenerator | None = None
         try:
-            self.rop_chain_generator = ROPChainGenerator() if ROPChainGenerator else None
+            self.rop_chain_generator = ROPChainGenerator()
         except (OSError, ValueError, RuntimeError) as e:
-            self.rop_chain_generator = None
             logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
+        self.parallel_processing_manager: ParallelProcessingManager | None = None
         try:
-            self.parallel_processing_manager = ParallelProcessingManager() if ParallelProcessingManager else None
+            self.parallel_processing_manager = ParallelProcessingManager()
         except (OSError, ValueError, RuntimeError) as e:
-            self.parallel_processing_manager = None
             logger.warning("Failed to initialize ParallelProcessingManager: %s", e)
 
+        self.gpu_accelerator: GPUAccelerator | None = None
         try:
-            self.gpu_accelerator = GPUAccelerator() if GPUAccelerator else None
+            self.gpu_accelerator = GPUAccelerator()
         except (OSError, ValueError, RuntimeError) as e:
-            self.gpu_accelerator = None
             logger.warning("Failed to initialize GPUAccelerator: %s", e)
 
     def _initialize_network_components(self) -> None:
         """Initialize network analysis and traffic components."""
+        self.network_traffic_analyzer: NetworkTrafficAnalyzer | None = None
         try:
-            from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+            from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer as NTA
 
-            self.network_traffic_analyzer = NetworkTrafficAnalyzer()
+            self.network_traffic_analyzer = NTA()
         except (OSError, ValueError, RuntimeError) as e:
-            self.network_traffic_analyzer = None
             logger.warning("Failed to initialize NetworkTrafficAnalyzer: %s", e)
 
+        self.ssl_interceptor: SSLTLSInterceptor | None = None
         try:
-            from ..core.network.ssl_interceptor import SSLTLSInterceptor
+            from ..core.network.ssl_interceptor import SSLTLSInterceptor as SSLInt
 
-            self.ssl_interceptor = SSLTLSInterceptor()
+            self.ssl_interceptor = SSLInt()
         except (OSError, ValueError, RuntimeError) as e:
-            self.ssl_interceptor = None
             logger.warning("Failed to initialize SSLTLSInterceptor: %s", e)
 
+        self.protocol_fingerprinter: ProtocolFingerprinter | None = None
         try:
-            from ..core.network.protocol_fingerprinter import ProtocolFingerprinter
+            from ..core.network.protocol_fingerprinter import ProtocolFingerprinter as PF
 
-            self.protocol_fingerprinter = ProtocolFingerprinter()
+            self.protocol_fingerprinter = PF()
         except (OSError, ValueError, RuntimeError) as e:
-            self.protocol_fingerprinter = None
             logger.warning("Failed to initialize ProtocolFingerprinter: %s", e)
 
+        self.network_license_server: NetworkLicenseServerEmulator | None = None
         try:
-            from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
+            from ..core.network.license_server_emulator import NetworkLicenseServerEmulator as NLSE
 
-            self.network_license_server = NetworkLicenseServerEmulator()
+            self.network_license_server = NLSE()
         except (OSError, ValueError, RuntimeError, ImportError) as e:
-            self.network_license_server = None
             logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
     def _create_main_ui_layout(self) -> None:
         """Create the main UI layout with central widget, tabs, and output panel."""
-        # Add TOOL_REGISTRY for hexview integration
-        self.TOOL_REGISTRY = TOOL_REGISTRY.copy()
+        self.TOOL_REGISTRY: dict[str, Any] = TOOL_REGISTRY.copy()
 
-        # Initialize ghidra_path_edit to avoid attribute errors
-        self.ghidra_path_edit = None
+        self.ghidra_path_edit: QWidget | None = None
 
-        # Create PDF report generator
-        if PDFReportGenerator is not None:
-            self.pdf_report_generator = PDFReportGenerator()
-        else:
-            self.pdf_report_generator = None
-            self.logger.warning("PDFReportGenerator not available - reporting features will be limited")
+        self.pdf_report_generator: PDFReportGenerator | None = PDFReportGenerator()
 
         # Create central widget and layout
         self.central_widget = QWidget()
@@ -633,23 +619,21 @@ class IntellicrackApp(QMainWindow):
 
     def _create_modular_tabs(self) -> None:
         """Create all modular tab instances with shared context."""
-        # Create shared context for tabs
-        shared_context = {
+        shared_context: dict[str, Any] = {
             "main_window": self,
             "log_message": self.log_message,
             "app_context": self.app_context,
             "task_manager": self.task_manager,
         }
 
-        # Create new modular tabs with lazy loading
-        self.dashboard_tab = DashboardTab(shared_context, self) if DashboardTab else QWidget()
-        self.analysis_tab = AnalysisTab(shared_context, self) if AnalysisTab else QWidget()
-        self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
-        self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
-        self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
-        self.terminal_tab = TerminalTab(shared_context, self) if TerminalTab else QWidget()
-        self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
-        self.workspace_tab = WorkspaceTab(shared_context, self) if WorkspaceTab else QWidget()
+        self.dashboard_tab: DashboardTab | QWidget = DashboardTab(shared_context, self)
+        self.analysis_tab: AnalysisTab | QWidget = AnalysisTab(shared_context, self)
+        self.exploitation_tab: ExploitationTab | QWidget = ExploitationTab(shared_context, self)
+        self.ai_assistant_tab: AIAssistantTab | QWidget = AIAssistantTab(shared_context, self)
+        self.tools_tab: ToolsTab | QWidget = ToolsTab(shared_context, self)
+        self.terminal_tab: TerminalTab | QWidget = TerminalTab(shared_context, self)
+        self.settings_tab: SettingsTab | QWidget = SettingsTab(shared_context, self)
+        self.workspace_tab: WorkspaceTab | QWidget = WorkspaceTab(shared_context, self)
 
         # Connect theme change signal to handler
         if hasattr(self.settings_tab, "theme_changed"):
@@ -784,7 +768,7 @@ class IntellicrackApp(QMainWindow):
                 self.PLUGIN_TYPE_GHIDRA: [],
             }
 
-    def _on_ai_task_complete(self, event_data: object) -> None:
+    def _on_ai_task_complete(self, event_data: dict[str, Any]) -> None:
         """Handle AI task completion events from the orchestrator.
 
         Args:
@@ -799,20 +783,18 @@ class IntellicrackApp(QMainWindow):
 
             self.logger.info(f"AI task completed - ID: {task_id}, Type: {task_type}, Status: {status}")
 
-            # Update UI with task completion
             if hasattr(self, "update_output") and self.update_output:
                 message = f"[AI] Task {task_id} ({task_type}) completed with status: {status}"
                 self.update_output.emit(message)
 
-                # If there are results, show summary
-                if results:
+                if results and isinstance(results, Sized):
                     result_summary = f"[AI] Results: {len(results)} items processed"
                     self.update_output.emit(result_summary)
 
         except Exception as e:
             self.logger.error(f"Error handling AI task completion: {e}")
 
-    def _on_coordinated_analysis_complete(self, event_data: object) -> None:
+    def _on_coordinated_analysis_complete(self, event_data: dict[str, Any]) -> None:
         """Handle coordinated analysis completion events from AI coordinator.
 
         Args:
@@ -827,18 +809,15 @@ class IntellicrackApp(QMainWindow):
 
             self.logger.info(f"Coordinated analysis completed - ID: {analysis_id}, Type: {analysis_type}")
 
-            # Update UI with analysis completion
             if hasattr(self, "update_output") and self.update_output:
                 message = f"[AI-COORD] Analysis {analysis_id} ({analysis_type}) completed"
                 self.update_output.emit(message)
 
-                # Show findings summary
-                if findings:
+                if findings and isinstance(findings, Sized):
                     findings_msg = f"[AI-COORD] Found {len(findings)} security findings"
                     self.update_output.emit(findings_msg)
 
-                # Show recommendations summary
-                if recommendations:
+                if recommendations and isinstance(recommendations, Sized):
                     rec_msg = f"[AI-COORD] Generated {len(recommendations)} recommendations"
                     self.update_output.emit(rec_msg)
 
@@ -864,8 +843,9 @@ class IntellicrackApp(QMainWindow):
             message: Status message to display in the status bar.
 
         """
-        if hasattr(self, "statusBar") and self.statusBar():
-            self.statusBar().showMessage(message, 5000)
+        status_bar = self.statusBar()
+        if status_bar is not None:
+            status_bar.showMessage(message, 5000)
         self.logger.info(f"Status: {message}")
 
     def append_analysis_results(self, results: str) -> None:
@@ -896,9 +876,8 @@ class IntellicrackApp(QMainWindow):
             status: Status message for the AI assistant.
 
         """
-        if hasattr(self, "assistant_status") and self.assistant_status:
-            with contextlib.suppress(AttributeError):
-                self.assistant_status.setText(status)
+        if self.assistant_status is not None:
+            self.assistant_status.setText(status)
         self.logger.info(f"Assistant status: {status}")
 
     def append_chat_display(self, message: str) -> None:
@@ -908,9 +887,8 @@ class IntellicrackApp(QMainWindow):
             message: Chat message to append.
 
         """
-        if hasattr(self, "chat_display") and self.chat_display:
-            with contextlib.suppress(AttributeError):
-                self.chat_display.append(message)
+        if self.chat_display is not None:
+            self.chat_display.append(message)
         self.logger.info(f"Chat: {message}")
 
     def replace_last_chat_message(self, message: str) -> None:
@@ -920,14 +898,11 @@ class IntellicrackApp(QMainWindow):
             message: Message to replace the last one with.
 
         """
-        if hasattr(self, "chat_display") and self.chat_display:
-            try:
-                cursor = self.chat_display.textCursor()
-                cursor.movePosition(cursor.MoveOperation.End)
-                cursor.select(cursor.SelectionType.BlockUnderCursor)
-                cursor.insertText(message)
-            except AttributeError:
-                self.append_chat_display(message)
+        if self.chat_display is not None:
+            cursor = self.chat_display.textCursor()
+            cursor.movePosition(cursor.MoveOperation.End)
+            cursor.select(cursor.SelectionType.BlockUnderCursor)
+            cursor.insertText(message)
         self.logger.info(f"Chat replaced: {message}")
 
     def handle_log_user_question(self, question: str) -> None:
@@ -966,9 +941,8 @@ class IntellicrackApp(QMainWindow):
             tab_index: Index of the tab to switch to.
 
         """
-        if hasattr(self, "tabs") and self.tabs:
-            with contextlib.suppress(AttributeError, IndexError):
-                self.tabs.setCurrentIndex(tab_index)
+        if hasattr(self, "tabs") and self.tabs is not None:
+            self.tabs.setCurrentIndex(tab_index)
         self.logger.info(f"Switched to tab index: {tab_index}")
 
     def handle_generate_key(self) -> None:
@@ -998,7 +972,7 @@ class IntellicrackApp(QMainWindow):
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         return f"[{timestamp}] {message}"
 
-    def _on_binary_loaded(self, binary_info: dict) -> None:
+    def _on_binary_loaded(self, binary_info: dict[str, Any]) -> None:
         """Handle binary loaded event from app context.
 
         Args:
@@ -1006,25 +980,25 @@ class IntellicrackApp(QMainWindow):
 
         """
         if isinstance(binary_info, dict) and "path" in binary_info:
-            self.binary_path = binary_info["path"]
-            binary_name = binary_info.get("name", os.path.basename(binary_info["path"]))
+            path_val = binary_info["path"]
+            self.binary_path = str(path_val) if path_val is not None else None
+            binary_name = binary_info.get("name", os.path.basename(str(path_val)))
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_name}"))
             self.logger.info(f"Binary loaded: {binary_info['path']}")
 
-            # Notify all tabs about the binary loading
-            if hasattr(self, "analysis_tab") and self.analysis_tab:
-                self.analysis_tab.set_binary_path(binary_info["path"])
+            if hasattr(self, "analysis_tab") and self.analysis_tab is not None:
+                if hasattr(self.analysis_tab, "set_binary_path"):
+                    self.analysis_tab.set_binary_path(str(path_val))
         else:
-            # Handle legacy string format for backward compatibility
             self.binary_path = str(binary_info) if binary_info else None
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
             self.logger.info(f"Binary loaded: {binary_info}")
 
-    def _on_analysis_completed(self, results: object) -> None:
+    def _on_analysis_completed(self, results: list[Any]) -> None:
         """Handle analysis completion event from app context.
 
         Args:
-            results: Analysis results object.
+            results: Analysis results list.
 
         """
         self.update_analysis_results.emit(f"Analysis completed with {len(results)} results")
@@ -1096,9 +1070,12 @@ class IntellicrackApp(QMainWindow):
             from ..core.config_manager import get_config
 
             config = get_config()
-            ui_config = config.get("ui", {})
-            if geometry := ui_config.get("window_geometry"):
-                self.setGeometry(*geometry)
+            config_dict = cast(dict[str, Any], config)
+            ui_config = config_dict.get("ui", {})
+            if isinstance(ui_config, dict):
+                geometry = ui_config.get("window_geometry")
+                if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
+                    self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))
         except Exception as e:
             self.logger.debug(f"Could not restore window state: {e}")
 
@@ -1125,7 +1102,7 @@ class IntellicrackApp(QMainWindow):
             self.theme_manager.set_theme(theme_name)
         self.logger.info(f"Theme changed to: {theme_name}")
 
-    def _load_cache_data(self, cache_file: object) -> dict | None:
+    def _load_cache_data(self, cache_file: Path) -> dict[str, Any] | None:
         """Load and parse cache data from file.
 
         Args:
@@ -1142,16 +1119,19 @@ class IntellicrackApp(QMainWindow):
 
         try:
             with open(cache_file, encoding="utf-8") as f:
-                return json.load(f)
+                result = json.load(f)
+                if isinstance(result, dict):
+                    return cast(dict[str, Any], result)
+                return None
         except (json.JSONDecodeError, OSError) as e:
             self.logger.debug(f"Failed to load cache data: {e}")
             return None
 
-    def _check_file_modifications(self, plugin_dir: object, cached_filenames: dict) -> tuple[bool, dict]:
+    def _check_file_modifications(self, plugin_dir: Path, cached_filenames: dict[str, float]) -> tuple[bool, dict[str, float]]:
         """Check if files in directory have been modified compared to cache.
 
         Args:
-            plugin_dir: Path to plugin directory (Path object or string).
+            plugin_dir: Path to plugin directory.
             cached_filenames: Dict mapping filenames to cached modification times.
 
         Returns:
@@ -1160,10 +1140,7 @@ class IntellicrackApp(QMainWindow):
             that were in cache but not found in directory.
 
         """
-        from pathlib import Path
-
-        plugin_dir = Path(plugin_dir)
-        remaining = dict(cached_filenames)
+        remaining: dict[str, float] = dict(cached_filenames)
 
         try:
             for entry in plugin_dir.iterdir():
@@ -1179,36 +1156,34 @@ class IntellicrackApp(QMainWindow):
 
         return True, remaining
 
-    def _validate_plugin_directory_cache(self, plugin_type: str, plugin_dir: object, cached_data: dict) -> bool:
+    def _validate_plugin_directory_cache(self, plugin_type: str, plugin_dir: Path, cached_data: dict[str, Any]) -> bool:
         """Validate cache for a specific plugin directory.
 
         Args:
             plugin_type: Type of plugin (custom, frida, ghidra).
-            plugin_dir: Path to plugin directory (Path object or string).
+            plugin_dir: Path to plugin directory.
             cached_data: Complete cached data dictionary.
 
         Returns:
             True if cache is valid for this directory, False otherwise.
 
         """
-        from pathlib import Path
-
-        plugin_dir = Path(plugin_dir)
-        cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
+        plugins_data = cached_data.get("plugins", {})
+        cached_plugins: list[dict[str, Any]] = plugins_data.get(plugin_type, []) if isinstance(plugins_data, dict) else []
 
         if not plugin_dir.exists():
             return not cached_plugins
 
-        cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
+        cached_filenames: dict[str, float] = {str(p["filename"]): float(p["modified"]) for p in cached_plugins if "filename" in p and "modified" in p}
         is_valid, remaining = self._check_file_modifications(plugin_dir, cached_filenames)
 
         return len(remaining) == 0 if is_valid else False
 
-    def _is_plugin_cache_valid(self, cache_file: object, plugin_directories: dict) -> tuple[bool, dict | None]:
+    def _is_plugin_cache_valid(self, cache_file: Path, plugin_directories: dict[str, Path]) -> tuple[bool, dict[str, Any] | None]:
         """Check if plugin cache exists and is still valid.
 
         Args:
-            cache_file: Path to cache file (Path object).
+            cache_file: Path to cache file.
             plugin_directories: Dict mapping plugin types to their directories.
 
         Returns:
@@ -1226,7 +1201,7 @@ class IntellicrackApp(QMainWindow):
 
         return True, cached_data
 
-    def load_available_plugins(self) -> dict:
+    def load_available_plugins(self) -> dict[str, list[dict[str, Any]]]:
         """Load available plugins from plugin directory with caching for performance.
 
         Uses a cache file to avoid rescanning the filesystem on every startup. Cache is
@@ -1237,7 +1212,6 @@ class IntellicrackApp(QMainWindow):
 
         """
         import json
-        from pathlib import Path
 
         from filelock import FileLock
 
@@ -1246,27 +1220,15 @@ class IntellicrackApp(QMainWindow):
         cache_lock_file = cache_dir / "plugin_cache.json.lock"
 
         plugin_base_dir = Path(__file__).parent.parent / "plugins"
-        plugin_directories = {
+        plugin_directories: dict[str, Path] = {
             self.PLUGIN_TYPE_CUSTOM: plugin_base_dir / "custom_modules",
-            self.PLUGIN_TYPE_FRIDA: get_frida_scripts_dir(),
-            self.PLUGIN_TYPE_GHIDRA: get_ghidra_scripts_dir(),
+            self.PLUGIN_TYPE_FRIDA: Path(get_frida_scripts_dir()),
+            self.PLUGIN_TYPE_GHIDRA: Path(get_ghidra_scripts_dir()),
         }
 
-        def is_path_safe(file_path: object, plugin_dir: object) -> bool:
-            """Validate that reconstructed path is within allowed plugin directory.
-
-            Args:
-                file_path: Path to validate (Path object or string).
-                plugin_dir: Expected parent directory (Path object or string).
-
-            Returns:
-                True if file_path is within plugin_dir, False otherwise.
-
-            """
+        def is_path_safe(file_path: Path, plugin_dir_param: Path) -> bool:
             try:
-                file_path = Path(file_path)
-                plugin_dir = Path(plugin_dir)
-                real_plugin_dir = plugin_dir.resolve()
+                real_plugin_dir = plugin_dir_param.resolve()
                 real_file_path = file_path.resolve()
                 return real_file_path.is_relative_to(real_plugin_dir)
             except (ValueError, OSError):
@@ -1275,7 +1237,7 @@ class IntellicrackApp(QMainWindow):
         lock = FileLock(str(cache_lock_file), timeout=10)
 
         cache_is_valid, cached_data = self._is_plugin_cache_valid(cache_file, plugin_directories)
-        if cache_is_valid:
+        if cache_is_valid and cached_data is not None:
             try:
                 cached_plugins = cached_data.get(
                     "plugins",
@@ -1286,33 +1248,38 @@ class IntellicrackApp(QMainWindow):
                     },
                 )
 
-                plugins = {
+                plugins: dict[str, list[dict[str, Any]]] = {
                     self.PLUGIN_TYPE_CUSTOM: [],
                     self.PLUGIN_TYPE_FRIDA: [],
                     self.PLUGIN_TYPE_GHIDRA: [],
                 }
-                for plugin_type, plugin_list in cached_plugins.items():
-                    if plugin_type not in plugin_directories:
-                        continue
-
-                    plugin_dir = plugin_directories[plugin_type]
-                    for plugin_info in plugin_list:
-                        filename = plugin_info.get("filename")
-                        if not filename:
+                if isinstance(cached_plugins, dict):
+                    for plugin_type, plugin_list in cached_plugins.items():
+                        if plugin_type not in plugin_directories:
                             continue
 
-                        reconstructed_path = plugin_dir / filename
-
-                        if not is_path_safe(reconstructed_path, plugin_dir):
-                            self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                        plugin_dir = plugin_directories[plugin_type]
+                        if not isinstance(plugin_list, list):
                             continue
+                        for plugin_info in plugin_list:
+                            if not isinstance(plugin_info, dict):
+                                continue
+                            filename = plugin_info.get("filename")
+                            if not filename:
+                                continue
 
-                        if not reconstructed_path.exists():
-                            continue
+                            reconstructed_path = plugin_dir / str(filename)
 
-                        plugin_info_with_path = plugin_info.copy()
-                        plugin_info_with_path["path"] = str(reconstructed_path)
-                        plugins[plugin_type].append(plugin_info_with_path)
+                            if not is_path_safe(reconstructed_path, plugin_dir):
+                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                                continue
+
+                            if not reconstructed_path.exists():
+                                continue
+
+                            plugin_info_with_path = dict(plugin_info)
+                            plugin_info_with_path["path"] = str(reconstructed_path)
+                            plugins[str(plugin_type)].append(plugin_info_with_path)
 
                 self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
                 return plugins
@@ -1335,7 +1302,7 @@ class IntellicrackApp(QMainWindow):
                         plugin_dir.mkdir(parents=True, exist_ok=True)
                         continue
 
-                    plugin_extensions = {
+                    plugin_extensions: dict[str, list[str]] = {
                         self.PLUGIN_TYPE_CUSTOM: [".py", ".pyd", ".dll"],
                         self.PLUGIN_TYPE_FRIDA: [".js", ".ts"],
                         self.PLUGIN_TYPE_GHIDRA: [".py", ".java", ".jar"],
@@ -1347,13 +1314,13 @@ class IntellicrackApp(QMainWindow):
                             if file_ext in plugin_extensions.get(plugin_type, []):
                                 try:
                                     if file_ext in BINARY_EXTENSIONS:
-                                        with open(entry, "rb") as f:
-                                            f.read(512)
+                                        with open(entry, "rb") as bf:
+                                            bf.read(512)
                                     else:
-                                        with open(entry, encoding="utf-8") as f:
-                                            f.read(512)
+                                        with open(entry, encoding="utf-8") as tf:
+                                            tf.read(512)
 
-                                    plugin_info = {
+                                    plugin_info_item: dict[str, Any] = {
                                         "name": entry.stem,
                                         "filename": entry.name,
                                         "path": str(entry),
@@ -1363,7 +1330,7 @@ class IntellicrackApp(QMainWindow):
                                         "modified": entry.stat().st_mtime,
                                         "valid": True,
                                     }
-                                    plugins[plugin_type].append(plugin_info)
+                                    plugins[plugin_type].append(plugin_info_item)
 
                                 except (OSError, UnicodeDecodeError) as file_error:
                                     self.logger.warning(f"Failed to validate plugin {entry.name}: {file_error}")
@@ -1383,8 +1350,8 @@ class IntellicrackApp(QMainWindow):
 
             try:
                 cache_dir.mkdir(parents=True, exist_ok=True)
-                with lock, open(cache_file, "w", encoding="utf-8") as f:
-                    json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
+                with lock, open(cache_file, "w", encoding="utf-8") as wf:
+                    json.dump({"plugins": plugins, "cache_version": "1.0"}, wf, indent=2)
                 self.logger.debug(f"Plugin cache saved to {cache_file}")
             except OSError as cache_error:
                 self.logger.warning(f"Failed to save plugin cache: {cache_error}")

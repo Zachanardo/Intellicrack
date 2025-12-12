@@ -60,6 +60,9 @@ FAILED_START_VM = "Failed to start VM: %s"
 SUBPROCESS_TIMEOUT_MSG = "Subprocess timeout in qemu_manager: %s"
 
 
+REMOTE_TEMP_DIR = "/tmp"
+
+
 class QEMUError(Exception):
     """Custom exception for QEMU-related errors."""
 
@@ -4066,7 +4069,7 @@ exit 0
                     runtime_ms=runtime_ms,
                 )
 
-            script_remote_path = f"/tmp/run_frida_{int(time.time())}.sh"
+            script_remote_path = f"{REMOTE_TEMP_DIR}/run_frida_{int(time.time())}.sh"
             self._upload_file_to_vm(snapshot, runner_script, script_remote_path)
 
             _stdin, stdout, stderr = ssh_client.exec_command(

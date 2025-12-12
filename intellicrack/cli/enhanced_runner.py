@@ -316,7 +316,6 @@ class EnhancedCLIRunner:
                     results["load_error"] = str(e)
 
             elif step_name == "Monitoring system calls":
-                # Use process monitoring for real syscall detection
                 try:
                     current_processes = psutil.pids()
                     results["baseline_processes"] = len(current_processes)
@@ -325,9 +324,6 @@ class EnhancedCLIRunner:
                     results["syscalls"] = ["monitoring_unavailable"]
 
             elif step_name == "Setting up sandbox environment":
-                # Verify system has monitoring capabilities
-                import psutil
-
                 results["system_info"] = {
                     "cpu_count": psutil.cpu_count(),
                     "memory_total": psutil.virtual_memory().total,

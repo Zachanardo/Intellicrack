@@ -1,14 +1,19 @@
 """Keygen dialog for generating license keys and serial numbers."""
 
+from __future__ import annotations
+
 import json
+import logging
 import os
 import platform
 import subprocess
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
+    QCloseEvent,
     QColor,
     QComboBox,
     QFileDialog,
@@ -36,6 +41,10 @@ from intellicrack.utils.logger import logger
 
 from ..icon_manager import set_button_icon
 from .base_dialog import BaseDialog
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 """
@@ -68,7 +77,7 @@ class KeygenWorker(QThread):
     batch_completed = pyqtSignal(list)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, operation: str, **kwargs: object) -> None:
+    def __init__(self, binary_path: str, operation: str, **kwargs: Any) -> None:
         """Initialize the KeygenWorker with default values.
 
         Args:
@@ -80,8 +89,9 @@ class KeygenWorker(QThread):
         super().__init__()
         self.binary_path = binary_path
         self.operation = operation
-        self.kwargs = kwargs
+        self.kwargs: dict[str, Any] = dict(kwargs)
         self.should_stop = False
+        self._logger = logging.getLogger(__name__)
 
     def run(self) -> None:
         """Execute the keygen operation."""
@@ -93,26 +103,37 @@ class KeygenWorker(QThread):
             elif self.operation == "analyze":
                 self._analyze_binary()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in keygen_dialog: %s", e)
+            self._logger.error("Error in keygen_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _generate_single_key(self) -> None:
         """Generate a single license key."""
         from ...utils.exploitation import generate_license_key
 
-        result = generate_license_key(
-            self.binary_path,
-            algorithm=self.kwargs.get("algorithm", "auto"),
-            format_type=self.kwargs.get("format_type", "auto"),
-            custom_length=self.kwargs.get("custom_length"),
-            validation_check=self.kwargs.get("validation_check", False),
-        )
+        algorithm_val = self.kwargs.get("algorithm", "auto")
+        format_val = self.kwargs.get("format_type", "auto")
+        custom_length_val = self.kwargs.get("custom_length")
+        validation_val = self.kwargs.get("validation_check", False)
+
+        kwargs_for_keygen: dict[str, Any] = {
+            "algorithm": str(algorithm_val) if algorithm_val is not None else "auto",
+            "format_type": str(format_val) if format_val is not None else "auto",
+            "validation_check": bool(validation_val),
+        }
+        if custom_length_val is not None:
+            kwargs_for_keygen["custom_length"] = int(custom_length_val)
+        result: dict[str, Any] = generate_license_key(self.binary_path, **kwargs_for_keygen)
         self.key_generated.emit(result)
 
     def _generate_batch_keys(self) -> None:
         """Generate multiple license keys."""
-        count = self.kwargs.get("count", 10)
-        keys = []
+        count_val = self.kwargs.get("count", 10)
+        count: int = int(count_val) if count_val is not None else 10
+        keys: list[dict[str, Any]] = []
+
+        algorithm_val = self.kwargs.get("algorithm", "auto")
+        format_val = self.kwargs.get("format_type", "auto")
+        custom_length_val = self.kwargs.get("custom_length")
 
         for i in range(count):
             if self.should_stop:
@@ -121,13 +142,14 @@ class KeygenWorker(QThread):
             try:
                 from ...utils.exploitation import generate_license_key
 
-                result = generate_license_key(
-                    self.binary_path,
-                    algorithm=self.kwargs.get("algorithm", "auto"),
-                    format_type=self.kwargs.get("format_type", "auto"),
-                    custom_length=self.kwargs.get("custom_length"),
-                    validation_check=False,  # Skip validation for batch to speed up
-                )
+                batch_kwargs: dict[str, Any] = {
+                    "algorithm": str(algorithm_val) if algorithm_val is not None else "auto",
+                    "format_type": str(format_val) if format_val is not None else "auto",
+                    "validation_check": False,
+                }
+                if custom_length_val is not None:
+                    batch_kwargs["custom_length"] = int(custom_length_val)
+                result: dict[str, Any] = generate_license_key(self.binary_path, **batch_kwargs)
                 result["batch_id"] = i + 1
                 keys.append(result)
                 self.batch_progress.emit(i + 1, count)
@@ -138,8 +160,8 @@ class KeygenWorker(QThread):
                         "batch_id": i + 1,
                         "key": "",
                         "error": str(e),
-                        "algorithm": self.kwargs.get("algorithm", "auto"),
-                        "format": self.kwargs.get("format_type", "auto"),
+                        "algorithm": str(algorithm_val) if algorithm_val is not None else "auto",
+                        "format": str(format_val) if format_val is not None else "auto",
                     },
                 )
 
@@ -152,7 +174,7 @@ class KeygenWorker(QThread):
         algorithm, analysis = _detect_license_algorithm(self.binary_path)
         format_type = _detect_key_format(self.binary_path)
 
-        result = {
+        result: dict[str, Any] = {
             "algorithm": algorithm,
             "format": format_type,
             "analysis": analysis,
@@ -167,7 +189,32 @@ class KeygenWorker(QThread):
 class KeygenDialog(BaseDialog):
     """Professional Keygen Dialog with advanced features."""
 
-    def __init__(self, parent: object | None = None, binary_path: str = "") -> None:
+    analysis_display: QTextEdit | None
+    analyze_keys_btn: QPushButton | None
+    analyze_btn: QPushButton | None
+    batch_algorithm_combo: QComboBox | None
+    batch_clear_btn: QPushButton | None
+    batch_count_spin: QSpinBox | None
+    batch_export_btn: QPushButton | None
+    batch_format_combo: QComboBox | None
+    batch_generate_btn: QPushButton | None
+    batch_progress: QProgressBar | None
+    batch_stop_btn: QPushButton | None
+    batch_table: QTableWidget | None
+    copy_btn: QPushButton | None
+    existing_keys_input: QTextEdit | None
+    generate_btn: QPushButton | None
+    key_analysis_display: QTextEdit | None
+    key_display: QTextEdit | None
+    results_display: QTextEdit | None
+    save_single_btn: QPushButton | None
+    worker: KeygenWorker | None
+    generated_keys: list[dict[str, Any]]
+    current_analysis: dict[str, Any]
+    last_generated_result: dict[str, Any]
+    _logger: logging.Logger
+
+    def __init__(self, parent: QWidget | None = None, binary_path: str = "") -> None:
         """Initialize the KeygenDialog with default values.
 
         Args:
@@ -175,9 +222,9 @@ class KeygenDialog(BaseDialog):
             binary_path: Path to binary file for analysis.
 
         """
-        # Initialize UI attributes
         self.analysis_display = None
         self.analyze_keys_btn = None
+        self.analyze_btn = None
         self.batch_algorithm_combo = None
         self.batch_clear_btn = None
         self.batch_count_spin = None
@@ -201,6 +248,7 @@ class KeygenDialog(BaseDialog):
         self.current_analysis = {}
         self.last_generated_key = ""
         self.last_generated_result = {}
+        self._logger = logging.getLogger(__name__)
 
         self.setWindowTitle("Professional License Key Generator")
         self.setMinimumSize(900, 700)
@@ -226,17 +274,39 @@ class KeygenDialog(BaseDialog):
         # Status and controls
         self.setup_footer(layout)
 
-    def setup_header(self, layout: object) -> None:
+    def setup_header(
+        self,
+        layout: QVBoxLayout,
+        show_label: bool = True,
+        extra_buttons: list[tuple[str, Callable[[], None]]] | None = None,
+    ) -> None:
         """Set up header with binary selection.
 
         Args:
             layout: Main layout widget.
+            show_label: Whether to show the binary label.
+            extra_buttons: Optional list of extra buttons to add.
 
         """
-        # Use the base class method with analyze button
-        super().setup_header(layout, show_label=True, extra_buttons=[("Analyze Binary", self.analyze_binary)])
+        buttons: list[tuple[str, Callable[[], None]]] = [("Analyze Binary", self.analyze_binary)]
+        if extra_buttons:
+            buttons.extend(extra_buttons)
+        super().setup_header(layout, show_label=show_label, extra_buttons=buttons)
+        self.analyze_btn = None
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item is not None:
+                sub_layout = item.layout()
+                if sub_layout is not None:
+                    for j in range(sub_layout.count()):
+                        sub_item = sub_layout.itemAt(j)
+                        if sub_item is not None:
+                            widget = sub_item.widget()
+                            if isinstance(widget, QPushButton) and widget.text() == "Analyze Binary":
+                                self.analyze_btn = widget
+                                break
 
-    def setup_tabs(self, layout: object) -> None:
+    def setup_tabs(self, layout: QVBoxLayout) -> None:
         """Set up main tab widget.
 
         Args:
@@ -245,16 +315,12 @@ class KeygenDialog(BaseDialog):
         """
         self.tabs = QTabWidget()
 
-        # Single Key Generation Tab
         self.setup_single_tab()
 
-        # Batch Generation Tab
         self.setup_batch_tab()
 
-        # Analysis Tab
         self.setup_analysis_tab()
 
-        # Key Management Tab
         self.setup_management_tab()
 
         layout.addWidget(self.tabs)
@@ -451,9 +517,9 @@ class KeygenDialog(BaseDialog):
             ],
         )
 
-        # Set column widths
         header = self.batch_table.horizontalHeader()
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Key column stretches
+        if header is not None:
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
         layout.addWidget(self.batch_table)
 
@@ -504,7 +570,7 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(management_widget, "Key Management")
 
-    def setup_footer(self, layout: object) -> None:
+    def setup_footer(self, layout: QVBoxLayout) -> None:
         """Set up footer with status and close button.
 
         Args:
@@ -544,15 +610,15 @@ class KeygenDialog(BaseDialog):
             return
 
         self.status_label.setText("Analyzing binary...")
-        self.analyze_btn.setEnabled(False)
+        if self.analyze_btn is not None:
+            self.analyze_btn.setEnabled(False)
 
-        # Start worker thread
         self.worker = KeygenWorker(self.binary_path, "analyze")
         self.worker.key_generated.connect(self.on_analysis_completed)
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_analysis_completed(self, result: object) -> None:
+    def on_analysis_completed(self, result: dict[str, Any]) -> None:
         """Handle analysis completion.
 
         Args:
@@ -561,7 +627,6 @@ class KeygenDialog(BaseDialog):
         """
         self.current_analysis = result
 
-        # Update UI with detected values
         if "algorithm" in result:
             algo_map = {
                 "simple": "Simple",
@@ -571,11 +636,11 @@ class KeygenDialog(BaseDialog):
                 "checksum": "Checksum",
                 "hardware": "Hardware-Locked",
             }
-            algo_text = algo_map.get(result["algorithm"], "Simple")
+            algo_text = algo_map.get(str(result["algorithm"]), "Simple")
 
-            # Update combo boxes
             self.algorithm_combo.setCurrentText(algo_text)
-            self.batch_algorithm_combo.setCurrentText(algo_text)
+            if self.batch_algorithm_combo is not None:
+                self.batch_algorithm_combo.setCurrentText(algo_text)
 
         if "format" in result:
             format_map = {
@@ -584,22 +649,23 @@ class KeygenDialog(BaseDialog):
                 "hex": "Hex",
                 "base64": "Base64",
             }
-            format_text = format_map.get(result["format"], "Alphanumeric")
+            format_text = format_map.get(str(result["format"]), "Alphanumeric")
 
             self.format_combo.setCurrentText(format_text)
-            self.batch_format_combo.setCurrentText(format_text)
+            if self.batch_format_combo is not None:
+                self.batch_format_combo.setCurrentText(format_text)
 
-        # Display analysis results
         analysis_text = self.format_analysis_results(result)
-        self.analysis_display.setPlainText(analysis_text)
+        if self.analysis_display is not None:
+            self.analysis_display.setPlainText(analysis_text)
 
-        # Switch to analysis tab
         self.tabs.setCurrentIndex(2)
 
         self.status_label.setText("Analysis completed")
-        self.analyze_btn.setEnabled(True)
+        if self.analyze_btn is not None:
+            self.analyze_btn.setEnabled(True)
 
-    def format_analysis_results(self, result: object) -> str:
+    def format_analysis_results(self, result: dict[str, Any]) -> str:
         """Format analysis results for display.
 
         Args:
@@ -612,11 +678,13 @@ class KeygenDialog(BaseDialog):
         text = f"Binary Analysis Results for: {os.path.basename(self.binary_path)}\n"
         text += "=" * 60 + "\n\n"
 
-        text += f"Detected Algorithm: {result.get('algorithm', 'unknown').upper()}\n"
-        text += f"Detected Format: {result.get('format', 'unknown').upper()}\n\n"
+        algo_val = result.get("algorithm", "unknown")
+        format_val = result.get("format", "unknown")
+        text += f"Detected Algorithm: {str(algo_val).upper()}\n"
+        text += f"Detected Format: {str(format_val).upper()}\n\n"
 
         if "analysis" in result:
-            analysis = result["analysis"]
+            analysis: dict[str, Any] = result["analysis"]
 
             text += f"Detection Confidence: {analysis.get('confidence', 0):.1%}\n\n"
 
@@ -633,10 +701,11 @@ class KeygenDialog(BaseDialog):
                 text += "\n"
 
             if analysis.get("entropy_analysis"):
-                entropy = analysis["entropy_analysis"].get("entropy", 0)
+                entropy_data: dict[str, Any] = analysis["entropy_analysis"]
+                entropy = entropy_data.get("entropy", 0)
                 text += f"File Entropy: {entropy:.2f}\n"
-                if entropy > 7.5:
-                    text += "  → High entropy detected, likely encrypted/packed\n"
+                if isinstance(entropy, (int, float)) and entropy > 7.5:
+                    text += "  -> High entropy detected, likely encrypted/packed\n"
                 text += "\n"
 
             if analysis.get("string_analysis"):
@@ -654,7 +723,8 @@ class KeygenDialog(BaseDialog):
             return
 
         self.status_label.setText("Generating key...")
-        self.generate_btn.setEnabled(False)
+        if self.generate_btn is not None:
+            self.generate_btn.setEnabled(False)
 
         # Get configuration
         algorithm_map = {
@@ -693,31 +763,32 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_single_key_generated(self, result: object) -> None:
+    def on_single_key_generated(self, result: dict[str, Any]) -> None:
         """Handle single key generation completion.
 
         Args:
             result: Key generation result dictionary.
 
         """
-        # Display the key
-        self.key_display.setPlainText(result.get("key", "Error generating key"))
+        key_val = result.get("key", "Error generating key")
+        if self.key_display is not None:
+            self.key_display.setPlainText(str(key_val))
 
-        # Display detailed results
         results_text = self.format_single_key_results(result)
-        self.results_display.setPlainText(results_text)
+        if self.results_display is not None:
+            self.results_display.setPlainText(results_text)
 
-        # Store for potential copying and saving
-        self.last_generated_key = result.get("key", "")
+        self.last_generated_key = str(result.get("key", ""))
         self.last_generated_result = result
 
-        # Enable save button if key was generated successfully
-        self.save_single_btn.setEnabled(bool(self.last_generated_key))
+        if self.save_single_btn is not None:
+            self.save_single_btn.setEnabled(bool(self.last_generated_key))
 
         self.status_label.setText("Key generated successfully")
-        self.generate_btn.setEnabled(True)
+        if self.generate_btn is not None:
+            self.generate_btn.setEnabled(True)
 
-    def format_single_key_results(self, result: object) -> str:
+    def format_single_key_results(self, result: dict[str, Any]) -> str:
         """Format single key results for display.
 
         Args:
@@ -731,24 +802,27 @@ class KeygenDialog(BaseDialog):
         text += "=" * 30 + "\n\n"
 
         text += f"Generated Key: {result.get('key', 'Error')}\n"
-        text += f"Algorithm Used: {result.get('algorithm', 'unknown').upper()}\n"
-        text += f"Format Used: {result.get('format', 'unknown').upper()}\n\n"
+        algo_str = str(result.get("algorithm", "unknown")).upper()
+        fmt_str = str(result.get("format", "unknown")).upper()
+        text += f"Algorithm Used: {algo_str}\n"
+        text += f"Format Used: {fmt_str}\n\n"
 
-        if "validation" in result and result["validation"]["tested"]:
-            validation = result["validation"]
-            text += "Validation Results:\n"
-            text += f"  Valid: {'YES' if validation['valid'] else 'NO'}\n"
-            text += f"  Confidence: {validation['confidence']:.1%}\n"
-            text += f"  Method: {validation['method']}\n"
+        if "validation" in result:
+            validation_data: dict[str, Any] = result["validation"]
+            if validation_data.get("tested"):
+                text += "Validation Results:\n"
+                text += f"  Valid: {'YES' if validation_data.get('valid') else 'NO'}\n"
+                text += f"  Confidence: {validation_data.get('confidence', 0):.1%}\n"
+                text += f"  Method: {validation_data.get('method', 'unknown')}\n"
 
-            if validation.get("notes"):
-                text += "  Notes:\n"
-                for note in validation["notes"]:
-                    text += f"     {note}\n"
-            text += "\n"
+                if validation_data.get("notes"):
+                    text += "  Notes:\n"
+                    for note in validation_data["notes"]:
+                        text += f"     {note}\n"
+                text += "\n"
 
         if "analysis" in result:
-            analysis = result["analysis"]
+            analysis: dict[str, Any] = result["analysis"]
             text += f"Detection Confidence: {analysis.get('confidence', 0):.1%}\n"
 
             if analysis.get("detected_algorithms"):
@@ -761,14 +835,19 @@ class KeygenDialog(BaseDialog):
 
     def copy_key(self) -> None:
         """Copy generated key to clipboard."""
-        if key := self.key_display.toPlainText().strip():
+        if self.key_display is None:
+            return
+        key = self.key_display.toPlainText().strip()
+        if key:
             try:
                 from intellicrack.handlers.pyqt6_handler import QApplication
 
-                QApplication.clipboard().setText(key)
+                clipboard = QApplication.clipboard()
+                if clipboard is not None:
+                    clipboard.setText(key)
                 self.status_label.setText("Key copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in keygen_dialog: %s", e)
+                self._logger.error("Error in keygen_dialog: %s", e)
                 QMessageBox.information(self, "Copy", f"Key: {key}")
 
     def save_single_key(self) -> None:
@@ -827,15 +906,14 @@ class KeygenDialog(BaseDialog):
 
             self.status_label.setText(f"Key saved to generated_keys/{filename}")
 
-            # Show success message with option to open folder
             reply = QMessageBox.question(
                 self,
                 "Key Saved",
                 f"Key saved successfully to:\n{file_path}\n\nWould you like to open the generated_keys folder?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
-            if reply == QMessageBox.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 # Open the generated_keys folder
                 try:
                     if platform.system() == "Windows":
@@ -859,25 +937,30 @@ class KeygenDialog(BaseDialog):
             QMessageBox.warning(self, "Warning", "Please select a valid binary file first.")
             return
 
+        if self.batch_count_spin is None:
+            return
         count = self.batch_count_spin.value()
         if count > 100:
             reply = QMessageBox.question(
                 self,
                 "Large Batch",
                 f"You're about to generate {count} keys. This may take a while. Continue?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
-            if reply != QMessageBox.Yes:
+            if reply != QMessageBox.StandardButton.Yes:
                 return
 
         self.status_label.setText(f"Generating {count} keys...")
-        self.batch_generate_btn.setEnabled(False)
-        self.batch_stop_btn.setEnabled(True)
-        self.batch_progress.setValue(0)
-        self.batch_progress.setMaximum(count)
+        if self.batch_generate_btn is not None:
+            self.batch_generate_btn.setEnabled(False)
+        if self.batch_stop_btn is not None:
+            self.batch_stop_btn.setEnabled(True)
+        if self.batch_progress is not None:
+            self.batch_progress.setValue(0)
+            self.batch_progress.setMaximum(count)
 
-        # Clear previous results
-        self.batch_table.setRowCount(0)
+        if self.batch_table is not None:
+            self.batch_table.setRowCount(0)
 
         # Get configuration
         algorithm_map = {
@@ -898,10 +981,13 @@ class KeygenDialog(BaseDialog):
             "Base64": "base64",
         }
 
-        algorithm = algorithm_map.get(self.batch_algorithm_combo.currentText(), "auto")
-        format_type = format_map.get(self.batch_format_combo.currentText(), "auto")
+        algorithm = "auto"
+        if self.batch_algorithm_combo is not None:
+            algorithm = algorithm_map.get(self.batch_algorithm_combo.currentText(), "auto")
+        format_type = "auto"
+        if self.batch_format_combo is not None:
+            format_type = format_map.get(self.batch_format_combo.currentText(), "auto")
 
-        # Start worker thread
         self.worker = KeygenWorker(
             self.binary_path,
             "batch",
@@ -922,10 +1008,11 @@ class KeygenDialog(BaseDialog):
             total: Total number of keys to generate.
 
         """
-        self.batch_progress.setValue(current)
+        if self.batch_progress is not None:
+            self.batch_progress.setValue(current)
         self.status_label.setText(f"Generating keys: {current}/{total}")
 
-    def on_batch_completed(self, keys: object) -> None:
+    def on_batch_completed(self, keys: list[dict[str, Any]]) -> None:
         """Handle batch generation completion.
 
         Args:
@@ -934,58 +1021,57 @@ class KeygenDialog(BaseDialog):
         """
         self.generated_keys = keys
 
-        # Populate table
-        self.batch_table.setRowCount(len(keys))
+        if self.batch_table is not None:
+            self.batch_table.setRowCount(len(keys))
 
-        for i, key_data in enumerate(keys):
-            # ID
-            self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get("batch_id", i + 1))))
+            for i, key_data in enumerate(keys):
+                self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get("batch_id", i + 1))))
 
-            # Key
-            key_text = key_data.get("key", "Error")
-            self.batch_table.setItem(i, 1, QTableWidgetItem(key_text))
+                key_text = str(key_data.get("key", "Error"))
+                self.batch_table.setItem(i, 1, QTableWidgetItem(key_text))
 
-            # Algorithm
-            self.batch_table.setItem(i, 2, QTableWidgetItem(key_data.get("algorithm", "unknown")))
+                self.batch_table.setItem(i, 2, QTableWidgetItem(str(key_data.get("algorithm", "unknown"))))
 
-            # Format
-            self.batch_table.setItem(i, 3, QTableWidgetItem(key_data.get("format", "unknown")))
+                self.batch_table.setItem(i, 3, QTableWidgetItem(str(key_data.get("format", "unknown"))))
 
-            # Status
-            if "error" in key_data:
-                status = "Error"
-                status_item = QTableWidgetItem(status)
-                status_item.setBackground(QColor(255, 200, 200))  # Light red
-            else:
-                status = "Generated"
-                status_item = QTableWidgetItem(status)
-                status_item.setBackground(QColor(200, 255, 200))  # Light green
+                if "error" in key_data:
+                    status_item = QTableWidgetItem("Error")
+                    status_item.setBackground(QColor(255, 200, 200))
+                else:
+                    status_item = QTableWidgetItem("Generated")
+                    status_item.setBackground(QColor(200, 255, 200))
 
-            self.batch_table.setItem(i, 4, status_item)
+                self.batch_table.setItem(i, 4, status_item)
 
-        # Switch to batch tab
         self.tabs.setCurrentIndex(1)
 
         self.status_label.setText(f"Generated {len(keys)} keys successfully")
-        self.batch_generate_btn.setEnabled(True)
-        self.batch_stop_btn.setEnabled(False)
-        self.batch_progress.setValue(self.batch_progress.maximum())
+        if self.batch_generate_btn is not None:
+            self.batch_generate_btn.setEnabled(True)
+        if self.batch_stop_btn is not None:
+            self.batch_stop_btn.setEnabled(False)
+        if self.batch_progress is not None:
+            self.batch_progress.setValue(self.batch_progress.maximum())
 
     def stop_batch_generation(self) -> None:
         """Stop batch generation."""
-        if self.worker:
+        if self.worker is not None:
             self.worker.stop()
             self.worker.wait()
 
-        self.batch_generate_btn.setEnabled(True)
-        self.batch_stop_btn.setEnabled(False)
+        if self.batch_generate_btn is not None:
+            self.batch_generate_btn.setEnabled(True)
+        if self.batch_stop_btn is not None:
+            self.batch_stop_btn.setEnabled(False)
         self.status_label.setText("Batch generation stopped")
 
     def clear_batch_results(self) -> None:
         """Clear batch results."""
-        self.batch_table.setRowCount(0)
+        if self.batch_table is not None:
+            self.batch_table.setRowCount(0)
         self.generated_keys = []
-        self.batch_progress.setValue(0)
+        if self.batch_progress is not None:
+            self.batch_progress.setValue(0)
         self.status_label.setText("Batch results cleared")
 
     def export_batch_keys(self) -> None:
@@ -1045,6 +1131,8 @@ class KeygenDialog(BaseDialog):
 
     def analyze_existing_keys(self) -> None:
         """Analyze existing keys for patterns."""
+        if self.existing_keys_input is None:
+            return
         keys_text = self.existing_keys_input.toPlainText().strip()
         if not keys_text:
             QMessageBox.warning(self, "Warning", "Please enter some existing keys to analyze.")
@@ -1057,7 +1145,6 @@ class KeygenDialog(BaseDialog):
 
             analysis = analyze_existing_keys(keys)
 
-            # Format results
             analysis_text = "Key Pattern Analysis\n"
             analysis_text += "=" * 30 + "\n\n"
 
@@ -1081,9 +1168,9 @@ class KeygenDialog(BaseDialog):
                 analysis_text += f"   Suggested Format: {analysis['recommendations'].get('format', 'alphanumeric').title()}\n"
                 analysis_text += f"   Suggested Length: {analysis['recommendations'].get('length', 25)}\n"
 
-            self.key_analysis_display.setPlainText(analysis_text)
+            if self.key_analysis_display is not None:
+                self.key_analysis_display.setPlainText(analysis_text)
 
-            # Switch to management tab
             self.tabs.setCurrentIndex(3)
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1099,26 +1186,30 @@ class KeygenDialog(BaseDialog):
         """
         QMessageBox.critical(self, "Error", f"An error occurred: {error_msg}")
         self.status_label.setText("Error occurred")
-        self.generate_btn.setEnabled(True)
-        self.batch_generate_btn.setEnabled(True)
-        self.batch_stop_btn.setEnabled(False)
-        self.analyze_btn.setEnabled(True)
+        if self.generate_btn is not None:
+            self.generate_btn.setEnabled(True)
+        if self.batch_generate_btn is not None:
+            self.batch_generate_btn.setEnabled(True)
+        if self.batch_stop_btn is not None:
+            self.batch_stop_btn.setEnabled(False)
+        if self.analyze_btn is not None:
+            self.analyze_btn.setEnabled(True)
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close event.
 
         Args:
             event: Close event from Qt framework.
 
         """
-        if self.worker and self.worker.isRunning():
+        if self.worker is not None and self.worker.isRunning():
             self.worker.stop()
             self.worker.wait()
-        event.accept()
+        if event is not None:
+            event.accept()
 
 
-# Convenience function for main app integration
-def show_keygen_dialog(parent: object | None = None, binary_path: str = "") -> int:
+def show_keygen_dialog(parent: QWidget | None = None, binary_path: str = "") -> int:
     """Show the keygen dialog.
 
     Args:

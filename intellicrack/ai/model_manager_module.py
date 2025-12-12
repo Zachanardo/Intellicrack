@@ -34,55 +34,75 @@ from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
 
 
-# Module logger - define early to avoid usage before definition
 logger = logging.getLogger(__name__)
 
-# Torch is not in the handler list yet, keep conditional import for now
-try:
-    import torch  # pylint: disable=import-error
-    from torch import nn  # pylint: disable=import-error
+torch: Any = None
+nn: Any = None
+HAS_TORCH = False
 
+try:
+    import torch as _torch  # pylint: disable=import-error
+    from torch import nn as _nn  # pylint: disable=import-error
+
+    torch = _torch
+    nn = _nn
     HAS_TORCH = True
 except ImportError:
-    torch = None
-    nn = None
-    HAS_TORCH = False
+    pass
 
-# Import unified GPU system
+get_device: Callable[[], Any] | None = None
+get_gpu_info: Callable[[], Any] | None = None
+gpu_autoloader: Any = None
+optimize_for_gpu: Callable[[Any], Any] | None = None
+to_device: Callable[..., Any] | None = None
+GPU_AUTOLOADER_AVAILABLE = False
+
 try:
-    from ..utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
+    from ..utils.gpu_autoloader import (
+        get_device as _get_device,
+        get_gpu_info as _get_gpu_info,
+        gpu_autoloader as _gpu_autoloader,
+        optimize_for_gpu as _optimize_for_gpu,
+        to_device as _to_device,
+    )
 
+    get_device = _get_device
+    get_gpu_info = _get_gpu_info
+    gpu_autoloader = _gpu_autoloader
+    optimize_for_gpu = _optimize_for_gpu
+    to_device = _to_device
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
-    GPU_AUTOLOADER_AVAILABLE = False
+    pass
+
+tf: Any = None
+keras: Any = None
 
 try:
-    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-    import os
-
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+    from intellicrack.handlers.tensorflow_handler import tensorflow as _tf
 
+    tf = _tf
     keras = tf.keras
 
     HAS_TENSORFLOW = True
 except ImportError as e:
     logger.error("Import error in model_manager_module: %s", e)
-    tf = None
-    keras = None
-    HAS_TENSORFLOW = False
+
+onnx: Any = None
+ort: Any = None
+HAS_ONNX = False
 
 try:
-    import onnx
-    import onnxruntime as ort
+    import onnx as _onnx
+    import onnxruntime as _ort
 
+    onnx = _onnx
+    ort = _ort
     HAS_ONNX = True
 except (ImportError, AttributeError) as e:
     logger.error("Import error in model_manager_module: %s", e)
-    onnx = None
-    ort = None
-    HAS_ONNX = False
 
 try:
     import joblib
@@ -97,22 +117,22 @@ class ModelBackend(ABC):
     """Abstract base class for AI model backends."""
 
     @abstractmethod
-    def load_model(self, model_path: str) -> object:
+    def load_model(self, model_path: str) -> Any:
         """Load a model from the given path."""
 
     @abstractmethod
-    def predict(self, model: object, input_data: object) -> object:
+    def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using the model."""
 
     @abstractmethod
-    def get_model_info(self, model: object) -> dict[str, object]:
+    def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get information about the model."""
 
 
 class PyTorchBackend(ModelBackend):
     """PyTorch model backend."""
 
-    def load_model(self, model_path: str) -> object:
+    def load_model(self, model_path: str) -> Any:
         """Load a PyTorch model."""
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
@@ -126,7 +146,7 @@ class PyTorchBackend(ModelBackend):
             logger.error("Failed to load PyTorch model: %s", e)
             raise
 
-    def predict(self, model: object, input_data: object) -> object:
+    def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using PyTorch model."""
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
@@ -147,9 +167,9 @@ class PyTorchBackend(ModelBackend):
             logger.error("PyTorch prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: object) -> dict[str, object]:
+    def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get PyTorch model information."""
-        info = {
+        info: dict[str, Any] = {
             "backend": "pytorch",
             "type": type(model).__name__,
             "parameters": 0,
@@ -167,7 +187,7 @@ class PyTorchBackend(ModelBackend):
 class TensorFlowBackend(ModelBackend):
     """TensorFlow model backend."""
 
-    def load_model(self, model_path: str) -> object:
+    def load_model(self, model_path: str) -> Any:
         """Load a TensorFlow model."""
         if not HAS_TENSORFLOW or tf is None:
             raise ImportError("TensorFlow not available")
@@ -178,7 +198,7 @@ class TensorFlowBackend(ModelBackend):
             logger.error("Failed to load TensorFlow model: %s", e)
             raise
 
-    def predict(self, model: object, input_data: object) -> object:
+    def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using TensorFlow model."""
         if not HAS_TENSORFLOW:
             raise ImportError("TensorFlow not available")
@@ -192,9 +212,9 @@ class TensorFlowBackend(ModelBackend):
             logger.error("TensorFlow prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: object) -> dict[str, object]:
+    def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get TensorFlow model information."""
-        info = {
+        info: dict[str, Any] = {
             "backend": "tensorflow",
             "type": type(model).__name__,
             "parameters": 0,
@@ -212,13 +232,12 @@ class TensorFlowBackend(ModelBackend):
 class ONNXBackend(ModelBackend):
     """ONNX model backend."""
 
-    def load_model(self, model_path: str) -> object:
+    def load_model(self, model_path: str) -> Any:
         """Load an ONNX model."""
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
 
         try:
-            # Validate the ONNX model first
             model = onnx.load(model_path)
             onnx.checker.check_model(model)
             logger.info("ONNX model validation passed")
@@ -228,7 +247,7 @@ class ONNXBackend(ModelBackend):
             logger.error("Failed to load ONNX model: %s", e)
             raise
 
-    def predict(self, model: object, input_data: object) -> object:
+    def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using ONNX model."""
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
@@ -245,9 +264,9 @@ class ONNXBackend(ModelBackend):
             logger.error("ONNX prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: object) -> dict[str, object]:
+    def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get ONNX model information."""
-        info = {
+        info: dict[str, Any] = {
             "backend": "onnx",
             "type": "ONNX Runtime Session",
             "inputs": [],
@@ -281,7 +300,7 @@ class ONNXBackend(ModelBackend):
 class SklearnBackend(ModelBackend):
     """Scikit-learn model backend."""
 
-    def load_model(self, model_path: str) -> object:
+    def load_model(self, model_path: str) -> Any:
         """Load a scikit-learn model."""
         if not HAS_JOBLIB:
             raise ImportError("Joblib not available")
@@ -292,7 +311,7 @@ class SklearnBackend(ModelBackend):
             logger.error("Failed to load sklearn model: %s", e)
             raise
 
-    def predict(self, model: object, input_data: object) -> object:
+    def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using scikit-learn model."""
         try:
             if np is not None and not isinstance(input_data, np.ndarray):
@@ -305,9 +324,9 @@ class SklearnBackend(ModelBackend):
             logger.error("Sklearn prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: object) -> dict[str, object]:
+    def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get scikit-learn model information."""
-        info = {
+        info: dict[str, Any] = {
             "backend": "sklearn",
             "type": type(model).__name__,
         }
@@ -324,7 +343,7 @@ class SklearnBackend(ModelBackend):
 class ModelCache:
     """Model caching system for efficient model management."""
 
-    def __init__(self, cache_dir: str = None, max_cache_size: int = 5) -> None:
+    def __init__(self, cache_dir: str | None = None, max_cache_size: int = 5) -> None:
         """Initialize the model cache system.
 
         Args:
@@ -336,15 +355,14 @@ class ModelCache:
         self.logger = logging.getLogger(f"{__name__}.ModelCache")
         self.cache_dir = cache_dir or os.path.join(os.path.expanduser("~"), ".intellicrack", "model_cache")
         self.max_cache_size = max_cache_size
-        self.cache = {}
-        self.access_times = {}
+        self.cache: dict[str, Any] = {}
+        self.access_times: dict[str, float] = {}
         self.lock = threading.RLock()
 
         os.makedirs(self.cache_dir, exist_ok=True)
 
     def _get_cache_key(self, model_path: str) -> str:
         """Generate a cache key for the model."""
-        # Use file path and modification time for cache key
         try:
             mtime = Path(model_path).stat().st_mtime
             key_string = f"{model_path}_{mtime}"
@@ -353,7 +371,7 @@ class ModelCache:
             self.logger.error("Error in model_manager_module: %s", e)
             return hashlib.sha256(model_path.encode()).hexdigest()
 
-    def get(self, model_path: str) -> object | None:
+    def get(self, model_path: str) -> Any:
         """Get model from cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
@@ -365,12 +383,11 @@ class ModelCache:
 
             return None
 
-    def put(self, model_path: str, model: object) -> None:
+    def put(self, model_path: str, model: Any) -> None:
         """Put model in cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
 
-            # Remove oldest items if cache is full
             if len(self.cache) >= self.max_cache_size:
                 self._evict_oldest()
 
@@ -383,7 +400,7 @@ class ModelCache:
         if not self.access_times:
             return
 
-        oldest_key = min(self.access_times, key=self.access_times.get)
+        oldest_key = min(self.access_times, key=lambda k: self.access_times[k])
         del self.cache[oldest_key]
         del self.access_times[oldest_key]
         logger.debug("Evicted model from cache: %s", oldest_key)
@@ -409,7 +426,7 @@ class ModelCache:
 class ModelManager:
     """Comprehensive AI model manager for Intellicrack."""
 
-    def __init__(self, models_dir: str = None, cache_size: int = 5) -> None:
+    def __init__(self, models_dir: str | None = None, cache_size: int = 5) -> None:
         """Initialize the AI model manager.
 
         Args:
@@ -421,13 +438,12 @@ class ModelManager:
         self.models_dir = models_dir or os.path.join(os.path.dirname(__file__), "..", "models")
         self.cache = ModelCache(max_cache_size=cache_size)
         self.backends = self._initialize_backends()
-        self.loaded_models = {}
-        self.model_metadata = {}
+        self.loaded_models: dict[str, Any] = {}
+        self.model_metadata: dict[str, Any] = {}
         self.lock = threading.RLock()
-        self.gpu_info = None
+        self.gpu_info: Any = None
 
-        # Get GPU information if available
-        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info:
+        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info is not None:
             try:
                 self.gpu_info = get_gpu_info()
                 if self.gpu_info:
@@ -440,7 +456,7 @@ class ModelManager:
 
     def _initialize_backends(self) -> dict[str, ModelBackend]:
         """Initialize available model backends."""
-        backends = {}
+        backends: dict[str, ModelBackend] = {}
 
         if HAS_TORCH:
             backends["pytorch"] = PyTorchBackend()
@@ -505,31 +521,30 @@ class ModelManager:
         self,
         model_id: str,
         model_path: str,
-        model_type: str = None,
-        metadata: dict[str, Any] = None,
+        model_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Register a model with the manager."""
         with self.lock:
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found: {model_path}")
 
-            if model_type is None:
-                model_type = self._detect_model_type(model_path)
+            resolved_model_type = model_type if model_type is not None else self._detect_model_type(model_path)
 
-            if model_type not in self.backends:
-                raise ValueError(f"Unsupported model type: {model_type}")
+            if resolved_model_type not in self.backends:
+                raise ValueError(f"Unsupported model type: {resolved_model_type}")
 
             self.model_metadata[model_id] = {
                 "path": model_path,
-                "type": model_type,
+                "type": resolved_model_type,
                 "registered": datetime.now().isoformat(),
                 "metadata": metadata or {},
             }
 
             self._save_model_metadata()
-            logger.info("Registered model: %s (%s)", model_id, model_type)
+            logger.info("Registered model: %s (%s)", model_id, resolved_model_type)
 
-    def load_model(self, model_id: str) -> object:
+    def load_model(self, model_id: str) -> Any:
         """Load a model by ID with enhanced support for pre-trained models.
 
         Supports automatic downloading of pre-trained models for:
@@ -603,7 +618,7 @@ class ModelManager:
 
         raise ValueError(f"Unknown pre-trained model: {model_id}")
 
-    def _create_vulnerability_detector(self) -> object:
+    def _create_vulnerability_detector(self) -> Any:
         """Create a vulnerability detection model using neural networks."""
         if HAS_TORCH:
             import torch
@@ -625,7 +640,6 @@ class ModelManager:
                     self.fc4 = nn.Linear(128, num_classes)
                     self.softmax = nn.Softmax(dim=1)
 
-                    # Vulnerability classes
                     self.vulnerability_types = [
                         "buffer_overflow",
                         "format_string",
@@ -639,25 +653,25 @@ class ModelManager:
                         "hardcoded_keys",
                     ]
 
-                def forward(self, x: object) -> object:
+                def forward(self, x: Any) -> Any:
                     x = self.dropout1(self.relu1(self.fc1(x)))
                     x = self.dropout2(self.relu2(self.fc2(x)))
                     x = self.relu3(self.fc3(x))
                     x = self.softmax(self.fc4(x))
                     return x
 
-                def detect_vulnerabilities(self, binary_features: object) -> list[dict[str, object]]:
+                def detect_vulnerabilities(self, binary_features: Any) -> list[list[dict[str, Any]]]:
                     """Detect vulnerabilities from binary feature vectors."""
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
                         top_k = torch.topk(predictions, k=3, dim=1)
-                        results = []
+                        results: list[list[dict[str, Any]]] = []
                         for i in range(top_k.values.shape[0]):
-                            vulns = []
+                            vulns: list[dict[str, Any]] = []
                             for j in range(3):
-                                vuln_idx = top_k.indices[i][j].item()
+                                vuln_idx = int(top_k.indices[i][j].item())
                                 confidence = top_k.values[i][j].item()
-                                if confidence > 0.3:  # Confidence threshold
+                                if confidence > 0.3:
                                     vulns.append(
                                         {
                                             "type": self.vulnerability_types[vuln_idx],
@@ -668,7 +682,7 @@ class ModelManager:
                         return results
 
             model = VulnerabilityDetector()
-            model.eval()  # Set to evaluation mode
+            model.eval()
             return model
 
         # Fallback to sklearn-based model
@@ -696,7 +710,7 @@ class ModelManager:
 
         raise RuntimeError("No ML backend available for vulnerability detector")
 
-    def _create_protection_classifier(self) -> object:
+    def _create_protection_classifier(self) -> Any:
         """Create a protection mechanism classifier model."""
         if HAS_TORCH:
             import torch
@@ -734,17 +748,17 @@ class ModelManager:
                         "self_modification",
                     ]
 
-                def forward(self, x: object) -> object:
-                    x = x.unsqueeze(1)  # Add channel dimension
+                def forward(self, x: Any) -> Any:
+                    x = x.unsqueeze(1)
                     x = self.pool(self.relu(self.conv1(x)))
                     x = self.pool(self.relu(self.conv2(x)))
                     x = x.flatten(1)
                     x = self.dropout(self.relu(self.fc1(x)))
                     x = self.dropout(self.relu(self.fc2(x)))
-                    x = torch.sigmoid(self.fc3(x))  # Multi-label classification
+                    x = torch.sigmoid(self.fc3(x))
                     return x
 
-                def classify_protections(self, binary_features: object) -> list[dict[str, object]]:
+                def classify_protections(self, binary_features: Any) -> list[dict[str, Any]]:
                     """Classify protection mechanisms from binary features."""
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
@@ -765,15 +779,15 @@ class ModelManager:
             """Perform rule-based protection classifier."""
 
             def __init__(self) -> None:
-                self.protection_patterns = {
+                self.protection_patterns: dict[str, list[bytes]] = {
                     "anti_debug": [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent"],
                     "anti_vm": [b"VMware", b"VirtualBox", b"QEMU"],
                     "packing": [b"UPX", b"ASPack", b"Themida"],
                     "license_check": [b"license", b"serial", b"activation"],
                 }
 
-            def classify_protections(self, binary_data: bytes) -> list[dict[str, object]]:
-                detected = []
+            def classify_protections(self, binary_data: bytes) -> list[dict[str, Any]]:
+                detected: list[dict[str, Any]] = []
                 for protection, patterns in self.protection_patterns.items():
                     for pattern in patterns:
                         if pattern in binary_data:
@@ -783,7 +797,7 @@ class ModelManager:
 
         return SimpleProtectionClassifier()
 
-    def _create_script_generator_model(self) -> object:
+    def _create_script_generator_model(self) -> Any:
         """Create a model to assist in script generation."""
         if HAS_TORCH:
             from torch import nn
@@ -797,8 +811,7 @@ class ModelManager:
                     self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
                     self.fc = nn.Linear(hidden_dim, vocab_size)
 
-                    # Common script patterns
-                    self.script_templates = {
+                    self.script_templates: dict[str, str] = {
                         "frida_hook": """
 Interceptor.attach(Module.findExportByName(null, '{function}'), {
     onEnter: function(args) {
@@ -817,13 +830,13 @@ Memory.protect(patch_addr, {size}, 'rwx');
 Memory.writeByteArray(patch_addr, {bytes});""",
                     }
 
-                def forward(self, x: object, hidden: object | None = None) -> tuple[object, object | None]:
+                def forward(self, x: Any, hidden: Any = None) -> tuple[Any, Any]:
                     embed = self.embedding(x)
                     output, hidden = self.lstm(embed, hidden)
                     output = self.fc(output)
                     return output, hidden
 
-                def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
+                def generate_script_snippet(self, protection_type: str, target_info: dict[str, Any]) -> str:
                     """Generate script snippet for specific protection type."""
                     if protection_type == "license_check":
                         return self.script_templates["frida_hook"].format(
@@ -845,18 +858,18 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         class TemplateScriptGenerator:
             def __init__(self) -> None:
-                self.templates = {
+                self.templates: dict[str, str] = {
                     "license": "Interceptor.replace(ptr({addr}), new NativeCallback(() => 1, 'int', []));",
                     "anti_debug": "Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {onLeave: (r) => r.replace(0)});",
                     "trial": "Memory.writeU32(ptr({addr}), 0xFFFFFFFF); // Extend trial",
                 }
 
-            def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
+            def generate_script_snippet(self, protection_type: str, target_info: dict[str, Any]) -> str:
                 return self.templates.get(protection_type, "// Manual analysis required")
 
         return TemplateScriptGenerator()
 
-    def _create_binary_analyzer_model(self) -> object:
+    def _create_binary_analyzer_model(self) -> Any:
         """Create a comprehensive binary analysis model."""
         if HAS_TORCH:
             import torch
@@ -867,19 +880,16 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
                 def __init__(self, input_channels: int = 1, num_features: int = 128) -> None:
                     super().__init__()
-                    # Convolutional layers for pattern extraction
                     self.conv1 = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
                     self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
                     self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
                     self.pool = nn.MaxPool2d(2)
 
-                    # Attention mechanism
                     self.attention = nn.MultiheadAttention(num_features, num_heads=8)
 
-                    # Classification heads
-                    self.arch_classifier = nn.Linear(num_features, 4)  # x86, x64, ARM, MIPS
-                    self.compiler_classifier = nn.Linear(num_features, 6)  # GCC, MSVC, Clang, etc
-                    self.packer_detector = nn.Linear(num_features, 10)  # Common packers
+                    self.arch_classifier = nn.Linear(num_features, 4)
+                    self.compiler_classifier = nn.Linear(num_features, 6)
+                    self.packer_detector = nn.Linear(num_features, 10)
 
                     self.architectures = ["x86", "x64", "ARM", "MIPS"]
                     self.compilers = ["GCC", "MSVC", "Clang", "ICC", "Borland", "Unknown"]
@@ -896,8 +906,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         "None",
                     ]
 
-                def forward(self, x: object) -> tuple[object, object, object]:
-                    # Extract features
+                def forward(self, x: Any) -> tuple[Any, Any, Any]:
                     x = torch.relu(self.conv1(x))
                     x = self.pool(x)
                     x = torch.relu(self.conv2(x))
@@ -905,30 +914,28 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     x = torch.relu(self.conv3(x))
                     x = self.pool(x)
 
-                    # Flatten and apply attention
                     batch_size = x.size(0)
                     x = x.view(batch_size, -1, 128)
                     x, _ = self.attention(x, x, x)
-                    x = x.mean(dim=1)  # Global average pooling
+                    x = x.mean(dim=1)
 
-                    # Multiple classification heads
                     arch = torch.softmax(self.arch_classifier(x), dim=1)
                     compiler = torch.softmax(self.compiler_classifier(x), dim=1)
                     packer = torch.softmax(self.packer_detector(x), dim=1)
 
                     return arch, compiler, packer
 
-                def analyze_binary(self, binary_tensor: object) -> dict[str, object]:
+                def analyze_binary(self, binary_tensor: Any) -> dict[str, Any]:
                     """Comprehensive binary analysis."""
                     with torch.no_grad():
                         arch, compiler, packer = self.forward(binary_tensor)
 
                         return {
-                            "architecture": self.architectures[arch.argmax().item()],
+                            "architecture": self.architectures[int(arch.argmax().item())],
                             "arch_confidence": arch.max().item(),
-                            "compiler": self.compilers[compiler.argmax().item()],
+                            "compiler": self.compilers[int(compiler.argmax().item())],
                             "compiler_confidence": compiler.max().item(),
-                            "packer": self.packers[packer.argmax().item()],
+                            "packer": self.packers[int(packer.argmax().item())],
                             "packer_confidence": packer.max().item(),
                         }
 
@@ -937,8 +944,8 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             return model
 
         class HeuristicBinaryAnalyzer:
-            def analyze_binary(self, binary_data: bytes) -> dict[str, object]:
-                results = {
+            def analyze_binary(self, binary_data: bytes) -> dict[str, Any]:
+                results: dict[str, Any] = {
                     "architecture": "x86" if b"MZ" in binary_data[:2] else "Unknown",
                     "arch_confidence": 0.7,
                     "compiler": "MSVC" if b"Visual Studio" in binary_data else "Unknown",
@@ -947,7 +954,6 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     "packer_confidence": 0.5,
                 }
 
-                # Check for common packers
                 if b"UPX" in binary_data[:1000]:
                     results["packer"] = "UPX"
                     results["packer_confidence"] = 0.9
@@ -1020,46 +1026,45 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         backend = self.backends[model_type]
         return backend.load_model(model_path)
 
-    def _optimize_loaded_model(self, model: object, model_id: str, model_type: str) -> object:
+    def _optimize_loaded_model(self, model: Any, model_id: str, model_type: str) -> Any:
         """Apply optimizations to loaded model."""
-        # Move to GPU if available and optimize
         if GPU_AUTOLOADER_AVAILABLE:
             try:
-                # Get optimal device
-                device = get_device()
-                if device != "cpu":
-                    # Move model to GPU
-                    if to_device:
-                        model = to_device(model, device)
-                        logger.info(f"Moved model {model_id} to {device}")
+                if get_device is not None:
+                    device = get_device()
+                    if device != "cpu":
+                        if to_device is not None:
+                            model = to_device(model, device)
+                            logger.info(f"Moved model {model_id} to {device}")
 
-                    # Apply GPU optimizations
-                    if optimize_for_gpu:
-                        optimized_model = optimize_for_gpu(model)
-                        if optimized_model is not None:
-                            model = optimized_model
-                            logger.info(f"Applied GPU optimizations to model {model_id}")
+                        if optimize_for_gpu is not None:
+                            optimized_model = optimize_for_gpu(model)
+                            if optimized_model is not None:
+                                model = optimized_model
+                                logger.info(f"Applied GPU optimizations to model {model_id}")
             except Exception as e:
                 logger.debug(f"Could not optimize model for GPU: {e}")
 
-        # Apply quantization for efficiency
         if model_type == "pytorch" and HAS_TORCH:
             try:
                 import torch
 
                 if hasattr(model, "eval"):
                     model.eval()
-                    # Apply dynamic quantization for CPU inference
-                    if not next(model.parameters()).is_cuda:
-                        quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
-                        logger.info(f"Applied quantization to {model_id}")
-                        return quantized
+                    if hasattr(model, "parameters"):
+                        params = model.parameters()
+                        first_param = next(params, None)
+                        if first_param is not None and not first_param.is_cuda:
+                            if hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic"):
+                                quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
+                                logger.info(f"Applied quantization to {model_id}")
+                                return quantized
             except Exception as e:
                 logger.debug(f"Could not quantize model: {e}")
 
         return model
 
-    def predict(self, model_id: str, input_data: object) -> object:
+    def predict(self, model_id: str, input_data: Any) -> Any:
         """Make predictions using a model with enhanced vulnerability scoring.
 
         Supports:
@@ -1100,7 +1105,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         raise ValueError(f"Cannot predict with model {model_id}")
 
-    def _predict_with_pretrained(self, model_id: str, input_data: object) -> dict[str, object]:
+    def _predict_with_pretrained(self, model_id: str, input_data: Any) -> dict[str, Any]:
         """Make predictions using pretrained models with structured output."""
         model = self.load_model(model_id)
 
@@ -1109,16 +1114,17 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         if model_id == "pretrained/protection_classifier":
             return self._predict_protections(model, input_data)
         if model_id == "pretrained/script_generator":
-            return self._predict_script_generation(model, input_data)
+            if isinstance(input_data, dict):
+                return self._predict_script_generation(model, input_data)
+            return {"error": "Script generation requires dict input"}
         if model_id == "pretrained/binary_analyzer":
             return self._predict_binary_analysis(model, input_data)
         raise ValueError(f"Unknown pretrained model: {model_id}")
 
-    def _predict_vulnerabilities(self, model: object, input_data: object) -> dict[str, object]:
+    def _predict_vulnerabilities(self, model: Any, input_data: Any) -> dict[str, Any]:
         """Predict vulnerabilities with scoring and recommendations."""
-        # Prepare input data
+        features: Any
         if isinstance(input_data, bytes):
-            # Convert binary to feature vector
             features = self._extract_binary_features(input_data)
         elif isinstance(input_data, (list, np.ndarray)):
             features = np.array(input_data)
@@ -1252,47 +1258,46 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "timestamp": __import__("datetime").datetime.now().isoformat(),
         }
 
-    def _predict_protections(self, model: object, input_data: object) -> dict[str, object]:
+    def _predict_protections(self, model: Any, input_data: Any) -> dict[str, Any]:
         """Predict protection mechanisms in binary."""
+        protections: list[dict[str, Any]]
         if hasattr(model, "classify_protections"):
             protections = model.classify_protections(input_data)
         else:
-            # Fallback detection
             protections = []
-            if b"IsDebuggerPresent" in input_data:
-                protections.append({"type": "anti_debug", "confidence": 0.9})
-            if b"VMware" in input_data or b"VirtualBox" in input_data:
-                protections.append({"type": "anti_vm", "confidence": 0.85})
-            if b"license" in input_data.lower():
-                protections.append({"type": "license_check", "confidence": 0.7})
+            if isinstance(input_data, bytes):
+                if b"IsDebuggerPresent" in input_data:
+                    protections.append({"type": "anti_debug", "confidence": 0.9})
+                if b"VMware" in input_data or b"VirtualBox" in input_data:
+                    protections.append({"type": "anti_vm", "confidence": 0.85})
+                if b"license" in input_data.lower():
+                    protections.append({"type": "license_check", "confidence": 0.7})
 
-        # Group protections by category
-        protection_categories = {
+        protection_categories: dict[str, list[str]] = {
             "anti_analysis": ["anti_debug", "anti_vm", "anti_dump"],
             "licensing": ["license_check", "hardware_lock", "time_trial"],
             "integrity": ["integrity_check", "anti_tamper", "self_modification"],
             "obfuscation": ["packing", "encryption", "code_virtualization"],
         }
 
-        categorized = {category: [p for p in protections if p["type"] in types] for category, types in protection_categories.items()}
+        categorized: dict[str, list[dict[str, Any]]] = {category: [p for p in protections if p["type"] in types] for category, types in protection_categories.items()}
         return {
             "protections": protections,
             "categorized": categorized,
-            "protection_score": len(protections) * 10,  # Simple scoring
+            "protection_score": len(protections) * 10,
             "bypass_difficulty": self._calculate_bypass_difficulty(protections),
             "bypass_strategies": self._generate_bypass_strategies(protections),
         }
 
-    def _predict_script_generation(self, model: object, input_data: dict[str, object]) -> dict[str, object]:
+    def _predict_script_generation(self, model: Any, input_data: dict[str, Any]) -> dict[str, Any]:
         """Generate script predictions and templates."""
-        protection_type = input_data.get("protection_type", "unknown")
-        target_info = input_data.get("target_info", {})
+        protection_type = str(input_data.get("protection_type", "unknown"))
+        target_info: dict[str, Any] = input_data.get("target_info", {}) if isinstance(input_data.get("target_info"), dict) else {}
 
         if hasattr(model, "generate_script_snippet"):
             script = model.generate_script_snippet(protection_type, target_info)
         else:
-            # Fallback templates
-            scripts = {
+            scripts: dict[str, str] = {
                 "license_check": """
 // Bypass license check
 Interceptor.attach(Module.findExportByName(null, 'CheckLicense'), {
@@ -1322,14 +1327,15 @@ Interceptor.attach(IsDebuggerPresent, {
             "testing_steps": self._generate_testing_steps(protection_type),
         }
 
-    def _predict_binary_analysis(self, model: object, input_data: object) -> dict[str, object]:
+    def _predict_binary_analysis(self, model: Any, input_data: Any) -> dict[str, Any]:
         """Comprehensive binary analysis prediction."""
+        analysis: dict[str, Any]
         if hasattr(model, "analyze_binary"):
             analysis = model.analyze_binary(input_data)
         else:
-            # Basic analysis
+            binary_bytes = input_data if isinstance(input_data, bytes) else b""
             analysis = {
-                "architecture": "x86" if b"MZ" in input_data[:2] else "Unknown",
+                "architecture": "x86" if len(binary_bytes) >= 2 and b"MZ" in binary_bytes[:2] else "Unknown",
                 "arch_confidence": 0.7,
                 "compiler": "Unknown",
                 "compiler_confidence": 0.5,
@@ -1337,16 +1343,15 @@ Interceptor.attach(IsDebuggerPresent, {
                 "packer_confidence": 0.5,
             }
 
-        # Add entropy analysis
-        entropy = self._calculate_entropy(input_data[:1024])
+        binary_for_entropy = input_data[:1024] if isinstance(input_data, bytes) else b""
+        entropy = self._calculate_entropy(binary_for_entropy)
         analysis["entropy"] = entropy
         analysis["likely_packed"] = entropy > 7.0
 
-        # Add section analysis
-        analysis["sections"] = self._analyze_sections(input_data)
+        binary_for_sections = input_data if isinstance(input_data, bytes) else b""
+        analysis["sections"] = self._analyze_sections(binary_for_sections)
 
-        # Add import analysis
-        analysis["suspicious_imports"] = self._find_suspicious_imports(input_data)
+        analysis["suspicious_imports"] = self._find_suspicious_imports(binary_for_sections)
 
         return {
             "analysis": analysis,
@@ -1355,29 +1360,26 @@ Interceptor.attach(IsDebuggerPresent, {
             "next_steps": self._generate_analysis_steps(analysis),
         }
 
-    def _extract_binary_features(self, binary_data: bytes) -> np.ndarray:
+    def _extract_binary_features(self, binary_data: bytes) -> "np.ndarray[Any, np.dtype[np.float32]]":
         """Extract feature vector from binary data."""
-        # Simple feature extraction
-        features = []
+        features: list[float] = []
 
-        # Byte histogram
-        byte_counts = np.zeros(256)
-        for byte in binary_data[:10000]:  # First 10KB
+        byte_counts: np.ndarray[Any, np.dtype[np.float64]] = np.zeros(256)
+        data_slice = binary_data[:10000]
+        for byte in data_slice:
             byte_counts[byte] += 1
-        features.extend(byte_counts / len(binary_data[:10000]))
+        features.extend(list(byte_counts / len(data_slice)))
 
-        # Entropy features
         for i in range(0, min(len(binary_data), 10000), 1000):
             chunk = binary_data[i : i + 1000]
             features.append(self._calculate_entropy(chunk))
 
-        # String features
         strings = self._extract_strings(binary_data[:10000])
-        features.extend((len(strings), np.mean([len(s) for s in strings]) if strings else 0))
-        # Pad or truncate to expected size
+        features.append(float(len(strings)))
+        features.append(float(np.mean([len(s) for s in strings])) if strings else 0.0)
         expected_size = 1024
         if len(features) < expected_size:
-            features.extend([0] * (expected_size - len(features)))
+            features.extend([0.0] * (expected_size - len(features)))
         else:
             features = features[:expected_size]
 
@@ -1388,9 +1390,9 @@ Interceptor.attach(IsDebuggerPresent, {
         import math
 
         if not data:
-            return 0
+            return 0.0
 
-        entropy = 0
+        entropy: float = 0.0
         for i in range(256):
             count = data.count(bytes([i]))
             if count > 0:
@@ -1403,7 +1405,6 @@ Interceptor.attach(IsDebuggerPresent, {
         """Extract ASCII strings from binary data."""
         import re
 
-        # Find ASCII strings
         ascii_pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
         strings = re.findall(ascii_pattern, data)
 
@@ -1425,7 +1426,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
     def _find_similar_cves(self, vuln_type: str) -> list[str]:
         """Find similar CVEs for vulnerability type."""
-        cve_database = {
+        cve_database: dict[str, list[str]] = {
             "buffer_overflow": ["CVE-2021-44228", "CVE-2021-34527", "CVE-2020-1472"],
             "format_string": ["CVE-2012-0809", "CVE-2015-0235"],
             "integer_overflow": ["CVE-2020-14372", "CVE-2018-5390"],
@@ -1442,9 +1443,9 @@ Interceptor.attach(IsDebuggerPresent, {
             return "MEDIUM"
         return "HIGH" if security_score >= 50 else "CRITICAL"
 
-    def _generate_vuln_recommendations(self, vulnerabilities: list) -> list[str]:
+    def _generate_vuln_recommendations(self, vulnerabilities: list[dict[str, Any]]) -> list[str]:
         """Generate recommendations for found vulnerabilities."""
-        recommendations = []
+        recommendations: list[str] = []
 
         for vuln in vulnerabilities:
             vuln_type = vuln.get("type", "")
@@ -1457,9 +1458,9 @@ Interceptor.attach(IsDebuggerPresent, {
             elif vuln_type == "use_after_free":
                 recommendations.append("Implement proper memory management")
 
-        return list(set(recommendations))  # Remove duplicates
+        return list(set(recommendations))
 
-    def _calculate_bypass_difficulty(self, protections: list) -> str:
+    def _calculate_bypass_difficulty(self, protections: list[dict[str, Any]]) -> str:
         """Calculate difficulty of bypassing protections."""
         difficult_protections = ["code_virtualization", "anti_tamper", "hardware_lock"]
         medium_protections = ["packing", "anti_debug", "integrity_check"]
@@ -1471,9 +1472,9 @@ Interceptor.attach(IsDebuggerPresent, {
             return "EXPERT"
         return "INTERMEDIATE" if has_medium else "BEGINNER"
 
-    def _generate_bypass_strategies(self, protections: list) -> dict:
+    def _generate_bypass_strategies(self, protections: list[dict[str, Any]]) -> dict[str, Any]:
         """Generate bypass strategies for detected protections."""
-        strategies = {}
+        strategies: dict[str, Any] = {}
 
         for protection in protections:
             prot_type = protection["type"]
@@ -1524,11 +1525,10 @@ Interceptor.attach(IsDebuggerPresent, {
         }
         return steps.get(protection_type, ["Test bypass effectiveness"])
 
-    def _analyze_sections(self, binary_data: bytes) -> list[dict]:
+    def _analyze_sections(self, binary_data: bytes) -> list[dict[str, Any]]:
         """Analyze binary sections."""
-        sections = []
+        sections: list[dict[str, Any]] = []
 
-        # Simple PE header check
         if binary_data[:2] == b"MZ":
             sections.extend(
                 (
@@ -1564,7 +1564,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
         return [api.decode("ascii") for api in suspicious_apis if api in binary_data]
 
-    def _classify_binary_type(self, analysis: dict) -> str:
+    def _classify_binary_type(self, analysis: dict[str, Any]) -> str:
         """Classify binary type based on analysis."""
         if analysis.get("likely_packed"):
             return "Packed Executable"
@@ -1572,7 +1572,7 @@ Interceptor.attach(IsDebuggerPresent, {
             return "Potentially Malicious"
         return "Standard Executable"
 
-    def _recommend_analysis_tools(self, analysis: dict) -> list[str]:
+    def _recommend_analysis_tools(self, analysis: dict[str, Any]) -> list[str]:
         """Recommend tools based on binary analysis."""
         tools = ["Ghidra", "x64dbg", "Radare2"]
 
@@ -1583,9 +1583,9 @@ Interceptor.attach(IsDebuggerPresent, {
 
         return tools
 
-    def _generate_analysis_steps(self, analysis: dict) -> list[str]:
+    def _generate_analysis_steps(self, analysis: dict[str, Any]) -> list[str]:
         """Generate next analysis steps."""
-        steps = []
+        steps: list[str] = []
 
         if analysis.get("likely_packed"):
             steps.append("Unpack the binary first")
@@ -1601,7 +1601,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
         return steps
 
-    def predict_batch(self, model_id: str, batch_data: list) -> list:
+    def predict_batch(self, model_id: str, batch_data: list[Any]) -> list[Any]:
         """Make batch predictions with GPU optimization."""
         model = self.load_model(model_id)
         model_info = self.model_metadata[model_id]
@@ -1650,7 +1650,7 @@ Interceptor.attach(IsDebuggerPresent, {
         else:
             model_info["loaded"] = False
 
-        return model_info
+        return dict(model_info)
 
     def list_models(self) -> list[str]:
         """List all registered models."""
@@ -1698,7 +1698,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "cache_info": self.get_cache_info(),
             }
 
-    def import_local_model(self, file_path: str) -> dict[str, Any]:
+    def import_local_model(self, file_path: str) -> dict[str, Any] | None:
         """Import a local model file."""
         try:
             if not os.path.exists(file_path):
@@ -1724,7 +1724,7 @@ Interceptor.attach(IsDebuggerPresent, {
         """Get list of available model repositories."""
         return ["huggingface", "local", "custom"]
 
-    def get_available_models(self, repository: str = None) -> list[dict[str, Any]]:
+    def get_available_models(self, repository: str | None = None) -> list[dict[str, Any]]:
         """Get list of available models."""
         models = []
         for model_id, metadata in self.model_metadata.items():
@@ -1742,33 +1742,26 @@ Interceptor.attach(IsDebuggerPresent, {
         """Get the file path for a model."""
         if model_id in self.model_metadata:
             model_info = self.model_metadata[model_id]
-            path = model_info.get("path", "")
+            path = str(model_info.get("path", ""))
 
-            # Handle different model types
             if model_info.get("type") == "api":
-                # API models return their API endpoint
                 return path
             if model_info.get("type") == "repository":
-                # Repository models may need path resolution
-                repo_name = model_info.get("repository", "")
-                model_name = model_info.get("model_name", model_id)
+                repo_name = str(model_info.get("repository", ""))
+                model_name = str(model_info.get("model_name", model_id))
                 if repo_name and model_name:
-                    # Construct path to downloaded model
                     repo_dir = os.path.join(self.models_dir, "repositories", repo_name)
                     model_path = os.path.join(repo_dir, model_name)
                     if os.path.exists(model_path):
                         return model_path
-                    # Try with common extensions
                     for ext in [".pth", ".h5", ".onnx", ".pkl", ".joblib"]:
                         extended_path = model_path + ext
                         if os.path.exists(extended_path):
                             return extended_path
 
-            # For local models, check if path exists
             if path and os.path.exists(path):
                 return path
 
-            # Try to find in models directory
             possible_paths = [
                 os.path.join(self.models_dir, model_id),
                 os.path.join(self.models_dir, f"{model_id}.pth"),
@@ -1782,21 +1775,18 @@ Interceptor.attach(IsDebuggerPresent, {
 
             for p in possible_paths:
                 if os.path.exists(p):
-                    # Update metadata with found path
                     self.model_metadata[model_id]["path"] = p
                     self._save_model_metadata()
                     return p
 
-        # Model not found - return empty string
         logger.warning(f"Model path not found for model_id: {model_id}")
         return ""
 
-    def import_api_model(self, model_name: str, api_config: dict[str, Any]) -> dict[str, Any]:
+    def import_api_model(self, model_name: str, api_config: dict[str, Any]) -> dict[str, Any] | None:
         """Import a model from an API."""
         try:
             model_id = f"api_{model_name}"
 
-            # Store API configuration in metadata
             self.model_metadata[model_id] = {
                 "path": f"api://{model_name}",
                 "type": "api",
@@ -1816,7 +1806,7 @@ Interceptor.attach(IsDebuggerPresent, {
             logger.error("Failed to import API model: %s", e)
             return None
 
-    def train_model(self, training_data: object, model_type: str) -> bool:
+    def train_model(self, training_data: Any, model_type: str) -> bool:
         """Train a machine learning model with provided data.
 
         Args:
@@ -2088,16 +2078,16 @@ Interceptor.attach(IsDebuggerPresent, {
                         random_state=42,
                     )
 
-                    # Determine number of classes
                     num_classes = len(np.unique(y))
 
-                    # One-hot encode labels if multi-class
-                    if num_classes > 2:
-                        y_train = tf.keras.utils.to_categorical(y_train, num_classes)
-                        y_val = tf.keras.utils.to_categorical(y_val, num_classes)
+                    local_keras: Any = keras
+                    local_tf: Any = tf
 
-                    # Build model
-                    model = keras.Sequential(
+                    if num_classes > 2:
+                        y_train = local_tf.keras.utils.to_categorical(y_train, num_classes)
+                        y_val = local_tf.keras.utils.to_categorical(y_val, num_classes)
+
+                    tf_model: Any = local_keras.Sequential(
                         [
                             layers.Input(shape=(X.shape[1],)),
                             layers.Dense(128, activation="relu"),
@@ -2111,29 +2101,26 @@ Interceptor.attach(IsDebuggerPresent, {
                         ],
                     )
 
-                    # Compile model
                     if num_classes > 2:
-                        model.compile(
+                        tf_model.compile(
                             optimizer="adam",
                             loss="categorical_crossentropy",
                             metrics=["accuracy"],
                         )
                     else:
-                        model.compile(
+                        tf_model.compile(
                             optimizer="adam",
                             loss="binary_crossentropy",
                             metrics=["accuracy"],
                         )
 
-                    # Early stopping callback
-                    early_stopping = keras.callbacks.EarlyStopping(
+                    early_stopping: Any = local_keras.callbacks.EarlyStopping(
                         monitor="val_loss",
                         patience=3,
                         restore_best_weights=True,
                     )
 
-                    # Train model
-                    history = model.fit(
+                    history: Any = tf_model.fit(
                         X_train,
                         y_train,
                         validation_data=(X_val, y_val),
@@ -2143,15 +2130,15 @@ Interceptor.attach(IsDebuggerPresent, {
                         verbose=1,
                     )
 
-                    # Get final validation accuracy
-                    val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
+                    eval_result: Any = tf_model.evaluate(X_val, y_val, verbose=0)
+                    tf_val_loss: float = float(eval_result[0])
+                    tf_val_acc: float = float(eval_result[1])
 
-                    logger.info(f"TensorFlow training completed - Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+                    logger.info(f"TensorFlow training completed - Val Loss: {tf_val_loss:.4f}, Val Acc: {tf_val_acc:.4f}")
 
-                    # Store trained model
-                    model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
-                    model_data = {
-                        "model": model,
+                    tf_model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
+                    tf_model_data: dict[str, Any] = {
+                        "model": tf_model,
                         "backend": "tensorflow",
                         "last_used": time.time(),
                         "metadata": {
@@ -2159,15 +2146,15 @@ Interceptor.attach(IsDebuggerPresent, {
                             "trained": True,
                             "training_samples": len(X_train),
                             "validation_samples": len(X_val),
-                            "validation_loss": float(val_loss),
-                            "validation_accuracy": float(val_acc),
+                            "validation_loss": tf_val_loss,
+                            "validation_accuracy": tf_val_acc,
                             "num_epochs": len(history.history["loss"]),
                             "num_classes": num_classes,
                         },
                     }
-                    self.cache.put(model_id, model_data)
+                    self.cache.put(tf_model_id, tf_model_data)
 
-                    logger.info(f"TensorFlow model training completed: {model_id}")
+                    logger.info(f"TensorFlow model training completed: {tf_model_id}")
                     return True
 
                 except ImportError:
@@ -2185,7 +2172,7 @@ Interceptor.attach(IsDebuggerPresent, {
             logger.error("Model training failed: %s", e)
             return False
 
-    def save_model(self, model: object, path: str) -> bool:
+    def save_model(self, model: Any, path: str) -> bool:
         """Save a trained model to disk.
 
         Args:
@@ -2200,15 +2187,12 @@ Interceptor.attach(IsDebuggerPresent, {
             import pickle  # noqa: S403
             from pathlib import Path
 
-            # Ensure directory exists
             save_path = Path(path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Try to determine model type and use appropriate saving method
             model_type = type(model).__name__.lower()
 
             if "sklearn" in str(type(model)) or hasattr(model, "fit"):
-                # Sklearn or sklearn-compatible model
                 try:
                     import joblib
 
@@ -2216,18 +2200,19 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.info("Model (type: %s) saved using joblib: %s", model_type, path)
                     return True
                 except ImportError:
-                    # Fallback to pickle
                     with open(save_path, "wb") as f:
                         pickle.dump(model, f)
                     logger.info("Model saved using pickle: %s", path)
                     return True
 
             elif "torch" in str(type(model)):
-                # PyTorch model
                 try:
                     import torch
 
-                    torch.save(model.state_dict(), str(save_path))
+                    if hasattr(model, "state_dict"):
+                        torch.save(model.state_dict(), str(save_path))
+                    else:
+                        torch.save(model, str(save_path))
                     logger.info("PyTorch model saved: %s", path)
                     return True
                 except ImportError:
@@ -2235,17 +2220,18 @@ Interceptor.attach(IsDebuggerPresent, {
                     return False
 
             elif "tensorflow" in str(type(model)) or "keras" in str(type(model)):
-                # TensorFlow/Keras model
                 try:
-                    model.save(str(save_path))
-                    logger.info("TensorFlow/Keras model saved: %s", path)
-                    return True
+                    if hasattr(model, "save"):
+                        model.save(str(save_path))
+                        logger.info("TensorFlow/Keras model saved: %s", path)
+                        return True
+                    logger.error("Model does not have save method")
+                    return False
                 except Exception as tf_error:
                     logger.error("TensorFlow model save failed: %s", tf_error)
                     return False
 
             else:
-                # Generic pickle save as fallback
                 with open(save_path, "wb") as f:
                     pickle.dump(model, f)
                 logger.info("Model saved using generic pickle: %s", path)
@@ -2263,11 +2249,11 @@ Interceptor.attach(IsDebuggerPresent, {
     def evaluate_model_with_split(
         self,
         model_id: str,
-        data: object,
-        labels: object,
+        data: Any,
+        labels: Any,
         test_size: float = 0.2,
         random_state: int = 42,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         """Evaluate a model using train_test_split for proper validation.
 
         Args:
@@ -2284,22 +2270,19 @@ Interceptor.attach(IsDebuggerPresent, {
         try:
             from sklearn.model_selection import train_test_split
 
-            # Get the model
             model_data = self.cache.get(model_id)
             if not model_data:
                 logger.error(f"Model {model_id} not found in cache")
                 return {"error": "Model not found"}
 
-            model = model_data.get("model")
+            model: Any = model_data.get("model")
             backend = model_data.get("backend")
 
-            # Convert data to numpy arrays if needed
             if not isinstance(data, np.ndarray):
                 data = np.array(data)
             if not isinstance(labels, np.ndarray):
                 labels = np.array(labels)
 
-            # Use train_test_split to create training and test sets
             X_train, X_test, y_train, y_test = train_test_split(
                 data,
                 labels,
@@ -2310,8 +2293,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
             logger.info(f"Split data into {len(X_train)} training and {len(X_test)} test samples")
 
-            # Evaluate based on backend type
-            evaluation_results = {
+            evaluation_results: dict[str, Any] = {
                 "train_size": len(X_train),
                 "test_size": len(X_test),
                 "test_ratio": test_size,
@@ -2404,7 +2386,7 @@ class AsyncModelManager:
         """
         self.logger = logging.getLogger(f"{__name__}.AsyncModelManager")
         self.model_manager = model_manager
-        self.thread_pool = {}
+        self.thread_pool: dict[str, threading.Thread] = {}
 
     def load_model_async(self, model_id: str, callback: Callable[..., None] | None = None) -> threading.Thread | None:
         """Load a model asynchronously."""
@@ -2468,7 +2450,7 @@ class AsyncModelManager:
 
 
 # Factory function for easy instantiation
-def create_model_manager(models_dir: str = None, cache_size: int = 5) -> ModelManager:
+def create_model_manager(models_dir: str | None = None, cache_size: int = 5) -> ModelManager:
     """Create a model manager instance."""
     return ModelManager(models_dir=models_dir, cache_size=cache_size)
 
@@ -2497,19 +2479,19 @@ class ModelFineTuner:
         """
         self.logger = logging.getLogger(f"{__name__}.ModelFineTuner")
         self.model_manager = model_manager
-        self.training_history = {}
+        self.training_history: dict[str, Any] = {}
         self.lock = threading.RLock()
 
     def fine_tune_model(
         self,
         model_id: str,
-        training_data: object,
-        validation_data: object | None = None,
+        training_data: Any,
+        validation_data: Any = None,
         epochs: int = 10,
         learning_rate: float = 0.001,
         batch_size: int = 32,
         callback: Callable[..., None] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         """Fine-tune a pre-trained model on custom data.
 
         Args:
@@ -2526,12 +2508,11 @@ class ModelFineTuner:
 
         """
         with self.lock:
-            # Load the base model
             model = self.model_manager.load_model(model_id)
             model_info = self.model_manager.model_metadata[model_id]
-            model_type = model_info["type"]
+            model_type = str(model_info["type"])
 
-            results = {
+            results: dict[str, Any] = {
                 "model_id": model_id,
                 "epochs": epochs,
                 "training_loss": [],
@@ -2539,6 +2520,11 @@ class ModelFineTuner:
                 "metrics": {},
                 "fine_tuned_model_path": None,
             }
+
+            def noop_callback(*args: Any, **kwargs: Any) -> None:
+                pass
+
+            actual_callback = callback if callback is not None else noop_callback
 
             try:
                 if model_type in ["pytorch", "pth"] and HAS_TORCH:
@@ -2549,7 +2535,7 @@ class ModelFineTuner:
                         epochs,
                         learning_rate,
                         batch_size,
-                        callback,
+                        actual_callback,
                     )
                 elif model_type in ["tensorflow", "h5"] and HAS_TENSORFLOW:
                     results = self._fine_tune_tensorflow(
@@ -2559,14 +2545,14 @@ class ModelFineTuner:
                         epochs,
                         learning_rate,
                         batch_size,
-                        callback,
+                        actual_callback,
                     )
                 elif model_type in ["sklearn", "joblib"] and HAS_JOBLIB:
                     results = self._fine_tune_sklearn(
                         model,
                         training_data,
                         validation_data,
-                        callback,
+                        actual_callback,
                     )
                 else:
                     raise ValueError(f"Fine-tuning not supported for model type: {model_type}")
@@ -2623,40 +2609,37 @@ class ModelFineTuner:
 
     def _fine_tune_pytorch(
         self,
-        model: object,
-        training_data: object,
-        validation_data: object,
+        model: Any,
+        training_data: Any,
+        validation_data: Any,
         epochs: int,
         learning_rate: float,
         batch_size: int,
         callback: Callable[..., None],
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         """Fine-tune a PyTorch model."""
         if not HAS_TORCH or torch is None or nn is None:
             return {"error": "PyTorch not available"}
 
         try:
-            from torch import optim  # pylint: disable=import-error
+            from torch import optim
             from torch.utils.data import DataLoader, TensorDataset
         except ImportError as e:
             self.logger.error("Import error in model_manager_module: %s", e)
             return {"error": "PyTorch components not available"}
 
-        # Set model to training mode
         model.train()
 
-        # Create optimizer
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         criterion = nn.CrossEntropyLoss()
 
-        # Prepare data loaders
         train_dataset = TensorDataset(
             torch.tensor(training_data[0]).float(),
             torch.tensor(training_data[1]).long(),
         )
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-        val_loader = None
+        val_loader: Any = None
         if validation_data is not None:
             val_dataset = TensorDataset(
                 torch.tensor(validation_data[0]).float(),
@@ -2664,14 +2647,13 @@ class ModelFineTuner:
             )
             val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
-        results = {
+        results: dict[str, Any] = {
             "training_loss": [],
             "validation_loss": [],
         }
 
-        # Training loop
+        avg_val_loss: float | None = None
         for epoch in range(epochs):
-            # Training phase
             train_loss = 0.0
             for data, target in train_loader:
                 optimizer.zero_grad()
@@ -2684,74 +2666,60 @@ class ModelFineTuner:
             avg_train_loss = train_loss / len(train_loader)
             results["training_loss"].append(avg_train_loss)
 
-            # Validation phase
-            if val_loader:
+            if val_loader is not None:
                 model.eval()
-                val_loss = 0.0
+                val_loss_total = 0.0
                 with torch.no_grad():
                     for data, target in val_loader:
                         output = model(data)
-                        val_loss += criterion(output, target).item()
+                        val_loss_total += criterion(output, target).item()
 
-                avg_val_loss = val_loss / len(val_loader)
+                avg_val_loss = val_loss_total / len(val_loader)
                 results["validation_loss"].append(avg_val_loss)
                 model.train()
 
-            # Callback for progress updates
-            if callback:
-                callback(epoch + 1, epochs, avg_train_loss, avg_val_loss if val_loader else None)
+            callback(epoch + 1, epochs, avg_train_loss, avg_val_loss)
 
         return results
 
     def _fine_tune_tensorflow(
         self,
-        model: object,
-        training_data: object,
-        validation_data: object,
+        model: Any,
+        training_data: Any,
+        validation_data: Any,
         epochs: int,
         learning_rate: float,
         batch_size: int,
         callback: Callable[..., None],
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         """Fine-tune a TensorFlow model."""
-        # Compile model with new learning rate
+        if keras is None:
+            return {"error": "Keras not available"}
+
         model.compile(
             optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
             loss="sparse_categorical_crossentropy",
             metrics=["accuracy"],
         )
 
-        # Prepare callbacks
-        callbacks = []
-        if callback:
+        keras_callbacks: list[Any] = []
 
-            class ProgressCallback(keras.callbacks.Callback):
-                """Keras callback to report training progress to the parent callback.
+        class ProgressCallback:
+            """Progress callback for TensorFlow training."""
 
-                Inherits from keras.callbacks.Callback to intercept training events
-                and forward progress information to the user-provided callback function.
-                """
+            def on_epoch_end(self, epoch: int, logs: dict[str, Any] | None = None) -> None:
+                actual_logs = logs if logs is not None else {}
+                callback(epoch + 1, epochs, actual_logs.get("loss"), actual_logs.get("val_loss"))
 
-                def on_epoch_end(self, epoch: int, logs: dict[str, Any] | None = None) -> None:
-                    """Call at the end of each training epoch.
+        keras_callbacks.append(ProgressCallback())
 
-                    Args:
-                        epoch: Current epoch number (0-indexed)
-                        logs: Dictionary containing training metrics (loss, val_loss, etc.)
-
-                    """
-                    callback(epoch + 1, epochs, logs.get("loss"), logs.get("val_loss"))
-
-            callbacks.append(ProgressCallback())
-
-        # Train the model
         history = model.fit(
             training_data[0],
             training_data[1],
             validation_data=validation_data,
             epochs=epochs,
             batch_size=batch_size,
-            callbacks=callbacks,
+            callbacks=keras_callbacks,
             verbose=0,
         )
 
@@ -2763,31 +2731,31 @@ class ModelFineTuner:
 
     def _fine_tune_sklearn(
         self,
-        model: object,
-        training_data: object,
-        validation_data: object,
+        model: Any,
+        training_data: Any,
+        validation_data: Any,
         callback: Callable[..., None],
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         """Fine-tune a scikit-learn model."""
-        # For sklearn, we typically retrain on new data
+        X_train: Any
+        y_train: Any
         X_train, y_train = training_data
 
-        # Partial fit if supported, otherwise full refit
         if hasattr(model, "partial_fit"):
             model.partial_fit(X_train, y_train)
         else:
             model.fit(X_train, y_train)
 
-        results = {"training_complete": True}
+        results: dict[str, Any] = {"training_complete": True}
 
-        # Calculate validation score if data provided
         if validation_data is not None:
+            X_val: Any
+            y_val: Any
             X_val, y_val = validation_data
             val_score = model.score(X_val, y_val)
             results["validation_score"] = val_score
 
-        if callback:
-            callback(1, 1, None, results.get("validation_score"))
+        callback(1, 1, None, results.get("validation_score"))
 
         return results
 
@@ -2796,7 +2764,7 @@ class ModelFineTuner:
         return self.training_history.get(model_id)
 
 
-def import_custom_model(model_path: str, model_type: str = None, model_id: str = None) -> dict[str, Any]:
+def import_custom_model(model_path: str, model_type: str | None = None, model_id: str | None = None) -> dict[str, Any]:
     """Import a custom AI model into the system.
 
     Args:
@@ -3035,7 +3003,7 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
         config_data = {
             "provider": provider_name,
             "api_key": f"{api_key[:4]}...{api_key[-4:]}" if api_key else None,
-            "timestamp": str(datetime.datetime.now()),
+            "timestamp": str(datetime.now()),
             "settings": config,
         }
 

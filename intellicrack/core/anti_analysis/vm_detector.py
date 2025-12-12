@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import ctypes
 import hashlib
 import logging
@@ -29,25 +31,9 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from .base_detector import BaseDetector
-
-
-"""
-Virtual Machine Detection
-
-Implements advanced techniques to detect virtualized environments with:
-- CPUID instruction analysis (hypervisor bit, vendor strings, feature flags)
-- Timing-based VM detection (RDTSC analysis, instruction timing variations)
-- Hardware fingerprinting (MAC addresses, disk serial numbers, BIOS info)
-- VM artifact detection (registry keys, files, processes, services)
-- Paravirtualization detection (VMCALL, VMMCALL, CPUID leaves)
-- Memory artifact scanning (hypervisor signatures in memory)
-- Device detection (VM-specific devices, controllers)
-- Performance counter analysis
-- Multi-layer detection with confidence scoring
-"""
 
 
 @dataclass
@@ -106,7 +92,7 @@ class VMDetector(BaseDetector):
         """Initialize the virtual machine detector with detection methods and signatures."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
-        self.detection_methods = {
+        self.detection_methods: dict[str, Callable[[], tuple[bool, float, dict[str, Any]]]] = {
             "cpuid_hypervisor_bit": self._check_cpuid_hypervisor_bit,
             "cpuid_vendor_strings": self._check_cpuid_vendor_strings,
             "cpuid_feature_flags": self._check_cpuid_feature_flags,
@@ -138,7 +124,7 @@ class VMDetector(BaseDetector):
             "cache_timing": self._check_cache_timing,
         }
 
-        self.vm_signatures = {
+        self.vm_signatures: dict[str, dict[str, Any]] = {
             "vmware": {
                 "processes": ["vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe"],
                 "files": [
@@ -226,13 +212,13 @@ class VMDetector(BaseDetector):
             },
         }
 
-        self._cpuid_cache = {}
-        self._cpuid_results = {}
-        self._timing_baseline = None
-        self._timing_measurements = {}
-        self._hardware_fingerprint = None
-        self._memory_scan_cache = {}
-        self._perf_counter_baseline = None
+        self._cpuid_cache: dict[tuple[int, int], tuple[int, int, int, int]] = {}
+        self._cpuid_results: dict[int, CPUIDResult] = {}
+        self._timing_baseline: TimingMeasurement | None = None
+        self._timing_measurements: dict[str, TimingMeasurement] = {}
+        self._hardware_fingerprint: HardwareFingerprint | None = None
+        self._memory_scan_cache: dict[int, bytes] = {}
+        self._perf_counter_baseline: dict[str, float] | None = None
         self._detection_lock = threading.Lock()
 
     def detect_vm(self, aggressive: bool = False) -> dict[str, Any]:
@@ -245,7 +231,7 @@ class VMDetector(BaseDetector):
             Detection results with confidence scores
 
         """
-        results = {
+        results: dict[str, Any] = {
             "is_vm": False,
             "confidence": 0.0,
             "vm_type": None,
@@ -256,21 +242,25 @@ class VMDetector(BaseDetector):
         try:
             self.logger.info("Starting VM detection...")
 
-            # Use base class detection loop to eliminate duplicate code
             base_results = self.run_detection_loop(aggressive, self.get_aggressive_methods())
 
-            # Copy base results
-            results["detections"] = base_results["detections"]
+            detections = base_results.get("detections", {})
+            if isinstance(detections, dict):
+                results["detections"] = detections
 
-            # Calculate VM-specific results
-            detection_count = base_results["detection_count"]
-            if detection_count > 0:
+            detection_count = base_results.get("detection_count", 0)
+            if isinstance(detection_count, int) and detection_count > 0:
                 results["is_vm"] = True
-                results["confidence"] = min(1.0, base_results["average_confidence"])
-                results["vm_type"] = self._identify_vm_type(results["detections"])
+                avg_conf = base_results.get("average_confidence", 0.0)
+                if isinstance(avg_conf, (int, float)):
+                    results["confidence"] = min(1.0, float(avg_conf))
+                detections_dict = results["detections"]
+                if isinstance(detections_dict, dict):
+                    results["vm_type"] = self._identify_vm_type(detections_dict)
 
-            # Calculate evasion score (how hard to evade detection)
-            results["evasion_score"] = self._calculate_evasion_score(results["detections"])
+            detections_for_score = results["detections"]
+            if isinstance(detections_for_score, dict):
+                results["evasion_score"] = self._calculate_evasion_score(detections_for_score)
 
             self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
             return results
@@ -361,7 +351,7 @@ class VMDetector(BaseDetector):
 
                 VirtualFree(exec_mem, 0, 0x8000)
 
-                registers = (result[0], result[1], result[2], result[3])
+                registers: tuple[int, int, int, int] = (int(result[0]), int(result[1]), int(result[2]), int(result[3]))
                 self._cpuid_cache[cache_key] = registers
                 return registers
 
@@ -422,29 +412,43 @@ class VMDetector(BaseDetector):
                     return None
 
                 try:
-                    exec_mem = mmap.mmap(
+                    map_private: int = getattr(mmap, "MAP_PRIVATE", 0x02)
+                    map_anonymous: int = getattr(mmap, "MAP_ANONYMOUS", 0x20)
+                    prot_read: int = getattr(mmap, "PROT_READ", 0x1)
+                    prot_write: int = getattr(mmap, "PROT_WRITE", 0x2)
+                    prot_exec: int = getattr(mmap, "PROT_EXEC", 0x4)
+
+                    flags_combined: int = map_private | map_anonymous
+                    prot_combined: int = prot_read | prot_write | prot_exec
+
+                    mmap_constructor: Any = mmap.mmap
+                    exec_mem_linux: mmap.mmap = mmap_constructor(
                         -1,
                         len(code),
-                        mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,
-                        mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC,
+                        flags_combined,
+                        prot_combined,
                     )
-                    exec_mem.write(code)
+                    exec_mem_linux.write(code)
 
-                    result = (ctypes.c_uint32 * 4)()
-                    func_type = ctypes.CFUNCTYPE(
+                    result_linux = (ctypes.c_uint32 * 4)()
+                    func_type_linux = ctypes.CFUNCTYPE(
                         None,
                         ctypes.c_uint32,
                         ctypes.c_uint32,
                         ctypes.POINTER(ctypes.c_uint32),
                     )
 
-                    exec_addr = ctypes.c_void_p.from_buffer(exec_mem).value
-                    func = func_type(exec_addr)
-                    func(leaf, subleaf, result)
+                    exec_addr_ptr = ctypes.c_void_p.from_buffer(exec_mem_linux)
+                    exec_addr = exec_addr_ptr.value
+                    if exec_addr is None:
+                        exec_mem_linux.close()
+                        return None
+                    func_linux = func_type_linux(exec_addr)
+                    func_linux(leaf, subleaf, result_linux)
 
-                    exec_mem.close()
+                    exec_mem_linux.close()
 
-                    registers = (result[0], result[1], result[2], result[3])
+                    registers = (int(result_linux[0]), int(result_linux[1]), int(result_linux[2]), int(result_linux[3]))
                     self._cpuid_cache[cache_key] = registers
                     return registers
 
@@ -452,13 +456,15 @@ class VMDetector(BaseDetector):
                     self.logger.debug(f"Linux CPUID execution failed: {e}")
                     return None
 
+            return None
+
         except Exception as e:
             self.logger.debug(f"CPUID execution failed for leaf 0x{leaf:X}: {e}")
             return None
 
-    def _check_cpuid_hypervisor_bit(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_hypervisor_bit(self) -> tuple[bool, float, dict[str, Any]]:
         """Check CPUID leaf 0x1 for hypervisor bit (ECX bit 31)."""
-        details = {"hypervisor_bit": False, "leaf": 0x1, "ecx_value": None}
+        details: dict[str, Any] = {"hypervisor_bit": False, "leaf": 0x1, "ecx_value": None}
 
         try:
             if result := self._execute_cpuid(0x1):
@@ -476,9 +482,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpuid_vendor_strings(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_vendor_strings(self) -> tuple[bool, float, dict[str, Any]]:
         """Check CPUID hypervisor vendor strings (leaves 0x40000000-0x400000FF)."""
-        details = {"vendor_string": None, "vm_type": None, "hypervisor_leaves": []}
+        details: dict[str, Any] = {"vendor_string": None, "vm_type": None, "hypervisor_leaves": []}
 
         try:
             if result := self._execute_cpuid(0x40000000):
@@ -486,7 +492,8 @@ class VMDetector(BaseDetector):
                 vendor_bytes = struct.pack("<III", ebx, ecx, edx)
                 vendor_string = vendor_bytes.decode("ascii", errors="ignore").rstrip("\x00")
                 details["vendor_string"] = vendor_string
-                details["hypervisor_leaves"].append({
+                hypervisor_leaves: list[dict[str, Any]] = details["hypervisor_leaves"]
+                hypervisor_leaves.append({
                     "leaf": 0x40000000,
                     "eax": eax,
                     "vendor": vendor_string,
@@ -494,7 +501,7 @@ class VMDetector(BaseDetector):
 
                 for vm_type, signatures in self.vm_signatures.items():
                     cpuid_vendor = signatures.get("cpuid_vendor", "")
-                    if cpuid_vendor and cpuid_vendor in vendor_string:
+                    if isinstance(cpuid_vendor, str) and cpuid_vendor and cpuid_vendor in vendor_string:
                         details["vm_type"] = vm_type
                         self.logger.info(f"Detected {vm_type} via CPUID vendor string: {vendor_string}")
                         return True, 0.98, details
@@ -509,13 +516,13 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpuid_timing(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_timing(self) -> tuple[bool, float, dict[str, Any]]:
         """Check CPUID instruction execution timing for VM overhead."""
-        details = {"avg_time_ns": 0, "variance": 0, "samples": 0, "anomaly_detected": False}
+        details: dict[str, Any] = {"avg_time_ns": 0, "variance": 0, "samples": 0, "anomaly_detected": False}
 
         try:
             samples = 1000
-            timings = []
+            timings: list[int] = []
 
             for _ in range(samples):
                 start = time.perf_counter_ns()
@@ -544,12 +551,11 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hypervisor_brand(self) -> tuple[bool, float, dict]:
+    def _check_hypervisor_brand(self) -> tuple[bool, float, dict[str, Any]]:
         """Check hypervisor brand string."""
-        details = {"brand": None}
+        details: dict[str, Any] = {"brand": None}
 
         try:
-            # Try to get hypervisor brand
             if platform.system() == "Linux":
                 result = subprocess.run(
                     ["dmidecode", "-s", "system-product-name"],
@@ -562,7 +568,7 @@ class VMDetector(BaseDetector):
                     for vm_type, signatures in self.vm_signatures.items():
                         if vm_type in product:
                             details["brand"] = product
-                            details["detected_signatures"] = signatures  # Use the signatures
+                            details["detected_signatures"] = signatures
                             return True, 0.9, details
 
         except Exception as e:
@@ -570,39 +576,41 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hardware_signatures(self) -> tuple[bool, float, dict]:
+    def _check_hardware_signatures(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific hardware signatures."""
-        details = {"detected_hardware": []}
+        details: dict[str, Any] = {"detected_hardware": []}
 
         try:
-            # Check various hardware identifiers
             if platform.system() == "Windows":
                 try:
                     import wmi
 
                     c = wmi.WMI()
 
-                    # Check system info
                     for system in c.Win32_ComputerSystem():
                         if hasattr(system, "Model"):
                             model = system.Model.lower()
                             for sigs in self.vm_signatures.values():
-                                if any(sig.lower() in model for sig in sigs.get("hardware", [])):
-                                    details["detected_hardware"].append(model)
+                                hardware_list = sigs.get("hardware", [])
+                                if isinstance(hardware_list, list):
+                                    if any(sig.lower() in model for sig in hardware_list if isinstance(sig, str)):
+                                        detected_hw: list[str] = details["detected_hardware"]
+                                        detected_hw.append(model)
 
-                    # Check disk drives
                     for disk in c.Win32_DiskDrive():
                         if hasattr(disk, "Model"):
                             model = disk.Model.lower()
                             for sigs in self.vm_signatures.values():
-                                if any(sig.lower() in model for sig in sigs.get("hardware", [])):
-                                    details["detected_hardware"].append(model)
+                                hardware_list = sigs.get("hardware", [])
+                                if isinstance(hardware_list, list):
+                                    if any(sig.lower() in model for sig in hardware_list if isinstance(sig, str)):
+                                        detected_hw = details["detected_hardware"]
+                                        detected_hw.append(model)
 
                 except ImportError as e:
                     self.logger.debug("Import error in vm_detector: %s", e)
 
             elif platform.system() == "Linux":
-                # Check /sys/class/dmi/id/
                 dmi_files = [
                     "/sys/class/dmi/id/product_name",
                     "/sys/class/dmi/id/sys_vendor",
@@ -615,9 +623,11 @@ class VMDetector(BaseDetector):
                             content = f.read().strip().lower()
                             for vm_type in self.vm_signatures:
                                 if vm_type in content:
-                                    details["detected_hardware"].append(content)
+                                    detected_hw = details["detected_hardware"]
+                                    detected_hw.append(content)
 
-            if details["detected_hardware"]:
+            detected_hardware = details["detected_hardware"]
+            if isinstance(detected_hardware, list) and detected_hardware:
                 return True, 0.8, details
 
         except Exception as e:
@@ -625,23 +635,25 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_process_list(self) -> tuple[bool, float, dict]:
+    def _check_process_list(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific processes."""
-        details = {"detected_processes": []}
+        details: dict[str, Any] = {"detected_processes": []}
 
         try:
-            # Get process list using base class method
             processes, process_list = self.get_running_processes()
             self.logger.debug(f"Scanning {len(process_list)} processes for VM indicators")
 
-            # Check for VM processes
             for vm_type, sigs in self.vm_signatures.items():
-                for process in sigs.get("processes", []):
-                    if process.lower() in processes:
-                        details["detected_processes"].append(process)
-                        details["vm_type"] = vm_type  # Use vm_type to indicate which VM was detected
+                proc_list = sigs.get("processes", [])
+                if isinstance(proc_list, list):
+                    for process in proc_list:
+                        if isinstance(process, str) and process.lower() in processes:
+                            detected_procs: list[str] = details["detected_processes"]
+                            detected_procs.append(process)
+                            details["vm_type"] = vm_type
 
-            if details["detected_processes"]:
+            detected_processes = details["detected_processes"]
+            if isinstance(detected_processes, list) and detected_processes:
                 return True, 0.7, details
 
         except Exception as e:
@@ -649,31 +661,36 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_registry_keys(self) -> tuple[bool, float, dict]:
+    def _check_registry_keys(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific registry keys (Windows only)."""
-        details = {"detected_keys": []}
+        details: dict[str, Any] = {"detected_keys": []}
 
         if platform.system() != "Windows":
             return False, 0.0, details
 
         try:
-            import winreg  # pylint: disable=E0401
+            import winreg
 
-            # Check for VM registry keys
             for vm_type, sigs in self.vm_signatures.items():
-                for key_path in sigs.get("registry", []):
-                    try:
-                        parts = key_path.split("\\")
-                        hive = getattr(winreg, parts[0])
-                        subkey = "\\".join(parts[1:])
+                reg_keys = sigs.get("registry", [])
+                if isinstance(reg_keys, list):
+                    for key_path in reg_keys:
+                        if not isinstance(key_path, str):
+                            continue
+                        try:
+                            parts = key_path.split("\\")
+                            hive = getattr(winreg, parts[0])
+                            subkey = "\\".join(parts[1:])
 
-                        with winreg.OpenKey(hive, subkey):
-                            details["detected_keys"].append(key_path)
-                            details["vm_type"] = vm_type  # Use vm_type
-                    except Exception:
-                        self.logger.debug(f"Registry key not found: {key_path}")
+                            with winreg.OpenKey(hive, subkey):
+                                detected_keys: list[str] = details["detected_keys"]
+                                detected_keys.append(key_path)
+                                details["vm_type"] = vm_type
+                        except Exception:
+                            self.logger.debug(f"Registry key not found: {key_path}")
 
-            if details["detected_keys"]:
+            detected_keys_list = details["detected_keys"]
+            if isinstance(detected_keys_list, list) and detected_keys_list:
                 return True, 0.8, details
 
         except Exception as e:
@@ -681,19 +698,22 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_file_system(self) -> tuple[bool, float, dict]:
+    def _check_file_system(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific files and directories."""
-        details = {"detected_files": []}
+        details: dict[str, Any] = {"detected_files": []}
 
         try:
-            # Check for VM files
             for vm_type, sigs in self.vm_signatures.items():
-                for file_path in sigs.get("files", []):
-                    if os.path.exists(file_path):
-                        details["detected_files"].append(file_path)
-                        details["vm_type"] = vm_type  # Use vm_type
+                files_list = sigs.get("files", [])
+                if isinstance(files_list, list):
+                    for file_path in files_list:
+                        if isinstance(file_path, str) and os.path.exists(file_path):
+                            detected_files: list[str] = details["detected_files"]
+                            detected_files.append(file_path)
+                            details["vm_type"] = vm_type
 
-            if details["detected_files"]:
+            detected_files_list = details["detected_files"]
+            if isinstance(detected_files_list, list) and detected_files_list:
                 return True, 0.7, details
 
         except Exception as e:
@@ -701,9 +721,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_rdtsc_timing(self) -> tuple[bool, float, dict]:
+    def _check_rdtsc_timing(self) -> tuple[bool, float, dict[str, Any]]:
         """Check RDTSC instruction timing for VM detection."""
-        details = {
+        details: dict[str, Any] = {
             "avg_delta": 0,
             "variance": 0,
             "anomaly_detected": False,
@@ -788,30 +808,29 @@ class VMDetector(BaseDetector):
                 VirtualFree(exec_mem, 0, 0x8000)
                 return False, 0.0, details
 
+            deltas: list[int] = []
             if platform.machine().endswith("64"):
                 tsc_storage = ctypes.c_uint64()
                 func_type = ctypes.CFUNCTYPE(ctypes.c_uint64, ctypes.POINTER(ctypes.c_uint64))
                 func = func_type(exec_mem)
 
                 samples = 1000
-                deltas = []
 
                 for _ in range(samples):
                     delta = func(ctypes.byref(tsc_storage))
                     if delta > 0 and delta < 100000:
-                        deltas.append(delta)
+                        deltas.append(int(delta))
             else:
-                tsc_storage = (ctypes.c_uint32 * 2)()
-                func_type = ctypes.CFUNCTYPE(ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
-                func = func_type(exec_mem)
+                tsc_storage_32 = (ctypes.c_uint32 * 2)()
+                func_type_32 = ctypes.CFUNCTYPE(ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
+                func_32 = func_type_32(exec_mem)
 
                 samples = 1000
-                deltas = []
 
                 for _ in range(samples):
-                    delta = func(tsc_storage)
+                    delta = func_32(tsc_storage_32)
                     if delta > 0 and delta < 100000:
-                        deltas.append(delta)
+                        deltas.append(int(delta))
 
             VirtualFree(exec_mem, 0, 0x8000)
 
@@ -842,14 +861,14 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_sleep_timing(self) -> tuple[bool, float, dict]:
+    def _check_sleep_timing(self) -> tuple[bool, float, dict[str, Any]]:
         """Check sleep timing discrepancies for VM detection."""
-        details = {"expected_ms": 0, "actual_ms": 0, "discrepancy": 0}
+        details: dict[str, Any] = {"expected_ms": 0.0, "actual_ms": 0.0, "discrepancy": 0.0}
 
         try:
             sleep_duration = 0.01
             samples = 50
-            discrepancies = []
+            discrepancies: list[float] = []
 
             for _ in range(samples):
                 start = time.perf_counter()
@@ -876,14 +895,14 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_instruction_timing(self) -> tuple[bool, float, dict]:
+    def _check_instruction_timing(self) -> tuple[bool, float, dict[str, Any]]:
         """Check instruction execution timing for VM overhead."""
-        details = {"baseline_ns": 0, "test_ns": 0, "overhead_pct": 0}
+        details: dict[str, Any] = {"baseline_ns": 0, "test_ns": 0, "overhead_pct": 0.0}
 
         try:
             iterations = 100000
-            baseline_timings = []
-            test_timings = []
+            baseline_timings: list[int] = []
+            test_timings: list[int] = []
 
             for _ in range(10):
                 start = time.perf_counter_ns()
@@ -918,54 +937,55 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_network_adapters(self) -> tuple[bool, float, dict]:
+    def _check_network_adapters(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific MAC address prefixes."""
-        details = {"detected_macs": []}
+        details: dict[str, Any] = {"detected_macs": []}
 
         try:
-            # Get network interfaces
             if platform.system() == "Windows":
                 if ipconfig_path := shutil.which("ipconfig"):
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    result = subprocess.run(
                         [ipconfig_path, "/all"],
                         check=False,
                         capture_output=True,
                         text=True,
-                        shell=False,  # Explicitly secure - using list format prevents shell injection
+                        shell=False,
                     )
                     output = result.stdout if result else ""
                 else:
                     output = ""
             elif ip_path := shutil.which("ip"):
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                result = subprocess.run(
                     [ip_path, "link"],
                     check=False,
                     capture_output=True,
                     text=True,
-                    shell=False,  # Explicitly secure - using list format prevents shell injection
+                    shell=False,
                 )
                 output = result.stdout if result else ""
             else:
                 output = ""
 
-            # Extract MAC addresses
             import re
 
             mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
             macs = re.findall(mac_pattern, output)
 
-            # Check against known VM MAC prefixes
             for mac in macs:
                 mac_str = "".join(mac).replace(":", "").replace("-", "")
                 mac_prefix = ":".join([mac_str[i : i + 2] for i in range(0, 6, 2)])
 
                 for vm_type, sigs in self.vm_signatures.items():
-                    for prefix in sigs.get("mac_prefixes", []):
-                        if mac_prefix.lower().startswith(prefix.lower()):
-                            details["detected_macs"].append(mac_prefix)
-                            details["vm_type"] = vm_type  # Use vm_type
+                    mac_prefixes = sigs.get("mac_prefixes", [])
+                    if isinstance(mac_prefixes, list):
+                        for prefix in mac_prefixes:
+                            if isinstance(prefix, str) and mac_prefix.lower().startswith(prefix.lower()):
+                                detected_macs: list[str] = details["detected_macs"]
+                                detected_macs.append(mac_prefix)
+                                details["vm_type"] = vm_type
 
-            if details["detected_macs"]:
+            detected_macs_list = details["detected_macs"]
+            if isinstance(detected_macs_list, list) and detected_macs_list:
                 return True, 0.8, details
 
         except Exception as e:
@@ -973,9 +993,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_bios_info(self) -> tuple[bool, float, dict]:
+    def _check_bios_info(self) -> tuple[bool, float, dict[str, Any]]:
         """Check BIOS information for VM signatures."""
-        details = {"bios_vendor": None}
+        details: dict[str, Any] = {"bios_vendor": None}
 
         try:
             if platform.system() == "Linux":
@@ -1008,9 +1028,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_device_drivers(self) -> tuple[bool, float, dict]:
+    def _check_device_drivers(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for VM-specific device drivers."""
-        details = {"detected_drivers": []}
+        details: dict[str, Any] = {"detected_drivers": []}
 
         try:
             if platform.system() == "Windows":
@@ -1039,7 +1059,8 @@ class VMDetector(BaseDetector):
 
                 for driver in vm_drivers:
                     if driver in drivers:
-                        details["detected_drivers"].append(driver)
+                        detected_drivers: list[str] = details["detected_drivers"]
+                        detected_drivers.append(driver)
 
             elif platform.system() == "Linux":
                 result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True)
@@ -1058,9 +1079,11 @@ class VMDetector(BaseDetector):
 
                 for module in vm_modules:
                     if module in modules:
-                        details["detected_drivers"].append(module)
+                        detected_drivers = details["detected_drivers"]
+                        detected_drivers.append(module)
 
-            if details["detected_drivers"]:
+            detected_drivers_list = details["detected_drivers"]
+            if isinstance(detected_drivers_list, list) and detected_drivers_list:
                 return True, 0.9, details
 
         except Exception as e:
@@ -1068,9 +1091,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpu_model_detection(self) -> tuple[bool, float, dict]:
+    def _check_cpu_model_detection(self) -> tuple[bool, float, dict[str, Any]]:
         """Check CPU model for VM-specific identifiers."""
-        details = {"cpu_model": None, "vm_indicators": []}
+        details: dict[str, Any] = {"cpu_model": None, "vm_indicators": []}
 
         try:
             if platform.system() == "Windows":
@@ -1095,7 +1118,8 @@ class VMDetector(BaseDetector):
 
                             for pattern in vm_cpu_patterns:
                                 if pattern in cpu_name:
-                                    details["vm_indicators"].append(pattern)
+                                    vm_indicators: list[str] = details["vm_indicators"]
+                                    vm_indicators.append(pattern)
 
                 except ImportError:
                     pass
@@ -1119,11 +1143,13 @@ class VMDetector(BaseDetector):
 
                             for pattern in vm_cpu_patterns:
                                 if pattern in cpu_name:
-                                    details["vm_indicators"].append(pattern)
+                                    vm_indicators = details["vm_indicators"]
+                                    vm_indicators.append(pattern)
                             break
 
-            if details["vm_indicators"]:
-                confidence = min(0.90, len(details["vm_indicators"]) * 0.3 + 0.6)
+            vm_indicators_list = details["vm_indicators"]
+            if isinstance(vm_indicators_list, list) and vm_indicators_list:
+                confidence = min(0.90, len(vm_indicators_list) * 0.3 + 0.6)
                 self.logger.info(f"VM CPU detected: {details['cpu_model']}")
                 return True, confidence, details
 
@@ -1132,9 +1158,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hardware_fingerprint(self) -> tuple[bool, float, dict]:
+    def _check_hardware_fingerprint(self) -> tuple[bool, float, dict[str, Any]]:
         """Check hardware fingerprint for VM characteristics."""
-        details = {
+        details: dict[str, Any] = {
             "total_ram_mb": 0,
             "cpu_cores": 0,
             "disk_count": 0,
@@ -1154,26 +1180,30 @@ class VMDetector(BaseDetector):
                             details["total_ram_mb"] = total_ram
 
                             if total_ram in [512, 1024, 2048, 4096, 8192]:
-                                details["suspicious_values"].append(f"ram={total_ram}MB (power of 2)")
+                                suspicious_vals: list[str] = details["suspicious_values"]
+                                suspicious_vals.append(f"ram={total_ram}MB (power of 2)")
 
                         if hasattr(cs, "NumberOfLogicalProcessors"):
                             cpu_cores = int(cs.NumberOfLogicalProcessors)
                             details["cpu_cores"] = cpu_cores
 
                             if cpu_cores in {1, 2, 4, 8}:
-                                details["suspicious_values"].append(f"cores={cpu_cores} (power of 2)")
+                                suspicious_vals = details["suspicious_values"]
+                                suspicious_vals.append(f"cores={cpu_cores} (power of 2)")
 
                     disk_count = len(list(c.Win32_DiskDrive()))
                     details["disk_count"] = disk_count
 
                     if disk_count == 1:
-                        details["suspicious_values"].append("single_disk (common in VMs)")
+                        suspicious_vals = details["suspicious_values"]
+                        suspicious_vals.append("single_disk (common in VMs)")
 
                 except ImportError:
                     pass
 
-            if details["suspicious_values"]:
-                confidence = min(0.55, len(details["suspicious_values"]) * 0.20)
+            suspicious_values_list = details["suspicious_values"]
+            if isinstance(suspicious_values_list, list) and suspicious_values_list:
+                confidence = min(0.55, len(suspicious_values_list) * 0.20)
                 self.logger.info(f"Suspicious hardware fingerprint: {details['suspicious_values']}")
                 return True, confidence, details
 
@@ -1182,9 +1212,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_disk_serial_numbers(self) -> tuple[bool, float, dict]:
+    def _check_disk_serial_numbers(self) -> tuple[bool, float, dict[str, Any]]:
         """Check disk serial numbers for VM patterns."""
-        details = {"disk_serials": [], "vm_patterns_found": []}
+        details: dict[str, Any] = {"disk_serials": [], "vm_patterns_found": []}
 
         try:
             if platform.system() == "Windows":
@@ -1195,7 +1225,8 @@ class VMDetector(BaseDetector):
                     for disk in c.Win32_DiskDrive():
                         if hasattr(disk, "SerialNumber"):
                             if serial := disk.SerialNumber.strip():
-                                details["disk_serials"].append(serial)
+                                disk_serials: list[str] = details["disk_serials"]
+                                disk_serials.append(serial)
 
                                 vm_serial_patterns = [
                                     "vmware",
@@ -1208,7 +1239,8 @@ class VMDetector(BaseDetector):
 
                                 for pattern in vm_serial_patterns:
                                     if pattern.lower() in serial.lower():
-                                        details["vm_patterns_found"].append(
+                                        vm_patterns: list[str] = details["vm_patterns_found"]
+                                        vm_patterns.append(
                                             f"{serial} contains '{pattern}'",
                                         )
 
@@ -1226,7 +1258,8 @@ class VMDetector(BaseDetector):
                     if result.stdout:
                         for line in result.stdout.split("\n"):
                             if serial := line.strip():
-                                details["disk_serials"].append(serial)
+                                disk_serials = details["disk_serials"]
+                                disk_serials.append(serial)
 
                                 vm_serial_patterns = [
                                     "vmware",
@@ -1237,14 +1270,16 @@ class VMDetector(BaseDetector):
 
                                 for pattern in vm_serial_patterns:
                                     if pattern.lower() in serial.lower():
-                                        details["vm_patterns_found"].append(
+                                        vm_patterns = details["vm_patterns_found"]
+                                        vm_patterns.append(
                                             f"{serial} contains '{pattern}'",
                                         )
                 except FileNotFoundError:
                     pass
 
-            if details["vm_patterns_found"]:
-                confidence = min(0.85, len(details["vm_patterns_found"]) * 0.30 + 0.55)
+            vm_patterns_list = details["vm_patterns_found"]
+            if isinstance(vm_patterns_list, list) and vm_patterns_list:
+                confidence = min(0.85, len(vm_patterns_list) * 0.30 + 0.55)
                 self.logger.info(f"VM disk serial patterns detected: {details['vm_patterns_found']}")
                 return True, confidence, details
 
@@ -1253,9 +1288,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_mac_address_patterns(self) -> tuple[bool, float, dict]:
+    def _check_mac_address_patterns(self) -> tuple[bool, float, dict[str, Any]]:
         """Check MAC address patterns for VM vendors."""
-        details = {"mac_addresses": [], "vm_macs": []}
+        details: dict[str, Any] = {"mac_addresses": [], "vm_macs": []}
 
         try:
             import re
@@ -1290,21 +1325,26 @@ class VMDetector(BaseDetector):
             for mac in macs:
                 mac_str = "".join(mac).replace(":", "").replace("-", "")
                 mac_formatted = ":".join([mac_str[i : i + 2] for i in range(0, 12, 2)])
-                details["mac_addresses"].append(mac_formatted)
+                mac_addresses: list[str] = details["mac_addresses"]
+                mac_addresses.append(mac_formatted)
 
                 for vm_type, sigs in self.vm_signatures.items():
-                    for prefix in sigs.get("mac_prefixes", []):
-                        if mac_formatted.upper().startswith(prefix.upper()):
-                            details["vm_macs"].append(
-                                {
-                                    "mac": mac_formatted,
-                                    "vendor": vm_type,
-                                    "prefix": prefix,
-                                },
-                            )
+                    mac_prefixes = sigs.get("mac_prefixes", [])
+                    if isinstance(mac_prefixes, list):
+                        for prefix in mac_prefixes:
+                            if isinstance(prefix, str) and mac_formatted.upper().startswith(prefix.upper()):
+                                vm_macs: list[dict[str, str]] = details["vm_macs"]
+                                vm_macs.append(
+                                    {
+                                        "mac": mac_formatted,
+                                        "vendor": vm_type,
+                                        "prefix": prefix,
+                                    },
+                                )
 
-            if details["vm_macs"]:
-                confidence = min(0.88, len(details["vm_macs"]) * 0.30 + 0.58)
+            vm_macs_list = details["vm_macs"]
+            if isinstance(vm_macs_list, list) and vm_macs_list:
+                confidence = min(0.88, len(vm_macs_list) * 0.30 + 0.58)
                 self.logger.info(f"VM MAC addresses detected: {details['vm_macs']}")
                 return True, confidence, details
 
@@ -1313,9 +1353,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpuid_feature_flags(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_feature_flags(self) -> tuple[bool, float, dict[str, Any]]:
         """Analyze CPUID feature flags for VM-specific indicators."""
-        details = {
+        details: dict[str, Any] = {
             "hypervisor_present": False,
             "feature_flags": {},
             "vm_indicators": [],
@@ -1329,7 +1369,7 @@ class VMDetector(BaseDetector):
 
                 details["hypervisor_present"] = bool((ecx >> 31) & 1)
 
-                ecx_features = {
+                ecx_features: dict[str, bool] = {
                     "SSE3": bool(ecx & 1),
                     "PCLMULQDQ": bool((ecx >> 1) & 1),
                     "MONITOR": bool((ecx >> 3) & 1),
@@ -1350,18 +1390,21 @@ class VMDetector(BaseDetector):
                     "RDRAND": bool((ecx >> 30) & 1),
                 }
 
-                details["feature_flags"]["ecx"] = ecx_features
-                details["ecx_features"] = [k for k, v in ecx_features.items() if v]
+                feature_flags: dict[str, dict[str, bool]] = details["feature_flags"]
+                feature_flags["ecx"] = ecx_features
+                ecx_features_list: list[str] = details["ecx_features"]
+                ecx_features_list.extend([k for k, v in ecx_features.items() if v])
 
+                vm_indicators: list[str] = details["vm_indicators"]
                 if not ecx_features.get("RDRAND"):
-                    details["vm_indicators"].append("Missing RDRAND (common in older VMs)")
+                    vm_indicators.append("Missing RDRAND (common in older VMs)")
 
                 if ecx_features.get("x2APIC") and details["hypervisor_present"]:
-                    details["vm_indicators"].append("x2APIC with hypervisor bit (VM configuration)")
+                    vm_indicators.append("x2APIC with hypervisor bit (VM configuration)")
 
-                if details["vm_indicators"] or details["hypervisor_present"]:
+                if vm_indicators or details["hypervisor_present"]:
                     confidence = 0.70 if details["hypervisor_present"] else 0.40
-                    confidence += len(details["vm_indicators"]) * 0.10
+                    confidence += len(vm_indicators) * 0.10
                     return True, min(confidence, 0.85), details
 
         except Exception as e:
@@ -1369,9 +1412,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpuid_extended_leaves(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_extended_leaves(self) -> tuple[bool, float, dict[str, Any]]:
         """Check CPUID extended leaves for hypervisor information."""
-        details = {"leaves": [], "hypervisor_info": {}, "vm_detected": False}
+        details: dict[str, Any] = {"leaves": [], "hypervisor_info": {}, "vm_detected": False}
 
         try:
             if base_leaf := self._execute_cpuid(0x40000000):
@@ -1379,20 +1422,22 @@ class VMDetector(BaseDetector):
                 max_leaf = eax
                 vendor = struct.pack("<III", ebx, ecx, edx).decode("ascii", errors="ignore").rstrip("\x00")
 
-                details["hypervisor_info"]["base_leaf"] = {
+                hypervisor_info: dict[str, Any] = details["hypervisor_info"]
+                hypervisor_info["base_leaf"] = {
                     "max_leaf": hex(max_leaf),
                     "vendor": vendor,
                 }
 
                 if vendor:
                     details["vm_detected"] = True
-                    details["hypervisor_info"]["vendor_string"] = vendor
+                    hypervisor_info["vendor_string"] = vendor
 
+                    leaves: list[dict[str, str]] = details["leaves"]
                     for i in range(1, min(16, (max_leaf - 0x40000000) + 1)):
                         leaf_num = 0x40000000 + i
                         if leaf_result := self._execute_cpuid(leaf_num):
                             leaf_eax, leaf_ebx, leaf_ecx, leaf_edx = leaf_result
-                            details["leaves"].append({
+                            leaves.append({
                                 "leaf": hex(leaf_num),
                                 "eax": hex(leaf_eax),
                                 "ebx": hex(leaf_ebx),
@@ -1410,12 +1455,12 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cpuid_brand_string(self) -> tuple[bool, float, dict]:
+    def _check_cpuid_brand_string(self) -> tuple[bool, float, dict[str, Any]]:
         """Extract and analyze CPU brand string for VM indicators."""
-        details = {"brand_string": "", "vm_indicators": []}
+        details: dict[str, Any] = {"brand_string": "", "vm_indicators": []}
 
         try:
-            brand_parts = []
+            brand_parts: list[bytes] = []
             for leaf in [0x80000002, 0x80000003, 0x80000004]:
                 if result := self._execute_cpuid(leaf):
                     eax, ebx, ecx, edx = result
@@ -1426,13 +1471,14 @@ class VMDetector(BaseDetector):
                 details["brand_string"] = brand_string
 
                 vm_patterns = ["QEMU", "Virtual", "KVM", "Xen", "Bochs", "VMware", "VirtualBox"]
+                vm_indicators: list[str] = details["vm_indicators"]
 
                 for pattern in vm_patterns:
                     if pattern.lower() in brand_string.lower():
-                        details["vm_indicators"].append(f"Brand contains '{pattern}'")
+                        vm_indicators.append(f"Brand contains '{pattern}'")
 
-                if details["vm_indicators"]:
-                    confidence = min(0.90, len(details["vm_indicators"]) * 0.35 + 0.55)
+                if vm_indicators:
+                    confidence = min(0.90, len(vm_indicators) * 0.35 + 0.55)
                     self.logger.info(f"VM detected in CPU brand: {brand_string}")
                     return True, confidence, details
 
@@ -1441,9 +1487,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_rdtsc_vmexit_detection(self) -> tuple[bool, float, dict]:
+    def _check_rdtsc_vmexit_detection(self) -> tuple[bool, float, dict[str, Any]]:
         """Detect VM exits by measuring RDTSC instruction pairs for large deltas."""
-        details = {
+        details: dict[str, Any] = {
             "vmexit_candidates": [],
             "max_delta": 0,
             "avg_delta": 0,
@@ -1529,17 +1575,18 @@ class VMDetector(BaseDetector):
             func = func_type(exec_mem)
 
             samples = 2000
-            deltas = []
+            deltas: list[int] = []
             vmexit_count = 0
+            vmexit_candidates: list[int] = details["vmexit_candidates"]
 
             for _ in range(samples):
                 delta = func()
                 if delta > 0:
-                    deltas.append(delta)
+                    deltas.append(int(delta))
                     if delta > details["vmexit_threshold"]:
                         vmexit_count += 1
-                        if len(details["vmexit_candidates"]) < 20:
-                            details["vmexit_candidates"].append(int(delta))
+                        if len(vmexit_candidates) < 20:
+                            vmexit_candidates.append(int(delta))
 
             VirtualFree(exec_mem, 0, 0x8000)
 
@@ -1560,15 +1607,15 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_paravirt_instructions(self) -> tuple[bool, float, dict]:
+    def _check_paravirt_instructions(self) -> tuple[bool, float, dict[str, Any]]:
         """Test for paravirtualization instructions (VMCALL, VMMCALL, VMFUNC)."""
-        details = {"instructions_tested": [], "exceptions_caught": [], "paravirt_detected": False}
+        details: dict[str, Any] = {"instructions_tested": [], "exceptions_caught": [], "paravirt_detected": False}
 
         try:
             if platform.system() != "Windows":
                 return False, 0.0, details
 
-            test_instructions = {
+            test_instructions: dict[str, bytes] = {
                 "VMCALL": bytes([0x0F, 0x01, 0xC1, 0xC3]),
                 "VMMCALL": bytes([0x0F, 0x01, 0xD9, 0xC3]),
             }
@@ -1576,6 +1623,9 @@ class VMDetector(BaseDetector):
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
             VirtualProtect = ctypes.windll.kernel32.VirtualProtect
             VirtualFree = ctypes.windll.kernel32.VirtualFree
+
+            instructions_tested: list[str] = details["instructions_tested"]
+            exceptions_caught: list[str] = details["exceptions_caught"]
 
             for instr_name, code in test_instructions.items():
                 try:
@@ -1593,7 +1643,7 @@ class VMDetector(BaseDetector):
                     func_type = ctypes.CFUNCTYPE(None)
                     func = func_type(exec_mem)
 
-                    details["instructions_tested"].append(instr_name)
+                    instructions_tested.append(instr_name)
 
                     try:
                         func()
@@ -1604,7 +1654,7 @@ class VMDetector(BaseDetector):
                         return True, 0.99, details
 
                     except Exception as exec_err:
-                        details["exceptions_caught"].append(f"{instr_name}: {type(exec_err).__name__}")
+                        exceptions_caught.append(f"{instr_name}: {type(exec_err).__name__}")
 
                     VirtualFree(exec_mem, 0, 0x8000)
 
@@ -1617,9 +1667,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_acpi_tables(self) -> tuple[bool, float, dict]:
+    def _check_acpi_tables(self) -> tuple[bool, float, dict[str, Any]]:
         """Check ACPI tables for VM signatures."""
-        details = {"acpi_tables": [], "vm_signatures_found": []}
+        details: dict[str, Any] = {"acpi_tables": [], "vm_signatures_found": []}
 
         try:
             if platform.system() == "Windows":
@@ -1627,6 +1677,7 @@ class VMDetector(BaseDetector):
                     import wmi
 
                     c = wmi.WMI()
+                    vm_signatures_found: list[str] = details["vm_signatures_found"]
 
                     for table in c.MSAcpi_RawSMBiosTables():
                         if hasattr(table, "SMBiosData"):
@@ -1645,7 +1696,7 @@ class VMDetector(BaseDetector):
                             ]
                             for pattern in vm_patterns:
                                 if pattern in data_str:
-                                    details["vm_signatures_found"].append(f"ACPI contains '{pattern}'")
+                                    vm_signatures_found.append(f"ACPI contains '{pattern}'")
 
                 except ImportError:
                     pass
@@ -1655,6 +1706,7 @@ class VMDetector(BaseDetector):
                     "/sys/firmware/acpi/tables/DSDT",
                     "/sys/firmware/acpi/tables/SSDT",
                 ]
+                vm_signatures_found = details["vm_signatures_found"]
 
                 for acpi_path in acpi_paths:
                     if os.path.exists(acpi_path):
@@ -1666,12 +1718,13 @@ class VMDetector(BaseDetector):
                                 vm_patterns = ["vmware", "vbox", "qemu", "xen", "kvm", "bochs"]
                                 for pattern in vm_patterns:
                                     if pattern in data_str:
-                                        details["vm_signatures_found"].append(f"{acpi_path} contains '{pattern}'")
+                                        vm_signatures_found.append(f"{acpi_path} contains '{pattern}'")
                         except Exception as e:
                             self.logger.debug(f"Failed to read {acpi_path}: {e}")
 
-            if details["vm_signatures_found"]:
-                confidence = min(0.90, len(details["vm_signatures_found"]) * 0.30 + 0.60)
+            vm_sigs_list = details["vm_signatures_found"]
+            if isinstance(vm_sigs_list, list) and vm_sigs_list:
+                confidence = min(0.90, len(vm_sigs_list) * 0.30 + 0.60)
                 return True, confidence, details
 
         except Exception as e:
@@ -1679,9 +1732,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_pci_devices(self) -> tuple[bool, float, dict]:
+    def _check_pci_devices(self) -> tuple[bool, float, dict[str, Any]]:
         """Check PCI devices for VM-specific controllers."""
-        details = {"pci_devices": [], "vm_devices": []}
+        details: dict[str, Any] = {"pci_devices": [], "vm_devices": []}
 
         try:
             if platform.system() == "Linux":
@@ -1695,7 +1748,8 @@ class VMDetector(BaseDetector):
 
                 if result.returncode == 0:
                     pci_output = result.stdout.lower()
-                    details["pci_devices"] = result.stdout.split("\n")[:20]
+                    pci_devices: list[str] = details["pci_devices"]
+                    pci_devices.extend(result.stdout.split("\n")[:20])
 
                     vm_device_patterns = [
                         "vmware",
@@ -1707,16 +1761,18 @@ class VMDetector(BaseDetector):
                         "hyper-v",
                         "parallels",
                     ]
+                    vm_devices: list[str] = details["vm_devices"]
 
                     for pattern in vm_device_patterns:
                         if pattern in pci_output:
-                            details["vm_devices"].append(f"PCI device contains '{pattern}'")
+                            vm_devices.append(f"PCI device contains '{pattern}'")
 
             elif platform.system() == "Windows":
                 try:
                     import wmi
 
                     c = wmi.WMI()
+                    vm_devices = details["vm_devices"]
 
                     for controller in c.Win32_PnPEntity():
                         if hasattr(controller, "Name"):
@@ -1725,13 +1781,14 @@ class VMDetector(BaseDetector):
                             vm_patterns = ["vmware", "vbox", "qemu", "virtio", "red hat", "hyper-v"]
                             for pattern in vm_patterns:
                                 if pattern in device_name:
-                                    details["vm_devices"].append(device_name)
+                                    vm_devices.append(device_name)
 
                 except ImportError:
                     pass
 
-            if details["vm_devices"]:
-                confidence = min(0.88, len(details["vm_devices"]) * 0.25 + 0.63)
+            vm_devices_list = details["vm_devices"]
+            if isinstance(vm_devices_list, list) and vm_devices_list:
+                confidence = min(0.88, len(vm_devices_list) * 0.25 + 0.63)
                 return True, confidence, details
 
         except Exception as e:
@@ -1739,9 +1796,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_memory_artifacts(self) -> tuple[bool, float, dict]:
+    def _check_memory_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
         """Scan process memory for hypervisor signatures."""
-        details = {"signatures_found": [], "memory_regions_scanned": 0}
+        details: dict[str, Any] = {"signatures_found": [], "memory_regions_scanned": 0}
 
         try:
             if platform.system() != "Windows":
@@ -1765,21 +1822,23 @@ class VMDetector(BaseDetector):
             address = 0
             max_regions = 100
             regions_scanned = 0
+            signatures_found: list[str] = details["signatures_found"]
 
             while regions_scanned < max_regions:
-                result = kernel32.VirtualQueryEx(
+                result_query = kernel32.VirtualQueryEx(
                     process_handle,
                     ctypes.c_void_p(address),
                     ctypes.byref(mbi),
                     ctypes.sizeof(mbi),
                 )
 
-                if result == 0:
+                if result_query == 0:
                     break
 
-                base_address = int.from_bytes(mbi[:8] if sys.maxsize > 2**32 else mbi[:4], "little")
-                region_size = int.from_bytes(mbi[16:24] if sys.maxsize > 2**32 else mbi[12:16], "little")
-                protect = int.from_bytes(mbi[32:36], "little")
+                mbi_raw = mbi.raw
+                base_address = int.from_bytes(mbi_raw[:8] if sys.maxsize > 2**32 else mbi_raw[:4], "little")
+                region_size = int.from_bytes(mbi_raw[16:24] if sys.maxsize > 2**32 else mbi_raw[12:16], "little")
+                protect = int.from_bytes(mbi_raw[32:36], "little")
 
                 if protect in [0x04, 0x20, 0x40]:
                     scan_size = min(region_size, 4096)
@@ -1799,8 +1858,8 @@ class VMDetector(BaseDetector):
                             for signature in hypervisor_signatures:
                                 if signature in memory_data:
                                     sig_str = signature.decode("ascii", errors="ignore")
-                                    if sig_str not in details["signatures_found"]:
-                                        details["signatures_found"].append(sig_str)
+                                    if sig_str not in signatures_found:
+                                        signatures_found.append(sig_str)
                                         self.logger.info(f"Found hypervisor signature in memory: {sig_str}")
                     except Exception as e:
                         self.logger.debug(f"Memory region scan error: {e}")
@@ -1813,8 +1872,8 @@ class VMDetector(BaseDetector):
 
             details["memory_regions_scanned"] = regions_scanned
 
-            if details["signatures_found"]:
-                confidence = min(0.85, len(details["signatures_found"]) * 0.30 + 0.55)
+            if signatures_found:
+                confidence = min(0.85, len(signatures_found) * 0.30 + 0.55)
                 return True, confidence, details
 
         except Exception as e:
@@ -1822,9 +1881,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_performance_counters(self) -> tuple[bool, float, dict]:
+    def _check_performance_counters(self) -> tuple[bool, float, dict[str, Any]]:
         """Analyze performance counters for VM overhead patterns."""
-        details = {"counter_anomalies": [], "baseline": {}, "current": {}}
+        details: dict[str, Any] = {"counter_anomalies": [], "baseline": {}, "current": {}}
 
         try:
             if platform.system() == "Windows":
@@ -1832,26 +1891,29 @@ class VMDetector(BaseDetector):
                     import wmi
 
                     c = wmi.WMI()
+                    current: dict[str, int] = details["current"]
+                    counter_anomalies: list[str] = details["counter_anomalies"]
 
                     for proc in c.Win32_PerfFormattedData_PerfOS_Processor(Name="_Total"):
                         if hasattr(proc, "PercentProcessorTime"):
-                            details["current"]["processor_time"] = int(proc.PercentProcessorTime)
+                            current["processor_time"] = int(proc.PercentProcessorTime)
                         if hasattr(proc, "PercentIdleTime"):
-                            details["current"]["idle_time"] = int(proc.PercentIdleTime)
+                            current["idle_time"] = int(proc.PercentIdleTime)
                         if hasattr(proc, "PercentInterruptTime"):
                             interrupt_time = int(proc.PercentInterruptTime)
-                            details["current"]["interrupt_time"] = interrupt_time
+                            current["interrupt_time"] = interrupt_time
 
                             if interrupt_time > 15:
-                                details["counter_anomalies"].append(
+                                counter_anomalies.append(
                                     f"High interrupt time: {interrupt_time}% (VM overhead indicator)",
                                 )
 
                 except ImportError:
                     pass
 
-            if details["counter_anomalies"]:
-                confidence = min(0.60, len(details["counter_anomalies"]) * 0.25 + 0.35)
+            counter_anomalies_list = details["counter_anomalies"]
+            if isinstance(counter_anomalies_list, list) and counter_anomalies_list:
+                confidence = min(0.60, len(counter_anomalies_list) * 0.25 + 0.35)
                 return True, confidence, details
 
         except Exception as e:
@@ -1859,9 +1921,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_tsc_frequency_analysis(self) -> tuple[bool, float, dict]:
+    def _check_tsc_frequency_analysis(self) -> tuple[bool, float, dict[str, Any]]:
         """Analyze TSC frequency for VM timing artifacts."""
-        details = {
+        details: dict[str, Any] = {
             "tsc_frequency_hz": 0,
             "measurement_variance": 0,
             "anomaly_detected": False,
@@ -1909,7 +1971,7 @@ class VMDetector(BaseDetector):
             func_type = ctypes.CFUNCTYPE(ctypes.c_uint64 if platform.machine().endswith("64") else ctypes.c_uint32)
             func = func_type(exec_mem)
 
-            measurements = []
+            measurements: list[int] = []
             for _ in range(5):
                 tsc_start = func()
                 time.sleep(0.1)
@@ -1917,7 +1979,7 @@ class VMDetector(BaseDetector):
 
                 tsc_diff = tsc_end - tsc_start
                 frequency = tsc_diff * 10
-                measurements.append(frequency)
+                measurements.append(int(frequency))
 
             VirtualFree(exec_mem, 0, 0x8000)
 
@@ -1943,9 +2005,9 @@ class VMDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_cache_timing(self) -> tuple[bool, float, dict]:
+    def _check_cache_timing(self) -> tuple[bool, float, dict[str, Any]]:
         """Analyze CPU cache timing for VM artifacts."""
-        details = {
+        details: dict[str, Any] = {
             "l1_cache_timing_ns": 0,
             "l2_cache_timing_ns": 0,
             "memory_timing_ns": 0,
@@ -1993,9 +2055,10 @@ class VMDetector(BaseDetector):
             details["l2_cache_timing_ns"] = int(l2_time)
             details["memory_timing_ns"] = int(mem_time)
 
+            timing_ratios: dict[str, float] = details["timing_ratios"]
             if l1_time > 0:
-                details["timing_ratios"]["l2_to_l1"] = round(l2_time / l1_time, 2)
-                details["timing_ratios"]["mem_to_l1"] = round(mem_time / l1_time, 2)
+                timing_ratios["l2_to_l1"] = round(l2_time / l1_time, 2)
+                timing_ratios["mem_to_l1"] = round(mem_time / l1_time, 2)
 
                 expected_l2_ratio = 3.0
                 expected_mem_ratio = 10.0
@@ -2016,7 +2079,7 @@ class VMDetector(BaseDetector):
 
     def get_hardware_fingerprint(self) -> HardwareFingerprint:
         """Collect comprehensive hardware fingerprint."""
-        if self._hardware_fingerprint:
+        if self._hardware_fingerprint is not None:
             return self._hardware_fingerprint
 
         fingerprint = HardwareFingerprint()
@@ -2029,7 +2092,9 @@ class VMDetector(BaseDetector):
 
             brand_result = self._check_cpuid_brand_string()
             if brand_result[0]:
-                fingerprint.cpu_model = brand_result[2].get("brand_string", "")
+                brand_string = brand_result[2].get("brand_string", "")
+                if isinstance(brand_string, str):
+                    fingerprint.cpu_model = brand_string
 
             if platform.system() == "Windows":
                 try:
@@ -2072,7 +2137,9 @@ class VMDetector(BaseDetector):
 
             mac_result = self._check_mac_address_patterns()
             if mac_result[0]:
-                fingerprint.mac_addresses = mac_result[2].get("mac_addresses", [])
+                mac_addresses = mac_result[2].get("mac_addresses", [])
+                if isinstance(mac_addresses, list):
+                    fingerprint.mac_addresses = [m for m in mac_addresses if isinstance(m, str)]
 
             fingerprint_data = (
                 f"{fingerprint.cpu_vendor}|{fingerprint.cpu_model}|"
@@ -2092,9 +2159,9 @@ class VMDetector(BaseDetector):
 
     def analyze_timing_patterns(self) -> dict[str, TimingMeasurement]:
         """Perform comprehensive timing analysis across multiple operations."""
-        measurements = {}
+        measurements: dict[str, TimingMeasurement] = {}
 
-        operations = {
+        operations: dict[str, Callable[[], Any]] = {
             "cpuid_leaf1": lambda: self._execute_cpuid(0x1),
             "cpuid_leaf0": lambda: self._execute_cpuid(0x0),
             "nop_sequence": lambda: None,
@@ -2131,29 +2198,28 @@ class VMDetector(BaseDetector):
 
     def _identify_vm_type(self, detections: dict[str, Any]) -> str:
         """Identify the specific VM type based on detections."""
-        vm_scores = {}
+        vm_scores: dict[str, float] = {}
 
-        # Score each VM type based on detections
         for method, result in detections.items():
-            if result["detected"]:
-                details_str = str(result["details"]).lower()
+            if isinstance(result, dict) and result.get("detected"):
+                details_str = str(result.get("details", "")).lower()
                 self.logger.debug(f"VM detection method '{method}' found evidence")
 
                 for vm_type in self.vm_signatures:
                     if vm_type in details_str:
-                        vm_scores[vm_type] = vm_scores.get(vm_type, 0) + result["confidence"]
+                        vm_scores[vm_type] = vm_scores.get(vm_type, 0.0) + float(result.get("confidence", 0.0))
 
-        # Return VM type with highest score
-        return max(vm_scores, key=vm_scores.get) if vm_scores else "unknown"
+        if vm_scores:
+            return max(vm_scores, key=lambda k: vm_scores[k])
+        return "unknown"
 
     def _calculate_evasion_score(self, detections: dict[str, Any]) -> int:
         """Calculate how difficult it is to evade detection."""
-        # Methods that are hard to evade
         hard_to_evade = ["cpuid", "hardware_signatures", "hypervisor_brand"]
 
         return self.calculate_detection_score(detections, hard_to_evade)
 
-    def generate_evasion_code(self, target_vm: str = None) -> str:
+    def generate_evasion_code(self, target_vm: str | None = None) -> str:
         """Generate code to evade VM detection."""
         if target_vm:
             self.logger.debug(f"Generating evasion code specifically for {target_vm}")
@@ -2196,7 +2262,7 @@ if (IsRunningInVM()) {
 }
 """
 
-    def get_aggressive_methods(self) -> list:
+    def get_aggressive_methods(self) -> list[str]:
         """Get list of method names that are considered aggressive."""
         return [
             "cpuid_timing",
@@ -2229,7 +2295,7 @@ if (IsRunningInVM()) {
         """
         self.logger.info(f"Generating VM detection bypass for: {vm_type}")
 
-        bypass_config = {
+        bypass_config: dict[str, Any] = {
             "vm_type": vm_type,
             "detection_methods": [],
             "bypass_techniques": [],
@@ -2240,27 +2306,26 @@ if (IsRunningInVM()) {
             "risks": [],
         }
 
-        # Identify detection methods used by target
         if vm_type.lower() in self.vm_signatures:
             vm_sig = self.vm_signatures[vm_type.lower()]
+            detection_methods: list[str] = bypass_config["detection_methods"]
 
-            # Determine which detection methods to bypass
             if vm_sig.get("processes"):
-                bypass_config["detection_methods"].append("Process detection")
+                detection_methods.append("Process detection")
             if vm_sig.get("files"):
-                bypass_config["detection_methods"].append("File system artifacts")
+                detection_methods.append("File system artifacts")
             if vm_sig.get("registry"):
-                bypass_config["detection_methods"].append("Registry keys")
+                detection_methods.append("Registry keys")
             if vm_sig.get("hardware"):
-                bypass_config["detection_methods"].append("Hardware signatures")
+                detection_methods.append("Hardware signatures")
             if vm_sig.get("mac_prefixes"):
-                bypass_config["detection_methods"].append("MAC address patterns")
+                detection_methods.append("MAC address patterns")
 
-        # Generate bypass techniques based on VM type
+        bypass_techniques: list[dict[str, Any]] = bypass_config["bypass_techniques"]
         if vm_type.lower() == "vmware":
             bypass_config["stealth_level"] = "high"
             bypass_config["success_probability"] = 0.85
-            bypass_config["bypass_techniques"] = [
+            bypass_techniques.extend([
                 {
                     "name": "VMware Tools Hiding",
                     "description": "Hide or rename VMware Tools processes and services",
@@ -2285,12 +2350,12 @@ if (IsRunningInVM()) {
                     "complexity": "high",
                     "effectiveness": 0.75,
                 },
-            ]
+            ])
 
         elif vm_type.lower() == "virtualbox":
             bypass_config["stealth_level"] = "high"
             bypass_config["success_probability"] = 0.90
-            bypass_config["bypass_techniques"] = [
+            bypass_techniques.extend([
                 {
                     "name": "VBoxGuest Hiding",
                     "description": "Hide VirtualBox Guest Additions",
@@ -2309,12 +2374,12 @@ if (IsRunningInVM()) {
                     "complexity": "low",
                     "effectiveness": 0.90,
                 },
-            ]
+            ])
 
         elif vm_type.lower() == "hyperv":
             bypass_config["stealth_level"] = "medium"
             bypass_config["success_probability"] = 0.70
-            bypass_config["bypass_techniques"] = [
+            bypass_techniques.extend([
                 {
                     "name": "Hyper-V Integration Disabling",
                     "description": "Disable Hyper-V integration services",
@@ -2327,13 +2392,12 @@ if (IsRunningInVM()) {
                     "complexity": "high",
                     "effectiveness": 0.70,
                 },
-            ]
+            ])
 
         else:
-            # Generic VM bypass
             bypass_config["stealth_level"] = "medium"
             bypass_config["success_probability"] = 0.60
-            bypass_config["bypass_techniques"] = [
+            bypass_techniques.extend([
                 {
                     "name": "Generic Process Hiding",
                     "description": "Hide common VM guest processes",
@@ -2352,26 +2416,26 @@ if (IsRunningInVM()) {
                     "complexity": "medium",
                     "effectiveness": 0.60,
                 },
-            ]
+            ])
 
-        # Add implementation details
-        bypass_config["implementation"]["hook_script"] = self._generate_vm_bypass_script(vm_type)
-        bypass_config["implementation"]["registry_modifications"] = self._get_registry_mods(vm_type)
-        bypass_config["implementation"]["file_operations"] = self._get_file_operations(vm_type)
+        implementation: dict[str, Any] = bypass_config["implementation"]
+        implementation["hook_script"] = self._generate_vm_bypass_script(vm_type)
+        implementation["registry_modifications"] = self._get_registry_mods(vm_type)
+        implementation["file_operations"] = self._get_file_operations(vm_type)
 
-        # Add requirements
-        bypass_config["requirements"] = [
+        requirements: list[str] = bypass_config["requirements"]
+        requirements.extend([
             "Administrator/root privileges",
             "Ability to modify system files",
             "Runtime hooking capability (Frida/similar)",
-        ]
+        ])
 
-        # Add risks
-        bypass_config["risks"] = [
+        risks: list[str] = bypass_config["risks"]
+        risks.extend([
             "System instability if modifications fail",
             "VM vendor updates may break bypass",
             "Some applications may depend on VM tools",
-        ]
+        ])
 
         return bypass_config
 
@@ -2437,7 +2501,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
 
     def _get_registry_mods(self, vm_type: str) -> list[dict[str, str]]:
         """Get registry modifications for VM bypass."""
-        mods = []
+        mods: list[dict[str, str]] = []
 
         if vm_type.lower() == "vmware":
             mods.extend(
@@ -2470,7 +2534,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
 
     def _get_file_operations(self, vm_type: str) -> list[dict[str, str]]:
         """Get file operations for VM bypass."""
-        ops = []
+        ops: list[dict[str, str]] = []
 
         if vm_type.lower() == "vmware":
             ops.extend(

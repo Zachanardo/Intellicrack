@@ -8,9 +8,8 @@ import traceback
 from subprocess import Popen
 from typing import Any, cast
 
+from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.utils.logger import logger
-
-from ...utils.resource_helper import get_resource_path
 
 
 """
@@ -69,8 +68,8 @@ class SSLTLSInterceptor:
             "listen_ip": "127.0.0.1",
             "listen_port": 8443,
             "target_hosts": COMMON_LICENSE_DOMAINS,
-            "ca_cert_path": get_resource_path("ssl_certificates/ca.crt"),
-            "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
+            "ca_cert_path": str(CA_CERT_PATH),
+            "ca_key_path": str(CA_KEY_PATH),
             "record_traffic": True,
             "auto_respond": True,
         }

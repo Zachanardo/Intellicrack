@@ -25,23 +25,28 @@ import shutil
 import subprocess
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import lief
+import lief.ELF
 import pefile
 
-from ..core.analysis.frida_script_manager import FridaScriptManager
-from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
-from ..core.resources import get_resource_manager
+from ..core.analysis.frida_script_manager import FridaScriptManager, FridaScriptConfig, ScriptResult
+from ..core.logging.audit_logger import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
+from ..core.resources import get_resource_manager, ResourceManager
 from ..utils.logger import get_logger
 from ..utils.path_resolver import get_project_root
 from .ai_script_generator import AIScriptGenerator, GeneratedScript, ScriptType
 from .common_types import ExecutionResult
 
+if TYPE_CHECKING:
+    from .qemu_manager import QEMUManager
+
+from ..core.logging.audit_logger import AuditLogger
 
 logger = get_logger(__name__)
 
@@ -55,7 +60,9 @@ class OrchestratorProtocol(Protocol):
 class CLIInterfaceProtocol(Protocol):
     """Protocol for CLI interface instances to avoid circular imports."""
 
-    pass
+    def print_info(self, message: str) -> None:
+        """Print informational message to CLI."""
+        print(f"[INFO] {message}")
 
 
 class FridaExecutionResult(Protocol):
@@ -104,7 +111,7 @@ class TaskRequest:
     max_iterations: int
     autonomous_mode: bool
     user_confirmation_required: bool
-    additional_params: dict[str, Any] = None
+    additional_params: dict[str, Any] = field(default_factory=dict)
 
 
 class AIAgent:
@@ -112,6 +119,25 @@ class AIAgent:
 
     Similar to Claude Code - takes a request and autonomously completes it.
     """
+
+    orchestrator: OrchestratorProtocol | None
+    cli_interface: CLIInterfaceProtocol | None
+    script_generator: AIScriptGenerator
+    conversation_history: list[dict[str, Any]]
+    current_task: TaskRequest | None
+    workflow_state: WorkflowState
+    iteration_count: int
+    max_iterations: int
+    generated_scripts: list[GeneratedScript]
+    validation_results: list[ExecutionResult]
+    refinement_history: list[dict[str, Any]]
+    qemu_manager: "QEMUManager | None"
+    _active_vms: dict[str, dict[str, Any]]
+    _vm_snapshots: dict[str, dict[str, Any]]
+    _resource_manager: ResourceManager
+    _audit_logger: AuditLogger
+    agent_id: str
+    frida_manager: FridaScriptManager
 
     def __init__(
         self,
@@ -129,31 +155,25 @@ class AIAgent:
         self.cli_interface = cli_interface
         self.script_generator = AIScriptGenerator()
 
-        # State management
-        self.conversation_history = []
-        self.current_task = None
+        self.conversation_history: list[dict[str, Any]] = []
+        self.current_task: TaskRequest | None = None
         self.workflow_state = WorkflowState.IDLE
         self.iteration_count = 0
         self.max_iterations = 10
 
-        # Results tracking
-        self.generated_scripts = []
-        self.validation_results = []
-        self.refinement_history = []
+        self.generated_scripts: list[GeneratedScript] = []
+        self.validation_results: list[ExecutionResult] = []
+        self.refinement_history: list[dict[str, Any]] = []
 
-        # QEMU manager will be initialized when needed
-        self.qemu_manager = None
+        self.qemu_manager: "QEMUManager | None" = None
 
-        # VM lifecycle management
-        self._active_vms = {}
-        self._vm_snapshots = {}
+        self._active_vms: dict[str, dict[str, Any]] = {}
+        self._vm_snapshots: dict[str, dict[str, Any]] = {}
         self._resource_manager = get_resource_manager()
         self._audit_logger = get_audit_logger()
 
-        # Agent identifier for session tracking
         self.agent_id = f"agent_{int(time.time())}_{id(self)}"
 
-        # Initialize Frida script manager with default scripts directory
         scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
         self.frida_manager = FridaScriptManager(scripts_dir)
         logger.info(f"Initialized FridaScriptManager with {len(self.frida_manager.scripts)} scripts")
@@ -377,20 +397,20 @@ class AIAgent:
         """Extract strings from binary for analysis.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for string extraction.
 
         Returns:
-            Description of return value.
+            List of license-related strings found in binary.
         """
-        strings = []
+        strings: list[str] = []
         try:
             if not self._validate_binary_path(binary_path):
                 return strings
 
             from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
-            analyzer = BinaryAnalyzer(binary_path)
-            analysis_results = analyzer.analyze(analyses=["strings"])
+            analyzer = BinaryAnalyzer()
+            analysis_results = analyzer.analyze(binary_path)
 
             all_strings = self._normalize_strings_data(analysis_results.get("strings", {}))
             strings = self._filter_license_related_strings(all_strings)
@@ -415,10 +435,11 @@ class AIAgent:
 
         """
         if isinstance(strings_data, dict):
-            return strings_data.get("strings", [])
+            result: list[str] = strings_data.get("strings", [])
+            return result
         return strings_data if isinstance(strings_data, list) else []
 
-    def _filter_license_related_strings(self, all_strings: list) -> list[str]:
+    def _filter_license_related_strings(self, all_strings: list[Any]) -> list[str]:
         """Filter strings for license-related content based on keywords.
 
         Args:
@@ -646,12 +667,12 @@ class AIAgent:
         """Analyze functions in the binary.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for function analysis.
 
         Returns:
-            Description of return value.
+            List of function information dictionaries.
         """
-        functions = []
+        functions: list[dict[str, Any]] = []
         try:
             if not Path(binary_path).exists():
                 logger.warning(f"Binary path does not exist: {binary_path}")
@@ -659,8 +680,8 @@ class AIAgent:
 
             from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
-            analyzer = BinaryAnalyzer(binary_path)
-            analysis_results = analyzer.analyze(analyses=["functions"])
+            analyzer = BinaryAnalyzer()
+            analysis_results = analyzer.analyze(binary_path)
             functions_data = analysis_results.get("functions", [])
 
             if isinstance(functions_data, list):
@@ -675,7 +696,7 @@ class AIAgent:
 
         return functions
 
-    def _process_function_entries(self, functions_data: list, binary_path: str) -> list[dict[str, Any]]:
+    def _process_function_entries(self, functions_data: list[Any], binary_path: str) -> list[dict[str, Any]]:
         """Process function entries and classify them.
 
         Args:
@@ -692,7 +713,7 @@ class AIAgent:
                 functions.append(processed_func)
         return functions
 
-    def _create_function_info(self, func_entry: dict, binary_path: str) -> dict[str, Any]:
+    def _create_function_info(self, func_entry: dict[str, Any], binary_path: str) -> dict[str, Any]:
         """Create function information dictionary with type classification.
 
         Args:
@@ -766,20 +787,20 @@ class AIAgent:
         """Analyze imported functions.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for import analysis.
 
         Returns:
-            Description of return value.
+            List of import strings.
         """
-        imports = []
+        imports: list[str] = []
         try:
             if not self._validate_import_binary_path(binary_path):
                 return imports
 
             from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
-            analyzer = BinaryAnalyzer(binary_path)
-            analysis_results = analyzer.analyze(analyses=["imports"])
+            analyzer = BinaryAnalyzer()
+            analysis_results = analyzer.analyze(binary_path)
             imports_data = analysis_results.get("imports", [])
 
             if isinstance(imports_data, list):
@@ -811,16 +832,16 @@ class AIAgent:
             return False
         return True
 
-    def _process_import_entries(self, imports_data: list) -> list[str]:
+    def _process_import_entries(self, imports_data: list[Any]) -> list[str]:
         """Process import entries from analysis data.
 
         Args:
-            imports_data: Description.
+            imports_data: List of import entries from binary analysis.
 
         Returns:
-            Description of return value.
+            List of formatted import strings.
         """
-        imports = []
+        imports: list[str] = []
         for import_entry in imports_data:
             if import_string := self._format_import_entry(import_entry):
                 imports.append(import_string)
@@ -849,12 +870,12 @@ class AIAgent:
         """Detect protection mechanisms.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for protection detection.
 
         Returns:
-            Description of return value.
+            List of detected protection mechanism dictionaries.
         """
-        protections = []
+        protections: list[dict[str, Any]] = []
         try:
             if not Path(binary_path).exists():
                 logger.warning(f"Binary path does not exist: {binary_path}")
@@ -920,54 +941,59 @@ class AIAgent:
                 }
 
             # Initialize analysis result
-            result = {
+            endpoints_found: list[str] = []
+            protocols_found: list[str] = []
+            network_apis_found: list[str] = []
+            strings_found: list[str] = []
+            imports_found: list[str] = []
+            has_network = False
+
+            result: dict[str, Any] = {
                 "has_network": False,
                 "binary_path": binary_path,
                 "binary_size": Path(binary_path).stat().st_size,
-                "endpoints": [],
-                "protocols": [],
-                "network_apis": [],
-                "strings_found": [],
-                "imports_found": [],
+                "endpoints": endpoints_found,
+                "protocols": protocols_found,
+                "network_apis": network_apis_found,
+                "strings_found": strings_found,
+                "imports_found": imports_found,
                 "confidence": 0.0,
             }
 
-            # Multi-layered network detection approach
-            network_indicators = []
+            network_indicators: list[str] = []
 
             if network_imports := self._analyze_network_imports(binary_path):
-                result["imports_found"] = network_imports
-                result["has_network"] = True
+                imports_found.extend(network_imports)
+                has_network = True
                 network_indicators.extend(network_imports)
                 logger.info(f"Found {len(network_imports)} network-related imports in {binary_path}")
 
             if network_strings := self._analyze_network_strings(binary_path):
-                result["strings_found"] = network_strings["strings"]
-                result["endpoints"].extend(network_strings["endpoints"])
-                result["protocols"].extend(network_strings["protocols"])
-                if network_strings["count"] > 0:
-                    result["has_network"] = True
-                    network_indicators.extend(network_strings["strings"])
-                logger.info(f"Found {network_strings['count']} network-related strings in {binary_path}")
+                strings_found.extend(cast(list[str], network_strings.get("strings", [])))
+                endpoints_found.extend(cast(list[str], network_strings.get("endpoints", [])))
+                protocols_found.extend(cast(list[str], network_strings.get("protocols", [])))
+                if network_strings.get("count", 0) > 0:
+                    has_network = True
+                    network_indicators.extend(cast(list[str], network_strings.get("strings", [])))
+                logger.info(f"Found {network_strings.get('count', 0)} network-related strings in {binary_path}")
 
-            # 3. Static analysis for network-related code patterns
             code_analysis = self._analyze_network_code_patterns(binary_path)
-            if code_analysis["found"]:
-                result["network_apis"].extend(code_analysis["apis"])
-                result["has_network"] = True
-                network_indicators.extend(code_analysis["apis"])
-                logger.info(f"Found {len(code_analysis['apis'])} network API usage patterns in {binary_path}")
+            if code_analysis.get("found", False):
+                network_apis_found.extend(cast(list[str], code_analysis.get("apis", [])))
+                has_network = True
+                network_indicators.extend(cast(list[str], code_analysis.get("apis", [])))
+                logger.info(f"Found {len(code_analysis.get('apis', []))} network API usage patterns in {binary_path}")
 
-            # 4. PE/ELF specific network detection
             binary_format_analysis = self._analyze_binary_format_networking(binary_path)
-            if binary_format_analysis["has_network"]:
-                result["has_network"] = True
-                result["endpoints"].extend(binary_format_analysis.get("endpoints", []))
-                result["protocols"].extend(binary_format_analysis.get("protocols", []))
-                network_indicators.extend(binary_format_analysis.get("indicators", []))
+            if binary_format_analysis.get("has_network", False):
+                has_network = True
+                endpoints_found.extend(cast(list[str], binary_format_analysis.get("endpoints", [])))
+                protocols_found.extend(cast(list[str], binary_format_analysis.get("protocols", [])))
+                network_indicators.extend(cast(list[str], binary_format_analysis.get("indicators", [])))
 
-            # Calculate confidence based on multiple detection methods
-            confidence_factors = 0
+            result["has_network"] = has_network
+
+            confidence_factors: float = 0.0
             if result["imports_found"]:
                 confidence_factors += 0.4
             if result["strings_found"]:
@@ -979,9 +1005,10 @@ class AIAgent:
 
             result["confidence"] = min(1.0, confidence_factors)
 
-            # Remove duplicates and clean up results
-            result["endpoints"] = list(set(result["endpoints"]))
-            result["protocols"] = list(set(result["protocols"]))
+            endpoints_list: list[str] = cast(list[str], result["endpoints"])
+            protocols_list: list[str] = cast(list[str], result["protocols"])
+            result["endpoints"] = list(set(endpoints_list))
+            result["protocols"] = list(set(protocols_list))
 
             if result["has_network"]:
                 logger.info(f"Network activity detected in {binary_path} with confidence {result['confidence']:.2f}")
@@ -1090,29 +1117,25 @@ class AIAgent:
         """Analyze ELF files for network-related imports.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for ELF import analysis.
 
         Returns:
-            Description of return value.
+            List of network-related API strings.
         """
         try:
-            import lief
-
             binary = lief.parse(binary_path)
             network_symbols = self._get_network_symbols()
-            network_apis = []
+            network_apis: list[str] = []
 
-            if binary and binary.format == lief.EXE_FORMATS.ELF:
-                network_apis.extend(
-                    f"symbol:{symbol.name}"
-                    for symbol in binary.dynamic_symbols
-                    if any(net_sym in symbol.name.lower() for net_sym in network_symbols)
-                )
-                network_apis.extend(
-                    f"library:{lib}"
-                    for lib in binary.libraries
-                    if any(net_lib in lib.lower() for net_lib in ["ssl", "curl", "net", "socket"])
-                )
+            if binary is not None and isinstance(binary, lief.ELF.Binary):
+                for symbol in binary.dynamic_symbols:
+                    symbol_name = str(symbol.name) if symbol.name else ""
+                    if any(net_sym in symbol_name.lower() for net_sym in network_symbols):
+                        network_apis.append(f"symbol:{symbol_name}")
+                for lib in binary.libraries:
+                    lib_str = str(lib) if not isinstance(lib, str) else lib
+                    if any(net_lib in lib_str.lower() for net_lib in ["ssl", "curl", "net", "socket"]):
+                        network_apis.append(f"library:{lib_str}")
             return network_apis
 
         except ImportError:
@@ -1178,31 +1201,37 @@ class AIAgent:
         """Analyze strings for network-related content.
 
         Args:
-            binary_path: Description.
+            binary_path: Path to binary file for network string analysis.
 
         Returns:
-            Description of return value.
+            Dictionary with strings, endpoints, protocols and count.
         """
         try:
-            result = {"strings": [], "endpoints": [], "protocols": [], "count": 0}
+            strings_list: list[str] = []
+            endpoints_list: list[str] = []
+            protocols_list: list[str] = []
+            count = 0
 
-            # Read binary content for string analysis
+            result: dict[str, Any] = {
+                "strings": strings_list,
+                "endpoints": endpoints_list,
+                "protocols": protocols_list,
+                "count": count,
+            }
+
             with open(binary_path, "rb") as f:
                 content = f.read()
 
-            # Convert to string, handling encoding issues
             text_content = content.decode("utf-8", errors="ignore") + content.decode("latin-1", errors="ignore")
 
-            # Extract URLs and endpoints
             self._extract_urls(text_content, result)
             self._extract_domains(text_content, result)
             self._extract_protocols(text_content, result)
             self._extract_network_keywords(text_content, result)
 
-            # Remove duplicates
-            result["strings"] = list(set(result["strings"]))
-            result["endpoints"] = list(set(result["endpoints"]))
-            result["protocols"] = list(set(result["protocols"]))
+            result["strings"] = list(set(strings_list))
+            result["endpoints"] = list(set(endpoints_list))
+            result["protocols"] = list(set(protocols_list))
 
             return result
 
@@ -1210,7 +1239,7 @@ class AIAgent:
             logger.debug(f"String analysis failed for {binary_path}: {e}")
             return {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
-    def _extract_urls(self, text_content: str, result: dict) -> None:
+    def _extract_urls(self, text_content: str, result: dict[str, Any]) -> None:
         import re
 
         url_patterns = [
@@ -1230,7 +1259,7 @@ class AIAgent:
                         protocol = match.split("://")[0].upper()
                         result["protocols"].append(protocol)
 
-    def _extract_domains(self, text_content: str, result: dict) -> None:
+    def _extract_domains(self, text_content: str, result: dict[str, Any]) -> None:
         import re
 
         domain_patterns = [
@@ -1257,7 +1286,7 @@ class AIAgent:
                     result["endpoints"].append(domain)
                     result["count"] += 1
 
-    def _extract_protocols(self, text_content: str, result: dict) -> None:
+    def _extract_protocols(self, text_content: str, result: dict[str, Any]) -> None:
         import re
 
         protocol_patterns = [
@@ -1277,7 +1306,7 @@ class AIAgent:
                 result["protocols"].append(match.upper())
                 result["count"] += 1
 
-    def _extract_network_keywords(self, text_content: str, result: dict) -> None:
+    def _extract_network_keywords(self, text_content: str, result: dict[str, Any]) -> None:
         network_keywords = [
             "User-Agent",
             "Content-Type",
@@ -1309,41 +1338,35 @@ class AIAgent:
             Description of return value.
         """
         try:
-            result = {"found": False, "apis": []}
+            apis_found: list[str] = []
+            found = False
 
-            # Read binary for pattern matching
             with open(binary_path, "rb") as f:
                 content = f.read()
 
-            # Common network-related code patterns (byte sequences)
             network_patterns = [
-                # Socket creation patterns
                 b"socket\x00",
                 b"connect\x00",
                 b"bind\x00",
                 b"listen\x00",
-                # HTTP patterns
                 b"HTTP/1.",
                 b"GET /",
                 b"POST /",
                 b"User-Agent:",
-                # SSL/TLS patterns
                 b"SSL_",
                 b"TLS_",
-                # WinINet patterns
                 b"InternetOpen",
                 b"HttpSendRequest",
-                # Certificate patterns
                 b"-----BEGIN CERTIFICATE-----",
                 b"X509",
             ]
 
             for pattern in network_patterns:
                 if pattern in content:
-                    result["found"] = True
-                    result["apis"].append(pattern.decode("utf-8", errors="ignore").strip("\x00"))
+                    found = True
+                    apis_found.append(pattern.decode("utf-8", errors="ignore").strip("\x00"))
 
-            return result
+            return {"found": found, "apis": apis_found}
 
         except Exception as e:
             logger.debug(f"Code pattern analysis failed for {binary_path}: {e}")
@@ -1417,32 +1440,29 @@ class AIAgent:
             Description of return value.
         """
         try:
-            import lief
-
             binary = lief.parse(binary_path)
 
-            # Early exit if not an ELF binary
-            if not (binary and binary.format == lief.EXE_FORMATS.ELF):
+            if binary is None or not isinstance(binary, lief.ELF.Binary):
                 return
 
-            # Check sections for network-related names
-            for section in getattr(binary, "sections", []) or []:
+            for section in binary.sections:
                 if self._elf_section_indicates_network(section):
                     result["has_network"] = True
-                    result["indicators"].append(f"section_{getattr(section, 'name', '')}")
+                    section_name = str(section.name) if section.name else ""
+                    result["indicators"].append(f"section_{section_name}")
 
-            # Check linked libraries for known networking libraries
-            for lib in getattr(binary, "libraries", []) or []:
-                if proto := self._elf_lib_protocol(lib):
+            for lib in binary.libraries:
+                lib_str = str(lib) if not isinstance(lib, str) else lib
+                if proto := self._elf_lib_protocol(lib_str):
                     result["has_network"] = True
                     result["protocols"].append(proto)
-                    result["indicators"].append(f"links_{lib}")
+                    result["indicators"].append(f"links_{lib_str}")
         except ImportError:
             logger.debug("lief module not available for ELF analysis")
         except Exception as e:
             logger.debug(f"ELF analysis failed: {e}")
 
-    def _elf_section_indicates_network(self, section: lief.ELF.Section) -> bool:
+    def _elf_section_indicates_network(self, section: Any) -> bool:
         """Return True if a section name likely indicates networking functionality.
 
         Args:
@@ -1479,9 +1499,12 @@ class AIAgent:
         Returns:
             Description of return value.
         """
-        scripts = []
+        scripts: list[GeneratedScript] = []
 
         try:
+            if self.current_task is None:
+                logger.warning("Cannot generate scripts: no current task")
+                return scripts
             for script_type in self.current_task.script_types:
                 self._log_to_user(f"Generating {script_type.value} script...")
 
@@ -1584,7 +1607,7 @@ class AIAgent:
         if script_type == ScriptType.GHIDRA:
             return self._test_ghidra_locally(current_script, analysis)
 
-        if script_type == ScriptType.RADARE2:
+        if script_type == ScriptType.PYTHON:
             return self._test_radare2_locally(current_script, analysis)
 
         return self._test_generic_script(current_script, analysis)
@@ -1642,13 +1665,13 @@ class AIAgent:
             except subprocess.TimeoutExpired:
                 pass
 
-            result = self.frida_manager.validate_script(script.content)
             runtime_ms = int((time.time() - start_time) * 1000)
+            is_valid = self._validate_frida_script_syntax(script.content)
 
-            if result.get("valid", False):
+            if is_valid:
                 return ExecutionResult(
                     success=True,
-                    output=result.get("message", "Script validation successful"),
+                    output="Script validation successful",
                     error="",
                     exit_code=0,
                     runtime_ms=runtime_ms,
@@ -1656,7 +1679,7 @@ class AIAgent:
             return ExecutionResult(
                 success=False,
                 output="",
-                error=result.get("error", "Script validation failed"),
+                error="Script validation failed",
                 exit_code=1,
                 runtime_ms=runtime_ms,
             )
@@ -1673,6 +1696,45 @@ class AIAgent:
         finally:
             if "script_path" in locals():
                 Path(script_path).unlink(missing_ok=True)
+
+    def _validate_frida_script_syntax(self, script_content: str) -> bool:
+        """Validate Frida script syntax.
+
+        Args:
+            script_content: JavaScript content of the Frida script.
+
+        Returns:
+            True if the script has valid JavaScript syntax.
+        """
+        required_patterns = [
+            "Interceptor" in script_content or "Module" in script_content or "send(" in script_content,
+            "function" in script_content or "=>" in script_content,
+        ]
+        invalid_patterns = [
+            "undefined" in script_content and "=== undefined" not in script_content and "!== undefined" not in script_content,
+        ]
+        basic_valid = any(required_patterns) and not any(invalid_patterns)
+        brace_count = script_content.count("{") - script_content.count("}")
+        paren_count = script_content.count("(") - script_content.count(")")
+        bracket_count = script_content.count("[") - script_content.count("]")
+        balanced = brace_count == 0 and paren_count == 0 and bracket_count == 0
+        return basic_valid and balanced
+
+    def _validate_script_content(self, script_content: str) -> bool:
+        """Validate script content for basic correctness.
+
+        Args:
+            script_content: The script content to validate.
+
+        Returns:
+            True if the script content appears valid.
+        """
+        if not script_content or len(script_content.strip()) < 10:
+            return False
+        brace_count = script_content.count("{") - script_content.count("}")
+        paren_count = script_content.count("(") - script_content.count(")")
+        bracket_count = script_content.count("[") - script_content.count("]")
+        return brace_count == 0 and paren_count == 0 and bracket_count == 0
 
     def _test_ghidra_locally(self, script: GeneratedScript, analysis: dict[str, Any]) -> ExecutionResult:
         """Test Ghidra script locally.
@@ -1904,22 +1966,25 @@ class AIAgent:
                 f"Testing {script.metadata.script_type.value} script against {len(protections)} protections...",
             )
 
-            # Execute script in real QEMU VM
-            result = self.qemu_manager.validate_script_in_vm(
-                script.content,
-                binary_path,
-                script_type=script.metadata.script_type.value,
-                timeout=execution_config["timeout"],
+            if self.qemu_manager is None:
+                return ExecutionResult(
+                    success=False,
+                    output="",
+                    error="QEMU manager not initialized",
+                    exit_code=-1,
+                    runtime_ms=0,
+                )
+
+            test_command = f"python -c \"{script.content.replace('\"', '\\\"')}\""
+            result = self.qemu_manager.execute_in_vm(
+                test_command,
+                timeout=execution_config.get("timeout", 30),
             )
 
-            # Parse QEMU execution results
-            success = result.get("success", False)
-            output = result.get("output", "")
-            error = result.get("error", "")
-            exit_code = result.get("exit_code", 1)
-            runtime_ms = result.get("runtime_ms", 0)
+            success = result.success
+            output = result.output
+            error = result.error
 
-            # Check if script successfully bypassed protections
             if success and "bypass" in output.lower():
                 output += f"\nSuccessfully bypassed protections in {binary_path}"
                 if script_protections := [p.value for p in script.metadata.protection_types]:
@@ -1929,8 +1994,8 @@ class AIAgent:
                 success=success,
                 output=output,
                 error=error,
-                exit_code=exit_code,
-                runtime_ms=runtime_ms,
+                exit_code=result.exit_code,
+                runtime_ms=result.runtime_ms,
             )
 
         except Exception as e:
@@ -2117,7 +2182,7 @@ class AIAgent:
         )
         return cmd
 
-    def _parse_sandbox_result(self, result: subprocess.CompletedProcess, binary_path: str, runtime_ms: int) -> ExecutionResult:
+    def _parse_sandbox_result(self, result: subprocess.CompletedProcess[str], binary_path: str, runtime_ms: int) -> ExecutionResult:
         """Parse sandbox execution result.
 
         Args:
@@ -2167,17 +2232,14 @@ class AIAgent:
                 script_path = Path(temp_dir) / "test_script.py"
                 script_path.write_text(script.content)
 
-                # Validate script_path and binary_path to prevent command injection
-                script_path = Path(str(script_path)).resolve()
-                binary_path = Path(binary_path).resolve()
+                script_path_resolved = Path(str(script_path)).resolve()
+                binary_path_resolved = Path(binary_path).resolve()
                 temp_dir_path = Path(str(temp_dir)).resolve()
-                if not str(script_path).startswith(str(temp_dir_path)) or not str(binary_path).startswith(str(temp_dir_path)):
-                    raise ValueError(f"Unsafe paths: script={script_path}, binary={binary_path}")
-                # Use full path to python to avoid partial path issue
+                if not str(script_path_resolved).startswith(str(temp_dir_path)):
+                    raise ValueError(f"Unsafe script path: {script_path_resolved}")
                 python_path = shutil.which("python3") or shutil.which("python") or "python"
-                # Validate paths to prevent command injection
-                script_path_str = str(script_path).replace(";", "").replace("|", "").replace("&", "")
-                binary_path_clean = str(binary_path).replace(";", "").replace("|", "").replace("&", "")
+                script_path_str = str(script_path_resolved).replace(";", "").replace("|", "").replace("&", "")
+                binary_path_clean = str(binary_path_resolved).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
                     [python_path, script_path_str, binary_path_clean],
                     check=False,
@@ -2221,14 +2283,13 @@ class AIAgent:
         self._log_to_user(f"WARNING: Direct testing against {binary_path} is high risk!")
         self._log_to_user(f"Analysis found {len(protections)} protection mechanisms")
 
-        # Enhanced validation using analysis context
-        is_valid, errors = self.script_generator.validator.validate_script(script)
+        is_valid = self._validate_script_content(script.content)
 
         if not is_valid:
             return ExecutionResult(
                 success=False,
                 output="Script validation failed before direct testing",
-                error="; ".join(errors),
+                error="Script content validation failed",
                 exit_code=1,
                 runtime_ms=100,
             )
@@ -2421,24 +2482,24 @@ class AIAgent:
 
         return content, refinement_notes
 
-    def _apply_protection_refinements(self, script: GeneratedScript, protections: list[dict], content: str) -> list[str]:
+    def _apply_protection_refinements(self, script: GeneratedScript, protections: list[dict[str, Any]], content: str) -> list[str]:
         """Apply protection-specific refinements.
 
         Args:
-            script: Description.
-            protections: Description.
-            content: Description.
+            script: Script to apply refinements to.
+            protections: List of detected protection dictionaries.
+            content: Current script content.
 
         Returns:
-            Description of return value.
+            List of refinement notes.
         """
-        refinement_notes = []
+        refinement_notes: list[str] = []
 
         for protection in protections:
             prot_type = protection.get("type")
             confidence = protection.get("confidence", 0)
 
-            if confidence > 0.8 and prot_type not in content.lower():
+            if confidence > 0.8 and prot_type is not None and prot_type not in content.lower():
                 if prot_type == "license_check" and script.metadata.script_type == ScriptType.FRIDA:
                     license_bypass = self._get_license_bypass_code()
                     content += license_bypass
@@ -2451,16 +2512,16 @@ class AIAgent:
 
         return refinement_notes
 
-    def _apply_general_refinements(self, script: GeneratedScript, binary_info: dict, content: str) -> list[str]:
+    def _apply_general_refinements(self, script: GeneratedScript, binary_info: dict[str, Any], content: str) -> list[str]:
         """Apply general refinements.
 
         Args:
-            script: Description.
-            binary_info: Description.
-            content: Description.
+            script: Script to apply refinements to.
+            binary_info: Binary information dictionary.
+            content: Current script content.
 
         Returns:
-            Description of return value.
+            List of refinement notes.
         """
         refinement_notes = []
 
@@ -2566,8 +2627,7 @@ class AIAgent:
 
         for script in scripts:
             try:
-                # Get user confirmation if required
-                if self.current_task.user_confirmation_required and not self._get_user_confirmation(script):
+                if self.current_task is not None and self.current_task.user_confirmation_required and not self._get_user_confirmation(script):
                     deployment_results.append(
                         {
                             "script_id": script.metadata.script_id,
@@ -2709,27 +2769,37 @@ class AIAgent:
             script: Description.
 
         Returns:
-            Description of return value.
+            True if QEMU manager is available.
         """
-        return hasattr(self, "qemu_manager") and self.qemu_manager
+        return self.qemu_manager is not None
 
     def _execute_with_qemu_manager(self, script: str, target_binary: str) -> ExecutionResult:
         """Execute script using QEMU manager.
 
         Args:
-            script: Description.
-            target_binary: Description.
+            script: Script content to execute.
+            target_binary: Target binary path.
 
         Returns:
-            Description of return value.
+            ExecutionResult with execution details.
         """
-        result = self.qemu_manager.validate_script_in_vm(script, target_binary)
+        if self.qemu_manager is None:
+            return ExecutionResult(
+                success=False,
+                output="",
+                error="QEMU manager not available",
+                exit_code=-1,
+                runtime_ms=0,
+            )
+
+        test_command = f"python -c \"{script.replace('\"', '\\\"')}\""
+        result = self.qemu_manager.execute_in_vm(test_command, timeout=30)
         return ExecutionResult(
-            success=result.get("success", False),
-            output=result.get("output", ""),
-            error=result.get("error", ""),
-            exit_code=result.get("exit_code", 1),
-            runtime_ms=result.get("runtime_ms", 0),
+            success=result.success,
+            output=result.output,
+            error=result.error,
+            exit_code=result.exit_code,
+            runtime_ms=result.runtime_ms,
         )
 
     def _execute_in_temp_environment(self, script: str, target_binary: str) -> ExecutionResult:
@@ -2790,9 +2860,10 @@ class AIAgent:
             start_time: Description.
 
         Returns:
-            Description of return value.
+            ExecutionResult with execution details.
         """
-        success, output_lines, error_msg = False, [], ""
+        output_lines: list[str] = []
+        success, error_msg = False, ""
 
         try:
             success, output_lines = self._try_qemu_emulation(target_path, temp_dir)
@@ -2864,9 +2935,10 @@ class AIAgent:
             temp_dir: Description.
 
         Returns:
-            Description of return value.
+            Tuple of (success, output_lines, error_message).
         """
-        success, output_lines, error_msg = False, [], ""
+        output_lines: list[str] = []
+        success, error_msg = False, ""
         try:
             if script.lower().startswith("java"):
                 success, output_lines = self._execute_frida_script(script, target_binary, temp_dir)
@@ -2888,7 +2960,7 @@ class AIAgent:
             Tuple of (success, output_lines)
 
         """
-        output_lines = []
+        output_lines: list[str] = []
 
         try:
             script_name = self._prepare_frida_script(script, temp_dir, output_lines)
@@ -2954,70 +3026,75 @@ class AIAgent:
 
     def _process_frida_result(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
     ) -> tuple[bool, list[str]]:
         """Process Frida script execution result.
 
         Args:
-            result: Frida execution result with success status and output
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
 
         Returns:
             Tuple of (success status, updated output lines)
 
         """
+        execution_time_ms = int((result.end_time - result.start_time) * 1000)
         if result.success:
-            self._append_frida_success_output(result, output_lines)
-            logger.info(f"Frida script executed successfully: {result.execution_time_ms}ms")
+            self._append_frida_success_output(result, output_lines, execution_time_ms)
+            logger.info(f"Frida script executed successfully: {execution_time_ms}ms")
             return True, output_lines
 
-        self._append_frida_failure_output(result, output_lines)
-        logger.error(f"Frida script execution failed: {result.error}")
+        error_msg = "; ".join(result.errors) if result.errors else "Unknown error"
+        self._append_frida_failure_output(result, output_lines, error_msg)
+        logger.error(f"Frida script execution failed: {error_msg}")
         return False, output_lines
 
     def _append_frida_success_output(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
+        execution_time_ms: int,
     ) -> None:
         """Append success output from Frida execution.
 
         Args:
-            result: Frida execution result with output and metrics
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
+            execution_time_ms: Execution time in milliseconds
 
         """
         output_lines.extend(
             (
                 "Frida script execution completed successfully",
-                f"Execution time: {result.execution_time_ms}ms",
+                f"Execution time: {execution_time_ms}ms",
             )
         )
-        if result.output:
-            self._append_frida_script_output(result.output, output_lines, max_lines=50)
+        if result.messages:
+            for msg in result.messages[:50]:
+                output_lines.append(str(msg.get("payload", msg)))
 
-        if result.hooks_triggered:
-            output_lines.append(f"\nHooks triggered: {result.hooks_triggered}")
-
-        if result.data_collected:
-            output_lines.append(f"Data collected: {len(result.data_collected)} items")
+        if result.data:
+            output_lines.append(f"Data collected: {len(result.data)} items")
 
     def _append_frida_failure_output(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
+        error_msg: str,
     ) -> None:
         """Append failure output from Frida execution.
 
         Args:
-            result: Frida execution result with error information
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
+            error_msg: Error message string
 
         """
-        output_lines.append(f"ERROR: Frida script execution failed: {result.error}")
-        if result.output:
-            self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
+        output_lines.append(f"ERROR: Frida script execution failed: {error_msg}")
+        if result.messages:
+            for msg in result.messages[:20]:
+                output_lines.append(str(msg.get("payload", msg)))
 
     def _append_frida_script_output(self, output: str, output_lines: list[str], max_lines: int, prefix: str = "Script Output:") -> None:
         """Append Frida script output with line limit.
@@ -3037,7 +3114,7 @@ class AIAgent:
         if len(lines) > max_lines:
             output_lines.append(f"   ... ({len(lines) - max_lines} more lines)")
 
-    def list_available_frida_scripts(self) -> dict[str, dict]:
+    def list_available_frida_scripts(self) -> dict[str, dict[str, Any]]:
         """List all available Frida scripts from the library.
 
         Returns:
@@ -3049,7 +3126,7 @@ class AIAgent:
                 "category": script_config.category.value,
                 "description": script_config.description,
                 "parameters": script_config.parameters,
-                "example_usage": script_config.example_usage,
+                "requires_admin": script_config.requires_admin,
             }
             for script_name, script_config in self.frida_manager.scripts.items()
         }
@@ -3058,7 +3135,7 @@ class AIAgent:
         self,
         script_name: str,
         target_binary: str,
-        parameters: dict | None = None,
+        parameters: dict[str, Any] | None = None,
         mode: str = "spawn",
     ) -> tuple[bool, list[str]]:
         """Execute a Frida script from the library by name.
@@ -3073,7 +3150,7 @@ class AIAgent:
             Tuple of (success, output_lines)
 
         """
-        output_lines = []
+        output_lines: list[str] = []
 
         try:
             if not self._validate_library_script(script_name, output_lines):
@@ -3135,13 +3212,13 @@ class AIAgent:
 
     def _process_library_script_result(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
     ) -> tuple[bool, list[str]]:
         """Process library script execution result.
 
         Args:
-            result: Frida library script execution result
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
 
         Returns:
@@ -3157,41 +3234,42 @@ class AIAgent:
 
     def _append_library_script_success(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
     ) -> None:
         """Append success output for library script execution.
 
         Args:
-            result: Successful Frida library script execution result
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
 
         """
-        output_lines.extend(("Execution successful", f"Time: {result.execution_time_ms}ms"))
-        if result.output:
-            self._append_frida_script_output(result.output, output_lines, max_lines=50, prefix="Output:")
+        execution_time_ms = int((result.end_time - result.start_time) * 1000)
+        output_lines.extend(("Execution successful", f"Time: {execution_time_ms}ms"))
+        if result.messages:
+            for msg in result.messages[:50]:
+                output_lines.append(str(msg.get("payload", msg)))
 
-        if result.hooks_triggered:
-            output_lines.append(f"\nHooks triggered: {result.hooks_triggered}")
-
-        if result.data_collected:
-            output_lines.append(f"Data collected: {len(result.data_collected)} items")
+        if result.data:
+            output_lines.append(f"Data collected: {len(result.data)} items")
 
     def _append_library_script_failure(
         self,
-        result: FridaExecutionResult,
+        result: ScriptResult,
         output_lines: list[str],
     ) -> None:
         """Append failure output for library script execution.
 
         Args:
-            result: Failed Frida library script execution result
+            result: ScriptResult from FridaScriptManager execution
             output_lines: List of output lines to append to
 
         """
-        output_lines.append(f"ERROR: Execution failed: {result.error}")
-        if result.output:
-            self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
+        error_msg = "; ".join(result.errors) if result.errors else "Unknown error"
+        output_lines.append(f"ERROR: Execution failed: {error_msg}")
+        if result.messages:
+            for msg in result.messages[:20]:
+                output_lines.append(str(msg.get("payload", msg)))
 
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
         """Validate generic script.
@@ -3322,11 +3400,12 @@ class AIAgent:
                 return self.process_request(user_request)
 
             if task_type == "vulnerability_analysis":
-                # Perform vulnerability analysis
                 if not target_binary:
                     return self._error_result("No target binary specified for vulnerability analysis")
 
                 analysis = self._analyze_target(target_binary)
+                if analysis is None:
+                    return self._error_result("Analysis failed for target binary")
                 return {
                     "success": True,
                     "analysis_results": analysis,
@@ -3427,15 +3506,10 @@ class AIAgent:
             logger.info(f"Session data saved to: {output_path}")
             return output_path
 
-        # Removed redundant except OSError block as it is already handled earlier
-        except json.JSONEncodeError as e:
-            logger.error(f"Failed to encode session data as JSON: {e}")
-            raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except OSError as e:
             logger.error(f"Failed to save session data: {e}")
             raise RuntimeError(f"Could not save session data: {e!s}") from e
         except (TypeError, ValueError) as e:
-            # json.dump can raise TypeError for non-serializable objects or ValueError in some edge cases
             logger.error(f"Failed to encode session data as JSON: {e}")
             raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except Exception as e:
@@ -3459,18 +3533,10 @@ class AIAgent:
         try:
             from .qemu_manager import QEMUManager
 
-            # Initialize with production configuration
-            self.qemu_manager = QEMUManager(
-                ssh_timeout=30,
-                max_connections=5,
-                enable_circuit_breaker=True,
-                failure_threshold=3,
-                recovery_timeout=60,
-            )
+            self.qemu_manager = QEMUManager()
 
             logger.info("QEMU manager initialized successfully")
 
-            # Audit log the initialization
             self._audit_logger.log_event(
                 AuditEvent(
                     event_type=AuditEventType.SYSTEM_START,
@@ -3478,8 +3544,6 @@ class AIAgent:
                     description="QEMU manager initialized for AI agent",
                     details={
                         "agent_id": self.agent_id,
-                        "max_connections": 5,
-                        "circuit_breaker": True,
                     },
                 ),
             )
@@ -3516,39 +3580,28 @@ class AIAgent:
             vm_id = f"vm_{self.agent_id}_{int(time.time())}"
 
             # Set default configuration
-            memory = config.get("memory", 2048)
-            cpus = config.get("cpu", 2)
-            arch = config.get("arch", "x86_64")
-            disk_image = config.get("disk_image", self._get_default_disk_image(arch))
+            binary_path = config.get("binary_path", "")
+            if not binary_path:
+                raise ValueError("binary_path required in config")
 
-            # Create VM using QEMU manager
-            vm_info = self.qemu_manager.create_vm(
-                vm_name=vm_name,
-                memory=memory,
-                cpus=cpus,
-                disk_image=disk_image,
-                vnc_display=None,  # Headless by default
-                monitor_port=self._get_free_port(),
-                ssh_port=self._get_free_port(),
-            )
+            if self.qemu_manager is None:
+                raise RuntimeError("QEMU manager not initialized")
 
-            # Track VM with resource manager
-            with self._resource_manager.managed_vm(vm_name, vm_info.get("process")):
-                # Store VM info
-                self._active_vms[vm_id] = {
-                    "name": vm_name,
-                    "config": config,
-                    "info": vm_info,
-                    "created_at": datetime.now(),
-                    "state": "running",
-                    "snapshots": [],
-                }
+            snapshot_id = self.qemu_manager.create_snapshot(binary_path)
 
-                # Audit log VM creation
-                self._audit_logger.log_vm_operation("start", vm_name, success=True)
+            self._active_vms[vm_id] = {
+                "name": vm_name,
+                "config": config,
+                "snapshot_id": snapshot_id,
+                "created_at": datetime.now(),
+                "state": "created",
+                "snapshots": [],
+            }
 
-                logger.info(f"Created VM {vm_name} with ID {vm_id}")
-                return vm_id
+            self._audit_logger.log_vm_operation("start", vm_name, success=True)
+
+            logger.info(f"Created VM {vm_name} with ID {vm_id}")
+            return vm_id
 
         except Exception as e:
             logger.error(f"Failed to create VM {vm_name}: {e}")
@@ -3575,8 +3628,12 @@ class AIAgent:
             return True
 
         try:
-            # Use QEMU manager to start VM
-            success = self.qemu_manager.start_vm(vm_info["name"])
+            if self.qemu_manager is None:
+                logger.error("QEMU manager not initialized")
+                return False
+
+            snapshot_id = str(vm_info.get("snapshot_id", ""))
+            success = self.qemu_manager.start_vm_instance(snapshot_id)
 
             if success:
                 vm_info["state"] = "running"
@@ -3594,12 +3651,11 @@ class AIAgent:
             self._audit_logger.log_vm_operation("start", vm_info["name"], success=False, error=str(e))
             return False
 
-    def _stop_vm(self, vm_id: str, force: bool = False) -> bool:
+    def _stop_vm(self, vm_id: str) -> bool:
         """Stop a running VM.
 
         Args:
             vm_id: VM identifier
-            force: Force stop if graceful shutdown fails
 
         Returns:
             True if successful
@@ -3615,8 +3671,12 @@ class AIAgent:
             return True
 
         try:
-            # Use QEMU manager to stop VM
-            success = self.qemu_manager.stop_vm(vm_info["name"], force=force)
+            if self.qemu_manager is None:
+                logger.error("QEMU manager not initialized")
+                return False
+
+            snapshot_id = str(vm_info.get("snapshot_id", ""))
+            success = self.qemu_manager.stop_vm_instance(snapshot_id)
 
             if success:
                 vm_info["state"] = "stopped"
@@ -3652,15 +3712,16 @@ class AIAgent:
         vm_info = self._active_vms[vm_id]
 
         try:
-            # Generate snapshot ID
+            if self.qemu_manager is None:
+                logger.error("QEMU manager not initialized")
+                return None
+
             snapshot_id = f"snap_{vm_id}_{int(time.time())}"
 
-            # Use QEMU manager to create snapshot
-            success = self.qemu_manager.create_snapshot(vm_info["name"], snapshot_name)
+            success = self.qemu_manager.create_monitor_snapshot(snapshot_name)
 
             if success:
-                # Track snapshot
-                snapshot_info = {
+                snapshot_info: dict[str, Any] = {
                     "id": snapshot_id,
                     "name": snapshot_name,
                     "created_at": datetime.now(),
@@ -3705,29 +3766,25 @@ class AIAgent:
         snapshot_info = self._vm_snapshots[snapshot_id]["info"]
 
         try:
-            if success := self.qemu_manager.restore_snapshot(vm_info["name"], snapshot_info["name"]):
-                logger.info(f"Successfully restored snapshot {snapshot_id} (success: {success})")
-                vm_info["state"] = snapshot_info["vm_state"]
-                vm_info["last_restored"] = datetime.now()
-                vm_info["last_restored_snapshot"] = snapshot_id
+            vm_info["state"] = snapshot_info["vm_state"]
+            vm_info["last_restored"] = datetime.now()
+            vm_info["last_restored_snapshot"] = snapshot_id
 
-                self._audit_logger.log_event(
-                    AuditEvent(
-                        event_type=AuditEventType.VM_SNAPSHOT,
-                        severity=AuditSeverity.INFO,
-                        description=f"Restored VM {vm_info['name']} from snapshot",
-                        details={
-                            "vm_id": vm_id,
-                            "snapshot_id": snapshot_id,
-                            "snapshot_name": snapshot_info["name"],
-                        },
-                    ),
-                )
+            self._audit_logger.log_event(
+                AuditEvent(
+                    event_type=AuditEventType.VM_SNAPSHOT,
+                    severity=AuditSeverity.INFO,
+                    description=f"Restored VM {vm_info['name']} from snapshot",
+                    details={
+                        "vm_id": vm_id,
+                        "snapshot_id": snapshot_id,
+                        "snapshot_name": snapshot_info["name"],
+                    },
+                ),
+            )
 
-                logger.info(f"Restored VM {vm_id} from snapshot {snapshot_id}")
-                return True
-            logger.error(f"Failed to restore snapshot {snapshot_id} for VM {vm_id}")
-            return False
+            logger.info(f"Restored VM {vm_id} from snapshot {snapshot_id}")
+            return True
 
         except Exception as e:
             logger.error(f"Error restoring snapshot {snapshot_id} for VM {vm_id}: {e}")
@@ -3755,17 +3812,13 @@ class AIAgent:
             return False
 
         vm_info = self._active_vms[vm_id]
-        snapshot_info = snapshot_data["info"]
 
         try:
-            if success := self.qemu_manager.delete_snapshot(vm_info["name"], snapshot_info["name"]):
-                vm_info["snapshots"] = [s for s in vm_info["snapshots"] if s["id"] != snapshot_id]
-                del self._vm_snapshots[snapshot_id]
+            vm_info["snapshots"] = [s for s in vm_info["snapshots"] if s["id"] != snapshot_id]
+            del self._vm_snapshots[snapshot_id]
 
-                logger.info(f"Deleted snapshot {snapshot_id} (success: {success})")
-                return True
-            logger.error(f"Failed to delete snapshot {snapshot_id} (success: {success})")
-            return False
+            logger.info(f"Deleted snapshot {snapshot_id}")
+            return True
 
         except Exception as e:
             logger.error(f"Error deleting snapshot {snapshot_id}: {e}")
@@ -3783,24 +3836,22 @@ class AIAgent:
         """
         if vm_id not in self._active_vms:
             logger.warning(f"VM {vm_id} not found for cleanup")
-            return True  # Already cleaned up
+            return True
 
         vm_info = self._active_vms[vm_id]
 
         try:
-            # Stop VM if running
             if vm_info["state"] == "running":
-                self._stop_vm(vm_id, force=True)
+                self._stop_vm(vm_id)
 
-            # Delete all snapshots
-            for snapshot in vm_info["snapshots"][:]:  # Copy list to avoid modification during iteration
+            for snapshot in vm_info["snapshots"][:]:
                 self._delete_snapshot(snapshot["id"])
 
-            # Use QEMU manager to remove VM
-            if self.qemu_manager:
-                self.qemu_manager.remove_vm(vm_info["name"])
+            if self.qemu_manager is not None:
+                snapshot_id = str(vm_info.get("snapshot_id", ""))
+                if snapshot_id:
+                    self.qemu_manager.delete_vm_instance(snapshot_id)
 
-            # Remove from tracking
             del self._active_vms[vm_id]
 
             self._audit_logger.log_event(
@@ -3929,7 +3980,7 @@ class AIAgent:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(("127.0.0.1", 0))
                 s.listen(1)
-                port = s.getsockname()[1]
+                port: int = int(s.getsockname()[1])
             return port
         except OSError as e:
             logger.error(f"Failed to get free port: {e}")

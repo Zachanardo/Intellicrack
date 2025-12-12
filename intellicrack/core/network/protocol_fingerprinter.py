@@ -21,7 +21,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import math
-import os
 import re
 import socket
 import sys
@@ -30,7 +29,8 @@ import traceback
 from collections import Counter
 from typing import Any
 
-from ...utils.protection_utils import calculate_entropy
+from intellicrack.data import PROTOCOL_SIGNATURES
+from intellicrack.utils.protection_utils import calculate_entropy
 
 
 print("[DEBUG protocol_fingerprinter] Module loading started")
@@ -65,11 +65,7 @@ class ProtocolFingerprinter:
             "max_fingerprints": 100,
             "learning_mode": True,
             "analysis_depth": 3,
-            "signature_db_path": os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "data",
-                "protocol_signatures.json",
-            ),
+            "signature_db_path": str(PROTOCOL_SIGNATURES),
         }
 
         # Update with provided configuration

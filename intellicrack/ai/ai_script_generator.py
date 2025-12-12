@@ -1683,7 +1683,7 @@ DateSpoofer.spoofAllDateSources();
             success_probability = self._calculate_success_probability(protection_types, analysis_data)
 
             metadata = ScriptMetadata(
-                script_id=f"frida_{hashlib.md5(binary_path.encode()).hexdigest()[:8]}",
+                script_id=f"frida_{hashlib.sha256(binary_path.encode()).hexdigest()[:8]}",
                 script_type=ScriptType.FRIDA,
                 iterations=0,
                 success_probability=success_probability,
@@ -1753,7 +1753,7 @@ DateSpoofer.spoofAllDateSources();
             success_probability = self._calculate_success_probability(protection_types, analysis_data)
 
             metadata = ScriptMetadata(
-                script_id=f"ghidra_{hashlib.md5(binary_path.encode()).hexdigest()[:8]}",
+                script_id=f"ghidra_{hashlib.sha256(binary_path.encode()).hexdigest()[:8]}",
                 script_type=ScriptType.GHIDRA,
                 iterations=0,
                 success_probability=success_probability,

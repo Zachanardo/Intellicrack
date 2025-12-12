@@ -336,20 +336,20 @@ def _apply_tooltips_to_line_edits(parent_widget: object, all_tooltips: dict[str,
 
     line_edits: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(line_edit_class)
     for line_edit in line_edits:
-        def get_hint_text_from_props() -> str:
-            props: list[Any] = getattr(line_edit, "dynamicPropertyNames", lambda: [])()
+        def get_hint_text_from_props(current_line_edit: Any) -> str:
+            props: list[Any] = getattr(current_line_edit, "dynamicPropertyNames", lambda: [])()
             for prop in props:
                 prop_data_func = getattr(prop, "data", lambda: lambda: b"")
                 prop_data_bytes = prop_data_func()
                 prop_name: str = prop_data_bytes.decode() if isinstance(prop_data_bytes, bytes) else str(prop_data_bytes)
                 if prop_name == "hintText":
-                    hint_result = getattr(line_edit, "property", lambda x: lambda: "")(
+                    hint_result = getattr(current_line_edit, "property", lambda x: lambda: "")(
                         "hintText"
                     )
                     return str(hint_result) if hint_result else ""
             return ""
 
-        hint_text: str = get_hint_text_from_props()
+        hint_text: str = get_hint_text_from_props(line_edit)
         object_name: str = getattr(line_edit, "objectName", lambda: "")()
 
         if hint_text in all_tooltips:

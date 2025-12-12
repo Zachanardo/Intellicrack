@@ -707,7 +707,7 @@ class PatternEvolutionEngine:
         target_type = pattern_data.get("target_type", "unknown")
         confidence = pattern_data.get("confidence", 0.5)
 
-        feature_sig = hashlib.md5(str(feature_vector).encode()).hexdigest()[:8]
+        feature_sig = hashlib.sha256(str(feature_vector).encode()).hexdigest()[:8]
         pattern_name = f"{pattern_type}_{technique}_{target_type}_{feature_sig}"
 
         condition_parts = []

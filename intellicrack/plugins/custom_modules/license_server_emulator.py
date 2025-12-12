@@ -35,7 +35,6 @@ import subprocess
 import threading
 import time
 import uuid
-import xml.etree.ElementTree as ET
 import zlib
 from collections.abc import Callable
 from ctypes import wintypes
@@ -46,7 +45,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypedDict, cast
 
-import defusedxml.ElementTree as DefusedElementTree
+import defusedxml.ElementTree as ET
 import jwt
 import psutil
 import uvicorn
@@ -121,6 +120,53 @@ pefile = _pefile
 capstone = _capstone
 
 "\nLicense Server Emulator\n\nComprehensive local license server emulator supporting multiple licensing\nprotocols including FlexLM, HASP, Microsoft KMS, Adobe, and custom vendor\nsystems. Provides offline license validation and fallback capabilities.\n\nAuthor: Intellicrack Framework\nVersion: 2.0.0\nLicense: GPL v3\n"
+
+
+class ARC4Cipher:
+    """Pure Python implementation of RC4 (ARC4) stream cipher for legacy protocol emulation.
+    This implementation is provided for compatibility with systems using RC4 and for security research
+    purposes within the Intellicrack framework. RC4 is known to be insecure for many applications
+    and should not be used in new designs.
+    """
+    def __init__(self, key: bytes) -> None:
+        """Initialize ARC4 cipher with a key."""
+        self.key = key
+        self.s = list(range(256))
+        self.i = 0
+        self.j = 0
+        self._init_state()
+
+    def _init_state(self) -> None:
+        """KSA (Key-scheduling algorithm) to initialize the S-box."""
+        j = 0
+        for i in range(256):
+            j = (j + self.s[i] + self.key[i % len(self.key)]) % 256
+            self.s[i], self.s[j] = self.s[j], self.s[i]
+        self.i = 0
+        self.j = 0
+
+    def crypt(self, data: bytes) -> bytes:
+        """PRGA (Pseudo-random generation algorithm) to encrypt/decrypt data."""
+        output = bytearray()
+        s = list(self.s)  # Use a copy for encryption/decryption
+        i = self.i
+        j = self.j
+
+        for byte in data:
+            i = (i + 1) % 256
+            j = (j + s[i]) % 256
+            s[i], s[j] = s[j], s[i]
+            k = s[(s[i] + s[j]) % 256]
+            output.append(byte ^ k)
+        return bytes(output)
+
+    def encrypt(self, data: bytes) -> bytes:
+        """Encrypt data using ARC4."""
+        return self.crypt(data)
+
+    def decrypt(self, data: bytes) -> bytes:
+        """Decrypt data using ARC4."""
+        return self.crypt(data)
 
 
 class CryptoStructure(TypedDict):
@@ -4312,12 +4358,11 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-                from Crypto.Cipher import ARC4
 
-                cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
+                cipher = ARC4Cipher(key)
                 test_decrypt = cipher.decrypt(data[:100])
                 if self._looks_like_code(test_decrypt):
-                    cipher = ARC4.new(key)  # lgtm[py/weak-cryptographic-algorithm] RC4 used for legacy protection analysis
+                    cipher = ARC4Cipher(key)
                     decrypted = cipher.decrypt(data)
                     break
             except Exception as e:
@@ -5018,7 +5063,7 @@ class ProtocolStateMachine:
         response.extend(struct.pack(">I", max_licenses))
         expiry = min(int(time.time()) + 365 * 24 * 3600 * 10, 4294967295)
         response.extend(struct.pack(">I", expiry))
-        host_id = hashlib.md5(feature + version + license_serial).digest()[:8]
+        host_id = hashlib.sha256(feature + version + license_serial).digest()[:8]
         response.extend(host_id)
         if keys.get("vendor_keys"):
             vendor_key = bytes.fromhex(keys["vendor_keys"][0])

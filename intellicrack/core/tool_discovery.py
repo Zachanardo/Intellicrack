@@ -29,7 +29,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, TypedDict
 
 
 logger = logging.getLogger(__name__)
@@ -43,11 +43,20 @@ except ImportError:
     logger.warning("Terminal manager not available for tool discovery")
 
 
+class ValidationResult(TypedDict):
+    """Type definition for tool validation results."""
+
+    valid: bool
+    version: str | None
+    capabilities: list[str]
+    issues: list[str]
+
+
 class ToolValidator:
     """Validates tool installations and capabilities."""
 
     @staticmethod
-    def validate_ghidra(tool_path: str) -> dict[str, Any]:
+    def validate_ghidra(tool_path: str) -> ValidationResult:
         """Validate Ghidra installation.
 
         Args:
@@ -58,7 +67,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -66,17 +75,15 @@ class ToolValidator:
         }
 
         try:
-            # Check if it's actually Ghidra
             ghidra_dir = Path(tool_path).parent
 
-            # Look for Ghidra-specific files
             ghidra_files = [
                 "support/analyzeHeadless",
                 "support/analyzeHeadless.bat",
                 "Ghidra/application.properties",
             ]
 
-            found_files = []
+            found_files: list[str] = []
             for file_path in ghidra_files:
                 full_path = ghidra_dir / file_path
                 if full_path.exists():
@@ -86,9 +93,8 @@ class ToolValidator:
                 validation["issues"].append("Ghidra installation files not found")
                 return validation
 
-            # Try to get version
             try:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                result = subprocess.run(
                     [tool_path, "--version"],
                     check=False,
                     capture_output=True,
@@ -105,7 +111,6 @@ class ToolValidator:
                 logger.error("Exception in tool_discovery: %s", e)
                 validation["issues"].append(f"Version check failed: {e}")
 
-            # Check capabilities
             validation["capabilities"].extend(
                 [
                     "decompilation",
@@ -123,7 +128,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_radare2(tool_path: str) -> dict[str, Any]:
+    def validate_radare2(tool_path: str) -> ValidationResult:
         """Validate radare2 installation.
 
         Args:
@@ -134,7 +139,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -142,8 +147,7 @@ class ToolValidator:
         }
 
         try:
-            # Test basic functionality
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "-v"],
                 check=False,
                 capture_output=True,
@@ -156,7 +160,6 @@ class ToolValidator:
                 if version_match := re.search(r"radare2\s+(\d+\.\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
-                # Check for common plugins/capabilities
                 if "r2pm" in version_text:
                     validation["capabilities"].append("package_manager")
 
@@ -182,7 +185,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_python(tool_path: str) -> dict[str, Any]:
+    def validate_python(tool_path: str) -> ValidationResult:
         """Validate Python installation.
 
         Args:
@@ -193,7 +196,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -201,7 +204,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -215,7 +218,6 @@ class ToolValidator:
                     version = version_match[1]
                     validation["version"] = version
 
-                    # Check version compatibility
                     major, minor = map(int, version.split(".")[:2])
                     if major >= 3 and minor >= 8:
                         validation["capabilities"].append("compatible")
@@ -233,7 +235,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_frida(tool_path: str) -> dict[str, Any]:
+    def validate_frida(tool_path: str) -> ValidationResult:
         """Validate Frida installation.
 
         Args:
@@ -244,7 +246,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -252,7 +254,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -284,7 +286,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_qemu(tool_path: str) -> dict[str, Any]:
+    def validate_qemu(tool_path: str) -> ValidationResult:
         """Validate QEMU installation.
 
         Args:
@@ -295,7 +297,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -303,7 +305,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -316,7 +318,6 @@ class ToolValidator:
                 if version_match := re.search(r"QEMU emulator version\s+(\d+\.\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
-                # Determine architecture support from executable name
                 if "x86_64" in tool_path:
                     validation["capabilities"].append("x86_64")
                 if "i386" in tool_path:
@@ -340,7 +341,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_nasm(tool_path: str) -> dict[str, Any]:
+    def validate_nasm(tool_path: str) -> ValidationResult:
         """Validate NASM (Netwide Assembler) installation.
 
         Args:
@@ -351,7 +352,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -359,7 +360,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "-v"],
                 check=False,
                 capture_output=True,
@@ -372,7 +373,6 @@ class ToolValidator:
                 if version_match := re.search(r"NASM version\s+(\d+\.\d+(?:\.\d+)?)", version_text):
                     validation["version"] = version_match[1]
 
-                # NASM capabilities
                 validation["capabilities"].extend(
                     [
                         "assembly_compilation",
@@ -396,7 +396,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_masm(tool_path: str) -> dict[str, Any]:
+    def validate_masm(tool_path: str) -> ValidationResult:
         """Validate MASM (Microsoft Macro Assembler) installation.
 
         Args:
@@ -407,7 +407,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -415,8 +415,7 @@ class ToolValidator:
         }
 
         try:
-            # MASM typically shows help/version info with /? flag
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "/?"],
                 check=False,
                 capture_output=True,
@@ -424,13 +423,11 @@ class ToolValidator:
                 timeout=10,
             )
 
-            # MASM help text contains version information
             version_text = result.stdout or result.stderr
             if "Microsoft (R) Macro Assembler" in version_text:
                 if version_match := re.search(r"Version\s+(\d+\.\d+\.\d+(?:\.\d+)?)", version_text):
                     validation["version"] = version_match[1]
 
-                # MASM capabilities
                 validation["capabilities"].extend(
                     [
                         "assembly_compilation",
@@ -455,7 +452,7 @@ class ToolValidator:
         return validation
 
     @staticmethod
-    def validate_accesschk(tool_path: str) -> dict[str, Any]:
+    def validate_accesschk(tool_path: str) -> ValidationResult:
         """Validate SysInternals AccessChk installation.
 
         Args:
@@ -466,7 +463,7 @@ class ToolValidator:
             'capabilities', and 'issues'.
 
         """
-        validation = {
+        validation: ValidationResult = {
             "valid": False,
             "version": None,
             "capabilities": [],
@@ -474,8 +471,7 @@ class ToolValidator:
         }
 
         try:
-            # AccessChk shows version info with -accepteula flag to avoid EULA dialog
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            result = subprocess.run(
                 [tool_path, "-accepteula", "-?"],
                 check=False,
                 capture_output=True,
@@ -483,13 +479,11 @@ class ToolValidator:
                 timeout=10,
             )
 
-            # AccessChk help text contains version information
             version_text = result.stdout or result.stderr
             if "Sysinternals" in version_text and ("AccessChk" in version_text or "accesschk" in version_text.lower()):
                 if version_match := re.search(r"(?:v|Version\s+)?(\d+\.\d+)", version_text):
                     validation["version"] = version_match[1]
 
-                # AccessChk capabilities
                 validation["capabilities"].extend(
                     [
                         "privilege_escalation_analysis",
@@ -519,6 +513,11 @@ class ToolValidator:
 class AdvancedToolDiscovery:
     """Advanced tool discovery with intelligent search and validation."""
 
+    validators: dict[str, Callable[[str], ValidationResult]]
+    discovered_tools: dict[str, dict[str, Any]]
+    manual_overrides: dict[str, str]
+    search_cache: dict[str, dict[str, Any]]
+
     def __init__(self) -> None:
         """Initialize tool discovery system."""
         self.validators = {
@@ -537,18 +536,16 @@ class AdvancedToolDiscovery:
             "accesschk64": ToolValidator.validate_accesschk,
         }
 
-        # Load configuration
         from intellicrack.core.config_manager import get_config
 
         self.config = get_config()
 
-        # Load discovered tools from config
-        self.discovered_tools = self.config.get("tools.discovered", {})
+        discovered_raw = self.config.get("tools.discovered", {})
+        self.discovered_tools = dict(discovered_raw) if isinstance(discovered_raw, dict) else {}
 
-        # Load manual overrides from config
-        self.manual_overrides = self.config.get("tools.manual_overrides", {})
+        overrides_raw = self.config.get("tools.manual_overrides", {})
+        self.manual_overrides = dict(overrides_raw) if isinstance(overrides_raw, dict) else {}
 
-        # Config-based caching (no longer using in-memory cache)
         self.search_cache = {}
 
     def discover_all_tools(self) -> dict[str, Any]:
@@ -561,7 +558,6 @@ class AdvancedToolDiscovery:
         """
         logger.info("Starting comprehensive tool discovery")
 
-        # Report to terminal manager if available
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
@@ -569,7 +565,7 @@ class AdvancedToolDiscovery:
             except Exception as e:
                 logger.warning(f"Could not log to terminal manager: {e}")
 
-        tool_configs = {
+        tool_configs: dict[str, dict[str, Any]] = {
             "ghidra": {
                 "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
                 "search_strategy": "installation_based",
@@ -620,7 +616,7 @@ class AdvancedToolDiscovery:
             },
         }
 
-        results = {}
+        results: dict[str, Any] = {}
 
         for tool_name, config in tool_configs.items():
             try:
@@ -630,27 +626,27 @@ class AdvancedToolDiscovery:
 
                 if tool_info["available"]:
                     logger.info(f"OK {tool_name} found: {tool_info['path']}")
-                    # Report successful discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
+                            terminal_manager = get_terminal_manager()
                             terminal_manager.log_terminal_message(f"OK {tool_name} found: {tool_info['path']}")
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
                 else:
                     level = logging.WARNING if config["required"] else logging.INFO
                     logger.log(level, f"FAIL {tool_name} not found")
-                    # Report failed discovery to terminal manager
                     if HAS_TERMINAL_MANAGER:
                         try:
+                            terminal_manager = get_terminal_manager()
                             terminal_manager.log_terminal_message(f"FAIL {tool_name} not found", level="warning")
                         except Exception as e:
                             logger.debug("Could not log to terminal manager: %s", e)
 
             except Exception as e:
                 logger.error(f"Error discovering {tool_name}: {e}")
-                # Report error to terminal manager
                 if HAS_TERMINAL_MANAGER:
                     try:
+                        terminal_manager = get_terminal_manager()
                         terminal_manager.log_terminal_message(f"Error discovering {tool_name}: {e}", level="error")
                     except Exception as e2:
                         logger.debug("Could not log to terminal manager: %s", e2)
@@ -660,18 +656,14 @@ class AdvancedToolDiscovery:
                     "discovery_time": time.time(),
                 }
 
-        # Save discovered tools to configuration
         self.discovered_tools = results
         self.config.set("tools.discovered", results)
 
-        # Also save last discovery timestamp
         self.config.set("tools.last_discovery", time.time())
 
-        # Configuration is auto-saved by the config manager
-
-        # Report completion to terminal manager
         if HAS_TERMINAL_MANAGER:
             try:
+                terminal_manager = get_terminal_manager()
                 terminal_manager.log_terminal_message(
                     f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}",
                 )
@@ -694,27 +686,27 @@ class AdvancedToolDiscovery:
         """
         discovery_start = time.time()
 
-        # Check for manual override first
         if tool_name in self.manual_overrides:
             manual_path = self.manual_overrides[tool_name]
             if manual_path and os.path.exists(manual_path):
                 logger.info(f"Using manual override for {tool_name}: {manual_path}")
-                tool_info = self._validate_and_populate(manual_path, tool_name)
-                tool_info["discovery_method"] = "manual_override"
-                tool_info["discovery_time"] = discovery_start
-                tool_info["discovery_duration"] = time.time() - discovery_start
-                return tool_info
+                override_info = self._validate_and_populate(manual_path, tool_name)
+                override_info["discovery_method"] = "manual_override"
+                override_info["discovery_time"] = discovery_start
+                override_info["discovery_duration"] = time.time() - discovery_start
+                return override_info
 
-        # Check config-based cache
-        cached_tools = self.config.get("tools.discovered", {})
+        cached_tools_raw = self.config.get("tools.discovered", {})
+        cached_tools: dict[str, Any] = dict(cached_tools_raw) if isinstance(cached_tools_raw, dict) else {}
         if tool_name in cached_tools:
             cached_result = cached_tools[tool_name]
-            # Check if cache is still valid (1 hour)
-            if cached_result.get("discovery_time") and time.time() - cached_result["discovery_time"] < 3600:
-                logger.debug(f"Using cached result for {tool_name}")
-                return cached_result
+            if isinstance(cached_result, dict):
+                disc_time = cached_result.get("discovery_time")
+                if disc_time is not None and time.time() - float(disc_time) < 3600:
+                    logger.debug(f"Using cached result for {tool_name}")
+                    return dict(cached_result)
 
-        tool_info = {
+        tool_info: dict[str, Any] = {
             "available": False,
             "path": None,
             "version": None,
@@ -725,23 +717,21 @@ class AdvancedToolDiscovery:
             "capabilities": [],
         }
 
-        if found_path := self._search_in_path(config["executables"]):
+        executables: list[str] = config.get("executables", [])
+        if found_path := self._search_in_path(executables):
             tool_info |= self._validate_and_populate(found_path, tool_name)
             tool_info["discovery_method"] = "PATH"
 
-        # Strategy 2: Installation-based search
         if not tool_info["available"] and config["search_strategy"] == "installation_based":
-            if found_path := self._search_installations(tool_name, config["executables"]):
+            if found_path := self._search_installations(tool_name, executables):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "installation_search"
 
-        # Strategy 3: Common locations
         if not tool_info["available"]:
-            if found_path := self._search_common_locations(tool_name, config["executables"]):
+            if found_path := self._search_common_locations(tool_name, executables):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
                 tool_info["discovery_method"] = "common_locations"
 
-        # Strategy 4: Registry search (Windows)
         if not tool_info["available"] and sys.platform == "win32":
             if found_path := self._search_windows_registry(tool_name):
                 tool_info.update(self._validate_and_populate(found_path, tool_name))
@@ -749,7 +739,6 @@ class AdvancedToolDiscovery:
 
         tool_info["discovery_duration"] = time.time() - discovery_start
 
-        # Save individual tool discovery to config
         self.discovered_tools[tool_name] = tool_info
         self.config.set(f"tools.discovered.{tool_name}", tool_info)
 
@@ -787,14 +776,12 @@ class AdvancedToolDiscovery:
             if not os.path.exists(search_path):
                 continue
 
-            # Search recursively in installation directory
             for root, dirs, _files in os.walk(search_path):
                 for executable in executables:
                     potential_path = os.path.join(root, executable)
                     if os.path.exists(potential_path) and os.access(potential_path, os.X_OK):
                         return potential_path
 
-                # Limit search depth to avoid performance issues
                 if len(Path(root).parts) - len(Path(search_path).parts) > 3:
                     dirs.clear()
 
@@ -812,7 +799,7 @@ class AdvancedToolDiscovery:
 
         """
         logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
-        common_paths = []
+        common_paths: list[str] = []
 
         if sys.platform == "win32":
             common_paths.extend(
@@ -867,8 +854,8 @@ class AdvancedToolDiscovery:
             import winreg
 
             registry_paths = [
-                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
-                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",  # pragma: allowlist secret
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
             ]
 
             for registry_path in registry_paths:
@@ -879,9 +866,11 @@ class AdvancedToolDiscovery:
                                 subkey_name = winreg.EnumKey(key, i)
                                 with winreg.OpenKey(key, subkey_name) as subkey:
                                     try:
-                                        display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
+                                        display_name_tuple = winreg.QueryValueEx(subkey, "DisplayName")
+                                        display_name = str(display_name_tuple[0])
                                         if tool_name.lower() in display_name.lower():
-                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            install_location_tuple = winreg.QueryValueEx(subkey, "InstallLocation")
+                                            install_location = str(install_location_tuple[0])
                                             if install_location and os.path.exists(install_location):
                                                 return install_location
                                     except FileNotFoundError as e:
@@ -896,7 +885,6 @@ class AdvancedToolDiscovery:
 
         except ImportError as e:
             logger.error("Import error in tool_discovery: %s", e)
-            # winreg not available
         except Exception as e:
             logger.debug(f"Registry search failed: {e}")
 
@@ -912,7 +900,7 @@ class AdvancedToolDiscovery:
             List of paths to search for tool installations.
 
         """
-        paths = []
+        paths: list[str] = []
 
         if tool_name == "accesschk":
             if sys.platform == "win32":
@@ -956,8 +944,7 @@ class AdvancedToolDiscovery:
 
         elif tool_name == "masm":
             if sys.platform == "win32":
-                # MASM is typically installed with Visual Studio or Windows SDK
-                vs_paths = []
+                vs_paths: list[str] = []
                 for vs_version in ["2022", "2019", "2017", "BuildTools"]:
                     vs_paths.extend(
                         [
@@ -970,8 +957,7 @@ class AdvancedToolDiscovery:
                         ],
                     )
 
-                # Add Windows SDK paths
-                sdk_paths = []
+                sdk_paths: list[str] = []
                 for version in ["10", "8.1", "8.0"]:
                     sdk_paths.extend(
                         [
@@ -999,7 +985,7 @@ class AdvancedToolDiscovery:
                             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                             "tools",
                             "NASM",
-                        ),  # Primary location
+                        ),
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",
@@ -1049,7 +1035,7 @@ class AdvancedToolDiscovery:
             Dictionary containing validation results and tool information.
 
         """
-        result = {
+        result: dict[str, Any] = {
             "available": False,
             "path": tool_path,
             "validation": {},
@@ -1081,7 +1067,6 @@ class AdvancedToolDiscovery:
 
         """
         logger.info("Refreshing tool discovery")
-        # Clear config-based cache
         self.config.set("tools.discovered", {})
         self.config.set("tools.last_discovery", None)
         self.discovered_tools = {}
@@ -1098,7 +1083,10 @@ class AdvancedToolDiscovery:
 
         """
         if tool_name in self.discovered_tools:
-            return self.discovered_tools[tool_name].get("capabilities", [])
+            caps = self.discovered_tools[tool_name].get("capabilities", [])
+            if isinstance(caps, list):
+                return list(caps)
+            return []
         return []
 
     def is_tool_compatible(self, tool_name: str, required_capabilities: list[str]) -> bool:
@@ -1133,13 +1121,11 @@ class AdvancedToolDiscovery:
         if not os.access(tool_path, os.X_OK):
             logger.warning(f"Path {tool_path} may not be executable")
 
-        # Save to config
         self.manual_overrides[tool_name] = tool_path
         self.config.set(f"tools.manual_overrides.{tool_name}", tool_path)
 
         logger.info(f"Set manual override for {tool_name}: {tool_path}")
 
-        # Clear cached discovery for this tool to force re-validation
         if tool_name in self.discovered_tools:
             del self.discovered_tools[tool_name]
             self.config.set(f"tools.discovered.{tool_name}", None)
@@ -1164,7 +1150,6 @@ class AdvancedToolDiscovery:
 
         logger.info(f"Cleared manual override for {tool_name}")
 
-        # Clear cached discovery to force re-discovery
         if tool_name in self.discovered_tools:
             del self.discovered_tools[tool_name]
             self.config.set(f"tools.discovered.{tool_name}", None)
@@ -1178,7 +1163,7 @@ class AdvancedToolDiscovery:
             Dictionary of tool_name -> manual_path mappings
 
         """
-        return self.manual_overrides.copy()
+        return dict(self.manual_overrides)
 
     def get_tool_path(self, tool_name: str) -> str | None:
         """Get the path for a tool, checking manual overrides first.
@@ -1190,15 +1175,15 @@ class AdvancedToolDiscovery:
             Path to the tool executable, or None if not found
 
         """
-        # Check manual override first
         if tool_name in self.manual_overrides:
             return self.manual_overrides[tool_name]
 
-        # Check discovered tools
         if tool_name in self.discovered_tools:
             tool_info = self.discovered_tools[tool_name]
             if tool_info.get("available"):
-                return tool_info.get("path")
+                path_val = tool_info.get("path")
+                if isinstance(path_val, str):
+                    return path_val
 
         return None
 
@@ -1212,7 +1197,7 @@ class AdvancedToolDiscovery:
             Dictionary with health check results
 
         """
-        health_status = {
+        health_status: dict[str, Any] = {
             "tool_name": tool_name,
             "healthy": False,
             "available": False,
@@ -1222,22 +1207,21 @@ class AdvancedToolDiscovery:
             "timestamp": time.time(),
         }
 
-        # Get tool path
+        issues_list: list[str] = health_status["issues"]
+
         tool_path = self.get_tool_path(tool_name)
         if not tool_path:
-            health_status["issues"].append("Tool path not found")
+            issues_list.append("Tool path not found")
             return health_status
 
-        # Check if path exists
         if not os.path.exists(tool_path):
-            health_status["issues"].append(f"Path does not exist: {tool_path}")
+            issues_list.append(f"Path does not exist: {tool_path}")
             return health_status
 
         health_status["available"] = True
 
-        # Check if executable
         if not os.access(tool_path, os.X_OK):
-            health_status["issues"].append("File is not executable")
+            issues_list.append("File is not executable")
         else:
             health_status["executable"] = True
 
@@ -1256,9 +1240,10 @@ class AdvancedToolDiscovery:
                 health_status["version"] = validation_result.get("version")
                 health_status["capabilities"] = validation_result.get("capabilities", [])
             else:
-                health_status["issues"].extend(validation_result.get("issues", []))
+                val_issues = validation_result.get("issues", [])
+                if isinstance(val_issues, list):
+                    issues_list.extend(val_issues)
 
-        # Determine overall health
         health_status["healthy"] = (
             health_status["available"] and health_status["executable"] and (health_status["version_valid"] or not validator)
         )
@@ -1272,13 +1257,11 @@ class AdvancedToolDiscovery:
             Dictionary mapping tool names to health check results
 
         """
-        results = {tool_name: self.health_check_tool(tool_name) for tool_name in self.discovered_tools}
-        # Check manual overrides not in discovered tools
+        results: dict[str, dict[str, Any]] = {tool_name: self.health_check_tool(tool_name) for tool_name in self.discovered_tools}
         for tool_name in self.manual_overrides:
             if tool_name not in results:
                 results[tool_name] = self.health_check_tool(tool_name)
 
-        # Report health check summary to terminal manager if available
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager = get_terminal_manager()
@@ -1286,18 +1269,17 @@ class AdvancedToolDiscovery:
                 total_count = len(results)
                 terminal_manager.log_terminal_message(f"Health check completed: {healthy_count}/{total_count} tools healthy")
 
-                # Report unhealthy tools
                 for tool_name, status in results.items():
                     if not status.get("healthy", False):
-                        if issues := status.get("issues", []):
+                        issues = status.get("issues", [])
+                        if isinstance(issues, list) and issues:
                             terminal_manager.log_terminal_message(
-                                f"Unhealthy tool: {tool_name} - {', '.join(issues)}",
+                                f"Unhealthy tool: {tool_name} - {', '.join(str(i) for i in issues)}",
                                 level="warning",
                             )
             except Exception as e:
                 logger.warning(f"Could not log health check to terminal manager: {e}")
 
-        # Save health check results to config
         self.config.set("tools.last_health_check", results)
         self.config.set("tools.last_health_check_time", time.time())
 
@@ -1313,7 +1295,7 @@ class AdvancedToolDiscovery:
         health_results = self.health_check_all_tools()
         return [tool_name for tool_name, status in health_results.items() if status.get("healthy", False)]
 
-    def discover_tool_with_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any]:
+    def discover_tool_with_fallbacks(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Enhanced tool discovery with comprehensive fallback mechanisms.
 
         Args:
@@ -1326,18 +1308,15 @@ class AdvancedToolDiscovery:
         """
         logger.info(f"Starting enhanced discovery for {tool_name} with fallbacks")
 
-        # Start with standard discovery
         tool_info = self.discover_tool(tool_name, config)
 
         if tool_info.get("available"):
             return tool_info
 
-        # Apply fallback strategies
         fallback_result = self._apply_fallback_strategies(tool_name, config)
         if fallback_result.get("available"):
             return fallback_result
 
-        # Try alternative tools if primary tool fails
         alternatives = self._get_tool_alternatives(tool_name)
         for alt_tool, alt_config in alternatives.items():
             logger.info(f"Trying alternative tool: {alt_tool} for {tool_name}")
@@ -1350,7 +1329,7 @@ class AdvancedToolDiscovery:
 
         return tool_info
 
-    def _apply_fallback_strategies(self, tool_name: str, config: dict) -> dict[str, Any]:
+    def _apply_fallback_strategies(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Apply various fallback strategies for tool discovery.
 
         Args:
@@ -1361,7 +1340,7 @@ class AdvancedToolDiscovery:
             Dictionary with discovery results from fallback strategies.
 
         """
-        strategies = [
+        strategies: list[Callable[[str, dict[str, Any]], dict[str, Any] | None]] = [
             self._try_portable_versions,
             self._try_package_manager_paths,
             self._try_version_fallbacks,
@@ -1381,7 +1360,7 @@ class AdvancedToolDiscovery:
 
         return {"available": False, "path": None}
 
-    def _try_portable_versions(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+    def _try_portable_versions(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
         """Try to find portable versions of tools.
 
         Args:
@@ -1399,9 +1378,10 @@ class AdvancedToolDiscovery:
             Path(__file__).parent.parent.parent / "tools" / tool_name,
         ]
 
+        executables: list[str] = config.get("executables", [tool_name])
         for portable_dir in portable_paths:
             if portable_dir.exists():
-                for executable in config.get("executables", [tool_name]):
+                for executable in executables:
                     for ext in ["", ".exe", ".bat"]:
                         exe_path = portable_dir / f"{executable}{ext}"
                         if exe_path.exists() and os.access(exe_path, os.X_OK):
@@ -1409,7 +1389,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _try_package_manager_paths(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+    def _try_package_manager_paths(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
         """Try package manager installation paths.
 
         Args:
@@ -1420,9 +1400,8 @@ class AdvancedToolDiscovery:
             Dictionary with discovery results if package manager version found, None otherwise.
 
         """
-        pm_paths = []
+        pm_paths: list[Path] = []
 
-        # Windows package managers
         if sys.platform == "win32":
             pm_paths.extend(
                 [
@@ -1433,7 +1412,6 @@ class AdvancedToolDiscovery:
                 ],
             )
 
-        # Linux package managers
         elif sys.platform.startswith("linux"):
             pm_paths.extend(
                 [
@@ -1444,7 +1422,6 @@ class AdvancedToolDiscovery:
                 ],
             )
 
-        # macOS package managers
         elif sys.platform == "darwin":
             pm_paths.extend(
                 [
@@ -1454,9 +1431,10 @@ class AdvancedToolDiscovery:
                 ],
             )
 
+        executables: list[str] = config.get("executables", [tool_name])
         for pm_path in pm_paths:
             if pm_path.exists():
-                for executable in config.get("executables", [tool_name]):
+                for executable in executables:
                     for ext in ["", ".exe", ".bat"]:
                         exe_path = pm_path / f"{executable}{ext}"
                         if exe_path.exists() and os.access(exe_path, os.X_OK):
@@ -1464,7 +1442,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _try_version_fallbacks(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+    def _try_version_fallbacks(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
         """Try different versions of the same tool.
 
         Args:
@@ -1475,6 +1453,7 @@ class AdvancedToolDiscovery:
             Dictionary with discovery results if alternative version found, None otherwise.
 
         """
+        _ = config
         version_patterns = [
             f"{tool_name}3",
             f"{tool_name}2",
@@ -1492,7 +1471,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _try_bundled_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+    def _try_bundled_tools(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
         """Try tools bundled with Intellicrack.
 
         Args:
@@ -1505,8 +1484,9 @@ class AdvancedToolDiscovery:
         """
         bundled_dir = Path(__file__).parent.parent.parent / "bundled_tools" / tool_name
 
+        executables: list[str] = config.get("executables", [tool_name])
         if bundled_dir.exists():
-            for executable in config.get("executables", [tool_name]):
+            for executable in executables:
                 for ext in ["", ".exe", ".bat"]:
                     exe_path = bundled_dir / f"{executable}{ext}"
                     if exe_path.exists() and os.access(exe_path, os.X_OK):
@@ -1517,7 +1497,7 @@ class AdvancedToolDiscovery:
 
         return None
 
-    def _try_container_tools(self, tool_name: str, config: dict) -> dict[str, Any] | None:
+    def _try_container_tools(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any] | None:
         """Try containerized versions of tools.
 
         Args:
@@ -1528,9 +1508,11 @@ class AdvancedToolDiscovery:
             Dictionary with discovery results if containerized version found, None otherwise.
 
         """
+        _ = tool_name
+        _ = config
         return None
 
-    def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict]:
+    def _get_tool_alternatives(self, tool_name: str) -> dict[str, dict[str, Any]]:
         """Get alternative tools for a given tool.
 
         Args:
@@ -1540,7 +1522,7 @@ class AdvancedToolDiscovery:
             Dictionary mapping alternative tool names to their configurations.
 
         """
-        alternatives = {
+        alternatives: dict[str, dict[str, dict[str, Any]]] = {
             "ghidra": {
                 "cutter": {
                     "executables": ["cutter", "Cutter"],
