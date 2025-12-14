@@ -1466,14 +1466,12 @@ class DatasetAnalysisWidget(QWidget):
             # Generate basic statistics
             stats = []
             if hasattr(self.current_dataset, "shape"):  # pandas DataFrame
-                stats.extend(
-                    (
-                        f"Shape: {self.current_dataset.shape}",
-                        f"Columns: {list(self.current_dataset.columns)}",
-                        f"Data Types: {self.current_dataset.dtypes.to_dict()}",
-                        f"Missing Values: {self.current_dataset.isna().sum().to_dict()}",
-                    )
-                )
+                stats.extend((
+                    f"Shape: {self.current_dataset.shape}",
+                    f"Columns: {list(self.current_dataset.columns)}",
+                    f"Data Types: {self.current_dataset.dtypes.to_dict()}",
+                    f"Missing Values: {self.current_dataset.isna().sum().to_dict()}",
+                ))
                 # Class distribution if target column exists
                 if "target" in self.current_dataset.columns:
                     distribution = self.current_dataset["target"].value_counts()
@@ -1508,12 +1506,10 @@ class DatasetAnalysisWidget(QWidget):
                         self.matplotlib_figure.tight_layout()
                         self.matplotlib_canvas.draw()
             else:
-                stats.extend(
-                    (
-                        f"Type: {type(self.current_dataset)}",
-                        f"Length: {len(self.current_dataset)}",
-                    )
-                )
+                stats.extend((
+                    f"Type: {type(self.current_dataset)}",
+                    f"Length: {len(self.current_dataset)}",
+                ))
             self.stats_text.setText("\n".join(stats))
 
         except Exception as e:

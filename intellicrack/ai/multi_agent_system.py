@@ -187,7 +187,7 @@ class BaseAgent:
         # Initialize capabilities
         self._initialize_capabilities()
 
-        logger.info(f"Agent {self.agent_id} ({self.role.value}) initialized")
+        logger.info("Agent %s (%s) initialized", self.agent_id, self.role.value)
 
     def _initialize_capabilities(self) -> None:
         """Initialize agent-specific capabilities."""
@@ -230,7 +230,7 @@ class BaseAgent:
         self.capabilities.extend(base_capabilities)
         self.capabilities.extend(role_specific_capabilities)
 
-        self.logger.info(f"Initialized {len(self.capabilities)} capabilities for {self.role.value} agent")
+        self.logger.info("Initialized %s capabilities for %s agent", len(self.capabilities), self.role.value)
 
     def _get_role_specific_capabilities(self) -> list[AgentCapability]:
         """Get capabilities specific to the agent's role."""
@@ -430,7 +430,7 @@ class BaseAgent:
 
         except Exception as e:
             self.tasks_failed += 1
-            self.logger.error(f"Task execution failed for {task.task_id}: {e}")
+            self.logger.error("Task execution failed for %s: %s", task.task_id, e, exc_info=True)
 
             return {
                 "task_id": task.task_id,
@@ -1023,12 +1023,12 @@ if __name__ == "__main__":
         )
         self.message_thread.start()
 
-        logger.info(f"Agent {self.agent_id} started")
+        logger.info("Agent %s started", self.agent_id)
 
     def stop(self) -> None:
         """Stop the agent."""
         self.active = False
-        logger.info(f"Agent {self.agent_id} stopped")
+        logger.info("Agent %s stopped", self.agent_id)
 
     def _message_processing_loop(self) -> None:
         """Process messages in the main loop."""
@@ -1037,10 +1037,10 @@ if __name__ == "__main__":
                 message = self.message_queue.get(timeout=1.0)
                 self._process_message(message)
             except Empty as e:
-                self.logger.error("Empty in multi_agent_system: %s", e)
+                self.logger.error("Empty in multi_agent_system: %s", e, exc_info=True)
                 continue
             except Exception as e:
-                logger.error(f"Error processing message in {self.agent_id}: {e}")
+                logger.error("Error processing message in %s: %s", self.agent_id, e, exc_info=True)
 
     def _process_message(self, message: AgentMessage) -> None:
         """Process incoming message."""
@@ -1057,7 +1057,7 @@ if __name__ == "__main__":
                 self._handle_task_response(message)
 
         except Exception as e:
-            logger.error(f"Error handling message {message.message_id}: {e}")
+            logger.error("Error handling message %s: %s", message.message_id, e, exc_info=True)
             self._send_error_response(message, str(e))
 
     def _handle_task_request(self, message: AgentMessage) -> None:
@@ -1134,7 +1134,7 @@ if __name__ == "__main__":
                 context={"agent_role": self.role.value, "agent_id": self.agent_id},
             )
 
-            logger.error(f"Task execution failed in {self.agent_id}: {e}")
+            logger.error("Task execution failed in %s: %s", self.agent_id, e, exc_info=True)
             self._send_task_response(original_message, False, {"error": str(e)})
 
         finally:
@@ -1163,7 +1163,7 @@ if __name__ == "__main__":
                 "confidence": message.content.get("confidence", 0.8),
             }
 
-        logger.info(f"Agent {self.agent_id} received knowledge from {source_agent}")
+        logger.info("Agent %s received knowledge from %s", self.agent_id, source_agent)
 
     def _handle_collaboration_request(self, message: AgentMessage) -> None:
         """Handle collaboration request."""
@@ -1604,7 +1604,7 @@ class StaticAnalysisAgent(BaseAgent):
         """Perform binary analysis."""
         file_path = input_data.get("file_path", "")
 
-        logger.debug(f"Binary analysis agent analyzing: {file_path}")
+        logger.debug("Binary analysis agent analyzing: %s", file_path)
 
         try:
             # Try using lief for binary analysis first
@@ -1617,7 +1617,7 @@ class StaticAnalysisAgent(BaseAgent):
                 # Final fallback - use basic file analysis
                 analysis_result = self._analyze_binary_basic(file_path)
         except Exception as e:
-            logger.error(f"Binary analysis failed: {e}")
+            logger.error("Binary analysis failed: %s", e, exc_info=True)
             analysis_result = {
                 "file_type": "Unknown",
                 "architecture": "Unknown",
@@ -1692,7 +1692,7 @@ class StaticAnalysisAgent(BaseAgent):
         except SyntaxError as e:
             return {"syntax_error": str(e), "confidence": 0.3}
         except Exception as e:
-            logger.error(f"Python AST analysis failed: {e}")
+            logger.error("Python AST analysis failed: %s", e, exc_info=True)
             return {"confidence": 0.5}
 
     def _check_python_vulnerabilities(self, node: object) -> list[dict[str, object]]:
@@ -1776,14 +1776,12 @@ class StaticAnalysisAgent(BaseAgent):
         for line_num, line in enumerate(lines, 1):
             for func, (vuln_type, severity) in dangerous_functions.items():
                 if f"{func}(" in line:
-                    vulnerabilities.append(
-                        {
-                            "type": vuln_type,
-                            "function": func,
-                            "line": line_num,
-                            "severity": severity,
-                        }
-                    )
+                    vulnerabilities.append({
+                        "type": vuln_type,
+                        "function": func,
+                        "line": line_num,
+                        "severity": severity,
+                    })
 
         function_count = len([line for line in lines if re.search(r"\w+\s+\w+\s*\([^)]*\)\s*{", line)])
         class_count = len([line for line in lines if re.search(r"(class|struct)\s+\w+", line)])
@@ -1817,14 +1815,12 @@ class StaticAnalysisAgent(BaseAgent):
         for line_num, line in enumerate(lines, 1):
             for pattern, vuln_type, severity in dangerous_patterns:
                 if re.search(pattern, line):
-                    vulnerabilities.append(
-                        {
-                            "type": vuln_type,
-                            "pattern": pattern,
-                            "line": line_num,
-                            "severity": severity,
-                        }
-                    )
+                    vulnerabilities.append({
+                        "type": vuln_type,
+                        "pattern": pattern,
+                        "line": line_num,
+                        "severity": severity,
+                    })
 
         function_count = len([line for line in lines if re.search(r"function\s+\w+|const\s+\w+\s*=.*=>|\w+\s*:\s*function", line)])
         class_count = len([line for line in lines if re.search(r"class\s+\w+", line)])
@@ -1885,7 +1881,7 @@ class StaticAnalysisAgent(BaseAgent):
         """Perform control flow analysis."""
         binary_path = input_data.get("binary_path", "")
 
-        logger.debug(f"Control flow analysis agent analyzing: {binary_path}")
+        logger.debug("Control flow analysis agent analyzing: %s", binary_path)
 
         result = {
             "basic_blocks": 0,
@@ -2028,7 +2024,7 @@ class StaticAnalysisAgent(BaseAgent):
                 result.update(await asyncio.to_thread(_analyze_with_mmap))
 
             except Exception as e:
-                logger.error(f"Control flow analysis failed: {e}")
+                logger.error("Control flow analysis failed: %s", e, exc_info=True)
                 result["error"] = str(e)
                 result["confidence"] = 0.0
 
@@ -2084,7 +2080,7 @@ class DynamicAnalysisAgent(BaseAgent):
         """Perform runtime analysis."""
         executable = input_data.get("executable", "")
 
-        logger.debug(f"Runtime analysis agent analyzing executable: {executable}")
+        logger.debug("Runtime analysis agent analyzing executable: %s", executable)
 
         result = {
             "execution_time": 0.0,
@@ -2267,12 +2263,10 @@ class DynamicAnalysisAgent(BaseAgent):
                         # Check network connections
                         for conn in proc.connections():
                             if conn.status == "ESTABLISHED":
-                                connections.add(
-                                    (
-                                        conn.raddr.ip if conn.raddr else "unknown",
-                                        conn.raddr.port if conn.raddr else 0,
-                                    )
-                                )
+                                connections.add((
+                                    conn.raddr.ip if conn.raddr else "unknown",
+                                    conn.raddr.port if conn.raddr else 0,
+                                ))
 
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         break
@@ -2308,7 +2302,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 result["confidence"] = 0.7
 
             except Exception as e:
-                logger.error(f"Runtime analysis failed: {e}")
+                logger.error("Runtime analysis failed: %s", e, exc_info=True)
                 result["error"] = str(e)
                 result["confidence"] = 0.0
 
@@ -2318,7 +2312,7 @@ class DynamicAnalysisAgent(BaseAgent):
         """Perform memory analysis."""
         process_id = input_data.get("process_id", 0)
 
-        logger.debug(f"Memory analysis agent analyzing process: {process_id}")
+        logger.debug("Memory analysis agent analyzing process: %s", process_id)
 
         result = {
             "heap_usage": 0.0,
@@ -2384,7 +2378,7 @@ class DynamicAnalysisAgent(BaseAgent):
                         result["memory_protection"]["aslr_enabled"] = True  # Default on modern Windows
 
                 except Exception as e:
-                    logger.debug(f"Could not check Windows memory protections: {e}")
+                    logger.debug("Could not check Windows memory protections: %s", e, exc_info=True)
 
             # Scan for potential buffer overflows using memory maps
             try:
@@ -2444,7 +2438,7 @@ class DynamicAnalysisAgent(BaseAgent):
                             kernel32.CloseHandle(handle)
 
                 except Exception as e:
-                    logger.debug(f"Memory scanning failed: {e}")
+                    logger.debug("Memory scanning failed: %s", e, exc_info=True)
 
             # Detect memory leaks by monitoring allocation patterns
             try:
@@ -2467,16 +2461,16 @@ class DynamicAnalysisAgent(BaseAgent):
                         )
 
             except Exception as e:
-                logger.debug(f"Memory leak detection failed: {e}")
+                logger.debug("Memory leak detection failed: %s", e, exc_info=True)
 
             result["confidence"] = 0.8
 
         except psutil.NoSuchProcess:
-            logger.error(f"Process {process_id} not found")
+            logger.error("Process %s not found", process_id, exc_info=True)
             result["error"] = "Process not found"
             result["confidence"] = 0.0
         except Exception as e:
-            logger.error(f"Memory analysis failed: {e}")
+            logger.error("Memory analysis failed: %s", e, exc_info=True)
             result["error"] = str(e)
             result["confidence"] = 0.0
 
@@ -2488,7 +2482,7 @@ class DynamicAnalysisAgent(BaseAgent):
         duration = input_data.get("duration", 10)
         input_data.get("target_apis", [])
 
-        logger.debug(f"API monitoring agent monitoring process: {process_id}")
+        logger.debug("API monitoring agent monitoring process: %s", process_id)
 
         api_calls = []
         suspicious_apis = []
@@ -2607,13 +2601,11 @@ class DynamicAnalysisAgent(BaseAgent):
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "api_call":
-                        api_calls.append(
-                            {
-                                "function": payload["data"]["function"],
-                                "args": payload["data"]["args"],
-                                "result": "success",
-                            }
-                        )
+                        api_calls.append({
+                            "function": payload["data"]["function"],
+                            "args": payload["data"]["args"],
+                            "result": "success",
+                        })
                     elif payload["type"] == "suspicious":
                         suspicious_apis.append({"function": payload["function"], "reason": payload["reason"]})
                     elif payload["type"] == "bypass":
@@ -2668,13 +2660,11 @@ class DynamicAnalysisAgent(BaseAgent):
                                     },
                                 )
                             elif debug_event.dwDebugEventCode == 6:  # LOAD_DLL_DEBUG_EVENT
-                                api_calls.append(
-                                    {
-                                        "function": "LoadLibrary",
-                                        "args": ["DLL loaded"],
-                                        "result": "success",
-                                    }
-                                )
+                                api_calls.append({
+                                    "function": "LoadLibrary",
+                                    "args": ["DLL loaded"],
+                                    "result": "success",
+                                })
 
                             kernel32.ContinueDebugEvent(
                                 debug_event.dwProcessId,
@@ -2685,7 +2675,7 @@ class DynamicAnalysisAgent(BaseAgent):
                     kernel32.DebugActiveProcessStop(process_id)
 
             except Exception as e:
-                logger.warning(f"Debug API monitoring failed: {e}")
+                logger.warning("Debug API monitoring failed: %s", e, exc_info=True)
 
                 # Last fallback: Use process monitoring
                 try:
@@ -2716,10 +2706,10 @@ class DynamicAnalysisAgent(BaseAgent):
                             suspicious_apis.append({"function": "VirtualAlloc", "reason": "excessive_memory"})
 
                 except Exception as e:
-                    logger.error(f"Process monitoring failed: {e}")
+                    logger.error("Process monitoring failed: %s", e, exc_info=True)
 
         except Exception as e:
-            logger.error(f"API monitoring failed: {e}")
+            logger.error("API monitoring failed: %s", e, exc_info=True)
 
         # Ensure we have some data
         if not api_calls:
@@ -2731,7 +2721,7 @@ class DynamicAnalysisAgent(BaseAgent):
                     proc = psutil.Process(process_id)
                     api_calls.append({"function": "Process", "args": [proc.name()], "result": "running"})
             except (AttributeError, OSError, ValueError) as e:
-                self.logger.warning(f"Unable to access process {proc.pid}: {e}")
+                self.logger.warning("Unable to access process %s: %s", proc.pid, e, exc_info=True)
                 suspicious_apis.append(
                     {
                         "name": "protected_process",
@@ -2830,7 +2820,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 if target.startswith("0x"):
                     cross_references.append({"from": hex(insn.address), "to": target, "type": insn.mnemonic})
             except (ValueError, AttributeError, KeyError) as e:
-                self.logger.debug(f"Failed to parse instruction at {hex(insn.address)}: {e}")
+                self.logger.debug("Failed to parse instruction at %s: %s", hex(insn.address), e, exc_info=True)
                 cross_references.append({"from": hex(insn.address), "to": "unknown", "type": "invalid_instruction"})
 
         return instruction_info
@@ -3004,7 +2994,7 @@ class ReverseEngineeringAgent(BaseAgent):
         start_address = input_data.get("start_address", 0x401000)
         architecture = input_data.get("architecture", "x86")
 
-        logger.debug(f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}")
+        logger.debug("Disassembly agent processing %s bytes starting at %s", len(binary_data), hex(start_address))
 
         assembly_instructions = []
         function_boundaries = []
@@ -3024,7 +3014,7 @@ class ReverseEngineeringAgent(BaseAgent):
             try:
                 assembly_instructions, function_boundaries, cross_references = self._manual_x86_disassembly(binary_data, start_address)
             except Exception as e:
-                logger.warning(f"Manual disassembly failed: {e}")
+                logger.warning("Manual disassembly failed: %s", e, exc_info=True)
                 assembly_instructions = self._create_fallback_disassembly(binary_data, start_address)
 
         # Clean up incomplete function boundaries
@@ -3073,13 +3063,11 @@ class ReverseEngineeringAgent(BaseAgent):
 
             if vars_json := r2.cmdj(f"afvj @ {func_addr}"):
                 for var in vars_json:
-                    variable_analysis.append(
-                        {
-                            "name": var.get("name", "unknown"),
-                            "type": var.get("type", "unknown"),
-                            "scope": "local",
-                        }
-                    )
+                    variable_analysis.append({
+                        "name": var.get("name", "unknown"),
+                        "type": var.get("type", "unknown"),
+                        "scope": "local",
+                    })
 
         r2.quit()
         return pseudo_code, function_signatures, variable_analysis
@@ -3266,7 +3254,7 @@ int process_data(void* input, int size) {
         binary_path = input_data.get("binary_path", "")
         input_data.get("architecture", "x86")
 
-        logger.debug(f"Decompilation agent processing {len(assembly_code)} assembly instructions")
+        logger.debug("Decompilation agent processing %s assembly instructions", len(assembly_code))
 
         pseudo_code = ""
         function_signatures = []
@@ -3278,7 +3266,7 @@ int process_data(void* input, int size) {
                 pseudo_code, function_signatures, variable_analysis = self._decompile_with_r2pipe(binary_path)
 
         except Exception as e:
-            logger.debug(f"r2pipe decompilation failed: {e}, using pattern-based decompilation")
+            logger.debug("r2pipe decompilation failed: %s, using pattern-based decompilation", e, exc_info=True)
 
         # Fallback to pattern-based decompilation from assembly
         if not pseudo_code and assembly_code:
@@ -3388,13 +3376,11 @@ int process_data(void* input, int size) {
         asm_text = " ".join(insn.get("instruction", "") for insn in assembly_code).lower()
 
         if any(insn in asm_text for insn in ["aesenc", "aesdec", "pclmulqdq", "sha256"]):
-            cryptographic_functions.append(
-                {
-                    "algorithm": "AES/SHA-HW",
-                    "implementation": "hardware_accelerated",
-                    "confidence": 0.95,
-                }
-            )
+            cryptographic_functions.append({
+                "algorithm": "AES/SHA-HW",
+                "implementation": "hardware_accelerated",
+                "confidence": 0.95,
+            })
 
         if any(insn in asm_text for insn in ["xmm", "ymm", "zmm", "movdqa", "paddd", "pxor"]):
             identified_algorithms.append({"name": "simd_operations", "complexity": "O(n/width)", "confidence": 0.85})
@@ -3437,13 +3423,11 @@ int process_data(void* input, int size) {
         elif max_loop_depth == 2:
             algorithms.append({"name": "nested_iteration", "complexity": "O(n²)", "confidence": 0.85})
         elif max_loop_depth >= 3:
-            algorithms.append(
-                {
-                    "name": "deep_nested_iteration",
-                    "complexity": f"O(n^{max_loop_depth})",
-                    "confidence": 0.8,
-                }
-            )
+            algorithms.append({
+                "name": "deep_nested_iteration",
+                "complexity": f"O(n^{max_loop_depth})",
+                "confidence": 0.8,
+            })
 
         return algorithms
 
@@ -3477,7 +3461,7 @@ int process_data(void* input, int size) {
         code = input_data.get("code", "")
         assembly_code = input_data.get("assembly_code", [])
 
-        logger.debug(f"Algorithm analysis agent processing {len(code)} characters of code")
+        logger.debug("Algorithm analysis agent processing %s characters of code", len(code))
 
         identified_algorithms = []
         cryptographic_functions = []
@@ -3546,7 +3530,7 @@ class MultiAgentSystem:
         self.agents[agent.agent_id] = agent
         self.message_router.register_agent(agent.agent_id, agent.message_queue)
 
-        logger.info(f"Added agent {agent.agent_id} to system")
+        logger.info("Added agent %s to system", agent.agent_id)
 
     def remove_agent(self, agent_id: str) -> None:
         """Remove agent from system."""
@@ -3556,7 +3540,7 @@ class MultiAgentSystem:
             del self.agents[agent_id]
             self.message_router.unregister_agent(agent_id)
 
-            logger.info(f"Removed agent {agent_id} from system")
+            logger.info("Removed agent %s from system", agent_id)
 
     def start(self) -> None:
         """Start the multi-agent system."""
@@ -3632,7 +3616,7 @@ class MultiAgentSystem:
             return result
 
         except Exception as e:
-            logger.error("Exception in multi_agent_system: %s", e)
+            logger.error("Exception in multi_agent_system: %s", e, exc_info=True)
             execution_time = time.time() - start_time
 
             return CollaborationResult(
@@ -3716,7 +3700,7 @@ class MultiAgentSystem:
                 result = await agent.execute_task(subtask)
                 return agent_id, {"success": True, "result": result}
             except Exception as e:
-                logger.error("Exception in multi_agent_system: %s", e)
+                logger.error("Exception in multi_agent_system: %s", e, exc_info=True)
                 return agent_id, {"success": False, "error": str(e)}
 
         # Execute all subtasks concurrently
@@ -3889,7 +3873,7 @@ class MessageRouter:
                 },
             )
         else:
-            logger.warning(f"No route found for agent {message.recipient_id}")
+            logger.warning("No route found for agent %s", message.recipient_id)
 
 
 class TaskDistributor:
@@ -4038,7 +4022,7 @@ class KnowledgeManager:
             "access_count": 0,
         }
 
-        logger.debug(f"Knowledge stored in {category}:{key} by agent {source_agent}")
+        logger.debug("Knowledge stored in %s:%s by agent %s", category, key, source_agent)
 
         # Update knowledge graph
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
@@ -4050,15 +4034,15 @@ class KnowledgeManager:
             knowledge_item["access_count"] += 1
             self.access_patterns[f"{category}:{key}"] += 1
 
-            logger.debug(f"Knowledge retrieved from {category}:{key} by agent {requesting_agent}")
+            logger.debug("Knowledge retrieved from %s:%s by agent %s", category, key, requesting_agent)
             return knowledge_item["value"]
 
-        logger.debug(f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}")
+        logger.debug("Knowledge not found for %s:%s requested by agent %s", category, key, requesting_agent)
         return None
 
     def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:
         """Get all knowledge in category."""
-        logger.debug(f"Agent '{requesting_agent}' requesting knowledge from category '{category}'")
+        logger.debug("Agent '%s' requesting knowledge from category '%s'", requesting_agent, category)
         if category in self.shared_knowledge:
             return {k: v["value"] for k, v in self.shared_knowledge[category].items()}
         return {}

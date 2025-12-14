@@ -31,6 +31,7 @@ from typing import Any
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -38,6 +39,7 @@ except ImportError:
 
 class ActivationType(Enum):
     """Types of activation mechanisms detected in binaries."""
+
     ONLINE = "online"
     OFFLINE = "offline"
     CHALLENGE_RESPONSE = "challenge_response"
@@ -50,6 +52,7 @@ class ActivationType(Enum):
 
 class RegistrationType(Enum):
     """Types of registration systems detected."""
+
     SERIAL_NUMBER = "serial_number"
     PRODUCT_KEY = "product_key"
     ACTIVATION_CODE = "activation_code"
@@ -60,6 +63,7 @@ class RegistrationType(Enum):
 @dataclass
 class ActivationPattern:
     """Detected activation pattern in binary."""
+
     pattern_type: ActivationType
     address: int
     confidence: float
@@ -71,6 +75,7 @@ class ActivationPattern:
 @dataclass
 class RegistrationPattern:
     """Detected registration pattern in binary."""
+
     registration_type: RegistrationType
     address: int
     confidence: float
@@ -81,6 +86,7 @@ class RegistrationPattern:
 @dataclass
 class TrialPattern:
     """Detected trial limitation pattern."""
+
     trial_type: str
     detection_address: int
     storage_location: str | None
@@ -91,6 +97,7 @@ class TrialPattern:
 @dataclass
 class HardwareIDPattern:
     """Detected hardware fingerprinting pattern."""
+
     hwid_type: str
     generation_address: int
     components: list[str]
@@ -100,6 +107,7 @@ class HardwareIDPattern:
 @dataclass
 class LicenseFilePattern:
     """Detected license file handling pattern."""
+
     file_path: str | None
     file_format: str | None
     validation_address: int | None
@@ -109,6 +117,7 @@ class LicenseFilePattern:
 @dataclass
 class ActivationAnalysisResult:
     """Complete activation analysis results."""
+
     activation_patterns: list[ActivationPattern]
     registration_patterns: list[RegistrationPattern]
     trial_patterns: list[TrialPattern]
@@ -125,40 +134,83 @@ class ActivationAnalyzer:
     """Production-grade analyzer for software activation and licensing patterns."""
 
     ACTIVATION_KEYWORDS = [
-        b"activate", b"activation", b"activate now", b"enter activation code",
-        b"product activation", b"activation required", b"trial expired",
-        b"activate product", b"activation key", b"activation server"
+        b"activate",
+        b"activation",
+        b"activate now",
+        b"enter activation code",
+        b"product activation",
+        b"activation required",
+        b"trial expired",
+        b"activate product",
+        b"activation key",
+        b"activation server",
     ]
 
     REGISTRATION_KEYWORDS = [
-        b"register", b"registration", b"serial number", b"product key",
-        b"license key", b"registration code", b"enter serial", b"unlock code",
-        b"register now", b"registration required"
+        b"register",
+        b"registration",
+        b"serial number",
+        b"product key",
+        b"license key",
+        b"registration code",
+        b"enter serial",
+        b"unlock code",
+        b"register now",
+        b"registration required",
     ]
 
     TRIAL_KEYWORDS = [
-        b"trial", b"trial period", b"trial expired", b"days remaining",
-        b"trial version", b"evaluation", b"demo mode", b"time limited",
-        b"trial limitation", b"buy now"
+        b"trial",
+        b"trial period",
+        b"trial expired",
+        b"days remaining",
+        b"trial version",
+        b"evaluation",
+        b"demo mode",
+        b"time limited",
+        b"trial limitation",
+        b"buy now",
     ]
 
     HWID_KEYWORDS = [
-        b"hardware id", b"machine id", b"computer id", b"hwid", b"fingerprint",
-        b"machine fingerprint", b"hardware fingerprint", b"system id",
-        b"installation id", b"device id"
+        b"hardware id",
+        b"machine id",
+        b"computer id",
+        b"hwid",
+        b"fingerprint",
+        b"machine fingerprint",
+        b"hardware fingerprint",
+        b"system id",
+        b"installation id",
+        b"device id",
     ]
 
     LICENSE_FILE_KEYWORDS = [
-        b".lic", b".license", b"license.dat", b"license.xml", b"license.key",
-        b".key", b"activation.dat", b"product.key"
+        b".lic",
+        b".license",
+        b"license.dat",
+        b"license.xml",
+        b"license.key",
+        b".key",
+        b"activation.dat",
+        b"product.key",
     ]
 
     ACTIVATION_APIS = [
-        b"GetVolumeInformationW", b"GetComputerNameW", b"GetUserNameW",
-        b"GetSystemInfo", b"GetDiskFreeSpaceExW", b"RegCreateKeyExW",
-        b"RegSetValueExW", b"RegQueryValueExW", b"CryptHashData",
-        b"CryptCreateHash", b"InternetConnectW", b"HttpSendRequestW",
-        b"WinHttpOpen", b"WinHttpConnect"
+        b"GetVolumeInformationW",
+        b"GetComputerNameW",
+        b"GetUserNameW",
+        b"GetSystemInfo",
+        b"GetDiskFreeSpaceExW",
+        b"RegCreateKeyExW",
+        b"RegSetValueExW",
+        b"RegQueryValueExW",
+        b"CryptHashData",
+        b"CryptCreateHash",
+        b"InternetConnectW",
+        b"HttpSendRequestW",
+        b"WinHttpOpen",
+        b"WinHttpConnect",
     ]
 
     URL_PATTERN = rb"https?://[a-zA-Z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+"
@@ -204,11 +256,7 @@ class ActivationAnalyzer:
         has_hwid = len(hardware_id_patterns) > 0
 
         strength = self._calculate_protection_strength(
-            activation_patterns,
-            registration_patterns,
-            trial_patterns,
-            hardware_id_patterns,
-            license_file_patterns
+            activation_patterns, registration_patterns, trial_patterns, hardware_id_patterns, license_file_patterns
         )
 
         return ActivationAnalysisResult(
@@ -221,7 +269,7 @@ class ActivationAnalyzer:
             has_activation=has_activation,
             has_trial=has_trial,
             has_hwid_lock=has_hwid,
-            protection_strength=strength
+            protection_strength=strength,
         )
 
     def _detect_activation_patterns(self) -> list[ActivationPattern]:
@@ -244,7 +292,7 @@ class ActivationAnalyzer:
                     confidence=confidence,
                     description=f"Activation pattern found: {keyword.decode('utf-8', errors='ignore')}",
                     related_strings=context_strings,
-                    api_calls=api_calls
+                    api_calls=api_calls,
                 )
                 patterns.append(pattern)
 
@@ -273,7 +321,7 @@ class ActivationAnalyzer:
                     address=offset,
                     confidence=min(confidence, 1.0),
                     validation_function=validation_addr,
-                    algorithm_hints=algorithm_hints
+                    algorithm_hints=algorithm_hints,
                 )
                 patterns.append(pattern)
 
@@ -298,7 +346,7 @@ class ActivationAnalyzer:
                     detection_address=offset,
                     storage_location=storage_location,
                     time_check_address=time_check,
-                    expiration_check=expiration_check
+                    expiration_check=expiration_check,
                 )
                 patterns.append(pattern)
 
@@ -316,12 +364,7 @@ class ActivationAnalyzer:
                 components = self._detect_hwid_components(api_calls)
                 hwid_type = self._determine_hwid_type(components)
 
-                pattern = HardwareIDPattern(
-                    hwid_type=hwid_type,
-                    generation_address=offset,
-                    components=components,
-                    api_calls=api_calls
-                )
+                pattern = HardwareIDPattern(hwid_type=hwid_type, generation_address=offset, components=components, api_calls=api_calls)
                 patterns.append(pattern)
 
         return self._deduplicate_hwid_patterns(patterns)
@@ -340,10 +383,7 @@ class ActivationAnalyzer:
                 encryption = self._detect_encryption_usage(offset)
 
                 pattern = LicenseFilePattern(
-                    file_path=file_path,
-                    file_format=file_format,
-                    validation_address=validation_addr,
-                    encryption_used=encryption
+                    file_path=file_path, file_format=file_format, validation_address=validation_addr, encryption_used=encryption
                 )
                 patterns.append(pattern)
 
@@ -354,12 +394,11 @@ class ActivationAnalyzer:
         urls: list[str] = []
 
         for match in re.finditer(self.URL_PATTERN, self.binary_data):
-            url = match.group(0).decode('utf-8', errors='ignore')
+            url = match.group(0).decode("utf-8", errors="ignore")
 
-            if any(keyword in url.lower() for keyword in [
-                'activate', 'activation', 'license', 'registration',
-                'auth', 'validate', 'verify'
-            ]):
+            if any(
+                keyword in url.lower() for keyword in ["activate", "activation", "license", "registration", "auth", "validate", "verify"]
+            ):
                 urls.append(url)
 
         return list(set(urls))
@@ -372,7 +411,7 @@ class ActivationAnalyzer:
 
         strings: list[str] = []
         for match in re.finditer(rb"[\x20-\x7e]{4,}", context):
-            s = match.group(0).decode('utf-8', errors='ignore')
+            s = match.group(0).decode("utf-8", errors="ignore")
             strings.append(s)
 
         return strings[:10]
@@ -387,7 +426,7 @@ class ActivationAnalyzer:
 
         for api in self.ACTIVATION_APIS:
             if api in context:
-                api_calls.append(api.decode('utf-8', errors='ignore'))
+                api_calls.append(api.decode("utf-8", errors="ignore"))
 
         return list(set(api_calls))
 
@@ -470,7 +509,7 @@ class ActivationAnalyzer:
 
     def _determine_registration_type(self, keyword: bytes, hints: list[str]) -> RegistrationType:
         """Determine type of registration system."""
-        kw = keyword.decode('utf-8', errors='ignore').lower()
+        kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if "serial" in kw:
             return RegistrationType.SERIAL_NUMBER
@@ -531,7 +570,7 @@ class ActivationAnalyzer:
 
     def _determine_trial_type(self, keyword: bytes, storage: str | None) -> str:
         """Determine type of trial mechanism."""
-        kw = keyword.decode('utf-8', errors='ignore').lower()
+        kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if "days" in kw:
             return "time_limited"
@@ -585,7 +624,7 @@ class ActivationAnalyzer:
 
     def _detect_license_format(self, keyword: bytes, offset: int) -> str | None:
         """Detect license file format."""
-        kw = keyword.decode('utf-8', errors='ignore').lower()
+        kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if ".xml" in kw:
             return "xml"
@@ -625,7 +664,7 @@ class ActivationAnalyzer:
         registration: list[RegistrationPattern],
         trial: list[TrialPattern],
         hwid: list[HardwareIDPattern],
-        license_file: list[LicenseFilePattern]
+        license_file: list[LicenseFilePattern],
     ) -> float:
         """Calculate overall protection strength score."""
         score = 0.0

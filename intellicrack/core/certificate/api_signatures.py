@@ -64,8 +64,12 @@ DATABASE COVERAGE:
 - iOS/macOS: 3 APIs (SecTrustEvaluate, SSLHandshake, etc.)
 """
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
+
+
+logger = logging.getLogger(__name__)
 
 
 class CallingConvention(Enum):

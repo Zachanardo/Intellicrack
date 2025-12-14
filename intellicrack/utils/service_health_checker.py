@@ -57,7 +57,7 @@ class ServiceHealthChecker:
 
                 self._config = get_config()
             except ImportError as e:
-                logger.warning(f"Could not import config manager: {e}")
+                logger.warning("Could not import config manager: %s", e, exc_info=True)
                 self._config = {}
         return self._config
 
@@ -92,7 +92,7 @@ class ServiceHealthChecker:
             sock.close()
             return result == 0
         except Exception as e:
-            logger.debug(f"Port check failed for {host}:{port}: {e}")
+            logger.debug("Port check failed for %s:%s: %s", host, port, e, exc_info=True)
             return False
 
     async def check_http_endpoint(self, url: str) -> dict[str, Any]:
@@ -131,13 +131,13 @@ class ServiceHealthChecker:
 
         except TimeoutError:
             result["error"] = f"Request timed out after {default_timeout} seconds"
-            logger.debug(f"HTTP check timed out for {url}")
+            logger.debug("HTTP check timed out for %s", url)
         except aiohttp.ClientError as e:
             result["error"] = str(e)
-            logger.debug(f"HTTP check failed for {url}: {e}")
+            logger.debug("HTTP check failed for %s: %s", url, e, exc_info=True)
         except Exception as e:
             result["error"] = str(e)
-            logger.error(f"Unexpected error checking {url}: {e}")
+            logger.error("Unexpected error checking %s: %s", url, e, exc_info=True)
 
         return result
 
@@ -175,10 +175,10 @@ class ServiceHealthChecker:
 
         except TimeoutError:
             result["error"] = f"WebSocket connection timed out after {default_timeout} seconds"
-            logger.debug(f"WebSocket check timed out for {url}")
+            logger.debug("WebSocket check timed out for %s", url)
         except Exception as e:
             result["error"] = str(e)
-            logger.debug(f"WebSocket check failed for {url}: {e}")
+            logger.debug("WebSocket check failed for %s: %s", url, e, exc_info=True)
 
         return result
 
@@ -197,7 +197,7 @@ class ServiceHealthChecker:
         if cache_key in self.health_cache:
             cached_result = self.health_cache[cache_key]
             if time.time() - cached_result["timestamp"] < self.cache_duration:
-                logger.debug(f"Using cached health check for {service_name}")
+                logger.debug("Using cached health check for %s", service_name)
                 return cached_result
 
         # Get service URL from config
@@ -331,12 +331,12 @@ class ServiceHealthChecker:
                 while True:
                     result = await self.check_service(service_name)
                     if result.get("healthy", False):
-                        logger.info(f"Service {service_name} is now available")
+                        logger.info("Service %s is now available", service_name)
                         return True
 
                     await asyncio.sleep(check_interval)
         except TimeoutError:
-            logger.warning(f"Service {service_name} did not become available within {default_timeout} seconds")
+            logger.warning("Service %s did not become available within %s seconds", service_name, default_timeout)
             return False
 
     def get_service_endpoint(self, service_name: str) -> str:

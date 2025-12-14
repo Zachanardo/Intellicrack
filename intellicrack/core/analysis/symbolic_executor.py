@@ -42,7 +42,7 @@ try:
 
     ANGR_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in symbolic_executor: %s", e)
+    logger.error("Import error in symbolic_executor: %s", e, exc_info=True)
     ANGR_AVAILABLE = False
 
 
@@ -78,7 +78,7 @@ class SymbolicExecutionEngine:
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 
-        self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
+        self.logger.info("Symbolic execution engine initialized for %s with %d max paths", binary_path, max_paths)
 
     def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
         """Set up angr project and initial state for symbolic execution."""
@@ -343,7 +343,10 @@ class SymbolicExecutionEngine:
                                                 "type": "command_injection",
                                                 "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
                                                 "description": f"Command injection: tainted data reaches {func_name}",
-                                                "taint_source": str(state.plugins.taint.get_taint_source(arg_val)) if hasattr(state.plugins.taint, "get_taint_source") and state.plugins.taint.get_taint_source(arg_val) is not None else "unknown",
+                                                "taint_source": str(state.plugins.taint.get_taint_source(arg_val))
+                                                if hasattr(state.plugins.taint, "get_taint_source")
+                                                and state.plugins.taint.get_taint_source(arg_val) is not None
+                                                else "unknown",
                                                 "severity": "critical",
                                             }
                                             vulnerabilities.append(vuln)
@@ -454,8 +457,7 @@ class SymbolicExecutionEngine:
             return vulnerabilities
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during symbolic execution: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.error("Error during symbolic execution: %s", e, exc_info=True)
             return [{"error": f"Symbolic execution failed: {e!s}"}]
 
     def _check_integer_overflow(self, state: Any, constraint: Any) -> bool:
@@ -488,7 +490,7 @@ class SymbolicExecutionEngine:
                             )
                             return True
                     except (AttributeError, ValueError, RuntimeError) as e:
-                        self.logger.debug("Failed to analyze variable for overflow: %s", e)
+                        self.logger.debug("Failed to analyze variable for overflow: %s", e, exc_info=True)
             return False
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Error during integer overflow check: %s", e, exc_info=False)
@@ -525,7 +527,7 @@ class SymbolicExecutionEngine:
                                     )
                                     return True
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in symbolic_executor: %s", e)
+                    self.logger.error("Error in symbolic_executor: %s", e, exc_info=True)
                     continue
             return False
         except (OSError, ValueError, RuntimeError) as e:
@@ -594,7 +596,7 @@ class SymbolicExecutionEngine:
             return {"error": f"Unknown vulnerability type: {vuln_type}"}
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating exploit: %s", e)
+            self.logger.error("Error generating exploit: %s", e, exc_info=True)
             return {"error": f"Exploit generation failed: {e!s}"}
 
     def _generate_heap_exploit(self, vulnerability: dict[str, Any]) -> dict[str, Any]:
@@ -1655,7 +1657,7 @@ int main() {{
                         self.logger.info("Memory violation detected at 0x%x", state.addr)
                         return True
         except (AttributeError, TypeError) as e:
-            self.logger.debug("Failed to analyze memory for violations: %s", e)
+            self.logger.debug("Failed to analyze memory for violations: %s", e, exc_info=True)
 
         return False
 
@@ -1693,10 +1695,10 @@ int main() {{
                             )
                             return True
                     except (RuntimeError, ValueError) as e:
-                        self.logger.debug("Failed to analyze stack pointer variation: %s", e)
+                        self.logger.debug("Failed to analyze stack pointer variation: %s", e, exc_info=True)
 
         except (AttributeError, TypeError) as e:
-            self.logger.debug("Failed to analyze stack buffer overflow: %s", e)
+            self.logger.debug("Failed to analyze stack buffer overflow: %s", e, exc_info=True)
 
         return False
 
@@ -1746,13 +1748,13 @@ int main() {{
                                                     )
                                                     return True
                             except (AttributeError, IndexError, KeyError) as e:
-                                logger.error("Error in symbolic_executor: %s", e)
+                                self.logger.error("Error in symbolic_executor: %s", e, exc_info=True)
                                 continue
                 except (RuntimeError, ValueError) as e:
-                    logger.error("Error in symbolic_executor: %s", e)
+                    self.logger.error("Error in symbolic_executor: %s", e, exc_info=True)
                     continue
         except (AttributeError, TypeError) as e:
-            self.logger.debug("Failed to analyze dangerous function calls: %s", e)
+            self.logger.debug("Failed to analyze dangerous function calls: %s", e, exc_info=True)
 
         return False
 
@@ -1783,9 +1785,9 @@ int main() {{
                             )
                             return True
                     except (RuntimeError, ValueError) as e:
-                        self.logger.debug("Failed to analyze heap operation: %s", e)
+                        self.logger.debug("Failed to analyze heap operation: %s", e, exc_info=True)
         except (AttributeError, TypeError) as e:
-            self.logger.debug("Failed to analyze heap buffer overflow: %s", e)
+            self.logger.debug("Failed to analyze heap buffer overflow: %s", e, exc_info=True)
 
         return False
 
@@ -1872,7 +1874,7 @@ int main() {{
             return vulnerabilities
 
         except Exception as e:
-            self.logger.error("Error analyzing vulnerable paths: %s", e)
+            self.logger.error("Error analyzing vulnerable paths: %s", e, exc_info=True)
             return vulnerabilities
 
     def _native_vulnerability_discovery(self, vulnerability_types: list[str] | None = None) -> list[dict[str, Any]]:
@@ -1965,7 +1967,7 @@ int main() {{
             return vulnerabilities
 
         except Exception as e:
-            self.logger.error("Error during native vulnerability discovery: %s", e)
+            self.logger.error("Error during native vulnerability discovery: %s", e, exc_info=True)
             return [{"error": f"Native vulnerability discovery failed: {e!s}"}]
 
     def _extract_binary_strings(self, binary_data: bytes) -> list[dict[str, Any]]:
@@ -1988,7 +1990,7 @@ int main() {{
                     },
                 )
             except UnicodeDecodeError as e:
-                self.logger.error("UnicodeDecodeError in symbolic_executor: %s", e)
+                self.logger.error("UnicodeDecodeError in symbolic_executor: %s", e, exc_info=True)
 
         # UTF-16 strings (Windows)
         utf16_pattern = re.compile(rb'(?:[A-Za-z0-9!@#$%^&*()_+={}\\[\]|\\:";\'<>?,./ ][\x00]){4,}')
@@ -2005,7 +2007,7 @@ int main() {{
                         },
                     )
             except UnicodeDecodeError as e:
-                logger.error("UnicodeDecodeError in symbolic_executor: %s", e)
+                self.logger.error("UnicodeDecodeError in symbolic_executor: %s", e, exc_info=True)
 
         return strings
 
@@ -2081,7 +2083,7 @@ int main() {{
                 disasm_info = self._basic_pattern_analysis(binary_data)
 
         except Exception as e:
-            self.logger.warning("Disassembly failed: %s", e)
+            self.logger.warning("Disassembly failed: %s", e, exc_info=True)
             disasm_info = self._basic_pattern_analysis(binary_data)
 
         return disasm_info
@@ -2111,7 +2113,7 @@ int main() {{
                 code_sections.append((0, binary_data[:4096]))
 
         except Exception as e:
-            logger.error("Exception in symbolic_executor: %s", e)
+            self.logger.error("Exception in symbolic_executor: %s", e, exc_info=True)
             # Fallback - analyze first 4KB
             code_sections.append((0, binary_data[:4096]))
 
@@ -2152,13 +2154,15 @@ int main() {{
 
         return patterns
 
-    def _detect_buffer_overflow_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_buffer_overflow_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential buffer overflow vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes of binary data")
-        self.logger.debug(f"Found {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes of binary data", len(binary_data))
+        self.logger.debug("Found %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Check for dangerous function usage in strings
         dangerous_functions = [
@@ -2220,13 +2224,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_format_string_vulns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_format_string_vulns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential format string vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for format string vulnerabilities")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for format string vulnerabilities", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for format string patterns
         format_patterns = ["%s", "%d", "%x", "%n", "%p", "%%"]
@@ -2258,13 +2264,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_integer_overflow_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential integer overflow vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for integer overflow patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for integer overflow patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for arithmetic operations without bounds checking
         arithmetic_ops = ["add", "mul", "imul", "shl", "sal"]
@@ -2298,13 +2306,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_command_injection_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_command_injection_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential command injection vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for command injection patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for command injection patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for system command execution
         dangerous_functions = ["system", "exec", "popen", "CreateProcess", "ShellExecute"]
@@ -2357,13 +2367,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_use_after_free_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_use_after_free_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential use-after-free vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for use-after-free patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for use-after-free patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for malloc/free patterns
         memory_functions = ["malloc", "free", "calloc", "realloc", "new", "delete"]
@@ -2384,13 +2396,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_path_traversal_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_path_traversal_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential path traversal vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for path traversal patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for path traversal patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for path traversal patterns
         traversal_patterns = ["../", "..\\", "%2e%2e%2f", "%2e%2e%5c"]
@@ -2411,13 +2425,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_sql_injection_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_sql_injection_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential SQL injection vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for SQL injection patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for SQL injection patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for SQL keywords and injection patterns
         sql_keywords = ["SELECT", "INSERT", "UPDATE", "DELETE", "DROP", "UNION", "OR", "AND"]
@@ -2443,13 +2459,15 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_memory_leak_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_memory_leak_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential memory leak vulnerabilities."""
         vulnerabilities = []
 
         # Log analysis context
-        self.logger.debug(f"Analyzing {len(binary_data)} bytes for memory leak patterns")
-        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+        self.logger.debug("Analyzing %d bytes for memory leak patterns", len(binary_data))
+        self.logger.debug("Processing %d strings and %d instructions", len(strings), len(disasm_info.get("instructions", [])))
 
         # Look for memory allocation without corresponding free
         alloc_functions = ["malloc", "calloc", "realloc", "new", "LocalAlloc", "GlobalAlloc"]
@@ -2470,7 +2488,9 @@ int main() {{
 
         return vulnerabilities
 
-    def _detect_null_pointer_patterns(self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]) -> list[dict[str, Any]]:
+    def _detect_null_pointer_patterns(
+        self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Detect potential null pointer dereference vulnerabilities."""
         vulnerabilities = []
 
@@ -2739,7 +2759,7 @@ int main() {{
 
         # Check if already freed (double-free)
         if hasattr(state.heap, "_freed_chunks") and ptr in state.heap._freed_chunks:
-            self.logger.warning(f"Double free detected at {hex(state.addr)} for ptr {hex(ptr)}")
+            self.logger.warning("Double free detected at %s for ptr %s", hex(state.addr), hex(ptr))
 
         # Track the deallocation
         if hasattr(state.heap, "_freed_chunks"):
@@ -2791,7 +2811,7 @@ int main() {{
                 )
             return False
         except Exception as e:
-            self.logger.debug(f"Race condition check failed: {e}")
+            self.logger.debug("Race condition check failed: %s", e, exc_info=True)
             return False
 
     def _analyze_synchronization(self, state: Any, project: Any) -> bool:
@@ -2823,7 +2843,7 @@ int main() {{
                 if shared_accesses > 0 and sync_count < 2:
                     return True
         except Exception as e:
-            self.logger.debug(f"Error analyzing synchronization: {e}")
+            self.logger.debug("Error analyzing synchronization: %s", e, exc_info=True)
 
         # If threading is used but few sync primitives, potential race condition
         return sync_count < 2
@@ -2852,7 +2872,7 @@ int main() {{
                                 return True
             return False
         except Exception as e:
-            self.logger.debug(f"Type confusion check failed: {e}")
+            self.logger.debug("Type confusion check failed: %s", e, exc_info=True)
             return False
 
     def _setup_exploration_project(self, start_address: int) -> tuple[Any, Any]:
@@ -2891,7 +2911,7 @@ int main() {{
             stdin_size = kwargs.get("stdin_size", 256)
             stdin_content = claripy.BVS("stdin", 8 * stdin_size)
             initial_state.posix.stdin.content = stdin_content
-            self.logger.info(f"Created symbolic stdin of size {stdin_size}")
+            self.logger.info("Created symbolic stdin of size %d", stdin_size)
 
     def _apply_concrete_values_for_exploration(self, initial_state: Any, concrete_values: dict[int, Any]) -> None:
         """Apply concrete values if provided.
@@ -2906,7 +2926,7 @@ int main() {{
                 initial_state.memory.store(addr, initial_state.solver.BVV(value, 32))
             elif isinstance(value, bytes):
                 initial_state.memory.store(addr, value)
-            self.logger.debug(f"Set concrete value at 0x{addr:x}: {value}")
+            self.logger.debug("Set concrete value at 0x%x: %s", addr, value)
 
     def _create_custom_step_function(
         self,
@@ -2962,7 +2982,7 @@ int main() {{
                                     "constraints": len(state.solver.constraints),
                                 }
                             except Exception as e:
-                                self.logger.debug(f"Error extracting concrete input at {hex(state.addr)}: {e}")
+                                self.logger.debug("Error extracting concrete input at %s: %s", hex(state.addr), e, exc_info=True)
 
             return simgr.step()
 
@@ -3058,9 +3078,7 @@ int main() {{
                 }
                 results["constraints"].append(constraint_info)
 
-    def _extract_interesting_test_cases(
-        self, simgr: Any, find_addresses: list[int], start_address: int, results: dict[str, Any]
-    ) -> None:
+    def _extract_interesting_test_cases(self, simgr: Any, find_addresses: list[int], start_address: int, results: dict[str, Any]) -> None:
         """Extract interesting test cases from exploration results.
 
         Args:
@@ -3082,7 +3100,7 @@ int main() {{
                         "reached_from": hex(start_address),
                     }
             except Exception as e:
-                self.logger.debug(f"Failed to extract concrete values: {e}")
+                self.logger.debug("Failed to extract concrete values: %s", e, exc_info=True)
 
     def explore_from(self, start_address: int, **kwargs: Any) -> dict[str, object]:
         """Explore execution paths from a specific start address.
@@ -3113,7 +3131,7 @@ int main() {{
                 - interesting_values: Concrete values that trigger specific behaviors
 
         """
-        self.logger.info(f"Starting exploration from address 0x{start_address:x}")
+        self.logger.info("Starting exploration from address 0x%x", start_address)
 
         # Extract parameters
         max_depth = kwargs.get("max_depth", 50)
@@ -3202,8 +3220,7 @@ int main() {{
             return results
 
         except Exception as e:
-            self.logger.error(f"Error during exploration from 0x{start_address:x}: {e}")
-            self.logger.debug(traceback.format_exc())
+            self.logger.error("Error during exploration from 0x%x: %s", start_address, e, exc_info=True)
             results["error"] = str(e)
             return results
 
@@ -3218,7 +3235,7 @@ int main() {{
             Dictionary with exploration results and analysis.
 
         """
-        self.logger.info(f"Starting native exploration from address 0x{start_address:x}")
+        self.logger.info("Starting native exploration from address 0x%x", start_address)
 
         results: dict[str, Any] = {
             "start_address": hex(start_address),
@@ -3273,7 +3290,7 @@ int main() {{
             return results
 
         except Exception as e:
-            self.logger.error(f"Native exploration failed: {e}")
+            self.logger.error("Native exploration failed: %s", e, exc_info=True)
             results["error"] = str(e)
             return results
 
@@ -3641,7 +3658,7 @@ int main() {{
             },
         }
 
-        self.logger.info(f"Built CFG with {len(nodes)} nodes and {len(edges)} edges from disasm_info")
+        self.logger.info("Built CFG with %d nodes and %d edges from disasm_info", len(nodes), len(edges))
         return cfg
 
     def _extract_jump_target(self, instr_bytes: bytes, instr_addr: int) -> int | None:
@@ -3676,7 +3693,7 @@ int main() {{
 
             return None
         except Exception as e:
-            self.logger.debug(f"Could not extract jump target: {e}")
+            self.logger.debug("Could not extract jump target: %s", e, exc_info=True)
             return None
 
     def _find_all_paths(self, cfg: dict[str, Any], start_address: int, max_depth: int) -> list[list[int]]:
@@ -3775,7 +3792,7 @@ int main() {{
             except Exception:
                 paths = [[start_address], [start_address, start_address + 16]]
 
-        self.logger.info(f"Found {len(paths)} execution paths from CFG analysis (max_depth={max_depth})")
+        self.logger.info("Found %d execution paths from CFG analysis (max_depth=%d)", len(paths), max_depth)
         return paths
 
     def _analyze_path_for_vulnerabilities(self, path: list[int], binary_data: bytes) -> list[dict[str, Any]]:
@@ -3812,7 +3829,7 @@ int main() {{
                             vulnerabilities.append(vuln)
 
             except Exception as e:
-                self.logger.debug(f"Error analyzing address {hex(addr)} in path: {e}")
+                self.logger.debug("Error analyzing address %s in path: %s", hex(addr), e, exc_info=True)
                 continue
 
         # Path-level analysis for complex vulnerabilities
@@ -3840,7 +3857,7 @@ int main() {{
         unique_vulns.sort(key=lambda v: severity_order.get(v.get("severity", "low"), 3))
 
         if vulnerabilities:
-            self.logger.info(f"Found {len(unique_vulns)} potential vulnerabilities in execution path of length {len(path)}")
+            self.logger.info("Found %d potential vulnerabilities in execution path of length %d", len(unique_vulns), len(path))
 
         return unique_vulns[:10]  # Limit to top 10 vulnerabilities
 
@@ -3871,7 +3888,7 @@ int main() {{
                     "evidence": f"Stack operations at {hex(addr)} in {path_depth}-step execution path",
                 }
         except Exception as e:
-            self.logger.debug(f"Buffer overflow detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Buffer overflow detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _check_integer_overflow_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
@@ -3901,7 +3918,7 @@ int main() {{
                     "evidence": f"Unchecked arithmetic at {hex(addr)} in {path_depth}-step path",
                 }
         except Exception as e:
-            self.logger.debug(f"Integer overflow detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Integer overflow detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _check_use_after_free_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
@@ -3929,7 +3946,7 @@ int main() {{
                         "evidence": f"Memory access after call at {hex(addr)} in execution path",
                     }
         except Exception as e:
-            self.logger.debug(f"Use-after-free detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Use-after-free detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _check_format_string_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
@@ -3956,7 +3973,7 @@ int main() {{
                     "evidence": f"Format string pattern at {hex(addr)} in execution path",
                 }
         except Exception as e:
-            self.logger.debug(f"Format string detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Format string detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _check_null_deref_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
@@ -3984,7 +4001,7 @@ int main() {{
                     "evidence": f"Unchecked memory access at {hex(addr)} in {path_complexity}-unique-address path",
                 }
         except Exception as e:
-            self.logger.debug(f"Null dereference detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Null dereference detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _check_race_condition_path(self, addr: int, path_idx: int, path: list[int], instr_window: bytes) -> dict[str, Any] | None:
@@ -4012,7 +4029,7 @@ int main() {{
                     "evidence": f"Unsynchronized memory operation at {hex(addr)} in branching execution path",
                 }
         except Exception as e:
-            self.logger.debug(f"Race condition detection failed at {hex(addr)}: {e}")
+            self.logger.debug("Race condition detection failed at %s: %s", hex(addr), e, exc_info=True)
         return None
 
     def _analyze_path_loops(self, path: list[int]) -> dict[str, Any] | None:
@@ -4031,7 +4048,7 @@ int main() {{
                     }
                 seen_addrs.add(addr)
         except Exception as e:
-            self.logger.debug(f"Loop analysis failed: {e}")
+            self.logger.debug("Loop analysis failed: %s", e, exc_info=True)
         return None
 
     def _analyze_path_memory_access(self, path: list[int], binary_data: bytes) -> dict[str, Any] | None:
@@ -4104,7 +4121,7 @@ int main() {{
                         "avg_jump": avg_jump,
                     }
         except Exception as e:
-            self.logger.debug(f"Memory access analysis failed: {e}")
+            self.logger.debug("Memory access analysis failed: %s", e, exc_info=True)
         return None
 
     def _analyze_path_control_flow(self, path: list[int]) -> dict[str, Any] | None:
@@ -4125,7 +4142,7 @@ int main() {{
                                 "evidence": f"Jump to potential library function at {hex(addr)}",
                             }
         except Exception as e:
-            self.logger.debug(f"Control flow analysis failed: {e}")
+            self.logger.debug("Control flow analysis failed: %s", e, exc_info=True)
         return None
 
     def _extract_path_constraints(self, path: list[int], disasm_info: dict[str, Any]) -> list[str]:

@@ -374,31 +374,23 @@ class CacheManagementWidget(QWidget):
 
         stats_data = stats.get("stats", {})
 
-        details.extend(
-            (
-                f"Cache Directory: {stats.get('cache_directory', 'Unknown')}",
-                f"Total Entries: {stats_data.get('total_entries', 0)}",
-            )
-        )
-        details.extend(
-            (
-                f"Cache Hits: {stats_data.get('cache_hits', 0)}",
-                f"Cache Misses: {stats_data.get('cache_misses', 0)}",
-            )
-        )
-        details.extend(
-            (
-                f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}",
-                f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%",
-            )
-        )
-        details.extend(
-            (
-                f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB",
-                f"Max Entries: {stats.get('max_entries', 0)}",
-                f"Max Size: {stats.get('max_size_mb', 0):.1f} MB",
-            )
-        )
+        details.extend((
+            f"Cache Directory: {stats.get('cache_directory', 'Unknown')}",
+            f"Total Entries: {stats_data.get('total_entries', 0)}",
+        ))
+        details.extend((
+            f"Cache Hits: {stats_data.get('cache_hits', 0)}",
+            f"Cache Misses: {stats_data.get('cache_misses', 0)}",
+        ))
+        details.extend((
+            f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}",
+            f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%",
+        ))
+        details.extend((
+            f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB",
+            f"Max Entries: {stats.get('max_entries', 0)}",
+            f"Max Size: {stats.get('max_size_mb', 0):.1f} MB",
+        ))
         # Add AI coordination layer performance statistics if available
         try:
             main_window = None
@@ -462,7 +454,7 @@ class CacheManagementWidget(QWidget):
             self.refresh_stats()
 
         except Exception as e:
-            self.logger.error("Exception in cache_management_widget: %s", e)
+            self.logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Cleanup Error",
@@ -485,7 +477,7 @@ class CacheManagementWidget(QWidget):
             )
 
         except Exception as e:
-            self.logger.error("Exception in cache_management_widget: %s", e)
+            self.logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Save Error",
@@ -536,7 +528,7 @@ class CacheManagementWidget(QWidget):
                 self.refresh_stats()
 
             except Exception as e:
-                logger.error("Exception in cache_management_widget: %s", e)
+                logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Clear Error",

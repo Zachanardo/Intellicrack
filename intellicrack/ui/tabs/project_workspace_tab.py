@@ -364,8 +364,7 @@ class DashboardTab(BaseTab):
             action = self.recent_files_menu.addAction(file_name)
             action.triggered.connect(
                 lambda checked, path=file_path: (
-                    logger.debug("Recent file opened, checked state: %s for path: %s", checked, path)
-                    or self.load_binary(path)
+                    logger.debug("Recent file opened, checked state: %s for path: %s", checked, path) or self.load_binary(path)
                 )
             )
 

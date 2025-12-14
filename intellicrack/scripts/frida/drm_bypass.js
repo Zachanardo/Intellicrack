@@ -167,7 +167,9 @@ const DrmBypass = {
             action: 'installing_hdcp_bypass',
         });
 
-        if (!this.config.hdcp.enabled) { return; }
+        if (!this.config.hdcp.enabled) {
+            return;
+        }
 
         // Hook HDCP authentication functions
         this.hookHdcpAuthentication();
@@ -190,38 +192,38 @@ const DrmBypass = {
         });
 
         // Hook HDCP authentication APIs
-      const hdcpFunctions = [
-        'HdcpAuthenticate',
-        'HDCPAuthenticate',
-        'hdcp_authenticate',
-        'HdcpGetStatus',
-        'HDCPGetStatus',
-        'hdcp_get_status',
-        'HdcpSetProtection',
-        'HDCPSetProtection',
-        'hdcp_set_protection',
-      ];
+        const hdcpFunctions = [
+            'HdcpAuthenticate',
+            'HDCPAuthenticate',
+            'hdcp_authenticate',
+            'HdcpGetStatus',
+            'HDCPGetStatus',
+            'hdcp_get_status',
+            'HdcpSetProtection',
+            'HDCPSetProtection',
+            'hdcp_set_protection',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < hdcpFunctions.length; j++) {
-              const funcName = hdcpFunctions[j];
-              this.hookHdcpFunction(module.name, funcName);
+            for (let j = 0; j < hdcpFunctions.length; j++) {
+                const funcName = hdcpFunctions[j];
+                this.hookHdcpFunction(module.name, funcName);
             }
         }
     },
 
     hookHdcpFunction: function (moduleName, functionName) {
         try {
-          const hdcpFunc = Module.findExportByName(moduleName, functionName);
-          if (hdcpFunc) {
+            const hdcpFunc = Module.findExportByName(moduleName, functionName);
+            if (hdcpFunc) {
                 Interceptor.attach(hdcpFunc, {
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
-                      if (config.hdcp.enabled) {
+                        const config = this.parent.parent.config;
+                        if (config.hdcp.enabled) {
                             // Make HDCP operations always succeed
                             retval.replace(0); // S_OK / SUCCESS
                             this.parent.parent.bypassedChecks++;
@@ -281,8 +283,11 @@ const DrmBypass = {
         });
 
         // Hook display capability queries
-      const getDisplayConfig = Module.findExportByName('user32.dll', 'GetDisplayConfigBufferSizes');
-      if (getDisplayConfig) {
+        const getDisplayConfig = Module.findExportByName(
+            'user32.dll',
+            'GetDisplayConfigBufferSizes'
+        );
+        if (getDisplayConfig) {
             Interceptor.attach(getDisplayConfig, {
                 onLeave: retval => {
                     if (retval.toInt32() === 0) {
@@ -301,12 +306,12 @@ const DrmBypass = {
         }
 
         // Hook DirectX DXGI for HDCP status
-      const dxgiFunctions = ['CreateDXGIFactory', 'CreateDXGIFactory1', 'CreateDXGIFactory2'];
+        const dxgiFunctions = ['CreateDXGIFactory', 'CreateDXGIFactory1', 'CreateDXGIFactory2'];
 
-      for (let i = 0; i < dxgiFunctions.length; i++) {
-          const funcName = dxgiFunctions[i];
-          const dxgiFunc = Module.findExportByName('dxgi.dll', funcName);
-          if (dxgiFunc) {
+        for (let i = 0; i < dxgiFunctions.length; i++) {
+            const funcName = dxgiFunctions[i];
+            const dxgiFunc = Module.findExportByName('dxgi.dll', funcName);
+            if (dxgiFunc) {
                 Interceptor.attach(dxgiFunc, {
                     onLeave: retval => {
                         if (retval.toInt32() === 0) {
@@ -334,12 +339,12 @@ const DrmBypass = {
         });
 
         // Hook cryptographic functions used by HDCP
-      const cryptFunctions = ['CryptEncrypt', 'CryptDecrypt', 'CryptHashData'];
+        const cryptFunctions = ['CryptEncrypt', 'CryptDecrypt', 'CryptHashData'];
 
-      for (let i = 0; i < cryptFunctions.length; i++) {
-          const funcName = cryptFunctions[i];
-          const cryptFunc = Module.findExportByName('advapi32.dll', funcName);
-          if (cryptFunc) {
+        for (let i = 0; i < cryptFunctions.length; i++) {
+            const funcName = cryptFunctions[i];
+            const cryptFunc = Module.findExportByName('advapi32.dll', funcName);
+            if (cryptFunc) {
                 Interceptor.attach(cryptFunc, {
                     onEnter: function (args) {
                         this.isHdcpCrypto = this.detectHdcpContext(args);
@@ -347,8 +352,8 @@ const DrmBypass = {
 
                     onLeave: function (retval) {
                         if (this.isHdcpCrypto && retval.toInt32() !== 0) {
-                          const config = this.parent.parent.config;
-                          if (config.hdcp.forceEncryptionBypass) {
+                            const config = this.parent.parent.config;
+                            if (config.hdcp.forceEncryptionBypass) {
                                 send({
                                     type: 'bypass',
                                     target: 'drm_bypass',
@@ -361,21 +366,21 @@ const DrmBypass = {
 
                     detectHdcpContext: function (args) {
                         // Comprehensive HDCP context detection and argument analysis
-                      const hdcpAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'hdcp_crypto_operation_analysis',
-                        arguments_analyzed: [],
-                        security_indicators: [],
-                        bypass_opportunities: [],
-                        hdcp_version_detected: null,
-                        crypto_strength_assessment: 'unknown',
-                        vulnerability_markers: [],
-                      };
+                        const hdcpAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'hdcp_crypto_operation_analysis',
+                            arguments_analyzed: [],
+                            security_indicators: [],
+                            bypass_opportunities: [],
+                            hdcp_version_detected: null,
+                            crypto_strength_assessment: 'unknown',
+                            vulnerability_markers: [],
+                        };
 
-                      // Analyze each argument for HDCP-specific patterns
+                        // Analyze each argument for HDCP-specific patterns
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzeHdcpArgument(args[i], i);
-                          hdcpAnalysis.arguments_analyzed.push(argAnalysis);
+                            const argAnalysis = this.analyzeHdcpArgument(args[i], i);
+                            hdcpAnalysis.arguments_analyzed.push(argAnalysis);
 
                             // Check for HDCP version indicators
                             if (argAnalysis.contains_hdcp_version) {
@@ -424,14 +429,14 @@ const DrmBypass = {
         });
 
         // Hook network requests to HDCP revocation servers
-      const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
-      if (winHttpSendRequest) {
+        const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
+        if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
-                  const requestDetails = this.getRequestDetails(args);
-                  if (this.isHdcpRevocationRequest(requestDetails)) {
-                      const config = this.parent.parent.config;
-                      if (config.hdcp.bypassRevocationList) {
+                    const requestDetails = this.getRequestDetails(args);
+                    if (this.isHdcpRevocationRequest(requestDetails)) {
+                        const config = this.parent.parent.config;
+                        if (config.hdcp.bypassRevocationList) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -451,22 +456,22 @@ const DrmBypass = {
 
                 getRequestDetails: function (args) {
                     // Comprehensive request details extraction and analysis system
-                  const requestAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'drm_request_extraction_analysis',
-                    arguments_processed: [],
-                    extracted_headers: {},
-                    extracted_body: null,
-                    security_attributes: [],
-                    license_indicators: [],
-                    authentication_tokens: [],
-                    bypass_vectors: [],
-                  };
+                    const requestAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'drm_request_extraction_analysis',
+                        arguments_processed: [],
+                        extracted_headers: {},
+                        extracted_body: null,
+                        security_attributes: [],
+                        license_indicators: [],
+                        authentication_tokens: [],
+                        bypass_vectors: [],
+                    };
 
-                  // Analyze each argument for request data extraction
+                    // Analyze each argument for request data extraction
                     for (let i = 0; i < args.length; i++) {
-                      const argDetails = this.extractRequestArgument(args[i], i);
-                      requestAnalysis.arguments_processed.push(argDetails);
+                        const argDetails = this.extractRequestArgument(args[i], i);
+                        requestAnalysis.arguments_processed.push(argDetails);
 
                         // Extract HTTP headers from argument data
                         if (argDetails.contains_headers) {
@@ -518,10 +523,15 @@ const DrmBypass = {
 
                 isHdcpRevocationRequest: details => {
                     // Check if this is an HDCP revocation list request
-                  const hdcpRevocationIndicators = ['revocation', 'hdcp', 'certificate', 'revoked'];
+                    const hdcpRevocationIndicators = [
+                        'revocation',
+                        'hdcp',
+                        'certificate',
+                        'revoked',
+                    ];
 
-                  const content = (`${details.headers} ${details.body}`).toLowerCase();
-                  return hdcpRevocationIndicators.some(indicator => content.includes(indicator));
+                    const content = `${details.headers} ${details.body}`.toLowerCase();
+                    return hdcpRevocationIndicators.some(indicator => content.includes(indicator));
                 },
             });
 
@@ -537,7 +547,9 @@ const DrmBypass = {
             action: 'installing_playready_bypass',
         });
 
-        if (!this.config.playready.enabled) { return; }
+        if (!this.config.playready.enabled) {
+            return;
+        }
 
         // Hook PlayReady initialization
         this.hookPlayReadyInitialization();
@@ -560,32 +572,32 @@ const DrmBypass = {
         });
 
         // Hook PlayReady initialization functions
-      const playreadyFunctions = [
-        'DRM_APP_CONTEXT_Create',
-        'DRM_APP_CONTEXT_Initialize',
-        'DRM_Initialize',
-        'DrmInitialize',
-        'PlayReadyInitialize',
-        'PRInitialize',
-        'PR_Initialize',
-      ];
+        const playreadyFunctions = [
+            'DRM_APP_CONTEXT_Create',
+            'DRM_APP_CONTEXT_Initialize',
+            'DRM_Initialize',
+            'DrmInitialize',
+            'PlayReadyInitialize',
+            'PRInitialize',
+            'PR_Initialize',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < playreadyFunctions.length; j++) {
-              const funcName = playreadyFunctions[j];
-              this.hookPlayReadyFunction(module.name, funcName);
+            for (let j = 0; j < playreadyFunctions.length; j++) {
+                const funcName = playreadyFunctions[j];
+                this.hookPlayReadyFunction(module.name, funcName);
             }
         }
     },
 
     hookPlayReadyFunction: function (moduleName, functionName) {
         try {
-          const prFunc = Module.findExportByName(moduleName, functionName);
-          if (prFunc) {
+            const prFunc = Module.findExportByName(moduleName, functionName);
+            if (prFunc) {
                 Interceptor.attach(prFunc, {
                     onLeave: function (retval) {
                         // Make PlayReady operations succeed
@@ -657,49 +669,49 @@ const DrmBypass = {
         });
 
         // Hook license request functions
-      const licenseFunctions = [
-        'DRM_LIC_AcquireLicense',
-        'DRM_LicenseAcquisition_ProcessResponse',
-        'DrmAcquireLicense',
-        'PlayReadyAcquireLicense',
-        'PR_AcquireLicense',
-      ];
+        const licenseFunctions = [
+            'DRM_LIC_AcquireLicense',
+            'DRM_LicenseAcquisition_ProcessResponse',
+            'DrmAcquireLicense',
+            'PlayReadyAcquireLicense',
+            'PR_AcquireLicense',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < licenseFunctions.length; j++) {
-              const funcName = licenseFunctions[j];
-              this.hookPlayReadyLicenseFunction(module.name, funcName);
+            for (let j = 0; j < licenseFunctions.length; j++) {
+                const funcName = licenseFunctions[j];
+                this.hookPlayReadyLicenseFunction(module.name, funcName);
             }
         }
     },
 
     hookPlayReadyLicenseFunction: function (moduleName, functionName) {
         try {
-          const licFunc = Module.findExportByName(moduleName, functionName);
-          if (licFunc) {
+            const licFunc = Module.findExportByName(moduleName, functionName);
+            if (licFunc) {
                 Interceptor.attach(licFunc, {
                     onEnter: function (args) {
                         // Comprehensive PlayReady license acquisition argument analysis
-                      const licenseAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'playready_license_acquisition_analysis',
-                        function_arguments: [],
-                        license_request_data: null,
-                        drm_context_info: {},
-                        security_level_indicators: [],
-                        content_protection_metadata: {},
-                        bypass_strategy: null,
-                        vulnerability_assessment: [],
-                      };
+                        const licenseAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'playready_license_acquisition_analysis',
+                            function_arguments: [],
+                            license_request_data: null,
+                            drm_context_info: {},
+                            security_level_indicators: [],
+                            content_protection_metadata: {},
+                            bypass_strategy: null,
+                            vulnerability_assessment: [],
+                        };
 
-                      // Analyze each argument for PlayReady license data
+                        // Analyze each argument for PlayReady license data
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzePlayReadyLicenseArgument(args[i], i);
-                          licenseAnalysis.function_arguments.push(argAnalysis);
+                            const argAnalysis = this.analyzePlayReadyLicenseArgument(args[i], i);
+                            licenseAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request data
                             if (argAnalysis.contains_license_request) {
@@ -743,8 +755,8 @@ const DrmBypass = {
                         // Store comprehensive license analysis
                         this.storePlayReadyLicenseAnalysis(licenseAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.playready.bypassLicenseAcquisition) {
+                        const config = this.parent.parent.config;
+                        if (config.playready.bypassLicenseAcquisition) {
                             send({
                                 type: 'info',
                                 target: 'drm_bypass',
@@ -825,30 +837,30 @@ const DrmBypass = {
         });
 
         // Hook content decryption functions
-      const decryptFunctions = [
-        'DRM_DECRYPT_ProcessEncryptedContent',
-        'DRM_Reader_Decrypt',
-        'DrmDecryptContent',
-        'PlayReadyDecrypt',
-        'PR_Decrypt',
-      ];
+        const decryptFunctions = [
+            'DRM_DECRYPT_ProcessEncryptedContent',
+            'DRM_Reader_Decrypt',
+            'DrmDecryptContent',
+            'PlayReadyDecrypt',
+            'PR_Decrypt',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < decryptFunctions.length; j++) {
-              const funcName = decryptFunctions[j];
-              this.hookPlayReadyDecryptFunction(module.name, funcName);
+            for (let j = 0; j < decryptFunctions.length; j++) {
+                const funcName = decryptFunctions[j];
+                this.hookPlayReadyDecryptFunction(module.name, funcName);
             }
         }
     },
 
     hookPlayReadyDecryptFunction: function (moduleName, functionName) {
         try {
-          const decryptFunc = Module.findExportByName(moduleName, functionName);
-          if (decryptFunc) {
+            const decryptFunc = Module.findExportByName(moduleName, functionName);
+            if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
                     onEnter: function (args) {
                         this.encryptedContent = args[0];
@@ -857,8 +869,8 @@ const DrmBypass = {
                     },
 
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
-                      if (config.decryption.enabled && retval.toInt32() === 0) {
+                        const config = this.parent.parent.config;
+                        if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -931,34 +943,34 @@ const DrmBypass = {
         });
 
         // Hook security level validation functions
-      const securityFunctions = [
-        'DRM_GetSecurityLevel',
-        'DRM_ValidateSecurityLevel',
-        'DrmGetSecurityLevel',
-        'PlayReadyGetSecurityLevel',
-      ];
+        const securityFunctions = [
+            'DRM_GetSecurityLevel',
+            'DRM_ValidateSecurityLevel',
+            'DrmGetSecurityLevel',
+            'PlayReadyGetSecurityLevel',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < securityFunctions.length; j++) {
-              const funcName = securityFunctions[j];
-              this.hookPlayReadySecurityFunction(module.name, funcName);
+            for (let j = 0; j < securityFunctions.length; j++) {
+                const funcName = securityFunctions[j];
+                this.hookPlayReadySecurityFunction(module.name, funcName);
             }
         }
     },
 
     hookPlayReadySecurityFunction: function (moduleName, functionName) {
         try {
-          const secFunc = Module.findExportByName(moduleName, functionName);
-          if (secFunc) {
+            const secFunc = Module.findExportByName(moduleName, functionName);
+            if (secFunc) {
                 Interceptor.attach(secFunc, {
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
+                        const config = this.parent.parent.config;
 
-                      if (functionName.includes('GetSecurityLevel')) {
+                        if (functionName.includes('GetSecurityLevel')) {
                             // Spoof maximum security level
                             if (retval.toInt32() !== config.playready.spoofSecurityLevel) {
                                 retval.replace(config.playready.spoofSecurityLevel);
@@ -1037,7 +1049,9 @@ const DrmBypass = {
             action: 'installing_widevine_drm_bypass',
         });
 
-        if (!this.config.widevine.enabled) { return; }
+        if (!this.config.widevine.enabled) {
+            return;
+        }
 
         // Hook Widevine CDM initialization
         this.hookWidevineInitialization();
@@ -1060,29 +1074,29 @@ const DrmBypass = {
         });
 
         // Hook Widevine CDM functions
-      const widevineFunctions = [
-        'CreateCdmInstance',
-        'InitializeCdm',
-        'WidevineInit',
-        'WV_Initialize',
-        'CDM_Initialize',
-        'wvdrm_init',
-      ];
+        const widevineFunctions = [
+            'CreateCdmInstance',
+            'InitializeCdm',
+            'WidevineInit',
+            'WV_Initialize',
+            'CDM_Initialize',
+            'wvdrm_init',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          // Focus on Widevine-related modules
+            // Focus on Widevine-related modules
             if (
                 module.name.toLowerCase().includes('widevine') ||
                 module.name.toLowerCase().includes('wvcdm') ||
                 module.name.toLowerCase().includes('chrome')
             ) {
                 for (let j = 0; j < widevineFunctions.length; j++) {
-                  const funcName = widevineFunctions[j];
-                  this.hookWidevineFunction(module.name, funcName);
+                    const funcName = widevineFunctions[j];
+                    this.hookWidevineFunction(module.name, funcName);
                 }
             }
         }
@@ -1090,12 +1104,12 @@ const DrmBypass = {
 
     hookWidevineFunction: function (moduleName, functionName) {
         try {
-          const wvFunc = Module.findExportByName(moduleName, functionName);
-          if (wvFunc) {
+            const wvFunc = Module.findExportByName(moduleName, functionName);
+            if (wvFunc) {
                 Interceptor.attach(wvFunc, {
                     onLeave: function (retval) {
                         // Make Widevine operations succeed
-                      const successCodes = [0, 1]; // Various success codes
+                        const successCodes = [0, 1]; // Various success codes
                         if (!successCodes.includes(retval.toInt32())) {
                             retval.replace(0);
                             send({
@@ -1163,50 +1177,53 @@ const DrmBypass = {
         });
 
         // Hook provisioning-related functions
-      const provisioningFunctions = [
-        'GetProvisionRequest',
-        'ProcessProvisionResponse',
-        'IsProvisioned',
-        'ProvisionCdm',
-        'WV_Provision',
-      ];
+        const provisioningFunctions = [
+            'GetProvisionRequest',
+            'ProcessProvisionResponse',
+            'IsProvisioned',
+            'ProvisionCdm',
+            'WV_Provision',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < provisioningFunctions.length; j++) {
-              const funcName = provisioningFunctions[j];
-              this.hookWidevineProvisioningFunction(module.name, funcName);
+            for (let j = 0; j < provisioningFunctions.length; j++) {
+                const funcName = provisioningFunctions[j];
+                this.hookWidevineProvisioningFunction(module.name, funcName);
             }
         }
     },
 
     hookWidevineProvisioningFunction: function (moduleName, functionName) {
         try {
-          const provFunc = Module.findExportByName(moduleName, functionName);
-          if (provFunc) {
+            const provFunc = Module.findExportByName(moduleName, functionName);
+            if (provFunc) {
                 Interceptor.attach(provFunc, {
                     onEnter: function (args) {
                         // Comprehensive Widevine provisioning argument analysis
-                      const provisioningAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'widevine_provisioning_analysis',
-                        function_arguments: [],
-                        provisioning_request_data: null,
-                        device_identity_info: {},
-                        security_level_assessment: 'unknown',
-                        cdm_version_detected: null,
-                        origin_verification_data: {},
-                        bypass_feasibility: 'unknown',
-                        attack_vectors: [],
-                      };
+                        const provisioningAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'widevine_provisioning_analysis',
+                            function_arguments: [],
+                            provisioning_request_data: null,
+                            device_identity_info: {},
+                            security_level_assessment: 'unknown',
+                            cdm_version_detected: null,
+                            origin_verification_data: {},
+                            bypass_feasibility: 'unknown',
+                            attack_vectors: [],
+                        };
 
-                      // Analyze each argument for Widevine provisioning data
+                        // Analyze each argument for Widevine provisioning data
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzeWidevineProvisioningArgument(args[i], i);
-                          provisioningAnalysis.function_arguments.push(argAnalysis);
+                            const argAnalysis = this.analyzeWidevineProvisioningArgument(
+                                args[i],
+                                i
+                            );
+                            provisioningAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract provisioning request data
                             if (argAnalysis.contains_provisioning_request) {
@@ -1253,8 +1270,8 @@ const DrmBypass = {
                         // Store comprehensive provisioning analysis
                         this.storeWidevineProvisioningAnalysis(provisioningAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.widevine.bypassProvisioningCheck) {
+                        const config = this.parent.parent.config;
+                        if (config.widevine.bypassProvisioningCheck) {
                             this.bypassProvisioning = true;
                             this.provisioningAnalysisData = provisioningAnalysis;
 
@@ -1343,53 +1360,53 @@ const DrmBypass = {
         });
 
         // Hook license request functions
-      const licenseFunctions = [
-        'CreateLicenseRequest',
-        'ProcessLicenseResponse',
-        'GenerateLicenseRequest',
-        'WV_GetLicense',
-        'AcquireLicense',
-      ];
+        const licenseFunctions = [
+            'CreateLicenseRequest',
+            'ProcessLicenseResponse',
+            'GenerateLicenseRequest',
+            'WV_GetLicense',
+            'AcquireLicense',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < licenseFunctions.length; j++) {
-              const funcName = licenseFunctions[j];
-              this.hookWidevineLicenseFunction(module.name, funcName);
+            for (let j = 0; j < licenseFunctions.length; j++) {
+                const funcName = licenseFunctions[j];
+                this.hookWidevineLicenseFunction(module.name, funcName);
             }
         }
     },
 
     hookWidevineLicenseFunction: function (moduleName, functionName) {
         try {
-          const licFunc = Module.findExportByName(moduleName, functionName);
-          if (licFunc) {
+            const licFunc = Module.findExportByName(moduleName, functionName);
+            if (licFunc) {
                 Interceptor.attach(licFunc, {
                     onEnter: function (args) {
                         // Comprehensive Widevine license request argument analysis
-                      const licenseRequestAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'widevine_license_request_analysis',
-                        function_arguments: [],
-                        license_request_payload: null,
-                        pssh_data: null,
-                        content_keys_info: [],
-                        session_context: {},
-                        encryption_parameters: {},
-                        bypass_method: null,
-                        exploitation_vectors: [],
-                      };
+                        const licenseRequestAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'widevine_license_request_analysis',
+                            function_arguments: [],
+                            license_request_payload: null,
+                            pssh_data: null,
+                            content_keys_info: [],
+                            session_context: {},
+                            encryption_parameters: {},
+                            bypass_method: null,
+                            exploitation_vectors: [],
+                        };
 
-                      // Analyze each argument for Widevine license request data
+                        // Analyze each argument for Widevine license request data
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzeWidevineLicenseRequestArgument(
-                            args[i],
-                            i
-                          );
-                          licenseRequestAnalysis.function_arguments.push(argAnalysis);
+                            const argAnalysis = this.analyzeWidevineLicenseRequestArgument(
+                                args[i],
+                                i
+                            );
+                            licenseRequestAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request payload
                             if (argAnalysis.contains_license_request_payload) {
@@ -1438,8 +1455,8 @@ const DrmBypass = {
                         // Store comprehensive license request analysis
                         this.storeWidevineLicenseRequestAnalysis(licenseRequestAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.widevine.bypassLicenseRequest) {
+                        const config = this.parent.parent.config;
+                        if (config.widevine.bypassLicenseRequest) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -1518,26 +1535,26 @@ const DrmBypass = {
         });
 
         // Hook Widevine decryption functions
-      const decryptFunctions = [
-        'Decrypt',
-        'DecryptFrame',
-        'DecryptAndDecode',
-        'WV_Decrypt',
-        'ProcessEncryptedBuffer',
-      ];
+        const decryptFunctions = [
+            'Decrypt',
+            'DecryptFrame',
+            'DecryptAndDecode',
+            'WV_Decrypt',
+            'ProcessEncryptedBuffer',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          if (
+            if (
                 module.name.toLowerCase().includes('widevine') ||
                 module.name.toLowerCase().includes('wvcdm')
             ) {
                 for (let j = 0; j < decryptFunctions.length; j++) {
-                  const funcName = decryptFunctions[j];
-                  this.hookWidevineDecryptFunction(module.name, funcName);
+                    const funcName = decryptFunctions[j];
+                    this.hookWidevineDecryptFunction(module.name, funcName);
                 }
             }
         }
@@ -1545,8 +1562,8 @@ const DrmBypass = {
 
     hookWidevineDecryptFunction: function (moduleName, functionName) {
         try {
-          const decryptFunc = Module.findExportByName(moduleName, functionName);
-          if (decryptFunc) {
+            const decryptFunc = Module.findExportByName(moduleName, functionName);
+            if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
                     onEnter: function (args) {
                         this.encryptedBuffer = args[0];
@@ -1555,8 +1572,8 @@ const DrmBypass = {
                     },
 
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
-                      if (config.decryption.enabled && retval.toInt32() === 0) {
+                        const config = this.parent.parent.config;
+                        if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -1628,7 +1645,9 @@ const DrmBypass = {
             action: 'installing_streaming_drm_bypass',
         });
 
-        if (!this.config.streaming.enabled) { return; }
+        if (!this.config.streaming.enabled) {
+            return;
+        }
 
         // Hook time-based protection
         this.hookTimeBasedProtection();
@@ -1651,41 +1670,41 @@ const DrmBypass = {
         });
 
         // Hook time-related functions
-      const timeFunctions = [
-        'GetSystemTime',
-        'GetLocalTime',
-        'GetFileTime',
-        'QueryPerformanceCounter',
-        'GetTickCount',
-        'GetTickCount64',
-      ];
+        const timeFunctions = [
+            'GetSystemTime',
+            'GetLocalTime',
+            'GetFileTime',
+            'QueryPerformanceCounter',
+            'GetTickCount',
+            'GetTickCount64',
+        ];
 
-      for (let i = 0; i < timeFunctions.length; i++) {
-          const funcName = timeFunctions[i];
-          this.hookTimeFunction(funcName);
+        for (let i = 0; i < timeFunctions.length; i++) {
+            const funcName = timeFunctions[i];
+            this.hookTimeFunction(funcName);
         }
     },
 
     hookTimeFunction: function (functionName) {
-      const timeFunc = Module.findExportByName('kernel32.dll', functionName);
-      if (timeFunc) {
+        const timeFunc = Module.findExportByName('kernel32.dll', functionName);
+        if (timeFunc) {
             Interceptor.attach(timeFunc, {
                 onLeave: function (retval) {
                     // Comprehensive time-based protection bypass retval manipulation system
-                  const timeBypassAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'time_based_protection_bypass',
-                    original_return_value: retval.toInt32(),
-                    function_name: functionName,
-                    manipulation_strategy: null,
-                    bypass_techniques: [],
-                    temporal_vulnerabilities: [],
-                    exploitation_vectors: [],
-                  };
+                    const timeBypassAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'time_based_protection_bypass',
+                        original_return_value: retval.toInt32(),
+                        function_name: functionName,
+                        manipulation_strategy: null,
+                        bypass_techniques: [],
+                        temporal_vulnerabilities: [],
+                        exploitation_vectors: [],
+                    };
 
-                  // Analyze the original time return value
-                  const timeAnalysis = this.analyzeTimeReturnValue(retval, functionName);
-                  timeBypassAnalysis.temporal_vulnerabilities = timeAnalysis.vulnerabilities;
+                    // Analyze the original time return value
+                    const timeAnalysis = this.analyzeTimeReturnValue(retval, functionName);
+                    timeBypassAnalysis.temporal_vulnerabilities = timeAnalysis.vulnerabilities;
 
                     // Determine optimal time manipulation strategy
                     timeBypassAnalysis.manipulation_strategy =
@@ -1699,12 +1718,15 @@ const DrmBypass = {
                     timeBypassAnalysis.exploitation_vectors =
                         this.assessTemporalExploitationVectors(timeAnalysis);
 
-                  const config = this.parent.parent.config;
-                  if (config.streaming.bypassTimeBasedProtection) {
+                    const config = this.parent.parent.config;
+                    if (config.streaming.bypassTimeBasedProtection) {
                         // Implement comprehensive time value manipulation for bypass
-                      const manipulatedValue = this.manipulateTimeValue(retval, timeBypassAnalysis);
+                        const manipulatedValue = this.manipulateTimeValue(
+                            retval,
+                            timeBypassAnalysis
+                        );
 
-                      // Apply the manipulation based on bypass strategy
+                        // Apply the manipulation based on bypass strategy
                         if (manipulatedValue !== retval.toInt32()) {
                             retval.replace(manipulatedValue);
                             timeBypassAnalysis.manipulation_applied = true;
@@ -1738,16 +1760,16 @@ const DrmBypass = {
         });
 
         // Hook geo-location APIs
-      const geoFunctions = ['GetGeoInfo', 'GetUserGeoID', 'GetGeoInfoW'];
+        const geoFunctions = ['GetGeoInfo', 'GetUserGeoID', 'GetGeoInfoW'];
 
-      for (let i = 0; i < geoFunctions.length; i++) {
-          const funcName = geoFunctions[i];
-          const geoFunc = Module.findExportByName('kernel32.dll', funcName);
-          if (geoFunc) {
+        for (let i = 0; i < geoFunctions.length; i++) {
+            const funcName = geoFunctions[i];
+            const geoFunc = Module.findExportByName('kernel32.dll', funcName);
+            if (geoFunc) {
                 Interceptor.attach(geoFunc, {
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
-                      if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
+                        const config = this.parent.parent.config;
+                        if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
                             retval.replace(244); // US geo ID
                             send({
                                 type: 'bypass',
@@ -1771,14 +1793,14 @@ const DrmBypass = {
         });
 
         // Hook HTTP requests to check for domain restrictions
-      const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
-      if (winHttpSendRequest) {
+        const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
+        if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
-                  const requestDetails = this.getRequestDetails(args);
-                  if (this.isDomainRestrictedRequest(requestDetails)) {
-                      const config = this.parent.parent.config;
-                      if (config.streaming.bypassDomainRestrictions) {
+                    const requestDetails = this.getRequestDetails(args);
+                    if (this.isDomainRestrictedRequest(requestDetails)) {
+                        const config = this.parent.parent.config;
+                        if (config.streaming.bypassDomainRestrictions) {
                             this.spoofHeaders = true;
                             send({
                                 type: 'bypass',
@@ -1791,23 +1813,23 @@ const DrmBypass = {
 
                 getRequestDetails: function (args) {
                     // Comprehensive domain-restricted request analysis system
-                  const domainRequestAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'domain_restricted_request_analysis',
-                    function_arguments: [],
-                    extracted_url: null,
-                    extracted_headers: {},
-                    domain_restrictions: [],
-                    origin_validation_data: {},
-                    referrer_analysis: {},
-                    bypass_strategies: [],
-                    security_implications: [],
-                  };
+                    const domainRequestAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'domain_restricted_request_analysis',
+                        function_arguments: [],
+                        extracted_url: null,
+                        extracted_headers: {},
+                        domain_restrictions: [],
+                        origin_validation_data: {},
+                        referrer_analysis: {},
+                        bypass_strategies: [],
+                        security_implications: [],
+                    };
 
-                  // Analyze each argument for domain request data
+                    // Analyze each argument for domain request data
                     for (let i = 0; i < args.length; i++) {
-                      const argAnalysis = this.analyzeDomainRequestArgument(args[i], i);
-                      domainRequestAnalysis.function_arguments.push(argAnalysis);
+                        const argAnalysis = this.analyzeDomainRequestArgument(args[i], i);
+                        domainRequestAnalysis.function_arguments.push(argAnalysis);
 
                         // Extract URL information
                         if (argAnalysis.contains_url) {
@@ -1876,10 +1898,10 @@ const DrmBypass = {
                 },
 
                 isDomainRestrictedRequest: function (details) {
-                  const config = this.parent.parent.config;
-                  const allowedDomains = config.streaming.allowedDomains;
+                    const config = this.parent.parent.config;
+                    const allowedDomains = config.streaming.allowedDomains;
 
-                  // Check if request is to streaming services
+                    // Check if request is to streaming services
                     return allowedDomains.some(domain =>
                         details.url.includes(domain.replace('*.', ''))
                     );
@@ -1898,19 +1920,19 @@ const DrmBypass = {
         });
 
         // Hook telemetry/analytics requests
-      const httpFunctions = ['WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'];
+        const httpFunctions = ['WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'];
 
-      for (let i = 0; i < httpFunctions.length; i++) {
-          const funcName = httpFunctions[i];
-          this.hookTelemetryFunction(funcName);
+        for (let i = 0; i < httpFunctions.length; i++) {
+            const funcName = httpFunctions[i];
+            this.hookTelemetryFunction(funcName);
         }
     },
 
     hookTelemetryFunction: function (functionName) {
-      let module = null;
-      let func = null;
+        let module = null;
+        let func = null;
 
-      if (functionName.includes('WinHttp')) {
+        if (functionName.includes('WinHttp')) {
             module = 'winhttp.dll';
         } else {
             module = 'wininet.dll';
@@ -1920,10 +1942,10 @@ const DrmBypass = {
         if (func) {
             Interceptor.attach(func, {
                 onEnter: function (args) {
-                  const config = this.parent.parent.config;
-                  if (config.streaming.blockTelemetry) {
-                      const requestDetails = this.analyzeTelemetryRequest(args);
-                      if (requestDetails.isTelemetry) {
+                    const config = this.parent.parent.config;
+                    if (config.streaming.blockTelemetry) {
+                        const requestDetails = this.analyzeTelemetryRequest(args);
+                        if (requestDetails.isTelemetry) {
                             this.blockTelemetryRequest = true;
                             send({
                                 type: 'bypass',
@@ -1943,45 +1965,45 @@ const DrmBypass = {
 
                 analyzeTelemetryRequest: function (args) {
                     // Comprehensive telemetry request argument analysis system
-                  const telemetryAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'telemetry_request_analysis',
-                    function_arguments: [],
-                    telemetry_indicators_detected: [],
-                    data_collection_vectors: [],
-                    privacy_implications: [],
-                    tracking_mechanisms: [],
-                    bypass_methods: [],
-                    blocking_strategies: [],
-                  };
+                    const telemetryAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'telemetry_request_analysis',
+                        function_arguments: [],
+                        telemetry_indicators_detected: [],
+                        data_collection_vectors: [],
+                        privacy_implications: [],
+                        tracking_mechanisms: [],
+                        bypass_methods: [],
+                        blocking_strategies: [],
+                    };
 
-                  // Enhanced telemetry detection patterns
-                  const telemetryIndicators = [
-                    'analytics',
-                    'telemetry',
-                    'tracking',
-                    'metrics',
-                    'usage',
-                    'stats',
-                    'ping',
-                    'beacon',
-                    'error_reporting',
-                    'crash_report',
-                    'performance_data',
-                    'user_behavior',
-                    'fingerprinting',
-                    'device_info',
-                    'session_tracking',
-                  ];
+                    // Enhanced telemetry detection patterns
+                    const telemetryIndicators = [
+                        'analytics',
+                        'telemetry',
+                        'tracking',
+                        'metrics',
+                        'usage',
+                        'stats',
+                        'ping',
+                        'beacon',
+                        'error_reporting',
+                        'crash_report',
+                        'performance_data',
+                        'user_behavior',
+                        'fingerprinting',
+                        'device_info',
+                        'session_tracking',
+                    ];
 
-                  // Analyze each argument for telemetry-related data
+                    // Analyze each argument for telemetry-related data
                     for (let i = 0; i < args.length; i++) {
-                      const argAnalysis = this.analyzeTelemetryArgument(
-                        args[i],
-                        i,
-                        telemetryIndicators
-                      );
-                      telemetryAnalysis.function_arguments.push(argAnalysis);
+                        const argAnalysis = this.analyzeTelemetryArgument(
+                            args[i],
+                            i,
+                            telemetryIndicators
+                        );
+                        telemetryAnalysis.function_arguments.push(argAnalysis);
 
                         // Collect telemetry indicators found in arguments
                         if (argAnalysis.telemetry_indicators.length > 0) {
@@ -2028,12 +2050,12 @@ const DrmBypass = {
                     this.storeTelemetryAnalysis(telemetryAnalysis);
 
                     // Determine if this is genuine telemetry based on comprehensive analysis
-                  const isTelemetryDetected =
-                    telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
-                    telemetryAnalysis.data_collection_vectors.length > 1 ||
-                    telemetryAnalysis.tracking_mechanisms.length > 0;
+                    const isTelemetryDetected =
+                        telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
+                        telemetryAnalysis.data_collection_vectors.length > 1 ||
+                        telemetryAnalysis.tracking_mechanisms.length > 0;
 
-                  return {
+                    return {
                         isTelemetry: isTelemetryDetected,
                         analysis: telemetryAnalysis,
                         indicators_count: telemetryAnalysis.telemetry_indicators_detected.length,
@@ -2061,7 +2083,9 @@ const DrmBypass = {
             action: 'installing_hardware_drm_bypass',
         });
 
-        if (!this.config.hardware.enabled) { return; }
+        if (!this.config.hardware.enabled) {
+            return;
+        }
 
         // Hook TPM-based DRM
         this.hookTpmDrm();
@@ -2081,21 +2105,21 @@ const DrmBypass = {
         });
 
         // Hook TPM functions
-      const tpmFunctions = [
-        'Tbsi_Context_Create',
-        'Tbsi_Submit_Command',
-        'TpmCreateContext',
-        'TpmSendCommand',
-      ];
+        const tpmFunctions = [
+            'Tbsi_Context_Create',
+            'Tbsi_Submit_Command',
+            'TpmCreateContext',
+            'TpmSendCommand',
+        ];
 
-      for (let i = 0; i < tpmFunctions.length; i++) {
-          const funcName = tpmFunctions[i];
-          const tpmFunc = Module.findExportByName('tbs.dll', funcName);
-          if (tpmFunc) {
+        for (let i = 0; i < tpmFunctions.length; i++) {
+            const funcName = tpmFunctions[i];
+            const tpmFunc = Module.findExportByName('tbs.dll', funcName);
+            if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
                     onLeave: function (retval) {
-                      const config = this.parent.parent.config;
-                      if (config.hardware.spoofTpmCredentials) {
+                        const config = this.parent.parent.config;
+                        if (config.hardware.spoofTpmCredentials) {
                             // Make TPM operations succeed
                             retval.replace(0); // TBS_SUCCESS
                             send({
@@ -2122,20 +2146,20 @@ const DrmBypass = {
         });
 
         // Hook TEE-related functions
-      const teeFunctions = ['TeeProcCreate', 'TeeInvokeCommand', 'TeeOpenSession'];
+        const teeFunctions = ['TeeProcCreate', 'TeeInvokeCommand', 'TeeOpenSession'];
 
-      for (let i = 0; i < teeFunctions.length; i++) {
-          const funcName = teeFunctions[i];
-          // TEE functions might be in various modules
-          const modules = ['tee.dll', 'trustlet.dll', 'secure.dll'];
+        for (let i = 0; i < teeFunctions.length; i++) {
+            const funcName = teeFunctions[i];
+            // TEE functions might be in various modules
+            const modules = ['tee.dll', 'trustlet.dll', 'secure.dll'];
 
-          for (let j = 0; j < modules.length; j++) {
-              const teeFunc = Module.findExportByName(modules[j], funcName);
-              if (teeFunc) {
+            for (let j = 0; j < modules.length; j++) {
+                const teeFunc = Module.findExportByName(modules[j], funcName);
+                if (teeFunc) {
                     Interceptor.attach(teeFunc, {
                         onLeave: function (retval) {
-                          const config = this.parent.parent.config;
-                          if (config.hardware.bypassTrustedExecutionEnvironment) {
+                            const config = this.parent.parent.config;
+                            if (config.hardware.bypassTrustedExecutionEnvironment) {
                                 retval.replace(0); // SUCCESS
                                 send({
                                     type: 'bypass',
@@ -2162,28 +2186,28 @@ const DrmBypass = {
         });
 
         // Hook CPU security features
-      const isProcessorFeaturePresent = Module.findExportByName(
-        'kernel32.dll',
-        'IsProcessorFeaturePresent'
-      );
-      if (isProcessorFeaturePresent) {
+        const isProcessorFeaturePresent = Module.findExportByName(
+            'kernel32.dll',
+            'IsProcessorFeaturePresent'
+        );
+        if (isProcessorFeaturePresent) {
             Interceptor.attach(isProcessorFeaturePresent, {
                 onEnter: function (args) {
                     this.feature = args[0].toInt32();
                 },
 
                 onLeave: function (retval) {
-                  const config = this.parent.parent.config;
-                  if (config.hardware.spoofCpuSecurityFeatures) {
+                    const config = this.parent.parent.config;
+                    if (config.hardware.spoofCpuSecurityFeatures) {
                         // Security-related processor features
-                      const securityFeatures = [
-                        10, // PF_NX_ENABLED
-                        12, // PF_DEP_ENABLED
-                        20, // PF_VIRT_FIRMWARE_ENABLED
-                        23, // PF_SECOND_LEVEL_ADDRESS_TRANSLATION
-                      ];
+                        const securityFeatures = [
+                            10, // PF_NX_ENABLED
+                            12, // PF_DEP_ENABLED
+                            20, // PF_VIRT_FIRMWARE_ENABLED
+                            23, // PF_SECOND_LEVEL_ADDRESS_TRANSLATION
+                        ];
 
-                      if (securityFeatures.includes(this.feature)) {
+                        if (securityFeatures.includes(this.feature)) {
                             retval.replace(1); // TRUE - feature present
                             send({
                                 type: 'bypass',
@@ -2208,7 +2232,9 @@ const DrmBypass = {
             action: 'installing_eme_api_bypass',
         });
 
-        if (!this.config.eme.enabled) { return; }
+        if (!this.config.eme.enabled) {
+            return;
+        }
 
         // Hook MediaKeys creation
         this.hookMediaKeysCreation();
@@ -2228,31 +2254,31 @@ const DrmBypass = {
         });
 
         // Hook browser EME functions (if running in browser context)
-      const emeFunctions = [
-        'CreateMediaKeys',
-        'RequestMediaKeySystemAccess',
-        'GenerateRequest',
-        'Load',
-        'Update',
-      ];
+        const emeFunctions = [
+            'CreateMediaKeys',
+            'RequestMediaKeySystemAccess',
+            'GenerateRequest',
+            'Load',
+            'Update',
+        ];
 
-      // Note: These would typically be JavaScript API hooks in a browser context
+        // Note: These would typically be JavaScript API hooks in a browser context
         // For native applications, we look for corresponding native implementations
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          // Look for Chrome/Chromium EME implementation
+            // Look for Chrome/Chromium EME implementation
             if (
                 module.name.toLowerCase().includes('chrome') ||
                 module.name.toLowerCase().includes('blink') ||
                 module.name.toLowerCase().includes('content')
             ) {
                 for (let j = 0; j < emeFunctions.length; j++) {
-                  const funcName = emeFunctions[j];
-                  this.hookEMEFunction(module.name, funcName);
+                    const funcName = emeFunctions[j];
+                    this.hookEMEFunction(module.name, funcName);
                 }
             }
         }
@@ -2260,26 +2286,26 @@ const DrmBypass = {
 
     hookEMEFunction: function (moduleName, functionName) {
         try {
-          const emeFunc = Module.findExportByName(moduleName, functionName);
-          if (emeFunc) {
+            const emeFunc = Module.findExportByName(moduleName, functionName);
+            if (emeFunc) {
                 Interceptor.attach(emeFunc, {
                     onLeave: function (retval) {
                         // Comprehensive EME retval manipulation system
-                      const emeBypassAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'eme_bypass_manipulation',
-                        function_name: functionName,
-                        original_return_value: retval.toInt32(),
-                        eme_operation_type: this.classifyEmeOperation(functionName),
-                        manipulation_strategy: null,
-                        bypass_techniques: [],
-                        media_key_vulnerabilities: [],
-                        access_control_weaknesses: [],
-                      };
+                        const emeBypassAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'eme_bypass_manipulation',
+                            function_name: functionName,
+                            original_return_value: retval.toInt32(),
+                            eme_operation_type: this.classifyEmeOperation(functionName),
+                            manipulation_strategy: null,
+                            bypass_techniques: [],
+                            media_key_vulnerabilities: [],
+                            access_control_weaknesses: [],
+                        };
 
-                      // Analyze the original EME return value
-                      const emeAnalysis = this.analyzeEmeReturnValue(retval, functionName);
-                      emeBypassAnalysis.media_key_vulnerabilities = emeAnalysis.vulnerabilities;
+                        // Analyze the original EME return value
+                        const emeAnalysis = this.analyzeEmeReturnValue(retval, functionName);
+                        emeBypassAnalysis.media_key_vulnerabilities = emeAnalysis.vulnerabilities;
                         emeBypassAnalysis.access_control_weaknesses =
                             emeAnalysis.access_control_issues;
 
@@ -2291,17 +2317,17 @@ const DrmBypass = {
                         emeBypassAnalysis.bypass_techniques =
                             this.identifyEmeBypassTechniques(emeAnalysis);
 
-                      const config = this.parent.parent.config;
+                        const config = this.parent.parent.config;
 
-                      if (functionName === 'RequestMediaKeySystemAccess') {
+                        if (functionName === 'RequestMediaKeySystemAccess') {
                             if (config.eme.spoofMediaKeySystemAccess) {
                                 // Comprehensive media key system access manipulation
-                              const manipulatedAccessValue = this.manipulateMediaKeySystemAccess(
-                                retval,
-                                emeBypassAnalysis
-                              );
+                                const manipulatedAccessValue = this.manipulateMediaKeySystemAccess(
+                                    retval,
+                                    emeBypassAnalysis
+                                );
 
-                              if (manipulatedAccessValue !== retval.toInt32()) {
+                                if (manipulatedAccessValue !== retval.toInt32()) {
                                     retval.replace(manipulatedAccessValue);
                                     emeBypassAnalysis.manipulation_applied = true;
                                     emeBypassAnalysis.new_return_value = manipulatedAccessValue;
@@ -2317,12 +2343,12 @@ const DrmBypass = {
                             }
                         } else {
                             // Comprehensive manipulation for other EME operations
-                          const manipulatedValue = this.manipulateEmeOperation(
-                            retval,
-                            emeBypassAnalysis
-                          );
+                            const manipulatedValue = this.manipulateEmeOperation(
+                                retval,
+                                emeBypassAnalysis
+                            );
 
-                          if (manipulatedValue !== retval.toInt32()) {
+                            if (manipulatedValue !== retval.toInt32()) {
                                 retval.replace(manipulatedValue);
                                 emeBypassAnalysis.manipulation_applied = true;
                                 emeBypassAnalysis.new_return_value = manipulatedValue;
@@ -2389,48 +2415,48 @@ const DrmBypass = {
         });
 
         // Hook key session functions
-      const sessionFunctions = [
-        'CreateSession',
-        'CloseSession',
-        'RemoveSession',
-        'LoadSession',
-        'UpdateSession',
-      ];
+        const sessionFunctions = [
+            'CreateSession',
+            'CloseSession',
+            'RemoveSession',
+            'LoadSession',
+            'UpdateSession',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < sessionFunctions.length; j++) {
-              const funcName = sessionFunctions[j];
-              this.hookKeySessionFunction(module.name, funcName);
+            for (let j = 0; j < sessionFunctions.length; j++) {
+                const funcName = sessionFunctions[j];
+                this.hookKeySessionFunction(module.name, funcName);
             }
         }
     },
 
     hookKeySessionFunction: function (moduleName, functionName) {
         try {
-          const sessionFunc = Module.findExportByName(moduleName, functionName);
-          if (sessionFunc) {
+            const sessionFunc = Module.findExportByName(moduleName, functionName);
+            if (sessionFunc) {
                 Interceptor.attach(sessionFunc, {
                     onLeave: function (retval) {
                         // Comprehensive key session retval manipulation system
-                      const keySessionAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'key_session_retval_manipulation',
-                        function_name: functionName,
-                        original_return_value: retval.toInt32(),
-                        session_operation_type: this.classifyKeySessionOperation(functionName),
-                        manipulation_strategy: null,
-                        bypass_techniques: [],
-                        session_vulnerabilities: [],
-                        license_weaknesses: [],
-                      };
+                        const keySessionAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'key_session_retval_manipulation',
+                            function_name: functionName,
+                            original_return_value: retval.toInt32(),
+                            session_operation_type: this.classifyKeySessionOperation(functionName),
+                            manipulation_strategy: null,
+                            bypass_techniques: [],
+                            session_vulnerabilities: [],
+                            license_weaknesses: [],
+                        };
 
-                      // Analyze the original key session return value
-                      const sessionAnalysis = this.analyzeKeySessionRetval(retval, functionName);
-                      keySessionAnalysis.session_vulnerabilities =
+                        // Analyze the original key session return value
+                        const sessionAnalysis = this.analyzeKeySessionRetval(retval, functionName);
+                        keySessionAnalysis.session_vulnerabilities =
                             sessionAnalysis.vulnerabilities;
                         keySessionAnalysis.license_weaknesses = sessionAnalysis.license_issues;
 
@@ -2444,15 +2470,15 @@ const DrmBypass = {
                         keySessionAnalysis.bypass_techniques =
                             this.identifySessionBypassTechniques(sessionAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.eme.bypassKeySessionLimits) {
+                        const config = this.parent.parent.config;
+                        if (config.eme.bypassKeySessionLimits) {
                             // Comprehensive key session manipulation
-                          const manipulatedSessionValue = this.manipulateKeySessionRetval(
-                            retval,
-                            keySessionAnalysis
-                          );
+                            const manipulatedSessionValue = this.manipulateKeySessionRetval(
+                                retval,
+                                keySessionAnalysis
+                            );
 
-                          if (manipulatedSessionValue !== retval.toInt32()) {
+                            if (manipulatedSessionValue !== retval.toInt32()) {
                                 retval.replace(manipulatedSessionValue);
                                 keySessionAnalysis.manipulation_applied = true;
                                 keySessionAnalysis.new_return_value = manipulatedSessionValue;
@@ -2540,7 +2566,9 @@ const DrmBypass = {
             action: 'installing_content_decryption_bypass',
         });
 
-        if (!this.config.decryption.enabled) { return; }
+        if (!this.config.decryption.enabled) {
+            return;
+        }
 
         // Hook generic decryption functions
         this.hookGenericDecryption();
@@ -2560,13 +2588,13 @@ const DrmBypass = {
         });
 
         // Hook common decryption APIs
-      const decryptFunctions = ['CryptDecrypt', 'BCryptDecrypt', 'NCryptDecrypt'];
+        const decryptFunctions = ['CryptDecrypt', 'BCryptDecrypt', 'NCryptDecrypt'];
 
-      for (let i = 0; i < decryptFunctions.length; i++) {
-          const funcName = decryptFunctions[i];
-          let module = null;
+        for (let i = 0; i < decryptFunctions.length; i++) {
+            const funcName = decryptFunctions[i];
+            let module = null;
 
-          if (funcName.startsWith('BCrypt')) {
+            if (funcName.startsWith('BCrypt')) {
                 module = 'bcrypt.dll';
             } else if (funcName.startsWith('NCrypt')) {
                 module = 'ncrypt.dll';
@@ -2574,8 +2602,8 @@ const DrmBypass = {
                 module = 'advapi32.dll';
             }
 
-          const decryptFunc = Module.findExportByName(module, funcName);
-          if (decryptFunc) {
+            const decryptFunc = Module.findExportByName(module, funcName);
+            if (decryptFunc) {
                 Interceptor.attach(decryptFunc, {
                     onEnter: function (args) {
                         this.isDrmDecryption = this.detectDrmDecryption(args);
@@ -2584,20 +2612,20 @@ const DrmBypass = {
                     onLeave: function (retval) {
                         if (this.isDrmDecryption) {
                             // Comprehensive DRM decryption retval manipulation system
-                          const decryptionAnalysis = {
-                            timestamp: new Date().toISOString(),
-                            context: 'drm_decryption_retval_manipulation',
-                            original_return_value: retval.toInt32(),
-                            decryption_operation_type: this.classifyDecryptionOperation(),
-                            manipulation_strategy: null,
-                            bypass_techniques: [],
-                            decryption_vulnerabilities: [],
-                            content_protection_weaknesses: [],
-                          };
+                            const decryptionAnalysis = {
+                                timestamp: new Date().toISOString(),
+                                context: 'drm_decryption_retval_manipulation',
+                                original_return_value: retval.toInt32(),
+                                decryption_operation_type: this.classifyDecryptionOperation(),
+                                manipulation_strategy: null,
+                                bypass_techniques: [],
+                                decryption_vulnerabilities: [],
+                                content_protection_weaknesses: [],
+                            };
 
-                          // Analyze the original decryption return value
-                          const decryptAnalysis = this.analyzeDecryptionRetval(retval);
-                          decryptionAnalysis.decryption_vulnerabilities =
+                            // Analyze the original decryption return value
+                            const decryptAnalysis = this.analyzeDecryptionRetval(retval);
+                            decryptionAnalysis.decryption_vulnerabilities =
                                 decryptAnalysis.vulnerabilities;
                             decryptionAnalysis.content_protection_weaknesses =
                                 decryptAnalysis.protection_issues;
@@ -2610,15 +2638,15 @@ const DrmBypass = {
                             decryptionAnalysis.bypass_techniques =
                                 this.identifyDecryptionBypassTechniques(decryptAnalysis);
 
-                          const config = this.parent.parent.config;
-                          if (config.decryption.interceptEncryptedContent) {
+                            const config = this.parent.parent.config;
+                            if (config.decryption.interceptEncryptedContent) {
                                 // Comprehensive decryption manipulation
-                              const manipulatedDecryptValue = this.manipulateDecryptionRetval(
-                                retval,
-                                decryptionAnalysis
-                              );
+                                const manipulatedDecryptValue = this.manipulateDecryptionRetval(
+                                    retval,
+                                    decryptionAnalysis
+                                );
 
-                              if (manipulatedDecryptValue !== retval.toInt32()) {
+                                if (manipulatedDecryptValue !== retval.toInt32()) {
                                     retval.replace(manipulatedDecryptValue);
                                     decryptionAnalysis.manipulation_applied = true;
                                     decryptionAnalysis.new_return_value = manipulatedDecryptValue;
@@ -2639,22 +2667,22 @@ const DrmBypass = {
 
                     detectDrmDecryption: function (args) {
                         // Comprehensive DRM decryption detection and argument analysis
-                      const decryptionAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'drm_decryption_detection_analysis',
-                        function_arguments: [],
-                        encryption_algorithms_detected: [],
-                        key_material_identified: [],
-                        content_protection_indicators: [],
-                        decryption_context: {},
-                        bypass_opportunities: [],
-                        vulnerability_assessment: [],
-                      };
+                        const decryptionAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'drm_decryption_detection_analysis',
+                            function_arguments: [],
+                            encryption_algorithms_detected: [],
+                            key_material_identified: [],
+                            content_protection_indicators: [],
+                            decryption_context: {},
+                            bypass_opportunities: [],
+                            vulnerability_assessment: [],
+                        };
 
-                      // Analyze each argument for DRM decryption patterns
+                        // Analyze each argument for DRM decryption patterns
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzeDrmDecryptionArgument(args[i], i);
-                          decryptionAnalysis.function_arguments.push(argAnalysis);
+                            const argAnalysis = this.analyzeDrmDecryptionArgument(args[i], i);
+                            decryptionAnalysis.function_arguments.push(argAnalysis);
 
                             // Detect encryption algorithms in use
                             if (argAnalysis.encryption_algorithms.length > 0) {
@@ -2701,12 +2729,12 @@ const DrmBypass = {
                         this.storeDrmDecryptionAnalysis(decryptionAnalysis);
 
                         // Return genuine DRM decryption detection based on comprehensive analysis
-                      const isDrmDecryption =
-                        decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
-                        decryptionAnalysis.key_material_identified.length > 0 ||
-                        decryptionAnalysis.content_protection_indicators.length > 1;
+                        const isDrmDecryption =
+                            decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
+                            decryptionAnalysis.key_material_identified.length > 0 ||
+                            decryptionAnalysis.content_protection_indicators.length > 1;
 
-                      return isDrmDecryption;
+                        return isDrmDecryption;
                     },
                 });
 
@@ -2723,31 +2751,31 @@ const DrmBypass = {
         });
 
         // Hook key derivation functions
-      const kdfFunctions = ['CryptDeriveKey', 'BCryptDeriveKey', 'CryptDestroyKey'];
+        const kdfFunctions = ['CryptDeriveKey', 'BCryptDeriveKey', 'CryptDestroyKey'];
 
-      for (let i = 0; i < kdfFunctions.length; i++) {
-          const funcName = kdfFunctions[i];
-          const module = funcName.startsWith('BCrypt') ? 'bcrypt.dll' : 'advapi32.dll';
+        for (let i = 0; i < kdfFunctions.length; i++) {
+            const funcName = kdfFunctions[i];
+            const module = funcName.startsWith('BCrypt') ? 'bcrypt.dll' : 'advapi32.dll';
 
-          const kdfFunc = Module.findExportByName(module, funcName);
-          if (kdfFunc) {
+            const kdfFunc = Module.findExportByName(module, funcName);
+            if (kdfFunc) {
                 Interceptor.attach(kdfFunc, {
                     onLeave: function (retval) {
                         // Comprehensive key derivation retval manipulation system
-                      const kdfAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'key_derivation_retval_manipulation',
-                        original_return_value: retval.toInt32(),
-                        kdf_operation_type: this.classifyKdfOperation(),
-                        manipulation_strategy: null,
-                        bypass_techniques: [],
-                        key_derivation_vulnerabilities: [],
-                        cryptographic_weaknesses: [],
-                      };
+                        const kdfAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'key_derivation_retval_manipulation',
+                            original_return_value: retval.toInt32(),
+                            kdf_operation_type: this.classifyKdfOperation(),
+                            manipulation_strategy: null,
+                            bypass_techniques: [],
+                            key_derivation_vulnerabilities: [],
+                            cryptographic_weaknesses: [],
+                        };
 
-                      // Analyze the original key derivation return value
-                      const kdfRetvalAnalysis = this.analyzeKdfRetval(retval);
-                      kdfAnalysis.key_derivation_vulnerabilities =
+                        // Analyze the original key derivation return value
+                        const kdfRetvalAnalysis = this.analyzeKdfRetval(retval);
+                        kdfAnalysis.key_derivation_vulnerabilities =
                             kdfRetvalAnalysis.vulnerabilities;
                         kdfAnalysis.cryptographic_weaknesses = kdfRetvalAnalysis.crypto_issues;
 
@@ -2759,12 +2787,15 @@ const DrmBypass = {
                         kdfAnalysis.bypass_techniques =
                             this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.decryption.spoofDecryptionKeys) {
+                        const config = this.parent.parent.config;
+                        if (config.decryption.spoofDecryptionKeys) {
                             // Comprehensive key derivation manipulation
-                          const manipulatedKdfValue = this.manipulateKdfRetval(retval, kdfAnalysis);
+                            const manipulatedKdfValue = this.manipulateKdfRetval(
+                                retval,
+                                kdfAnalysis
+                            );
 
-                          if (manipulatedKdfValue !== retval.toInt32()) {
+                            if (manipulatedKdfValue !== retval.toInt32()) {
                                 retval.replace(manipulatedKdfValue);
                                 kdfAnalysis.manipulation_applied = true;
                                 kdfAnalysis.new_return_value = manipulatedKdfValue;
@@ -2796,32 +2827,32 @@ const DrmBypass = {
         });
 
         // Hook key export/import functions
-      const keyFunctions = ['CryptExportKey', 'CryptImportKey', 'CryptGetKeyParam'];
+        const keyFunctions = ['CryptExportKey', 'CryptImportKey', 'CryptGetKeyParam'];
 
-      for (let i = 0; i < keyFunctions.length; i++) {
-          const funcName = keyFunctions[i];
-          const keyFunc = Module.findExportByName('advapi32.dll', funcName);
-          if (keyFunc) {
+        for (let i = 0; i < keyFunctions.length; i++) {
+            const funcName = keyFunctions[i];
+            const keyFunc = Module.findExportByName('advapi32.dll', funcName);
+            if (keyFunc) {
                 Interceptor.attach(keyFunc, {
                     onEnter: function (args) {
                         // Comprehensive Windows key session argument analysis
-                      const keySessionAnalysis = {
-                        timestamp: new Date().toISOString(),
-                        context: 'windows_key_session_analysis',
-                        function_arguments: [],
-                        key_handles_detected: [],
-                        crypto_providers_identified: [],
-                        key_operations_analyzed: [],
-                        security_attributes: {},
-                        access_permissions: [],
-                        bypass_techniques: [],
-                        exploitation_vectors: [],
-                      };
+                        const keySessionAnalysis = {
+                            timestamp: new Date().toISOString(),
+                            context: 'windows_key_session_analysis',
+                            function_arguments: [],
+                            key_handles_detected: [],
+                            crypto_providers_identified: [],
+                            key_operations_analyzed: [],
+                            security_attributes: {},
+                            access_permissions: [],
+                            bypass_techniques: [],
+                            exploitation_vectors: [],
+                        };
 
-                      // Analyze each argument for Windows key session data
+                        // Analyze each argument for Windows key session data
                         for (let i = 0; i < args.length; i++) {
-                          const argAnalysis = this.analyzeWindowsKeyArgument(args[i], i);
-                          keySessionAnalysis.function_arguments.push(argAnalysis);
+                            const argAnalysis = this.analyzeWindowsKeyArgument(args[i], i);
+                            keySessionAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract key handles
                             if (argAnalysis.key_handles.length > 0) {
@@ -2875,8 +2906,8 @@ const DrmBypass = {
                         // Store comprehensive key session analysis
                         this.storeWindowsKeySessionAnalysis(keySessionAnalysis);
 
-                      const config = this.parent.parent.config;
-                      if (config.decryption.allowKeyExport) {
+                        const config = this.parent.parent.config;
+                        if (config.decryption.allowKeyExport) {
                             this.allowKeyOperation = true;
                             this.keySessionAnalysisData = keySessionAnalysis;
 
@@ -2930,12 +2961,12 @@ const DrmBypass = {
         });
 
         // Hook HTTP requests to DRM servers
-      const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
-      if (winHttpSendRequest) {
+        const winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
+        if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
-                  const requestDetails = this.analyzeRequest(args);
-                  if (this.isDrmRequest(requestDetails)) {
+                    const requestDetails = this.analyzeRequest(args);
+                    if (this.isDrmRequest(requestDetails)) {
                         send({
                             type: 'bypass',
                             target: 'drm_bypass',
@@ -2963,23 +2994,23 @@ const DrmBypass = {
 
                 analyzeRequest: function (args) {
                     // Comprehensive DRM-related request argument analysis
-                  const requestAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'drm_request_analysis',
-                    function_arguments: [],
-                    extracted_url: null,
-                    extracted_headers: {},
-                    drm_service_indicators: [],
-                    content_protection_metadata: {},
-                    authentication_data: {},
-                    bypass_insertion_points: [],
-                    manipulation_opportunities: [],
-                  };
+                    const requestAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'drm_request_analysis',
+                        function_arguments: [],
+                        extracted_url: null,
+                        extracted_headers: {},
+                        drm_service_indicators: [],
+                        content_protection_metadata: {},
+                        authentication_data: {},
+                        bypass_insertion_points: [],
+                        manipulation_opportunities: [],
+                    };
 
-                  // Analyze each argument for DRM request data
+                    // Analyze each argument for DRM request data
                     for (let i = 0; i < args.length; i++) {
-                      const argAnalysis = this.analyzeDrmRequestArgument(args[i], i);
-                      requestAnalysis.function_arguments.push(argAnalysis);
+                        const argAnalysis = this.analyzeDrmRequestArgument(args[i], i);
+                        requestAnalysis.function_arguments.push(argAnalysis);
 
                         // Extract URL information
                         if (argAnalysis.contains_url) {
@@ -3047,52 +3078,52 @@ const DrmBypass = {
                 },
 
                 isDrmRequest: requestDetails => {
-                  const drmIndicators = [
-                    'license',
-                    'drm',
-                    'playready',
-                    'widevine',
-                    'fairplay',
-                    'hdcp',
-                    'protection',
-                    'rights',
-                    'encrypted',
-                  ];
+                    const drmIndicators = [
+                        'license',
+                        'drm',
+                        'playready',
+                        'widevine',
+                        'fairplay',
+                        'hdcp',
+                        'protection',
+                        'rights',
+                        'encrypted',
+                    ];
 
-                  const requestContent = (
-                    requestDetails.url +
-                    ' ' +
-                    requestDetails.headers
-                  ).toLowerCase();
-                  return drmIndicators.some(indicator => requestContent.includes(indicator));
+                    const requestContent = (
+                        requestDetails.url +
+                        ' ' +
+                        requestDetails.headers
+                    ).toLowerCase();
+                    return drmIndicators.some(indicator => requestContent.includes(indicator));
                 },
 
                 shouldBlockDrmRequest: function (requestDetails) {
                     // Comprehensive DRM request details analysis system
-                  const drmRequestAnalysis = {
-                    timestamp: new Date().toISOString(),
-                    context: 'drm_request_blocking_decision',
-                    request_url: requestDetails.url || '',
-                    request_headers: requestDetails.headers || {},
-                    request_method: requestDetails.method || 'GET',
-                    blocking_decision: null,
-                    analysis_factors: [],
-                    security_implications: [],
-                    bypass_opportunities: [],
-                  };
+                    const drmRequestAnalysis = {
+                        timestamp: new Date().toISOString(),
+                        context: 'drm_request_blocking_decision',
+                        request_url: requestDetails.url || '',
+                        request_headers: requestDetails.headers || {},
+                        request_method: requestDetails.method || 'GET',
+                        blocking_decision: null,
+                        analysis_factors: [],
+                        security_implications: [],
+                        bypass_opportunities: [],
+                    };
 
-                  // Analyze request details for DRM characteristics
-                  const requestAnalysis = this.analyzeDrmRequestDetails(requestDetails);
-                  drmRequestAnalysis.analysis_factors = requestAnalysis.factors;
+                    // Analyze request details for DRM characteristics
+                    const requestAnalysis = this.analyzeDrmRequestDetails(requestDetails);
+                    drmRequestAnalysis.analysis_factors = requestAnalysis.factors;
                     drmRequestAnalysis.security_implications = requestAnalysis.security_issues;
                     drmRequestAnalysis.bypass_opportunities = requestAnalysis.bypass_vectors;
 
                     // Determine blocking strategy based on comprehensive analysis
-                  const blockingStrategy = this.determineDrmBlockingStrategy(
-                    requestAnalysis,
-                    requestDetails
-                  );
-                  drmRequestAnalysis.blocking_decision = blockingStrategy.should_block;
+                    const blockingStrategy = this.determineDrmBlockingStrategy(
+                        requestAnalysis,
+                        requestDetails
+                    );
+                    drmRequestAnalysis.blocking_decision = blockingStrategy.should_block;
                     drmRequestAnalysis.blocking_rationale = blockingStrategy.rationale;
 
                     // Log comprehensive DRM request analysis
@@ -3123,21 +3154,21 @@ const DrmBypass = {
         });
 
         // Hook Windows services related to DRM
-      const openService = Module.findExportByName('advapi32.dll', 'OpenServiceW');
-      if (openService) {
+        const openService = Module.findExportByName('advapi32.dll', 'OpenServiceW');
+        if (openService) {
             Interceptor.attach(openService, {
                 onEnter: args => {
                     if (args[1] && !args[1].isNull()) {
-                      const serviceName = args[1].readUtf16String().toLowerCase();
+                        const serviceName = args[1].readUtf16String().toLowerCase();
 
-                      const drmServices = [
-                        'sppsvc', // Software Protection Platform Service
-                        'winmgmt', // Windows Management Instrumentation
-                        'wuauserv', // Windows Update (sometimes used for DRM)
-                        'cryptsvc', // Cryptographic Services
-                      ];
+                        const drmServices = [
+                            'sppsvc', // Software Protection Platform Service
+                            'winmgmt', // Windows Management Instrumentation
+                            'wuauserv', // Windows Update (sometimes used for DRM)
+                            'cryptsvc', // Cryptographic Services
+                        ];
 
-                      if (drmServices.includes(serviceName)) {
+                        if (drmServices.includes(serviceName)) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -3179,33 +3210,33 @@ const DrmBypass = {
         });
 
         // Hook common license validation function names
-      const licenseFunctions = [
-        'CheckLicense',
-        'ValidateLicense',
-        'VerifyLicense',
-        'IsLicenseValid',
-        'HasValidLicense',
-        'LicenseCheck',
-        'AuthenticateLicense',
-        'ActivateLicense',
-      ];
+        const licenseFunctions = [
+            'CheckLicense',
+            'ValidateLicense',
+            'VerifyLicense',
+            'IsLicenseValid',
+            'HasValidLicense',
+            'LicenseCheck',
+            'AuthenticateLicense',
+            'ActivateLicense',
+        ];
 
-      const modules = Process.enumerateModules();
+        const modules = Process.enumerateModules();
 
-      for (let i = 0; i < modules.length; i++) {
-          const module = modules[i];
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
 
-          for (let j = 0; j < licenseFunctions.length; j++) {
-              const funcName = licenseFunctions[j];
-              this.hookLicenseFunction(module.name, funcName);
+            for (let j = 0; j < licenseFunctions.length; j++) {
+                const funcName = licenseFunctions[j];
+                this.hookLicenseFunction(module.name, funcName);
             }
         }
     },
 
     hookLicenseFunction: function (moduleName, functionName) {
         try {
-          const licenseFunc = Module.findExportByName(moduleName, functionName);
-          if (licenseFunc) {
+            const licenseFunc = Module.findExportByName(moduleName, functionName);
+            if (licenseFunc) {
                 Interceptor.attach(licenseFunc, {
                     onLeave: function (retval) {
                         // Make license validation always succeed
@@ -3277,24 +3308,24 @@ const DrmBypass = {
         });
 
         // Hook file access to license files
-      const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
-      if (createFile) {
+        const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
+        if (createFile) {
             Interceptor.attach(createFile, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
-                      const fileName = args[0].readUtf16String().toLowerCase();
+                        const fileName = args[0].readUtf16String().toLowerCase();
 
-                      const licenseFileIndicators = [
-                        '.lic',
-                        '.license',
-                        '.key',
-                        '.activation',
-                        'license',
-                        'drm',
-                        'protection',
-                      ];
+                        const licenseFileIndicators = [
+                            '.lic',
+                            '.license',
+                            '.key',
+                            '.activation',
+                            'license',
+                            'drm',
+                            'protection',
+                        ];
 
-                      if (licenseFileIndicators.some(indicator => fileName.includes(indicator))) {
+                        if (licenseFileIndicators.some(indicator => fileName.includes(indicator))) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -3331,24 +3362,24 @@ const DrmBypass = {
         });
 
         // Hook registry access for license information
-      const regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
-      if (regQueryValue) {
+        const regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
+        if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
                 onEnter: function (args) {
                     if (args[1] && !args[1].isNull()) {
-                      const valueName = args[1].readUtf16String().toLowerCase();
+                        const valueName = args[1].readUtf16String().toLowerCase();
 
-                      const licenseRegistryValues = [
-                        'license',
-                        'activation',
-                        'product',
-                        'serial',
-                        'key',
-                        'registration',
-                        'drm',
-                      ];
+                        const licenseRegistryValues = [
+                            'license',
+                            'activation',
+                            'product',
+                            'serial',
+                            'key',
+                            'registration',
+                            'drm',
+                        ];
 
-                      if (licenseRegistryValues.some(value => valueName.includes(value))) {
+                        if (licenseRegistryValues.some(value => valueName.includes(value))) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -3386,11 +3417,11 @@ const DrmBypass = {
         });
 
         // Hook certificate validation for DRM
-      const certVerifyChain = Module.findExportByName(
-        'crypt32.dll',
-        'CertVerifyCertificateChainPolicy'
-      );
-      if (certVerifyChain) {
+        const certVerifyChain = Module.findExportByName(
+            'crypt32.dll',
+            'CertVerifyCertificateChainPolicy'
+        );
+        if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
                 onEnter: function (args) {
                     this.policyOID = args[0];
@@ -3431,20 +3462,20 @@ const DrmBypass = {
     // === INSTALLATION SUMMARY ===
     installSummary: function () {
         setTimeout(() => {
-          const categories = {
-            'HDCP Protection': 0,
-            'PlayReady DRM': 0,
-            'Widevine DRM': 0,
-            'Streaming DRM': 0,
-            'Hardware DRM': 0,
-            'EME APIs': 0,
-            'Content Decryption': 0,
-            'DRM Communication': 0,
-            'License Validation': 0,
-            'Certificate Validation': 0,
-          };
+            const categories = {
+                'HDCP Protection': 0,
+                'PlayReady DRM': 0,
+                'Widevine DRM': 0,
+                'Streaming DRM': 0,
+                'Hardware DRM': 0,
+                'EME APIs': 0,
+                'Content Decryption': 0,
+                'DRM Communication': 0,
+                'License Validation': 0,
+                'Certificate Validation': 0,
+            };
 
-          for (let hook in this.hooksInstalled) {
+            for (let hook in this.hooksInstalled) {
                 if (hook.includes('HDCP') || hook.includes('Hdcp')) {
                     categories['HDCP Protection']++;
                 } else if (
@@ -3502,9 +3533,9 @@ const DrmBypass = {
                 }
             }
 
-          const activeSystems = [];
-          const config = this.config;
-          if (config.hdcp.enabled) {
+            const activeSystems = [];
+            const config = this.config;
+            if (config.hdcp.enabled) {
                 activeSystems.push({
                     name: 'HDCP Bypass',
                     version: config.hdcp.spoofHdcpVersion,
@@ -3904,16 +3935,16 @@ const DrmBypass = {
         });
 
         // Hook Netflix MSL (Message Security Layer)
-      const netflixAPIs = ['msl_encrypt', 'msl_decrypt', 'cadmium_validate'];
-      this.hookStreamingAPIs('netflix', netflixAPIs);
+        const netflixAPIs = ['msl_encrypt', 'msl_decrypt', 'cadmium_validate'];
+        this.hookStreamingAPIs('netflix', netflixAPIs);
 
         // Hook Disney+ BamTech
-      const disneyAPIs = ['bamtech_auth', 'star_validate', 'disney_drm'];
-      this.hookStreamingAPIs('disney', disneyAPIs);
+        const disneyAPIs = ['bamtech_auth', 'star_validate', 'disney_drm'];
+        this.hookStreamingAPIs('disney', disneyAPIs);
 
         // Hook HBO Max Discovery
-      const hboAPIs = ['discovery_drm', 'warner_validate', 'max_auth'];
-      this.hookStreamingAPIs('hbo', hboAPIs);
+        const hboAPIs = ['discovery_drm', 'warner_validate', 'max_auth'];
+        this.hookStreamingAPIs('hbo', hboAPIs);
 
         this.bypassedChecks += 15;
     },
@@ -3944,14 +3975,14 @@ const DrmBypass = {
             action: 'hooking_cloud_gaming_drm',
         });
 
-      const cloudPlatforms = {
-        stadia: ['stadia_auth', 'stream_validate'],
-        geforce_now: ['nvidia_drm', 'gfn_validate'],
-        xcloud: ['xbox_cloud', 'microsoft_stream'],
-        luna: ['amazon_luna', 'twitch_integration'],
-      };
+        const cloudPlatforms = {
+            stadia: ['stadia_auth', 'stream_validate'],
+            geforce_now: ['nvidia_drm', 'gfn_validate'],
+            xcloud: ['xbox_cloud', 'microsoft_stream'],
+            luna: ['amazon_luna', 'twitch_integration'],
+        };
 
-      for (let platform in cloudPlatforms) {
+        for (let platform in cloudPlatforms) {
             this.hookStreamingAPIs(platform, cloudPlatforms[platform]);
         }
 
@@ -4058,8 +4089,8 @@ const DrmBypass = {
     // Helper methods for v3.0.0 functionality
     hookStreamingAPIs: function (platform, apiList) {
         for (let i = 0; i < apiList.length; i++) {
-          const apiName = apiList[i];
-          try {
+            const apiName = apiList[i];
+            try {
                 // Simulate API hooking for streaming platforms
                 this.hooksInstalled[`${platform}_${apiName}`] = true;
                 send({
@@ -4116,8 +4147,8 @@ const DrmBypass = {
 
     hookCodecDRM: function (codecName, functionList) {
         for (let i = 0; i < functionList.length; i++) {
-          const funcName = functionList[i];
-          try {
+            const funcName = functionList[i];
+            try {
                 this.hooksInstalled[`${codecName}_${funcName}`] = true;
                 send({
                     type: 'bypass',
@@ -4167,8 +4198,8 @@ const DrmBypass = {
 
     hookHDRFormats: function (formatList) {
         for (let i = 0; i < formatList.length; i++) {
-          const format = formatList[i];
-          this.hooksInstalled[`hdr_${format}`] = true;
+            const format = formatList[i];
+            this.hooksInstalled[`hdr_${format}`] = true;
             send({
                 type: 'bypass',
                 target: 'drm_bypass',

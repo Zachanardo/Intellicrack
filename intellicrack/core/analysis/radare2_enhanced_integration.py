@@ -543,7 +543,7 @@ class EnhancedR2Integration:
             self.logger.error("Binary diff component not initialized")
             return False
         except Exception as e:
-            self.logger.error(f"Failed to set secondary binary: {e}")
+            self.logger.error(f"Failed to set secondary binary: {e}", exc_info=True)
             return False
 
     def get_function_diffs(self) -> list[dict[str, Any]]:
@@ -576,7 +576,7 @@ class EnhancedR2Integration:
             self.logger.error("Binary diff component not initialized")
             return []
         except Exception as e:
-            self.logger.error(f"Failed to get function diffs: {e}")
+            self.logger.error(f"Failed to get function diffs: {e}", exc_info=True)
             return []
 
     def get_basic_block_diffs(self, function_name: str) -> list[dict[str, Any]]:
@@ -609,7 +609,7 @@ class EnhancedR2Integration:
             self.logger.error("Binary diff component not initialized")
             return []
         except Exception as e:
-            self.logger.error(f"Failed to get basic block diffs: {e}")
+            self.logger.error(f"Failed to get basic block diffs: {e}", exc_info=True)
             return []
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -840,7 +840,7 @@ class EnhancedR2Integration:
             self.logger.info("EnhancedR2Integration cleanup completed")
 
         except Exception as e:
-            self.logger.error(f"Cleanup failed: {e}")
+            self.logger.error(f"Cleanup failed: {e}", exc_info=True)
 
 
 def create_enhanced_r2_integration(binary_path: str, **config: object) -> EnhancedR2Integration:

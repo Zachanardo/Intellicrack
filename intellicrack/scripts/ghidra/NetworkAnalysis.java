@@ -659,7 +659,7 @@ public class NetworkAnalysis extends GhidraScript {
           || typeName.contains("tcp")) {
 
         if (dt instanceof Structure struct) {
-            println(
+          println(
               "    Found network structure: "
                   + dt.getName()
                   + " ("
@@ -677,7 +677,7 @@ public class NetworkAnalysis extends GhidraScript {
           }
           networkStructCount++;
         } else if (dt instanceof ghidra.program.model.data.Enum enumType) {
-            println(
+          println(
               "    Found network enum: "
                   + dt.getName()
                   + " with "

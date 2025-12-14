@@ -592,44 +592,34 @@ class ValidationAnalyzer:
         recommendations = []
 
         if algorithm_type == AlgorithmType.MD5:
-            recommendations.extend(
-                (
-                    "MD5 hash detected - consider rainbow table attack or keygen with hash matching",
-                    "Look for input transformation before MD5 - may reveal key format requirements",
-                )
-            )
+            recommendations.extend((
+                "MD5 hash detected - consider rainbow table attack or keygen with hash matching",
+                "Look for input transformation before MD5 - may reveal key format requirements",
+            ))
         elif algorithm_type == AlgorithmType.SHA1:
             recommendations.append("SHA1 hash detected - analyze input preparation for keygen creation")
         elif algorithm_type == AlgorithmType.SHA256:
             recommendations.append("SHA256 hash detected - strong algorithm, focus on input analysis or patching")
         elif algorithm_type == AlgorithmType.CRC32:
-            recommendations.extend(
-                (
-                    "CRC32 checksum detected - easily reversible, create keygen with CRC matching",
-                    "Extract CRC polynomial and generate valid checksums",
-                )
-            )
+            recommendations.extend((
+                "CRC32 checksum detected - easily reversible, create keygen with CRC matching",
+                "Extract CRC polynomial and generate valid checksums",
+            ))
         elif algorithm_type == AlgorithmType.RSA:
-            recommendations.extend(
-                (
-                    "RSA signature detected - extract public key and analyze key format",
-                    "Consider patching signature verification instead of key generation",
-                )
-            )
+            recommendations.extend((
+                "RSA signature detected - extract public key and analyze key format",
+                "Consider patching signature verification instead of key generation",
+            ))
         elif algorithm_type == AlgorithmType.CUSTOM:
-            recommendations.extend(
-                (
-                    "Custom algorithm detected - perform dynamic analysis to trace validation logic",
-                    "Use debugger to capture input/output of validation function",
-                )
-            )
+            recommendations.extend((
+                "Custom algorithm detected - perform dynamic analysis to trace validation logic",
+                "Use debugger to capture input/output of validation function",
+            ))
         if patch_points:
-            recommendations.extend(
-                (
-                    f"Found {len(patch_points)} potential patch points for binary modification",
-                    "Priority: Patch conditional jumps to bypass validation checks",
-                )
-            )
+            recommendations.extend((
+                f"Found {len(patch_points)} potential patch points for binary modification",
+                "Priority: Patch conditional jumps to bypass validation checks",
+            ))
         if crypto_primitives:
             hash_primitives = [p for p in crypto_primitives if p.crypto_type == CryptoType.HASH]
             if len(hash_primitives) > 1:

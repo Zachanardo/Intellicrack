@@ -175,7 +175,7 @@ class WindowsServiceManager:
             self._advapi32.CloseServiceHandle.restype = wintypes.BOOL
 
         except Exception as e:
-            self.logger.debug(f"Failed to setup Windows API functions: {e}")
+            self.logger.debug("Failed to setup Windows API functions: %s", e, exc_info=True)
 
     def get_service_info(self, service_name: str) -> ServiceInfo | None:
         """Get detailed information about a service.
@@ -239,7 +239,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error enumerating services: {e}")
+            self.logger.debug("Error enumerating services: %s", e, exc_info=True)
 
         return None
 
@@ -258,7 +258,7 @@ class WindowsServiceManager:
                 dependencies.append(dep)
                 offset += len(dep) + 1
         except Exception as e:
-            self.logger.debug(f"Error parsing dependencies: {e}")
+            self.logger.debug("Error parsing dependencies: %s", e, exc_info=True)
 
         return dependencies
 
@@ -307,7 +307,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error starting service {service_name}: {e}")
+            self.logger.debug("Error starting service %s: %s", service_name, e, exc_info=True)
 
         return False
 
@@ -347,7 +347,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error stopping service {service_name}: {e}")
+            self.logger.debug("Error stopping service %s: %s", service_name, e, exc_info=True)
 
         return False
 
@@ -387,7 +387,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error pausing service {service_name}: {e}")
+            self.logger.debug("Error pausing service %s: %s", service_name, e, exc_info=True)
 
         return False
 
@@ -427,7 +427,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error continuing service {service_name}: {e}")
+            self.logger.debug("Error continuing service %s: %s", service_name, e, exc_info=True)
 
         return False
 
@@ -467,7 +467,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error deleting service {service_name}: {e}")
+            self.logger.debug("Error deleting service %s: %s", service_name, e, exc_info=True)
 
         return False
 
@@ -507,7 +507,7 @@ class WindowsServiceManager:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error querying service status {service_name}: {e}")
+            self.logger.debug("Error querying service status %s: %s", service_name, e, exc_info=True)
 
         return None
 

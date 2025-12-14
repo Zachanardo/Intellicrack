@@ -45,7 +45,7 @@ def get_project_root() -> Path:
         intellicrack_root = Path(get_resource_path(""))
         return intellicrack_root.parent
     except Exception as e:
-        _logger.error("Exception in plugin_paths: %s", e)
+        _logger.error("Exception in plugin_paths: %s", e, exc_info=True)
         # Fallback to relative path calculation
         current_file = Path(__file__)
         # Go up from utils -> intellicrack -> project root
@@ -401,15 +401,15 @@ def get_ghidra_script_path(script_name: str) -> str | None:
 
 # Module initialization
 if __name__ == "__main__":
-    # Print path information when run directly
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
     info = get_path_info()
-    print("Intellicrack Path Configuration:")
-    print("=" * 40)
+    _logger.info("Intellicrack Path Configuration:")
+    _logger.info("=" * 40)
     for name, path in info.items():
         exists = "OK" if Path(path).exists() else "FAIL"
-        print(f"{exists} {name}: {path}")
+        _logger.info("%s %s: %s", exists, name, path)
 
-    print("\nScript Counts:")
-    print(f"  Frida scripts: {len(list_frida_scripts())}")
-    print(f"  Ghidra scripts: {len(list_ghidra_scripts())}")
-    print(f"  Plugin modules: {len(list_plugin_modules())}")
+    _logger.info("Script Counts:")
+    _logger.info("  Frida scripts: %s", len(list_frida_scripts()))
+    _logger.info("  Ghidra scripts: %s", len(list_ghidra_scripts()))
+    _logger.info("  Plugin modules: %s", len(list_plugin_modules()))

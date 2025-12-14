@@ -721,14 +721,12 @@ class DynamicSignatureExtractor:
         for chain in jmp_chains:
             if len(chain) > 5:  # Suspicious jump chain
                 pattern = self._extract_pattern_from_chain(data, chain)
-                patterns.append(
-                    (
-                        pattern,
-                        ProtectionCategory.OBFUSCATION,
-                        min(1.0, len(chain) * 0.15),
-                        f"Jump chain length: {len(chain)}",
-                    )
-                )
+                patterns.append((
+                    pattern,
+                    ProtectionCategory.OBFUSCATION,
+                    min(1.0, len(chain) * 0.15),
+                    f"Jump chain length: {len(chain)}",
+                ))
 
         return patterns
 
@@ -920,9 +918,7 @@ class DynamicSignatureExtractor:
 
                 try:
                     instructions = list(cs.disasm(context_bytes, context_start))
-                    valid_instruction = any(
-                        insn.address <= found_offset < insn.address + insn.size for insn in instructions
-                    )
+                    valid_instruction = any(insn.address <= found_offset < insn.address + insn.size for insn in instructions)
 
                     if valid_instruction:
                         confidence = min(1.0, base_confidence + (occurrences * 0.02))
@@ -1193,13 +1189,11 @@ class DynamicSignatureExtractor:
 
             for behavior in analysis.behavior_patterns:
                 behavior_bytes = behavior.behavioral_hash.encode()[:64]
-                patterns.append(
-                    (
-                        behavior_bytes,
-                        behavior.confidence,
-                        f"Behavior pattern: {behavior.pattern_id}",
-                    )
-                )
+                patterns.append((
+                    behavior_bytes,
+                    behavior.confidence,
+                    f"Behavior pattern: {behavior.pattern_id}",
+                ))
 
         except Exception as e:
             logger.debug(f"Polymorphic analysis error: {e}")
@@ -1239,13 +1233,11 @@ class DynamicSignatureExtractor:
                 if semantic_sig := analyzer.extract_semantic_signature(data, base_address=0):
                     sig_bytes = semantic_sig.encode()[:64]
                     confidence = min(0.95, 0.70 + (len(detected_metamorphic) * 0.08))
-                    patterns.append(
-                        (
-                            sig_bytes,
-                            confidence,
-                            f"Metamorphic code: {len(detected_metamorphic)} techniques",
-                        )
-                    )
+                    patterns.append((
+                        sig_bytes,
+                        confidence,
+                        f"Metamorphic code: {len(detected_metamorphic)} techniques",
+                    ))
 
             for mutation in detected_metamorphic:
                 mutation_name = mutation.value.replace("_", " ").title()
@@ -1520,14 +1512,12 @@ class EnhancedProtectionScanner:
                 category_key = f"{sig.category.value}s" if sig.category.value != "custom" else "custom"
 
                 if category_key in results:
-                    results[category_key].append(
-                        {
-                            "pattern": f"{sig.pattern_bytes.hex()[:32]}...",
-                            "confidence": sig.confidence,
-                            "context": sig.context,
-                            "effectiveness": sig.effectiveness_score,
-                        }
-                    )
+                    results[category_key].append({
+                        "pattern": f"{sig.pattern_bytes.hex()[:32]}...",
+                        "confidence": sig.confidence,
+                        "context": sig.context,
+                        "effectiveness": sig.effectiveness_score,
+                    })
 
                 # Update confidence scores
                 if sig.category.value not in results["confidence_scores"]:

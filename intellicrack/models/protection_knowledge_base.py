@@ -19,8 +19,12 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
+
+
+logger = logging.getLogger(__name__)
 
 
 """
@@ -1628,27 +1632,25 @@ def get_protection_knowledge_base() -> ProtectionKnowledgeBase:
 
 
 if __name__ == "__main__":
-    # Example usage
+    logging.basicConfig(level=logging.INFO)
     kb = get_protection_knowledge_base()
 
     if hasp_info := kb.get_protection_info("Sentinel HASP"):
-        print(f"Protection: {hasp_info.name}")
-        print(f"Vendor: {hasp_info.vendor}")
-        print(f"Difficulty: {hasp_info.bypass_difficulty.value}")
-        print(f"Common in: {', '.join(hasp_info.common_applications[:3])}")
+        logger.info("Protection: %s", hasp_info.name)
+        logger.info("Vendor: %s", hasp_info.vendor)
+        logger.info("Difficulty: %s", hasp_info.bypass_difficulty.value)
+        logger.info("Common in: %s", ", ".join(hasp_info.common_applications[:3]))
 
-        print("\nBypass Techniques:")
+        logger.info("Bypass Techniques:")
         for technique in hasp_info.bypass_techniques:
-            print(f"  - {technique.name}: {technique.description}")
-            print(f"    Success Rate: {technique.success_rate:.0%}")
-            print(f"    Time: {technique.time_estimate}")
+            logger.info("  - %s: %s", technique.name, technique.description)
+            logger.info("    Success Rate: %.0f%%", technique.success_rate * 100)
+            logger.info("    Time: %s", technique.time_estimate)
 
-    # Search by signature
-    print("\n\nSearching for 'steam' signatures:")
+    logger.info("Searching for 'steam' signatures:")
     results = kb.search_by_signature("steam")
     for scheme in results:
-        print(f"  - {scheme.name}: {scheme.description}")
+        logger.info("  - %s: %s", scheme.name, scheme.description)
 
-    # Export knowledge base
     kb.export_knowledge_base("protection_knowledge_base.json")
-    print("\nKnowledge base exported to protection_knowledge_base.json")
+    logger.info("Knowledge base exported to protection_knowledge_base.json")

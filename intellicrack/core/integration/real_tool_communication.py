@@ -200,7 +200,7 @@ class SharedMemoryManager:
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to write message: {e}")
+                logger.error("Failed to write message: %s", e, exc_info=True)
                 return False
 
     def read_message(self) -> bytes | None:
@@ -249,7 +249,7 @@ class SharedMemoryManager:
                 return message
 
             except Exception as e:
-                logger.error(f"Failed to read message: {e}")
+                logger.error("Failed to read message: %s", e, exc_info=True)
                 return None
 
     def _reset_pointers(self) -> None:
@@ -336,7 +336,7 @@ class SerializationProtocol:
             )
 
         except Exception as e:
-            logger.error(f"Failed to deserialize message: {e}")
+            logger.error("Failed to deserialize message: %s", e, exc_info=True)
             return None
 
 
@@ -415,7 +415,7 @@ class ToolMonitor:
                             status.status = "running"
 
                     except Exception as e:
-                        logger.error(f"Failed to monitor {tool.value}: {e}")
+                        logger.error("Failed to monitor %s: %s", tool.value, e, exc_info=True)
                         status.status = "error"
 
             time.sleep(1)
@@ -495,7 +495,7 @@ class FailureRecovery:
         # Check retry count
         retry_count = len(self.failed_messages[correlation_id])
         if retry_count > self.retry_config["max_retries"]:
-            logger.error(f"Message {correlation_id} exceeded max retries")
+            logger.error("Message %s exceeded max retries", correlation_id)
             self._handle_permanent_failure(message, error)
             return False
 
@@ -507,7 +507,7 @@ class FailureRecovery:
 
         # Schedule retry
         threading.Timer(delay, self._retry_message, args=[message]).start()
-        logger.info(f"Scheduled retry for message {correlation_id} after {delay}s")
+        logger.info("Scheduled retry for message %s after %ss", correlation_id, delay)
 
         return True
 
@@ -535,7 +535,7 @@ class FailureRecovery:
             error: Exception that caused the permanent failure.
 
         """
-        logger.error(f"Permanent failure for message {message.correlation_id}: {error}")
+        logger.error("Permanent failure for message %s: %s", message.correlation_id, error)
 
         # Clean up
         if message.correlation_id in self.failed_messages:
@@ -857,7 +857,7 @@ class RealToolCommunicator:
             self.message_handlers[tool] = handler
             self.recovery.add_recovery_handler(tool, handler)
 
-        logger.info(f"Registered tool {tool.value} with PID {pid}")
+        logger.info("Registered tool %s with PID %s", tool.value, pid)
 
     def start(self) -> None:
         """Start the communicator."""
@@ -886,7 +886,7 @@ class RealToolCommunicator:
                     continue
 
             except Exception as e:
-                logger.error(f"Error in message loop: {e}")
+                logger.error("Error in message loop: %s", e, exc_info=True)
 
     def _process_message(self, message: ToolMessage) -> None:
         """Process incoming message.
@@ -915,7 +915,7 @@ class RealToolCommunicator:
                     success_count=self.monitor.get_status(message.destination).success_count + 1,
                 )
             except Exception as e:
-                logger.error(f"Handler failed for {message.destination.value}: {e}")
+                logger.error("Handler failed for %s: %s", message.destination.value, e, exc_info=True)
                 self.monitor.update_status(
                     message.destination,
                     error_count=self.monitor.get_status(message.destination).error_count + 1,
@@ -945,7 +945,7 @@ class RealToolCommunicator:
             return success
 
         except Exception as e:
-            logger.error(f"Failed to send message: {e}")
+            logger.error("Failed to send message: %s", e, exc_info=True)
             self.recovery.handle_failure(message, e)
             return False
 
@@ -1052,21 +1052,20 @@ def main() -> None:
 
         communicator.start()
 
-        print("Tool Communication Server Started")
-        print("Press Ctrl+C to stop")
+        logger.info("Tool Communication Server Started")
+        logger.info("Press Ctrl+C to stop")
 
         try:
             while True:
-                # Print status
                 status = communicator.get_all_status()
-                print("\nTool Status:")
+                logger.info("Tool Status:")
                 for tool, stat in status.items():
-                    print(f"  {tool.value}: {stat.status} (PID: {stat.pid})")
+                    logger.info("  %s: %s (PID: %s)", tool.value, stat.status, stat.pid)
 
                 time.sleep(5)
 
         except KeyboardInterrupt:
-            print("\nStopping server...")
+            logger.info("Stopping server...")
             communicator.stop()
 
     else:
@@ -1077,13 +1076,13 @@ def main() -> None:
         communicator = RealToolCommunicator()
 
         def message_handler(msg: ToolMessage) -> None:
-            print(f"Received message: {msg.data}")
+            logger.info("Received message: %s", msg.data)
 
         communicator.register_tool(tool_type, args.pid, message_handler)
         communicator.start()
 
-        print(f"Tool Client ({tool_type.value}) Started")
-        print("Press Ctrl+C to stop")
+        logger.info("Tool Client (%s) Started", tool_type.value)
+        logger.info("Press Ctrl+C to stop")
 
         try:
             # Send periodic heartbeats
@@ -1101,7 +1100,7 @@ def main() -> None:
                 time.sleep(10)
 
         except KeyboardInterrupt:
-            print("\nStopping client...")
+            logger.info("Stopping client...")
             communicator.stop()
 
 

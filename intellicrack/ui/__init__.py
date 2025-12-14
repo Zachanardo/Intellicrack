@@ -67,15 +67,13 @@ def __getattr__(name: str) -> object:
                 integrate_radare2_comprehensive,
             )
 
-            _lazy_imports.update(
-                {
-                    "ComprehensiveR2Integration": ComprehensiveR2Integration,
-                    "cleanup_integration": cleanup_integration,
-                    "get_comprehensive_integration": get_comprehensive_integration,
-                    "get_integration_status": get_integration_status,
-                    "integrate_radare2_comprehensive": integrate_radare2_comprehensive,
-                }
-            )
+            _lazy_imports.update({
+                "ComprehensiveR2Integration": ComprehensiveR2Integration,
+                "cleanup_integration": cleanup_integration,
+                "get_comprehensive_integration": get_comprehensive_integration,
+                "get_integration_status": get_integration_status,
+                "integrate_radare2_comprehensive": integrate_radare2_comprehensive,
+            })
             return _lazy_imports.get(name)
         except ImportError as e:
             logger.warning("Failed to import comprehensive_integration: %s", e)
@@ -90,14 +88,12 @@ def __getattr__(name: str) -> object:
         try:
             from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget, R2ResultsViewer, create_radare2_tab
 
-            _lazy_imports.update(
-                {
-                    "R2ConfigurationDialog": R2ConfigurationDialog,
-                    "R2IntegrationWidget": R2IntegrationWidget,
-                    "R2ResultsViewer": R2ResultsViewer,
-                    "create_radare2_tab": create_radare2_tab,
-                }
-            )
+            _lazy_imports.update({
+                "R2ConfigurationDialog": R2ConfigurationDialog,
+                "R2IntegrationWidget": R2IntegrationWidget,
+                "R2ResultsViewer": R2ResultsViewer,
+                "create_radare2_tab": create_radare2_tab,
+            })
             return _lazy_imports.get(name)
         except ImportError as e:
             logger.warning("Failed to import radare2_integration_ui: %s", e)
@@ -111,13 +107,11 @@ def __getattr__(name: str) -> object:
         try:
             from .enhanced_ui_integration import EnhancedAnalysisDashboard, EnhancedMainWindow, create_enhanced_application
 
-            _lazy_imports.update(
-                {
-                    "EnhancedAnalysisDashboard": EnhancedAnalysisDashboard,
-                    "EnhancedMainWindow": EnhancedMainWindow,
-                    "create_enhanced_application": create_enhanced_application,
-                }
-            )
+            _lazy_imports.update({
+                "EnhancedAnalysisDashboard": EnhancedAnalysisDashboard,
+                "EnhancedMainWindow": EnhancedMainWindow,
+                "create_enhanced_application": create_enhanced_application,
+            })
             return _lazy_imports.get(name)
         except ImportError as e:
             logger.warning("Failed to import enhanced_ui_integration: %s", e)
@@ -127,12 +121,10 @@ def __getattr__(name: str) -> object:
         try:
             from .radare2_ui_manager import R2UIManager, create_r2_ui_manager
 
-            _lazy_imports.update(
-                {
-                    "R2UIManager": R2UIManager,
-                    "create_r2_ui_manager": create_r2_ui_manager,
-                }
-            )
+            _lazy_imports.update({
+                "R2UIManager": R2UIManager,
+                "create_r2_ui_manager": create_r2_ui_manager,
+            })
             return _lazy_imports.get(name)
         except ImportError as e:
             logger.warning("Failed to import radare2_ui_manager: %s", e)

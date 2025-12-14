@@ -703,7 +703,7 @@ class R2Session:
 @contextmanager
 def r2_session(
     binary_path: str, radare2_path: str | None = None, use_pooling: bool = True
-) -> Generator[R2Session | R2SessionPoolAdapter, None, None]:
+) -> Generator["R2Session | R2SessionPoolAdapter", None, None]:
     """Context manager for radare2 sessions.
 
     Args:

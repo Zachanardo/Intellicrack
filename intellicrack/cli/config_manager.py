@@ -64,7 +64,7 @@ class ConfigManager:
         if not self.config_file.exists() or self.central_config.get("cli_configuration.migrated", False):
             return
         try:
-            logger.info(f"Migrating CLI config from {self.config_file} to central config")
+            logger.info("Migrating CLI config from %s to central config", self.config_file)
 
             # Load old config
             with open(self.config_file) as f:
@@ -103,10 +103,10 @@ class ConfigManager:
             # Optionally rename old file to .backup
             backup_file = self.config_file.with_suffix(".json.backup")
             self.config_file.rename(backup_file)
-            logger.info(f"Renamed old config to {backup_file}")
+            logger.info("Renamed old config to %s", backup_file)
 
         except Exception as e:
-            logger.error(f"Failed to migrate CLI config: {e}")
+            logger.error("Failed to migrate CLI config: %s", e, exc_info=True)
             # Continue without migration, use defaults
 
     def load_config(self) -> None:
@@ -179,22 +179,22 @@ def main() -> int:
     if args.action == "list":
         settings = manager.list_settings()
         for key, value in settings.items():
-            print(f"{key}: {value}")
+            logger.info("%s: %s", key, value)
 
     elif args.action == "get":
         if not args.key:
-            print("Error: Key required for get operation")
+            logger.error("Error: Key required for get operation")
             return 1
         value = manager.get(args.key)
-        print(f"{args.key}: {value}")
+        logger.info("%s: %s", args.key, value)
 
     elif args.action == "set":
         if not args.key or args.value is None:
-            print("Error: Key and value required for set operation")
+            logger.error("Error: Key and value required for set operation")
             return 1
         manager.set(args.key, args.value)
         manager.save_config()
-        print(f"Set {args.key} = {args.value}")
+        logger.info("Set %s = %s", args.key, args.value)
 
     return 0
 

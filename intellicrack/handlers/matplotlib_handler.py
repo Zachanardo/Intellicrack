@@ -19,13 +19,17 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
-import os
 import traceback
-import types
-from collections.abc import Callable, Iterable, Sized
-from typing import Any, Protocol, TypeVar
+from collections.abc import Sized
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    import os
+    import types
+    from collections.abc import Callable, Iterable
 
 
 class _ImageDrawProtocol(Protocol):
@@ -150,6 +154,7 @@ try:
 
     try:
         from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as _TkCanvasClass
+
         _canvas_tk_class = _TkCanvasClass
     except ImportError:
         pass
@@ -239,7 +244,7 @@ except ImportError as e:
             ncols: int,
             index: int,
             **kwargs: Any,
-        ) -> "FallbackAxes":
+        ) -> FallbackAxes:
             """Add a subplot to the figure.
 
             Args:
@@ -257,7 +262,7 @@ except ImportError as e:
             self._current_axes = ax
             return ax
 
-        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: Any) -> "FallbackAxes":
+        def add_axes(self, rect: tuple[float, float, float, float], **kwargs: Any) -> FallbackAxes:
             """Add axes at the given position.
 
             Args:
@@ -357,7 +362,7 @@ except ImportError as e:
             """
             fname_str = str(fname)
             if format is None:
-                file_format: str = fname_str.split(".")[-1].lower()
+                file_format: str = fname_str.rsplit(".", maxsplit=1)[-1].lower()
             else:
                 file_format = format
 
@@ -585,7 +590,7 @@ except ImportError as e:
             """
             return self.axes
 
-        def gca(self) -> "FallbackAxes":
+        def gca(self) -> FallbackAxes:
             """Get current axes.
 
             Returns:
@@ -771,16 +776,14 @@ except ImportError as e:
             else:
                 height_data = list(height)
 
-            self.bars.append(
-                {
-                    "x": x_data,
-                    "height": height_data,
-                    "width": width,
-                    "bottom": bottom,
-                    "color": color,
-                    "label": label,
-                }
-            )
+            self.bars.append({
+                "x": x_data,
+                "height": height_data,
+                "width": width,
+                "bottom": bottom,
+                "color": color,
+                "label": label,
+            })
 
             if label:
                 self.legend_items.append((label, color))
@@ -850,15 +853,13 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments including extent.
 
             """
-            self.images.append(
-                {
-                    "data": X,
-                    "cmap": cmap,
-                    "aspect": aspect,
-                    "interpolation": interpolation,
-                    "extent": kwargs.get("extent"),
-                }
-            )
+            self.images.append({
+                "data": X,
+                "cmap": cmap,
+                "aspect": aspect,
+                "interpolation": interpolation,
+                "extent": kwargs.get("extent"),
+            })
 
         def contour(
             self,
@@ -906,17 +907,15 @@ except ImportError as e:
                 **kwargs: Additional keyword arguments.
 
             """
-            self.texts.append(
-                {
-                    "x": x,
-                    "y": y,
-                    "text": str(s),
-                    "fontsize": fontsize,
-                    "color": color,
-                    "ha": ha,
-                    "va": va,
-                }
-            )
+            self.texts.append({
+                "x": x,
+                "y": y,
+                "text": str(s),
+                "fontsize": fontsize,
+                "color": color,
+                "ha": ha,
+                "va": va,
+            })
 
         def annotate(
             self,
@@ -1141,15 +1140,15 @@ except ImportError as e:
                 for i in range(len(line_x)):
                     if self.xlim and self.ylim:
                         x_norm = (float(line_x[i]) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        y_norm = (
+                            1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        )
                         points.append(f"{x_norm * width},{y_norm * height}")
 
                 if points:
                     line_color = str(line.get("color", "black"))
                     lw = int(line.get("linewidth", 1))
-                    svg += (
-                        f'<polyline points="{" ".join(points)}" fill="none" stroke="{line_color}" stroke-width="{lw}"/>\n'
-                    )
+                    svg += f'<polyline points="{" ".join(points)}" fill="none" stroke="{line_color}" stroke-width="{lw}"/>\n'
 
             for bar_group in self.bars:
                 bar_x_list = bar_group.get("x")
@@ -1231,7 +1230,9 @@ except ImportError as e:
                 for i in range(len(line_x)):
                     if self.xlim and self.ylim:
                         x_norm = (float(line_x[i]) - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
-                        y_norm = 1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        y_norm = (
+                            1 - (float(line_y[i]) - self.ylim[0]) / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
+                        )
                         points.append((x + x_norm * width, y + y_norm * height))
 
                 if len(points) > 1:
@@ -1468,7 +1469,7 @@ except ImportError as e:
             self.steps: list[int] | None = steps
             self.min_n_ticks: int = min_n_ticks
             self.prune: str | None = prune
-            self.integer: bool = bool(kwargs.get("integer", False))
+            self.integer: bool = bool(kwargs.get("integer"))
 
     class FallbackPdfPages:
         """Functional multi-page PDF writer for matplotlib figures."""
@@ -1493,7 +1494,7 @@ except ImportError as e:
             self.pages: list[dict[str, Any]] = []
             self.closed: bool = False
 
-        def __enter__(self) -> "FallbackPdfPages":
+        def __enter__(self) -> FallbackPdfPages:
             """Context manager entry.
 
             Returns:
@@ -2045,7 +2046,7 @@ startxref
 
         __version__: str = "0.0.0-fallback"
 
-        pyplot: type["FallbackMatplotlib.Pyplot"] = Pyplot
+        pyplot: type[FallbackMatplotlib.Pyplot] = Pyplot
 
         @staticmethod
         def use(backend: str, **kwargs: Any) -> None:
@@ -2061,8 +2062,9 @@ MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 def get_plt() -> Any:
     """Get pyplot module or fallback."""
     if HAS_MATPLOTLIB:
-        import matplotlib.pyplot as _mpl_plt
-        return _mpl_plt
+        import matplotlib.pyplot as plt
+
+        return plt
     return _fallback_plt_instance
 
 
@@ -2070,6 +2072,7 @@ def get_figure_class() -> type[Any]:
     """Get Figure class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.figure import Figure as _MplFigure
+
         return _MplFigure
     return FallbackFigure
 
@@ -2078,6 +2081,7 @@ def get_axes_class() -> type[Any]:
     """Get Axes class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.axes import Axes as _MplAxes
+
         return _MplAxes
     return FallbackAxes
 
@@ -2086,6 +2090,7 @@ def get_rectangle_class() -> type[Any]:
     """Get Rectangle class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Rectangle as _MplRectangle
+
         return _MplRectangle
     return FallbackRectangle
 
@@ -2094,6 +2099,7 @@ def get_circle_class() -> type[Any]:
     """Get Circle class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Circle as _MplCircle
+
         return _MplCircle
     return FallbackCircle
 
@@ -2102,6 +2108,7 @@ def get_polygon_class() -> type[Any]:
     """Get Polygon class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Polygon as _MplPolygon
+
         return _MplPolygon
     return FallbackPolygon
 
@@ -2110,6 +2117,7 @@ def get_funcformatter_class() -> type[Any]:
     """Get FuncFormatter class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.ticker import FuncFormatter as _MplFuncFormatter
+
         return _MplFuncFormatter
     return FallbackFuncFormatter
 
@@ -2118,6 +2126,7 @@ def get_maxnlocator_class() -> type[Any]:
     """Get MaxNLocator class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.ticker import MaxNLocator as _MplMaxNLocator
+
         return _MplMaxNLocator
     return FallbackMaxNLocator
 
@@ -2126,6 +2135,7 @@ def get_pdfpages_class() -> type[Any]:
     """Get PdfPages class or fallback."""
     if HAS_MATPLOTLIB:
         from matplotlib.backends.backend_pdf import PdfPages as _MplPdfPages
+
         return _MplPdfPages
     return FallbackPdfPages
 
@@ -2133,8 +2143,9 @@ def get_pdfpages_class() -> type[Any]:
 def get_mpl() -> Any:
     """Get matplotlib module or fallback."""
     if HAS_MATPLOTLIB:
-        import matplotlib as _matplotlib
-        return _matplotlib
+        import matplotlib as mpl
+
+        return mpl
     return _fallback_mpl
 
 

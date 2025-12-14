@@ -14,6 +14,7 @@
 **Location**: Line 227 in `hardware_dongle_emulator.py`
 
 **Issue**:
+
 ```python
 # Current (BROKEN):
 self.memory = DongleMemory(spec.memory_size * 1024)
@@ -26,6 +27,7 @@ class DongleMemory:
 ```
 
 **Impact**:
+
 - **ALL dongle emulation functionality is completely broken**
 - Cannot instantiate `BaseDongleEmulator`, `HASPEmulator`, or `SentinelEmulator`
 - Every single dongle operation fails at initialization
@@ -34,6 +36,7 @@ class DongleMemory:
 **Root Cause**: The `data` parameter is required by the dataclass but not provided during instantiation. While `__post_init__` attempts to handle empty data, the dataclass requires the parameter to be passed.
 
 **Required Fix**:
+
 ```python
 # Option 1: Pass empty bytearray
 self.memory = DongleMemory(spec.memory_size * 1024, bytearray())
@@ -50,6 +53,7 @@ class DongleMemory:
 **Location**: Multiple locations where `@log_all_methods` decorates classes with static methods
 
 **Issue**:
+
 ```python
 @log_all_methods
 class CryptoEngine:
@@ -59,12 +63,14 @@ class CryptoEngine:
 ```
 
 **Error**:
+
 ```
 TypeError: unsupported callable
 ValueError: no signature found for builtin <staticmethod(<function CryptoEngine.tea_encrypt>)>
 ```
 
 **Impact**:
+
 - All cryptographic operations fail when called
 - TEA encryption/decryption unusable
 - XOR operations fail
@@ -72,6 +78,7 @@ ValueError: no signature found for builtin <staticmethod(<function CryptoEngine.
 - Challenge-response mechanisms broken
 
 **Affected Classes**:
+
 - `CryptoEngine` - all static methods fail
 
 ### Bug #3: Missing `reset()` Method
@@ -79,6 +86,7 @@ ValueError: no signature found for builtin <staticmethod(<function CryptoEngine.
 **Location**: Line 1107 in `parallel_port_emulator.py`
 
 **Issue**:
+
 ```python
 if value & 0x04 and self.dongles:
     for dongle in self.dongles.values():
@@ -86,6 +94,7 @@ if value & 0x04 and self.dongles:
 ```
 
 **Impact**:
+
 - Parallel port control register writes fail when bit 0x04 is set
 - Cannot reset dongle state via parallel port
 - Affects legacy LPT dongle emulation
@@ -95,79 +104,79 @@ if value & 0x04 and self.dongles:
 ### Successfully Tested Components
 
 1. **DongleSpec** (4/4 tests PASSED before bug discovered)
-   - Serial number generation and uniqueness
-   - Cryptographically secure serial generation
-   - Parameter initialization
-   - All configuration options
+    - Serial number generation and uniqueness
+    - Cryptographically secure serial generation
+    - Parameter initialization
+    - All configuration options
 
 2. **DongleMemory** (9/9 tests PASSED)
-   - Read/write operations
-   - Boundary checking
-   - Read-only protection
-   - Out-of-bounds error handling
-   - Round-trip data integrity
+    - Read/write operations
+    - Boundary checking
+    - Read-only protection
+    - Out-of-bounds error handling
+    - Round-trip data integrity
 
 3. **Basic Infrastructure** (3 tests PASSED)
-   - USBDongleDriver initialization
-   - HardwareDongleEmulator initialization
-   - Predefined dongle loading
+    - USBDongleDriver initialization
+    - HardwareDongleEmulator initialization
+    - Predefined dongle loading
 
 ### Blocked Test Categories (Due to Source Code Bugs)
 
 All 99 remaining tests are blocked by the critical bugs above:
 
 1. **CryptoEngine Tests** (10 tests)
-   - TEA encryption/decryption
-   - XOR operations
-   - CRC16 calculations
-   - Property-based cryptographic tests
+    - TEA encryption/decryption
+    - XOR operations
+    - CRC16 calculations
+    - Property-based cryptographic tests
 
 2. **BaseDongleEmulator Tests** (14 tests)
-   - Initialization and lifecycle
-   - Memory operations
-   - Encryption/decryption
-   - Challenge-response
+    - Initialization and lifecycle
+    - Memory operations
+    - Encryption/decryption
+    - Challenge-response
 
 3. **HASPEmulator Tests** (12 tests)
-   - HASP command processing
-   - Login/logout operations
-   - Memory read/write commands
-   - RTC operations
-   - Encryption commands
+    - HASP command processing
+    - Login/logout operations
+    - Memory read/write commands
+    - RTC operations
+    - Encryption commands
 
 4. **SentinelEmulator Tests** (8 tests)
-   - Cell-based memory model
-   - Cell read/write with permissions
-   - Data transformation algorithms
+    - Cell-based memory model
+    - Cell read/write with permissions
+    - Data transformation algorithms
 
 5. **USBDongleDriver Tests** (9 tests)
-   - Dongle registration/unregistration
-   - Control transfers
-   - Bulk transfers
-   - Device enumeration
+    - Dongle registration/unregistration
+    - Control transfers
+    - Bulk transfers
+    - Device enumeration
 
 6. **ParallelPortEmulator Tests** (8 tests)
-   - Port I/O operations
-   - Dongle attachment
-   - Presence detection
-   - Memory access protocols
+    - Port I/O operations
+    - Dongle attachment
+    - Presence detection
+    - Memory access protocols
 
 7. **HardwareDongleEmulator Tests** (17 tests)
-   - Dongle creation/removal
-   - Multi-dongle management
-   - Export/import functionality
-   - Testing framework
+    - Dongle creation/removal
+    - Multi-dongle management
+    - Export/import functionality
+    - Testing framework
 
 8. **Real-World Scenarios** (6 tests)
-   - Commercial license validation
-   - Feature bit manipulation
-   - Time-limited licenses
-   - Multi-dongle environments
+    - Commercial license validation
+    - Feature bit manipulation
+    - Time-limited licenses
+    - Multi-dongle environments
 
 9. **Anti-Emulation Detection** (4 tests)
-   - Timing attack resistance
-   - Serial entropy validation
-   - Memory pattern realism
+    - Timing attack resistance
+    - Serial entropy validation
+    - Memory pattern realism
 
 10. **Edge Cases** (7 tests)
     - Boundary conditions
@@ -207,6 +216,7 @@ All 99 remaining tests are blocked by the critical bugs above:
 ### Test Methodology
 
 All tests follow TDD principles:
+
 - Tests FAIL if functionality doesn't work
 - No mocked responses - only real dongle operations
 - Validates actual cryptographic output
@@ -216,6 +226,7 @@ All tests follow TDD principles:
 ## What Tests Prove (Once Source Code is Fixed)
 
 ### Cryptographic Validation
+
 - TEA encryption produces deterministic, reversible output
 - Different keys produce different ciphertext
 - XOR is truly symmetric
@@ -223,6 +234,7 @@ All tests follow TDD principles:
 - Round-trip encryption/decryption preserves data
 
 ### Hardware Emulation Fidelity
+
 - USB dongles appear as real USB devices
 - Parallel port dongles respond to LPT protocols
 - Vendor/Product IDs are correctly reported
@@ -230,6 +242,7 @@ All tests follow TDD principles:
 - Memory layout matches real hardware
 
 ### Protocol Compliance
+
 - HASP HL commands process correctly
 - Login returns valid session IDs
 - Memory read/write follows HASP protocol
@@ -237,6 +250,7 @@ All tests follow TDD principles:
 - Sentinel cell-based access enforces permissions
 
 ### License Validation Simulation
+
 - Feature bits can control software capabilities
 - Time-limited licenses expire correctly
 - Challenge-response proves dongle presence
@@ -244,6 +258,7 @@ All tests follow TDD principles:
 - Memory persists across operations
 
 ### Anti-Detection Resistance
+
 - Timing characteristics appear realistic
 - Serial numbers have high entropy
 - Memory patterns look genuine
@@ -254,33 +269,33 @@ All tests follow TDD principles:
 ### IMMEDIATE (CRITICAL)
 
 1. **Fix DongleMemory Initialization** (Bug #1)
-   - This is a production-breaking bug
-   - Blocks ALL functionality
-   - Must be fixed before any testing can proceed
+    - This is a production-breaking bug
+    - Blocks ALL functionality
+    - Must be fixed before any testing can proceed
 
 2. **Fix Logger Decorator for Static Methods** (Bug #2)
-   - Prevents all cryptographic operations
-   - Core security functionality is broken
+    - Prevents all cryptographic operations
+    - Core security functionality is broken
 
 3. **Implement `reset()` Method** (Bug #3)
-   - Add to `BaseDongleEmulator` class
-   - Support parallel port reset protocol
+    - Add to `BaseDongleEmulator` class
+    - Support parallel port reset protocol
 
 ### AFTER FIXES
 
 4. **Run Full Test Suite**
-   - All 112 tests should pass once bugs are fixed
-   - Verify 85%+ line coverage
-   - Validate 80%+ branch coverage
+    - All 112 tests should pass once bugs are fixed
+    - Verify 85%+ line coverage
+    - Validate 80%+ branch coverage
 
 5. **Add Integration Tests**
-   - Test against real commercial software (in controlled environment)
-   - Validate actual HASP/Sentinel protected applications accept emulated dongles
-   - Measure detection resistance against anti-emulation systems
+    - Test against real commercial software (in controlled environment)
+    - Validate actual HASP/Sentinel protected applications accept emulated dongles
+    - Measure detection resistance against anti-emulation systems
 
 6. **Performance Optimization**
-   - Benchmark tests show where optimization is needed
-   - Ensure cryptographic operations meet performance requirements
+    - Benchmark tests show where optimization is needed
+    - Ensure cryptographic operations meet performance requirements
 
 ## Test Execution Command
 

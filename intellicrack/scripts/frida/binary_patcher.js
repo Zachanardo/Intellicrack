@@ -663,7 +663,9 @@ const BinaryPatcher = {
                     let str = '';
                     for (let i = 0; i < maxLength; i++) {
                         const byte = buffer[offset + i];
-                        if (byte === 0) { break; }
+                        if (byte === 0) {
+                            break;
+                        }
                         str += String.fromCharCode(byte);
                     }
                     return str;

@@ -119,9 +119,9 @@ def show_message(
         logger.info("%s: %s%s", title, message, parent_context)
 
     # In a real UI implementation, this would show a dialog
-    # For now, we print to console with parent context
+    # For now, we log to console with parent context
     parent_info = f" (Parent: {parent.__class__.__name__})" if parent else ""
-    print(f"[{msg_type.value.upper()}] {title}: {message}{parent_info}")
+    logger.info("[%s] %s: %s%s", msg_type.value.upper(), title, message, parent_info)
 
     # Store message in parent if it has a message history
     if parent and hasattr(parent, "message_history"):
@@ -191,7 +191,7 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
 
         return result
     except (KeyboardInterrupt, EOFError) as e:
-        logger.error("Error in ui_utils: %s", e)
+        logger.error("Error in ui_utils: %s", e, exc_info=True)
         return None
 
 
@@ -210,11 +210,11 @@ def update_progress(
     """
     if callback:
         callback(progress, message)
-    # Default console output
+    # Default console output via logger
     elif message:
-        print(f"Progress: {progress}% - {message}")
+        logger.info("Progress: %s%% - %s", progress, message)
     else:
-        print(f"Progress: {progress}%")
+        logger.info("Progress: %s%%", progress)
 
 
 def confirm_action(message: str, title: str = "Confirm Action", parent: object = None) -> bool:
@@ -231,7 +231,7 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
     """
     # In a real UI implementation, this would show a confirmation dialog
     # For now, we use console input (parent parameter reserved for future GUI integration)
-    logger.debug(f"Console confirmation dialog (parent: {parent is not None})")
+    logger.debug("Console confirmation dialog (parent: %s)", parent is not None)
     try:
         # Sanitize title and message to prevent injection
         safe_title = title.replace("\n", " ").replace("\r", " ")
@@ -240,7 +240,7 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
-        logger.error("Error in ui_utils: %s", e)
+        logger.error("Error in ui_utils: %s", e, exc_info=True)
         return False
 
 
@@ -268,10 +268,10 @@ def select_from_list(
         return None
 
     # Console implementation (parent parameter reserved for future GUI integration)
-    logger.debug(f"Console selection dialog (parent: {parent is not None})")
-    print(f"\n{title}: {prompt}")
+    logger.debug("Console selection dialog (parent: %s)", parent is not None)
+    logger.info("%s: %s", title, prompt)
     for i, item in enumerate(items, 1):
-        print(f"  {i}. {item}")
+        logger.info("  %s. %s", i, item)
 
     try:
         if allow_multiple:
@@ -293,7 +293,7 @@ def select_from_list(
                     if 0 <= idx < len(items):
                         selected.append(items[idx])
                 except ValueError as e:
-                    logger.error("Value error in ui_utils: %s", e)
+                    logger.error("Value error in ui_utils: %s", e, exc_info=True)
                     continue
             return selected or None
         user_input = input("Enter number: ").strip()
@@ -304,7 +304,7 @@ def select_from_list(
         idx = int(selection) - 1
         return [items[idx]] if 0 <= idx < len(items) else None
     except (KeyboardInterrupt, EOFError, ValueError) as e:
-        logger.error("Error in ui_utils: %s", e)
+        logger.error("Error in ui_utils: %s", e, exc_info=True)
         return None
 
 

@@ -362,7 +362,9 @@ class PerformanceOptimizer:
         # Default to applying rule for new operations
         return True
 
-    def _apply_optimization_strategy(self, func: Callable[..., object], strategy: OptimizationStrategy, parameters: dict[str, Any]) -> Callable[..., object]:
+    def _apply_optimization_strategy(
+        self, func: Callable[..., object], strategy: OptimizationStrategy, parameters: dict[str, Any]
+    ) -> Callable[..., object]:
         """Apply specific optimization strategy to function.
 
         Wraps the function with the appropriate optimization wrapper based on the
@@ -966,7 +968,9 @@ class ParallelExecutor:
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(self, operations: list[tuple[Callable[..., object], tuple[object, ...], dict[str, Any]]], max_workers: int | None = None) -> list[Any]:
+    def execute_batch_parallel(
+        self, operations: list[tuple[Callable[..., object], tuple[object, ...], dict[str, Any]]], max_workers: int | None = None
+    ) -> list[Any]:
         """Execute multiple different operations in parallel.
 
         Processes a list of different callables with their respective arguments
@@ -1305,7 +1309,7 @@ class PerformanceOptimizationLayer:
 
         """
         result = self.parallel_executor.execute_parallel(func, items, max_workers)
-        return result if isinstance(result, list) else list(result) if hasattr(result, '__iter__') else []
+        return result if isinstance(result, list) else list(result) if hasattr(result, "__iter__") else []
 
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
         """Allocate resources for operation.

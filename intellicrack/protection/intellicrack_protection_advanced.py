@@ -1093,12 +1093,10 @@ function detect(bShowType, bShowVersion, bShowOptions)
 
         # Add file format specific patterns
         if "PE" in analysis.file_type:
-            strings_section.extend(
-                (
-                    "        $mz = { 4D 5A }  // MZ header",
-                    "        $pe = { 50 45 00 00 }  // PE signature",
-                )
-            )
+            strings_section.extend((
+                "        $mz = { 4D 5A }  // MZ header",
+                "        $pe = { 50 45 00 00 }  // PE signature",
+            ))
             conditions_list.append("$mz at 0 and $pe")
         elif "ELF" in analysis.file_type:
             strings_section.append("        $elf = { 7F 45 4C 46 }  // ELF header")

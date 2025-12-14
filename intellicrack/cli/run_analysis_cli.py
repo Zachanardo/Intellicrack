@@ -82,7 +82,7 @@ def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, 
         from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
         from intellicrack.core.processing.memory_loader import MemoryLoader
 
-        logger.info(f"Starting analysis of: {binary_path}")
+        logger.info("Starting analysis of: %s", binary_path)
 
         # Initialize components
         orchestrator = AnalysisOrchestrator()
@@ -117,11 +117,11 @@ def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, 
         return results
 
     except ImportError as e:
-        logger.error(f"Failed to import analysis components: {e}")
+        logger.error("Failed to import analysis components: %s", e, exc_info=True)
         return {"error": f"Import error: {e}"}
 
     except Exception as e:
-        logger.error(f"Analysis failed: {e}")
+        logger.error("Analysis failed: %s", e, exc_info=True)
         return {"error": f"Analysis error: {e}"}
 
 
@@ -253,7 +253,7 @@ def main() -> int:
         try:
             binary_path = validate_binary_path(args.binary)
         except (FileNotFoundError, PermissionError, ValueError) as e:
-            logger.error(f"Binary validation failed: {e}")
+            logger.error("Binary validation failed: %s", e, exc_info=True)
             return 1
 
         # Configure analysis options
@@ -277,9 +277,9 @@ def main() -> int:
             try:
                 with open(args.output, "w", encoding="utf-8") as f:
                     f.write(output)
-                logger.info(f"Results saved to: {args.output}")
+                logger.info("Results saved to: %s", args.output)
             except OSError as e:
-                logger.error(f"Failed to save results: {e}")
+                logger.error("Failed to save results: %s", e, exc_info=True)
                 return 1
         else:
             print(output)
@@ -297,11 +297,7 @@ def main() -> int:
         return 1
 
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        if logger.isEnabledFor(logging.DEBUG):
-            import traceback
-
-            logger.debug(traceback.format_exc())
+        logger.error("Unexpected error: %s", e, exc_info=True)
         return 1
 
 

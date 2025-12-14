@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 import subprocess
 from pathlib import Path
@@ -539,6 +540,7 @@ class ToolsTab(BaseTab):
                     self.parent().append_output(status["raw_output"])
 
         except Exception as e:
+            logger.error("Error checking Windows activation: %s", e, exc_info=True)
             self.windows_activation_status.setText("Status: Error checking")
             self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
             if hasattr(self.parent(), "append_output"):
@@ -557,6 +559,7 @@ class ToolsTab(BaseTab):
             self.windows_activation_status.setStyleSheet("font-weight: bold; color: blue;")
 
         except Exception as e:
+            logger.error("Error launching Windows activation: %s", e, exc_info=True)
             self.windows_activation_status.setText("Status: Error launching")
             self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
 
@@ -856,6 +859,7 @@ class ToolsTab(BaseTab):
             self.log_message("System information retrieved")
 
         except Exception as e:
+            logger.error("Error getting system info: %s", e, exc_info=True)
             self.output_console.append(f"Error getting system info: {e!s}")
 
     def list_processes(self) -> None:
@@ -884,6 +888,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Listed {len(processes)} running processes")
 
         except Exception as e:
+            logger.error("Error listing processes: %s", e, exc_info=True)
             self.output_console.append(f"Error listing processes: {e!s}")
 
     def get_memory_info(self) -> None:
@@ -909,6 +914,7 @@ class ToolsTab(BaseTab):
             self.log_message("Memory information retrieved")
 
         except Exception as e:
+            logger.error("Error getting memory info: %s", e, exc_info=True)
             self.output_console.append(f"Error getting memory info: {e!s}")
 
     def browse_file(self) -> None:
@@ -938,12 +944,10 @@ class ToolsTab(BaseTab):
             file_stat = Path(file_path).stat()
 
             info = [f"File: {os.path.basename(file_path)}"]
-            info.extend(
-                (
-                    f"Path: {file_path}",
-                    f"Size: {file_stat.st_size} bytes ({file_stat.st_size / 1024**2:.2f} MB)",
-                )
-            )
+            info.extend((
+                f"Path: {file_path}",
+                f"Size: {file_stat.st_size} bytes ({file_stat.st_size / 1024**2:.2f} MB)",
+            ))
             info.append(f"Created: {datetime.fromtimestamp(file_stat.st_ctime)}")
             info.append(f"Modified: {datetime.fromtimestamp(file_stat.st_mtime)}")
             info.append(f"Accessed: {datetime.fromtimestamp(file_stat.st_atime)}")
@@ -954,6 +958,7 @@ class ToolsTab(BaseTab):
             self.log_message("File information retrieved")
 
         except Exception as e:
+            logger.error("Error getting file info: %s", e, exc_info=True)
             self.output_console.append(f"Error getting file info: {e!s}")
 
     def create_hex_dump(self) -> None:
@@ -979,6 +984,7 @@ class ToolsTab(BaseTab):
             self.log_message("Hex dump created")
 
         except Exception as e:
+            logger.error("Error creating hex dump: %s", e, exc_info=True)
             self.output_console.append(f"Error creating hex dump: {e!s}")
 
     def extract_strings(self) -> None:
@@ -1022,6 +1028,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings")
 
         except Exception as e:
+            logger.error("Error extracting strings: %s", e, exc_info=True)
             self.output_console.append(f"Error extracting strings: {e!s}")
 
     def query_registry(self) -> None:
@@ -1064,6 +1071,7 @@ class ToolsTab(BaseTab):
                 self.log_message(f"Queried registry key: {reg_key}")
 
         except Exception as e:
+            logger.error("Error querying registry: %s", e, exc_info=True)
             self.output_console.append(f"Error querying registry: {e!s}")
 
     def browse_analysis_binary(self) -> None:
@@ -1110,10 +1118,13 @@ class ToolsTab(BaseTab):
                 self.output_console.append(f"Disassembly failed: {result.stderr}")
 
         except FileNotFoundError:
+            logger.error("objdump not found", exc_info=True)
             self.output_console.append("Error: objdump not found. Please install binutils.")
         except subprocess.TimeoutExpired:
+            logger.error("Disassembly timed out", exc_info=True)
             self.output_console.append("Error: Disassembly timed out")
         except Exception as e:
+            logger.error("Error disassembling binary: %s", e, exc_info=True)
             self.output_console.append(f"Error disassembling binary: {e!s}")
 
     def analyze_entropy(self) -> None:
@@ -1171,6 +1182,7 @@ class ToolsTab(BaseTab):
             self.log_message("Entropy analysis completed")
 
         except Exception as e:
+            logger.error("Error analyzing entropy: %s", e, exc_info=True)
             self.output_console.append(f"Error analyzing entropy: {e!s}")
 
     def analyze_imports(self) -> None:
@@ -1205,8 +1217,10 @@ class ToolsTab(BaseTab):
             self.log_message("Import analysis completed")
 
         except ImportError:
+            logger.error("pefile module not available", exc_info=True)
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
+            logger.error("Error analyzing imports: %s", e, exc_info=True)
             self.output_console.append(f"Error analyzing imports: {e!s}")
 
     def analyze_exports(self) -> None:
@@ -1243,8 +1257,10 @@ class ToolsTab(BaseTab):
             self.log_message("Export analysis completed")
 
         except ImportError:
+            logger.error("pefile module not available", exc_info=True)
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
+            logger.error("Error analyzing exports: %s", e, exc_info=True)
             self.output_console.append(f"Error analyzing exports: {e!s}")
 
     def analyze_sections(self) -> None:
@@ -1277,8 +1293,10 @@ class ToolsTab(BaseTab):
             self.log_message("Section analysis completed")
 
         except ImportError:
+            logger.error("pefile module not available", exc_info=True)
             self.output_console.append("Error: pefile module not available")
         except Exception as e:
+            logger.error("Error analyzing sections: %s", e, exc_info=True)
             self.output_console.append(f"Error analyzing sections: {e!s}")
 
     def analyze_symbols(self) -> None:
@@ -1310,10 +1328,13 @@ class ToolsTab(BaseTab):
                 self.output_console.append("No symbols found or nm tool unavailable")
 
         except FileNotFoundError:
+            logger.error("nm tool not found", exc_info=True)
             self.output_console.append("Error: nm tool not found")
         except subprocess.TimeoutExpired:
+            logger.error("Symbol analysis timed out", exc_info=True)
             self.output_console.append("Error: Symbol analysis timed out")
         except Exception as e:
+            logger.error("Error analyzing symbols: %s", e, exc_info=True)
             self.output_console.append(f"Error analyzing symbols: {e!s}")
 
     def calculate_hash(self, algorithm: str) -> None:
@@ -1347,6 +1368,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"{algorithm.upper()} hash calculated")
 
         except Exception as e:
+            logger.error("Error calculating hash: %s", e, exc_info=True)
             self.output_console.append(f"Error calculating hash: {e!s}")
 
     def base64_encode(self) -> None:
@@ -1366,6 +1388,7 @@ class ToolsTab(BaseTab):
             self.log_message("Base64 encoding completed")
 
         except Exception as e:
+            logger.error("Error encoding data: %s", e, exc_info=True)
             self.output_console.append(f"Error encoding data: {e!s}")
 
     def base64_decode(self) -> None:
@@ -1385,6 +1408,7 @@ class ToolsTab(BaseTab):
             self.log_message("Base64 decoding completed")
 
         except Exception as e:
+            logger.error("Error decoding data: %s", e, exc_info=True)
             self.output_console.append(f"Error decoding data: {e!s}")
 
     def populate_plugin_list(self) -> None:
@@ -1461,6 +1485,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Plugin '{plugin_name}' loaded")
 
         except Exception as e:
+            logger.error("Error loading plugin '%s': %s", plugin_name, e, exc_info=True)
             self.output_console.append(f"Error loading plugin '{plugin_name}': {e!s}")
             self.plugin_loaded.emit(plugin_name, False)
 
@@ -1557,6 +1582,7 @@ def get_plugin():
                 self.log_message(f"New plugin '{plugin_name}' created")
 
             except Exception as e:
+                logger.error("Error creating plugin: %s", e, exc_info=True)
                 self.output_console.append(f"Error creating plugin: {e!s}")
 
     def edit_selected_plugin(self) -> None:
@@ -1585,6 +1611,7 @@ def get_plugin():
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 
             except Exception as e:
+                logger.error("Error opening plugin for editing: %s", e, exc_info=True)
                 self.output_console.append(f"Error opening plugin for editing: {e!s}")
         else:
             self.output_console.append(f"Plugin file not found: {plugin_file}")
@@ -1603,6 +1630,7 @@ def get_plugin():
             self.log_message(f"Found {len(interfaces)} network interfaces")
 
         except Exception as e:
+            logger.error("Error getting network interfaces: %s", e, exc_info=True)
             self.output_console.append(f"Error getting network interfaces: {e!s}")
 
     def start_packet_capture(self) -> None:
@@ -1640,10 +1668,12 @@ def get_plugin():
                 self.output_console.append("Failed to start packet capture")
 
         except ImportError:
+            logger.error("Network capture module not available", exc_info=True)
             self.output_console.append("Network capture module not available")
             self.log_message("Network capture requires additional dependencies")
 
         except Exception as e:
+            logger.error("Error starting packet capture: %s", e, exc_info=True)
             self.output_console.append(f"Error starting packet capture: {e!s}")
 
     def _update_packet_table_periodically(self) -> None:
@@ -1728,6 +1758,7 @@ def get_plugin():
             self.log_message(f"Ping scan completed for {target}")
 
         except Exception as e:
+            logger.error("Error performing ping scan: %s", e, exc_info=True)
             self.output_console.append(f"Error performing ping scan: {e!s}")
 
     def port_scan(self) -> None:
@@ -1803,6 +1834,7 @@ def get_plugin():
             self.log_message(f"Port scan completed for {target}")
 
         except Exception as e:
+            logger.error("Error performing port scan: %s", e, exc_info=True)
             self.output_console.append(f"Error performing port scan: {e!s}")
 
     def service_scan(self) -> None:
@@ -1899,6 +1931,7 @@ def get_plugin():
             self.log_message(f"Service scan completed for {target}")
 
         except Exception as e:
+            logger.error("Error performing service scan: %s", e, exc_info=True)
             self.output_console.append(f"Error performing service scan: {e!s}")
 
     def browse_advanced_binary(self) -> None:
@@ -1965,9 +1998,11 @@ def get_plugin():
             self.log_message("Frida dynamic analysis completed")
 
         except ImportError as e:
+            logger.error("Frida import error: %s", e, exc_info=True)
             error_msg = get_user_friendly_error("frida", "Frida Analysis", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running Frida analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running Frida analysis: {e!s}")
 
     def run_symbolic_execution(self) -> None:
@@ -2004,8 +2039,10 @@ def get_plugin():
             self.log_message("Symbolic execution analysis completed")
 
         except ImportError:
+            logger.error("Symbolic execution engine not available", exc_info=True)
             self.output_console.append("Error: Symbolic execution engine not available")
         except Exception as e:
+            logger.error("Error running symbolic execution: %s", e, exc_info=True)
             self.output_console.append(f"Error running symbolic execution: {e!s}")
 
     def run_memory_forensics(self) -> None:
@@ -2042,8 +2079,10 @@ def get_plugin():
             self.log_message("Memory forensics analysis completed")
 
         except ImportError:
+            logger.error("Memory forensics tools not available", exc_info=True)
             self.output_console.append("Error: Memory forensics tools not available")
         except Exception as e:
+            logger.error("Error running memory forensics: %s", e, exc_info=True)
             self.output_console.append(f"Error running memory forensics: {e!s}")
 
     def run_ghidra_analysis(self) -> None:
@@ -2086,6 +2125,7 @@ def get_plugin():
             self.log_message("Ghidra static analysis completed")
 
         except ImportError as e:
+            logger.error("Ghidra import error: %s", e, exc_info=True)
             error_msg = get_user_friendly_error("ghidra", "Ghidra Analysis", e)
             self.output_console.append(error_msg)
 
@@ -2093,6 +2133,7 @@ def get_plugin():
             alternatives = dependency_feedback.suggest_alternatives("ghidra", "static analysis")
             self.tool_output.append(alternatives)
         except Exception as e:
+            logger.error("Error running Ghidra analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running Ghidra analysis: {e!s}")
 
     def run_protection_scanner(self) -> None:
@@ -2146,6 +2187,7 @@ def get_plugin():
             self.log_message("Protection scanning completed")
 
         except ImportError as e:
+            logger.error("Protection Scanner import error: %s", e, exc_info=True)
             error_msg = get_user_friendly_error("radare2", "Protection Scanner", e)
             self.output_console.append(error_msg)
 
@@ -2153,6 +2195,7 @@ def get_plugin():
             alternatives = dependency_feedback.suggest_alternatives("radare2", "protection scanning")
             self.tool_output.append(alternatives)
         except Exception as e:
+            logger.error("Error running protection scanner: %s", e, exc_info=True)
             self.output_console.append(f"Error running protection scanner: {e!s}")
 
     def run_vulnerability_engine(self) -> None:
@@ -2201,6 +2244,7 @@ def get_plugin():
             self.log_message("Vulnerability detection completed")
 
         except ImportError as e:
+            logger.error("Vulnerability Engine import error: %s", e, exc_info=True)
             error_msg = get_user_friendly_error("radare2", "Vulnerability Engine", e)
             self.output_console.append(error_msg)
 
@@ -2208,6 +2252,7 @@ def get_plugin():
             alternatives = dependency_feedback.suggest_alternatives("radare2", "vulnerability detection")
             self.tool_output.append(alternatives)
         except Exception as e:
+            logger.error("Error running vulnerability engine: %s", e, exc_info=True)
             self.output_console.append(f"Error running vulnerability engine: {e!s}")
 
     def run_taint_analysis(self) -> None:
@@ -2251,8 +2296,10 @@ def get_plugin():
             self.log_message("Taint analysis completed")
 
         except ImportError:
+            logger.warning("Taint analysis engine not available")
             self.output_console.append("Error: Taint analysis engine not available")
         except Exception as e:
+            logger.error("Error running taint analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running taint analysis: {e!s}")
 
     def run_ai_script_generator(self) -> None:
@@ -2305,9 +2352,11 @@ def get_plugin():
             self.log_message("AI script generation completed")
 
         except ImportError as e:
+            logger.warning("AI Script Generator import error: %s", e)
             error_msg = get_user_friendly_error("tensorflow", "AI Script Generator", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running AI script generator: %s", e, exc_info=True)
             self.output_console.append(f"Error running AI script generator: {e!s}")
 
     def run_semantic_analysis(self) -> None:
@@ -2346,8 +2395,10 @@ def get_plugin():
             self.log_message("Semantic analysis completed")
 
         except ImportError:
+            logger.warning("Semantic analyzer not available")
             self.output_console.append("Error: Semantic analyzer not available")
         except Exception as e:
+            logger.error("Error running semantic analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running semantic analysis: {e!s}")
 
     def run_pattern_analysis(self) -> None:
@@ -2384,8 +2435,10 @@ def get_plugin():
             self.log_message("Pattern analysis completed")
 
         except ImportError:
+            logger.warning("Pattern analyzer not available")
             self.output_console.append("Error: Pattern analyzer not available")
         except Exception as e:
+            logger.error("Error running pattern analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running pattern analysis: {e!s}")
 
     def run_rop_generator(self) -> None:
@@ -2435,9 +2488,11 @@ def get_plugin():
             self.log_message("ROP chain generation completed")
 
         except ImportError as e:
+            logger.warning("ROP Generator import error: %s", e)
             error_msg = get_user_friendly_error("capstone", "ROP Generator", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running ROP generator: %s", e, exc_info=True)
             self.output_console.append(f"Error running ROP generator: {e!s}")
 
     def run_payload_engine(self) -> None:
@@ -2484,9 +2539,11 @@ def get_plugin():
             self.log_message("Payload generation completed")
 
         except ImportError as e:
+            logger.warning("Payload Engine import error: %s", e)
             error_msg = get_user_friendly_error("pefile", "Payload Engine", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running payload engine: %s", e, exc_info=True)
             self.output_console.append(f"Error running payload engine: {e!s}")
 
     def run_shellcode_generator(self) -> None:
@@ -2531,9 +2588,11 @@ def get_plugin():
             self.log_message("Shellcode generation completed")
 
         except ImportError as e:
+            logger.warning("Shellcode Generator import error: %s", e)
             error_msg = get_user_friendly_error("capstone", "Shellcode Generator", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running shellcode generator: %s", e, exc_info=True)
             self.output_console.append(f"Error running shellcode generator: {e!s}")
 
     def run_traffic_analysis(self) -> None:
@@ -2576,9 +2635,11 @@ def get_plugin():
             self.log_message("Traffic analysis completed")
 
         except ImportError as e:
+            logger.warning("Traffic Analyzer import error: %s", e)
             error_msg = get_user_friendly_error("psutil", "Traffic Analyzer", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running traffic analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running traffic analysis: {e!s}")
 
     def run_protocol_analysis(self) -> None:
@@ -2617,9 +2678,11 @@ def get_plugin():
             self.log_message("Protocol fingerprinting completed")
 
         except ImportError as e:
+            logger.warning("Protocol Tool import error: %s", e)
             error_msg = get_user_friendly_error("psutil", "Protocol Tool", e)
             self.output_console.append(error_msg)
         except Exception as e:
+            logger.error("Error running protocol analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running protocol analysis: {e!s}")
 
     def log_message(self, message: str, level: str = "info") -> None:
@@ -2633,4 +2696,14 @@ def get_plugin():
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:
-            print(f"[{level.upper()}] {message}")
+            import logging
+
+            level_map = {
+                "debug": logging.DEBUG,
+                "info": logging.INFO,
+                "warning": logging.WARNING,
+                "error": logging.ERROR,
+                "critical": logging.CRITICAL,
+            }
+            log_level = level_map.get(level.lower(), logging.INFO)
+            logger.log(log_level, "%s", message)

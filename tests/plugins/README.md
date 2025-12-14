@@ -12,21 +12,25 @@ Comprehensive test suite for `intellicrack/plugins/plugin_system.py` (2,258 line
 ## Running Tests
 
 ### Option 1: Run All Plugin Tests
+
 ```bash
 pixi run pytest tests/plugins/test_plugin_system.py -v
 ```
 
 ### Option 2: Run Specific Test Class
+
 ```bash
 pixi run pytest tests/plugins/test_plugin_system.py::TestPluginSystemClass -v
 ```
 
 ### Option 3: Run Single Test
+
 ```bash
 pixi run pytest tests/plugins/test_plugin_system.py::TestLoadPlugins::test_load_plugins_loads_custom_plugin -v
 ```
 
 ### Option 4: Run with Coverage
+
 ```bash
 pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.plugin_system --cov-report=html
 ```
@@ -34,6 +38,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 ## Test Categories
 
 ### Basic Functionality (30 tests)
+
 - log_message formatting
 - WindowsResourceCompat class
 - load_plugins discovery
@@ -43,6 +48,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 - create_plugin_template generation
 
 ### PluginSystem Class (36 tests)
+
 - Initialization and loading
 - Plugin discovery and search
 - Plugin listing and metadata
@@ -52,6 +58,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 - Static method functionality
 
 ### Advanced Testing (12 tests)
+
 - Edge cases and error handling
 - Integration workflows
 - Performance and concurrency
@@ -60,6 +67,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 ## What Gets Tested
 
 ### Real Plugin Operations
+
 - ✅ File system scanning for plugin discovery
 - ✅ Dynamic module loading via importlib
 - ✅ Plugin execution with actual results
@@ -68,6 +76,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 - ✅ Error handling for broken plugins
 
 ### NO MOCKS for Core Functionality
+
 - Real plugin files created in temp directories
 - Real Python modules loaded and executed
 - Real subprocess spawning for sandbox tests
@@ -75,6 +84,7 @@ pixi run pytest tests/plugins/test_plugin_system.py --cov=intellicrack.plugins.p
 - Real error injection and handling
 
 ### Production Scenarios
+
 - Plugins with syntax errors → gracefully skipped
 - Plugins with import errors → logged and skipped
 - Plugins without register() → ignored
@@ -95,13 +105,16 @@ All tests follow Intellicrack testing principles:
 ## Known Issues
 
 ### Pytest Langsmith Plugin
+
 The langsmith pytest plugin has import issues. Tests include pytest.ini to disable it:
+
 ```ini
 [pytest]
 addopts = -p no:langsmith
 ```
 
 If you still encounter issues, run tests with:
+
 ```bash
 pytest tests/plugins/test_plugin_system.py -v -p no:langsmith
 ```
@@ -127,6 +140,7 @@ All tests use isolated temporary directories:
 ## Coverage Highlights
 
 ### Functions Tested (12/12 = 100%)
+
 - log_message
 - load_plugins
 - run_plugin
@@ -135,12 +149,13 @@ All tests use isolated temporary directories:
 - run_ghidra_plugin_from_file
 - create_sample_plugins
 - create_plugin_template
-- _create_specialized_templates
-- _sandbox_worker
+- \_create_specialized_templates
+- \_sandbox_worker
 - run_plugin_in_sandbox
 - run_plugin_remotely
 
 ### Classes Tested (2/2 = 100%)
+
 - WindowsResourceCompat (all methods)
 - PluginSystem (all 17 methods)
 

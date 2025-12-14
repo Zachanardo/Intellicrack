@@ -134,6 +134,7 @@ Complete production-ready test suite for `intellicrack\core\protection_bypass\se
 ### `securom_protected_binary` Fixture
 
 Creates realistic SecuROM v7 protected PE binary with:
+
 - Valid PE headers (DOS, COFF, Optional)
 - Multiple protection patterns (activation checks, disc checks, triggers)
 - Validation keywords (ValidateLicense, CheckActivationStatus, etc.)
@@ -146,6 +147,7 @@ Creates realistic SecuROM v7 protected PE binary with:
 ### `securom_v8_binary` Fixture
 
 Creates SecuROM v8 x64 protected binary with:
+
 - x64 PE headers (PE32+ format)
 - Enhanced protection patterns
 - SCSI command codes
@@ -156,30 +158,35 @@ Creates SecuROM v8 x64 protected binary with:
 ## Key Testing Principles Applied
 
 ### 1. Real Bypass Validation
+
 - Tests verify actual binary modification
 - Registry operations are executed (not mocked)
 - Windows API calls interact with real OS components
 - Backup files are created and verified
 
 ### 2. No Mocks for Core Functionality
+
 - NO unittest.mock used for bypass operations
 - Real file I/O with temporary directories
 - Actual Windows registry manipulation
 - Genuine binary pattern detection and patching
 
 ### 3. TDD Approach
+
 - Tests fail when bypass code is broken
 - Tests fail when protection patterns aren't found
 - Tests fail when registry operations don't succeed
 - Tests validate genuine offensive capability
 
 ### 4. Comprehensive Coverage
+
 - All public methods tested
 - Multiple scenarios per method
 - Edge cases and error handling
 - Both v7 and v8 compatibility
 
 ### 5. Production Quality
+
 - Complete type annotations
 - Descriptive test names and docstrings
 - Proper fixture scoping and cleanup
@@ -188,18 +195,21 @@ Creates SecuROM v8 x64 protected binary with:
 ## Bypass Techniques Validated
 
 ### Static Analysis Techniques
+
 1. **Binary Pattern Matching**: Identifies activation checks, trigger keywords, API calls
 2. **Opcode Patching**: Replaces conditional jumps (JE/JNE) with unconditional jumps or NOPs
 3. **Function Prologue Detection**: Finds function entry points for patching
 4. **API Call Modification**: Patches network and disc check API calls to return success
 
 ### Runtime Manipulation
+
 1. **Registry Manipulation**: Creates fake activation/license data
 2. **Disc Presence Emulation**: Registry entries simulate disc presence
 3. **Service Management**: Stops and deletes SecuROM services
 4. **Driver Removal**: Deletes SecuROM kernel-mode drivers
 
 ### Network Blocking
+
 1. **Hosts File Modification**: Blocks activation server domains
 2. **Firewall Rules**: Creates rules blocking server IPs
 3. **API Patching**: Modifies network API calls to return immediately
@@ -227,11 +237,13 @@ tests\core\protection_bypass\test_securom_bypass_comprehensive.py
 ## Code Coverage Impact
 
 The comprehensive test suite exercises:
+
 - **Primary module**: `intellicrack\core\protection_bypass\securom_bypass.py`
 - **Coverage**: 65.60% (184/573 lines missed)
 - **Branches**: 180 branches, 45 partial
 
 ### High Coverage Areas
+
 - ✅ Initialization and Windows API setup
 - ✅ Registry manipulation functions
 - ✅ Binary patching core logic
@@ -239,6 +251,7 @@ The comprehensive test suite exercises:
 - ✅ Service and driver management
 
 ### Areas with Lower Coverage
+
 - 🔧 Advanced SCSI command neutralization edge cases
 - 🔧 Complex error recovery paths
 - 🔧 Some Windows-specific API error conditions
@@ -265,6 +278,7 @@ This test suite validates that Intellicrack can:
 ## Future Enhancements
 
 Potential additional test scenarios:
+
 1. Performance benchmarks for large binaries
 2. Property-based testing with hypothesis for pattern generation
 3. Integration tests with real commercial software (if legal samples available)

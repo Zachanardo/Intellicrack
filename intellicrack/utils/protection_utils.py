@@ -383,13 +383,11 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
         elif packer == "VMProtect":
             strategies.append("Consider VMProtect-specific unpacking tools")
     if protections.get("anti_debug"):
-        strategies.extend(
-            (
-                "Implement anti-debug bypass hooks",
-                "Hook IsDebuggerPresent and NtQueryInformationProcess",
-                "Consider using hardware breakpoints instead of software breakpoints",
-            )
-        )
+        strategies.extend((
+            "Implement anti-debug bypass hooks",
+            "Hook IsDebuggerPresent and NtQueryInformationProcess",
+            "Consider using hardware breakpoints instead of software breakpoints",
+        ))
     if protections.get("vm_detection"):
         strategies.append("Use VM evasion techniques")
         strategies.append("Modify VM artifacts to appear as physical machine")

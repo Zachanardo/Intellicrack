@@ -67,16 +67,10 @@ def _lazy_import_real_time_dashboard() -> object:
 
 
 # Create properties for lazy loading
-dashboard_manager = property(
-    lambda self: (logger.debug("Accessing dashboard_manager on %s", self) or _lazy_import_dashboard_manager())
-)
-dashboard_widgets = property(
-    lambda self: (logger.debug("Accessing dashboard_widgets on %s", self) or _lazy_import_dashboard_widgets())
-)
+dashboard_manager = property(lambda self: (logger.debug("Accessing dashboard_manager on %s", self) or _lazy_import_dashboard_manager()))
+dashboard_widgets = property(lambda self: (logger.debug("Accessing dashboard_widgets on %s", self) or _lazy_import_dashboard_widgets()))
 real_time_dashboard = property(
-    lambda self: (
-        logger.debug("Accessing real_time_dashboard on %s", self) or _lazy_import_real_time_dashboard()
-    )
+    lambda self: (logger.debug("Accessing real_time_dashboard on %s", self) or _lazy_import_real_time_dashboard())
 )
 
 

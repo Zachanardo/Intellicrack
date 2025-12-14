@@ -67,18 +67,19 @@ class LicenseProtocolHandler:
             config: Optional configuration dictionary for the protocol handler
 
         """
+        logger.debug("Entering LicenseProtocolHandler.__init__ with config=%s", config is not None)
         self.config = config or {}
         self.running = False
         self.proxy_thread: threading.Thread | None = None
         self.logger = logging.getLogger(__name__)
 
-        # Initialize protocol-specific configuration
         self.port = self.config.get("port", int(os.environ.get("LICENSE_PROTOCOL_PORT", "8080")))
-        self.host = self.config.get("host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost"))  # Default to localhost for security
-        self.bind_host = self.config.get("bind_host", self.host)  # Allow separate bind host
+        self.host = self.config.get("host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost"))
+        self.bind_host = self.config.get("bind_host", self.host)
         self.timeout = self.config.get("timeout", int(os.environ.get("LICENSE_PROTOCOL_TIMEOUT", "30")))
 
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
+        logger.debug("Exiting LicenseProtocolHandler.__init__: port=%d, host=%s", self.port, self.host)
 
     def clear_data(self) -> None:
         """Clear any captured data.
@@ -115,17 +116,17 @@ class LicenseProtocolHandler:
             True if proxy started successfully, False if already running
 
         """
+        logger.debug("Entering start_proxy: port=%d", port)
         if self.running:
             self.logger.warning("Proxy server is already running")
+            logger.debug("Exiting start_proxy: already running")
             return False
 
-        # Clear previous captured requests on start
         self.clear_data()
 
         self.running = True
         self.port = port
 
-        # Start proxy in a separate daemon thread
         self.proxy_thread = threading.Thread(
             target=self._run_proxy,
             args=(port,),
@@ -135,6 +136,7 @@ class LicenseProtocolHandler:
         self.proxy_thread.start()
 
         self.logger.info("Started %s proxy on port %s", self.__class__.__name__, port)
+        logger.debug("Exiting start_proxy: success")
         return True
 
     def stop_proxy(self) -> bool:
@@ -144,19 +146,21 @@ class LicenseProtocolHandler:
             True if proxy stopped successfully, False if not running
 
         """
+        logger.debug("Entering stop_proxy")
         if not self.running:
             self.logger.warning("Proxy server is not running")
+            logger.debug("Exiting stop_proxy: not running")
             return False
 
         self.running = False
 
         if self.proxy_thread and self.proxy_thread.is_alive():
-            # Wait for thread to complete
             self.proxy_thread.join(timeout=5.0)
             if self.proxy_thread.is_alive():
                 self.logger.warning("Proxy thread did not terminate gracefully")
 
         self.logger.info("Stopped %s proxy", self.__class__.__name__)
+        logger.debug("Exiting stop_proxy: success")
         return True
 
     def shutdown(self) -> None:
@@ -164,20 +168,19 @@ class LicenseProtocolHandler:
 
         This method stops the proxy server and cleans up all resources.
         """
+        logger.debug("Entering shutdown")
         self.logger.info("Shutting down %s protocol handler", self.__class__.__name__)
 
-        # Stop the proxy server
         if self.running:
             self.stop_proxy()
 
-        # Clear all data
         self.clear_data()
 
-        # Reset state
         self.running = False
         self.proxy_thread = None
 
         self.logger.info("Protocol handler shutdown complete")
+        logger.debug("Exiting shutdown")
 
     def is_running(self) -> bool:
         """Check if the proxy server is currently running.
@@ -214,6 +217,7 @@ class LicenseProtocolHandler:
             port: Port number to bind the proxy server to
 
         """
+        logger.debug("Entering _run_proxy: port=%d", port)
         import socket
 
         self.logger.info("Starting proxy server on port %s", port)
@@ -244,11 +248,12 @@ class LicenseProtocolHandler:
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("Proxy server error: %s", e)
+                        self.logger.error("Proxy server error: %s", e, exc_info=True)
 
         finally:
             server_socket.close()
             self.logger.info("Proxy server stopped")
+            logger.debug("Exiting _run_proxy")
 
     def _handle_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual client connection.
@@ -262,7 +267,7 @@ class LicenseProtocolHandler:
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling client %s: %s", client_addr, e)
+            self.logger.error("Error handling client %s: %s", client_addr, e, exc_info=True)
         finally:
             client_socket.close()
 
@@ -285,7 +290,7 @@ class LicenseProtocolHandler:
             socket.send(response)
             self.log_response(response, "client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send response: %s", e)
+            self.logger.error("Failed to send response: %s", e, exc_info=True)
 
     def generate_response(self, request_data: bytes) -> bytes:
         """Generate a protocol-specific response.
@@ -401,12 +406,11 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                     )
                     client_thread.start()
 
-                except TimeoutError as e:
-                    logger.error("socket.timeout in license_protocol_handler: %s", e)
-                    continue  # Check self.running and continue
+                except TimeoutError:
+                    continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("FlexLM proxy error: %s", e)
+                        self.logger.error("FlexLM proxy error: %s", e, exc_info=True)
 
         finally:
             server_socket.close()
@@ -429,7 +433,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "FlexLM client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send FlexLM response: %s", e)
+            self.logger.error("Failed to send FlexLM response: %s", e, exc_info=True)
 
     def _handle_flexlm_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual FlexLM client connection.
@@ -443,7 +447,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling FlexLM client %s: %s", client_addr, e)
+            self.logger.error("Error handling FlexLM client %s: %s", client_addr, e, exc_info=True)
         finally:
             client_socket.close()
 
@@ -592,12 +596,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     )
                     client_thread.start()
 
-                except TimeoutError as e:
-                    logger.error("socket.timeout in license_protocol_handler: %s", e)
+                except TimeoutError:
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("HASP proxy error: %s", e)
+                        self.logger.error("HASP proxy error: %s", e, exc_info=True)
 
         finally:
             server_socket.close()
@@ -619,7 +622,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "HASP client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send HASP response: %s", e)
+            self.logger.error("Failed to send HASP response: %s", e, exc_info=True)
 
     def _handle_hasp_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual HASP client connection.
@@ -633,7 +636,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling HASP client %s: %s", client_addr, e)
+            self.logger.error("Error handling HASP client %s: %s", client_addr, e, exc_info=True)
         finally:
             client_socket.close()
 
@@ -780,9 +783,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
                     return struct.pack("<I", 0x00000000) + license_data
                 except struct.error as e:
-                    logger.error("struct.error in license_protocol_handler: %s", e)
-                    # Fallback for malformed requests
-                    return struct.pack("<I", 0x00000001)  # Error status
+                    self.logger.error("struct.error in license_protocol_handler: %s", e, exc_info=True)
+                    return struct.pack("<I", 0x00000001)
 
             elif command_id == 0x07:  # HASP_WRITE
                 # Write memory response: success
@@ -804,9 +806,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 return struct.pack("<I", 0x00000000)
 
         except struct.error as e:
-            logger.error("struct.error in license_protocol_handler: %s", e)
-            # Malformed packet
-            return b"\xff\xff\xff\xff"  # Error response
+            self.logger.error("struct.error in license_protocol_handler: %s", e, exc_info=True)
+            return b"\xff\xff\xff\xff"
 
 
 # Export main classes

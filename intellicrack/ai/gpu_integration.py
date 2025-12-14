@@ -108,7 +108,7 @@ class GPUIntegration:
         """Initialize GPU integration."""
         self.gpu_info = get_gpu_info()
         self.device = get_device()
-        logger.info(f"GPU Integration initialized: {self.gpu_info['type']}")
+        logger.info("GPU Integration initialized: %s", self.gpu_info["type"])
 
     def get_device_info(self) -> dict[str, Any]:
         """Get comprehensive device information."""
@@ -139,8 +139,8 @@ class GPUIntegration:
                         "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
                         "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
                     }
-            except Exception as e:
-                logger.debug(f"Failed to get runtime info: {e}")
+            except Exception:
+                logger.debug("Failed to get runtime info", exc_info=True)
 
         return info
 

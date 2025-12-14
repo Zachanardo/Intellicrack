@@ -220,5 +220,5 @@ class DashboardManager:
             return True
 
         except Exception:
-            self.logger.exception(f"Failed to export statistics to {filepath}")
+            self.logger.exception("Failed to export statistics to %s", filepath)
             return False

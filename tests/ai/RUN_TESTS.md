@@ -30,26 +30,31 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v --tb=s
 ### Run Specific Test Classes
 
 **Initialization Tests**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestProtectionAwareScriptGeneratorInitialization -v
 ```
 
 **Frida Script Generation**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestFridaScriptGeneration -v
 ```
 
 **Ghidra Script Generation**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestGhidraScriptGeneration -v
 ```
 
 **Protection Detection**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestProtectionDetectionIntegration -v
 ```
 
 **Template Completeness**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestScriptTemplateCompleteness -v
 ```
@@ -57,16 +62,19 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestScri
 ### Run Individual Tests
 
 **Test VMProtect Script Generation**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestFridaScriptGeneration::test_generate_vmprotect_bypass_frida_script -v
 ```
 
 **Test HASP Script Generation**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestFridaScriptGeneration::test_generate_hasp_bypass_frida_script_with_api_hooks -v
 ```
 
 **Test All Templates**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestScriptTemplateCompleteness::test_all_templates_generate_valid_frida_scripts -v
 ```
@@ -74,6 +82,7 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestScri
 ### Run with Coverage
 
 **Generate Coverage Report**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
     --cov=intellicrack.ai.protection_aware_script_gen \
@@ -83,6 +92,7 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
 ```
 
 **View Coverage HTML Report**:
+
 ```bash
 start htmlcov/index.html
 ```
@@ -90,6 +100,7 @@ start htmlcov/index.html
 ### Run in Parallel
 
 **Speed up execution with pytest-xdist**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -n auto -v
 ```
@@ -97,11 +108,13 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -n auto -
 ### Run with Detailed Output
 
 **Show all print statements**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -s
 ```
 
 **Show local variables on failure**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -l
 ```
@@ -109,6 +122,7 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -l
 ### Run Only Failed Tests
 
 **Rerun last failed tests**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --lf -v
 ```
@@ -118,16 +132,19 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --lf -v
 ### Run Tests by Keyword
 
 **Run all VMProtect-related tests**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -k vmprotect -v
 ```
 
 **Run all HASP-related tests**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -k hasp -v
 ```
 
 **Run all template tests**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -k template -v
 ```
@@ -143,6 +160,7 @@ def test_large_binary_generation(self):
 ```
 
 Run with:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -m "not slow" -v
 ```
@@ -152,11 +170,13 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -m "not s
 ### Run with Debugger
 
 **Drop into debugger on failure**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --pdb -v
 ```
 
 **Drop into debugger on first failure**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --pdb -x -v
 ```
@@ -164,11 +184,13 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --pdb -x 
 ### Run with Verbose Logging
 
 **Enable all logging**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -s --log-cli-level=DEBUG
 ```
 
 **Show specific module logs**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -s \
     --log-cli-level=DEBUG \
@@ -180,11 +202,13 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v -s \
 ### Benchmark Tests
 
 **Run with timing information**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py --durations=10 -v
 ```
 
 **Run performance tests with benchmark plugin**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestPerformanceWithLargeBinaries --benchmark-only -v
 ```
@@ -194,6 +218,7 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py::TestPerf
 ### JUnit XML Report
 
 **Generate JUnit XML for CI/CD**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
     --junitxml=test-results/protection_aware_tests.xml -v
@@ -202,6 +227,7 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
 ### JSON Report
 
 **Generate JSON report**:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
     --json-report \
@@ -218,24 +244,24 @@ name: Protection-Aware Script Generation Tests
 on: [push, pull_request]
 
 jobs:
-  test:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install dependencies
-        run: |
-          pixi install
-      - name: Run tests
-        run: |
-          pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
-            --cov=intellicrack.ai.protection_aware_script_gen \
-            --cov-report=xml \
-            --junitxml=test-results.xml \
-            -v
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage.xml
+    test:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Install dependencies
+              run: |
+                  pixi install
+            - name: Run tests
+              run: |
+                  pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py \
+                    --cov=intellicrack.ai.protection_aware_script_gen \
+                    --cov-report=xml \
+                    --junitxml=test-results.xml \
+                    -v
+            - name: Upload coverage
+              uses: codecov/codecov-action@v3
+              with:
+                  files: ./coverage.xml
 ```
 
 ## Troubleshooting
@@ -244,18 +270,21 @@ jobs:
 
 **Issue**: `ImportError: cannot import name 'console_main' from 'pytest'`
 **Solution**: Reinstall pytest:
+
 ```bash
 pixi remove pytest && pixi add pytest
 ```
 
 **Issue**: `ImportError: cannot import name 'ElementTree' from 'defusedxml'`
 **Solution**: Install defusedxml:
+
 ```bash
 pixi add defusedxml
 ```
 
 **Issue**: `FileNotFoundError: Test binary not found`
 **Solution**: Generate test binaries or skip missing tests:
+
 ```bash
 pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v --ignore-missing
 ```
@@ -266,16 +295,19 @@ pixi run python -m pytest tests/ai/test_protection_aware_script_gen.py -v --igno
 ### Verify Test Environment
 
 **Check pytest installation**:
+
 ```bash
 pixi run python -c "import pytest; print(pytest.__version__)"
 ```
 
 **Check module imports**:
+
 ```bash
 pixi run python -c "from intellicrack.ai.protection_aware_script_gen import ProtectionAwareScriptGenerator; print('OK')"
 ```
 
 **List available fixtures**:
+
 ```bash
 dir tests\fixtures\binaries\pe\protected\
 ```
@@ -308,19 +340,21 @@ TOTAL                                                   1247     87    93%
 ### Before Running Tests
 
 1. **Ensure environment is set up**:
-   ```bash
-   pixi install
-   ```
+
+    ```bash
+    pixi install
+    ```
 
 2. **Check test binaries exist**:
-   ```bash
-   dir tests\fixtures\binaries\pe\protected\
-   ```
+
+    ```bash
+    dir tests\fixtures\binaries\pe\protected\
+    ```
 
 3. **Verify dependencies**:
-   ```bash
-   pixi list
-   ```
+    ```bash
+    pixi list
+    ```
 
 ### During Development
 
@@ -359,6 +393,7 @@ When protection detection improves:
 ## Contact
 
 For issues with tests:
+
 - Check this documentation first
 - Review test file comments
 - Check TEST_COVERAGE_SUMMARY.md

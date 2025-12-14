@@ -116,13 +116,7 @@ const ArxanBypass = {
         if (outputDebugString) {
             Interceptor.replace(
                 outputDebugString,
-                new NativeCallback(
-                    _lpOutputString => {
-
-                    },
-                    'void',
-                    ['pointer']
-                )
+                new NativeCallback(_lpOutputString => {}, 'void', ['pointer'])
             );
             this.hooks.installed++;
             this.log('debug', 'Neutralized OutputDebugStringA');
@@ -389,7 +383,6 @@ const ArxanBypass = {
                 },
                 onLeave: function (_retval) {
                     if (this.shouldBlock) {
-
                     }
                 },
             });

@@ -15,25 +15,28 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 ## Critical Operating Principles
 
 ### 1. Manual, Context-Aware Fixing Only
+
 - NEVER automate fixes or use ruff's auto-fix capabilities
 - For EACH finding, you must:
-  1. Analyze the specific context and purpose of the code
-  2. Understand how the code integrates with the rest of the file
-  3. Design a sophisticated, production-ready fix
-  4. Implement the fix manually
+    1. Analyze the specific context and purpose of the code
+    2. Understand how the code integrates with the rest of the file
+    3. Design a sophisticated, production-ready fix
+    4. Implement the fix manually
 - Each fix must be deliberate and contextually appropriate
 
 ### 2. Zero Deletion Policy
+
 - NEVER delete or comment out problematic code
 - NEVER disable ruff rules or add # noqa comments, except for false positives
 - NEVER remove unused imports, variables, arguments, functions, or any code elements
 - Instead, provide REAL, EFFECTIVE, PRODUCTION-READY implementations for:
-  - Unused variables: Give them meaningful usage that complements the code
-  - Unused arguments: Integrate them into the function logic appropriately
-  - Unused imports: Use them in context-appropriate ways
-  - Dead code: Make it live and functional
+    - Unused variables: Give them meaningful usage that complements the code
+    - Unused arguments: Integrate them into the function logic appropriately
+    - Unused imports: Use them in context-appropriate ways
+    - Dead code: Make it live and functional
 
 ### 3. Production-Ready Implementation Standard
+
 - All fixes must be SOPHISTICATED and ROBUST
 - Implementations must complement and enhance the existing codebase
 - Code must be ready for immediate deployment
@@ -42,12 +45,14 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 - Maintain full Windows platform compatibility
 
 ### 4. Type Hints and Annotations
+
 - ALL functions must have complete type hints
 - ALL variables should have type annotations where beneficial
 - Return types must be explicitly specified
 - Use proper typing imports (from typing import ...)
 
 ### 5. PEP Compliance Excellence
+
 - Meet the STRICTEST interpretation of PEP standards
 - PEP 8: Style Guide for Python Code
 - PEP 484: Type Hints
@@ -59,27 +64,27 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 1. **Initial Scan**: Run ruff on the specified file(s) to get complete findings list
 
 2. **Analysis Phase**: For each finding:
-   - Identify the specific PEP violation
-   - Understand the code's purpose and context
-   - Determine how the code integrates with surrounding code
-   - Plan a production-ready fix strategy
+    - Identify the specific PEP violation
+    - Understand the code's purpose and context
+    - Determine how the code integrates with surrounding code
+    - Plan a production-ready fix strategy
 
 3. **Implementation Phase**: For each finding:
-   - Implement the sophisticated fix manually
-   - Ensure the fix enhances rather than diminishes functionality
-   - Verify the fix maintains all existing functionality
-   - Ensure Windows platform compatibility
+    - Implement the sophisticated fix manually
+    - Ensure the fix enhances rather than diminishes functionality
+    - Verify the fix maintains all existing functionality
+    - Ensure Windows platform compatibility
 
 4. **Verification Phase**:
-   - Run ruff again on the fixed file(s)
-   - Verify ZERO findings remain
-   - If any findings persist, repeat the analysis and implementation phases
-   - Continue until achieving a completely clean ruff report
+    - Run ruff again on the fixed file(s)
+    - Verify ZERO findings remain
+    - If any findings persist, repeat the analysis and implementation phases
+    - Continue until achieving a completely clean ruff report
 
 5. **Completion Report**: Provide a summary of:
-   - Total number of issues fixed
-   - Types of violations addressed
-   - Confirmation of clean ruff report
+    - Total number of issues fixed
+    - Types of violations addressed
+    - Confirmation of clean ruff report
 
 ## Code Style Requirements
 
@@ -100,6 +105,7 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 ## Success Criteria
 
 You have succeeded when:
+
 1. Ruff reports ZERO findings on all specified files
 2. All code remains fully functional
 3. All fixes are production-ready and sophisticated

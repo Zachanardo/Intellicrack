@@ -166,7 +166,7 @@ class StarForceBypass:
             self._kernel32.CloseHandle.restype = wintypes.BOOL
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to setup Windows API functions: %s", e, exc_info=True)
 
     def remove_starforce(self) -> StarForceRemovalResult:
         """Perform complete StarForce removal from system.
@@ -246,7 +246,7 @@ class StarForceBypass:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to stop services: %s", e, exc_info=True)
 
         return stopped
 
@@ -277,7 +277,7 @@ class StarForceBypass:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to delete services: %s", e, exc_info=True)
 
         return deleted
 
@@ -320,7 +320,7 @@ class StarForceBypass:
                     path.unlink()
                     removed.append(driver_path)
                 except Exception as e:
-                    self.logger.debug(f"Failed to remove driver {driver_path}: {e}")
+                    self.logger.debug("Failed to remove driver %s: %s", driver_path, e, exc_info=True)
 
         return removed
 
@@ -343,7 +343,7 @@ class StarForceBypass:
                     shutil.rmtree(sf_dir)
                     deleted.append(str(sf_dir))
                 except Exception as e:
-                    self.logger.debug(f"Failed to remove StarForce directory {sf_dir}: {e}")
+                    self.logger.debug("Failed to remove StarForce directory %s: %s", sf_dir, e, exc_info=True)
 
         return deleted
 
@@ -446,7 +446,7 @@ class StarForceBypass:
                 self._kernel32.CloseHandle(process_handle)
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to patch PEB BeingDebugged: %s", e, exc_info=True)
 
         return False
 
@@ -493,7 +493,7 @@ class StarForceBypass:
                 self._kernel32.CloseHandle(process_handle)
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to clear debug registers: %s", e, exc_info=True)
 
         return False
 

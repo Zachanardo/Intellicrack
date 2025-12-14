@@ -19,8 +19,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 from collections import Counter
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 # Optional imports for enhanced charts
@@ -257,8 +261,8 @@ class ASCIIChartGenerator:
 
         """
         if not RICH_AVAILABLE:
-            print(f"\n{title}\n{'=' * len(title)}")
-            print(chart_content)
+            logger.info("\n%s\n%s", title, "=" * len(title))
+            logger.info("%s", chart_content)
             return
 
         # Create styled title with rich Text formatting
@@ -287,9 +291,9 @@ class ASCIIChartGenerator:
 
         """
         if not RICH_AVAILABLE:
-            print(f"\n{title}:")
+            logger.info("\n%s:", title)
             for label, value in data.items():
-                print(f"  {label}: {value}")
+                logger.info("  %s: %s", label, value)
             return
 
         # Create styled legend entries
@@ -441,15 +445,13 @@ class ASCIIChartGenerator:
                         severity_counts[severity.title()] += 1
 
                 if severity_counts:
-                    charts.extend(
-                        (
-                            "\n" + "=" * 50 + "\n",
-                            self.generate_pie_chart(
-                                dict(severity_counts),
-                                "Vulnerability Severity Distribution",
-                            ),
-                        )
-                    )
+                    charts.extend((
+                        "\n" + "=" * 50 + "\n",
+                        self.generate_pie_chart(
+                            dict(severity_counts),
+                            "Vulnerability Severity Distribution",
+                        ),
+                    ))
         # 3. Protection status
         prot_data = analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
@@ -457,15 +459,13 @@ class ASCIIChartGenerator:
             disabled_count = len(prot_data) - enabled_count
 
             if enabled_count + disabled_count > 0:
-                charts.extend(
-                    (
-                        "\n" + "=" * 50 + "\n",
-                        self.generate_pie_chart(
-                            {"Enabled": enabled_count, "Disabled": disabled_count},
-                            "Security Protections Status",
-                        ),
-                    )
-                )
+                charts.extend((
+                    "\n" + "=" * 50 + "\n",
+                    self.generate_pie_chart(
+                        {"Enabled": enabled_count, "Disabled": disabled_count},
+                        "Security Protections Status",
+                    ),
+                ))
         # 4. String analysis histogram
         strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
@@ -489,7 +489,7 @@ class ASCIIChartGenerator:
 
         """
         if not RICH_AVAILABLE or not self.console:
-            print("Rich dashboard not available")
+            logger.warning("Rich dashboard not available")
             return
 
         self.console.clear()
@@ -643,7 +643,7 @@ def create_analysis_charts(analysis_results: dict[str, Any], chart_type: str = "
 
 
 if __name__ == "__main__":
-    # Test the chart generator
+    logging.basicConfig(level=logging.INFO)
     test_data = {
         "vulnerabilities": {
             "vulnerabilities": [
@@ -662,4 +662,4 @@ if __name__ == "__main__":
         "strings": ["test1", "test2", "longer_string_here", "short"],
     }
 
-    print(create_analysis_charts(test_data, "summary"))
+    logger.info("%s", create_analysis_charts(test_data, "summary"))

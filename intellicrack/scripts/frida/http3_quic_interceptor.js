@@ -160,10 +160,12 @@ const Http3QuicInterceptor = {
         this.detectedImplementations = {};
 
         Process.enumerateModules().forEach(module => {
-          const moduleName = module.name.toLowerCase();
+            const moduleName = module.name.toLowerCase();
 
-          Object.keys(this.config.implementations).forEach(impl => {
-                if (!this.config.implementations[impl].enabled) { return; }
+            Object.keys(this.config.implementations).forEach(impl => {
+                if (!this.config.implementations[impl].enabled) {
+                    return;
+                }
 
                 this.config.implementations[impl].patterns.forEach(pattern => {
                     if (moduleName.includes(pattern)) {
@@ -183,9 +185,9 @@ const Http3QuicInterceptor = {
 
     // Hook Chromium QUIC implementation
     hookChromiumQuic: function () {
-      const self = this;
+        const self = this;
 
-      // QuicStreamFactory::Create
+        // QuicStreamFactory::Create
         this.findAndHook('*quic*stream*factory*create*', address => {
             Interceptor.attach(address, {
                 onEnter: _args => {
@@ -226,17 +228,17 @@ const Http3QuicInterceptor = {
         this.findAndHook('*quic*stream*on*data*available*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const _stream = args[0];
-                  const data = args[1];
-                  const length = args[2] ? args[2].toInt32() : 0;
+                    const _stream = args[0];
+                    const data = args[1];
+                    const length = args[2] ? args[2].toInt32() : 0;
 
-                  if (length > 0) {
-                      const content = data.readByteArray(Math.min(length, 1024));
+                    if (length > 0) {
+                        const content = data.readByteArray(Math.min(length, 1024));
 
-                      // Check if it's HTTP/3 headers
+                        // Check if it's HTTP/3 headers
                         if (self.isHttp3Headers(content)) {
-                          const modified = self.processHttp3Headers(content, length);
-                          if (modified) {
+                            const modified = self.processHttp3Headers(content, length);
+                            if (modified) {
                                 data.writeByteArray(modified);
                                 self.modifiedResponses++;
                             }
@@ -265,19 +267,19 @@ const Http3QuicInterceptor = {
 
     // Hook ngtcp2 implementation
     hookNgtcp2: function () {
-      const self = this;
+        const self = this;
 
-      // ngtcp2_conn_client_new
-      const connNew = Module.findExportByName(null, 'ngtcp2_conn_client_new');
-      if (connNew) {
+        // ngtcp2_conn_client_new
+        const connNew = Module.findExportByName(null, 'ngtcp2_conn_client_new');
+        if (connNew) {
             Interceptor.attach(connNew, {
                 onEnter: function (args) {
                     this.pconn = args[0];
                 },
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.pconn) {
-                      const conn = this.pconn.readPointer();
-                      self.connections[conn.toString()] = {
+                        const conn = this.pconn.readPointer();
+                        self.connections[conn.toString()] = {
                             type: 'ngtcp2',
                             conn: conn,
                             streams: {},
@@ -294,8 +296,8 @@ const Http3QuicInterceptor = {
         }
 
         // ngtcp2_conn_open_stream
-      const openStream = Module.findExportByName(null, 'ngtcp2_conn_open_stream');
-      if (openStream) {
+        const openStream = Module.findExportByName(null, 'ngtcp2_conn_open_stream');
+        if (openStream) {
             Interceptor.attach(openStream, {
                 onEnter: function (args) {
                     this.conn = args[0];
@@ -303,9 +305,9 @@ const Http3QuicInterceptor = {
                 },
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.pstream_id) {
-                      const streamId = this.pstream_id.readS64();
-                      const connKey = this.conn.toString();
-                      if (self.connections[connKey]) {
+                        const streamId = this.pstream_id.readS64();
+                        const connKey = this.conn.toString();
+                        if (self.connections[connKey]) {
                             self.connections[connKey].streams[streamId] = {
                                 id: streamId,
                                 data: [],
@@ -324,16 +326,16 @@ const Http3QuicInterceptor = {
         }
 
         // nghttp3_conn_submit_response
-      const submitResponse = Module.findExportByName(null, 'nghttp3_conn_submit_response');
-      if (submitResponse) {
+        const submitResponse = Module.findExportByName(null, 'nghttp3_conn_submit_response');
+        if (submitResponse) {
             Interceptor.attach(submitResponse, {
                 onEnter: args => {
-                  const _conn = args[0];
-                  const stream_id = args[1].toInt32();
-                  const headers = args[2];
-                  const headers_len = args[3].toInt32();
+                    const _conn = args[0];
+                    const stream_id = args[1].toInt32();
+                    const headers = args[2];
+                    const headers_len = args[3].toInt32();
 
-                  send({
+                    send({
                         type: 'info',
                         target: 'http3_quic_interceptor',
                         action: 'http3_response_for_stream',
@@ -348,31 +350,31 @@ const Http3QuicInterceptor = {
         }
 
         // ngtcp2_conn_writev_stream
-      const writevStream = Module.findExportByName(null, 'ngtcp2_conn_writev_stream');
-      if (writevStream) {
+        const writevStream = Module.findExportByName(null, 'ngtcp2_conn_writev_stream');
+        if (writevStream) {
             Interceptor.attach(writevStream, {
                 onEnter: args => {
-                  const _conn = args[0];
-                  const stream_id = args[2] ? args[2].readS64() : -1;
-                  const datav = args[4];
-                  const datavcnt = args[5].toInt32();
+                    const _conn = args[0];
+                    const stream_id = args[2] ? args[2].readS64() : -1;
+                    const datav = args[4];
+                    const datavcnt = args[5].toInt32();
 
-                  if (stream_id >= 0 && datavcnt > 0) {
+                    if (stream_id >= 0 && datavcnt > 0) {
                         // Read the data
-                      const totalData = [];
-                      for (let i = 0; i < datavcnt; i++) {
-                          const iov = datav.add(i * Process.pointerSize * 2);
-                          const base = iov.readPointer();
-                          const len = iov.add(Process.pointerSize).readPointer().toInt32();
-                          if (base && len > 0) {
+                        const totalData = [];
+                        for (let i = 0; i < datavcnt; i++) {
+                            const iov = datav.add(i * Process.pointerSize * 2);
+                            const base = iov.readPointer();
+                            const len = iov.add(Process.pointerSize).readPointer().toInt32();
+                            if (base && len > 0) {
                                 totalData.push(base.readByteArray(len));
                             }
                         }
 
                         // Check and modify if needed
                         if (totalData.length > 0) {
-                          const combined = self.combineBuffers(totalData);
-                          if (self.isLicenseRelatedData(combined)) {
+                            const combined = self.combineBuffers(totalData);
+                            if (self.isLicenseRelatedData(combined)) {
                                 send({
                                     type: 'detection',
                                     target: 'http3_quic_interceptor',
@@ -390,11 +392,11 @@ const Http3QuicInterceptor = {
 
     // Hook quiche implementation
     hookQuiche: function () {
-      const self = this;
+        const self = this;
 
-      // quiche_conn_new_with_tls
-      const connNew = Module.findExportByName(null, 'quiche_conn_new_with_tls');
-      if (connNew) {
+        // quiche_conn_new_with_tls
+        const connNew = Module.findExportByName(null, 'quiche_conn_new_with_tls');
+        if (connNew) {
             Interceptor.attach(connNew, {
                 onLeave: retval => {
                     if (!retval.isNull()) {
@@ -415,8 +417,8 @@ const Http3QuicInterceptor = {
         }
 
         // quiche_conn_stream_recv
-      const streamRecv = Module.findExportByName(null, 'quiche_conn_stream_recv');
-      if (streamRecv) {
+        const streamRecv = Module.findExportByName(null, 'quiche_conn_stream_recv');
+        if (streamRecv) {
             Interceptor.attach(streamRecv, {
                 onEnter: function (args) {
                     this.conn = args[0];
@@ -425,11 +427,11 @@ const Http3QuicInterceptor = {
                     this.buf_len = args[3];
                 },
                 onLeave: function (retval) {
-                  const recvLen = retval.toInt32();
-                  if (recvLen > 0) {
-                      const data = this.buf.readByteArray(recvLen);
+                    const recvLen = retval.toInt32();
+                    if (recvLen > 0) {
+                        const data = this.buf.readByteArray(recvLen);
 
-                      // Check for HTTP/3 data
+                        // Check for HTTP/3 data
                         if (self.isHttp3Data(data)) {
                             send({
                                 type: 'info',
@@ -438,8 +440,8 @@ const Http3QuicInterceptor = {
                                 stream_id: this.stream_id,
                             });
 
-                          const modified = self.processHttp3Data(data);
-                          if (modified) {
+                            const modified = self.processHttp3Data(data);
+                            if (modified) {
                                 this.buf.writeByteArray(modified);
                                 self.modifiedResponses++;
                             }
@@ -452,12 +454,12 @@ const Http3QuicInterceptor = {
         }
 
         // quiche_h3_event_type
-      const h3EventType = Module.findExportByName(null, 'quiche_h3_event_type');
-      if (h3EventType) {
+        const h3EventType = Module.findExportByName(null, 'quiche_h3_event_type');
+        if (h3EventType) {
             Interceptor.attach(h3EventType, {
                 onLeave: retval => {
-                  const eventType = retval.toInt32();
-                  // QUICHE_H3_EVENT_HEADERS = 0
+                    const eventType = retval.toInt32();
+                    // QUICHE_H3_EVENT_HEADERS = 0
                     // QUICHE_H3_EVENT_DATA = 1
                     if (eventType === 0) {
                         send({
@@ -474,11 +476,11 @@ const Http3QuicInterceptor = {
 
     // Hook MsQuic implementation
     hookMsQuic: function () {
-      const self = this;
+        const self = this;
 
-      // MsQuicOpenVersion
-      const openVersion = Module.findExportByName('msquic.dll', 'MsQuicOpenVersion');
-      if (openVersion) {
+        // MsQuicOpenVersion
+        const openVersion = Module.findExportByName('msquic.dll', 'MsQuicOpenVersion');
+        if (openVersion) {
             Interceptor.attach(openVersion, {
                 onEnter: _args => {
                     send({
@@ -502,8 +504,8 @@ const Http3QuicInterceptor = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.pconnection) {
                         // QUIC_STATUS_SUCCESS
-                      const connection = this.pconnection.readPointer();
-                      self.connections[connection.toString()] = {
+                        const connection = this.pconnection.readPointer();
+                        self.connections[connection.toString()] = {
                             type: 'msquic',
                             connection: connection,
                             callback: this.callback,
@@ -527,11 +529,11 @@ const Http3QuicInterceptor = {
         this.findAndHook('*msquic*stream*open*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const _connection = args[0];
-                  const flags = args[1].toInt32();
-                  const handler = args[2];
+                    const _connection = args[0];
+                    const flags = args[1].toInt32();
+                    const handler = args[2];
 
-                  send({
+                    send({
                         type: 'info',
                         target: 'http3_quic_interceptor',
                         action: 'msquic_stream_open',
@@ -552,14 +554,14 @@ const Http3QuicInterceptor = {
     hookMsQuicCallback: callback => {
         Interceptor.attach(callback, {
             onEnter: args => {
-              const _connection = args[0];
-              const _context = args[1];
-              const event = args[2];
+                const _connection = args[0];
+                const _context = args[1];
+                const event = args[2];
 
-              if (event) {
-                  const eventType = event.readU32();
+                if (event) {
+                    const eventType = event.readU32();
 
-                  // QUIC_CONNECTION_EVENT_TYPE enum values
+                    // QUIC_CONNECTION_EVENT_TYPE enum values
                     switch (eventType) {
                         case 0: // CONNECTED
                             send({
@@ -593,14 +595,14 @@ const Http3QuicInterceptor = {
     hookMsQuicStreamHandler: function (handler) {
         Interceptor.attach(handler, {
             onEnter: args => {
-              const _stream = args[0];
-              const _context = args[1];
-              const event = args[2];
+                const _stream = args[0];
+                const _context = args[1];
+                const event = args[2];
 
-              if (event) {
-                  const eventType = event.readU32();
+                if (event) {
+                    const eventType = event.readU32();
 
-                  // QUIC_STREAM_EVENT_TYPE enum values
+                    // QUIC_STREAM_EVENT_TYPE enum values
                     switch (eventType) {
                         case 0: // START_COMPLETE
                             send({
@@ -611,26 +613,26 @@ const Http3QuicInterceptor = {
                             break;
                         case 1: {
                             // RECEIVE
-                          const bufferCount = event.add(8).readU32();
-                          const buffers = event.add(16).readPointer();
+                            const bufferCount = event.add(8).readU32();
+                            const buffers = event.add(16).readPointer();
 
-                          for (let i = 0; i < bufferCount; i++) {
-                              const buffer = buffers.add(i * 16); // sizeof(QUIC_BUFFER)
-                              const length = buffer.readU32();
-                              const data = buffer.add(8).readPointer();
+                            for (let i = 0; i < bufferCount; i++) {
+                                const buffer = buffers.add(i * 16); // sizeof(QUIC_BUFFER)
+                                const length = buffer.readU32();
+                                const data = buffer.add(8).readPointer();
 
-                              if (data && length > 0) {
-                                  const content = data.readByteArray(Math.min(length, 1024));
+                                if (data && length > 0) {
+                                    const content = data.readByteArray(Math.min(length, 1024));
 
-                                  if (this.isHttp3Data(content)) {
+                                    if (this.isHttp3Data(content)) {
                                         send({
                                             type: 'info',
                                             target: 'http3_quic_interceptor',
                                             action: 'http3_data_received',
                                         });
 
-                                      const modified = this.processHttp3Data(content);
-                                      if (modified) {
+                                        const modified = this.processHttp3Data(content);
+                                        if (modified) {
                                             data.writeByteArray(modified);
                                             this.modifiedResponses++;
                                         }
@@ -656,35 +658,35 @@ const Http3QuicInterceptor = {
 
     // Hook UDP for QUIC detection
     hookUdpForQuic: function () {
-      const self = this;
+        const self = this;
 
-      // sendto
-      const sendto = Module.findExportByName(null, 'sendto');
-      if (sendto) {
+        // sendto
+        const sendto = Module.findExportByName(null, 'sendto');
+        if (sendto) {
             Interceptor.attach(sendto, {
                 onEnter: args => {
-                  const _sockfd = args[0].toInt32();
-                  const buf = args[1];
-                  const len = args[2].toInt32();
-                  const _flags = args[3].toInt32();
-                  const dest_addr = args[4];
+                    const _sockfd = args[0].toInt32();
+                    const buf = args[1];
+                    const len = args[2].toInt32();
+                    const _flags = args[3].toInt32();
+                    const dest_addr = args[4];
 
-                  if (dest_addr && len > 20) {
-                      const sa_family = dest_addr.readU16();
+                    if (dest_addr && len > 20) {
+                        const sa_family = dest_addr.readU16();
 
-                      if (sa_family === 2) {
+                        if (sa_family === 2) {
                             // AF_INET
-                          let port = dest_addr.add(2).readU16();
-                          port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                            let port = dest_addr.add(2).readU16();
+                            port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
 
                             if (self.config.quicPorts.includes(port)) {
                                 // Check for QUIC packet
-                              const firstByte = buf.readU8();
-                              const isLongHeader = (firstByte & 0x80) !== 0;
+                                const firstByte = buf.readU8();
+                                const isLongHeader = (firstByte & 0x80) !== 0;
 
-                              if (isLongHeader) {
-                                  const version = buf.add(1).readU32();
-                                  if (self.config.versions.includes(version)) {
+                                if (isLongHeader) {
+                                    const version = buf.add(1).readU32();
+                                    if (self.config.versions.includes(version)) {
                                         send({
                                             type: 'detection',
                                             target: 'http3_quic_interceptor',
@@ -702,30 +704,30 @@ const Http3QuicInterceptor = {
         }
 
         // recvfrom
-      const recvfrom = Module.findExportByName(null, 'recvfrom');
-      if (recvfrom) {
+        const recvfrom = Module.findExportByName(null, 'recvfrom');
+        if (recvfrom) {
             Interceptor.attach(recvfrom, {
                 onEnter: function (args) {
                     this.buf = args[1];
                     this.src_addr = args[4];
                 },
                 onLeave: function (retval) {
-                  const len = retval.toInt32();
-                  if (len > 20 && this.src_addr) {
-                      const addr = this.src_addr.readPointer();
-                      if (addr) {
-                          const sa_family = addr.readU16();
+                    const len = retval.toInt32();
+                    if (len > 20 && this.src_addr) {
+                        const addr = this.src_addr.readPointer();
+                        if (addr) {
+                            const sa_family = addr.readU16();
 
-                          if (sa_family === 2) {
+                            if (sa_family === 2) {
                                 // AF_INET
-                              let port = addr.add(2).readU16();
-                              port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                let port = addr.add(2).readU16();
+                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
 
                                 if (self.config.quicPorts.includes(port)) {
-                                  const firstByte = this.buf.readU8();
-                                  const isLongHeader = (firstByte & 0x80) !== 0;
+                                    const firstByte = this.buf.readU8();
+                                    const isLongHeader = (firstByte & 0x80) !== 0;
 
-                                  if (isLongHeader) {
+                                    if (isLongHeader) {
                                         send({
                                             type: 'info',
                                             target: 'http3_quic_interceptor',
@@ -748,25 +750,25 @@ const Http3QuicInterceptor = {
     // Hook TLS 1.3 for QUIC
     hookTls13ForQuic: () => {
         // SSL_CTX_set_alpn_select_cb
-      const setAlpnSelect = Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb');
-      if (setAlpnSelect) {
+        const setAlpnSelect = Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb');
+        if (setAlpnSelect) {
             Interceptor.attach(setAlpnSelect, {
                 onEnter: args => {
-                  const _ctx = args[0];
-                  const cb = args[1];
+                    const _ctx = args[0];
+                    const cb = args[1];
 
-                  if (cb) {
+                    if (cb) {
                         // Hook the ALPN callback
                         Interceptor.attach(cb, {
                             onEnter: args => {
-                              const _out = args[1];
-                              const _outlen = args[2];
-                              const inbuf = args[3];
-                              const inlen = args[4].toInt32();
+                                const _out = args[1];
+                                const _outlen = args[2];
+                                const inbuf = args[3];
+                                const inlen = args[4].toInt32();
 
-                              if (inbuf && inlen > 0) {
-                                  const alpn = inbuf.readUtf8String(inlen);
-                                  if (alpn?.includes('h3')) {
+                                if (inbuf && inlen > 0) {
+                                    const alpn = inbuf.readUtf8String(inlen);
+                                    if (alpn?.includes('h3')) {
                                         send({
                                             type: 'detection',
                                             target: 'http3_quic_interceptor',
@@ -784,18 +786,22 @@ const Http3QuicInterceptor = {
 
     // Helper: Find and hook functions by pattern
     findAndHook: (pattern, hookFunc) => {
-      let found = false;
+        let found = false;
 
-      Process.enumerateModules().forEach(module => {
-            if (found) { return; }
+        Process.enumerateModules().forEach(module => {
+            if (found) {
+                return;
+            }
 
             module.enumerateExports().forEach(exp => {
-                if (found) { return; }
+                if (found) {
+                    return;
+                }
 
-              const name = exp.name.toLowerCase();
-              const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+                const name = exp.name.toLowerCase();
+                const regex = new RegExp(pattern.replace(/\*/g, '.*'));
 
-              if (regex.test(name)) {
+                if (regex.test(name)) {
                     send({
                         type: 'info',
                         target: 'http3_quic_interceptor',
@@ -811,23 +817,27 @@ const Http3QuicInterceptor = {
 
     // Check if data is HTTP/3 headers
     isHttp3Headers: data => {
-        if (!data || data.length < 3) { return false; }
+        if (!data || data.length < 3) {
+            return false;
+        }
 
         // HTTP/3 frame types
-      const frameType = data[0];
+        const frameType = data[0];
 
-      // HEADERS frame type = 0x01
+        // HEADERS frame type = 0x01
         // PUSH_PROMISE frame type = 0x05
         return frameType === 0x01 || frameType === 0x05;
     },
 
     // Check if data is HTTP/3 data
     isHttp3Data: data => {
-        if (!data || data.length < 3) { return false; }
+        if (!data || data.length < 3) {
+            return false;
+        }
 
-      const frameType = data[0];
+        const frameType = data[0];
 
-      // Common HTTP/3 frame types
+        // Common HTTP/3 frame types
         // 0x00 = DATA
         // 0x01 = HEADERS
         // 0x03 = CANCEL_PUSH
@@ -839,13 +849,15 @@ const Http3QuicInterceptor = {
 
     // Check if data is license-related
     isLicenseRelatedData: function (data) {
-        if (!data) { return false; }
+        if (!data) {
+            return false;
+        }
 
         try {
-          const str = this.bufferToString(data);
-          const keywords = ['license', 'activation', 'subscription', 'auth', 'token', 'key'];
+            const str = this.bufferToString(data);
+            const keywords = ['license', 'activation', 'subscription', 'auth', 'token', 'key'];
 
-          for (let i = 0; i < keywords.length; i++) {
+            for (let i = 0; i < keywords.length; i++) {
                 if (str.toLowerCase().includes(keywords[i])) {
                     return true;
                 }
@@ -861,10 +873,10 @@ const Http3QuicInterceptor = {
     processHttp3Headers: function (data, _length) {
         // This is simplified - real HTTP/3 header processing is complex
         try {
-          const headers = this.parseHttp3Headers(data);
-          let modified = false;
+            const headers = this.parseHttp3Headers(data);
+            let modified = false;
 
-          // Check for license-related headers
+            // Check for license-related headers
             this.config.targetHeaders.forEach(header => {
                 if (headers[header]) {
                     send({
@@ -880,8 +892,8 @@ const Http3QuicInterceptor = {
 
             // Modify status if needed
             if (headers[':status']) {
-              const status = parseInt(headers[':status'], 10);
-              if (this.config.responseMods.statusCodes[status]) {
+                const status = parseInt(headers[':status'], 10);
+                if (this.config.responseMods.statusCodes[status]) {
                     headers[':status'] = this.config.responseMods.statusCodes[status].toString();
                     send({
                         type: 'bypass',
@@ -917,25 +929,25 @@ const Http3QuicInterceptor = {
     // Process HTTP/3 data
     processHttp3Data: function (data) {
         try {
-          const str = this.bufferToString(data);
+            const str = this.bufferToString(data);
 
-          // Check for JSON responses
+            // Check for JSON responses
             if (str.startsWith('{') || str.startsWith('[')) {
-              const json = JSON.parse(str);
-              let modified = false;
+                const json = JSON.parse(str);
+                let modified = false;
 
-              // Common license response fields
-              const licenseFields = {
-                status: 'active',
-                valid: true,
-                licensed: true,
-                expired: false,
-                trial: false,
-                subscription: 'enterprise',
-                features: ['all'],
-              };
+                // Common license response fields
+                const licenseFields = {
+                    status: 'active',
+                    valid: true,
+                    licensed: true,
+                    expired: false,
+                    trial: false,
+                    subscription: 'enterprise',
+                    features: ['all'],
+                };
 
-              Object.keys(licenseFields).forEach(key => {
+                Object.keys(licenseFields).forEach(key => {
                     if (key in json && json[key] !== licenseFields[key]) {
                         json[key] = licenseFields[key];
                         modified = true;
@@ -960,19 +972,19 @@ const Http3QuicInterceptor = {
 
     // Parse HTTP/3 headers (simplified)
     parseHttp3Headers: function (data) {
-      const headers = {};
+        const headers = {};
 
-      // This is a simplified parser - real QPACK decoding is complex
+        // This is a simplified parser - real QPACK decoding is complex
         // For now, look for common patterns
-      const str = this.bufferToString(data);
-      const lines = str.split('\0');
+        const str = this.bufferToString(data);
+        const lines = str.split('\0');
 
-      lines.forEach(line => {
-          const colonIndex = line.indexOf(':');
-          if (colonIndex > 0) {
-              const name = line.substring(0, colonIndex).toLowerCase();
-              const value = line.substring(colonIndex + 1).trim();
-              headers[name] = value;
+        lines.forEach(line => {
+            const colonIndex = line.indexOf(':');
+            if (colonIndex > 0) {
+                const name = line.substring(0, colonIndex).toLowerCase();
+                const value = line.substring(colonIndex + 1).trim();
+                headers[name] = value;
             }
         });
 
@@ -981,9 +993,9 @@ const Http3QuicInterceptor = {
 
     // Encode HTTP/3 headers (simplified)
     encodeHttp3Headers: function (headers) {
-      const parts = [];
+        const parts = [];
 
-      Object.keys(headers).forEach(key => {
+        Object.keys(headers).forEach(key => {
             parts.push(`${key}:${headers[key]}`);
         });
 
@@ -993,31 +1005,32 @@ const Http3QuicInterceptor = {
     // Modify nghttp3 headers
     modifyNghttp3Headers: function (headers, count) {
         for (let i = 0; i < count; i++) {
-          const header = headers.add(i * Process.pointerSize * 4); // nghttp3_nv structure
-          const name = header.readPointer();
-          const value = header.add(Process.pointerSize).readPointer();
-          const namelen = header
-            .add(Process.pointerSize * 2)
-            .readPointer()
-            .toInt32();
-          const valuelen = header
-            .add(Process.pointerSize * 3)
-            .readPointer()
-            .toInt32();
+            const header = headers.add(i * Process.pointerSize * 4); // nghttp3_nv structure
+            const name = header.readPointer();
+            const value = header.add(Process.pointerSize).readPointer();
+            const namelen = header
+                .add(Process.pointerSize * 2)
+                .readPointer()
+                .toInt32();
+            const valuelen = header
+                .add(Process.pointerSize * 3)
+                .readPointer()
+                .toInt32();
 
-          if (name && namelen > 0) {
-              const nameStr = name.readUtf8String(namelen);
+            if (name && namelen > 0) {
+                const nameStr = name.readUtf8String(namelen);
 
-              // Check for status header
+                // Check for status header
                 if (nameStr === ':status' && value && valuelen > 0) {
-                  const status = value.readUtf8String(valuelen);
-                  const statusInt = parseInt(status, 10);
+                    const status = value.readUtf8String(valuelen);
+                    const statusInt = parseInt(status, 10);
 
-                  if (this.config.responseMods.statusCodes[statusInt]) {
-                      const newStatus = this.config.responseMods.statusCodes[statusInt].toString();
-                      const newStatusBuf = Memory.allocUtf8String(newStatus);
+                    if (this.config.responseMods.statusCodes[statusInt]) {
+                        const newStatus =
+                            this.config.responseMods.statusCodes[statusInt].toString();
+                        const newStatusBuf = Memory.allocUtf8String(newStatus);
 
-                      header.add(Process.pointerSize).writePointer(newStatusBuf);
+                        header.add(Process.pointerSize).writePointer(newStatusBuf);
                         header.add(Process.pointerSize * 3).writePointer(ptr(newStatus.length));
 
                         send({
@@ -1048,24 +1061,24 @@ const Http3QuicInterceptor = {
         // Skip QUIC packet header to get to frames
         // This is simplified - real parsing requires full QUIC packet parsing
 
-      let offset = 0;
+        let offset = 0;
 
-      // Skip long header if present
-      const firstByte = buf.readU8();
-      if ((firstByte & 0x80) !== 0) {
+        // Skip long header if present
+        const firstByte = buf.readU8();
+        if ((firstByte & 0x80) !== 0) {
             offset += 1 + 4; // flags + version
 
             // Skip DCID
-          const dcidLen = buf.add(offset).readU8();
-          offset += 1 + dcidLen;
+            const dcidLen = buf.add(offset).readU8();
+            offset += 1 + dcidLen;
 
             // Skip SCID
-          const scidLen = buf.add(offset).readU8();
-          offset += 1 + scidLen;
+            const scidLen = buf.add(offset).readU8();
+            offset += 1 + scidLen;
 
             // Skip token length and token
-          const tokenLen = buf.add(offset).readU8();
-          offset += 1 + tokenLen;
+            const tokenLen = buf.add(offset).readU8();
+            offset += 1 + tokenLen;
 
             // Skip length
             offset += 2; // Assuming 2-byte length
@@ -1076,8 +1089,8 @@ const Http3QuicInterceptor = {
 
         // Now we should be at the payload (frames)
         if (offset < len - 10) {
-          const frameData = buf.add(offset).readByteArray(Math.min(len - offset, 100));
-          if (this.isHttp3Data(frameData)) {
+            const frameData = buf.add(offset).readByteArray(Math.min(len - offset, 100));
+            if (this.isHttp3Data(frameData)) {
                 send({
                     type: 'detection',
                     target: 'http3_quic_interceptor',
@@ -1090,16 +1103,16 @@ const Http3QuicInterceptor = {
 
     // Combine multiple buffers
     combineBuffers: buffers => {
-      let totalLength = 0;
-      buffers.forEach(buf => {
+        let totalLength = 0;
+        buffers.forEach(buf => {
             totalLength += buf.byteLength;
         });
 
-      const combined = new ArrayBuffer(totalLength);
-      const view = new Uint8Array(combined);
-      let offset = 0;
+        const combined = new ArrayBuffer(totalLength);
+        const view = new Uint8Array(combined);
+        let offset = 0;
 
-      buffers.forEach(buf => {
+        buffers.forEach(buf => {
             view.set(new Uint8Array(buf), offset);
             offset += buf.byteLength;
         });
@@ -1119,9 +1132,9 @@ const Http3QuicInterceptor = {
 
     // String to buffer conversion
     stringToBuffer: str => {
-      const buf = new ArrayBuffer(str.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < str.length; i++) {
+        const buf = new ArrayBuffer(str.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < str.length; i++) {
             view[i] = str.charCodeAt(i);
         }
         return buf;
@@ -1152,27 +1165,27 @@ const Http3QuicInterceptor = {
         ];
 
         // Version negotiation packet detection
-      const originalSendto = Module.findExportByName(null, 'sendto');
-      if (originalSendto) {
+        const originalSendto = Module.findExportByName(null, 'sendto');
+        if (originalSendto) {
             Interceptor.attach(originalSendto, {
                 onEnter: args => {
-                  const buf = args[1];
-                  const len = args[2].toInt32();
+                    const buf = args[1];
+                    const len = args[2].toInt32();
 
-                  if (len > 16) {
-                      const firstByte = buf.readU8();
+                    if (len > 16) {
+                        const firstByte = buf.readU8();
 
-                      // Version negotiation packet (first bit is 1, version is 0)
+                        // Version negotiation packet (first bit is 1, version is 0)
                         if ((firstByte & 0x80) !== 0) {
-                          const version = buf.add(1).readU32();
-                          if (version === 0) {
+                            const version = buf.add(1).readU32();
+                            if (version === 0) {
                                 // Version negotiation packet detected
-                              const supportedVersions = [];
-                              let offset = 7; // Skip header
+                                const supportedVersions = [];
+                                let offset = 7; // Skip header
 
                                 while (offset + 4 <= len) {
-                                  const supportedVersion = buf.add(offset).readU32();
-                                  supportedVersions.push(supportedVersion);
+                                    const supportedVersion = buf.add(offset).readU32();
+                                    supportedVersions.push(supportedVersion);
                                     offset += 4;
                                 }
 
@@ -1184,8 +1197,11 @@ const Http3QuicInterceptor = {
                                 });
 
                                 // Inject our modern versions
-                              const modifiedPacket = this.createModernVersionNegotiation(buf, len);
-                              if (modifiedPacket) {
+                                const modifiedPacket = this.createModernVersionNegotiation(
+                                    buf,
+                                    len
+                                );
+                                if (modifiedPacket) {
                                     args[1] = modifiedPacket.ptr;
                                     args[2] = ptr(modifiedPacket.size);
 
@@ -1234,12 +1250,12 @@ const Http3QuicInterceptor = {
         this.findAndHook('*quic*connection*close*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const closeFrame = args[1];
-                  if (closeFrame) {
-                      const errorCode = closeFrame.readU64();
-                      const reasonCode = errorCode.toNumber();
+                    const closeFrame = args[1];
+                    if (closeFrame) {
+                        const errorCode = closeFrame.readU64();
+                        const reasonCode = errorCode.toNumber();
 
-                      send({
+                        send({
                             type: 'info',
                             target: 'http3_quic_interceptor',
                             action: 'connection_close_intercepted',
@@ -1294,10 +1310,10 @@ const Http3QuicInterceptor = {
         this.findAndHook('*quic*transport*param*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const params = args[1];
-                  const paramsLen = args[2] ? args[2].toInt32() : 0;
+                    const params = args[1];
+                    const paramsLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (params && paramsLen > 0) {
+                    if (params && paramsLen > 0) {
                         this.processModernTransportParams(params, paramsLen);
                     }
                 },
@@ -1313,9 +1329,9 @@ const Http3QuicInterceptor = {
 
     // HTTP/3 Extensible Priorities (RFC 9218)
     setupHttp3ExtensiblePriorities: function () {
-      const self = this;
+        const self = this;
 
-      send({
+        send({
             type: 'status',
             target: 'http3_quic_interceptor',
             action: 'initializing_http3_priorities',
@@ -1340,10 +1356,10 @@ const Http3QuicInterceptor = {
         this.findAndHook('*http3*settings*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const settings = args[1];
-                  const settingsLen = args[2] ? args[2].toInt32() : 0;
+                    const settings = args[1];
+                    const settingsLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (settings && settingsLen > 0) {
+                    if (settings && settingsLen > 0) {
                         // Check for SETTINGS_ENABLE_WEBTRANSPORT = 0x2b603742
                         // Check for H3_DATAGRAM = 0x33
                         self.processHttp3Settings(settings, settingsLen);
@@ -1356,12 +1372,12 @@ const Http3QuicInterceptor = {
         this.findAndHook('*http3*priority*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const streamId = args[1] ? args[1].toNumber() : 0;
-                  const priorityField = args[2];
+                    const streamId = args[1] ? args[1].toNumber() : 0;
+                    const priorityField = args[2];
 
-                  if (priorityField && streamId > 0) {
-                      const urgency = priorityField.readU8() >> 5; // Top 3 bits
-                      const incremental = (priorityField.readU8() & 0x01) !== 0; // Bottom bit
+                    if (priorityField && streamId > 0) {
+                        const urgency = priorityField.readU8() >> 5; // Top 3 bits
+                        const incremental = (priorityField.readU8() & 0x01) !== 0; // Bottom bit
 
                         self.streamPriorities[streamId] = {
                             urgency: urgency,
@@ -1402,10 +1418,10 @@ const Http3QuicInterceptor = {
         this.findAndHook('*http3*stream*create*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const streamId = args[1] ? args[1].toNumber() : 0;
-                  const parentId = args[2] ? args[2].toNumber() : 0;
+                    const streamId = args[1] ? args[1].toNumber() : 0;
+                    const parentId = args[2] ? args[2].toNumber() : 0;
 
-                  if (streamId > 0) {
+                    if (streamId > 0) {
                         self.streamDependencies[streamId] = {
                             parent: parentId,
                             children: [],
@@ -1441,10 +1457,10 @@ const Http3QuicInterceptor = {
             },
 
             enqueue: function (streamId, data) {
-              const priority = self.streamPriorities[streamId];
-              const level = priority ? priority.level : 'normal';
+                const priority = self.streamPriorities[streamId];
+                const level = priority ? priority.level : 'normal';
 
-              this.queues[level].push({
+                this.queues[level].push({
                     streamId: streamId,
                     data: data,
                     timestamp: Date.now(),
@@ -1453,10 +1469,10 @@ const Http3QuicInterceptor = {
 
             dequeue: function () {
                 // Process in priority order
-              const levels = ['urgent', 'high', 'normal', 'low', 'background'];
-              for (let i = 0; i < levels.length; i++) {
-                  const level = levels[i];
-                  if (this.queues[level].length > 0) {
+                const levels = ['urgent', 'high', 'normal', 'low', 'background'];
+                for (let i = 0; i < levels.length; i++) {
+                    const level = levels[i];
+                    if (this.queues[level].length > 0) {
                         return this.queues[level].shift();
                     }
                 }
@@ -1468,17 +1484,17 @@ const Http3QuicInterceptor = {
         this.findAndHook('*http3*stream*send*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const streamId = args[0] ? args[0].toNumber() : 0;
-                  const data = args[1];
-                  const dataLen = args[2] ? args[2].toInt32() : 0;
+                    const streamId = args[0] ? args[0].toNumber() : 0;
+                    const data = args[1];
+                    const dataLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (streamId > 0 && data && dataLen > 0) {
+                    if (streamId > 0 && data && dataLen > 0) {
                         // Apply priority-based scheduling
-                      const priority = self.streamPriorities[streamId] || {
-                        level: 'normal',
-                      };
+                        const priority = self.streamPriorities[streamId] || {
+                            level: 'normal',
+                        };
 
-                      send({
+                        send({
                             type: 'info',
                             target: 'http3_quic_interceptor',
                             action: 'stream_data_scheduled',
@@ -1510,9 +1526,9 @@ const Http3QuicInterceptor = {
 
     // QUIC Connection Migration Support
     initializeQuicConnectionMigration: function () {
-      const self = this;
+        const self = this;
 
-      send({
+        send({
             type: 'status',
             target: 'http3_quic_interceptor',
             action: 'initializing_connection_migration',
@@ -1526,14 +1542,14 @@ const Http3QuicInterceptor = {
         this.findAndHook('*quic*connection*id*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const connIdPtr = args[0];
-                  const connIdLen = args[1] ? args[1].toInt32() : 0;
+                    const connIdPtr = args[0];
+                    const connIdLen = args[1] ? args[1].toInt32() : 0;
 
-                  if (connIdPtr && connIdLen > 0 && connIdLen <= 20) {
-                      const connIdBytes = connIdPtr.readByteArray(connIdLen);
-                      const connIdHex = self.bytesToHex(connIdBytes);
+                    if (connIdPtr && connIdLen > 0 && connIdLen <= 20) {
+                        const connIdBytes = connIdPtr.readByteArray(connIdLen);
+                        const connIdHex = self.bytesToHex(connIdBytes);
 
-                      self.connectionIds[connIdHex] = {
+                        self.connectionIds[connIdHex] = {
                             bytes: connIdBytes,
                             length: connIdLen,
                             sequence: 0,
@@ -1557,20 +1573,20 @@ const Http3QuicInterceptor = {
         this.findAndHook('*new*connection*id*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const frame = args[0];
-                  if (frame) {
-                      const sequence = frame.readU64().toNumber();
-                      const retirePriorTo = frame.add(8).readU64().toNumber();
-                      const connIdLen = frame.add(16).readU8();
-                      const connIdPtr = frame.add(17);
-                      const statelessResetToken = frame.add(17 + connIdLen);
+                    const frame = args[0];
+                    if (frame) {
+                        const sequence = frame.readU64().toNumber();
+                        const retirePriorTo = frame.add(8).readU64().toNumber();
+                        const connIdLen = frame.add(16).readU8();
+                        const connIdPtr = frame.add(17);
+                        const statelessResetToken = frame.add(17 + connIdLen);
 
-                      if (connIdLen <= 20) {
-                          const connIdBytes = connIdPtr.readByteArray(connIdLen);
-                          const connIdHex = self.bytesToHex(connIdBytes);
-                          const resetToken = statelessResetToken.readByteArray(16);
+                        if (connIdLen <= 20) {
+                            const connIdBytes = connIdPtr.readByteArray(connIdLen);
+                            const connIdHex = self.bytesToHex(connIdBytes);
+                            const resetToken = statelessResetToken.readByteArray(16);
 
-                          self.connectionIds[connIdHex] = {
+                            self.connectionIds[connIdHex] = {
                                 bytes: connIdBytes,
                                 length: connIdLen,
                                 sequence: sequence,
@@ -1597,12 +1613,12 @@ const Http3QuicInterceptor = {
         this.findAndHook('*path*challenge*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const challenge = args[0];
-                  if (challenge) {
-                      const challengeData = challenge.readByteArray(8);
-                      const challengeHex = self.bytesToHex(challengeData);
+                    const challenge = args[0];
+                    if (challenge) {
+                        const challengeData = challenge.readByteArray(8);
+                        const challengeHex = self.bytesToHex(challengeData);
 
-                      send({
+                        send({
                             type: 'info',
                             target: 'http3_quic_interceptor',
                             action: 'path_challenge_received',
@@ -1619,12 +1635,12 @@ const Http3QuicInterceptor = {
         this.findAndHook('*path*response*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const response = args[0];
-                  if (response) {
-                      const responseData = response.readByteArray(8);
-                      const responseHex = self.bytesToHex(responseData);
+                    const response = args[0];
+                    if (response) {
+                        const responseData = response.readByteArray(8);
+                        const responseHex = self.bytesToHex(responseData);
 
-                      send({
+                        send({
                             type: 'success',
                             target: 'http3_quic_interceptor',
                             action: 'path_response_received',
@@ -1673,30 +1689,30 @@ const Http3QuicInterceptor = {
         };
 
         // Hook UDP receive to detect NAT rebinding
-      const originalRecvfrom = Module.findExportByName(null, 'recvfrom');
-      if (originalRecvfrom) {
+        const originalRecvfrom = Module.findExportByName(null, 'recvfrom');
+        if (originalRecvfrom) {
             Interceptor.attach(originalRecvfrom, {
                 onLeave: function (retval) {
-                  const len = retval.toInt32();
-                  if (len > 0 && this.src_addr) {
-                      const addr = this.src_addr.readPointer();
-                      if (addr) {
-                          const family = addr.readU16();
-                          if (family === 2) {
+                    const len = retval.toInt32();
+                    if (len > 0 && this.src_addr) {
+                        const addr = this.src_addr.readPointer();
+                        if (addr) {
+                            const family = addr.readU16();
+                            if (family === 2) {
                                 // AF_INET
-                              let port = addr.add(2).readU16();
-                              port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
-                              const ip = addr.add(4).readU32();
-                              const ipStr =
-                                ((ip >> 24) & 0xff) +
-                                '.' +
-                                ((ip >> 16) & 0xff) +
-                                '.' +
-                                ((ip >> 8) & 0xff) +
-                                '.' +
-                                (ip & 0xff);
+                                let port = addr.add(2).readU16();
+                                port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
+                                const ip = addr.add(4).readU32();
+                                const ipStr =
+                                    ((ip >> 24) & 0xff) +
+                                    '.' +
+                                    ((ip >> 16) & 0xff) +
+                                    '.' +
+                                    ((ip >> 8) & 0xff) +
+                                    '.' +
+                                    (ip & 0xff);
 
-                              if (self.natRebindingDetector.checkForRebinding(ipStr, port)) {
+                                if (self.natRebindingDetector.checkForRebinding(ipStr, port)) {
                                     send({
                                         type: 'bypass',
                                         target: 'http3_quic_interceptor',
@@ -1786,23 +1802,23 @@ const Http3QuicInterceptor = {
         this.findAndHook('*http*connect*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const method = args[0];
-                  const headers = args[1];
-                  const headersCount = args[2] ? args[2].toInt32() : 0;
+                    const method = args[0];
+                    const headers = args[1];
+                    const headersCount = args[2] ? args[2].toInt32() : 0;
 
-                  if (method) {
-                      const methodStr = method.readUtf8String();
-                      if (methodStr === 'CONNECT') {
+                    if (method) {
+                        const methodStr = method.readUtf8String();
+                        if (methodStr === 'CONNECT') {
                             // Check for WebTransport protocol header
-                          const isWebTransport = this.checkWebTransportHeaders(
-                            headers,
-                            headersCount
-                          );
+                            const isWebTransport = this.checkWebTransportHeaders(
+                                headers,
+                                headersCount
+                            );
 
-                          if (isWebTransport) {
-                              const sessionId = this.generateSessionId();
+                            if (isWebTransport) {
+                                const sessionId = this.generateSessionId();
 
-                              this.webTransportSessions[sessionId] = {
+                                this.webTransportSessions[sessionId] = {
                                     id: sessionId,
                                     state: 'connecting',
                                     streams: {},
@@ -1830,14 +1846,14 @@ const Http3QuicInterceptor = {
         this.findAndHook('*webtransport*datagram*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const sessionId = args[0] ? args[0].toNumber() : 0;
-                  const datagram = args[1];
-                  const datagramLen = args[2] ? args[2].toInt32() : 0;
+                    const sessionId = args[0] ? args[0].toNumber() : 0;
+                    const datagram = args[1];
+                    const datagramLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (sessionId && datagram && datagramLen > 0) {
-                      const data = datagram.readByteArray(Math.min(datagramLen, 1024));
+                    if (sessionId && datagram && datagramLen > 0) {
+                        const data = datagram.readByteArray(Math.min(datagramLen, 1024));
 
-                      if (this.webTransportSessions[sessionId]) {
+                        if (this.webTransportSessions[sessionId]) {
                             this.webTransportSessions[sessionId].datagrams.push({
                                 data: data,
                                 timestamp: Date.now(),
@@ -1861,8 +1877,8 @@ const Http3QuicInterceptor = {
                                 });
 
                                 // Modify license data in WebTransport datagrams
-                              const modifiedData = this.modifyLicenseDatagrams(data);
-                              if (modifiedData) {
+                                const modifiedData = this.modifyLicenseDatagrams(data);
+                                if (modifiedData) {
                                     datagram.writeByteArray(modifiedData);
 
                                     send({
@@ -1883,11 +1899,11 @@ const Http3QuicInterceptor = {
         this.findAndHook('*webtransport*stream*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const sessionId = args[0] ? args[0].toNumber() : 0;
-                  const streamId = args[1] ? args[1].toNumber() : 0;
-                  const streamType = args[2] ? args[2].toInt32() : 0;
+                    const sessionId = args[0] ? args[0].toNumber() : 0;
+                    const streamId = args[1] ? args[1].toNumber() : 0;
+                    const streamType = args[2] ? args[2].toInt32() : 0;
 
-                  if (sessionId && streamId && this.webTransportSessions[sessionId]) {
+                    if (sessionId && streamId && this.webTransportSessions[sessionId]) {
                         this.webTransportSessions[sessionId].streams[streamId] = {
                             id: streamId,
                             type: streamType,
@@ -1918,9 +1934,9 @@ const Http3QuicInterceptor = {
 
             routeMessage: function (sessionId, message) {
                 if (this.sessions[sessionId]) {
-                  const _session = this.sessions[sessionId];
+                    const _session = this.sessions[sessionId];
 
-                  send({
+                    send({
                         type: 'info',
                         target: 'http3_quic_interceptor',
                         action: 'webtransport_message_routed',
@@ -1938,11 +1954,11 @@ const Http3QuicInterceptor = {
         this.findAndHook('*capsule*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const capsuleType = args[0] ? args[0].toInt32() : 0;
-                  const capsuleData = args[1];
-                  const capsuleLen = args[2] ? args[2].toInt32() : 0;
+                    const capsuleType = args[0] ? args[0].toInt32() : 0;
+                    const capsuleData = args[1];
+                    const capsuleLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (capsuleData && capsuleLen > 0) {
+                    if (capsuleData && capsuleLen > 0) {
                         send({
                             type: 'info',
                             target: 'http3_quic_interceptor',
@@ -1991,12 +2007,12 @@ const Http3QuicInterceptor = {
             },
 
             processMessages: function () {
-              const now = Date.now();
-              const delivered = [];
+                const now = Date.now();
+                const delivered = [];
 
-              for (let i = 0; i < this.pendingMessages.length; i++) {
-                  const pending = this.pendingMessages[i];
-                  if (now - pending.scheduled >= pending.delay) {
+                for (let i = 0; i < this.pendingMessages.length; i++) {
+                    const pending = this.pendingMessages[i];
+                    if (now - pending.scheduled >= pending.delay) {
                         delivered.push(pending);
                         this.pendingMessages.splice(i, 1);
                         i--;
@@ -2034,12 +2050,12 @@ const Http3QuicInterceptor = {
         this.findAndHook('*push*promise*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const streamId = args[0] ? args[0].toNumber() : 0;
-                  const pushId = args[1] ? args[1].toNumber() : 0;
-                  const _headers = args[2];
-                  const headerLen = args[3] ? args[3].toInt32() : 0;
+                    const streamId = args[0] ? args[0].toNumber() : 0;
+                    const pushId = args[1] ? args[1].toNumber() : 0;
+                    const _headers = args[2];
+                    const headerLen = args[3] ? args[3].toInt32() : 0;
 
-                  if (streamId && pushId >= 0) {
+                    if (streamId && pushId >= 0) {
                         this.serverPushState.pushPromises[pushId] = {
                             pushId: pushId,
                             parentStream: streamId,
@@ -2086,10 +2102,10 @@ const Http3QuicInterceptor = {
         this.findAndHook('*push*stream*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const pushId = args[0] ? args[0].toNumber() : 0;
-                  const streamId = args[1] ? args[1].toNumber() : 0;
+                    const pushId = args[0] ? args[0].toNumber() : 0;
+                    const streamId = args[1] ? args[1].toNumber() : 0;
 
-                  if (pushId >= 0 && streamId > 0) {
+                    if (pushId >= 0 && streamId > 0) {
                         this.serverPushState.pushStreams[streamId] = {
                             pushId: pushId,
                             streamId: streamId,
@@ -2119,9 +2135,9 @@ const Http3QuicInterceptor = {
         this.findAndHook('*cancel*push*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const pushId = args[0] ? args[0].toNumber() : 0;
+                    const pushId = args[0] ? args[0].toNumber() : 0;
 
-                  if (pushId >= 0 && this.serverPushState.pushPromises[pushId]) {
+                    if (pushId >= 0 && this.serverPushState.pushPromises[pushId]) {
                         this.serverPushState.pushPromises[pushId].state = 'cancelled';
 
                         send({
@@ -2154,11 +2170,11 @@ const Http3QuicInterceptor = {
         this.findAndHook('*max*push*id*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const maxPushId = args[0] ? args[0].toNumber() : 0;
+                    const maxPushId = args[0] ? args[0].toNumber() : 0;
 
-                  if (maxPushId >= 0) {
-                      const oldMaxPushId = this.serverPushState.maxPushId;
-                      this.serverPushState.maxPushId = Math.max(
+                    if (maxPushId >= 0) {
+                        const oldMaxPushId = this.serverPushState.maxPushId;
+                        this.serverPushState.maxPushId = Math.max(
                             this.serverPushState.maxPushId,
                             maxPushId
                         );
@@ -2192,22 +2208,22 @@ const Http3QuicInterceptor = {
         this.findAndHook('*push*data*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const streamId = args[0] ? args[0].toNumber() : 0;
-                  const data = args[1];
-                  const dataLen = args[2] ? args[2].toInt32() : 0;
+                    const streamId = args[0] ? args[0].toNumber() : 0;
+                    const data = args[1];
+                    const dataLen = args[2] ? args[2].toInt32() : 0;
 
-                  if (
+                    if (
                         streamId &&
                         data &&
                         dataLen > 0 &&
                         this.serverPushState.pushStreams[streamId]
                     ) {
-                      const pushStream = this.serverPushState.pushStreams[streamId];
-                      pushStream.bytesReceived += dataLen;
+                        const pushStream = this.serverPushState.pushStreams[streamId];
+                        pushStream.bytesReceived += dataLen;
 
-                      const content = data.readByteArray(Math.min(dataLen, 1024));
+                        const content = data.readByteArray(Math.min(dataLen, 1024));
 
-                      send({
+                        send({
                             type: 'info',
                             target: 'http3_quic_interceptor',
                             action: 'push_data_received',
@@ -2228,8 +2244,8 @@ const Http3QuicInterceptor = {
                             });
 
                             // Modify pushed license data
-                          const modifiedContent = this.modifyPushedLicenseData(content);
-                          if (modifiedContent) {
+                            const modifiedContent = this.modifyPushedLicenseData(content);
+                            if (modifiedContent) {
                                 data.writeByteArray(modifiedContent);
 
                                 send({
@@ -2253,10 +2269,10 @@ const Http3QuicInterceptor = {
             store: function (pushId, headers, data) {
                 if (Object.keys(this.entries).length >= this.maxEntries) {
                     // Remove oldest entry
-                  let oldest = null;
-                  let oldestTime = Date.now();
+                    let oldest = null;
+                    let oldestTime = Date.now();
 
-                  for (let key in this.entries) {
+                    for (let key in this.entries) {
                         if (this.entries[key].timestamp < oldestTime) {
                             oldestTime = this.entries[key].timestamp;
                             oldest = key;
@@ -2285,11 +2301,11 @@ const Http3QuicInterceptor = {
             },
 
             invalidate: function (pattern) {
-              let removed = 0;
-              for (let key in this.entries) {
-                  const entry = this.entries[key];
-                  const path = entry.headers[':path'] || '';
-                  if (path.includes(pattern)) {
+                let removed = 0;
+                for (let key in this.entries) {
+                    const entry = this.entries[key];
+                    const path = entry.headers[':path'] || '';
+                    if (path.includes(pattern)) {
                         delete this.entries[key];
                         removed++;
                     }
@@ -2302,18 +2318,18 @@ const Http3QuicInterceptor = {
         this.findAndHook('*link*header*', address => {
             Interceptor.attach(address, {
                 onEnter: args => {
-                  const linkHeader = args[0];
-                  if (linkHeader) {
-                      const linkValue = linkHeader.readUtf8String();
+                    const linkHeader = args[0];
+                    if (linkHeader) {
+                        const linkValue = linkHeader.readUtf8String();
 
-                      // Parse Link header for preload relationships
-                      const preloadRegex = /<([^>]+)>;\s*rel=preload/gi;
-                      let match;
+                        // Parse Link header for preload relationships
+                        const preloadRegex = /<([^>]+)>;\s*rel=preload/gi;
+                        let match;
 
-                      while ((match = preloadRegex.exec(linkValue)) !== null) {
-                          const resource = match[1];
+                        while ((match = preloadRegex.exec(linkValue)) !== null) {
+                            const resource = match[1];
 
-                          send({
+                            send({
                                 type: 'info',
                                 target: 'http3_quic_interceptor',
                                 action: 'preload_resource_detected',
@@ -3181,7 +3197,6 @@ const Http3QuicInterceptor = {
                                 action: 'certificate_verification_bypassed',
                                 reason: 'verification_exception',
                             });
-
                         }
                     };
                 }
@@ -3245,7 +3260,6 @@ const Http3QuicInterceptor = {
                                 host: host,
                                 reason: 'trust_check_exception',
                             });
-
                         }
                     };
 

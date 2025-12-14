@@ -701,15 +701,13 @@ class VisualizationRenderer:
         datasets = []
         colors = self.color_schemes["categorical"]
         for i, (name, points) in enumerate(grouped.items()):
-            datasets.append(
-                {
-                    "label": name,
-                    "data": points,
-                    "borderColor": colors[i % len(colors)],
-                    "backgroundColor": f"{colors[i % len(colors)]}33",
-                    "fill": chart_type == "area",
-                }
-            )
+            datasets.append({
+                "label": name,
+                "data": points,
+                "borderColor": colors[i % len(colors)],
+                "backgroundColor": f"{colors[i % len(colors)]}33",
+                "fill": chart_type == "area",
+            })
 
         # Generate Chart.js code
         js_code = self.chart_templates["chartjs_line"]

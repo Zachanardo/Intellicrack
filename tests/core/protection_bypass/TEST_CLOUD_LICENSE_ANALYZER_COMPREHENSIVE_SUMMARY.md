@@ -23,6 +23,7 @@ These tests follow strict production-readiness principles:
 ## Test Coverage by Category
 
 ### 1. TestCloudLicenseAnalyzerInitialization (5 tests)
+
 **Purpose:** Validate analyzer initialization and CA certificate generation
 
 - `test_analyzer_initializes_all_data_structures` - Verifies all dictionaries and lists are created
@@ -32,12 +33,14 @@ These tests follow strict production-readiness principles:
 - `test_multiple_analyzers_reuse_existing_ca` - Ensures CA reuse across instances
 
 **Key Validations:**
+
 - CA certificate has proper X.509 structure with BasicConstraints CA=True
 - Private key is 2048-bit RSA
 - Certificate subject CN is "Intellicrack Root CA"
 - Certificates persist to `intellicrack/core/protection_bypass/certs/`
 
 ### 2. TestHostCertificateGeneration (5 tests)
+
 **Purpose:** Validate SSL certificate generation for MITM interception
 
 - `test_generate_host_certificate_creates_valid_cert_and_key` - Creates valid TLS cert for hostname
@@ -47,12 +50,14 @@ These tests follow strict production-readiness principles:
 - `test_host_certificate_validity_period` - Validates 1-year validity
 
 **Key Validations:**
+
 - Each host gets unique 2048-bit RSA certificate
 - SAN extension includes `hostname` and `*.hostname`
 - Certificate issuer matches CA subject
 - Serial numbers are unique
 
 ### 3. TestEndpointAnalysisAndExtraction (8 tests)
+
 **Purpose:** Validate HTTP endpoint metadata extraction
 
 - `test_analyze_endpoint_extracts_complete_metadata` - Extracts URL, method, headers, body, auth type
@@ -65,6 +70,7 @@ These tests follow strict production-readiness principles:
 - `test_analyze_endpoint_stores_in_discovered_endpoints` - Adds to endpoint dictionary
 
 **Key Validations:**
+
 - JSON bodies parsed into Python dicts
 - Query parameters extracted correctly
 - Response schemas include type information for nested objects
@@ -72,6 +78,7 @@ These tests follow strict production-readiness principles:
 - Endpoints keyed as `METHOD:/path`
 
 ### 4. TestAuthenticationTypeDetection (8 tests)
+
 **Purpose:** Validate detection of authentication schemes from HTTP headers
 
 - `test_detect_jwt_bearer_token` - Identifies JWT tokens in Bearer auth
@@ -84,6 +91,7 @@ These tests follow strict production-readiness principles:
 - `test_is_jwt_token_validates_structure` - Validates JWT 3-part structure
 
 **Key Validations:**
+
 - Real JWT tokens (created with PyJWT) are correctly identified
 - Base64-encoded Basic auth credentials detected
 - API key headers (`x-api-key`, `api-key`) recognized
@@ -91,6 +99,7 @@ These tests follow strict production-readiness principles:
 - JWT structure validation checks 3 parts and base64 encoding
 
 ### 5. TestLicenseTokenExtraction (7 tests)
+
 **Purpose:** Validate extraction of license tokens from HTTP traffic
 
 - `test_extract_tokens_from_bearer_authorization_header` - Extracts JWT from Authorization header
@@ -102,6 +111,7 @@ These tests follow strict production-readiness principles:
 - `test_extract_tokens_handles_missing_expiry` - Handles tokens without expiration
 
 **Key Validations:**
+
 - Real JWTs decoded with PyJWT library
 - Token expiration calculated from `exp` and `expires_in`
 - Refresh tokens captured separately
@@ -109,6 +119,7 @@ These tests follow strict production-readiness principles:
 - Nested JSON traversed recursively to find tokens
 
 ### 6. TestTokenGeneration (8 tests)
+
 **Purpose:** Validate generation of various license token types for bypass
 
 - `test_generate_jwt_token_creates_valid_jwt` - Generates cryptographically valid JWT
@@ -121,6 +132,7 @@ These tests follow strict production-readiness principles:
 - `test_generated_tokens_are_unique` - All tokens are unique across 20 generations
 
 **Key Validations:**
+
 - Generated JWTs decode successfully with PyJWT
 - JWTs include `iss`, `sub`, `exp`, `iat`, `jti` claims
 - RS256 JWTs have correct algorithm in header
@@ -129,6 +141,7 @@ These tests follow strict production-readiness principles:
 - Generic tokens are SHA256 hex digests with high randomness
 
 ### 7. TestFridaProxyInjection (5 tests)
+
 **Purpose:** Validate Frida JavaScript code generation for proxy injection
 
 - `test_generate_proxy_injection_script_includes_winhttp_hooks` - Includes WinHTTP API hooks
@@ -138,6 +151,7 @@ These tests follow strict production-readiness principles:
 - `test_frida_message_handler_processes_messages` - Handles Frida script messages
 
 **Key Validations:**
+
 - Generated Frida script includes `WinHttpOpen`, `WinHttpSetOption`
 - Script forces proxy to `127.0.0.1:8080`
 - SSL verification disabled via `SSL_CTX_set_verify`, `SECURITY_FLAG_IGNORE_ALL`
@@ -145,6 +159,7 @@ These tests follow strict production-readiness principles:
 - .NET/CLR hooking code included
 
 ### 8. TestAnalysisExport (6 tests)
+
 **Purpose:** Validate export of analysis data to JSON/YAML/pickle
 
 - `test_export_analysis_creates_json_file` - Exports complete analysis to JSON
@@ -155,6 +170,7 @@ These tests follow strict production-readiness principles:
 - `test_export_analysis_handles_filesystem_errors` - Returns False on write errors
 
 **Key Validations:**
+
 - JSON exports include `timestamp`, `endpoints`, `tokens`, `api_schemas`, `intercepted_requests`
 - YAML exports use `yaml.safe_load` compatible format
 - Pickle exports can be loaded with `pickle.load`
@@ -162,6 +178,7 @@ These tests follow strict production-readiness principles:
 - Invalid paths return `False` rather than raising exceptions
 
 ### 9. TestCloudInterceptor (5 tests)
+
 **Purpose:** Validate mitmproxy addon for traffic interception
 
 - `test_interceptor_initialization` - Initializes with analyzer reference
@@ -171,22 +188,26 @@ These tests follow strict production-readiness principles:
 - `test_modify_response_patches_license_validation` - Modifies responses to bypass checks
 
 **Key Validations:**
+
 - Requests logged with timestamp, method, URL, headers, content
 - License endpoints detected via URL path patterns (`/license`, `/verify`, `/activate`, `/check`)
 - Response modification changes `valid: false` to `valid: true`
 - License expiration dates extended to future
 
 ### 10. TestCloudLicenseBypasser (2 tests)
+
 **Purpose:** Validate license bypass using replayed tokens
 
 - `test_bypasser_initialization` - Initializes with analyzer
 - `test_get_valid_token_prefers_non_expired_tokens` - Selects non-expired tokens
 
 **Key Validations:**
+
 - Bypasser correctly references analyzer
 - Non-expired tokens preferred over expired tokens in selection
 
 ### 11. TestDataclassStructures (3 tests)
+
 **Purpose:** Validate CloudEndpoint and LicenseToken dataclass structures
 
 - `test_cloud_endpoint_initialization` - CloudEndpoint initializes with all fields
@@ -194,11 +215,13 @@ These tests follow strict production-readiness principles:
 - `test_license_token_optional_fields_default_correctly` - Optional fields default to None
 
 **Key Validations:**
+
 - CloudEndpoint auto-generates `last_seen` timestamp
 - LicenseToken `metadata` defaults to empty dict
 - All optional fields (`expires_at`, `refresh_token`, `scope`) can be None
 
 ### 12. TestEdgeCasesAndErrorHandling (5 tests)
+
 **Purpose:** Validate error handling and edge cases
 
 - `test_analyze_endpoint_handles_empty_response` - Handles 204 No Content responses
@@ -208,6 +231,7 @@ These tests follow strict production-readiness principles:
 - `test_generate_token_handles_unknown_type` - Falls back to generic for unknown types
 
 **Key Validations:**
+
 - Empty responses don't crash analyzer
 - Malformed JSON silently ignored (no exceptions raised)
 - Cleanup calls `proxy_master.shutdown()` and `frida_session.detach()`
@@ -217,7 +241,9 @@ These tests follow strict production-readiness principles:
 ## Test Data Patterns
 
 ### Real JWT Tokens
+
 All JWT tests use **real tokens** generated with PyJWT library:
+
 ```python
 payload = {
     "sub": "user123",
@@ -229,14 +255,18 @@ jwt_token = jwt.encode(payload, "test-secret", algorithm="HS256")
 ```
 
 ### Real X.509 Certificates
+
 All certificate tests use **real certificates** generated with cryptography library:
+
 ```python
 cert = x509.load_pem_x509_certificate(analyzer.ca_cert, backend=default_backend())
 key = serialization.load_pem_private_key(analyzer.ca_key, password=None, backend=default_backend())
 ```
 
 ### Real JSON Parsing
+
 All JSON tests use **real JSON encoding/decoding**:
+
 ```python
 response.content = json.dumps({"valid": True, "access_token": "xyz"}).encode()
 data = json.loads(response.content)
@@ -245,6 +275,7 @@ data = json.loads(response.content)
 ## Dependencies
 
 ### Required Imports
+
 - `pytest` - Test framework
 - `jwt` (PyJWT) - Real JWT encoding/decoding
 - `cryptography` - Real X.509 certificate operations
@@ -258,6 +289,7 @@ data = json.loads(response.content)
 - `pathlib` - Cross-platform path operations
 
 ### Optional Imports (Skipped if Unavailable)
+
 - `mitmproxy` - MITM proxy functionality (tests skip if not installed)
 - `frida` - Dynamic instrumentation (tests skip if not installed)
 
@@ -278,6 +310,7 @@ response.content = json.dumps(real_response).encode()
 ```
 
 **All analyzer logic operates on these mock objects with REAL implementations** - no mocking of:
+
 - JWT encoding/decoding
 - Certificate generation
 - JSON parsing
@@ -329,6 +362,7 @@ pixi run pytest tests/core/protection_bypass/test_cloud_license_analyzer_compreh
 ## Coverage Goals
 
 Target coverage for `cloud_license_analyzer.py`:
+
 - **Line Coverage:** 85%+
 - **Branch Coverage:** 80%+
 

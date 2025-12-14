@@ -369,7 +369,7 @@ def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
                 )
                 len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
             except (subprocess.TimeoutExpired, OSError) as e:
-                logger.debug(f"String extraction failed: {e}")
+                logger.debug("String extraction failed: %s", e, exc_info=True)
 
         current_progress += weight
         progress_percent = int((current_progress / total_weight) * 100)
@@ -511,7 +511,7 @@ def _demo_network_analysis(pm: ProgressManager, binary_path: str) -> None:
                     ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
                     re.findall(ip_pattern, data)
             except Exception as e:
-                logger.debug(f"Error searching for IP patterns: {e}")
+                logger.debug("Error searching for IP patterns: %s", e, exc_info=True)
 
         current_progress += weight
         progress_percent = int((current_progress / total_weight) * 100)

@@ -44,6 +44,7 @@ from intellicrack.handlers.tkinter_handler import (
     ttk,
 )
 
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvasType
@@ -344,9 +345,18 @@ class RealTimeChart:
         self.axis.clear()
 
         colors = [
-            "#00ff41", "#ff4444", "#ffaa00", "#00aaff",
-            "#ff00ff", "#00ffff", "#ffff00", "#ff8800",
-            "#88ff00", "#0088ff", "#ff0088", "#8800ff"
+            "#00ff41",
+            "#ff4444",
+            "#ffaa00",
+            "#00aaff",
+            "#ff00ff",
+            "#00ffff",
+            "#ffff00",
+            "#ff8800",
+            "#88ff00",
+            "#0088ff",
+            "#ff0088",
+            "#8800ff",
         ]
         slice_colors = [colors[i % len(colors)] for i in range(len(labels))]
 
@@ -357,7 +367,7 @@ class RealTimeChart:
             autopct=lambda pct: f"{pct:.1f}%" if pct > 5 else "",
             startangle=90,
             textprops={"color": "white", "fontsize": 9},
-            wedgeprops={"edgecolor": "#2d2d2d", "linewidth": 1}
+            wedgeprops={"edgecolor": "#2d2d2d", "linewidth": 1},
         )
         autotexts = pie_result[2] if len(pie_result) > 2 else []
 
@@ -1300,7 +1310,7 @@ class AnalysisViewerPanel:
 
             # Add historical protections if available
             if hasattr(self, "analysis_history"):
-                for analysis in getattr(self, "analysis_history"):
+                for analysis in self.analysis_history:
                     if hasattr(analysis, "protection_type") and analysis.protection_type:
                         prot_type = analysis.protection_type
                         protection_counts[prot_type] = protection_counts.get(prot_type, 0) + 1
@@ -1319,7 +1329,7 @@ class AnalysisViewerPanel:
 
             # Check current analysis for bypass methods
             if self.current_analysis and self.current_analysis.bypass_methods:
-                for method in self.current_analysis.bypass_methods:
+                for _method in self.current_analysis.bypass_methods:
                     # Use heuristic based on confidence level
                     if self.current_analysis.confidence >= 80:
                         bypass_stats["Successful"] += 1
@@ -1787,6 +1797,7 @@ class ScriptGeneratorPanel:
         def _on_js_keyrelease(e: tk.Event[Any]) -> None:
             self.logger.debug("JS KeyRelease: %s", e)
             self.highlight_syntax(text_widget, js_keywords)
+
         text_widget.bind("<KeyRelease>", _on_js_keyrelease)
 
     def setup_java_syntax_highlighting(self, text_widget: tk.Text) -> None:
@@ -1836,6 +1847,7 @@ class ScriptGeneratorPanel:
         def _on_java_keyrelease(e: tk.Event[Any]) -> None:
             self.logger.debug("Java KeyRelease: %s", e)
             self.highlight_syntax(text_widget, java_keywords)
+
         text_widget.bind("<KeyRelease>", _on_java_keyrelease)
 
     def setup_python_syntax_highlighting(self, text_widget: tk.Text) -> None:
@@ -1877,6 +1889,7 @@ class ScriptGeneratorPanel:
         def _on_python_keyrelease(e: tk.Event[Any]) -> None:
             self.logger.debug("Python KeyRelease: %s", e)
             self.highlight_syntax(text_widget, python_keywords)
+
         text_widget.bind("<KeyRelease>", _on_python_keyrelease)
 
     def highlight_syntax(self, text_widget: tk.Text, keywords: list[str]) -> None:
@@ -2387,18 +2400,25 @@ class UIEnhancementModule:
         def _on_ctrl_o(e: tk.Event[Any]) -> None:
             self.logger.debug("Ctrl+O event: %s", e)
             self.open_file()
+
         self.root.bind("<Control-o>", _on_ctrl_o)
+
         def _on_ctrl_shift_o(e: tk.Event[Any]) -> None:
             self.logger.debug("Ctrl+Shift+O event: %s", e)
             self.open_folder()
+
         self.root.bind("<Control-O>", _on_ctrl_shift_o)
+
         def _on_ctrl_q(e: tk.Event[Any]) -> None:
             self.logger.debug("Ctrl+Q event: %s", e)
             self.exit_application()
+
         self.root.bind("<Control-q>", _on_ctrl_q)
+
         def _on_f5(e: tk.Event[Any]) -> None:
             self.logger.debug("F5 event: %s", e)
             self.refresh_current_view()
+
         self.root.bind("<F5>", _on_f5)
 
     def create_status_bar(self) -> None:
@@ -2590,7 +2610,7 @@ class UIEnhancementModule:
             self.log_viewer.add_log("INFO", f"Generating scripts for {file_path}", "ScriptGen")
 
             # Switch to script generator tab
-            getattr(self.script_generator.notebook, "select")(0)  # Frida tab
+            self.script_generator.notebook.select(0)  # Frida tab
 
             # Set target in appropriate fields
             self.script_generator.frida_process_var.set(file_path)
@@ -2861,8 +2881,10 @@ if __name__ == "__main__":
                 )
 
             except Exception as e:
+
                 def _log_frida_error(err: str = str(e)) -> None:
                     self.log_viewer.add_log("ERROR", f"Frida execution failed: {err}", "ScriptExec")
+
                 self.root.after(0, _log_frida_error)
 
         import threading
@@ -2885,9 +2907,10 @@ if __name__ == "__main__":
                 try:
                     try:
                         from intellicrack.utils.tools import ghidra_utils
+
                         result: dict[str, Any] = ghidra_utils.execute_ghidra_script(target, script_path)  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
-                        raise ImportError("ghidra_utils.execute_ghidra_script not available")
+                        raise ImportError("ghidra_utils.execute_ghidra_script not available") from None
 
                     if result.get("success"):
                         output = result.get("output", "")
@@ -2910,8 +2933,10 @@ if __name__ == "__main__":
                         Path(script_path).unlink()
 
             except Exception as e:
+
                 def _log_ghidra_error(err: str = str(e)) -> None:
                     self.log_viewer.add_log("ERROR", f"Ghidra execution failed: {err}", "ScriptExec")
+
                 self.root.after(0, _log_ghidra_error)
 
         import threading
@@ -2934,9 +2959,10 @@ if __name__ == "__main__":
                 try:
                     try:
                         from intellicrack.utils.tools import radare2_utils
+
                         result: dict[str, Any] = radare2_utils.execute_r2_script(target, script_path)  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
-                        raise ImportError("radare2_utils.execute_r2_script not available")
+                        raise ImportError("radare2_utils.execute_r2_script not available") from None
 
                     if result.get("success"):
                         output = result.get("output", "")
@@ -2959,8 +2985,10 @@ if __name__ == "__main__":
                         Path(script_path).unlink()
 
             except Exception as e:
+
                 def _log_r2_error(err: str = str(e)) -> None:
                     self.log_viewer.add_log("ERROR", f"Radare2 execution failed: {err}", "ScriptExec")
+
                 self.root.after(0, _log_r2_error)
 
         import threading
@@ -3020,8 +3048,10 @@ if __name__ == "__main__":
                     lambda: self.log_viewer.add_log("ERROR", "Script execution timed out", "ScriptExec"),
                 )
             except Exception as e:
+
                 def _log_custom_error(err: str = str(e)) -> None:
                     self.log_viewer.add_log("ERROR", f"Script execution failed: {err}", "ScriptExec")
+
                 self.root.after(0, _log_custom_error)
 
         import threading
@@ -3083,7 +3113,7 @@ if __name__ == "__main__":
         button_frame.pack(fill=tk.X, pady=5)
 
         def open_selected() -> None:
-            selection = getattr(recent_listbox, "curselection")()
+            selection = recent_listbox.curselection()
             if selection:
                 file_path = recent_listbox.get(selection[0])
                 if Path(file_path).exists():
@@ -3096,7 +3126,7 @@ if __name__ == "__main__":
         def clear_recent() -> None:
             if messagebox.askyesno("Clear Recent Files", "Clear all recent files?"):
                 if hasattr(self.config, "recent_files"):
-                    setattr(self.config, "recent_files", [])
+                    self.config.recent_files = []
                 self.save_config()
                 recent_listbox.delete(0, tk.END)
 
@@ -3120,9 +3150,10 @@ if __name__ == "__main__":
                 try:
                     try:
                         from intellicrack.protection import icp_backend
+
                         backend = icp_backend.IntellicrackProtectionBackend()  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
-                        raise ImportError("IntellicrackProtectionBackend not available")
+                        raise ImportError("IntellicrackProtectionBackend not available") from None
                     results = backend.analyze_file(str(self.current_target), quick_mode=True)
 
                     self.root.after(
@@ -3132,8 +3163,10 @@ if __name__ == "__main__":
 
                     if results.get("protections_found"):
                         for protection in results["protections_found"]:
+
                             def _log_prot(p: str = str(protection)) -> None:
                                 self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection")
+
                             self.root.after(0, _log_prot)
                     else:
                         self.root.after(
@@ -3142,8 +3175,10 @@ if __name__ == "__main__":
                         )
 
                 except Exception as e:
+
                     def _log_quick_error(err: str = str(e)) -> None:
                         self.log_viewer.add_log("ERROR", f"Quick scan failed: {err}", "Analysis")
+
                     self.root.after(0, _log_quick_error)
 
             import threading
@@ -3161,9 +3196,10 @@ if __name__ == "__main__":
                 try:
                     try:
                         from intellicrack.protection import icp_backend
+
                         backend = icp_backend.IntellicrackProtectionBackend()  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
-                        raise ImportError("IntellicrackProtectionBackend not available")
+                        raise ImportError("IntellicrackProtectionBackend not available") from None
                     results = backend.analyze_file(str(self.current_target), quick_mode=False)
 
                     self.root.after(
@@ -3173,10 +3209,9 @@ if __name__ == "__main__":
 
                     try:
                         from intellicrack.protection import intellicrack_protection_advanced
+
                         advanced = intellicrack_protection_advanced.AdvancedProtectionAnalysis(
-                            file_path=str(self.current_target),
-                            file_type="PE",
-                            architecture="x86"
+                            file_path=str(self.current_target), file_type="PE", architecture="x86"
                         )
                         advanced_results: dict[str, Any] = advanced.analyze()  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
@@ -3189,8 +3224,10 @@ if __name__ == "__main__":
 
                     if results.get("protections_found"):
                         for protection in results["protections_found"]:
+
                             def _log_prot(p: str = str(protection)) -> None:
                                 self.log_viewer.add_log("INFO", f"Detected: {p}", "Detection")
+
                             self.root.after(0, _log_prot)
 
                     if advanced_results.get("entropy_sections"):
@@ -3201,13 +3238,17 @@ if __name__ == "__main__":
 
                     if advanced_results.get("suspicious_patterns"):
                         for pattern in advanced_results["suspicious_patterns"]:
+
                             def _log_suspicious(p: str = str(pattern)) -> None:
                                 self.log_viewer.add_log("WARN", f"Suspicious pattern: {p}", "Detection")
+
                             self.root.after(0, _log_suspicious)
 
                 except Exception as e:
+
                     def _log_deep_error(err: str = str(e)) -> None:
                         self.log_viewer.add_log("ERROR", f"Deep analysis failed: {err}", "Analysis")
+
                     self.root.after(0, _log_deep_error)
 
             import threading
@@ -3229,9 +3270,10 @@ if __name__ == "__main__":
 
                     try:
                         from intellicrack.protection import icp_backend
+
                         backend = icp_backend.IntellicrackProtectionBackend()  # type: ignore[attr-defined]
                     except (ImportError, AttributeError):
-                        raise ImportError("IntellicrackProtectionBackend not available")
+                        raise ImportError("IntellicrackProtectionBackend not available") from None
                     target_extensions = [".exe", ".dll", ".so", ".dylib", ".bin"]
 
                     files_to_analyze = []
@@ -3241,27 +3283,35 @@ if __name__ == "__main__":
                                 files_to_analyze.append(os.path.join(root, file))
 
                     total_files = len(files_to_analyze)
+
                     def _log_count(c: int = total_files) -> None:
                         self.log_viewer.add_log("INFO", f"Found {c} files to analyze", "Analysis")
+
                     self.root.after(0, _log_count)
 
                     for idx, file_path in enumerate(files_to_analyze, 1):
                         try:
+
                             def _log_analyzing(i: int = idx, t: int = total_files, f: str = file_path) -> None:
                                 self.log_viewer.add_log("INFO", f"Analyzing {i}/{t}: {os.path.basename(f)}", "Analysis")
+
                             self.root.after(0, _log_analyzing)
 
                             results = backend.analyze_file(file_path, quick_mode=True)
 
                             if results.get("protections_found"):
                                 for protection in results["protections_found"]:
+
                                     def _log_detection(f: str = file_path, p: str = str(protection)) -> None:
                                         self.log_viewer.add_log("INFO", f"{os.path.basename(f)}: {p}", "Detection")
+
                                     self.root.after(0, _log_detection)
 
                         except Exception as e:
+
                             def _log_file_error(f: str = file_path, err: str = str(e)) -> None:
                                 self.log_viewer.add_log("ERROR", f"Failed to analyze {os.path.basename(f)}: {err}", "Analysis")
+
                             self.root.after(0, _log_file_error)
 
                     self.root.after(
@@ -3270,8 +3320,10 @@ if __name__ == "__main__":
                     )
 
                 except Exception as e:
+
                     def _log_batch_error(err: str = str(e)) -> None:
                         self.log_viewer.add_log("ERROR", f"Batch analysis failed: {err}", "Analysis")
+
                     self.root.after(0, _log_batch_error)
 
             import threading

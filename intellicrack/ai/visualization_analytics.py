@@ -1221,15 +1221,11 @@ class VisualizationAnalytics:
 
             results["semantic_summary"] = {
                 "total_functions_analyzed": len(function_semantics),
-                "licensing_related_functions": sum(
-                    1 for f in function_semantics if f.get("category") == "licensing"
-                ),
+                "licensing_related_functions": sum(1 for f in function_semantics if f.get("category") == "licensing"),
                 "protection_patterns_found": len(code_patterns),
                 "protection_indicators_count": len(protection_indicators),
                 "binary_size": binary_size,
-                "analysis_confidence": self._calculate_analysis_confidence(
-                    function_semantics, code_patterns
-                ),
+                "analysis_confidence": self._calculate_analysis_confidence(function_semantics, code_patterns),
             }
 
             logger.info(
@@ -1368,6 +1364,7 @@ class VisualizationAnalytics:
             text = context.decode("utf-8", errors="ignore")
 
             import re
+
             patterns = [
                 rf"(\w+{signature.decode('utf-8', errors='ignore')}\w*)",
                 r"([A-Z][a-zA-Z0-9_]+(?:Check|Validate|Verify|License|Serial|Key))",
@@ -1393,8 +1390,16 @@ class VisualizationAnalytics:
             text = context.decode("utf-8", errors="ignore").lower()
 
             high_confidence_words = [
-                "license", "serial", "trial", "expire", "register",
-                "activate", "validate", "check", "verify", "key",
+                "license",
+                "serial",
+                "trial",
+                "expire",
+                "register",
+                "activate",
+                "validate",
+                "check",
+                "verify",
+                "key",
             ]
 
             for word in high_confidence_words:
@@ -1422,7 +1427,7 @@ class VisualizationAnalytics:
         pattern_signatures = [
             {
                 "name": "License String Comparison",
-                "bytes": [b"\x3D", b"\x3C", b"\x75", b"\x74"],
+                "bytes": [b"\x3d", b"\x3c", b"\x75", b"\x74"],
                 "description": "Conditional jump after comparison (license check)",
                 "type": "comparison",
             },
@@ -1525,20 +1530,14 @@ class VisualizationAnalytics:
         base_confidence = 0.3
 
         if function_semantics:
-            avg_func_confidence = sum(f.get("confidence", 0) for f in function_semantics) / len(
-                function_semantics
-            )
+            avg_func_confidence = sum(f.get("confidence", 0) for f in function_semantics) / len(function_semantics)
             base_confidence += avg_func_confidence * 0.3
 
         if code_patterns:
-            avg_pattern_confidence = sum(p.get("confidence", 0) for p in code_patterns) / len(
-                code_patterns
-            )
+            avg_pattern_confidence = sum(p.get("confidence", 0) for p in code_patterns) / len(code_patterns)
             base_confidence += avg_pattern_confidence * 0.2
 
-        licensing_functions = sum(
-            1 for f in function_semantics if f.get("category") == "licensing"
-        )
+        licensing_functions = sum(1 for f in function_semantics if f.get("category") == "licensing")
         if licensing_functions > 5:
             base_confidence += 0.1
         elif licensing_functions > 2:
@@ -1727,7 +1726,7 @@ hookLicenseFunctions();
 
     def _build_api_trace_script(self, binary_name: str) -> str:
         """Build Frida script for tracing licensing-related API calls."""
-        return f'''
+        return f"""
 "use strict";
 
 console.log("[*] API Tracer for {binary_name}");
@@ -1759,11 +1758,11 @@ apis.forEach(function(apiGroup) {{
         }}
     }});
 }});
-'''
+"""
 
     def _build_anti_debug_script(self, binary_name: str) -> str:
         """Build Frida script for bypassing anti-debugging."""
-        return f'''
+        return f"""
 "use strict";
 
 console.log("[*] Anti-Debug Bypass for {binary_name}");
@@ -1806,11 +1805,11 @@ if (ntQueryInfo) {{
     }});
     console.log("[*] Hooked NtQueryInformationProcess");
 }}
-'''
+"""
 
     def _build_time_spoof_script(self, binary_name: str) -> str:
         """Build Frida script for spoofing time-related calls."""
-        return f'''
+        return f"""
 "use strict";
 
 console.log("[*] Time Spoof for {binary_name}");
@@ -1846,7 +1845,7 @@ if (getLocalTime) {{
     }});
     console.log("[*] Hooked GetLocalTime");
 }}
-'''
+"""
 
     def _build_ghidra_license_analyzer(
         self,
@@ -1854,7 +1853,7 @@ if (getLocalTime) {{
         semantic_results: dict[str, Any] | None,
     ) -> str:
         """Build Ghidra script for analyzing licensing functions."""
-        return f'''
+        return f"""
 //@category Analysis
 //@menupath Analysis.License Analyzer
 //@author Intellicrack
@@ -1910,11 +1909,11 @@ public class {binary_name}_LicenseAnalyzer extends GhidraScript {{
         println("[*] Analysis complete. Found " + foundCount + " licensing-related functions.");
     }}
 }}
-'''
+"""
 
     def _build_ghidra_crypto_finder(self, binary_name: str) -> str:
         """Build Ghidra script for finding cryptographic routines."""
-        return f'''
+        return f"""
 //@category Analysis
 //@menupath Analysis.Crypto Finder
 //@author Intellicrack
@@ -1960,7 +1959,7 @@ public class {binary_name}_CryptoFinder extends GhidraScript {{
         println("[*] Found " + foundCount + " potential crypto constants.");
     }}
 }}
-'''
+"""
 
 
 # Global visualization and analytics instance

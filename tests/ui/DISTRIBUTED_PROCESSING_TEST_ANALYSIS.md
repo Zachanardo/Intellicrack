@@ -29,9 +29,11 @@ tests/ui/test_distributed_processing.py
 ## Critical Testing Principles Applied
 
 ### 1. Production-Ready Test Code
+
 Every test validates actual functionality that proves the distributed processing system works:
 
 **Binary Analysis Tests**:
+
 - Create real PE binaries with headers, sections, and data
 - Use actual pefile library to parse binaries
 - Extract real strings from binary data
@@ -40,18 +42,21 @@ Every test validates actual functionality that proves the distributed processing
 - Detect actual protection mechanisms (VMProtect, Themida, UPX)
 
 **Password Cracking Tests**:
+
 - Generate real hash values using hashlib (MD5, SHA1, SHA256, SHA512)
 - Test actual password dictionary generation (1000+ patterns)
 - Validate real hash comparison logic
 - Test parallel processing with ThreadPoolExecutor
 
 **License Analysis Tests**:
+
 - Scan for real validation patterns (online, offline, hardware, time-based)
 - Identify actual cryptographic algorithms (RSA, AES, MD5, SHA)
 - Determine real license types (cloud-based, hardware-locked, trial, key-based)
 - Generate actual bypass strategies (keygen, patch, server emulation)
 
 **Vulnerability Scanning Tests**:
+
 - Use real YARA rules to detect weak implementations
 - Perform actual risk assessment calculations
 - Generate context-aware security recommendations
@@ -59,12 +64,14 @@ Every test validates actual functionality that proves the distributed processing
 ### 2. Zero Tolerance for Fake Tests
 
 **What These Tests DO NOT Do**:
+
 - ❌ Check if functions "run" without validating outputs
 - ❌ Use mocked binary data for core analysis (only for UI components)
 - ❌ Accept placeholder assertions like `assert result is not None`
 - ❌ Pass with non-functional implementations
 
 **What These Tests DO**:
+
 - ✅ Validate actual binary parsing produces correct results
 - ✅ Verify real entropy calculations match expected ranges
 - ✅ Confirm actual string extraction finds specific strings
@@ -82,6 +89,7 @@ def test_manager_add_task(self, manager: DistributedProcessing) -> None:
 ```
 
 All fixtures are typed:
+
 ```python
 @pytest.fixture
 def temp_binary(self, tmp_path: Path) -> Path:
@@ -190,6 +198,7 @@ assert all(task.results is not None for task in task_queue)  # ALL must have res
 ### Missing Binary Handling
 
 **Test**: `test_worker_process_binary_analysis_creates_missing_binary`
+
 ```python
 binary_path = tmp_path / "missing.exe"
 task = DistributedTask("bin_task_2", "binary_analysis", {"binary_path": str(binary_path)})
@@ -205,6 +214,7 @@ assert results["binary_path"] == str(binary_path)
 ### Task Cancellation
 
 **Test**: `test_worker_update_progress_cancelled`
+
 ```python
 task = DistributedTask("cancelled_task", "binary_analysis", {})
 worker.running = False
@@ -218,6 +228,7 @@ with pytest.raises(Exception, match="Task cancelled"):
 ### Empty Queue Handling
 
 **Test**: `test_worker_get_next_task_empty_queue`
+
 ```python
 task = worker.get_next_task()
 assert task is None
@@ -230,6 +241,7 @@ assert task is None
 ### Entropy Calculation Performance
 
 **Test**: `test_worker_calculate_entropy`
+
 ```python
 uniform_data = bytes([0] * 256)
 entropy_uniform = worker._calculate_entropy(uniform_data)
@@ -245,6 +257,7 @@ assert 6.0 <= entropy_random <= 8.0  # Fast calculation for random data
 ### String Extraction Performance
 
 **Test**: `test_worker_extract_strings_min_length`
+
 ```python
 strings_min4 = worker._extract_strings(str(temp_binary), min_length=4)
 strings_min10 = worker._extract_strings(str(temp_binary), min_length=10)
@@ -261,6 +274,7 @@ assert len(strings_min10) <= len(strings_min4)  # Filtering works correctly
 ### Qt-less Operation
 
 **Test**: `test_qobject_fallback_initialization`
+
 ```python
 if HAS_PYQT6:
     pytest.skip("Testing fallback implementation only")
@@ -276,6 +290,7 @@ assert obj._parent is None
 ### Signal/Slot Without Qt
 
 **Test**: `test_pyqt_signal_fallback_emit`
+
 ```python
 signal = pyqtSignal(int)
 results = []
@@ -300,6 +315,7 @@ assert sorted(results) == [10, 15]  # Both slots receive signal
 ### Complete Workflow Validation
 
 **Test**: `test_integration_complete_workflow_manager_to_workers`
+
 ```python
 manager = DistributedProcessing()
 
@@ -328,16 +344,19 @@ for task_id in task_ids:
 ### Coverage Estimation
 
 **Line Coverage**: ~87%
+
 - All major methods tested
 - Edge cases covered
 - Error paths validated
 
 **Branch Coverage**: ~83%
+
 - Conditional logic tested
 - Multiple execution paths validated
 - Error conditions covered
 
 **Method Coverage**: 95%+
+
 - All public methods tested
 - Most private methods tested
 - Critical paths fully covered
@@ -345,6 +364,7 @@ for task_id in task_ids:
 ### Test Failure Scenarios
 
 **Tests FAIL when**:
+
 1. Binary analysis returns empty results
 2. String extraction finds no strings
 3. Entropy calculation is incorrect
@@ -355,6 +375,7 @@ for task_id in task_ids:
 8. Risk assessment calculation is wrong
 
 **Tests PASS when**:
+
 1. Real binary analysis completes successfully
 2. Actual strings extracted from test binaries
 3. Entropy values in correct ranges
@@ -367,6 +388,7 @@ for task_id in task_ids:
 ## Dependencies Required
 
 ### Core Dependencies
+
 - **pytest**: Test framework
 - **pefile**: PE file parsing
 - **capstone**: Disassembly engine
@@ -374,6 +396,7 @@ for task_id in task_ids:
 - **PyQt6** (optional): UI components
 
 ### Python Standard Library
+
 - hashlib: Hash algorithms
 - threading: Worker coordination
 - concurrent.futures: Parallel processing
@@ -383,6 +406,7 @@ for task_id in task_ids:
 ## Test Execution
 
 ### Running Tests
+
 ```bash
 # With pytest (when dependencies available)
 pytest tests/ui/test_distributed_processing.py -v
@@ -398,6 +422,7 @@ pytest tests/ui/test_distributed_processing.py::TestDistributedWorkerThread::tes
 ```
 
 ### Skip Conditions
+
 - PyQt6 tests skip when PyQt6 unavailable
 - Fallback tests skip when PyQt6 available
 - All tests use `@pytest.mark.skipif` appropriately
@@ -405,6 +430,7 @@ pytest tests/ui/test_distributed_processing.py::TestDistributedWorkerThread::tes
 ## Production Readiness
 
 ### Code Standards Met
+
 ✅ Complete type annotations (PEP 484)
 ✅ Comprehensive docstrings
 ✅ No placeholder code
@@ -414,6 +440,7 @@ pytest tests/ui/test_distributed_processing.py::TestDistributedWorkerThread::tes
 ✅ PEP 8 compliance
 
 ### Testing Standards Met
+
 ✅ Real data validation
 ✅ No mocked core logic
 ✅ Production-ready assertions

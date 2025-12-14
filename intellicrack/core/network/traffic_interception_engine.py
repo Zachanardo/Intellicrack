@@ -280,13 +280,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
             self.analysis_thread.start()
 
-            self.logger.info(f"Traffic interception started using {self.capture_backend} backend")
-            self.logger.info(f"Monitoring {len(self.license_ports)} license server ports")
+            self.logger.info("Traffic interception started using %s backend", self.capture_backend)
+            self.logger.info("Monitoring %d license server ports", len(self.license_ports))
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to start traffic interception: {e}")
+            self.logger.error("Failed to start traffic interception: %s", e, exc_info=True)
             self.running = False
             return False
 
@@ -306,7 +306,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error(f"Error stopping traffic interception: {e}")
+            self.logger.error("Error stopping traffic interception: %s", e, exc_info=True)
             return False
 
     def _capture_loop(self) -> None:
@@ -319,7 +319,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self._socket_capture()
 
         except Exception as e:
-            self.logger.error(f"Capture loop error: {e}")
+            self.logger.error("Capture loop error: %s", e, exc_info=True)
 
     def _scapy_capture(self) -> None:
         """Packet capture using Scapy."""
@@ -331,7 +331,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             port_filter = " or ".join([f"port {port}" for port in self.license_ports])
             filter_expr = f"tcp and ({port_filter})"
 
-            self.logger.info(f"Starting Scapy capture with filter: {filter_expr}")
+            self.logger.info("Starting Scapy capture with filter: %s", filter_expr)
 
             # Define packet processing function
             def process_license_packet(packet: object, IP: object, TCP: object) -> None:
@@ -376,7 +376,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
 
         except Exception as e:
-            self.logger.error(f"Scapy capture error: {e}")
+            self.logger.error("Scapy capture error: %s", e, exc_info=True)
 
     # Note: _pcap_capture method removed - now using Scapy exclusively for packet capture
     # This provides better cross-platform compatibility and enhanced features
@@ -412,14 +412,14 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.debug(f"Socket capture error: {e}")
+                        self.logger.debug("Socket capture error: %s", e, exc_info=True)
 
             if sys.platform == "win32":
                 sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
             sock.close()
 
         except Exception as e:
-            self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
+            self.logger.warning("Raw socket capture failed, using connection monitoring: %s", e, exc_info=True)
             self._monitor_local_connections()
 
     def _monitor_local_connections(self) -> None:
@@ -448,7 +448,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                                         "packet_count": 0,
                                     }
 
-                                    self.logger.info(f"License server detected on port {port}")
+                                    self.logger.info("License server detected on port %d", port)
 
                         sock.close()
 
@@ -458,7 +458,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 time.sleep(1.0)
 
             except Exception as e:
-                self.logger.debug(f"Connection monitoring error: {e}")
+                self.logger.debug("Connection monitoring error: %s", e, exc_info=True)
 
     def _parse_raw_packet(self, raw_packet: bytes) -> None:
         """Parse raw network packet."""
@@ -516,7 +516,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self._queue_packet(intercepted)
 
         except Exception as e:
-            self.logger.debug(f"Error parsing packet: {e}")
+            self.logger.debug("Error parsing packet: %s", e, exc_info=True)
 
     def _queue_packet(self, packet: InterceptedPacket) -> None:
         """Add packet to analysis queue."""
@@ -549,12 +549,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                             try:
                                 callback(analysis)
                             except Exception as e:
-                                self.logger.error(f"Analysis callback error: {e}")
+                                self.logger.error("Analysis callback error: %s", e, exc_info=True)
 
                 time.sleep(0.1)
 
             except Exception as e:
-                self.logger.error(f"Analysis loop error: {e}")
+                self.logger.error("Analysis loop error: %s", e, exc_info=True)
 
     def _analyze_packet(self, packet: InterceptedPacket) -> AnalyzedTraffic | None:
         """Analyze packet for license-related content."""
@@ -626,7 +626,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
 
         except Exception as e:
-            self.logger.error(f"Packet analysis error: {e}")
+            self.logger.error("Packet analysis error: %s", e, exc_info=True)
             return None
 
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
@@ -642,10 +642,10 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         """Set up DNS redirection for hostname."""
         try:
             self.dns_redirections[hostname.lower()] = target_ip
-            self.logger.info(f"DNS redirection setup: {hostname} -> {target_ip}")
+            self.logger.info("DNS redirection setup: %s -> %s", hostname, target_ip)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to setup DNS redirection: {e}")
+            self.logger.error("Failed to setup DNS redirection: %s", e, exc_info=True)
             return False
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
@@ -653,10 +653,10 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
-            self.logger.info(f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}")
+            self.logger.info("Transparent proxy setup: %s -> %s:%d", proxy_key, self.bind_interface, target_port)
             return True
         except Exception as e:
-            self.logger.error(f"Failed to setup transparent proxy: {e}")
+            self.logger.error("Failed to setup transparent proxy: %s", e, exc_info=True)
             return False
 
     def get_statistics(self) -> dict[str, Any]:
@@ -793,7 +793,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return None
 
         except Exception as e:
-            self.logger.error("Protocol command failed: %s", e)
+            self.logger.error("Protocol command failed: %s", e, exc_info=True)
             return None
 
     def _wrap_protocol_command(self, protocol_name: str, command: bytes) -> bytes:

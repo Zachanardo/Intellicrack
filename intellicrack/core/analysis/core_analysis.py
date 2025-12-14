@@ -119,8 +119,8 @@ def get_pe_timestamp(timestamp: int) -> str:
     try:
         dt = datetime.datetime.fromtimestamp(timestamp)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
-    except (ValueError, OSError) as e:
-        logger.error("Error in core_analysis: %s", e)
+    except (ValueError, OSError):
+        logger.exception("Error converting PE timestamp")
         return "Invalid timestamp"
 
 
@@ -148,12 +148,10 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
 
     try:
         logger.info("Starting internal binary analysis for: %s. Flags: %s", binary_path, flags)
-        results.extend(
-            (
-                f"Analyzing binary: {os.path.basename(binary_path)}",
-                f"File size: {os.path.getsize(binary_path):,} bytes",
-            )
-        )
+        results.extend((
+            f"Analyzing binary: {os.path.basename(binary_path)}",
+            f"File size: {os.path.getsize(binary_path):,} bytes",
+        ))
         if not pefile:
             results.append("ERROR: pefile library not available - install with 'pip install pefile'")
             return results
@@ -294,7 +292,7 @@ def _analyze_sections(pe: object, results: list[str]) -> list[str]:
                     results.append("    WARNING: High entropy, possible encryption/compression")
                     suspicious_sections.append(name)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in core_analysis: %s", e)
+                logger.exception("Error calculating section entropy")
                 results.append(f"    ERROR: Could not calculate entropy: {e}")
 
     return suspicious_sections
@@ -483,8 +481,8 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
                     if entropy > 7.0:
                         section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\0")
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
-                except (AttributeError, ValueError) as e:
-                    logger.error("Error in core_analysis: %s", e)
+                except (AttributeError, ValueError):
+                    logger.exception("Error analyzing section for protection indicators")
 
         results["protection_mechanisms"] = protection_indicators
 
@@ -722,7 +720,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                             },
                         )
                     except (OSError, ValueError, RuntimeError) as e:
-                        logger.error("Error in core_analysis: %s", e)
+                        logger.exception("Error decoding embedded script")
                         results.append(f"Error decoding script: {e}")
 
                 start_pos = end_pos + len(end_marker)
@@ -760,7 +758,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                         },
                     )
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in core_analysis: %s", e)
+                    logger.exception("Error decoding obfuscated script")
                     results.append(f"Error decoding obfuscated script: {e}")
 
                 start_pos += len(marker_)
@@ -774,13 +772,11 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                 marker = script.get("marker", "Unknown")
                 content = script.get("content", "")
 
-                results.extend(
-                    (
-                        f"\nScript {i + 1} at offset 0x{offset:X}:",
-                        f"Marker: {marker}",
-                        "Content preview:",
-                    )
-                )
+                results.extend((
+                    f"\nScript {i + 1} at offset 0x{offset:X}:",
+                    f"Marker: {marker}",
+                    "Content preview:",
+                ))
                 # Show first few lines
                 if isinstance(content, str):
                     lines = content.splitlines()
@@ -807,6 +803,6 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
 
     except (OSError, ValueError, RuntimeError) as e:
         results.append(f"Error searching for embedded scripts: {e}")
-        logger.error("Error in decrypt_embedded_script: %s", e)
+        logger.exception("Error in decrypt_embedded_script for %s", binary_path)
 
     return results

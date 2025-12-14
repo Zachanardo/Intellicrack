@@ -148,13 +148,11 @@ class ReportGenerator:
             html_parts.extend((f"<p>{data['summary']}</p>", "</section>"))
         # Add binary information
         if "binary_info" in data:
-            html_parts.extend(
-                (
-                    "<section class='binary-info'>",
-                    "<h2>Binary Information</h2>",
-                    "<table>",
-                )
-            )
+            html_parts.extend((
+                "<section class='binary-info'>",
+                "<h2>Binary Information</h2>",
+                "<table>",
+            ))
             for key, value in data["binary_info"].items():
                 html_parts.append(f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>")
             html_parts.extend(("</table>", "</section>"))

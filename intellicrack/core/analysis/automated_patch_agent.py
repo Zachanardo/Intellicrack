@@ -199,7 +199,7 @@ class AutomatedPatchAgent:
                     )
 
         except Exception as e:
-            logger.error(f"Binary analysis failed: {e}")
+            logger.exception("Binary analysis failed: %s", e)
 
         return analysis_results
 
@@ -231,14 +231,12 @@ class AutomatedPatchAgent:
                     offset = binary_data.find(pattern, offset)
                     if offset == -1:
                         break
-                    patch_points.append(
-                        {
-                            "offset": offset,
-                            "type": patch_type,
-                            "pattern": pattern.hex(),
-                            "size": len(pattern),
-                        }
-                    )
+                    patch_points.append({
+                        "offset": offset,
+                        "type": patch_type,
+                        "pattern": pattern.hex(),
+                        "size": len(pattern),
+                    })
                     offset += len(pattern)
 
         return patch_points
@@ -279,7 +277,7 @@ class AutomatedPatchAgent:
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to apply patch: {e}")
+            logger.exception("Failed to apply patch: %s", e)
 
         return False
 

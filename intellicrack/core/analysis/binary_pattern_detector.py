@@ -419,13 +419,11 @@ class BinaryPatternDetector:
                     current_mask = bytearray()
 
             if current_segment:
-                segments.append(
-                    (
-                        bytes(current_segment),
-                        bytes(current_mask),
-                        len(pattern.pattern_bytes) - len(current_segment),
-                    )
-                )
+                segments.append((
+                    bytes(current_segment),
+                    bytes(current_mask),
+                    len(pattern.pattern_bytes) - len(current_segment),
+                ))
 
             self.compiled_patterns[key] = segments
 

@@ -452,7 +452,7 @@ class FridaScriptManager:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to execute script {script_name}: {e}")
+            logger.error(f"Failed to execute script {script_name}: {e}", exc_info=True)
             result.errors.append(str(e))
             result.end_time = time.time()
             return result
@@ -517,10 +517,10 @@ class FridaScriptManager:
             elif msg_type == "error":
                 error = message.get("description", "Unknown error")
                 result.errors.append(error)
-                logger.error(f"Script error: {error}")
+                logger.error(f"Script error: {error}", exc_info=True)
 
         except Exception as e:
-            logger.error(f"Failed to handle message: {e}")
+            logger.error(f"Failed to handle message: {e}", exc_info=True)
 
     def stop_script(self, session_id: str) -> None:
         """Stop a running script."""
@@ -531,7 +531,7 @@ class FridaScriptManager:
                 del self.active_sessions[session_id]
                 logger.info(f"Stopped script session: {session_id}")
             except Exception as e:
-                logger.error(f"Failed to stop script: {e}")
+                logger.error(f"Failed to stop script: {e}", exc_info=True)
 
     def get_script_categories(self) -> list[ScriptCategory]:
         """Get all available script categories."""

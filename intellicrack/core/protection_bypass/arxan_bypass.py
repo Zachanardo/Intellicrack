@@ -169,7 +169,7 @@ class ArxanBypass:
         else:
             output_path = Path(output_path)
 
-        self.logger.info(f"Starting Arxan bypass: {binary_path}")
+        self.logger.info("Starting Arxan bypass: %s", binary_path)
 
         detection_result = self.detector.detect(binary_path)
 
@@ -233,7 +233,7 @@ class ArxanBypass:
                     f.write(binary_data)
 
         except Exception as e:
-            self.logger.error(f"Binary patching failed: {e}")
+            self.logger.error("Binary patching failed: %s", e, exc_info=True)
             result.success = False
             return result
 
@@ -243,8 +243,8 @@ class ArxanBypass:
         result.integrity_checks_neutralized = len([p for p in patches if p.patch_type == "integrity_bypass"])
         result.rasp_mechanisms_defeated = len([p for p in patches if p.patch_type == "rasp_bypass"])
 
-        self.logger.info(f"Applied {len(patches)} patches to binary")
-        self.logger.info(f"Patched binary saved: {output_path}")
+        self.logger.info("Applied %d patches to binary", len(patches))
+        self.logger.info("Patched binary saved: %s", output_path)
 
         if runtime_bypass and process_name:
             if not FRIDA_AVAILABLE:
@@ -260,10 +260,10 @@ class ArxanBypass:
                     self.frida_script.load()
 
                     result.runtime_hooks_installed = frida_script.count("Interceptor.attach")
-                    self.logger.info(f"Installed {result.runtime_hooks_installed} Frida hooks")
+                    self.logger.info("Installed %d Frida hooks", result.runtime_hooks_installed)
 
                 except Exception as e:
-                    self.logger.error(f"Frida runtime bypass failed: {e}")
+                    self.logger.error("Frida runtime bypass failed: %s", e, exc_info=True)
 
         result.success = True
         return result
@@ -293,7 +293,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(f"Patching tamper check at 0x{check.address:x}: {check.algorithm}")
+                self.logger.debug("Patching tamper check at 0x%x: %s", check.address, check.algorithm)
 
     def _bypass_integrity_checks(
         self,
@@ -322,7 +322,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(f"Patching integrity check at 0x{check.address:x}: {check.hash_algorithm}")
+                self.logger.debug("Patching integrity check at 0x%x: %s", check.address, check.hash_algorithm)
 
     def _bypass_license_validation(
         self,
@@ -349,7 +349,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(f"Patching license validation at 0x{routine.address:x}: {routine.validation_type}")
+                self.logger.debug("Patching license validation at 0x%x: %s", routine.address, routine.validation_type)
 
     def _neutralize_rasp(
         self,
@@ -382,7 +382,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(f"Patching RASP mechanism at 0x{rasp.address:x}: {rasp.mechanism_type}")
+                self.logger.debug("Patching RASP mechanism at 0x%x: %s", rasp.address, rasp.mechanism_type)
 
     def _decrypt_strings(
         self,
@@ -412,7 +412,7 @@ class ArxanBypass:
                     )
                     patches.append(patch)
 
-                    self.logger.debug(f"Decrypting string at 0x{address:x} with XOR key {xor_key}")
+                    self.logger.debug("Decrypting string at 0x%x with XOR key %d", address, xor_key)
                     break
 
     def _generate_frida_bypass_script(self, analysis_result: object) -> str:
@@ -569,9 +569,9 @@ class ArxanBypass:
 
         """
         if message["type"] == "send":
-            self.logger.info(f"[Frida] {message['payload']}")
+            self.logger.info("[Frida] %s", message["payload"])
         elif message["type"] == "error":
-            self.logger.error(f"[Frida Error] {message.get('stack', message)}")
+            self.logger.error("[Frida Error] %s", message.get("stack", message))
 
     def cleanup(self) -> None:
         """Clean up Frida session."""
@@ -579,13 +579,13 @@ class ArxanBypass:
             try:
                 self.frida_script.unload()
             except Exception as e:
-                self.logger.debug(f"Failed to unload Frida script: {e}")
+                self.logger.debug("Failed to unload Frida script: %s", e, exc_info=True)
 
         if self.frida_session:
             try:
                 self.frida_session.detach()
             except Exception as e:
-                self.logger.debug(f"Failed to detach Frida session: {e}")
+                self.logger.debug("Failed to detach Frida session: %s", e, exc_info=True)
 
 
 def main() -> None:
@@ -628,29 +628,28 @@ def main() -> None:
                 "runtime_hooks_installed": result.runtime_hooks_installed,
                 "patched_binary": result.patched_binary_path,
             }
-            print(json.dumps(output, indent=2))
+            logger.info("%s", json.dumps(output, indent=2))
         else:
-            print("\n=== Arxan Bypass Results ===")
-            print(f"Success: {result.success}")
-            print(f"Patches Applied: {len(result.patches_applied)}")
-            print(f"License Checks Bypassed: {result.license_checks_bypassed}")
-            print(f"Integrity Checks Neutralized: {result.integrity_checks_neutralized}")
-            print(f"RASP Mechanisms Defeated: {result.rasp_mechanisms_defeated}")
+            logger.info("=== Arxan Bypass Results ===")
+            logger.info("Success: %s", result.success)
+            logger.info("Patches Applied: %d", len(result.patches_applied))
+            logger.info("License Checks Bypassed: %d", result.license_checks_bypassed)
+            logger.info("Integrity Checks Neutralized: %d", result.integrity_checks_neutralized)
+            logger.info("RASP Mechanisms Defeated: %d", result.rasp_mechanisms_defeated)
 
             if result.runtime_hooks_installed > 0:
-                print(f"Runtime Hooks Installed: {result.runtime_hooks_installed}")
+                logger.info("Runtime Hooks Installed: %d", result.runtime_hooks_installed)
 
             if result.patched_binary_path:
-                print(f"\nPatched Binary: {result.patched_binary_path}")
+                logger.info("Patched Binary: %s", result.patched_binary_path)
 
             if result.patches_applied:
-                print(f"\n=== Applied Patches ({len(result.patches_applied)}) ===")
+                logger.info("=== Applied Patches (%d) ===", len(result.patches_applied))
                 for patch in result.patches_applied[:10]:
-                    print(f"  - 0x{patch.address:x}: {patch.description}")
+                    logger.info("  - 0x%x: %s", patch.address, patch.description)
 
     except Exception as e:
-        logger.error(f"Bypass failed: {e}")
-        logger.error(e)
+        logger.error("Bypass failed: %s", e, exc_info=True)
         raise
 
 

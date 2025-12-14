@@ -22,12 +22,16 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # Standard library imports
 import argparse
 import json
+import logging
 import os
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 # Add parent directory to path
@@ -175,6 +179,7 @@ class AnalysisStage(PipelineStage):
                 format="json",
             )
         except Exception as e:
+            logger.error("Analysis stage failed for %s: %s", binary_path, e, exc_info=True)
             return PipelineData(
                 content={"error": str(e)},
                 metadata={
@@ -396,12 +401,10 @@ class TransformStage(PipelineStage):
             lines.append(f"Data Type: List with {len(content)} items")
 
             if content and isinstance(content[0], dict):
-                lines.extend(
-                    (
-                        "  Item type: Dictionary",
-                        f"  Keys: {', '.join(content[0].keys())}",
-                    )
-                )
+                lines.extend((
+                    "  Item type: Dictionary",
+                    f"  Keys: {', '.join(content[0].keys())}",
+                ))
         return "\n".join(lines)
 
 
@@ -423,7 +426,7 @@ class OutputStage(PipelineStage):
                 else:
                     f.write(str(input_data.content))
 
-            self.console.print(f"[green]Output written to {self.output_path}[/green]")
+            logger.info("Output written to %s", self.output_path)
         # Print to stdout
         elif input_data.format == "json":
             syntax = Syntax(
@@ -463,7 +466,7 @@ class Pipeline:
 
         # Execute each stage
         for i, stage in enumerate(self.stages):
-            self.console.print(f"[cyan]Executing stage {i + 1}/{len(self.stages)}: {stage.name}[/cyan]")
+            logger.info("Executing stage %d/%d: %s", i + 1, len(self.stages), stage.name)
 
             try:
                 # Validate input
@@ -475,12 +478,12 @@ class Pipeline:
 
                 # Check for errors
                 if isinstance(data.content, dict) and "error" in data.content:
-                    self.console.print(f"[red]Error in stage {stage.name}: {data.content['error']}[/red]")
+                    logger.error("Error in stage %s: %s", stage.name, data.content["error"])
                     if not data.metadata.get("continue_on_error", False):
                         break
 
             except Exception as e:
-                self.console.print(f"[red]Failed at stage {stage.name}: {e}[/red]")
+                logger.error("Failed at stage %s: %s", stage.name, e, exc_info=True)
                 break
 
         return data
@@ -596,16 +599,16 @@ Examples:
 
     args = parser.parse_args()
 
-    console = Console()
+    Console()
 
     # Parse pipeline with validation
     try:
         pipeline = parse_pipeline_command(args.pipeline)
     except ValueError as e:
-        console.print(f"[red]Invalid pipeline command: {e}[/red]")
+        logger.error("Invalid pipeline command: %s", e, exc_info=True)
         return
     except Exception as e:
-        console.print(f"[red]Error parsing pipeline: {e}[/red]")
+        logger.error("Error parsing pipeline: %s", e, exc_info=True)
         return
 
     # Determine input
@@ -615,18 +618,18 @@ Examples:
             input_path = Path(args.input).resolve()
             # Check if path exists and is accessible
             if not input_path.exists():
-                console.print(f"[red]Input file not found: {args.input}[/red]")
+                logger.error("Input file not found: %s", args.input)
                 return
             if not input_path.is_file():
-                console.print(f"[red]Input path is not a file: {args.input}[/red]")
+                logger.error("Input path is not a file: %s", args.input)
                 return
             # Check file size to prevent memory issues
             if input_path.stat().st_size > 100 * 1024 * 1024:  # 100MB limit
-                console.print("[red]Input file too large (max 100MB)[/red]")
+                logger.error("Input file too large (max 100MB)")
                 return
             initial_input = str(input_path)
         except Exception as e:
-            console.print(f"[red]Invalid input path: {e}[/red]")
+            logger.error("Invalid input path: %s", e, exc_info=True)
             return
     elif not sys.stdin.isatty():
         # Read from stdin with size limit
@@ -641,26 +644,26 @@ Examples:
                     break
                 bytes_read += len(chunk.encode("utf-8"))
                 if bytes_read > max_stdin_size:
-                    console.print("[red]Stdin input too large (max 10MB)[/red]")
+                    logger.error("Stdin input too large (max 10MB)")
                     return
                 initial_input += chunk
         except Exception as e:
-            console.print(f"[red]Error reading from stdin: {e}[/red]")
+            logger.error("Error reading from stdin: %s", e, exc_info=True)
             return
     else:
-        console.print("[red]No input provided. Use -i flag or pipe data to stdin.[/red]")
+        logger.error("No input provided. Use -i flag or pipe data to stdin.")
         return
 
     # Execute pipeline
     if args.verbose:
-        console.print(f"[bold]Executing pipeline:[/bold] {args.pipeline}")
+        logger.info("Executing pipeline: %s", args.pipeline)
 
     result = pipeline.execute(initial_input)
 
     if args.verbose:
-        console.print("\n[bold green]Pipeline completed![/bold green]")
+        logger.info("Pipeline completed!")
         if result:
-            console.print(f"[dim]Result type: {type(result).__name__}[/dim]")
+            logger.debug("Result type: %s", type(result).__name__)
 
 
 # Alias for easier importing

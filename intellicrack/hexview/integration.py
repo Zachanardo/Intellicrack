@@ -155,13 +155,11 @@ except ImportError as e:
                         pos = data.find(lp, idx)
                         if pos == -1:
                             break
-                        matches.append(
-                            {
-                                "offset": pos,
-                                "length": len(lp),
-                                "type": lp.decode("utf-8", errors="ignore"),
-                            }
-                        )
+                        matches.append({
+                            "offset": pos,
+                            "length": len(lp),
+                            "type": lp.decode("utf-8", errors="ignore"),
+                        })
                         idx = pos + 1
 
             return {

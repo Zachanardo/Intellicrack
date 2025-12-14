@@ -505,25 +505,25 @@ const DynamicScriptGenerator = {
         });
 
         try {
-          const modules = Process.enumerateModules();
-          const importAnalysis = {
-            suspiciousImports: [],
-            protectionAPIs: [],
-            networkAPIs: [],
-            cryptoAPIs: [],
-            debugAPIs: [],
-            licenseAPIs: [],
-          };
+            const modules = Process.enumerateModules();
+            const importAnalysis = {
+                suspiciousImports: [],
+                protectionAPIs: [],
+                networkAPIs: [],
+                cryptoAPIs: [],
+                debugAPIs: [],
+                licenseAPIs: [],
+            };
 
-          for (let i = 0; i < modules.length; i++) {
-              const module = modules[i];
+            for (let i = 0; i < modules.length; i++) {
+                const module = modules[i];
 
-              try {
-                  const imports = Module.enumerateImports(module.name);
+                try {
+                    const imports = Module.enumerateImports(module.name);
 
-                  for (let j = 0; j < imports.length; j++) {
-                      const imp = imports[j];
-                      this.categorizeImport(imp, importAnalysis);
+                    for (let j = 0; j < imports.length; j++) {
+                        const imp = imports[j];
+                        this.categorizeImport(imp, importAnalysis);
                     }
                 } catch (_e) {}
             }
@@ -548,36 +548,36 @@ const DynamicScriptGenerator = {
     },
 
     categorizeImport: (importEntry, analysis) => {
-      const name = importEntry.name.toLowerCase();
-      const _module = importEntry.module.toLowerCase();
+        const name = importEntry.name.toLowerCase();
+        const _module = importEntry.module.toLowerCase();
 
-      // Anti-debug APIs
-      const debugAPIs = [
-        'isdebuggerpresent',
-        'checkremotedebuggerpresent',
-        'ntqueryinformationprocess',
-        'outputdebugstring',
-        'debugbreak',
-        'debugactiveprocess',
-      ];
+        // Anti-debug APIs
+        const debugAPIs = [
+            'isdebuggerpresent',
+            'checkremotedebuggerpresent',
+            'ntqueryinformationprocess',
+            'outputdebugstring',
+            'debugbreak',
+            'debugactiveprocess',
+        ];
 
-      if (debugAPIs.some(api => name.includes(api))) {
+        if (debugAPIs.some(api => name.includes(api))) {
             analysis.debugAPIs.push(importEntry);
             analysis.suspiciousImports.push({ type: 'debug', entry: importEntry });
         }
 
         // Protection APIs
-      const protectionAPIs = [
-        'cryptencrypt',
-        'cryptdecrypt',
-        'crypthashdata',
-        'bcryptencrypt',
-        'virtualprotect',
-        'virtualallocex',
-        'createremotethread',
-      ];
+        const protectionAPIs = [
+            'cryptencrypt',
+            'cryptdecrypt',
+            'crypthashdata',
+            'bcryptencrypt',
+            'virtualprotect',
+            'virtualallocex',
+            'createremotethread',
+        ];
 
-      if (protectionAPIs.some(api => name.includes(api))) {
+        if (protectionAPIs.some(api => name.includes(api))) {
             analysis.protectionAPIs.push(importEntry);
             analysis.suspiciousImports.push({
                 type: 'protection',
@@ -586,31 +586,31 @@ const DynamicScriptGenerator = {
         }
 
         // Network APIs
-      const networkAPIs = [
-        'winhttpsendrequest',
-        'internetreadfile',
-        'socket',
-        'connect',
-        'send',
-        'recv',
-        'wsastartup',
-      ];
+        const networkAPIs = [
+            'winhttpsendrequest',
+            'internetreadfile',
+            'socket',
+            'connect',
+            'send',
+            'recv',
+            'wsastartup',
+        ];
 
-      if (networkAPIs.some(api => name.includes(api))) {
+        if (networkAPIs.some(api => name.includes(api))) {
             analysis.networkAPIs.push(importEntry);
         }
 
         // License-related APIs
-      const licenseAPIs = [
-        'regopenkey',
-        'regqueryvalue',
-        'createfile',
-        'readfile',
-        'getcomputername',
-        'getvolumeinfo',
-      ];
+        const licenseAPIs = [
+            'regopenkey',
+            'regqueryvalue',
+            'createfile',
+            'readfile',
+            'getcomputername',
+            'getvolumeinfo',
+        ];
 
-      if (licenseAPIs.some(api => name.includes(api))) {
+        if (licenseAPIs.some(api => name.includes(api))) {
             analysis.licenseAPIs.push(importEntry);
         }
     },
@@ -623,23 +623,25 @@ const DynamicScriptGenerator = {
         });
 
         try {
-          const stringAnalysis = {
-            protectionStrings: [],
-            debugStrings: [],
-            licenseStrings: [],
-            errorMessages: [],
-            urls: [],
-            filepaths: [],
-          };
+            const stringAnalysis = {
+                protectionStrings: [],
+                debugStrings: [],
+                licenseStrings: [],
+                errorMessages: [],
+                urls: [],
+                filepaths: [],
+            };
 
-          // Search for strings in loaded modules
-          const modules = Process.enumerateModules();
+            // Search for strings in loaded modules
+            const modules = Process.enumerateModules();
 
-          for (let i = 0; i < modules.length; i++) {
-              const module = modules[i];
+            for (let i = 0; i < modules.length; i++) {
+                const module = modules[i];
 
-              // Skip system modules
-                if (this.isSystemModule(module.name)) { continue; }
+                // Skip system modules
+                if (this.isSystemModule(module.name)) {
+                    continue;
+                }
 
                 try {
                     this.scanModuleForStrings(module, stringAnalysis);
@@ -669,58 +671,58 @@ const DynamicScriptGenerator = {
         // Comprehensive string scanning implementation
         // Scans module memory for protection keywords and URL patterns
 
-      const protectionKeywords = [
-        'debugger',
-        'cracked',
-        'patched',
-        'tampered',
-        'license',
-        'trial',
-        'expired',
-        'invalid',
-        'piracy',
-        'authentic',
-        'genuine',
-        'registration',
-      ];
+        const protectionKeywords = [
+            'debugger',
+            'cracked',
+            'patched',
+            'tampered',
+            'license',
+            'trial',
+            'expired',
+            'invalid',
+            'piracy',
+            'authentic',
+            'genuine',
+            'registration',
+        ];
 
-      const urlPatterns = ['https://', 'https://', 'ftp://', 'license-server', 'activation'];
+        const urlPatterns = ['https://', 'https://', 'ftp://', 'license-server', 'activation'];
 
-      // Scan module memory sections for protection strings
+        // Scan module memory sections for protection strings
         try {
             // Get module memory ranges
-          const ranges = Process.enumerateRangesSync({
-            protection: 'r--',
-            coalesce: false,
-          }).filter(
-            range =>
-              range.file?.path &&
-              range.file.path.toLowerCase().indexOf(module.name.toLowerCase()) !== -1
-          );
+            const ranges = Process.enumerateRangesSync({
+                protection: 'r--',
+                coalesce: false,
+            }).filter(
+                range =>
+                    range.file?.path &&
+                    range.file.path.toLowerCase().indexOf(module.name.toLowerCase()) !== -1
+            );
 
-          for (let r = 0; r < ranges.length; r++) {
+            for (let r = 0; r < ranges.length; r++) {
                 var range = ranges[r];
 
                 for (let i = 0; i < protectionKeywords.length; i++) {
-                  const keyword = protectionKeywords[i];
-                  const keywordBytes = Memory.allocUtf8String(keyword);
+                    const keyword = protectionKeywords[i];
+                    const keywordBytes = Memory.allocUtf8String(keyword);
 
-                  try {
+                    try {
                         // Scan for ASCII strings
-                      const matches = Memory.scanSync(
-                        range.base,
-                        range.size,
-                        Memory.readByteArray(keywordBytes, keyword.length)
-                      );
+                        const matches = Memory.scanSync(
+                            range.base,
+                            range.size,
+                            Memory.readByteArray(keywordBytes, keyword.length)
+                        );
 
-                      for (let m = 0; m < matches.length; m++) {
-                          const match = matches[m];
-                          // Verify it's a complete string (not part of larger data)
-                          let context = '';
-                          try {
-                              const beforeByte = match.address.sub(1).readU8();
-                              const afterByte = match.address.add(keyword.length).readU8();
-                              if (
+                        for (let m = 0; m < matches.length; m++) {
+                            const match = matches[m];
+                            // Verify it's a complete string (not part of larger data)
+                            let context = '';
+                            try {
+                                const beforeByte = match.address.sub(1).readU8();
+                                const afterByte = match.address.add(keyword.length).readU8();
+                                if (
                                     (beforeByte === 0 || beforeByte < 32) &&
                                     (afterByte === 0 || afterByte < 32)
                                 ) {
@@ -742,16 +744,16 @@ const DynamicScriptGenerator = {
                         }
 
                         // Also scan for wide character (UTF-16) version
-                      const widePattern = [];
-                      for (let c = 0; c < keyword.length; c++) {
+                        const widePattern = [];
+                        for (let c = 0; c < keyword.length; c++) {
                             widePattern.push(keyword.charCodeAt(c));
                             widePattern.push(0);
                         }
 
-                      const wideMatches = Memory.scanSync(range.base, range.size, widePattern);
-                      for (let wm = 0; wm < wideMatches.length; wm++) {
-                          const wideMatch = wideMatches[wm];
-                          analysis.protectionStrings.push({
+                        const wideMatches = Memory.scanSync(range.base, range.size, widePattern);
+                        for (let wm = 0; wm < wideMatches.length; wm++) {
+                            const wideMatch = wideMatches[wm];
+                            analysis.protectionStrings.push({
                                 string: keyword,
                                 module: module.name,
                                 address: wideMatch.address,
@@ -764,21 +766,21 @@ const DynamicScriptGenerator = {
 
                 // Scan for URL patterns in this range
                 for (let u = 0; u < urlPatterns.length; u++) {
-                  const urlPattern = urlPatterns[u];
-                  const urlBytes = Memory.allocUtf8String(urlPattern);
+                    const urlPattern = urlPatterns[u];
+                    const urlBytes = Memory.allocUtf8String(urlPattern);
 
-                  try {
-                      const urlMatches = Memory.scanSync(
-                        range.base,
-                        range.size,
-                        Memory.readByteArray(urlBytes, urlPattern.length)
-                      );
+                    try {
+                        const urlMatches = Memory.scanSync(
+                            range.base,
+                            range.size,
+                            Memory.readByteArray(urlBytes, urlPattern.length)
+                        );
 
-                      for (let um = 0; um < urlMatches.length; um++) {
-                          const urlMatch = urlMatches[um];
-                          // Try to read more context around URL
-                          let fullUrl = '';
-                          try {
+                        for (let um = 0; um < urlMatches.length; um++) {
+                            const urlMatch = urlMatches[um];
+                            // Try to read more context around URL
+                            let fullUrl = '';
+                            try {
                                 fullUrl = urlMatch.address.readCString(128);
                             } catch (_e) {
                                 fullUrl = urlPattern;
@@ -815,18 +817,18 @@ const DynamicScriptGenerator = {
         });
 
         try {
-          const mainModule = Process.enumerateModules()[0];
-          const peAnalysis = {
-            entryPoint: mainModule.base,
-            imageBase: mainModule.base,
-            imageSize: mainModule.size,
-            sections: [],
-            entropy: {},
-            packedIndicators: [],
-            protectionIndicators: [],
-          };
+            const mainModule = Process.enumerateModules()[0];
+            const peAnalysis = {
+                entryPoint: mainModule.base,
+                imageBase: mainModule.base,
+                imageSize: mainModule.size,
+                sections: [],
+                entropy: {},
+                packedIndicators: [],
+                protectionIndicators: [],
+            };
 
-          // Analyze sections
+            // Analyze sections
             this.analyzePESections(mainModule, peAnalysis);
 
             // Calculate entropy
@@ -857,17 +859,17 @@ const DynamicScriptGenerator = {
         // This is a simplified PE section analysis
         // In practice, you'd parse the actual PE headers
 
-      const commonSections = [
-        {name: '.text', characteristics: 'executable', entropy: 0.6},
-        {name: '.data', characteristics: 'writable', entropy: 0.3},
-        {name: '.rdata', characteristics: 'readable', entropy: 0.4},
-        {name: '.rsrc', characteristics: 'resources', entropy: 0.7},
-      ];
+        const commonSections = [
+            { name: '.text', characteristics: 'executable', entropy: 0.6 },
+            { name: '.data', characteristics: 'writable', entropy: 0.3 },
+            { name: '.rdata', characteristics: 'readable', entropy: 0.4 },
+            { name: '.rsrc', characteristics: 'resources', entropy: 0.7 },
+        ];
 
-      for (let i = 0; i < commonSections.length; i++) {
-          const section = commonSections[i];
+        for (let i = 0; i < commonSections.length; i++) {
+            const section = commonSections[i];
 
-          analysis.sections.push({
+            analysis.sections.push({
                 name: section.name,
                 virtualAddress: ptr(module.base).add(i * 0x1000),
                 size: 0x1000,
@@ -891,97 +893,99 @@ const DynamicScriptGenerator = {
 
     detectPackingIndicators: function (analysis) {
         // Packer signatures database
-      const packerSignatures = {
-        UPX: {
-          sections: ['UPX0', 'UPX1', 'UPX2'],
-          entryPoint: [0x60, 0xbe], // PUSHA; MOV ESI
-          magic: 0x21585055, // "UPX!"
-        },
-        Themida: {
-          sections: ['.themida', '.WinLicense'],
-          entryPoint: [0xb8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
-          imports: ['SecureEngineCustom'],
-        },
-        VMProtect: {
-          sections: ['.vmp0', '.vmp1', '.vmp2'],
-          entryPoint: [0x68], // PUSH
-          patterns: [0x9c, 0x60, 0xe8], // PUSHFD; PUSHA; CALL
-        },
-        ASProtect: {
-          sections: ['.aspack', '.adata', '.aspr'],
-          entryPoint: [0x60, 0xe8, 0x03], // PUSHA; CALL
-          overlay: true,
-        },
-        Armadillo: {
-          sections: ['.text', '.data', '.pdata'],
-          entryPoint: [0x60, 0xe8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
-          debugCheck: true,
-        },
-      };
+        const packerSignatures = {
+            UPX: {
+                sections: ['UPX0', 'UPX1', 'UPX2'],
+                entryPoint: [0x60, 0xbe], // PUSHA; MOV ESI
+                magic: 0x21585055, // "UPX!"
+            },
+            Themida: {
+                sections: ['.themida', '.WinLicense'],
+                entryPoint: [0xb8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
+                imports: ['SecureEngineCustom'],
+            },
+            VMProtect: {
+                sections: ['.vmp0', '.vmp1', '.vmp2'],
+                entryPoint: [0x68], // PUSH
+                patterns: [0x9c, 0x60, 0xe8], // PUSHFD; PUSHA; CALL
+            },
+            ASProtect: {
+                sections: ['.aspack', '.adata', '.aspr'],
+                entryPoint: [0x60, 0xe8, 0x03], // PUSHA; CALL
+                overlay: true,
+            },
+            Armadillo: {
+                sections: ['.text', '.data', '.pdata'],
+                entryPoint: [0x60, 0xe8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
+                debugCheck: true,
+            },
+        };
 
-      // Get main module for analysis
-      const mainModule = Process.enumerateModules()[0];
-      if (!mainModule) {
+        // Get main module for analysis
+        const mainModule = Process.enumerateModules()[0];
+        if (!mainModule) {
             analysis.packedIndicators = ['module_enumeration_failed'];
             return;
         }
 
-      const peHeader = mainModule.base;
-      const dos = peHeader.readU16();
+        const peHeader = mainModule.base;
+        const dos = peHeader.readU16();
 
-      if (dos === 0x5a4d) {
+        if (dos === 0x5a4d) {
             // MZ signature
-          const peOffset = peHeader.add(0x3c).readU32();
-          const peSignature = peHeader.add(peOffset).readU32();
+            const peOffset = peHeader.add(0x3c).readU32();
+            const peSignature = peHeader.add(peOffset).readU32();
 
-          if (peSignature === 0x00004550) {
+            if (peSignature === 0x00004550) {
                 // PE\0\0 signature
                 // Check entry point for packer patterns
-              const optionalHeaderOffset = peOffset + 0x18;
-              const addressOfEntryPoint = peHeader.add(optionalHeaderOffset + 0x10).readU32();
-              const entryPointVA = mainModule.base.add(addressOfEntryPoint);
-              const entryBytes = entryPointVA.readByteArray(16);
+                const optionalHeaderOffset = peOffset + 0x18;
+                const addressOfEntryPoint = peHeader.add(optionalHeaderOffset + 0x10).readU32();
+                const entryPointVA = mainModule.base.add(addressOfEntryPoint);
+                const entryBytes = entryPointVA.readByteArray(16);
 
-              // Check sections for packer indicators
-              const numberOfSections = peHeader.add(peOffset + 0x6).readU16();
-              const sectionHeaderOffset =
-                optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
+                // Check sections for packer indicators
+                const numberOfSections = peHeader.add(peOffset + 0x6).readU16();
+                const sectionHeaderOffset =
+                    optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
 
-              for (let packerName in packerSignatures) {
-                  const sig = packerSignatures[packerName];
-                  let confidence = 0;
+                for (let packerName in packerSignatures) {
+                    const sig = packerSignatures[packerName];
+                    let confidence = 0;
 
-                  // Check entry point signature
+                    // Check entry point signature
                     if (sig.entryPoint && entryBytes) {
-                      let matched = true;
-                      for (var i = 0; i < sig.entryPoint.length && i < entryBytes.length; i++) {
+                        let matched = true;
+                        for (var i = 0; i < sig.entryPoint.length && i < entryBytes.length; i++) {
                             if (sig.entryPoint[i] !== entryBytes[i]) {
                                 matched = false;
                                 break;
                             }
                         }
-                        if (matched) { confidence += 0.4; }
+                        if (matched) {
+                            confidence += 0.4;
+                        }
                     }
 
                     // Check section names
                     for (var i = 0; i < numberOfSections; i++) {
-                      const sectionHeader = peHeader.add(sectionHeaderOffset + i * 0x28);
-                      const sectionName = sectionHeader.readCString(8);
+                        const sectionHeader = peHeader.add(sectionHeaderOffset + i * 0x28);
+                        const sectionName = sectionHeader.readCString(8);
 
-                      if (sig.sections && sig.sections.indexOf(sectionName) !== -1) {
+                        if (sig.sections && sig.sections.indexOf(sectionName) !== -1) {
                             confidence += 0.3;
                             break;
                         }
                     }
 
                     // Check for high entropy (indicates compression/encryption)
-                  const textSection = Process.findRangeByAddress(entryPointVA);
-                  if (textSection) {
-                      const entropy = this.calculateEntropy(
-                        textSection.base,
-                        Math.min(0x1000, textSection.size)
-                      );
-                      if (entropy > 6.5) {
+                    const textSection = Process.findRangeByAddress(entryPointVA);
+                    if (textSection) {
+                        const entropy = this.calculateEntropy(
+                            textSection.base,
+                            Math.min(0x1000, textSection.size)
+                        );
+                        if (entropy > 6.5) {
                             // High entropy threshold
                             confidence += 0.2;
                         }
@@ -989,8 +993,8 @@ const DynamicScriptGenerator = {
 
                     // Check import table for packer-specific imports
                     if (sig.imports) {
-                      const imports = Process.enumerateImports(mainModule.name);
-                      for (let j = 0; j < imports.length; j++) {
+                        const imports = Process.enumerateImports(mainModule.name);
+                        for (let j = 0; j < imports.length; j++) {
                             if (sig.imports.indexOf(imports[j].name) !== -1) {
                                 confidence += 0.1;
                                 break;
@@ -1019,14 +1023,14 @@ const DynamicScriptGenerator = {
             action: 'starting_api_usage_tracing',
         });
 
-      const apiTrace = {
-        calls: [],
-        patterns: {},
-        hotspots: [],
-        suspiciousActivity: [],
-      };
+        const apiTrace = {
+            calls: [],
+            patterns: {},
+            hotspots: [],
+            suspiciousActivity: [],
+        };
 
-      // Hook common API categories
+        // Hook common API categories
         this.hookAPICategory('kernel32.dll', ['CreateFile', 'ReadFile', 'WriteFile'], apiTrace);
         this.hookAPICategory(
             'advapi32.dll',
@@ -1049,11 +1053,11 @@ const DynamicScriptGenerator = {
 
     hookAPICategory: (module, functions, trace) => {
         for (let i = 0; i < functions.length; i++) {
-          const funcName = functions[i];
+            const funcName = functions[i];
 
-          try {
-              const apiFunc = Module.findExportByName(module, funcName);
-              if (apiFunc) {
+            try {
+                const apiFunc = Module.findExportByName(module, funcName);
+                if (apiFunc) {
                     Interceptor.attach(apiFunc, {
                         onEnter: function (_args) {
                             this.startTime = Date.now();
@@ -1062,9 +1066,9 @@ const DynamicScriptGenerator = {
                         },
 
                         onLeave: function (retval) {
-                          const duration = Date.now() - this.startTime;
+                            const duration = Date.now() - this.startTime;
 
-                          trace.calls.push({
+                            trace.calls.push({
                                 function: this.funcName,
                                 module: this.module,
                                 timestamp: Date.now(),
@@ -1082,9 +1086,9 @@ const DynamicScriptGenerator = {
     },
 
     updateAPIPatterns: (trace, funcName, module) => {
-      const key = `${module}!${funcName}`;
+        const key = `${module}!${funcName}`;
 
-      if (!trace.patterns[key]) {
+        if (!trace.patterns[key]) {
             trace.patterns[key] = {
                 callCount: 0,
                 avgDuration: 0,
@@ -1094,8 +1098,8 @@ const DynamicScriptGenerator = {
             };
         }
 
-      const pattern = trace.patterns[key];
-      pattern.callCount++;
+        const pattern = trace.patterns[key];
+        pattern.callCount++;
         pattern.lastCall = Date.now();
 
         // Update other metrics would be calculated here
@@ -1108,8 +1112,8 @@ const DynamicScriptGenerator = {
             action: 'analyzing_api_usage_patterns',
         });
 
-      const totalCalls = trace.calls.length;
-      send({
+        const totalCalls = trace.calls.length;
+        send({
             type: 'info',
             target: 'dynamic_script_generator',
             action: 'api_calls_recorded',
@@ -1118,9 +1122,9 @@ const DynamicScriptGenerator = {
 
         // Identify hotspots (frequently called APIs)
         for (let key in trace.patterns) {
-          const pattern = trace.patterns[key];
+            const pattern = trace.patterns[key];
 
-          if (pattern.callCount > totalCalls * 0.1) {
+            if (pattern.callCount > totalCalls * 0.1) {
                 // More than 10% of calls
                 trace.hotspots.push({
                     api: key,
@@ -1136,16 +1140,16 @@ const DynamicScriptGenerator = {
 
     detectSuspiciousAPIActivity: trace => {
         // Look for protection-related API patterns
-      const protectionAPIs = [
-        'kernel32.dll!IsDebuggerPresent',
-        'ntdll.dll!NtQueryInformationProcess',
-        'advapi32.dll!RegQueryValue',
-      ];
+        const protectionAPIs = [
+            'kernel32.dll!IsDebuggerPresent',
+            'ntdll.dll!NtQueryInformationProcess',
+            'advapi32.dll!RegQueryValue',
+        ];
 
-      for (let i = 0; i < protectionAPIs.length; i++) {
-          const api = protectionAPIs[i];
+        for (let i = 0; i < protectionAPIs.length; i++) {
+            const api = protectionAPIs[i];
 
-          if (trace.patterns[api] && trace.patterns[api].callCount > 5) {
+            if (trace.patterns[api] && trace.patterns[api].callCount > 5) {
                 trace.suspiciousActivity.push({
                     type: 'protection_check',
                     api: api,
@@ -1251,9 +1255,9 @@ const DynamicScriptGenerator = {
 
         this.analysisState.currentPhase = 'protection_detection';
 
-      let detectedProtections = [];
+        let detectedProtections = [];
 
-      // Analyze collected data for protection mechanisms
+        // Analyze collected data for protection mechanisms
         detectedProtections = detectedProtections.concat(this.detectAntiDebugMechanisms());
         detectedProtections = detectedProtections.concat(this.detectPackingMechanisms());
         detectedProtections = detectedProtections.concat(this.detectLicensingMechanisms());
@@ -1272,13 +1276,13 @@ const DynamicScriptGenerator = {
     },
 
     detectAntiDebugMechanisms: function () {
-      const mechanisms = [];
+        const mechanisms = [];
 
-      // Check import table for anti-debug APIs
+        // Check import table for anti-debug APIs
         if (this.analysisResults.binaryInfo.imports) {
-          const imports = this.analysisResults.binaryInfo.imports;
+            const imports = this.analysisResults.binaryInfo.imports;
 
-          if (imports.debugAPIs.length > 0) {
+            if (imports.debugAPIs.length > 0) {
                 mechanisms.push({
                     type: 'anti_debug',
                     subtype: 'api_based',
@@ -1292,15 +1296,13 @@ const DynamicScriptGenerator = {
         }
 
         // Check API usage patterns
-        if (
-            this.analysisResults.apiUsagePatterns?.suspiciousActivity
-        ) {
-          const suspicious = this.analysisResults.apiUsagePatterns.suspiciousActivity;
+        if (this.analysisResults.apiUsagePatterns?.suspiciousActivity) {
+            const suspicious = this.analysisResults.apiUsagePatterns.suspiciousActivity;
 
-          for (let i = 0; i < suspicious.length; i++) {
-              const activity = suspicious[i];
+            for (let i = 0; i < suspicious.length; i++) {
+                const activity = suspicious[i];
 
-              if (activity.type === 'protection_check') {
+                if (activity.type === 'protection_check') {
                     mechanisms.push({
                         type: 'anti_debug',
                         subtype: 'runtime_checks',
@@ -1316,13 +1318,13 @@ const DynamicScriptGenerator = {
     },
 
     detectPackingMechanisms: function () {
-      const mechanisms = [];
+        const mechanisms = [];
 
-      // Check PE structure analysis results
+        // Check PE structure analysis results
         if (this.analysisResults.binaryInfo.peStructure) {
-          const pe = this.analysisResults.binaryInfo.peStructure;
+            const pe = this.analysisResults.binaryInfo.peStructure;
 
-          if (pe.packedIndicators.length > 0) {
+            if (pe.packedIndicators.length > 0) {
                 mechanisms.push({
                     type: 'packing',
                     subtype: 'executable_packing',
@@ -1347,23 +1349,21 @@ const DynamicScriptGenerator = {
     },
 
     detectLicensingMechanisms: function () {
-      const mechanisms = [];
+        const mechanisms = [];
 
-      // Check for license-related strings
-        if (
-            this.analysisResults.stringPatterns?.protectionStrings
-        ) {
-          const strings = this.analysisResults.stringPatterns.protectionStrings;
+        // Check for license-related strings
+        if (this.analysisResults.stringPatterns?.protectionStrings) {
+            const strings = this.analysisResults.stringPatterns.protectionStrings;
 
-          const licenseStrings = strings.filter(
-            s =>
-              s.string.includes('license') ||
-              s.string.includes('trial') ||
-              s.string.includes('registration') ||
-              s.string.includes('activation')
-          );
+            const licenseStrings = strings.filter(
+                s =>
+                    s.string.includes('license') ||
+                    s.string.includes('trial') ||
+                    s.string.includes('registration') ||
+                    s.string.includes('activation')
+            );
 
-          if (licenseStrings.length > 0) {
+            if (licenseStrings.length > 0) {
                 mechanisms.push({
                     type: 'licensing',
                     subtype: 'license_validation',
@@ -1375,12 +1375,10 @@ const DynamicScriptGenerator = {
         }
 
         // Check for license-related API usage
-        if (
-            this.analysisResults.binaryInfo.imports?.licenseAPIs
-        ) {
-          const licenseAPIs = this.analysisResults.binaryInfo.imports.licenseAPIs;
+        if (this.analysisResults.binaryInfo.imports?.licenseAPIs) {
+            const licenseAPIs = this.analysisResults.binaryInfo.imports.licenseAPIs;
 
-          if (licenseAPIs.length > 3) {
+            if (licenseAPIs.length > 3) {
                 mechanisms.push({
                     type: 'licensing',
                     subtype: 'system_checks',
@@ -1395,20 +1393,20 @@ const DynamicScriptGenerator = {
     },
 
     detectDRMMechanisms: function () {
-      const mechanisms = [];
+        const mechanisms = [];
 
-      // Check for DRM-related imports
+        // Check for DRM-related imports
         if (this.analysisResults.binaryInfo.imports) {
-          const imports = this.analysisResults.binaryInfo.imports;
+            const imports = this.analysisResults.binaryInfo.imports;
 
-          const drmAPIs = imports.protectionAPIs.filter(
-            api =>
-              api.name.toLowerCase().includes('crypt') ||
-              api.name.toLowerCase().includes('drm') ||
-              api.name.toLowerCase().includes('media')
-          );
+            const drmAPIs = imports.protectionAPIs.filter(
+                api =>
+                    api.name.toLowerCase().includes('crypt') ||
+                    api.name.toLowerCase().includes('drm') ||
+                    api.name.toLowerCase().includes('media')
+            );
 
-          if (drmAPIs.length > 0) {
+            if (drmAPIs.length > 0) {
                 mechanisms.push({
                     type: 'drm',
                     subtype: 'content_protection',
@@ -1432,10 +1430,10 @@ const DynamicScriptGenerator = {
 
         this.analysisState.currentPhase = 'script_generation';
 
-      const scriptPlan = this.createScriptPlan();
-      const generatedScript = this.generateScript(scriptPlan);
+        const scriptPlan = this.createScriptPlan();
+        const generatedScript = this.generateScript(scriptPlan);
 
-      this.generatedScripts[`optimal_bypass_${Date.now()}`] = generatedScript;
+        this.generatedScripts[`optimal_bypass_${Date.now()}`] = generatedScript;
         this.stats.scriptsGenerated++;
 
         send({
@@ -1453,26 +1451,26 @@ const DynamicScriptGenerator = {
             action: 'creating_script_execution_plan',
         });
 
-      const plan = {
-        strategies: [],
-        priorities: [],
-        dependencies: [],
-        executionOrder: [],
-        fallbackStrategies: [],
-        performanceSettings: {},
-        metadata: {
-          generatedAt: Date.now(),
-          analysisResults: this.analysisResults,
-          confidenceScore: 0,
-        },
-      };
+        const plan = {
+            strategies: [],
+            priorities: [],
+            dependencies: [],
+            executionOrder: [],
+            fallbackStrategies: [],
+            performanceSettings: {},
+            metadata: {
+                generatedAt: Date.now(),
+                analysisResults: this.analysisResults,
+                confidenceScore: 0,
+            },
+        };
 
-      // Analyze detected protection mechanisms and create strategies
+        // Analyze detected protection mechanisms and create strategies
         for (let i = 0; i < this.analysisResults.protectionMechanisms.length; i++) {
-          const mechanism = this.analysisResults.protectionMechanisms[i];
-          const strategy = this.createBypassStrategy(mechanism);
+            const mechanism = this.analysisResults.protectionMechanisms[i];
+            const strategy = this.createBypassStrategy(mechanism);
 
-          if (strategy) {
+            if (strategy) {
                 plan.strategies.push(strategy);
                 plan.priorities.push({
                     strategy: strategy.id,
@@ -1487,8 +1485,8 @@ const DynamicScriptGenerator = {
         plan.executionOrder = plan.priorities.map(p => p.strategy);
 
         // Calculate overall confidence
-      const totalConfidence = plan.priorities.reduce((sum, p) => sum + p.confidence, 0);
-      plan.metadata.confidenceScore = totalConfidence / plan.priorities.length;
+        const totalConfidence = plan.priorities.reduce((sum, p) => sum + p.confidence, 0);
+        plan.metadata.confidenceScore = totalConfidence / plan.priorities.length;
 
         send({
             type: 'info',
@@ -1502,9 +1500,9 @@ const DynamicScriptGenerator = {
     },
 
     createBypassStrategy: function (mechanism) {
-      let strategy = null;
+        let strategy = null;
 
-      switch (mechanism.type) {
+        switch (mechanism.type) {
             case 'anti_debug':
                 strategy = this.createAntiDebugStrategy(mechanism);
                 break;
@@ -1534,26 +1532,26 @@ const DynamicScriptGenerator = {
     },
 
     createAntiDebugStrategy: function (mechanism) {
-      const strategy = {
-        id: `antidebug_${Date.now()}`,
-        type: 'anti_debug_bypass',
-        mechanism: mechanism,
-        effectiveness: 0.9,
-        template: null,
-        customizations: {},
-        hooks: [],
-        description: 'Anti-debug bypass strategy',
-      };
+        const strategy = {
+            id: `antidebug_${Date.now()}`,
+            type: 'anti_debug_bypass',
+            mechanism: mechanism,
+            effectiveness: 0.9,
+            template: null,
+            customizations: {},
+            hooks: [],
+            description: 'Anti-debug bypass strategy',
+        };
 
-      if (mechanism.subtype === 'api_based') {
+        if (mechanism.subtype === 'api_based') {
             strategy.template = this.scriptTemplates.antiDebug.basic;
             strategy.effectiveness = 0.95;
 
             // Customize based on specific APIs found
             for (let i = 0; i < mechanism.evidence.length; i++) {
-              const api = mechanism.evidence[i];
+                const api = mechanism.evidence[i];
 
-              strategy.hooks.push({
+                strategy.hooks.push({
                     target: api.name,
                     module: api.module,
                     strategy: 'replace_return',
@@ -1574,30 +1572,30 @@ const DynamicScriptGenerator = {
     },
 
     createLicenseBypassStrategy: function (mechanism) {
-      const strategy = {
-        id: `license_${Date.now()}`,
-        type: 'license_bypass',
-        mechanism: mechanism,
-        effectiveness: 0.8,
-        template: null,
-        customizations: {},
-        hooks: [],
-        description: 'License validation bypass strategy',
-      };
+        const strategy = {
+            id: `license_${Date.now()}`,
+            type: 'license_bypass',
+            mechanism: mechanism,
+            effectiveness: 0.8,
+            template: null,
+            customizations: {},
+            hooks: [],
+            description: 'License validation bypass strategy',
+        };
 
-      if (mechanism.subtype === 'license_validation') {
+        if (mechanism.subtype === 'license_validation') {
             strategy.template = this.scriptTemplates.licensing.local;
 
             // Add hooks for common license validation functions
-          const licenseHooks = [
-            'validateLicense',
-            'checkLicense',
-            'verifyLicense',
-            'isValidLicense',
-            'hasValidLicense',
-          ];
+            const licenseHooks = [
+                'validateLicense',
+                'checkLicense',
+                'verifyLicense',
+                'isValidLicense',
+                'hasValidLicense',
+            ];
 
-          for (let i = 0; i < licenseHooks.length; i++) {
+            for (let i = 0; i < licenseHooks.length; i++) {
                 strategy.hooks.push({
                     target: licenseHooks[i],
                     strategy: 'replace_return',
@@ -1621,23 +1619,23 @@ const DynamicScriptGenerator = {
             action: 'generating_script_from_plan',
         });
 
-      const script = {
-        metadata: {
-          name: 'Generated Bypass Script',
-          description: 'Automatically generated bypass script',
-          version: '1.0.0',
-          generatedAt: new Date().toISOString(),
-          confidence: plan.metadata.confidenceScore,
-          strategies: plan.strategies.length,
-        },
-        config: this.generateScriptConfig(plan),
-        implementation: this.generateScriptImplementation(plan),
-        hooks: this.generateScriptHooks(plan),
-        monitoring: this.generateScriptMonitoring(plan),
-        fullScript: '',
-      };
+        const script = {
+            metadata: {
+                name: 'Generated Bypass Script',
+                description: 'Automatically generated bypass script',
+                version: '1.0.0',
+                generatedAt: new Date().toISOString(),
+                confidence: plan.metadata.confidenceScore,
+                strategies: plan.strategies.length,
+            },
+            config: this.generateScriptConfig(plan),
+            implementation: this.generateScriptImplementation(plan),
+            hooks: this.generateScriptHooks(plan),
+            monitoring: this.generateScriptMonitoring(plan),
+            fullScript: '',
+        };
 
-      // Combine all parts into final script
+        // Combine all parts into final script
         script.fullScript = this.combineScriptParts(script);
 
         send({
@@ -1651,30 +1649,30 @@ const DynamicScriptGenerator = {
     },
 
     generateScriptConfig: plan => {
-      const config = {
-        enabled: true,
-        strategies: {},
-        performance: {
-          maxHooks: 100,
-          enableOptimization: true,
-          adaptiveInstrumentation: true,
-        },
-        logging: {
-          enabled: true,
-          level: 'info',
-          includeStackTraces: false,
-        },
-        fallback: {
-          enabled: true,
-          retryAttempts: 3,
-          fallbackStrategies: plan.fallbackStrategies,
-        },
-      };
+        const config = {
+            enabled: true,
+            strategies: {},
+            performance: {
+                maxHooks: 100,
+                enableOptimization: true,
+                adaptiveInstrumentation: true,
+            },
+            logging: {
+                enabled: true,
+                level: 'info',
+                includeStackTraces: false,
+            },
+            fallback: {
+                enabled: true,
+                retryAttempts: 3,
+                fallbackStrategies: plan.fallbackStrategies,
+            },
+        };
 
-      // Configure strategies
+        // Configure strategies
         for (let i = 0; i < plan.strategies.length; i++) {
-          const strategy = plan.strategies[i];
-          config.strategies[strategy.id] = {
+            const strategy = plan.strategies[i];
+            config.strategies[strategy.id] = {
                 enabled: true,
                 priority: plan.priorities.find(p => p.strategy === strategy.id).priority,
                 customizations: strategy.customizations,
@@ -1685,25 +1683,25 @@ const DynamicScriptGenerator = {
     },
 
     generateScriptImplementation: function (plan) {
-      const implementation = {
-        initFunction: this.generateInitFunction(plan),
-        runFunction: this.generateRunFunction(plan),
-        strategyFunctions: {},
-        utilityFunctions: this.generateUtilityFunctions(),
-        errorHandling: this.generateErrorHandling(),
-      };
+        const implementation = {
+            initFunction: this.generateInitFunction(plan),
+            runFunction: this.generateRunFunction(plan),
+            strategyFunctions: {},
+            utilityFunctions: this.generateUtilityFunctions(),
+            errorHandling: this.generateErrorHandling(),
+        };
 
-      // Generate strategy-specific functions
+        // Generate strategy-specific functions
         for (let i = 0; i < plan.strategies.length; i++) {
-          const strategy = plan.strategies[i];
-          implementation.strategyFunctions[strategy.id] = this.generateStrategyFunction(strategy);
+            const strategy = plan.strategies[i];
+            implementation.strategyFunctions[strategy.id] = this.generateStrategyFunction(strategy);
         }
 
         return implementation;
     },
 
     generateInitFunction: _plan => {
-      const initCode = `
+        const initCode = `
     onAttach: function(pid) {
         send({
             type: "status",
@@ -1721,11 +1719,11 @@ const DynamicScriptGenerator = {
         };
     },`;
 
-      return initCode;
+        return initCode;
     },
 
     generateRunFunction: plan => {
-      let runCode = `
+        let runCode = `
     run: function() {
         send({
             type: "status",
@@ -1741,9 +1739,9 @@ const DynamicScriptGenerator = {
 
         // Execute strategies in priority order`;
 
-      for (let i = 0; i < plan.executionOrder.length; i++) {
-          const strategyId = plan.executionOrder[i];
-          runCode += `
+        for (let i = 0; i < plan.executionOrder.length; i++) {
+            const strategyId = plan.executionOrder[i];
+            runCode += `
         this.execute_${strategyId}();`;
         }
 
@@ -1756,7 +1754,7 @@ const DynamicScriptGenerator = {
     },
 
     generateStrategyFunction: function (strategy) {
-      let functionCode = `
+        let functionCode = `
     execute_${strategy.id}: function() {
         send({
             type: "status",
@@ -1768,10 +1766,10 @@ const DynamicScriptGenerator = {
 
         try {`;
 
-      // Generate hooks for this strategy
+        // Generate hooks for this strategy
         for (let i = 0; i < strategy.hooks.length; i++) {
-          const hook = strategy.hooks[i];
-          functionCode += this.generateHookCode(hook);
+            const hook = strategy.hooks[i];
+            functionCode += this.generateHookCode(hook);
         }
 
         functionCode += `
@@ -1800,9 +1798,9 @@ const DynamicScriptGenerator = {
     },
 
     generateHookCode: hook => {
-      let hookCode = '';
+        let hookCode = '';
 
-      switch (hook.strategy) {
+        switch (hook.strategy) {
             case 'replace_return':
                 hookCode = `
             // Hook ${hook.target} - ${hook.description}
@@ -1857,7 +1855,7 @@ const DynamicScriptGenerator = {
     },
 
     combineScriptParts: script => {
-      let fullScript = `/**
+        let fullScript = `/**
  * Generated Bypass Script
  *
  * ${script.metadata.description}
@@ -1884,7 +1882,7 @@ const DynamicScriptGenerator = {
 
     ${script.implementation.runFunction}`;
 
-      // Add strategy functions
+        // Add strategy functions
         for (let strategyId in script.implementation.strategyFunctions) {
             fullScript += `\n${script.implementation.strategyFunctions[strategyId]}`;
         }
@@ -1957,15 +1955,15 @@ const DynamicScriptGenerator = {
 
         try {
             // Execute the generated script with proper error handling
-          const scriptEngine = new Function(
-            'Process',
-            'Module',
-            'Memory',
-            'Interceptor',
-            'send',
-            script
-          );
-          scriptEngine(Process, Module, Memory, Interceptor, send);
+            const scriptEngine = new Function(
+                'Process',
+                'Module',
+                'Memory',
+                'Interceptor',
+                'send',
+                script
+            );
+            scriptEngine(Process, Module, Memory, Interceptor, send);
 
             send({
                 type: 'info',
@@ -2014,20 +2012,20 @@ const DynamicScriptGenerator = {
         });
 
         // Hook network functions to detect license/activation traffic
-      const networkHooks = ['WinHttpSendRequest', 'InternetReadFile', 'connect', 'send'];
+        const networkHooks = ['WinHttpSendRequest', 'InternetReadFile', 'connect', 'send'];
 
-      for (let i = 0; i < networkHooks.length; i++) {
+        for (let i = 0; i < networkHooks.length; i++) {
             this.hookNetworkFunction(networkHooks[i]);
         }
     },
 
     hookNetworkFunction: functionName => {
         try {
-          const modules = ['winhttp.dll', 'wininet.dll', 'ws2_32.dll'];
+            const modules = ['winhttp.dll', 'wininet.dll', 'ws2_32.dll'];
 
-          for (let i = 0; i < modules.length; i++) {
-              const networkFunc = Module.findExportByName(modules[i], functionName);
-              if (networkFunc) {
+            for (let i = 0; i < modules.length; i++) {
+                const networkFunc = Module.findExportByName(modules[i], functionName);
+                if (networkFunc) {
                     Interceptor.attach(networkFunc, {
                         onEnter: function (_args) {
                             send({
@@ -2048,18 +2046,18 @@ const DynamicScriptGenerator = {
     },
 
     isSystemModule: moduleName => {
-      const systemModules = [
-        'ntdll.dll',
-        'kernel32.dll',
-        'kernelbase.dll',
-        'user32.dll',
-        'gdi32.dll',
-        'advapi32.dll',
-        'msvcrt.dll',
-        'shell32.dll',
-      ];
+        const systemModules = [
+            'ntdll.dll',
+            'kernel32.dll',
+            'kernelbase.dll',
+            'user32.dll',
+            'gdi32.dll',
+            'advapi32.dll',
+            'msvcrt.dll',
+            'shell32.dll',
+        ];
 
-      return systemModules.includes(moduleName.toLowerCase());
+        return systemModules.includes(moduleName.toLowerCase());
     },
 
     loadProtectionSignatures: () => ({
@@ -2807,12 +2805,12 @@ const DynamicScriptGenerator = {
 
     // === HELPER FUNCTIONS FOR v3.0.0 COMPONENTS ===
     initializeNeuralWeights: layers => {
-      const weights = [];
-      for (let i = 0; i < layers.length - 1; i++) {
-          const layerWeights = [];
-          for (let j = 0; j < layers[i]; j++) {
-              const nodeWeights = [];
-              for (let k = 0; k < layers[i + 1]; k++) {
+        const weights = [];
+        for (let i = 0; i < layers.length - 1; i++) {
+            const layerWeights = [];
+            for (let j = 0; j < layers[i]; j++) {
+                const nodeWeights = [];
+                for (let k = 0; k < layers[i + 1]; k++) {
                     nodeWeights.push((Math.random() * 2 - 1) * Math.sqrt(2.0 / layers[i]));
                 }
                 layerWeights.push(nodeWeights);
@@ -2823,10 +2821,10 @@ const DynamicScriptGenerator = {
     },
 
     initializeNeuralBiases: layers => {
-      const biases = [];
-      for (let i = 1; i < layers.length; i++) {
-          const layerBiases = [];
-          for (let j = 0; j < layers[i]; j++) {
+        const biases = [];
+        for (let i = 1; i < layers.length; i++) {
+            const layerBiases = [];
+            for (let j = 0; j < layers[i]; j++) {
                 layerBiases.push(Math.random() * 0.1);
             }
             biases.push(layerBiases);
@@ -2923,9 +2921,9 @@ const DynamicScriptGenerator = {
                 action: 'final_summary_start',
             });
 
-          const activeComponents = [];
+            const activeComponents = [];
 
-          if (this.config.analysis.enabled) {
+            if (this.config.analysis.enabled) {
                 activeComponents.push('Binary Analysis Engine');
             }
             if (this.config.protectionDetection.enabled) {
@@ -3102,7 +3100,7 @@ const DynamicScriptGenerator = {
             obfuscateStringLiterals: (code, variant) =>
                 code.replace(/"([^"]+)"/g, (_match, str) => {
                     const encoded = btoa(`${str}_v${variant}`);
-                    return `atob("${encoded}").slice(0, -${(`_v${variant}`).length})`;
+                    return `atob("${encoded}").slice(0, -${`_v${variant}`.length})`;
                 }),
             insertOpaquePredicates: code => {
                 const predicates = [
@@ -3286,7 +3284,7 @@ const DynamicScriptGenerator = {
                             Math.random();
                         }
                     },
-                    () => Date.now()% 997, // Prime number delay
+                    () => Date.now() % 997, // Prime number delay
                 ];
                 return jitterPatterns[Math.floor(Math.random() * jitterPatterns.length)];
             },
@@ -3476,11 +3474,11 @@ const DynamicScriptGenerator = {
 
                 memoryRegions.forEach(region => {
                     // Check for actual memory corruption patterns
-                  const baseAddr = Module.findBaseAddress(region);
-                  if (baseAddr) {
+                    const baseAddr = Module.findBaseAddress(region);
+                    if (baseAddr) {
                         try {
-                          const _header = baseAddr.readPointer();
-                          const expectedSig = 0x4d5a; // MZ signature
+                            const _header = baseAddr.readPointer();
+                            const expectedSig = 0x4d5a; // MZ signature
                             if (baseAddr.readU16() !== expectedSig) {
                                 issues.push(`memory_corruption_detected_in_${region}`);
                             }
@@ -3764,8 +3762,8 @@ const DynamicScriptGenerator = {
                 // Scan process memory for threat indicators
                 Process.enumerateModules().forEach(module => {
                     threatTypes.forEach(threatType => {
-                      const pattern = threatType.pattern || '00 00 00 00';
-                      Memory.scan(module.base, module.size, pattern, {
+                        const pattern = threatType.pattern || '00 00 00 00';
+                        Memory.scan(module.base, module.size, pattern, {
                             onMatch: (address, _size) => {
                                 threats.push({
                                     type: threatType,
@@ -4062,7 +4060,9 @@ const DynamicScriptGenerator = {
             ],
             makePrediction: function (modelType, inputData) {
                 const model = this.models.get(modelType);
-                if (!model) { return null; }
+                if (!model) {
+                    return null;
+                }
 
                 const prediction = {
                     model_type: modelType,
@@ -4518,10 +4518,18 @@ const DynamicScriptGenerator = {
                             // Detect actual protocols in use
                             const protocols = new Set();
                             // Check for SSL/TLS
-                            if (Module.findExportByName(null, 'SSL_write')) { protocols.add('https'); }
-                            if (Module.findExportByName(null, 'WSASend')) { protocols.add('wss'); }
-                            if (Module.findExportByName(null, 'send')) { protocols.add('tcp'); }
-                            if (Module.findExportByName(null, 'SSL_CTX_new')) { protocols.add('tls'); }
+                            if (Module.findExportByName(null, 'SSL_write')) {
+                                protocols.add('https');
+                            }
+                            if (Module.findExportByName(null, 'WSASend')) {
+                                protocols.add('wss');
+                            }
+                            if (Module.findExportByName(null, 'send')) {
+                                protocols.add('tcp');
+                            }
+                            if (Module.findExportByName(null, 'SSL_CTX_new')) {
+                                protocols.add('tls');
+                            }
                             return Array.from(protocols);
                         })(),
                         response_manipulation: {

@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import ctypes
+import logging
 import os
 import platform
 import socket
@@ -19,6 +20,9 @@ from typing import Any
 
 import frida
 import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 class FridaServerManager:
@@ -135,8 +139,8 @@ class FridaServerManager:
         """
         try:
             url = self._get_download_url()
-            print(f"[FridaServerManager] Downloading frida-server {self.frida_version}...")
-            print(f"[FridaServerManager] URL: {url}")
+            logger.info("Downloading frida-server %s...", self.frida_version)
+            logger.info("URL: %s", url)
 
             response = requests.get(url, timeout=60, stream=True)
             response.raise_for_status()
@@ -148,7 +152,7 @@ class FridaServerManager:
 
                 shutil.copyfileobj(response.raw, f)
 
-            print("[FridaServerManager] Decompressing frida-server...")
+            logger.info("Decompressing frida-server...")
             self._decompress_xz(compressed_path, self._get_server_path())
 
             compressed_path.unlink()
@@ -156,11 +160,11 @@ class FridaServerManager:
             if self._platform != "windows":
                 Path(self._get_server_path()).chmod(0o700)
 
-            print("[FridaServerManager] Download complete!")
+            logger.info("Download complete!")
             return True
 
         except Exception as e:
-            print(f"[FridaServerManager] Download failed: {e}")
+            logger.error("Download failed: %s", e, exc_info=True)
             return False
 
     def _decompress_xz(self, input_path: Path, output_path: Path) -> None:
@@ -191,7 +195,7 @@ class FridaServerManager:
         if server_path.exists():
             return True
 
-        print("[FridaServerManager] frida-server not found, downloading...")
+        logger.info("frida-server not found, downloading...")
         return self._download_frida_server()
 
     def _is_server_running(self) -> bool:
@@ -218,20 +222,20 @@ class FridaServerManager:
 
         """
         if self._is_server_running():
-            print("[FridaServerManager] frida-server already running")
+            logger.info("frida-server already running")
             return True
 
         if not self._ensure_server_installed():
-            print("[FridaServerManager] Failed to install frida-server")
+            logger.error("Failed to install frida-server")
             return False
 
         if not self._is_admin():
-            print("[FridaServerManager] WARNING: Not running as administrator")
-            print("[FridaServerManager] Frida may have limited capabilities")
+            logger.warning("Not running as administrator")
+            logger.warning("Frida may have limited capabilities")
 
         try:
             server_path = self._get_server_path()
-            print(f"[FridaServerManager] Starting frida-server from {server_path}...")
+            logger.info("Starting frida-server from %s...", server_path)
 
             if self._platform == "windows":
                 startupinfo = subprocess.STARTUPINFO()
@@ -251,14 +255,14 @@ class FridaServerManager:
             for _attempt in range(10):
                 time.sleep(0.5)
                 if self._is_server_running():
-                    print("[FridaServerManager] frida-server started successfully!")
+                    logger.info("frida-server started successfully!")
                     return True
 
-            print("[FridaServerManager] frida-server process started but not responding")
+            logger.warning("frida-server process started but not responding")
             return False
 
         except Exception as e:
-            print(f"[FridaServerManager] Failed to start frida-server: {e}")
+            logger.error("Failed to start frida-server: %s", e, exc_info=True)
             return False
 
     def stop(self) -> None:
@@ -272,9 +276,9 @@ class FridaServerManager:
                     self.server_process.kill()
                     self.server_process.wait()
 
-                print("[FridaServerManager] frida-server stopped")
+                logger.info("frida-server stopped")
             except Exception as e:
-                print(f"[FridaServerManager] Error stopping frida-server: {e}")
+                logger.error("Error stopping frida-server: %s", e, exc_info=True)
             finally:
                 self.server_process = None
 

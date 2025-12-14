@@ -249,7 +249,7 @@ class IntellicrackProtectionCore:
             self.icp_backend = ICPBackend()
             self._validate_engine_installation()
         except Exception as e:
-            logger.warning(f"ICP Backend initialization failed: {e}")
+            logger.warning("ICP Backend initialization failed: %s", e, exc_info=True)
             logger.info("Protection detection will use fallback methods")
             self.icp_backend = None
 
@@ -257,7 +257,7 @@ class IntellicrackProtectionCore:
         """Validate that native ICP Engine integration is working."""
         try:
             version = self.icp_backend.get_engine_version()
-            logger.info(f"ICP Engine: {version}")
+            logger.info("ICP Engine: %s", version)
 
             if not self.icp_backend.is_icp_available():
                 logger.error("ICP Engine library not available or not working")
@@ -267,7 +267,7 @@ class IntellicrackProtectionCore:
             logger.info("Native ICP Engine integration validated successfully")
             return True
         except Exception as e:
-            logger.error(f"Error validating native ICP Engine: {e}")
+            logger.error("Error validating native ICP Engine: %s", e, exc_info=True)
             return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
@@ -305,7 +305,7 @@ class IntellicrackProtectionCore:
                 loop.close()
 
             if icp_result.error:
-                logger.error(f"ICP analysis failed: {icp_result.error}")
+                logger.error("ICP analysis failed: %s", icp_result.error, exc_info=True)
                 return ProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
@@ -316,7 +316,7 @@ class IntellicrackProtectionCore:
             return self._convert_icp_result(icp_result)
 
         except Exception as e:
-            logger.error(f"Error analyzing file with native ICP Engine: {e}")
+            logger.error("Error analyzing file with native ICP Engine: %s", e, exc_info=True)
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
@@ -658,7 +658,7 @@ class IntellicrackProtectionCore:
                             analysis = self.detect_protections(file_path)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error(f"Error analyzing {file_path}: {e}")
+                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
         else:
             for file in os.listdir(directory):
                 if any(file.lower().endswith(ext) for ext in extensions):
@@ -668,7 +668,7 @@ class IntellicrackProtectionCore:
                             analysis = self.detect_protections(file_path)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error(f"Error analyzing {file_path}: {e}")
+                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
 
         return results
 
@@ -751,19 +751,18 @@ def quick_analyze(file_path: str) -> ProtectionAnalysis:
 
 
 if __name__ == "__main__":
-    # Example usage
     if len(sys.argv) > 1:
         target_file = sys.argv[1]
         detector = IntellicrackProtectionCore()
         analysis = detector.detect_protections(target_file)
-        print(detector.get_summary(analysis))
+        logger.info(detector.get_summary(analysis))
 
         if analysis.detections:
-            print("\nBypass Recommendations:")
+            logger.info("Bypass Recommendations:")
             for det in analysis.detections:
                 if det.bypass_recommendations:
-                    print(f"\n{det.name}:")
+                    logger.info("%s:", det.name)
                     for rec in det.bypass_recommendations:
-                        print(f"  - {rec}")
+                        logger.info("  - %s", rec)
     else:
-        print("Usage: python intellicrack_protection_core.py <binary_file>")
+        logger.info("Usage: python intellicrack_protection_core.py <binary_file>")

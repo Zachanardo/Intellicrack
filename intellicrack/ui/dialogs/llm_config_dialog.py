@@ -1986,7 +1986,7 @@ class LLMConfigDialog(BaseDialog):
             info_text = "LoRA Adapter Information:\n\n"
             info_text += f"Path: {adapter_info.get('path', 'N/A')}\n"
             info_text += f"Exists: {adapter_info.get('exists', False)}\n"
-            size_mb = adapter_info.get('size_mb', 0.0)
+            size_mb = adapter_info.get("size_mb", 0.0)
             info_text += f"Size: {size_mb:.2f} MB\n"
 
             config_data = adapter_info.get("config")
@@ -1995,7 +1995,7 @@ class LLMConfigDialog(BaseDialog):
                 info_text += f"  Task Type: {config_data.get('task_type', 'N/A')}\n"
                 info_text += f"  LoRA Rank: {config_data.get('r', 'N/A')}\n"
                 info_text += f"  LoRA Alpha: {config_data.get('lora_alpha', 'N/A')}\n"
-                target_modules = config_data.get('target_modules', [])
+                target_modules = config_data.get("target_modules", [])
                 if isinstance(target_modules, list):
                     info_text += f"  Target Modules: {', '.join(str(m) for m in target_modules)}\n"
 

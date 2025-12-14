@@ -205,7 +205,6 @@ function activateGenericBypass() {
                             log(`Generic hook installed: ${module.name}!${name}`);
 
                             if (hooksInstalled >= 50) {
-
                             }
                         } catch (_e) {}
                     }

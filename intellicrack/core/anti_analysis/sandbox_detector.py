@@ -348,7 +348,7 @@ class SandboxDetector(BaseDetector):
             }
 
         except Exception as e:
-            self.logger.debug(f"Error building behavioral patterns: {e}")
+            self.logger.debug("Error building behavioral patterns: %s", e, exc_info=True)
             # Use conservative defaults
             patterns = {
                 "user_files": {"paths": user_dirs, "min_files": 10},
@@ -622,7 +622,7 @@ class SandboxDetector(BaseDetector):
 
             # If more than 75% of checks match, flag as potential sandbox
             if checks > 0 and (matches / checks) > 0.75:
-                self.logger.warning(f"System profile matches {sandbox_name}: {matches}/{checks}")
+                self.logger.warning("System profile matches %s: %s/%s", sandbox_name, matches, checks)
                 self.detection_cache[f"profile_{sandbox_name}"] = True
 
     def _check_hardware_indicators(self) -> dict:
@@ -655,7 +655,7 @@ class SandboxDetector(BaseDetector):
                             indicators["details"].append(f"VM CPU pattern: {pattern}")
 
                 except Exception as e:
-                    self.logger.debug(f"Error checking CPU info for VM patterns: {e}")
+                    self.logger.debug("Error checking CPU info for VM patterns: %s", e, exc_info=True)
             else:
                 try:
                     with open("/proc/cpuinfo") as f:
@@ -666,7 +666,7 @@ class SandboxDetector(BaseDetector):
                             indicators["confidence"] += 30
                             indicators["details"].append("Hypervisor detected in cpuinfo")
                 except Exception as e:
-                    self.logger.debug(f"Error reading /proc/cpuinfo for hypervisor detection: {e}")
+                    self.logger.debug("Error reading /proc/cpuinfo for hypervisor detection: %s", e, exc_info=True)
 
             # Check MAC address patterns
             import uuid
@@ -695,7 +695,7 @@ class SandboxDetector(BaseDetector):
                     break
 
         except Exception as e:
-            self.logger.debug(f"Hardware check error: {e}")
+            self.logger.debug("Hardware check error: %s", e, exc_info=True)
 
         return indicators
 
@@ -749,10 +749,10 @@ class SandboxDetector(BaseDetector):
                     indicators["details"].append(f"VM manufacturer: {value}")
 
             except Exception as e:
-                self.logger.debug(f"Error checking VM manufacturer in registry: {e}")
+                self.logger.debug("Error checking VM manufacturer in registry: %s", e, exc_info=True)
 
         except Exception as e:
-            self.logger.debug(f"Registry check error: {e}")
+            self.logger.debug("Registry check error: %s", e, exc_info=True)
 
         return indicators
 
@@ -790,7 +790,7 @@ class SandboxDetector(BaseDetector):
                         artifacts["details"].append(f"VM driver: {driver}")
 
             except Exception as e:
-                self.logger.debug(f"Error checking for VM drivers: {e}")
+                self.logger.debug("Error checking for VM drivers: %s", e, exc_info=True)
         else:
             # Check loaded kernel modules on Linux
             try:
@@ -815,7 +815,7 @@ class SandboxDetector(BaseDetector):
                             artifacts["details"].append(f"VM module: {module}")
 
             except Exception as e:
-                self.logger.debug(f"Error checking for VM modules: {e}")
+                self.logger.debug("Error checking for VM modules: %s", e, exc_info=True)
 
         # Check DMI/SMBIOS information
         try:
@@ -836,7 +836,7 @@ class SandboxDetector(BaseDetector):
                             artifacts["details"].append(f"DMI indicator: {indicator}")
                             break
         except Exception as e:
-            self.logger.debug(f"Error checking DMI/SMBIOS information: {e}")
+            self.logger.debug("Error checking DMI/SMBIOS information: %s", e, exc_info=True)
 
         return artifacts
 
@@ -876,11 +876,11 @@ class SandboxDetector(BaseDetector):
             # Calculate evasion difficulty
             results["evasion_difficulty"] = self._calculate_evasion_difficulty(results["detections"])
 
-            self.logger.info(f"Sandbox detection complete: {results['is_sandbox']} (confidence: {results['confidence']:.2f})")
+            self.logger.info("Sandbox detection complete: %s (confidence: %.2f)", results["is_sandbox"], results["confidence"])
             return results
 
         except Exception as e:
-            self.logger.error(f"Sandbox detection failed: {e}")
+            self.logger.error("Sandbox detection failed: %s", e, exc_info=True)
             return results
 
     def _check_environment(self) -> tuple[bool, float, dict]:
@@ -948,7 +948,7 @@ class SandboxDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Environment check failed: {e}")
+            self.logger.debug("Environment check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -965,7 +965,7 @@ class SandboxDetector(BaseDetector):
                         files = os.listdir(path)
                         user_file_count += len(files)
                     except Exception as e:
-                        self.logger.debug(f"Error accessing {path}: {e}")
+                        self.logger.debug("Error accessing %s: %s", path, e, exc_info=True)
 
             if user_file_count < self.behavioral_patterns["no_user_files"]["min_files"]:
                 details["anomalies"].append(f"Few user files: {user_file_count}")
@@ -991,7 +991,7 @@ class SandboxDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Behavioral check failed: {e}")
+            self.logger.debug("Behavioral check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1015,7 +1015,7 @@ class SandboxDetector(BaseDetector):
                     if total_gb < 4:
                         details["limitations"].append(f"Low memory: {total_gb:.1f}GB")
                 except ImportError as e:
-                    self.logger.error("Import error in sandbox_detector: %s", e)
+                    self.logger.error("Import error in sandbox_detector: %s", e, exc_info=True)
             else:
                 try:
                     with open("/proc/meminfo") as f:
@@ -1027,7 +1027,7 @@ class SandboxDetector(BaseDetector):
                                     details["limitations"].append(f"Low memory: {total_gb:.1f}GB")
                                 break
                 except Exception as e:
-                    self.logger.debug(f"Error reading memory info: {e}")
+                    self.logger.debug("Error reading memory info: %s", e, exc_info=True)
 
             # Check disk space
             if platform.system() == "Windows":
@@ -1053,7 +1053,7 @@ class SandboxDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Resource limits check failed: {e}")
+            self.logger.debug("Resource limits check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1106,7 +1106,7 @@ class SandboxDetector(BaseDetector):
                             details["network_anomalies"].append(f"Sandbox network: {network} ({sandbox_type})")
 
             except Exception as e:
-                self.logger.debug(f"Error checking network configuration: {e}")
+                self.logger.debug("Error checking network configuration: %s", e, exc_info=True)
 
             # Check DNS resolution
             try:
@@ -1119,20 +1119,20 @@ class SandboxDetector(BaseDetector):
                         socket.gethostbyname(domain)
                         resolved += 1
                     except Exception as e:
-                        self.logger.debug(f"DNS resolution failed for {domain}: {e}")
+                        self.logger.debug("DNS resolution failed for %s: %s", domain, e, exc_info=True)
 
                 if resolved == 0:
                     details["network_anomalies"].append("No DNS resolution")
 
             except Exception as e:
-                self.logger.debug(f"Error in DNS resolution test: {e}")
+                self.logger.debug("Error in DNS resolution test: %s", e, exc_info=True)
 
             if details["network_anomalies"]:
                 confidence = min(0.8, len(details["network_anomalies"]) * 0.3)
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Network check failed: {e}")
+            self.logger.debug("Network check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1193,7 +1193,7 @@ class SandboxDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"User interaction check failed: {e}")
+            self.logger.debug("User interaction check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1240,7 +1240,7 @@ class SandboxDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"File system check failed: {e}")
+            self.logger.debug("File system check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1301,14 +1301,14 @@ class SandboxDetector(BaseDetector):
                             details["monitoring_signs"].append(f"Suspicious DLL: {dll_name}")
 
                 except Exception as e:
-                    self.logger.debug(f"Error checking loaded DLLs: {e}")
+                    self.logger.debug("Error checking loaded DLLs: %s", e, exc_info=True)
 
             if details["monitoring_signs"]:
                 confidence = min(0.8, len(details["monitoring_signs"]) * 0.3)
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Process monitoring check failed: {e}")
+            self.logger.debug("Process monitoring check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1322,53 +1322,51 @@ class SandboxDetector(BaseDetector):
 
                 kernel32 = ctypes.windll.kernel32
 
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x89,
-                        0x01,
-                        0x48,
-                        0x8B,
-                        0x02,
-                        0x48,
-                        0x85,
-                        0xC0,
-                        0x74,
-                        0x0E,
-                        0x48,
-                        0x8D,
-                        0x0C,
-                        0x00,
-                        0x48,
-                        0xFF,
-                        0xC9,
-                        0x75,
-                        0xFE,
-                        0x90,
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x2B,
-                        0x01,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x89,
+                    0x01,
+                    0x48,
+                    0x8B,
+                    0x02,
+                    0x48,
+                    0x85,
+                    0xC0,
+                    0x74,
+                    0x0E,
+                    0x48,
+                    0x8D,
+                    0x0C,
+                    0x00,
+                    0x48,
+                    0xFF,
+                    0xC9,
+                    0x75,
+                    0xFE,
+                    0x90,
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x2B,
+                    0x01,
+                    0xC3,
+                ])
 
                 buf = ctypes.create_string_buffer(code)
                 exec_mem = kernel32.VirtualAlloc(
@@ -1468,46 +1466,44 @@ class SandboxDetector(BaseDetector):
             elif platform.system() == "Linux":
                 import mmap
 
-                code = bytes(
-                    [
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x89,
-                        0x07,
-                        0x48,
-                        0x85,
-                        0xF6,
-                        0x74,
-                        0x09,
-                        0x48,
-                        0xFF,
-                        0xCE,
-                        0x75,
-                        0xFB,
-                        0x90,
-                        0x0F,
-                        0x31,
-                        0x48,
-                        0xC1,
-                        0xE2,
-                        0x20,
-                        0x48,
-                        0x09,
-                        0xD0,
-                        0x48,
-                        0x2B,
-                        0x07,
-                        0xC3,
-                    ]
-                )
+                code = bytes([
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x89,
+                    0x07,
+                    0x48,
+                    0x85,
+                    0xF6,
+                    0x74,
+                    0x09,
+                    0x48,
+                    0xFF,
+                    0xCE,
+                    0x75,
+                    0xFB,
+                    0x90,
+                    0x0F,
+                    0x31,
+                    0x48,
+                    0xC1,
+                    0xE2,
+                    0x20,
+                    0x48,
+                    0x09,
+                    0xD0,
+                    0x48,
+                    0x2B,
+                    0x07,
+                    0xC3,
+                ])
 
                 exec_mem = mmap.mmap(
                     -1,
@@ -1543,7 +1539,7 @@ class SandboxDetector(BaseDetector):
                 exec_mem.close()
 
         except Exception as e:
-            self.logger.debug(f"Time acceleration check failed: {e}")
+            self.logger.debug("Time acceleration check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1578,14 +1574,14 @@ class SandboxDetector(BaseDetector):
                                 details["hooked_apis"].append(f"{dll_name}!{api_name}")
 
                     except Exception as e:
-                        self.logger.debug(f"Error checking API hook for {dll_name}!{api_name}: {e}")
+                        self.logger.debug("Error checking API hook for %s!%s: %s", dll_name, api_name, e, exc_info=True)
 
             if details["hooked_apis"]:
                 confidence = min(0.8, len(details["hooked_apis"]) * 0.15)
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"API hook check failed: {e}")
+            self.logger.debug("API hook check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1615,6 +1611,7 @@ class SandboxDetector(BaseDetector):
                     self.logger.warning(
                         "Windows API not available, implementing comprehensive Windows API wrapper: %s",
                         e,
+                        exc_info=True,
                     )
 
                     # Real Windows API implementation for cross-platform compatibility
@@ -1761,15 +1758,13 @@ class SandboxDetector(BaseDetector):
                     time_delta = timestamps[i] - timestamps[i - 1]
 
                     if distance > 0:
-                        movements.append(
-                            {
-                                "distance": distance,
-                                "time_delta": time_delta,
-                                "velocity": distance / time_delta if time_delta > 0 else 0,
-                                "dx": dx,
-                                "dy": dy,
-                            }
-                        )
+                        movements.append({
+                            "distance": distance,
+                            "time_delta": time_delta,
+                            "velocity": distance / time_delta if time_delta > 0 else 0,
+                            "dx": dx,
+                            "dy": dy,
+                        })
 
                 if not movements:
                     return True, 0.7, details
@@ -1808,7 +1803,7 @@ class SandboxDetector(BaseDetector):
                 details["click_count"] = click_count
 
         except Exception as e:
-            self.logger.debug(f"Mouse movement check failed: {e}")
+            self.logger.debug("Mouse movement check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1846,7 +1841,7 @@ class SandboxDetector(BaseDetector):
         for method, result in detections.items():
             if result["detected"]:
                 details_str = str(result["details"]).lower()
-                self.logger.debug(f"Analyzing sandbox type from method: {method}")
+                self.logger.debug("Analyzing sandbox type from method: %s", method)
 
                 # Check for sandbox signatures
                 for sandbox_type, sigs in self.sandbox_signatures.items():
@@ -1999,7 +1994,7 @@ Sleep(30000);  // 30 seconds
             results["confidence"] = detection_results["confidence"]
 
             if results["sandbox_detected"]:
-                self.logger.warning(f"Sandbox detected: {results['sandbox_type']} (confidence: {results['confidence']:.2f})")
+                self.logger.warning("Sandbox detected: %s (confidence: %.2f)", results["sandbox_type"], results["confidence"])
 
                 evasion_strategy = self._determine_evasion_strategy(detection_results, aggressive)
                 results["evasion_strategy"] = evasion_strategy
@@ -2012,14 +2007,14 @@ Sleep(30000);  // 30 seconds
                 bypass_success = self._verify_evasion_effectiveness(detection_results, evasion_strategy)
                 results["detection_bypassed"] = bypass_success
 
-                self.logger.info(f"Evasion applied with {len(behavioral_changes)} behavioral changes")
+                self.logger.info("Evasion applied with %s behavioral changes", len(behavioral_changes))
             else:
                 self.logger.info("No sandbox detected - continuing normal execution")
 
             return results
 
         except Exception as e:
-            self.logger.error(f"Sandbox evasion failed: {e}")
+            self.logger.error("Sandbox evasion failed: %s", e, exc_info=True)
             return results
 
     def _determine_evasion_strategy(self, detection_results: dict[str, Any], aggressive: bool) -> dict[str, Any]:
@@ -2354,7 +2349,7 @@ Sleep(30000);  // 30 seconds
                 changes.append(f"Set execution trigger for {time.ctime(trigger_time)}")
 
         except Exception as e:
-            self.logger.error(f"Error applying behavioral adaptation: {e}")
+            self.logger.error("Error applying behavioral adaptation: %s", e, exc_info=True)
             changes.append(f"Adaptation error: {e!s}")
 
         return changes
@@ -2398,7 +2393,7 @@ Sleep(30000);  // 30 seconds
             return unique_positions >= min_movements
 
         except Exception as e:
-            self.logger.debug(f"Mouse movement verification failed: {e}")
+            self.logger.debug("Mouse movement verification failed: %s", e, exc_info=True)
             return True
 
     def _verify_dns_resolution(self, required_domains: list[str]) -> bool:
@@ -2417,12 +2412,12 @@ Sleep(30000);  // 30 seconds
                     socket.gethostbyname(domain)
                     return True
                 except Exception as e:
-                    self.logger.debug(f"DNS resolution failed for {domain}: {e}")
+                    self.logger.debug("DNS resolution failed for %s: %s", domain, e, exc_info=True)
 
             return False
 
         except Exception as e:
-            self.logger.debug(f"DNS verification failed: {e}")
+            self.logger.debug("DNS verification failed: %s", e, exc_info=True)
             return True
 
     def _check_for_monitoring_tools(self) -> bool:
@@ -2450,7 +2445,7 @@ Sleep(30000);  // 30 seconds
 
             return any(monitor.lower() in processes or any(monitor in p.lower() for p in process_list) for monitor in monitoring_processes)
         except Exception as e:
-            self.logger.debug(f"Monitoring tool check failed: {e}")
+            self.logger.debug("Monitoring tool check failed: %s", e, exc_info=True)
             return False
 
     def _attempt_api_unhooking(self, hooked_apis: list[str]) -> int:
@@ -2587,16 +2582,16 @@ Sleep(30000);  // 30 seconds
                                 VirtualProtect(hooked_addr, 16, old_protect.value, ctypes.byref(old_protect))
 
                                 unhooked_count += 1
-                                self.logger.debug(f"Unhooked {hooked_api} using PE-based clean copy")
+                                self.logger.debug("Unhooked %s using PE-based clean copy", hooked_api)
 
                     finally:
                         FreeLibrary(clean_module)
 
                 except Exception as e:
-                    self.logger.debug(f"Failed to unhook {hooked_api}: {e}")
+                    self.logger.debug("Failed to unhook %s: %s", hooked_api, e, exc_info=True)
 
         except Exception as e:
-            self.logger.debug(f"API unhooking failed: {e}")
+            self.logger.debug("API unhooking failed: %s", e, exc_info=True)
 
         return unhooked_count
 
@@ -2624,7 +2619,7 @@ Sleep(30000);  // 30 seconds
             return drift > 0.1
 
         except Exception as e:
-            self.logger.debug(f"Time acceleration detection failed: {e}")
+            self.logger.debug("Time acceleration detection failed: %s", e, exc_info=True)
             return False
 
     def _apply_sandbox_specific_evasion(self, sandbox_type: str, techniques: list[str]) -> int:
@@ -2725,10 +2720,10 @@ Sleep(30000);  // 30 seconds
 
                 if success:
                     applied += 1
-                    self.logger.debug(f"Applied technique: {technique}")
+                    self.logger.debug("Applied technique: %s", technique)
 
         except Exception as e:
-            self.logger.debug(f"Sandbox-specific evasion failed: {e}")
+            self.logger.debug("Sandbox-specific evasion failed: %s", e, exc_info=True)
 
         return applied
 
@@ -2768,7 +2763,7 @@ Sleep(30000);  // 30 seconds
             return "Unknown stalling technique"
 
         except Exception as e:
-            self.logger.debug(f"Stalling technique failed: {e}")
+            self.logger.debug("Stalling technique failed: %s", e, exc_info=True)
             return f"Stalling failed: {e}"
 
     def _verify_evasion_effectiveness(self, detection_results: dict[str, Any], evasion_strategy: dict[str, Any]) -> bool:
@@ -2819,7 +2814,7 @@ Sleep(30000);  // 30 seconds
 
             return False if total_checks == 0 else bypass_indicators / total_checks >= 0.5
         except Exception as e:
-            self.logger.debug(f"Evasion verification failed: {e}")
+            self.logger.debug("Evasion verification failed: %s", e, exc_info=True)
             return False
 
     def _check_environment_variables(self) -> tuple[bool, float, dict]:
@@ -2860,7 +2855,7 @@ Sleep(30000);  // 30 seconds
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Environment variable check failed: {e}")
+            self.logger.debug("Environment variable check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -2912,7 +2907,7 @@ Sleep(30000);  // 30 seconds
                         return True, 0.3, details
 
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-            self.logger.debug(f"Parent process check failed: {e}")
+            self.logger.debug("Parent process check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -2924,32 +2919,30 @@ Sleep(30000);  // 30 seconds
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
 
-                code_cpuid = bytes(
-                    [
-                        0x53,
-                        0x57,
-                        0x56,
-                        0x89,
-                        0xC8,
-                        0x0F,
-                        0xA2,
-                        0x89,
-                        0x1F,
-                        0x89,
-                        0x4F,
-                        0x04,
-                        0x89,
-                        0x57,
-                        0x08,
-                        0x89,
-                        0x77,
-                        0x0C,
-                        0x5E,
-                        0x5F,
-                        0x5B,
-                        0xC3,
-                    ]
-                )
+                code_cpuid = bytes([
+                    0x53,
+                    0x57,
+                    0x56,
+                    0x89,
+                    0xC8,
+                    0x0F,
+                    0xA2,
+                    0x89,
+                    0x1F,
+                    0x89,
+                    0x4F,
+                    0x04,
+                    0x89,
+                    0x57,
+                    0x08,
+                    0x89,
+                    0x77,
+                    0x0C,
+                    0x5E,
+                    0x5F,
+                    0x5B,
+                    0xC3,
+                ])
 
                 buf = ctypes.create_string_buffer(code_cpuid)
                 exec_mem = kernel32.VirtualAlloc(
@@ -3014,7 +3007,7 @@ Sleep(30000);  // 30 seconds
 
                         return True, 0.7, details
         except Exception as e:
-            self.logger.debug(f"CPUID hypervisor check failed: {e}")
+            self.logger.debug("CPUID hypervisor check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -3057,7 +3050,7 @@ Sleep(30000);  // 30 seconds
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"MAC address check failed: {e}")
+            self.logger.debug("MAC address check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -3133,14 +3126,14 @@ Sleep(30000);  // 30 seconds
                         details["automation_indicators"].extend([f"Window: {t}" for t in automation_titles])
 
                 except Exception as e:
-                    self.logger.debug(f"Window enumeration failed: {e}")
+                    self.logger.debug("Window enumeration failed: %s", e, exc_info=True)
 
             if details["automation_indicators"]:
                 confidence = min(0.8, len(details["detected_frameworks"]) * 0.25)
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Browser automation check failed: {e}")
+            self.logger.debug("Browser automation check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -3210,6 +3203,6 @@ Sleep(30000);  // 30 seconds
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Advanced timing check failed: {e}")
+            self.logger.debug("Advanced timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details

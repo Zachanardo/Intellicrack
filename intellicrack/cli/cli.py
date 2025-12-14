@@ -33,8 +33,11 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import logger as imported_logger
 from intellicrack.utils.patching.patch_generator import generate_patch
+
+
+logger = logging.getLogger("IntellicrackLogger.CLI")
 
 
 """
@@ -47,8 +50,8 @@ payload generation and exploitation operations.
 try:
     import click
 except ImportError as e:
-    logger.error("Import error in cli: %s", e)
-    print("Error: click module not found. Please install with: pip install click")
+    logger.error("Import error in cli: %s", e, exc_info=True)
+    logger.critical("click module not found. Please install with: pip install click")
     sys.exit(1)
 
 # Add parent directory to path for imports
@@ -60,7 +63,7 @@ try:
 
     MODERN_CONFIG_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cli: %s", e)
+    logger.error("Import error in cli: %s", e, exc_info=True)
     MODERN_CONFIG_AVAILABLE = False
 
 # Basic imports (with fallbacks for missing components)
@@ -72,23 +75,26 @@ PayloadResultHandler: Any = None
 
 try:
     from intellicrack.core.exploitation import Architecture as _Architecture
+
     Architecture = _Architecture
 except ImportError as e:
-    logger.debug("Architecture import not available: %s", e)
+    logger.debug("Architecture import not available: %s", e, exc_info=True)
 
 try:
     from intellicrack.core.exploitation.bypass_engine import BypassEngine
+
     PayloadEngine = BypassEngine
     PayloadTemplates = None
     PayloadType = None
 except ImportError as e:
-    logger.debug("BypassEngine import not available: %s", e)
+    logger.debug("BypassEngine import not available: %s", e, exc_info=True)
 
 try:
     from intellicrack.utils.exploitation.payload_result_handler import PayloadResultHandler as _PayloadResultHandler
+
     PayloadResultHandler = _PayloadResultHandler
 except ImportError as e:
-    logger.error("Import error in cli: %s", e)
+    logger.error("Import error in cli: %s", e, exc_info=True)
 
 
 # Import licensing protection analysis modules
@@ -97,7 +103,7 @@ try:
 
     ADVANCED_MODULES_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cli: %s", e)
+    logger.error("Import error in cli: %s", e, exc_info=True)
     ADVANCED_MODULES_AVAILABLE = False
 
 # Import certificate bypass modules
@@ -108,11 +114,8 @@ try:
 
     CERT_BYPASS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cli (certificate bypass): %s", e)
+    logger.error("Import error in cli (certificate bypass): %s", e, exc_info=True)
     CERT_BYPASS_AVAILABLE = False
-
-# Initialize logger before it's used
-logger = logging.getLogger("IntellicrackLogger.CLI")
 
 
 def _typed_decorator[F: Callable[..., Any]](func: F) -> F:
@@ -122,31 +125,39 @@ def _typed_decorator[F: Callable[..., Any]](func: F) -> F:
 
 def typed_group(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     """Typed wrapper for click.group()."""
+
     def decorator(f: F) -> F:
         return cast("F", click.group(*args, **kwargs)(f))
+
     return decorator
 
 
 def typed_command(group: Any, name: str | None = None, **kwargs: Any) -> Callable[[F], F]:
     """Typed wrapper for group.command()."""
+
     def decorator(f: F) -> F:
         return cast("F", group.command(name, **kwargs)(f))
+
     return decorator
 
 
 def typed_option(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     """Typed wrapper for click.option()."""
+
     def decorator(f: F) -> F:
         wrapped: F = click.option(*args, **kwargs)(f)
         return wrapped
+
     return decorator
 
 
 def typed_argument(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     """Typed wrapper for click.argument()."""
+
     def decorator(f: F) -> F:
         wrapped: F = click.argument(*args, **kwargs)(f)
         return wrapped
+
     return decorator
 
 
@@ -275,7 +286,6 @@ def strings(binary_path: str, min_length: int, encoding: str, output: str | None
 
         extracted_strings = cli_analyzer._extract_strings(binary_path, min_length=min_length)
         if extracted_strings:
-
             # Apply filter if provided
             if filter_pattern:
                 import re
@@ -1207,6 +1217,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             # Set timeout for the analysis
             import platform
             import signal
+
             try:
                 alarm_func = getattr(signal, "alarm", None)
                 sigalrm = getattr(signal, "SIGALRM", None)
@@ -1227,7 +1238,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     # Windows or systems without SIGALRM
                     result = ai_researcher.analyze_licensing_protection(target_path)
             except (AttributeError, OSError) as e:
-                logger.error("Error in cli: %s", e)
+                logger.error("Error in cli: %s", e, exc_info=True)
                 # Fallback for systems without signal support - use threading for timeout
                 exception_holder: list[BaseException | None] = [None]
                 result = None
@@ -1247,7 +1258,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                         ConnectionError,
                         TimeoutError,
                     ) as exc:
-                        logger.error("Error in cli: %s", exc)
+                        logger.error("Error in cli: %s", exc, exc_info=True)
                         exception_holder[0] = exc
 
                 thread = threading.Thread(target=run_analysis)
@@ -1325,7 +1336,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     # Windows or systems without SIGALRM
                     result = analyzer.analyze(target_path)
             except (AttributeError, OSError) as e:
-                logger.error("Error in cli: %s", e)
+                logger.error("Error in cli: %s", e, exc_info=True)
                 # Fallback for systems without signal support
                 result = analyzer.analyze(target_path)
 
@@ -1606,7 +1617,7 @@ def ai_generate(
                     ConnectionError,
                     TimeoutError,
                 ) as e:
-                    logger.error("Error in cli: %s", e)
+                    logger.error("Error in cli: %s", e, exc_info=True)
                     click.echo(f"ERROR Failed to save script: {e}", err=True)
 
         else:
@@ -1952,7 +1963,7 @@ def autonomous(
                         ConnectionError,
                         TimeoutError,
                     ) as e:
-                        logger.error("Error in cli: %s", e)
+                        logger.error("Error in cli: %s", e, exc_info=True)
                         click.echo(f"      Save failed: {e}")
 
             # Show analysis if verbose
@@ -2023,6 +2034,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
             except ImportError:
                 click.echo("  UI module not available, skipping UI history")
             except Exception as e:
+                logger.error("Could not retrieve UI history: %s", e, exc_info=True)
                 click.echo(f"  Warning: Could not retrieve UI history: {e}")
 
         # Save session data with options
@@ -2357,6 +2369,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             try:
                 parameters = json.loads(params)
             except json.JSONDecodeError as e:
+                logger.error("Invalid JSON parameters: %s", e, exc_info=True)
                 click.echo(f"FAIL Invalid JSON parameters: {e}")
                 sys.exit(1)
 
@@ -2503,6 +2516,7 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
             click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
+        logger.error("Target not found: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
@@ -2622,9 +2636,11 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
             click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
+        logger.error("Target not found: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
+        logger.error("Permission denied: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
@@ -2715,6 +2731,7 @@ def cert_test(target: str, url: str, timeout: int) -> None:
                     click.echo("   Bypass may be partially effective")
 
         except urllib.error.URLError as e:
+            logger.error("Certificate test URL error: %s", e, exc_info=True)
             click.echo()
             click.echo("FAIL Test FAILED")
             click.echo(f"   Connection error: {e.reason}")
@@ -2726,6 +2743,7 @@ def cert_test(target: str, url: str, timeout: int) -> None:
             sys.exit(1)
 
     except FileNotFoundError as e:
+        logger.error("Target not found: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
@@ -2841,7 +2859,7 @@ def cert_rollback(target: str, force: bool) -> None:
         except ImportError:
             click.echo("  WARNING  psutil not available, skipping process check")
         except Exception as hook_error:
-            logger.warning("Failed to detach hooks: %s", hook_error)
+            logger.warning("Failed to detach hooks: %s", hook_error, exc_info=True)
             click.echo(f"  WARNING  Hook detachment failed: {hook_error}")
 
         click.echo()
@@ -2858,9 +2876,11 @@ def cert_rollback(target: str, force: bool) -> None:
             sys.exit(1)
 
     except FileNotFoundError as e:
+        logger.error("Target not found: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
+        logger.error("Permission denied: %s", e, exc_info=True)
         click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
@@ -2894,6 +2914,7 @@ def main() -> int:
                 click.echo("GUI main function not available", err=True)
                 return 1
         except ImportError as e:
+            logger.error("Failed to import GUI module: %s", e, exc_info=True)
             click.echo(f"Failed to import GUI module: {e}", err=True)
             return 1
         return 0

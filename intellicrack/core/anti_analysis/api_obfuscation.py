@@ -402,7 +402,7 @@ class APIObfuscator:
             return func(*args)
 
         except Exception as e:
-            self.logger.error(f"Indirect call failed: {e}")
+            self.logger.error(f"Indirect call failed: {e}", exc_info=True)
             return None
 
     def _obfuscated_string(self, string: str) -> bytes:
@@ -460,7 +460,7 @@ class APIObfuscator:
             return self._normal_resolve(dll_name, api_name)
 
         except Exception as e:
-            self.logger.debug(f"Forwarded export resolution failed: {e}")
+            self.logger.debug(f"Forwarded export resolution failed: {e}", exc_info=True)
             return None
 
     def _calculate_hash(self, string: str) -> int:
@@ -668,7 +668,7 @@ if (p{api_name}) {{
             self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
 
         except Exception as e:
-            self.logger.error(f"Failed to load API databases: {e}")
+            self.logger.error(f"Failed to load API databases: {e}", exc_info=True)
             # Initialize empty databases
             self.api_hash_db = {}
             self.encrypted_strings_db = {}
@@ -714,7 +714,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve encrypted strings: {e}")
+            self.logger.error(f"Failed to resolve encrypted strings: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_dynamic_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -749,7 +749,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve dynamic imports: {e}")
+            self.logger.error(f"Failed to resolve dynamic imports: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_redirected_apis(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -777,14 +777,12 @@ if (p{api_name}) {{
                     # Check if target is a known API
                     if target in self.api_hash_db:
                         api_name = self.api_hash_db[target]
-                        redirected_apis.append(
-                            {
-                                "offset": i,
-                                "api": api_name,
-                                "method": "JMP redirection",
-                                "target": hex(target),
-                            }
-                        )
+                        redirected_apis.append({
+                            "offset": i,
+                            "api": api_name,
+                            "method": "JMP redirection",
+                            "target": hex(target),
+                        })
 
             return bytes(resolved_code), {
                 "method": "api_redirection",
@@ -793,7 +791,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve redirected APIs: {e}")
+            self.logger.error(f"Failed to resolve redirected APIs: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_indirect_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -838,14 +836,12 @@ if (p{api_name}) {{
                         if len(indirect_sequence) <= 5:
                             modified_code[i : i + 5] = indirect_sequence[:5]
 
-                            indirect_calls.append(
-                                {
-                                    "offset": i,
-                                    "api": api_name,
-                                    "original": "CALL direct",
-                                    "replacement": "CALL indirect",
-                                }
-                            )
+                            indirect_calls.append({
+                                "offset": i,
+                                "api": api_name,
+                                "original": "CALL direct",
+                                "replacement": "CALL indirect",
+                            })
 
                 # Check for CALL DWORD PTR [addr] pattern
                 if code[i : i + 2] == b"\xff\x15":  # CALL DWORD PTR [addr32]
@@ -879,7 +875,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate indirect calls: {e}")
+            self.logger.error(f"Failed to generate indirect calls: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_trampoline_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -942,11 +938,11 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate trampoline calls: {e}")
+            self.logger.error(f"Failed to generate trampoline calls: {e}", exc_info=True)
             return code, {"error": str(e)}
 
-    def _generate_decryption_stub(self, offset: int, size: int, key: int) -> bytearray:
-        """Generate x86/x64 assembly decryption stub for runtime decryption.
+    def _generate_decryption_shellcode(self, offset: int, size: int, key: int) -> bytearray:
+        """Generate x86/x64 assembly decryption shellcode for runtime decryption.
 
         Args:
             offset: Offset of encrypted section
@@ -954,102 +950,89 @@ if (p{api_name}) {{
             key: XOR encryption key
 
         Returns:
-            Assembly stub bytes for runtime decryption
+            Assembly shellcode bytes for runtime decryption
 
         """
-        stub = bytearray()
+        shellcode = bytearray()
 
-        # Save registers
-        stub.extend(
+        shellcode.extend(
             [
-                0x50,  # PUSH EAX
-                0x53,  # PUSH EBX
-                0x51,  # PUSH ECX
-                0x52,  # PUSH EDX
-                0x56,  # PUSH ESI
-                0x57,  # PUSH EDI
+                0x50,
+                0x53,
+                0x51,
+                0x52,
+                0x56,
+                0x57,
             ],
         )
 
-        # Set up decryption loop
-        # Load address of encrypted section
-        stub.extend(
+        shellcode.extend(
             [
                 0xE8,
                 0x00,
                 0x00,
                 0x00,
-                0x00,  # CALL $+5 (get EIP)
-                0x5E,  # POP ESI (ESI = current EIP)
+                0x00,
+                0x5E,
             ],
         )
 
-        # Calculate actual address of encrypted section
-        # Offset from current position to encrypted section
-        relative_offset = offset + 15  # Account for stub instructions so far
+        relative_offset = offset + 15
 
-        # ADD ESI, relative_offset to point to encrypted section
-        stub.extend(
+        shellcode.extend(
             [
                 0x81,
-                0xC6,  # ADD ESI, imm32
+                0xC6,
             ],
         )
-        stub.extend(struct.pack("<I", relative_offset))
+        shellcode.extend(struct.pack("<I", relative_offset))
 
-        # Set up loop counter
-        stub.extend(
+        shellcode.extend(
             [
-                0xB9,  # MOV ECX, imm32 (size)
+                0xB9,
             ],
         )
-        stub.extend(struct.pack("<I", size))
+        shellcode.extend(struct.pack("<I", size))
 
-        # Load XOR key
-        stub.extend(
+        shellcode.extend(
             [
-                0xB0,  # MOV AL, imm8 (key)
+                0xB0,
                 key & 0xFF,
             ],
         )
 
-        # Decryption loop label position (used for relative loop calculations)
-        len(stub)
+        len(shellcode)
 
-        # XOR byte at [ESI] with key
-        stub.extend(
+        shellcode.extend(
             [
                 0x30,
-                0x06,  # XOR [ESI], AL
-                0x46,  # INC ESI
+                0x06,
+                0x46,
                 0xE2,
-                0xFC,  # LOOP -4 (back to XOR instruction)
+                0xFC,
             ],
         )
 
-        # Restore registers
-        stub.extend(
+        shellcode.extend(
             [
-                0x5F,  # POP EDI
-                0x5E,  # POP ESI
-                0x5A,  # POP EDX
-                0x59,  # POP ECX
-                0x5B,  # POP EBX
-                0x58,  # POP EAX
+                0x5F,
+                0x5E,
+                0x5A,
+                0x59,
+                0x5B,
+                0x58,
             ],
         )
 
-        # Jump to decrypted code
-        stub.extend(
+        shellcode.extend(
             [
-                0xE9,  # JMP rel32
+                0xE9,
             ],
         )
-        # Calculate jump offset to skip the stub and execute decrypted code
-        jmp_offset = -(len(stub) + 4)  # Jump back to original position
-        stub.extend(struct.pack("<i", jmp_offset))
+        jmp_offset = -(len(shellcode) + 4)
+        shellcode.extend(struct.pack("<i", jmp_offset))
 
-        return stub
+        return shellcode
 
     def _generate_encrypted_payloads(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate encrypted API call payloads.
@@ -1079,20 +1062,17 @@ if (p{api_name}) {{
                     for j in range(section_size):
                         modified_code[i + j] ^= key
 
-                    # Generate runtime decryption stub
-                    decrypt_stub = self._generate_decryption_stub(i, section_size, key)
+                    decrypt_shellcode = self._generate_decryption_shellcode(i, section_size, key)
 
-                    # Insert decryption stub before encrypted section
-                    # The stub will decrypt the code at runtime before execution
-                    modified_code = bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
+                    modified_code = bytearray(modified_code[:i]) + decrypt_shellcode + bytearray(modified_code[i:])
 
                     encrypted_sections.append(
                         {
-                            "offset": i + len(decrypt_stub),  # Adjust offset for inserted stub
+                            "offset": i + len(decrypt_shellcode),
                             "size": section_size,
                             "key": key,
-                            "stub_size": len(decrypt_stub),
-                            "stub_offset": i,
+                            "shellcode_size": len(decrypt_shellcode),
+                            "shellcode_offset": i,
                             "decryption_type": "xor_inline",
                         },
                     )
@@ -1105,7 +1085,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate encrypted payloads: {e}")
+            self.logger.error(f"Failed to generate encrypted payloads: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_polymorphic_wrappers(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -1168,7 +1148,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate polymorphic wrappers: {e}")
+            self.logger.error(f"Failed to generate polymorphic wrappers: {e}", exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_delayed_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -1254,5 +1234,5 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve delayed imports: {e}")
+            self.logger.error(f"Failed to resolve delayed imports: {e}", exc_info=True)
             return code, {"error": str(e)}

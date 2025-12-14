@@ -701,9 +701,7 @@ class BaseDialog(QDialog):
             self.binary_path_edit.setText(str(self.binary_path))
         else:
             self.binary_path_edit.setText("")
-            self.binary_path_edit.setStyleSheet(
-                "QLineEdit { color: #888888; font-style: italic; }"
-            )
+            self.binary_path_edit.setStyleSheet("QLineEdit { color: #888888; font-style: italic; }")
 
         header_layout.addWidget(self.binary_path_edit, 1)
 

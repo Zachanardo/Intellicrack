@@ -186,25 +186,21 @@ class DetectionReport:
         else:
             lines.append("  (none)")
 
-        lines.extend(
-            [
-                "",
-                "DETECTED VALIDATION FUNCTIONS:",
-                "-" * 80,
-            ]
-        )
+        lines.extend([
+            "",
+            "DETECTED VALIDATION FUNCTIONS:",
+            "-" * 80,
+        ])
 
         if self.validation_functions:
             for func in self.validation_functions:
-                lines.extend(
-                    [
-                        f"  API: {func.api_name}",
-                        f"  Library: {func.library}",
-                        f"  Address: 0x{func.address:08x}",
-                        f"  Confidence: {func.confidence:.2%}",
-                        f"  Cross-references: {len(func.references)}",
-                    ]
-                )
+                lines.extend([
+                    f"  API: {func.api_name}",
+                    f"  Library: {func.library}",
+                    f"  Address: 0x{func.address:08x}",
+                    f"  Confidence: {func.confidence:.2%}",
+                    f"  Cross-references: {len(func.references)}",
+                ])
                 if func.context:
                     context_preview = func.context[:200]
                     if len(func.context) > 200:

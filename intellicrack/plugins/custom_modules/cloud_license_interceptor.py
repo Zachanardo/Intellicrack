@@ -232,7 +232,7 @@ class CertificateManager:
                 return self._generate_ca()
 
         except Exception as e:
-            self.logger.exception(f"CA initialization failed: {e}")
+            self.logger.exception("CA initialization failed: %s", e)
             return False
 
     def _generate_ca(self) -> bool:
@@ -312,7 +312,7 @@ class CertificateManager:
             return True
 
         except Exception as e:
-            self.logger.exception(f"CA generation failed: {e}")
+            self.logger.exception("CA generation failed: %s", e)
             return False
 
     def get_server_certificate(self, hostname: str) -> tuple[ssl.SSLContext, str]:
@@ -398,11 +398,11 @@ class CertificateManager:
                 cert_data = (context, hostname)
                 self.server_certs[hostname] = cert_data
 
-                self.logger.debug(f"Generated certificate for {hostname}")
+                self.logger.debug("Generated certificate for %s", hostname)
                 return cert_data
 
             except Exception as e:
-                self.logger.exception(f"Server certificate generation failed for {hostname}: {e}")
+                self.logger.exception("Server certificate generation failed for %s: %s", hostname, e)
                 raise
 
 
@@ -681,7 +681,7 @@ class AuthenticationManager:
                 "valid": True,
             }
         except Exception as e:
-            self.logger.exception(f"JWT parsing failed: {e}")
+            self.logger.exception("JWT parsing failed: %s", e)
             return {"valid": False, "error": str(e)}
 
     def modify_jwt_token(self, token: str, modifications: dict[str, Any]) -> str:
@@ -734,11 +734,11 @@ class AuthenticationManager:
                 key = self.signing_keys["HS256"]
 
             new_token = jwt.encode(payload, key, algorithm=algorithm)
-            self.logger.debug(f"Modified JWT token with algorithm {algorithm}")
+            self.logger.debug("Modified JWT token with algorithm %s", algorithm)
             return new_token
 
         except Exception as e:
-            self.logger.exception(f"JWT modification failed: {e}")
+            self.logger.exception("JWT modification failed: %s", e)
             return token
 
     def generate_license_token(self, provider: CloudProvider, auth_type: AuthenticationType) -> str:
@@ -823,7 +823,7 @@ class AuthenticationManager:
         key = self.signing_keys[algorithm]
         token = jwt.encode(payload, key, algorithm=algorithm)
 
-        self.logger.debug(f"Generated license token for {provider.value}")
+        self.logger.debug("Generated license token for %s", provider.value)
         return token
 
     def extract_bearer_token(self, auth_header: str) -> str | None:
@@ -928,7 +928,7 @@ class ResponseModifier:
             headers["Content-Length"] = str(len(modified_body))
             headers["Content-Type"] = "application/json"
 
-            self.logger.info(f"Modified license response for {request.provider.value}")
+            self.logger.info("Modified license response for %s", request.provider.value)
             return 200, headers, modified_body
 
         except json.JSONDecodeError:
@@ -945,7 +945,7 @@ class ResponseModifier:
             return original_response.status, headers, response_body
 
         except Exception as e:
-            self.logger.exception(f"License response modification failed: {e}")
+            self.logger.exception("License response modification failed: %s", e)
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
@@ -1028,7 +1028,7 @@ class ResponseModifier:
             return 200, headers, modified_body
 
         except Exception as e:
-            self.logger.exception(f"Feature response modification failed: {e}")
+            self.logger.exception("Feature response modification failed: %s", e)
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
@@ -1065,7 +1065,7 @@ class ResponseModifier:
 
             return 200, headers, modified_body
         except Exception as e:
-            self.logger.exception(f"Token response modification failed: {e}")
+            self.logger.exception("Token response modification failed: %s", e)
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
@@ -1126,7 +1126,7 @@ class ResponseModifier:
             return 200, headers, modified_body
 
         except Exception as e:
-            self.logger.exception(f"Usage response modification failed: {e}")
+            self.logger.exception("Usage response modification failed: %s", e)
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
@@ -1171,7 +1171,7 @@ class CacheManager:
                 if time.time() - timestamp < self.config.cache_ttl:
                     self.access_times[cache_key] = time.time()
                     cached_response.cache_hit = True
-                    self.logger.debug(f"Cache hit for {request.url}")
+                    self.logger.debug("Cache hit for %s", request.url)
                     return cached_response
                 # Remove expired entry
                 del self.cache[cache_key]
@@ -1204,9 +1204,9 @@ class CacheManager:
                     self._store_in_sqlite(cache_key, encoded_data)
 
             except Exception as e:
-                self.logger.debug(f"Cache serialization failed: {e}")
+                self.logger.debug("Cache serialization failed: %s", e, exc_info=True)
 
-        self.logger.debug(f"Cached response for {request.url}")
+        self.logger.debug("Cached response for %s", request.url)
 
     def _store_in_sqlite(self, cache_key: str, encoded_data: str) -> None:
         """Store cache data in SQLite database."""
@@ -1222,7 +1222,7 @@ class CacheManager:
             conn.commit()
             conn.close()
         except Exception as e:
-            self.logger.exception(f"SQLite storage failed: {e}")
+            self.logger.exception("SQLite storage failed: %s", e)
 
     def _check_network_connectivity(self, url: str) -> bool:
         """Check network connectivity using socket."""
@@ -1232,12 +1232,12 @@ class CacheManager:
             port = parsed_url.port or (443 if parsed_url.scheme == "https" else 80)
 
             if query_params := parse_qs(parsed_url.query):
-                self.logger.debug(f"Network connectivity test for {hostname}:{port} with query params: {list(query_params.keys())}")
+                self.logger.debug("Network connectivity test for %s:%s with query params: %s", hostname, port, list(query_params.keys()))
 
                 # Validate common cloud service parameters
                 for param in ["key", "token", "auth", "license"]:
                     if param in query_params:
-                        self.logger.info(f"Detected authentication parameter '{param}' in URL - potential license validation endpoint")
+                        self.logger.info("Detected authentication parameter '%s' in URL - potential license validation endpoint", param)
 
             # Use socket to test connectivity
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1249,27 +1249,27 @@ class CacheManager:
             ping_data = struct.pack("!I", int(time.time()))
 
             # Log network diagnostics data
-            self.logger.debug(f"Network diagnostic timestamp: {int(time.time())}, raw ping data: {ping_data.hex()}")
+            self.logger.debug("Network diagnostic timestamp: %s, raw ping data: %s", int(time.time()), ping_data.hex())
 
             # Validate network connectivity result
             if result == 0:
-                self.logger.info(f"Successfully connected to {hostname}:{port}")
+                self.logger.info("Successfully connected to %s:%s", hostname, port)
             else:
-                self.logger.warning(f"Failed to connect to {hostname}:{port} (error code: {result})")
+                self.logger.warning("Failed to connect to %s:%s (error code: %s)", hostname, port, result)
 
             return result == 0
         except Exception as e:
-            self.logger.exception(f"Network connectivity check failed: {e}")
+            self.logger.exception("Network connectivity check failed: %s", e)
             return False
 
     def _compress_cache_data(self, data: bytes) -> bytes:
         """Compress cache data using zlib."""
         try:
             compressed = zlib.compress(data)
-            self.logger.debug(f"Compressed {len(data)} bytes to {len(compressed)} bytes")
+            self.logger.debug("Compressed %s bytes to %s bytes", len(data), len(compressed))
             return compressed
         except Exception as e:
-            self.logger.exception(f"Compression failed: {e}")
+            self.logger.exception("Compression failed: %s", e)
             return data
 
     def _analyze_response_content(self, response_body: bytes, content_type: str) -> dict[str, Any]:
@@ -1302,7 +1302,7 @@ class CacheManager:
             }
 
         except Exception as e:
-            self.logger.exception(f"Content analysis failed: {e}")
+            self.logger.exception("Content analysis failed: %s", e)
 
         return analysis
 
@@ -1319,7 +1319,7 @@ class CacheManager:
             del self.cache[oldest_key]
         del self.access_times[oldest_key]
 
-        self.logger.debug(f"Evicted cache entry: {oldest_key}")
+        self.logger.debug("Evicted cache entry: %s", oldest_key)
 
     def _cleanup_loop(self) -> None:
         """Background cleanup of expired cache entries."""
@@ -1342,10 +1342,10 @@ class CacheManager:
                             del self.access_times[key]
 
                 if expired_keys:
-                    self.logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
+                    self.logger.debug("Cleaned up %s expired cache entries", len(expired_keys))
 
             except Exception as e:
-                self.logger.exception(f"Cache cleanup error: {e}")
+                self.logger.exception("Cache cleanup error: %s", e)
 
     def clear_cache(self) -> None:
         """Clear all cached responses."""
@@ -1431,7 +1431,7 @@ class LocalLicenseServer:
             bypass_applied=True,
         )
 
-        self.logger.info(f"Generated local license response for {request.provider.value}")
+        self.logger.info("Generated local license response for %s", request.provider.value)
         return response
 
     def _extract_identifier(self, request: RequestInfo) -> str:
@@ -1447,7 +1447,9 @@ class LocalLicenseServer:
                 return parsed["payload"].get("sub", "default")
 
         if api_key := request.headers.get("X-API-Key") or request.headers.get("API-Key"):
-            return hashlib.sha256(api_key.encode()).hexdigest()[:16]  # lgtm[py/weak-sensitive-data-hashing] SHA256 for request correlation ID, not credential storage
+            return hashlib.sha256(api_key.encode()).hexdigest()[
+                :16
+            ]  # lgtm[py/weak-sensitive-data-hashing] SHA256 for request correlation ID, not credential storage
 
         # Check URL for identifier
         parsed_url = urlparse(request.url)
@@ -1576,11 +1578,11 @@ class CloudLicenseInterceptor:
             )
 
             self.running = True
-            self.logger.info(f"Interceptor started on {self.config.listen_host}:{self.config.listen_port}")
+            self.logger.info("Interceptor started on %s:%s", self.config.listen_host, self.config.listen_port)
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to start interceptor: {e}")
+            self.logger.exception("Failed to start interceptor: %s", e)
             return False
 
     async def stop(self) -> None:
@@ -1676,7 +1678,7 @@ class CloudLicenseInterceptor:
             return await self._forward_request(request_info)
 
         except Exception as e:
-            self.logger.exception(f"Request handling error: {e}")
+            self.logger.exception("Request handling error: %s", e)
             return aiohttp.web.Response(
                 status=500,
                 text="Internal Server Error",
@@ -1704,7 +1706,7 @@ class CloudLicenseInterceptor:
                         return self._create_response(modified_response)
 
                 except Exception as e:
-                    self.logger.warning(f"Upstream request failed: {e}")
+                    self.logger.warning("Upstream request failed: %s", e, exc_info=True)
 
             # Use local license server as fallback
             local_response = self.local_server.handle_license_request(request)
@@ -1716,7 +1718,7 @@ class CloudLicenseInterceptor:
             return self._create_response(local_response)
 
         except Exception as e:
-            self.logger.exception(f"License request handling failed: {e}")
+            self.logger.exception("License request handling failed: %s", e)
 
             # Generate emergency fallback response
             fallback_response = self._generate_fallback_response(request)
@@ -1736,7 +1738,7 @@ class CloudLicenseInterceptor:
             )
 
         except Exception as e:
-            self.logger.exception(f"Request forwarding failed: {e}")
+            self.logger.exception("Request forwarding failed: %s", e)
             return aiohttp.web.Response(
                 status=502,
                 text="Bad Gateway",
@@ -1776,10 +1778,10 @@ class CloudLicenseInterceptor:
                 )
 
         except TimeoutError:
-            self.logger.exception(f"Upstream request timeout: {request.url}")
+            self.logger.exception("Upstream request timeout: %s", request.url)
             return None
         except Exception as e:
-            self.logger.exception(f"Upstream request error: {e}")
+            self.logger.exception("Upstream request error: %s", e)
             return None
 
     def _modify_upstream_response(self, request: RequestInfo, upstream_response: ResponseInfo) -> ResponseInfo:
@@ -1866,6 +1868,9 @@ class CloudLicenseInterceptor:
         }
 
 
+logger = logging.getLogger(__name__)
+
+
 async def main() -> int:
     """Run main CLI interface."""
     import argparse
@@ -1899,21 +1904,19 @@ async def main() -> int:
     # Create and start interceptor
     interceptor = CloudLicenseInterceptor(config)
 
-    print(f"""
-=================================================
-Cloud License Interceptor v2.0.0
-=================================================
-Listening on: {config.listen_host}:{config.listen_port}
-Cache TTL: {config.cache_ttl}s
-Stealth Mode: {"Enabled" if config.stealth_mode else "Disabled"}
-Fallback Mode: {"Enabled" if config.fallback_mode else "Disabled"}
-=================================================
-""")
+    logger.info(
+        "Cloud License Interceptor v2.0.0 - Listening on: %s:%s, Cache TTL: %ss, Stealth Mode: %s, Fallback Mode: %s",
+        config.listen_host,
+        config.listen_port,
+        config.cache_ttl,
+        "Enabled" if config.stealth_mode else "Disabled",
+        "Enabled" if config.fallback_mode else "Disabled",
+    )
 
     try:
         if await interceptor.start():
-            print("Interceptor started successfully!")
-            print("Press Ctrl+C to stop...")
+            logger.info("Interceptor started successfully!")
+            logger.info("Press Ctrl+C to stop...")
 
             # Keep running
             while interceptor.running:
@@ -1922,16 +1925,16 @@ Fallback Mode: {"Enabled" if config.fallback_mode else "Disabled"}
                 # Print stats every 60 seconds
                 if int(time.time()) % 60 == 0:
                     stats = interceptor.get_statistics()
-                    print(f"Stats: {stats['total_requests']} requests, {stats['bypass_stats']} bypasses")
+                    logger.info("Stats: %s requests, %s bypasses", stats["total_requests"], stats["bypass_stats"])
 
         else:
-            print("Failed to start interceptor!")
+            logger.error("Failed to start interceptor!")
             return 1
 
     except KeyboardInterrupt:
-        print("\nShutting down...")
+        logger.info("Shutting down...")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.exception("Error: %s", e)
         return 1
     finally:
         await interceptor.stop()

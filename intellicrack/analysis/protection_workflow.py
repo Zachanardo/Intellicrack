@@ -788,28 +788,22 @@ console.log("[+] Generic bypass active for " + protectionName);
         steps = []
 
         if analysis.is_packed:
-            steps.extend(
-                (
-                    "1. Run the unpacking script in Frida to dump the unpacked code",
-                    "2. Use Scylla to rebuild the import table",
-                    "3. Re-analyze the unpacked binary",
-                )
-            )
+            steps.extend((
+                "1. Run the unpacking script in Frida to dump the unpacked code",
+                "2. Use Scylla to rebuild the import table",
+                "3. Re-analyze the unpacked binary",
+            ))
         elif analysis.has_anti_debug:
-            steps.extend(
-                (
-                    "1. Apply the anti-debug bypass script",
-                    "2. Attach debugger with ScyllaHide enabled",
-                    "3. Set breakpoints at key decision points",
-                )
-            )
+            steps.extend((
+                "1. Apply the anti-debug bypass script",
+                "2. Attach debugger with ScyllaHide enabled",
+                "3. Set breakpoints at key decision points",
+            ))
         elif analysis.has_licensing:
-            steps.extend(
-                (
-                    "1. Run the license bypass script to identify check locations",
-                    "2. Analyze the validation logic in Ghidra",
-                )
-            )
+            steps.extend((
+                "1. Run the license bypass script to identify check locations",
+                "2. Analyze the validation logic in Ghidra",
+            ))
             steps.append("3. Patch the license checks or generate valid keys")
 
         else:

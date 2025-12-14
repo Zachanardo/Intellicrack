@@ -115,7 +115,7 @@ class R2BypassGenerator:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Bypass generation failed: {e}")
+            self.logger.error("Bypass generation failed: %s", e, exc_info=True)
 
         return result
 
@@ -186,7 +186,7 @@ class R2BypassGenerator:
             analysis["validation_flow"] = self._build_validation_flow(analysis)
 
         except R2Exception as e:
-            self.logger.error(f"License mechanism analysis failed: {e}")
+            self.logger.error("License mechanism analysis failed: %s", e, exc_info=True)
 
         return analysis
 
@@ -327,11 +327,11 @@ class R2BypassGenerator:
                                         },
                                     )
                 except R2Exception as e:
-                    logger.error("R2Exception in radare2_bypass_generator: %s", e)
+                    logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
                     continue
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e)
+            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
 
         return patterns
 
@@ -404,7 +404,7 @@ class R2BypassGenerator:
                         )
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e)
+            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
 
         return api_analysis
 
@@ -550,7 +550,7 @@ class R2BypassGenerator:
                             patches.append(basic_patch)
 
             except Exception as e:
-                logger.error(f"Error generating patches for function at {hex(func_addr)}: {e}")
+                logger.error("Error generating patches for function at %s: %s", hex(func_addr), e, exc_info=True)
                 continue
 
         # Sort patches by confidence and sophistication
@@ -638,7 +638,7 @@ class R2BypassGenerator:
 
                 sbox_pattern = r2.cmd(f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}")
                 if sbox_pattern:
-                    logger.debug(f"S-box pattern found at {hex(func_addr)}: {sbox_pattern}")
+                    logger.debug("S-box pattern found at %s: %s", hex(func_addr), sbox_pattern)
                     s_boxes_list: list[dict[str, Any]] = analysis["s_boxes"]
                     s_boxes_list.append(
                         {
@@ -670,7 +670,7 @@ class R2BypassGenerator:
                 analysis["salt_values"] = self._find_salts(r2, func_addr)
 
         except Exception as e:
-            self.logger.error(f"Crypto analysis error: {e}")
+            self.logger.error("Crypto analysis error: %s", e, exc_info=True)
 
         return analysis
 
@@ -853,7 +853,7 @@ if __name__ == "__main__":
                     construction["transformation"] = "partial"
 
         except Exception as e:
-            self.logger.error(f"Hash construction analysis error: {e}")
+            self.logger.error("Hash construction analysis error: %s", e, exc_info=True)
 
         return construction
 
@@ -987,7 +987,7 @@ if __name__ == "__main__":
                     if len(ivs) >= 3:  # Limit to first 3 potential IVs
                         break
         except Exception as e:
-            logger.debug(f"Failed to find initialization vectors: {e}")
+            logger.debug("Failed to find initialization vectors: %s", e, exc_info=True)
         return ivs
 
     def _find_salts(self, r2: R2Session, func_addr: int) -> list[str]:
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
                     if 8 <= len(string_val) <= 32:  # Typical salt size
                         salts.append(string_val)
         except Exception as e:
-            logger.debug(f"Failed to find salts: {e}")
+            logger.debug("Failed to find salts: %s", e, exc_info=True)
         return salts
 
     def _extract_crypto_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
@@ -1165,7 +1165,7 @@ if __name__ == "__main__":
                                             return str(hex_data.strip())
 
         except Exception as e:
-            self.logger.debug(f"Failed to extract RSA modulus: {e}")
+            self.logger.debug("Failed to extract RSA modulus: %s", e, exc_info=True)
 
         # Return None if extraction failed - caller should handle this
         return None
@@ -1719,7 +1719,7 @@ void apply_patch() {{
                 "patch_bytes": self._generate_patch_bytes_for_method(bypass_method),
             }
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e)
+            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
             return None
 
     def _generate_keygen_implementation(self, crypto_op: dict[str, Any]) -> dict[str, str]:
@@ -2093,7 +2093,7 @@ Compatible=1.0,1.5,2.0"""
                 return str(bytes_data.strip())
             return "00" * 16
         except R2Exception as e:
-            self.logger.error("R2Exception in radare2_bypass_generator: %s", e)
+            self.logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
             return "00" * 16
 
     def _generate_patch_bytes(self, func_info: dict[str, Any]) -> str:
@@ -3165,7 +3165,7 @@ def generate_key():
             return cfg
 
         except Exception as e:
-            logger.error(f"Error analyzing control flow graph: {e}")
+            logger.error("Error analyzing control flow graph: %s", e, exc_info=True)
             return {"blocks": {}, "edges": [], "conditionals": []}
 
     def _identify_decision_points(self, r2: R2Session, func_addr: int, cfg: dict[str, Any]) -> list[dict[str, Any]]:
@@ -3203,7 +3203,7 @@ def generate_key():
                 decision_points.append(decision_point)
 
             except Exception as e:
-                logger.error(f"Error analyzing decision point at {hex(cond_addr)}: {e}")
+                logger.error("Error analyzing decision point at %s: %s", hex(cond_addr), e, exc_info=True)
                 continue
 
         # Also identify function entry points that perform immediate checks
@@ -3489,7 +3489,7 @@ def generate_key():
                     if any(check in line.lower() for check in ["cmp", "test", "call"])
                 )
         except Exception as e:
-            logger.error(f"Error finding entry validation checks: {e}")
+            logger.error("Error finding entry validation checks: %s", e, exc_info=True)
 
         return entry_checks
 
@@ -3663,7 +3663,7 @@ def generate_key():
                         bytes_str += "".join(parts)
                 return bytes_str[: size * 2]  # Each byte is 2 hex chars
         except Exception as e:
-            logger.error(f"Error getting original bytes: {e}")
+            logger.error("Error getting original bytes: %s", e, exc_info=True)
         return "90" * size  # Return NOPs as fallback
 
     def _is_already_patched(self, bypass_point: dict[str, Any], patches: list[dict[str, Any]]) -> bool:

@@ -325,13 +325,11 @@ class QEMUExecutionThread(QThread):
             # Parse real Frida output patterns
             if "Found" in line and "at 0x" in line:
                 if addr_match := re.search(r"at (0x[0-9a-fA-F]+)", line):
-                    memory_changes.append(
-                        {
-                            "type": "discovery",
-                            "address": addr_match[1],
-                            "description": line,
-                        }
-                    )
+                    memory_changes.append({
+                        "type": "discovery",
+                        "address": addr_match[1],
+                        "description": line,
+                    })
 
             elif "Patched" in line or "Hooked" in line:
                 # Extract patching/hooking info

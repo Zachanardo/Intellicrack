@@ -1270,41 +1270,135 @@ except ImportError as e:
     # Fallback classes for headless mode to prevent TypeError: NoneType takes no arguments
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
         globals()["PYQT_VERSION_STR"] = "Fallback"
-        _set_qt_globals([
-            "QAbstractItemModel", "QAbstractItemView", "QAbstractScrollArea",
-            "QAction", "QApplication", "QBrush", "QBuffer", "QButtonGroup",
-            "QCheckBox", "QCloseEvent", "QColor", "QColorDialog", "QComboBox",
-            "QCoreApplication", "QDateTime", "QDesktopServices", "QDialog",
-        ], FallbackWidget)
+        _set_qt_globals(
+            [
+                "QAbstractItemModel",
+                "QAbstractItemView",
+                "QAbstractScrollArea",
+                "QAction",
+                "QApplication",
+                "QBrush",
+                "QBuffer",
+                "QButtonGroup",
+                "QCheckBox",
+                "QCloseEvent",
+                "QColor",
+                "QColorDialog",
+                "QComboBox",
+                "QCoreApplication",
+                "QDateTime",
+                "QDesktopServices",
+                "QDialog",
+            ],
+            FallbackWidget,
+        )
     else:
         globals()["PYQT_VERSION_STR"] = None
-        _set_qt_globals([
-            "QAbstractItemModel", "QAbstractItemView", "QAbstractScrollArea",
-            "QAction", "QApplication", "QBrush", "QBuffer", "QButtonGroup",
-            "QCheckBox", "QCloseEvent",
-        ], None)
-        _set_qt_globals([
-            "QColor", "QColorDialog", "QComboBox", "QCoreApplication",
-            "QDateTime", "QDesktopServices", "QDialog",
-        ], FallbackWidget)
+        _set_qt_globals(
+            [
+                "QAbstractItemModel",
+                "QAbstractItemView",
+                "QAbstractScrollArea",
+                "QAction",
+                "QApplication",
+                "QBrush",
+                "QBuffer",
+                "QButtonGroup",
+                "QCheckBox",
+                "QCloseEvent",
+            ],
+            None,
+        )
+        _set_qt_globals(
+            [
+                "QColor",
+                "QColorDialog",
+                "QComboBox",
+                "QCoreApplication",
+                "QDateTime",
+                "QDesktopServices",
+                "QDialog",
+            ],
+            FallbackWidget,
+        )
     # Continue testing mode assignment for remaining Qt classes
     _qt_classes_batch2 = [
-        "QDialogButtonBox", "QDoubleSpinBox", "QDragEnterEvent", "QDragLeaveEvent",
-        "QDropEvent", "QFileDialog", "QFileIconProvider", "QFileInfo",
-        "QFileSystemWatcher", "QFont", "QFontDatabase", "QFontMetrics",
-        "QFormLayout", "QFrame", "QGraphicsView", "QGridLayout", "QGroupBox",
-        "QHBoxLayout", "QHeaderView", "QIODevice", "QIcon", "QImage",
-        "QInputDialog", "QKeyEvent", "QKeySequence", "QLabel", "QLineEdit",
-        "QListView", "QListWidget", "QListWidgetItem", "QMainWindow", "QMenu",
-        "QMenuBar", "QMessageBox", "QMetaObject", "QModelIndex", "QMouseEvent",
-        "QObject", "QOpenGLContext", "QOpenGLWidget", "QPaintEvent", "QPainter",
-        "QPalette", "QPdfDocument", "QPdfView", "QPen", "QPixmap", "QPlainTextEdit",
-        "QPoint", "QPrintDialog", "QPrinter", "QProcess", "QProgressBar",
-        "QProgressDialog", "QPushButton", "QRadioButton", "QRect",
-        "QRegularExpression", "QResizeEvent", "QRunnable", "QShortcut",
-        "QScrollArea", "QScrollBar", "QSize", "QSizePolicy", "QSlider",
-        "QSpacerItem", "QSpinBox", "QSplashScreen", "QSplitter", "QStackedWidget",
-        "QStandardItem", "QStandardItemModel", "QStatusBar", "QStyle", "QSurfaceFormat",
+        "QDialogButtonBox",
+        "QDoubleSpinBox",
+        "QDragEnterEvent",
+        "QDragLeaveEvent",
+        "QDropEvent",
+        "QFileDialog",
+        "QFileIconProvider",
+        "QFileInfo",
+        "QFileSystemWatcher",
+        "QFont",
+        "QFontDatabase",
+        "QFontMetrics",
+        "QFormLayout",
+        "QFrame",
+        "QGraphicsView",
+        "QGridLayout",
+        "QGroupBox",
+        "QHBoxLayout",
+        "QHeaderView",
+        "QIODevice",
+        "QIcon",
+        "QImage",
+        "QInputDialog",
+        "QKeyEvent",
+        "QKeySequence",
+        "QLabel",
+        "QLineEdit",
+        "QListView",
+        "QListWidget",
+        "QListWidgetItem",
+        "QMainWindow",
+        "QMenu",
+        "QMenuBar",
+        "QMessageBox",
+        "QMetaObject",
+        "QModelIndex",
+        "QMouseEvent",
+        "QObject",
+        "QOpenGLContext",
+        "QOpenGLWidget",
+        "QPaintEvent",
+        "QPainter",
+        "QPalette",
+        "QPdfDocument",
+        "QPdfView",
+        "QPen",
+        "QPixmap",
+        "QPlainTextEdit",
+        "QPoint",
+        "QPrintDialog",
+        "QPrinter",
+        "QProcess",
+        "QProgressBar",
+        "QProgressDialog",
+        "QPushButton",
+        "QRadioButton",
+        "QRect",
+        "QRegularExpression",
+        "QResizeEvent",
+        "QRunnable",
+        "QShortcut",
+        "QScrollArea",
+        "QScrollBar",
+        "QSize",
+        "QSizePolicy",
+        "QSlider",
+        "QSpacerItem",
+        "QSpinBox",
+        "QSplashScreen",
+        "QSplitter",
+        "QStackedWidget",
+        "QStandardItem",
+        "QStandardItemModel",
+        "QStatusBar",
+        "QStyle",
+        "QSurfaceFormat",
     ]
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
         _set_qt_globals(_qt_classes_batch2, FallbackWidget)
@@ -1314,12 +1408,32 @@ except ImportError as e:
         globals()["QT_VERSION_STR"] = None
     # Finish testing mode assignment for final Qt classes
     _qt_classes_batch3 = [
-        "QSyntaxHighlighter", "QTabWidget", "QTableView", "QTableWidget",
-        "QTableWidgetItem", "QTest", "QTextBrowser", "QTextCharFormat",
-        "QTextCursor", "QTextDocument", "QTextEdit", "QTextFormat",
-        "QThread", "QThreadPool", "QTimer", "QToolBar", "QTreeView",
-        "QTreeWidget", "QTreeWidgetItem", "QUrl", "QVariant", "QVBoxLayout",
-        "QWebEngineView", "QWidget", "QWizard", "QWizardPage",
+        "QSyntaxHighlighter",
+        "QTabWidget",
+        "QTableView",
+        "QTableWidget",
+        "QTableWidgetItem",
+        "QTest",
+        "QTextBrowser",
+        "QTextCharFormat",
+        "QTextCursor",
+        "QTextDocument",
+        "QTextEdit",
+        "QTextFormat",
+        "QThread",
+        "QThreadPool",
+        "QTimer",
+        "QToolBar",
+        "QTreeView",
+        "QTreeWidget",
+        "QTreeWidgetItem",
+        "QUrl",
+        "QVariant",
+        "QVBoxLayout",
+        "QWebEngineView",
+        "QWidget",
+        "QWizard",
+        "QWizardPage",
     ]
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
         _set_qt_globals(_qt_classes_batch3, FallbackWidget)
@@ -1440,7 +1554,8 @@ except ImportError as e:
             """
             from collections.abc import Callable
             from typing import Any, TypeVar, cast
-            F = TypeVar('F', bound=Callable[..., Any])
+
+            F = TypeVar("F", bound=Callable[..., Any])
 
             def decorator(func: F) -> F:
                 """Apply the pyqt slot decorator to a function.
@@ -1525,6 +1640,7 @@ except ImportError as e:
             a = max(0, min(255, a))
 
             return (a << 24) | (r << 16) | (g << 8) | b
+
     else:
         _set_qt_globals(_qt_classes_batch3, None)
         globals()["Qt"] = None

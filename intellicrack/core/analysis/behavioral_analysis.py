@@ -139,18 +139,16 @@ class QEMUController:
             if self.config.initrd:
                 cmd.extend(["-initrd", str(self.config.initrd)])
 
-            cmd.extend(
-                [
-                    "-netdev",
-                    "user,id=net0",
-                    "-device",
-                    "e1000,netdev=net0",
-                    "-monitor",
-                    f"tcp:127.0.0.1:{self.config.monitor_port},server,nowait",
-                    "-qmp",
-                    f"tcp:127.0.0.1:{self.config.qmp_port},server,nowait",
-                ]
-            )
+            cmd.extend([
+                "-netdev",
+                "user,id=net0",
+                "-device",
+                "e1000,netdev=net0",
+                "-monitor",
+                f"tcp:127.0.0.1:{self.config.monitor_port},server,nowait",
+                "-qmp",
+                f"tcp:127.0.0.1:{self.config.qmp_port},server,nowait",
+            ])
             if self.config.enable_gdb:
                 cmd.extend(["-gdb", f"tcp:127.0.0.1:{self.config.gdb_port}"])
                 cmd.append("-S")
@@ -162,7 +160,7 @@ class QEMUController:
 
             cmd.extend(self.config.extra_args)
 
-            logger.info(f"Starting QEMU: {' '.join(cmd)}")
+            logger.info("Starting QEMU: %s", " ".join(cmd))
 
             # Validate that cmd contains only safe, expected commands
             if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
@@ -186,7 +184,7 @@ class QEMUController:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to start QEMU: {e}")
+            logger.error("Failed to start QEMU: %s", e, exc_info=True)
             return False
 
     def stop(self) -> None:
@@ -226,7 +224,7 @@ class QEMUController:
             self.monitor_socket.send(f"{command}\n".encode())
             return self.monitor_socket.recv(4096).decode()
         except Exception as e:
-            logger.error(f"Monitor command failed: {e}")
+            logger.error("Monitor command failed: %s", e, exc_info=True)
             return ""
 
     def send_qmp_command(self, command: dict[str, Any]) -> dict[str, Any]:
@@ -240,7 +238,7 @@ class QEMUController:
             response = self.qmp_socket.recv(8192).decode()
             return json.loads(response)
         except Exception as e:
-            logger.error(f"QMP command failed: {e}")
+            logger.error("QMP command failed: %s", e, exc_info=True)
             return {}
 
     def _find_qemu_binary(self) -> str | None:
@@ -324,7 +322,7 @@ class QEMUController:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to connect to QEMU: {e}")
+            logger.error("Failed to connect to QEMU: %s", e, exc_info=True)
             return False
 
     def take_snapshot(self, name: str) -> bool:
@@ -358,7 +356,7 @@ class APIHookingFramework:
         elif system == "Linux":
             self._setup_linux_hooks()
         else:
-            logger.warning(f"Platform {system} not fully supported for API hooking")
+            logger.warning("Platform %s not fully supported for API hooking", system)
 
     def _setup_windows_hooks(self) -> None:
         """Set up Windows API hooks."""
@@ -507,10 +505,10 @@ class APIHookingFramework:
                 context=context,
             )
             self.events.append(event)
-            logger.debug(f"File create: {filename}")
+            logger.debug("File create: %s", filename)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_read_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor ReadFile calls."""
@@ -530,7 +528,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_write_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor WriteFile calls to track file writes."""
@@ -556,7 +554,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_reg_open_key(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor RegOpenKeyExW calls to track registry access."""
@@ -574,10 +572,10 @@ class APIHookingFramework:
                 context=context,
             )
             self.events.append(event)
-            logger.debug(f"Registry open: {subkey}")
+            logger.debug("Registry open: %s", subkey)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_reg_query_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry queries via RegQueryValueExW hook."""
@@ -596,7 +594,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_reg_set_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry writes via RegSetValueExW hook."""
@@ -614,10 +612,10 @@ class APIHookingFramework:
                 context=context,
             )
             self.events.append(event)
-            logger.debug(f"Registry set: {value_name}")
+            logger.debug("Registry set: %s", value_name)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_connect(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Windows)."""
@@ -640,10 +638,10 @@ class APIHookingFramework:
                 context=context,
             )
             self.events.append(event)
-            logger.debug(f"Network connect: {addr_info.get('address')}:{addr_info.get('port')}")
+            logger.debug("Network connect: %s:%s", addr_info.get("address"), addr_info.get("port"))
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_send(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data transmission via send hook."""
@@ -669,7 +667,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_recv(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data reception via recv hook."""
@@ -689,7 +687,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_create_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process creation via NtCreateProcess hook."""
@@ -709,7 +707,7 @@ class APIHookingFramework:
             logger.debug("Process create detected")
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_open_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process access via NtOpenProcess hook."""
@@ -727,10 +725,10 @@ class APIHookingFramework:
                 context=context,
             )
             self.events.append(event)
-            logger.debug(f"Process open: PID {process_id}")
+            logger.debug("Process open: PID %s", process_id)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_open(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file opening via open hook (Linux)."""
@@ -749,7 +747,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_read(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file reading via read hook (Linux)."""
@@ -769,7 +767,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_write(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file writing via write hook (Linux)."""
@@ -795,7 +793,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_socket(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network socket creation via socket hook (Linux)."""
@@ -815,7 +813,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _hook_connect_linux(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Linux)."""
@@ -840,7 +838,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error(f"Hook error: {e}")
+            logger.error("Hook error: %s", e, exc_info=True)
 
     def _read_wide_string(self, address: int, max_length: int = 260) -> str:
         """Read a wide string from memory."""
@@ -960,7 +958,7 @@ class AntiAnalysisDetector:
             try:
                 method(process_id)
             except Exception as e:
-                logger.error(f"Detection method failed: {e}")
+                logger.error("Detection method failed: %s", e, exc_info=True)
 
         return self.detections
 
@@ -1017,7 +1015,7 @@ class AntiAnalysisDetector:
                     kernel32.CloseHandle(process_handle)
 
             except Exception as e:
-                logger.error(f"Debugger detection failed: {e}")
+                logger.error("Debugger detection failed: %s", e, exc_info=True)
 
         elif platform.system() == "Linux":
             try:
@@ -1037,7 +1035,7 @@ class AntiAnalysisDetector:
                         checks.append(f"High FD count: {fd_count}")
 
             except Exception as e:
-                logger.error(f"Linux debugger detection failed: {e}")
+                logger.error("Linux debugger detection failed: %s", e, exc_info=True)
 
         if checks:
             self.detections.append({"type": "debugger_presence", "methods": checks, "severity": "high"})
@@ -1083,7 +1081,7 @@ class AntiAnalysisDetector:
                         vm_indicators.append(f"DMI product: {product}")
 
         except Exception as e:
-            logger.error(f"VM detection failed: {e}")
+            logger.error("VM detection failed: %s", e, exc_info=True)
 
         if vm_indicators:
             self.detections.append({"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"})
@@ -1138,7 +1136,7 @@ class AntiAnalysisDetector:
                     timing_checks.append(f"CPU time anomaly: {cpu_time:.6f}s")
 
         except Exception as e:
-            logger.error(f"Timing detection failed: {e}")
+            logger.error("Timing detection failed: %s", e, exc_info=True)
 
         if timing_checks:
             self.detections.append({"type": "timing_attacks", "checks": timing_checks, "severity": "medium"})
@@ -1164,16 +1162,14 @@ class AntiAnalysisDetector:
                 hollowing_indicators.append("Suspicious memory usage ratio")
 
         except Exception as e:
-            logger.error(f"Process hollowing detection failed: {e}")
+            logger.error("Process hollowing detection failed: %s", e, exc_info=True)
 
         if hollowing_indicators:
-            self.detections.append(
-                {
-                    "type": "process_hollowing",
-                    "indicators": hollowing_indicators,
-                    "severity": "high",
-                }
-            )
+            self.detections.append({
+                "type": "process_hollowing",
+                "indicators": hollowing_indicators,
+                "severity": "high",
+            })
 
     def _detect_api_hooks(self, process_id: int) -> None:
         """Detect API hooking."""
@@ -1209,12 +1205,12 @@ class AntiAnalysisDetector:
 
                                 kernel32.FreeLibrary(dll_handle)
                         except Exception as e:
-                            logger.debug(f"Failed to free library handle: {e}")
+                            logger.debug("Failed to free library handle: %s", e)
 
                     kernel32.CloseHandle(process_handle)
 
             except Exception as e:
-                logger.error(f"API hook detection failed: {e}")
+                logger.error("API hook detection failed: %s", e, exc_info=True)
 
         if hooked_apis:
             self.detections.append({"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"})
@@ -1248,26 +1244,24 @@ class AntiAnalysisDetector:
                 if any(s in hostname.lower() for s in ["sandbox", "malware", "virus", "analysis"]):
                     sandbox_indicators.append(f"Suspicious hostname: {hostname}")
             except Exception as e:
-                logger.debug(f"Hostname analysis failed: {e}")
+                logger.debug("Hostname analysis failed: %s", e)
 
             try:
                 username = os.environ.get("USERNAME", os.environ.get("USER", ""))
                 if any(s in username.lower() for s in ["sandbox", "admin", "test", "malware"]):
                     sandbox_indicators.append(f"Suspicious username: {username}")
             except Exception as e:
-                logger.debug(f"Username analysis failed: {e}")
+                logger.debug("Username analysis failed: %s", e)
 
         except Exception as e:
-            logger.error(f"Sandbox detection failed: {e}")
+            logger.error("Sandbox detection failed: %s", e, exc_info=True)
 
         if sandbox_indicators:
-            self.detections.append(
-                {
-                    "type": "sandbox_artifacts",
-                    "indicators": sandbox_indicators,
-                    "severity": "medium",
-                }
-            )
+            self.detections.append({
+                "type": "sandbox_artifacts",
+                "indicators": sandbox_indicators,
+                "severity": "medium",
+            })
 
     def _detect_memory_protections(self, process_id: int) -> None:
         """Detect memory protection mechanisms."""
@@ -1299,10 +1293,10 @@ class AntiAnalysisDetector:
                         kernel32.CloseHandle(process_handle)
 
                 except Exception as e:
-                    logger.debug(f"Error during memory protection detection cleanup: {e}")
+                    logger.debug("Error during memory protection detection cleanup: %s", e)
 
         except Exception as e:
-            logger.error(f"Memory protection detection failed: {e}")
+            logger.error("Memory protection detection failed: %s", e, exc_info=True)
 
         if protections:
             self.detections.append({"type": "memory_protections", "mechanisms": protections, "severity": "low"})
@@ -1331,7 +1325,7 @@ class AntiAnalysisDetector:
                         if pe_header_offset > 0x1000:
                             obfuscation_indicators.append(f"Unusual PE header offset: {pe_header_offset:#x}")
             except Exception as e:
-                logger.debug(f"PE header analysis failed: {e}")
+                logger.debug("PE header analysis failed: %s", e)
 
             memory_maps = proc.memory_maps() if hasattr(proc, "memory_maps") else []
             exec_regions = [m for m in memory_maps if "x" in getattr(m, "perms", "")]
@@ -1360,19 +1354,17 @@ class AntiAnalysisDetector:
 
                                 kernel32.CloseHandle(process_handle)
                     except Exception as e:
-                        logger.debug(f"Error during obfuscation detection cleanup: {e}")
+                        logger.debug("Error during obfuscation detection cleanup: %s", e)
 
         except Exception as e:
-            logger.error(f"Obfuscation detection failed: {e}")
+            logger.error("Obfuscation detection failed: %s", e, exc_info=True)
 
         if obfuscation_indicators:
-            self.detections.append(
-                {
-                    "type": "code_obfuscation",
-                    "indicators": obfuscation_indicators,
-                    "severity": "medium",
-                }
-            )
+            self.detections.append({
+                "type": "code_obfuscation",
+                "indicators": obfuscation_indicators,
+                "severity": "medium",
+            })
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
@@ -1412,7 +1404,7 @@ class BehavioralAnalyzer:
 
     def run_analysis(self, duration: int = 60) -> dict[str, Any]:
         """Run comprehensive behavioral analysis."""
-        logger.info(f"Starting behavioral analysis of {self.binary_path}")
+        logger.info("Starting behavioral analysis of %s", self.binary_path)
 
         results = {
             "binary": str(self.binary_path),
@@ -1456,7 +1448,7 @@ class BehavioralAnalyzer:
             results["summary"] = self._generate_summary(results)
 
         except Exception as e:
-            logger.error(f"Behavioral analysis failed: {e}")
+            logger.error("Behavioral analysis failed: %s", e, exc_info=True)
             results["error"] = str(e)
 
         finally:
@@ -1492,7 +1484,7 @@ class BehavioralAnalyzer:
                 self.qemu_controller.stop()
 
         except Exception as e:
-            logger.error(f"QEMU analysis failed: {e}")
+            logger.error("QEMU analysis failed: %s", e, exc_info=True)
             qemu_results["error"] = str(e)
 
         return qemu_results
@@ -1537,7 +1529,7 @@ class BehavioralAnalyzer:
                 process.wait(timeout=5)
 
         except Exception as e:
-            logger.error(f"Native analysis failed: {e}")
+            logger.error("Native analysis failed: %s", e, exc_info=True)
             native_results["error"] = str(e)
 
         return native_results
@@ -1580,7 +1572,7 @@ class BehavioralAnalyzer:
             monitoring_results["unique_apis_called"] = list(monitoring_results["unique_apis_called"])
 
         except Exception as e:
-            logger.error(f"API monitoring failed: {e}")
+            logger.error("API monitoring failed: %s", e, exc_info=True)
             monitoring_results["error"] = str(e)
 
         return monitoring_results

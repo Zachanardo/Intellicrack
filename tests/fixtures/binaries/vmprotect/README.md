@@ -14,29 +14,34 @@ Place the following VMProtect-protected samples in this directory:
 ## Legal Acquisition Methods
 
 ### 1. VMProtect Trial SDK
+
 - Visit: https://vmpsoft.com/
 - Download trial version
 - Protect sample applications
 - Place protected binaries here
 
 ### 2. Legitimate Software Demos
+
 - Some commercial software uses VMProtect for trial protection
 - Ensure licensing allows reverse engineering/testing
 - Document source and licensing
 
 ### 3. Crackme Challenges
+
 - VMProtect-based crackmes from:
-  - crackmes.one
-  - CTF competitions
-  - Reverse engineering training platforms
+    - crackmes.one
+    - CTF competitions
+    - Reverse engineering training platforms
 
 ### 4. Open Source Projects
+
 - GitHub projects using VMProtect
 - Verify license permits analysis
 
 ## Security Notice
 
 All samples MUST be:
+
 - Legally obtained
 - From legitimate sources
 - Properly licensed for analysis/testing
@@ -45,11 +50,13 @@ All samples MUST be:
 ## Test Execution
 
 Without samples, tests will skip with instructions:
+
 ```bash
 pytest tests/unit/core/analysis/test_vmprotect_detector_real.py -v
 ```
 
 With samples present, tests will:
+
 - Verify >90% detection accuracy
 - Validate all detector capabilities
 - Ensure production-ready performance

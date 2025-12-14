@@ -265,12 +265,12 @@ except ImportError:
         def show(self) -> None:
             """Show dialog in console mode."""
             self._visible = True
-            logger.info(f"Dialog '{self._title}' opened (console mode)")
+            logger.info("Dialog '%s' opened (console mode)", self._title)
 
         def hide(self) -> None:
             """Hide dialog and log action."""
             self._visible = False
-            logger.info(f"Dialog '{self._title}' hidden")
+            logger.info("Dialog '%s' hidden", self._title)
 
         def exec(self) -> int:
             """Execute modal dialog and return result.
@@ -281,7 +281,7 @@ except ImportError:
             """
             self._modal = True
             self._visible = True
-            logger.info(f"Modal dialog '{self._title}' executing")
+            logger.info("Modal dialog '%s' executing", self._title)
             return self._result
 
         def accept(self) -> None:
@@ -325,11 +325,11 @@ except ImportError:
 
         def raise_(self) -> None:
             """Raise dialog to front in console mode."""
-            logger.debug(f"Raising dialog '{self._title}'")
+            logger.debug("Raising dialog '%s'", self._title)
 
         def activateWindow(self) -> None:
             """Activate dialog window in console mode."""
-            logger.debug(f"Activating dialog '{self._title}'")
+            logger.debug("Activating dialog '%s'", self._title)
 
         def closeEvent(self, event: object) -> None:
             """Handle close event to be overridden in subclass.
@@ -514,11 +514,11 @@ except ImportError:
 
         def update(self) -> None:
             """Update widget display in console mode."""
-            logger.debug(f"Widget {self._object_name} updated")
+            logger.debug("Widget %s updated", self._object_name)
 
         def repaint(self) -> None:
             """Repaint widget display in console mode."""
-            logger.debug(f"Widget {self._object_name} repainted")
+            logger.debug("Widget %s repainted", self._object_name)
 
     class PyqtSignal:  # type: ignore[no-redef]
         """Fully functional signal implementation for PyQt6 compatibility.
@@ -580,7 +580,7 @@ except ImportError:
                 try:
                     slot(*args)
                 except Exception as e:
-                    logger.error(f"Error in signal slot: {e}")
+                    logger.error("Error in signal slot: %s", e, exc_info=True)
 
         def blockSignals(self, blocked: bool) -> None:
             """Block or unblock signal emission.
@@ -672,7 +672,7 @@ except ImportError:
                 try:
                     slot(*args)
                 except Exception as e:
-                    logger.error(f"Error in bound signal slot: {e}")
+                    logger.error("Error in bound signal slot: %s", e, exc_info=True)
 
 
 class ProcessingStatus(Enum):
@@ -758,7 +758,7 @@ class DistributedWorkerThread(QThread):
     def run(self) -> None:
         """Run worker thread execution loop."""
         self.running = True
-        logger.info(f"Distributed worker {self.worker_id} started")
+        logger.info("Distributed worker %s started", self.worker_id)
 
         while self.running:
             if task := self.get_next_task():
@@ -767,7 +767,7 @@ class DistributedWorkerThread(QThread):
                 # No tasks available, wait before checking again
                 time.sleep(1.0)
 
-        logger.info(f"Distributed worker {self.worker_id} stopped")
+        logger.info("Distributed worker %s stopped", self.worker_id)
 
     def get_next_task(self) -> DistributedTask | None:
         """Get the next available task from the queue.
@@ -794,7 +794,7 @@ class DistributedWorkerThread(QThread):
         """
         try:
             self.current_task = task
-            logger.info(f"Worker {self.worker_id} processing task {task.task_id}")
+            logger.info("Worker %s processing task %s", self.worker_id, task.task_id)
 
             # Process different types of tasks with real implementations
             if task.task_type == "binary_analysis":
@@ -817,10 +817,10 @@ class DistributedWorkerThread(QThread):
             if HAS_PYQT6 and self.task_completed:
                 self.task_completed.emit(task.task_id, results)
 
-            logger.info(f"Task {task.task_id} completed successfully")
+            logger.info("Task %s completed successfully", task.task_id)
 
         except Exception as e:
-            logger.error(f"Task {task.task_id} failed: {e}")
+            logger.error("Task %s failed: %s", task.task_id, e, exc_info=True)
             task.status = ProcessingStatus.FAILED
             task.completed_time = datetime.now()
             task.error_message = str(e)
@@ -874,7 +874,7 @@ class DistributedWorkerThread(QThread):
             results["image_base"] = hex(pe.OPTIONAL_HEADER.ImageBase)
             results["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
         except Exception as e:
-            logger.warning(f"Not a valid PE file, analyzing as raw binary: {e}")
+            logger.warning("Not a valid PE file, analyzing as raw binary: %s", e, exc_info=True)
             with open(binary_path, "rb") as f:
                 raw_data = f.read()
             results["file_type"] = "Raw Binary"
@@ -1012,7 +1012,7 @@ class DistributedWorkerThread(QThread):
             if len(current) >= min_length:
                 strings.append("".join(current))
         except Exception as e:
-            logger.error(f"String extraction failed: {e}")
+            logger.error("String extraction failed: %s", e, exc_info=True)
 
         return strings
 
@@ -1038,24 +1038,20 @@ class DistributedWorkerThread(QThread):
             for i in md.disasm(code, 0x1000):
                 if i.mnemonic == "push" and "rbp" in i.op_str:
                     # Potential function start
-                    functions.append(
-                        {
-                            "address": hex(i.address),
-                            "instruction": f"{i.mnemonic} {i.op_str}",
-                            "type": "prologue",
-                        }
-                    )
+                    functions.append({
+                        "address": hex(i.address),
+                        "instruction": f"{i.mnemonic} {i.op_str}",
+                        "type": "prologue",
+                    })
                 elif i.mnemonic == "call":
                     # Function call
-                    functions.append(
-                        {
-                            "address": hex(i.address),
-                            "instruction": f"{i.mnemonic} {i.op_str}",
-                            "type": "call",
-                        }
-                    )
+                    functions.append({
+                        "address": hex(i.address),
+                        "instruction": f"{i.mnemonic} {i.op_str}",
+                        "type": "call",
+                    })
         except Exception as e:
-            logger.warning(f"Function identification failed: {e}")
+            logger.warning("Function identification failed: %s", e, exc_info=True)
 
         return functions
 
@@ -1082,7 +1078,7 @@ class DistributedWorkerThread(QThread):
                     entropy_map[f"0x{offset:08x}"] = round(entropy, 3)
                     offset += len(block)
         except Exception as e:
-            logger.error(f"Entropy map computation failed: {e}")
+            logger.error("Entropy map computation failed: %s", e, exc_info=True)
 
         return entropy_map
 
@@ -1119,8 +1115,10 @@ class DistributedWorkerThread(QThread):
 
             test_chars = string.ascii_letters + string.digits
             test_password = "".join(secrets.choice(test_chars) for _ in range(16))
-            hash_value = hashlib.sha256(test_password.encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 is strong; test data generation only
-            logger.info(f"Generated test hash from random password for demonstration: {hash_value[:16]}...")
+            hash_value = hashlib.sha256(
+                test_password.encode()
+            ).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 is strong; test data generation only
+            logger.info("Generated test hash from random password for demonstration: %s...", hash_value[:16])
 
         results = {
             "hash": hash_value,
@@ -1154,7 +1152,7 @@ class DistributedWorkerThread(QThread):
                 with open(wordlist_path, encoding="utf-8", errors="ignore") as f:
                     wordlist = [line.strip() for line in f.readlines()[:max_attempts]]
             except Exception as e:
-                logger.warning(f"Failed to load wordlist: {e}")
+                logger.warning("Failed to load wordlist: %s", e, exc_info=True)
                 wordlist = self._generate_common_passwords()
 
         # Attempt to crack the hash
@@ -1211,16 +1209,14 @@ class DistributedWorkerThread(QThread):
 
         # Common patterns
         for base in bases:
-            passwords.extend(
-                (
-                    base,
-                    base + "123",
-                    base + "1234",
-                    base + "12345",
-                    base.capitalize(),
-                    base.upper(),
-                )
-            )
+            passwords.extend((
+                base,
+                base + "123",
+                base + "1234",
+                base + "12345",
+                base.capitalize(),
+                base.upper(),
+            ))
             # Add year patterns
             for year in range(2020, 2026):
                 passwords.append(f"{base}{year}")
@@ -1252,7 +1248,9 @@ class DistributedWorkerThread(QThread):
             Tuple of (password, match_boolean)
 
         """
-        computed_hash = hash_func(password.encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] Intentional: password cracking requires matching target hash algorithm
+        computed_hash = hash_func(
+            password.encode()
+        ).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] Intentional: password cracking requires matching target hash algorithm
         return password, computed_hash == target_hash
 
     def process_vulnerability_scan(self, task: DistributedTask) -> dict[str, Any]:
@@ -1375,17 +1373,15 @@ class DistributedWorkerThread(QThread):
             # Check for encryption/obfuscation
             entropy = self._calculate_entropy(data[:4096])
             if entropy > 7.5:
-                protections.append(
-                    {
-                        "name": "High Entropy Code",
-                        "type": "obfuscation",
-                        "entropy": entropy,
-                        "confidence": "medium",
-                    }
-                )
+                protections.append({
+                    "name": "High Entropy Code",
+                    "type": "obfuscation",
+                    "entropy": entropy,
+                    "confidence": "medium",
+                })
 
         except Exception as e:
-            logger.error(f"Protection scan failed: {e}")
+            logger.error("Protection scan failed: %s", e, exc_info=True)
 
         return protections
 
@@ -1424,28 +1420,24 @@ class DistributedWorkerThread(QThread):
 
         # Check for missing anti-debug
         if all(p["type"] != "anti-debug" for p in protections):
-            weak_points.append(
-                {
-                    "type": "no_anti_debug",
-                    "description": "No anti-debugging protection detected",
-                    "severity": "medium",
-                }
-            )
+            weak_points.append({
+                "type": "no_anti_debug",
+                "description": "No anti-debugging protection detected",
+                "severity": "medium",
+            })
 
         # Check for standard CRT initialization
         try:
             with open(target, "rb") as f:
                 data = f.read(4096)
             if b"__scrt_common_main" in data or b"mainCRTStartup" in data:
-                weak_points.append(
-                    {
-                        "type": "standard_crt",
-                        "description": "Standard CRT initialization found",
-                        "severity": "low",
-                    }
-                )
+                weak_points.append({
+                    "type": "standard_crt",
+                    "description": "Standard CRT initialization found",
+                    "severity": "low",
+                })
         except Exception as e:
-            logger.debug(f"Weak point detection failed: {e}")
+            logger.debug("Weak point detection failed: %s", e, exc_info=True)
 
         return weak_points
 
@@ -1499,7 +1491,7 @@ class DistributedWorkerThread(QThread):
                 for match in matches
             )
         except Exception as e:
-            logger.warning(f"YARA scan failed: {e}")
+            logger.warning("YARA scan failed: %s", e, exc_info=True)
             # Fallback pattern matching
             try:
                 with open(target, "rb") as f:
@@ -1525,7 +1517,7 @@ class DistributedWorkerThread(QThread):
                     )
 
             except Exception as e2:
-                logger.error(f"Fallback vulnerability check failed: {e2}")
+                logger.error("Fallback vulnerability check failed: %s", e2, exc_info=True)
 
         return vulnerabilities
 
@@ -1588,28 +1580,24 @@ class DistributedWorkerThread(QThread):
                     },
                 )
             elif weak_point["type"] == "weak_encryption":
-                techniques.append(
-                    {
-                        "technique": "Cryptanalysis",
-                        "description": "Analyze weak encryption scheme",
-                        "difficulty": "medium",
-                    }
-                )
-
-        techniques.extend(
-            (
-                {
-                    "technique": "API Hooking",
-                    "description": "Hook license validation APIs",
+                techniques.append({
+                    "technique": "Cryptanalysis",
+                    "description": "Analyze weak encryption scheme",
                     "difficulty": "medium",
-                },
-                {
-                    "technique": "Memory Patching",
-                    "description": "Patch license checks in memory at runtime",
-                    "difficulty": "easy",
-                },
-            )
-        )
+                })
+
+        techniques.extend((
+            {
+                "technique": "API Hooking",
+                "description": "Hook license validation APIs",
+                "difficulty": "medium",
+            },
+            {
+                "technique": "Memory Patching",
+                "description": "Patch license checks in memory at runtime",
+                "difficulty": "easy",
+            },
+        ))
         return techniques
 
     def _assess_risk(
@@ -1687,22 +1675,18 @@ class DistributedWorkerThread(QThread):
         recommendations: list[str] = []
 
         if risk_assessment["level"] in ["critical", "high"]:
-            recommendations.extend(
-                (
-                    "Implement strong packing/obfuscation",
-                    "Add multiple layers of anti-debugging",
-                    "Use hardware-based license verification",
-                    "Implement code virtualization",
-                )
-            )
+            recommendations.extend((
+                "Implement strong packing/obfuscation",
+                "Add multiple layers of anti-debugging",
+                "Use hardware-based license verification",
+                "Implement code virtualization",
+            ))
         elif risk_assessment["level"] == "medium":
-            recommendations.extend(
-                (
-                    "Enhance encryption algorithms",
-                    "Add integrity checks",
-                    "Implement anti-tampering measures",
-                )
-            )
+            recommendations.extend((
+                "Enhance encryption algorithms",
+                "Add integrity checks",
+                "Implement anti-tampering measures",
+            ))
         else:
             recommendations.append("Consider adding obfuscation")
             recommendations.append("Monitor for suspicious activity")
@@ -1791,7 +1775,7 @@ class DistributedWorkerThread(QThread):
                     if pattern.encode() in data.lower()
                 )
         except Exception as e:
-            logger.warning(f"Validation analysis failed: {e}")
+            logger.warning("Validation analysis failed: %s", e, exc_info=True)
 
         return methods
 
@@ -1827,7 +1811,7 @@ class DistributedWorkerThread(QThread):
                         algorithms.append(algo)
                         break
         except Exception as e:
-            logger.warning(f"Algorithm identification failed: {e}")
+            logger.warning("Algorithm identification failed: %s", e, exc_info=True)
 
         return list(set(algorithms))
 
@@ -1895,15 +1879,13 @@ class DistributedWorkerThread(QThread):
 
         strategies.extend(strategy_map.get(license_type, []))
 
-        strategies.extend(
-            (
-                {
-                    "method": "Memory Patching",
-                    "description": "Patch validation in memory",
-                },
-                {"method": "API Hooking", "description": "Hook validation APIs"},
-            )
-        )
+        strategies.extend((
+            {
+                "method": "Memory Patching",
+                "description": "Patch validation in memory",
+            },
+            {"method": "API Hooking", "description": "Hook validation APIs"},
+        ))
         return strategies
 
     def _calculate_confidence(self, results: dict[str, Any]) -> float:
@@ -2048,15 +2030,13 @@ class DistributedProcessingDialog(QDialog):
         add_layout.addWidget(QLabel("Task Type:"))
 
         self.task_type_combo = QComboBox()
-        self.task_type_combo.addItems(
-            [
-                "binary_analysis",
-                "password_cracking",
-                "vulnerability_scan",
-                "license_analysis",
-                "generic_task",
-            ]
-        )
+        self.task_type_combo.addItems([
+            "binary_analysis",
+            "password_cracking",
+            "vulnerability_scan",
+            "license_analysis",
+            "generic_task",
+        ])
         add_layout.addWidget(self.task_type_combo)
 
         self.add_task_button = QPushButton("Add Task")
@@ -2099,7 +2079,7 @@ class DistributedProcessingDialog(QDialog):
             self.stop_workers()
 
         worker_count = self.worker_count_spin.value()
-        logger.info(f"Starting {worker_count} distributed workers")
+        logger.info("Starting %s distributed workers", worker_count)
 
         for i in range(worker_count):
             worker_id = f"worker_{i + 1}"
@@ -2181,7 +2161,7 @@ class DistributedProcessingDialog(QDialog):
             self.progress_bars[task_id] = progress_bar
 
         self.update_status_text(f"Added task: {task_id} ({task_type})")
-        logger.info(f"Added task {task_id} of type {task_type}")
+        logger.info("Added task %s of type %s", task_id, task_type)
 
     def on_task_progress(self, task_id: str, progress: float) -> None:
         """Handle task progress updates.
@@ -2203,7 +2183,7 @@ class DistributedProcessingDialog(QDialog):
 
         """
         self.update_status_text(f"Task {task_id} completed successfully")
-        logger.info(f"Task {task_id} completed")
+        logger.info("Task %s completed", task_id)
 
     def on_task_failed(self, task_id: str, error: str) -> None:
         """Handle task failure.
@@ -2214,7 +2194,7 @@ class DistributedProcessingDialog(QDialog):
 
         """
         self.update_status_text(f"Task {task_id} failed: {error}")
-        logger.error(f"Task {task_id} failed: {error}")
+        logger.error("Task %s failed: %s", task_id, error)
 
     def update_status(self) -> None:
         """Update task status display."""
@@ -2286,7 +2266,7 @@ class DistributedProcessing:
             self.dialog.activateWindow()
 
         except Exception as e:
-            logger.error(f"Failed to launch distributed processing interface: {e}")
+            logger.error("Failed to launch distributed processing interface: %s", e, exc_info=True)
             raise
 
     def add_task(self, task_type: str, parameters: dict[str, Any]) -> str:
@@ -2304,7 +2284,7 @@ class DistributedProcessing:
         task = DistributedTask(task_id, task_type, parameters)
         self.tasks.append(task)
 
-        logger.info(f"Added distributed task {task_id} of type {task_type}")
+        logger.info("Added distributed task %s of type %s", task_id, task_type)
         return task_id
 
     def get_task_status(self, task_id: str) -> dict[str, Any] | None:
@@ -2347,6 +2327,6 @@ class DistributedProcessing:
                 ProcessingStatus.RUNNING,
             ]:
                 task.status = ProcessingStatus.CANCELLED
-                logger.info(f"Cancelled task {task_id}")
+                logger.info("Cancelled task %s", task_id)
                 return True
         return False

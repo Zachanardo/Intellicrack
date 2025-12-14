@@ -138,7 +138,7 @@ public class StringDecryptionAutomator extends GhidraScript {
         return true;
       }
 
-        return (rotateCount + shiftCount) > 8 && loopCount > 0 && stringLoadCount > 2;
+      return (rotateCount + shiftCount) > 8 && loopCount > 0 && stringLoadCount > 2;
     }
 
     return false;
@@ -169,7 +169,7 @@ public class StringDecryptionAutomator extends GhidraScript {
 
         Object[] operands = inst.getOpObjects(1);
         if (operands.length > 0 && operands[0] instanceof Scalar scalar) {
-            long value = scalar.getValue();
+          long value = scalar.getValue();
 
           if (value > 0 && value < 256) {
             keyCandidate = new byte[] {(byte) value};
@@ -362,7 +362,7 @@ public class StringDecryptionAutomator extends GhidraScript {
     }
 
     double entropy = calculateEntropy(data);
-      return entropy > 6.0 && entropy < 7.9;
+    return entropy > 6.0 && entropy < 7.9;
   }
 
   private double calculateEntropy(byte[] data) {
@@ -400,20 +400,20 @@ public class StringDecryptionAutomator extends GhidraScript {
         routine = guessDecryptionRoutine(encStr);
       }
 
-        String decrypted = decryptString(encStr, routine);
+      String decrypted = decryptString(encStr, routine);
 
-        if (looksLikeValidString(decrypted)) {
-          encStr.decryptedValue = decrypted;
-          stringsDecrypted++;
+      if (looksLikeValidString(decrypted)) {
+        encStr.decryptedValue = decrypted;
+        stringsDecrypted++;
 
-          println("  Decrypted at " + addr + ": \"" + sanitizeForDisplay(decrypted) + "\"");
+        println("  Decrypted at " + addr + ": \"" + sanitizeForDisplay(decrypted) + "\"");
 
-          try {
-            setEOLComment(addr, "Decrypted: " + sanitizeForDisplay(decrypted));
-          } catch (Exception e) {
-              throw new RuntimeException(e);
-          }
+        try {
+          setEOLComment(addr, "Decrypted: " + sanitizeForDisplay(decrypted));
+        } catch (Exception e) {
+          throw new RuntimeException(e);
         }
+      }
     }
   }
 

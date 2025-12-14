@@ -98,14 +98,14 @@ class IntellicrackConfig:
         self.logs_dir = self.config_dir / "logs"
         self.output_dir = self.config_dir / "output"
 
-        self.logger.debug(f"IntellicrackConfig: Config directory: {self.config_dir}")
-        self.logger.debug(f"IntellicrackConfig: Config file: {self.config_file}")
-        self.logger.debug(f"IntellicrackConfig: Defaults file: {self.defaults_file}")
-        self.logger.debug(f"IntellicrackConfig: User config file: {self.user_config_file}")
-        self.logger.debug(f"IntellicrackConfig: State file: {self.state_file}")
-        self.logger.debug(f"IntellicrackConfig: Cache directory: {self.cache_dir}")
-        self.logger.debug(f"IntellicrackConfig: Logs directory: {self.logs_dir}")
-        self.logger.debug(f"IntellicrackConfig: Output directory: {self.output_dir}")
+        self.logger.debug("IntellicrackConfig: Config directory: %s", self.config_dir)
+        self.logger.debug("IntellicrackConfig: Config file: %s", self.config_file)
+        self.logger.debug("IntellicrackConfig: Defaults file: %s", self.defaults_file)
+        self.logger.debug("IntellicrackConfig: User config file: %s", self.user_config_file)
+        self.logger.debug("IntellicrackConfig: State file: %s", self.state_file)
+        self.logger.debug("IntellicrackConfig: Cache directory: %s", self.cache_dir)
+        self.logger.debug("IntellicrackConfig: Logs directory: %s", self.logs_dir)
+        self.logger.debug("IntellicrackConfig: Output directory: %s", self.output_dir)
 
         self._ensure_directories_exist()
         self._load_layered_config()
@@ -119,15 +119,15 @@ class IntellicrackConfig:
 
         """
         if intellicrack_root_env := os.environ.get("INTELLICRACK_ROOT"):
-            self.logger.debug(f"IntellicrackConfig: Found INTELLICRACK_ROOT environment variable: {intellicrack_root_env}")
+            self.logger.debug("IntellicrackConfig: Found INTELLICRACK_ROOT environment variable: %s", intellicrack_root_env)
             return Path(intellicrack_root_env)
 
         try:
             root = Path(__file__).parent.parent.parent
-            self.logger.debug(f"IntellicrackConfig: Determined Intellicrack root from module location: {root}")
+            self.logger.debug("IntellicrackConfig: Determined Intellicrack root from module location: %s", root)
             return root
-        except (AttributeError, OSError) as e:
-            self.logger.error(f"Failed to determine Intellicrack root: {e}")
+        except (AttributeError, OSError):
+            self.logger.error("Failed to determine Intellicrack root", exc_info=True)
             return Path.cwd()
 
     def _get_user_config_dir(self) -> Path:
@@ -138,7 +138,7 @@ class IntellicrackConfig:
 
         """
         config_dir = self._get_intellicrack_root() / "config"
-        self.logger.debug(f"IntellicrackConfig: Determined user config directory: {config_dir}")
+        self.logger.debug("IntellicrackConfig: Determined user config directory: %s", config_dir)
         return config_dir
 
     def _ensure_directories_exist(self) -> None:
@@ -151,9 +151,9 @@ class IntellicrackConfig:
         for directory in [self.config_dir, self.cache_dir, self.logs_dir, self.output_dir]:
             try:
                 directory.mkdir(parents=True, exist_ok=True)
-                self.logger.debug(f"IntellicrackConfig: Directory verified/created: {directory}")
-            except Exception as e:
-                self.logger.exception(f"IntellicrackConfig: Could not create directory {directory}: {e}")
+                self.logger.debug("IntellicrackConfig: Directory verified/created: %s", directory)
+            except Exception:
+                self.logger.exception("IntellicrackConfig: Could not create directory %s", directory)
 
     def _load_layered_config(self) -> None:
         """Load configuration using layered architecture.
@@ -165,11 +165,12 @@ class IntellicrackConfig:
         self.logger.info("IntellicrackConfig: Loading layered configuration.")
         try:
             if self.defaults_file.exists():
-                self.logger.debug(f"IntellicrackConfig: Defaults file found at {self.defaults_file}. Loading defaults.")
+                self.logger.debug("IntellicrackConfig: Defaults file found at %s. Loading defaults.", self.defaults_file)
                 self._load_defaults_from_file(self.defaults_file)
             elif self.config_file.exists():
                 self.logger.warning(
-                    f"IntellicrackConfig: Legacy config.json found at {self.config_file}. Loading as defaults and creating new defaults file."
+                    "IntellicrackConfig: Legacy config.json found at %s. Loading as defaults and creating new defaults file.",
+                    self.config_file,
                 )
                 self._load_defaults_from_file(self.config_file)
                 self._create_defaults_from_legacy()
@@ -178,22 +179,22 @@ class IntellicrackConfig:
                 self._create_default_config()
 
             if self.user_config_file.exists():
-                self.logger.debug(f"IntellicrackConfig: User config file found at {self.user_config_file}. Merging user configuration.")
+                self.logger.debug("IntellicrackConfig: User config file found at %s. Merging user configuration.", self.user_config_file)
                 self._merge_user_config()
             else:
                 self.logger.debug("IntellicrackConfig: No user config file found to merge.")
 
             if self.state_file.exists():
-                self.logger.debug(f"IntellicrackConfig: Runtime state file found at {self.state_file}. Merging runtime state.")
+                self.logger.debug("IntellicrackConfig: Runtime state file found at %s. Merging runtime state.", self.state_file)
                 self._merge_runtime_state()
             else:
                 self.logger.debug("IntellicrackConfig: No runtime state file found to merge.")
 
             self._upgrade_config_if_needed()
             self.logger.info("IntellicrackConfig: Layered configuration loaded successfully.")
-        except Exception as e:
+        except Exception:
             self.logger.exception(
-                f"IntellicrackConfig: Critical error loading layered configuration: {e}. Attempting to create emergency config."
+                "IntellicrackConfig: Critical error loading layered configuration. Attempting to create emergency config."
             )
             self._create_emergency_config()
 
@@ -212,13 +213,13 @@ class IntellicrackConfig:
         Reads JSON configuration from the config file. Creates default if load fails.
 
         """
-        self.logger.debug(f"IntellicrackConfig: Attempting to load configuration from {self.config_file}")
+        self.logger.debug("IntellicrackConfig: Attempting to load configuration from %s", self.config_file)
         try:
             with open(self.config_file, encoding="utf-8") as f, self._config_lock:
                 self._config = json.load(f)
-            self.logger.info(f"IntellicrackConfig: Configuration loaded successfully from {self.config_file}")
+            self.logger.info("IntellicrackConfig: Configuration loaded successfully from %s", self.config_file)
         except Exception:
-            self.logger.exception(f"IntellicrackConfig: Failed to load config from {self.config_file}. Creating default config.")
+            self.logger.exception("IntellicrackConfig: Failed to load config from %s. Creating default config.", self.config_file)
             self._create_default_config()
 
     def _load_defaults_from_file(self, file_path: Path) -> None:
@@ -231,13 +232,13 @@ class IntellicrackConfig:
             Exception: If the file cannot be read or JSON parsing fails
 
         """
-        self.logger.debug(f"IntellicrackConfig: Loading defaults from file: {file_path}")
+        self.logger.debug("IntellicrackConfig: Loading defaults from file: %s", file_path)
         try:
             with open(file_path, encoding="utf-8") as f, self._config_lock:
                 self._config = json.load(f)
-            self.logger.info(f"IntellicrackConfig: Default configuration loaded from {file_path}")
+            self.logger.info("IntellicrackConfig: Default configuration loaded from %s", file_path)
         except Exception:
-            self.logger.exception(f"IntellicrackConfig: Failed to load defaults from {file_path}")
+            self.logger.exception("IntellicrackConfig: Failed to load defaults from %s", file_path)
             raise
 
     def _merge_user_config(self) -> None:
@@ -246,15 +247,15 @@ class IntellicrackConfig:
         Deep merges user configuration file with the loaded defaults.
 
         """
-        self.logger.debug(f"IntellicrackConfig: Merging user configuration from {self.user_config_file}")
+        self.logger.debug("IntellicrackConfig: Merging user configuration from %s", self.user_config_file)
         try:
             with open(self.user_config_file, encoding="utf-8") as f:
                 user_config = json.load(f)
             with self._config_lock:
                 self._deep_merge(self._config, user_config)
-            self.logger.info(f"IntellicrackConfig: User configuration merged from {self.user_config_file}")
+            self.logger.info("IntellicrackConfig: User configuration merged from %s", self.user_config_file)
         except Exception:
-            self.logger.exception(f"IntellicrackConfig: Failed to merge user config from {self.user_config_file}")
+            self.logger.exception("IntellicrackConfig: Failed to merge user config from %s", self.user_config_file)
 
     def _merge_runtime_state(self) -> None:
         """Merge runtime state into configuration.
@@ -262,15 +263,15 @@ class IntellicrackConfig:
         Deep merges runtime state file with loaded configuration if it exists.
 
         """
-        self.logger.debug(f"IntellicrackConfig: Merging runtime state from {self.state_file}")
+        self.logger.debug("IntellicrackConfig: Merging runtime state from %s", self.state_file)
         try:
             with open(self.state_file, encoding="utf-8") as f:
                 state = json.load(f)
             with self._config_lock:
                 self._deep_merge(self._config, state)
-            self.logger.debug(f"IntellicrackConfig: Runtime state merged from {self.state_file}")
+            self.logger.debug("IntellicrackConfig: Runtime state merged from %s", self.state_file)
         except Exception:
-            self.logger.exception(f"IntellicrackConfig: Failed to merge runtime state from {self.state_file}")
+            self.logger.exception("IntellicrackConfig: Failed to merge runtime state from %s", self.state_file)
 
     def _deep_merge(self, base: dict[str, object], override: dict[str, object]) -> None:
         """Deep merge override dict into base dict.
@@ -281,14 +282,14 @@ class IntellicrackConfig:
 
         """
         self.logger.debug(
-            f"IntellicrackConfig: Performing deep merge. Base keys: {list(base.keys())}, Override keys: {list(override.keys())}"
+            "IntellicrackConfig: Performing deep merge. Base keys: %s, Override keys: %s", list(base.keys()), list(override.keys())
         )
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                self.logger.debug(f"IntellicrackConfig: Deep merging nested dictionary for key: '{key}'.")
+                self.logger.debug("IntellicrackConfig: Deep merging nested dictionary for key: '%s'.", key)
                 self._deep_merge(base[key], value)
             else:
-                self.logger.debug(f"IntellicrackConfig: Merging key '{key}' with value '{value}'.")
+                self.logger.debug("IntellicrackConfig: Merging key '%s' with value '%s'.", key, value)
                 base[key] = value
 
     def _create_defaults_from_legacy(self) -> None:
@@ -298,13 +299,13 @@ class IntellicrackConfig:
         removing runtime-specific fields.
 
         """
-        self.logger.info(f"IntellicrackConfig: Creating new defaults file from legacy config: {self.config_file}")
+        self.logger.info("IntellicrackConfig: Creating new defaults file from legacy config: %s", self.config_file)
         try:
             defaults = self._config.copy()
             runtime_fields = ["initialized", "emergency_mode"]
             for field in runtime_fields:
                 if field in defaults:
-                    self.logger.debug(f"IntellicrackConfig: Removing runtime field '{field}' from defaults.")
+                    self.logger.debug("IntellicrackConfig: Removing runtime field '%s' from defaults.", field)
                     del defaults[field]
 
             if "secrets" in defaults and "last_sync" in defaults["secrets"]:
@@ -313,12 +314,12 @@ class IntellicrackConfig:
             if "tools" in defaults:
                 for tool_name, tool_data in defaults["tools"].items():
                     if isinstance(tool_data, dict) and "auto_discovered" in tool_data:
-                        self.logger.debug(f"IntellicrackConfig: Removing 'auto_discovered' from tool '{tool_name}' defaults.")
+                        self.logger.debug("IntellicrackConfig: Removing 'auto_discovered' from tool '%s' defaults.", tool_name)
                         del tool_data["auto_discovered"]
 
             with open(self.defaults_file, "w", encoding="utf-8") as f:
                 json.dump(defaults, f, indent=2, sort_keys=True)
-            self.logger.info(f"IntellicrackConfig: Created {self.defaults_file} successfully from legacy config.")
+            self.logger.info("IntellicrackConfig: Created %s successfully from legacy config.", self.defaults_file)
         except Exception:
             self.logger.exception("IntellicrackConfig: Failed to create defaults file from legacy config.")
 
@@ -332,11 +333,11 @@ class IntellicrackConfig:
         self.logger.info("IntellicrackConfig: Attempting to create or load unified configuration.")
         unified_config_file = self._get_intellicrack_root() / "config" / "config.json"
         if unified_config_file.exists():
-            self.logger.debug(f"IntellicrackConfig: Unified config file found at {unified_config_file}. Attempting to load.")
+            self.logger.debug("IntellicrackConfig: Unified config file found at %s. Attempting to load.", unified_config_file)
             try:
                 with open(unified_config_file, encoding="utf-8") as f, self._config_lock:
                     self._config = json.load(f)
-                self.logger.info(f"IntellicrackConfig: Loaded unified configuration from {unified_config_file}")
+                self.logger.info("IntellicrackConfig: Loaded unified configuration from %s", unified_config_file)
                 return
             except Exception:
                 self.logger.exception("IntellicrackConfig: Failed to load unified config, creating default.")
@@ -368,7 +369,7 @@ class IntellicrackConfig:
             Configuration value or default if not found
 
         """
-        self.logger.debug(f"IntellicrackConfig: Attempting to get config key: '{key}' with default: '{default}'.")
+        self.logger.debug("IntellicrackConfig: Attempting to get config key: '%s' with default: '%s'.", key, default)
         with self._config_lock:
             keys = key.split(".")
             value = self._config
@@ -378,18 +379,18 @@ class IntellicrackConfig:
                         value = value[k]
                     else:
                         self.logger.debug(
-                            f"IntellicrackConfig: Intermediate key '{k}' in path '{key}' is not a dictionary. Returning default."
+                            "IntellicrackConfig: Intermediate key '%s' in path '%s' is not a dictionary. Returning default.", k, key
                         )
                         return default  # Path segment is not a dict, cannot descent further
 
                 expanded_value = self._expand_environment_variables(value)
                 if expanded_value != value:
-                    self.logger.debug(f"IntellicrackConfig: Key '{key}' value '{value}' expanded to '{expanded_value}'.")
+                    self.logger.debug("IntellicrackConfig: Key '%s' value '%s' expanded to '%s'.", key, value, expanded_value)
                 else:
-                    self.logger.debug(f"IntellicrackConfig: Successfully retrieved key '{key}', value: '{expanded_value}'.")
+                    self.logger.debug("IntellicrackConfig: Successfully retrieved key '%s', value: '%s'.", key, expanded_value)
                 return expanded_value
             except (KeyError, TypeError):
-                self.logger.debug(f"IntellicrackConfig: Config key '{key}' not found or path invalid, returning default: '{default}'.")
+                self.logger.debug("IntellicrackConfig: Config key '%s' not found or path invalid, returning default: '%s'.", key, default)
                 return default
 
     def set(self, key: str, value: object, save: bool | None = None) -> None:
@@ -404,33 +405,35 @@ class IntellicrackConfig:
             save: Whether to save config to disk (None uses auto_save setting)
 
         """
-        self.logger.debug(f"IntellicrackConfig: Attempting to set config key: '{key}' to value: '{value}'.")
+        self.logger.debug("IntellicrackConfig: Attempting to set config key: '%s' to value: '%s'.", key, value)
         with self._config_lock:
             keys = key.split(".")
             config = self._config
             for _i, k in enumerate(keys[:-1]):
                 if not isinstance(config, dict):
-                    self.logger.error(f"IntellicrackConfig: Cannot set key '{key}'. Intermediate path segment '{k}' is not a dictionary.")
+                    self.logger.error(
+                        "IntellicrackConfig: Cannot set key '%s'. Intermediate path segment '%s' is not a dictionary.", key, k
+                    )
                     return  # Cannot set if intermediate is not a dict
                 if k not in config:
-                    self.logger.debug(f"IntellicrackConfig: Creating new dictionary for intermediate key '{k}'.")
+                    self.logger.debug("IntellicrackConfig: Creating new dictionary for intermediate key '%s'.", k)
                     config[k] = {}
                 config = config[k]
 
             if not isinstance(config, dict):
-                self.logger.error(f"IntellicrackConfig: Cannot set key '{key}'. Final path segment parent is not a dictionary.")
+                self.logger.error("IntellicrackConfig: Cannot set key '%s'. Final path segment parent is not a dictionary.", key)
                 return
 
             config[keys[-1]] = value
-            self.logger.info(f"IntellicrackConfig: Config key '{key}' set successfully to '{value}'.")
+            self.logger.info("IntellicrackConfig: Config key '%s' set successfully to '%s'.", key, value)
 
         if save is None:
             save = self.auto_save
         if save:
-            self.logger.debug(f"IntellicrackConfig: Auto-saving configuration after setting key '{key}'.")
+            self.logger.debug("IntellicrackConfig: Auto-saving configuration after setting key '%s'.", key)
             self._save_config()
         else:
-            self.logger.debug(f"IntellicrackConfig: Auto-save disabled or explicitly false. Not saving config after setting key '{key}'.")
+            self.logger.debug("IntellicrackConfig: Auto-save disabled or explicitly false. Not saving config after setting key '%s'.", key)
 
     def _save_config(self) -> None:
         """Save the current configuration to the config file.
@@ -438,15 +441,15 @@ class IntellicrackConfig:
         Uses atomic write pattern with temporary file to ensure data integrity.
 
         """
-        self.logger.debug(f"IntellicrackConfig: Saving configuration to {self.config_file}.")
+        self.logger.debug("IntellicrackConfig: Saving configuration to %s.", self.config_file)
         temp_file = self.config_file.with_suffix(".tmp")
         try:
             with temp_file.open("w", encoding="utf-8") as f, self._config_lock:
                 json.dump(self._config, f, indent=2, sort_keys=True)
             temp_file.replace(self.config_file)
-            self.logger.info(f"IntellicrackConfig: Configuration saved successfully to {self.config_file}.")
-        except Exception as e:
-            self.logger.exception(f"IntellicrackConfig: Failed to save configuration to {self.config_file}: {e}")
+            self.logger.info("IntellicrackConfig: Configuration saved successfully to %s.", self.config_file)
+        except Exception:
+            self.logger.exception("IntellicrackConfig: Failed to save configuration to %s", self.config_file)
 
     def _expand_environment_variables(self, value: object) -> object:
         """Expand environment variables in a string value.
@@ -462,7 +465,7 @@ class IntellicrackConfig:
             expanded = os.path.expandvars(value)
             if "$" in expanded:  # Check for unexpanded variables
                 self.logger.warning(
-                    f"IntellicrackConfig: Environment variable(s) in '{value}' might not have been fully expanded. Result: '{expanded}'"
+                    "IntellicrackConfig: Environment variable(s) in '%s' might not have been fully expanded. Result: '%s'", value, expanded
                 )
             return expanded
         return value
@@ -521,7 +524,7 @@ class IntellicrackConfig:
         }
 
         if provider_lower not in endpoint_mappings:
-            self.logger.warning(f"Unknown API provider: {provider}")
+            self.logger.warning("Unknown API provider: %s", provider)
             return None
 
         keys = endpoint_mappings[provider_lower]
@@ -531,7 +534,7 @@ class IntellicrackConfig:
             if isinstance(value, dict) and key in value:
                 value = value[key]
             else:
-                self.logger.debug(f"API endpoint not configured for provider: {provider}")
+                self.logger.debug("API endpoint not configured for provider: %s", provider)
                 return None
 
         if isinstance(value, str) and value:
@@ -547,7 +550,7 @@ class IntellicrackConfig:
 
         """
         current_version = self._config.get("version", "1.0")
-        self.logger.debug(f"IntellicrackConfig: Current config version: {current_version}")
+        self.logger.debug("IntellicrackConfig: Current config version: %s", current_version)
 
         # Example upgrade logic (can be expanded)
         if current_version < "2.0":
@@ -595,9 +598,9 @@ class IntellicrackConfig:
             with self._config_lock:
                 self._config = emergency_config
             self._save_config()  # Attempt to save even in emergency
-            self.logger.info(f"IntellicrackConfig: Emergency configuration created and saved to {self.config_file}.")
-        except Exception as e:
-            self.logger.exception(f"IntellicrackConfig: Failed to create and save emergency configuration: {e}")
+            self.logger.info("IntellicrackConfig: Emergency configuration created and saved to %s.", self.config_file)
+        except Exception:
+            self.logger.exception("IntellicrackConfig: Failed to create and save emergency configuration")
 
     def get_tool_path(self, tool_name: str) -> str | None:
         """Get path for a specific tool.
@@ -612,22 +615,21 @@ class IntellicrackConfig:
             Full path to the tool executable or None if not found
 
         """
-        self.logger.debug(f"IntellicrackConfig: Requesting path for tool: '{tool_name}'.")
+        self.logger.debug("IntellicrackConfig: Requesting path for tool: '%s'.", tool_name)
         if path := self.get(f"tools.{tool_name}.path"):
-            self.logger.debug(f"IntellicrackConfig: Found configured path for tool '{tool_name}': '{path}'.")
+            self.logger.debug("IntellicrackConfig: Found configured path for tool '%s': '%s'.", tool_name, path)
             return path
 
-        # Auto-discovery logic (simplified, actual implementation might be in tool_discovery module)
-        self.logger.debug(f"IntellicrackConfig: No explicit path for '{tool_name}', attempting auto-discovery.")
+        self.logger.debug("IntellicrackConfig: No explicit path for '%s', attempting auto-discovery.", tool_name)
         import shutil
 
         if discovered_path := shutil.which(tool_name):
-            self.logger.info(f"IntellicrackConfig: Auto-discovered path for tool '{tool_name}': '{discovered_path}'.")
+            self.logger.info("IntellicrackConfig: Auto-discovered path for tool '%s': '%s'.", tool_name, discovered_path)
             self.set(f"tools.{tool_name}.path", discovered_path, save=False)  # Save for future, but don't force immediate disk write
             self.set(f"tools.{tool_name}.auto_discovered", True, save=False)
             return discovered_path
 
-        self.logger.warning(f"IntellicrackConfig: Tool '{tool_name}' not found via configuration or auto-discovery.")
+        self.logger.warning("IntellicrackConfig: Tool '%s' not found via configuration or auto-discovery.", tool_name)
         return None
 
     def is_tool_available(self, tool_name: str) -> bool:
@@ -640,9 +642,9 @@ class IntellicrackConfig:
             True if tool is available, False otherwise
 
         """
-        self.logger.debug(f"IntellicrackConfig: Checking availability for tool: '{tool_name}'.")
+        self.logger.debug("IntellicrackConfig: Checking availability for tool: '%s'.", tool_name)
         is_available = self.get_tool_path(tool_name) is not None
-        self.logger.debug(f"IntellicrackConfig: Tool '{tool_name}' availability: {is_available}.")
+        self.logger.debug("IntellicrackConfig: Tool '%s' availability: %s.", tool_name, is_available)
         return is_available
 
     def get_logs_dir(self) -> Path:

@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import math
 from typing import TYPE_CHECKING
 
@@ -37,6 +38,9 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:

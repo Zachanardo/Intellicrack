@@ -21,6 +21,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 ## Test Classes and Coverage
 
 ### 1. TestCLIBasicExecution (5 tests)
+
 **Purpose:** Validate core CLI functionality and help system
 
 - `test_cli_main_help_displays` - Main --help displays usage information
@@ -32,6 +33,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Entry point, argument parsing, help system, global flags
 
 ### 2. TestAnalyzeCommand (10 tests)
+
 **Purpose:** Validate binary analysis command execution
 
 - `test_analyze_basic_mode_executes` - Basic analysis mode on real binary
@@ -48,6 +50,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Analysis modes, output formats, flags, error handling
 
 ### 3. TestScanCommand (5 tests)
+
 **Purpose:** Validate vulnerability scanning functionality
 
 - `test_scan_basic_executes` - Basic security scan execution
@@ -59,6 +62,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Security scanning, vulnerability detection, output formats
 
 ### 4. TestStringsCommand (5 tests)
+
 **Purpose:** Validate string extraction from binaries
 
 - `test_strings_extraction_executes` - String extraction works
@@ -70,6 +74,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** String extraction, encoding options, filtering, file output
 
 ### 5. TestPatchCommand (3 tests)
+
 **Purpose:** Validate binary patching functionality
 
 - `test_patch_with_offset_and_data` - Patch at specific offset with hex data
@@ -79,6 +84,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Binary patching, offset patching, NOP filling, validation
 
 ### 6. TestPayloadCommands (5 tests)
+
 **Purpose:** Validate payload generation commands
 
 - `test_payload_generate_reverse_shell` - Reverse shell payload generation
@@ -90,6 +96,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Payload generation, architectures, formats, templates
 
 ### 7. TestCertificateBypassCommands (6 tests)
+
 **Purpose:** Validate certificate bypass functionality
 
 - `test_cert_detect_on_binary` - Certificate validation detection
@@ -102,6 +109,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Certificate detection, bypass methods, validation, reporting
 
 ### 8. TestAdvancedCommands (3 tests)
+
 **Purpose:** Validate advanced research and exploitation commands
 
 - `test_advanced_research_run_binary_analysis` - Research analysis execution
@@ -111,6 +119,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Advanced research workflows, AI integration, result storage
 
 ### 9. TestAICommands (5 tests)
+
 **Purpose:** Validate AI-powered script generation and analysis
 
 - `test_ai_analyze_binary` - AI binary analysis execution
@@ -122,6 +131,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** AI analysis, script generation, output formats
 
 ### 10. TestRealWorldWorkflows (3 tests)
+
 **Purpose:** Validate complete multi-step workflows
 
 - `test_workflow_analyze_scan_patch` - Complete analysis → scan → patch workflow
@@ -131,6 +141,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** End-to-end workflows, command chaining, multi-step operations
 
 ### 11. TestErrorHandling (5 tests)
+
 **Purpose:** Validate error handling and edge cases
 
 - `test_analyze_invalid_file_path` - Invalid path error handling
@@ -142,6 +153,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Error messages, graceful failures, input validation
 
 ### 12. TestOutputFormatting (4 tests)
+
 **Purpose:** Validate output formatting and display
 
 - `test_analyze_output_is_readable` - Human-readable output formatting
@@ -152,6 +164,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Output formatting, severity categorization, verbosity levels
 
 ### 13. TestPerformance (2 tests)
+
 **Purpose:** Validate performance on different binary sizes
 
 - `test_analyze_small_binary_completes_quickly` - Small binary analysis speed
@@ -160,6 +173,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Performance benchmarks, timeout handling
 
 ### 14. TestProtectionDetection (3 tests)
+
 **Purpose:** Validate detection of specific protection schemes
 
 - `test_detect_upx_packer` - UPX packer detection
@@ -169,6 +183,7 @@ These tests validate **REAL CLI functionality** against actual binaries:
 **Coverage:** Protection scheme identification, packer detection
 
 ### 15. TestCommandAliases (3 tests)
+
 **Purpose:** Validate command aliases work correctly
 
 - `test_cert_detect_alias_cd` - 'cd' alias for cert-detect
@@ -182,18 +197,21 @@ These tests validate **REAL CLI functionality** against actual binaries:
 Tests utilize real protected binaries from `tests/fixtures/`:
 
 ### Protected Binaries
+
 - UPX packed executables
 - VMProtect protected binaries
 - Themida protected binaries
 - Enigma, Obsidium, ASPack, PECompact protected samples
 
 ### Legitimate Binaries
+
 - 7-Zip
 - Notepad++
 - VLC Media Player
 - Firefox
 
 ### Vulnerable Samples
+
 - Buffer overflow samples
 - Format string vulnerabilities
 - Integer overflow samples
@@ -201,6 +219,7 @@ Tests utilize real protected binaries from `tests/fixtures/`:
 - Race condition samples
 
 ### Size Categories
+
 - Tiny (4KB) - Performance testing
 - Small (1MB) - Standard testing
 - Medium (100MB) - Stress testing
@@ -208,20 +227,26 @@ Tests utilize real protected binaries from `tests/fixtures/`:
 ## Test Execution Strategy
 
 ### Subprocess Execution
+
 All tests execute CLI via subprocess:
+
 ```python
 result = run_cli_command(["analyze", str(binary_path)])
 ```
 
 ### Real Binary Analysis
+
 Tests operate on actual binaries:
+
 ```python
 assert "upx" in result.stdout.lower()  # Real detection
 assert output_file.exists()            # Real file created
 ```
 
 ### Environment Isolation
+
 Test environment variables prevent interference:
+
 ```python
 env["INTELLICRACK_TESTING"] = "1"
 env["DISABLE_AI_WORKERS"] = "1"
@@ -230,6 +255,7 @@ env["DISABLE_AI_WORKERS"] = "1"
 ## Validation Criteria
 
 ### Tests PASS When:
+
 - CLI commands execute successfully (returncode == 0)
 - Expected output appears in stdout/stderr
 - JSON files created with valid structure
@@ -237,6 +263,7 @@ env["DISABLE_AI_WORKERS"] = "1"
 - Errors returned for invalid inputs
 
 ### Tests FAIL When:
+
 - CLI commands crash or hang
 - Output format invalid or missing
 - Protection detection fails on known samples
@@ -246,6 +273,7 @@ env["DISABLE_AI_WORKERS"] = "1"
 ## Coverage Metrics
 
 ### Command Coverage
+
 - ✅ `analyze` - 10 tests
 - ✅ `scan` - 5 tests
 - ✅ `strings` - 5 tests
@@ -260,6 +288,7 @@ env["DISABLE_AI_WORKERS"] = "1"
 - ✅ `ai generate` - 2 tests
 
 ### Option Coverage
+
 - ✅ `--help` - Basic execution tests
 - ✅ `--verbose` / `-v` - Multiple tests
 - ✅ `--quiet` / `-q` - Output formatting tests
@@ -278,6 +307,7 @@ env["DISABLE_AI_WORKERS"] = "1"
 - ✅ `--report` - Report generation tests
 
 ### Workflow Coverage
+
 - ✅ Single command execution
 - ✅ Multi-step workflows
 - ✅ Command chaining
@@ -288,21 +318,25 @@ env["DISABLE_AI_WORKERS"] = "1"
 ## Running the Tests
 
 ### Run All CLI Tests
+
 ```bash
 pixi run python -m pytest tests/cli/test_cli.py -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 pixi run python -m pytest tests/cli/test_cli.py::TestAnalyzeCommand -v
 ```
 
 ### Run Single Test
+
 ```bash
 pixi run python -m pytest tests/cli/test_cli.py::TestAnalyzeCommand::test_analyze_basic_mode_executes -v
 ```
 
 ### Run with Coverage
+
 ```bash
 pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov-report=html
 ```
@@ -310,11 +344,13 @@ pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov
 ## Test Dependencies
 
 ### Required Fixtures
+
 - Protected binary samples in `tests/fixtures/binaries/protected/`
 - Legitimate binaries in `tests/fixtures/binaries/pe/legitimate/`
 - Vulnerable samples in `tests/fixtures/vulnerable_samples/`
 
 ### Environment Requirements
+
 - Windows platform (primary target)
 - Python 3.10+
 - All CLI dependencies installed via pixi
@@ -323,20 +359,24 @@ pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov
 ## Known Limitations
 
 ### Platform-Specific
+
 - Some tests may behave differently on non-Windows platforms
 - Certificate bypass tests require Windows-specific APIs
 
 ### Binary Availability
+
 - Tests skip if fixture binaries not present
 - Large binaries may be excluded from repository
 
 ### Timeout Constraints
+
 - Long-running analysis limited to 60 seconds
 - AI operations may timeout on slow systems
 
 ## Future Enhancements
 
 ### Additional Test Coverage
+
 - [ ] Interactive mode testing
 - [ ] GUI launch testing (--gui flag)
 - [ ] Progress bar validation
@@ -344,11 +384,13 @@ pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov
 - [ ] Parallel execution testing
 
 ### Integration Tests
+
 - [ ] CLI + GUI integration
 - [ ] CLI + Database integration
 - [ ] CLI + Remote API integration
 
 ### Performance Tests
+
 - [ ] Benchmark suite for large binaries
 - [ ] Memory usage profiling
 - [ ] Concurrent execution testing
@@ -356,6 +398,7 @@ pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov
 ## Maintenance
 
 ### Adding New Tests
+
 1. Create test function with descriptive name
 2. Use real binaries from fixtures
 3. Execute via `run_cli_command()`
@@ -363,12 +406,14 @@ pixi run python -m pytest tests/cli/test_cli.py --cov=intellicrack.cli.cli --cov
 5. Ensure test FAILS when functionality broken
 
 ### Updating Tests
+
 1. Update when CLI commands change
 2. Maintain backward compatibility checks
 3. Update fixtures as needed
 4. Document breaking changes
 
 ### Test Hygiene
+
 - Keep tests independent
 - Clean up temporary files
 - Use appropriate fixtures

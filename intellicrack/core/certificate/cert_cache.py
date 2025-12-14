@@ -115,9 +115,13 @@ LRU EVICTION POLICY:
 
 import hashlib
 import json
+import logging
 import threading
 from datetime import datetime
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -313,10 +317,8 @@ class CertificateCache:
                 import shutil
 
                 shutil.rmtree(domain_dir, ignore_errors=True)
-            except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).debug(f"Failed to evict cache entry: {e}")
+            except Exception:
+                logger.debug("Failed to evict cache entry", exc_info=True)
 
             del metadata[domain_hash]
 
@@ -396,10 +398,8 @@ class CertificateCache:
                     shutil.rmtree(domain_dir, ignore_errors=True)
                     del metadata[domain_hash]
                     removed_count += 1
-                except Exception as e:
-                    import logging
-
-                    logging.getLogger(__name__).debug(f"Failed to remove expired entry: {e}")
+                except Exception:
+                    logger.debug("Failed to remove expired entry", exc_info=True)
 
             if removed_count > 0:
                 self._save_metadata(metadata)

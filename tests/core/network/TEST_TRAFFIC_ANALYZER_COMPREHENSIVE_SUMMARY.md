@@ -52,6 +52,7 @@ Tests low-level packet parsing and license detection:
 - **test_process_truncated_packet_handles_gracefully**: Confirms safe handling of incomplete packets
 
 **Real Packet Fixtures**:
+
 - `real_flexlm_packet`: Complete FlexLM license check with FEATURE request
 - `real_hasp_packet`: HASP/Sentinel license validation packet
 - `real_codemeter_packet`: CodeMeter activation traffic
@@ -179,6 +180,7 @@ All packet fixtures create realistic binary structures matching real license pro
 5. **real_non_license_packet**: Normal HTTP traffic for negative testing
 
 Each fixture includes:
+
 - Valid IP header (20 bytes)
 - Valid TCP header (20 bytes)
 - Realistic payload with protocol-specific keywords
@@ -195,6 +197,7 @@ Each fixture includes:
 ### Methods Tested
 
 **Core Analysis Methods**:
+
 - `_process_captured_packet()` - Raw packet processing
 - `_process_pyshark_packet()` - PyShark packet handling
 - `_check_payload_for_license_content()` - Payload analysis
@@ -202,6 +205,7 @@ Each fixture includes:
 - `get_results()` - Comprehensive result retrieval
 
 **Statistical Methods**:
+
 - `_calculate_capture_duration()` - Duration metrics
 - `_calculate_packet_rate()` - Rate calculations
 - `_calculate_protocol_distribution()` - Protocol counts
@@ -211,16 +215,19 @@ Each fixture includes:
 - `_analyze_connection_durations()` - Connection statistics
 
 **Control Methods**:
+
 - `start_capture()` - Capture initiation
 - `stop_capture()` - Capture termination
 - `generate_report()` - Report generation
 
 **Threat Assessment**:
+
 - `_assess_threat_level()` - Security classification
 
 ### Protocol Coverage
 
 Tests validate detection of:
+
 - **FlexLM**: Port 27000-27009, FEATURE/INCREMENT/VENDOR keywords
 - **HASP/Sentinel**: Port 1947/6001, HASP-specific patterns
 - **CodeMeter**: Port 22350-22351, activation keywords
@@ -281,6 +288,7 @@ tests/core/network/test_traffic_analyzer_comprehensive.py::TestRealWorldScenario
 ### Security Research Applications
 
 These capabilities enable:
+
 - **License Server Mapping**: Identifying where software phones home for validation
 - **Protocol Analysis**: Understanding license check mechanisms and timing
 - **Traffic Profiling**: Detecting patterns in license validation requests

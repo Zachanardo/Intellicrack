@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 try:
     import requests
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
     requests = None
 
 try:
@@ -42,7 +42,7 @@ try:
 
     HAS_FLASK = True
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
     Flask = jsonify = request = CORS = None
     HAS_FLASK = False
 
@@ -52,7 +52,7 @@ try:
 
     HAS_LLAMA_CPP = True
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
     llama_cpp = Llama = None
     HAS_LLAMA_CPP = False
 
@@ -64,7 +64,7 @@ try:
     if not HAS_INTEL_GPU:
         logger.debug("PyTorch XPU not available")
 except Exception as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
     HAS_INTEL_GPU = False
 
 # Check for Intel GPU support via OpenVINO
@@ -135,9 +135,9 @@ class LocalGGUFServer:
                         self.gpu_devices.append(device)
                         if not self.gpu_backend:
                             self.gpu_backend = "openvino"
-                        logger.info(f"Found Intel GPU device via OpenVINO: {device}")
+                        logger.info("Found Intel GPU device via OpenVINO: %s", device)
             except Exception as e:
-                logger.debug(f"OpenVINO GPU detection failed: {e}")
+                logger.debug("OpenVINO GPU detection failed: %s", e, exc_info=True)
 
         # Check for Intel GPU via SYCL/DPC++
         if HAS_DPCTL:
@@ -148,9 +148,9 @@ class LocalGGUFServer:
                         self.gpu_devices.append(f"dpctl:{device.name}")
                         if not self.gpu_backend:
                             self.gpu_backend = "dpctl"
-                        logger.info(f"Found Intel GPU device via DPCTL: {device.name}")
+                        logger.info("Found Intel GPU device via DPCTL: %s", device.name)
             except Exception as e:
-                logger.debug(f"DPCTL GPU detection failed: {e}")
+                logger.debug("DPCTL GPU detection failed: %s", e, exc_info=True)
 
         # Check for Intel GPU via native PyTorch XPU
         if HAS_INTEL_GPU:
@@ -168,23 +168,23 @@ class LocalGGUFServer:
                         self.gpu_devices.append(f"xpu:{i}:{device_name}")
                         if not self.gpu_backend:
                             self.gpu_backend = "xpu"
-                        logger.info(f"Found Intel GPU device via PyTorch XPU: {device_name}")
+                        logger.info("Found Intel GPU device via PyTorch XPU: %s", device_name)
 
                         # Get device properties
                         device_props = torch.xpu.get_device_properties(i)
-                        logger.info(f"Intel GPU {i} properties: {device_props}")
+                        logger.info("Intel GPU %s properties: %s", i, device_props)
 
                     # Check PyTorch version
-                    logger.info(f"PyTorch version with XPU support: {torch.__version__}")
+                    logger.info("PyTorch version with XPU support: %s", torch.__version__)
 
                     # Enable mixed precision if available
                     try:
                         torch.set_float32_matmul_precision("high")
                         logger.info("Enabled high precision matrix multiplication")
                     except Exception as e:
-                        logger.debug(f"Could not set matmul precision: {e}")
+                        logger.debug("Could not set matmul precision: %s", e, exc_info=True)
             except Exception as e:
-                logger.debug(f"PyTorch XPU GPU detection failed: {e}")
+                logger.debug("PyTorch XPU GPU detection failed: %s", e, exc_info=True)
 
         # Check llama.cpp build info for GPU support
         if HAS_LLAMA_CPP and hasattr(llama_cpp, "llama_backend_init"):
@@ -198,11 +198,11 @@ class LocalGGUFServer:
                     if not self.gpu_backend:
                         self.gpu_backend = "llama_cpp_gpu"
             except Exception as e:
-                logger.debug(f"llama.cpp GPU detection failed: {e}")
+                logger.debug("llama.cpp GPU detection failed: %s", e, exc_info=True)
 
         if self.gpu_devices:
-            logger.info(f"Intel GPU backend: {self.gpu_backend}")
-            logger.info(f"Intel GPU devices: {self.gpu_devices}")
+            logger.info("Intel GPU backend: %s", self.gpu_backend)
+            logger.info("Intel GPU devices: %s", self.gpu_devices)
         else:
             logger.info("No Intel GPU devices detected")
 
@@ -221,9 +221,9 @@ class LocalGGUFServer:
             try:
                 optimal = int(os.environ["OMP_NUM_THREADS"])
             except ValueError as e:
-                self.logger.error("Value error in local_gguf_server: %s", e)
+                self.logger.error("Value error in local_gguf_server: %s", e, exc_info=True)
 
-        logger.debug(f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})")
+        logger.debug("Using %s threads (CPU count: %s, GPU: %s)", optimal, cpu_count, bool(self.gpu_backend))
         return optimal
 
     def can_run(self) -> bool:
@@ -264,7 +264,7 @@ class LocalGGUFServer:
         try:
             model_path = Path(model_path)
             if not model_path.exists():
-                logger.error(f"Model file not found: {model_path}")
+                logger.error("Model file not found: %s", model_path)
                 return False
 
             # Auto-detect GPU layers if Intel GPU is available
@@ -272,7 +272,7 @@ class LocalGGUFServer:
             if self.gpu_backend and kwargs.get("auto_gpu", True):
                 # Try to offload all layers to GPU by default
                 auto_gpu_layers = kwargs.get("gpu_layers", -1)  # -1 means all layers
-                logger.info(f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers")
+                logger.info("Auto-detected Intel GPU, will attempt to offload %s layers", auto_gpu_layers)
 
             # Default parameters for model loading
             default_params = {
@@ -309,8 +309,8 @@ class LocalGGUFServer:
             # Filter out None values
             model_params = {k: v for k, v in default_params.items() if v is not None}
 
-            logger.info(f"Loading GGUF model: {model_path}")
-            logger.info(f"Model parameters: {model_params}")
+            logger.info("Loading GGUF model: %s", model_path)
+            logger.info("Model parameters: %s", model_params)
 
             # Load the model
             self.model = Llama(model_path=str(model_path), **model_params)
@@ -322,11 +322,11 @@ class LocalGGUFServer:
                 **kwargs,
             }
 
-            logger.info(f"Successfully loaded GGUF model: {model_path.name}")
+            logger.info("Successfully loaded GGUF model: %s", model_path.name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to load GGUF model: {e}")
+            logger.error("Failed to load GGUF model: %s", e, exc_info=True)
             self.model = None
             self.model_path = None
             return False
@@ -342,7 +342,7 @@ class LocalGGUFServer:
                 self.model_config = {}
                 logger.info("Model unloaded successfully")
             except Exception as e:
-                logger.error(f"Error unloading model: {e}")
+                logger.error("Error unloading model: %s", e, exc_info=True)
 
     def start_server(self) -> bool:
         """Start the local GGUF server."""
@@ -374,13 +374,13 @@ class LocalGGUFServer:
             # Test server
             if self._test_server():
                 self.is_running = True
-                logger.info(f"Local GGUF server started at http://{self.host}:{self.port}")
+                logger.info("Local GGUF server started at http://%s:%s", self.host, self.port)
                 return True
             logger.error("Server failed to start properly")
             return False
 
         except Exception as e:
-            logger.error(f"Failed to start GGUF server: {e}")
+            logger.error("Failed to start GGUF server: %s", e, exc_info=True)
             return False
 
     def stop_server(self) -> None:
@@ -491,7 +491,7 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error(f"Chat completion error: {e}", exc_info=True)
+                logger.error("Chat completion error: %s", e, exc_info=True)
                 return jsonify({"error": "Internal server error during chat completion"}), 500
 
         @self.app.route("/v1/completions", methods=["POST"])
@@ -523,7 +523,7 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error(f"Completion error: {e}", exc_info=True)
+                logger.error("Completion error: %s", e, exc_info=True)
                 return jsonify({"error": "Internal server error during completion"}), 500
 
         @self.app.route("/load_model", methods=["POST"])
@@ -558,7 +558,7 @@ class LocalGGUFServer:
                 return jsonify({"error": "Failed to load model"}), 500
 
             except Exception as e:
-                logger.error(f"Model loading error: {e}", exc_info=True)
+                logger.error("Model loading error: %s", e, exc_info=True)
                 return jsonify({"error": "Internal server error during model loading"}), 500
 
         @self.app.route("/unload_model", methods=["POST"])
@@ -573,7 +573,7 @@ class LocalGGUFServer:
                 self.unload_model()
                 return jsonify({"status": "success", "message": "Model unloaded"})
             except Exception as e:
-                logger.error(f"Model unloading error: {e}", exc_info=True)
+                logger.error("Model unloading error: %s", e, exc_info=True)
                 return jsonify({"error": "Internal server error during model unloading"}), 500
 
     def _messages_to_prompt(self, messages: list[dict]) -> str:
@@ -635,7 +635,7 @@ class LocalGGUFServer:
             )
 
         except Exception as e:
-            logger.error(f"Response generation error: {e}")
+            logger.error("Response generation error: %s", e, exc_info=True)
             raise
 
     def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
@@ -698,7 +698,7 @@ class LocalGGUFServer:
             )
 
         except Exception as e:
-            logger.error(f"Streaming error: {e}")
+            logger.error("Streaming error: %s", e, exc_info=True)
             raise
 
     def _run_server(self) -> None:
@@ -712,7 +712,7 @@ class LocalGGUFServer:
                 threaded=True,
             )
         except Exception as e:
-            logger.error(f"Server runtime error: {e}")
+            logger.error("Server runtime error: %s", e, exc_info=True)
 
     def _test_server(self) -> bool:
         """Test if the server is responding."""
@@ -726,7 +726,7 @@ class LocalGGUFServer:
             )
             return response.status_code == 200
         except Exception as e:
-            self.logger.error("Exception in local_gguf_server: %s", e)
+            self.logger.error("Exception in local_gguf_server: %s", e, exc_info=True)
             return False
 
     def get_server_url(self) -> str:
@@ -747,7 +747,7 @@ class LocalGGUFServer:
             )
             return response.status_code == 200
         except Exception as e:
-            self.logger.error("Exception in local_gguf_server: %s", e)
+            self.logger.error("Exception in local_gguf_server: %s", e, exc_info=True)
             return False
 
 
@@ -794,9 +794,9 @@ class GGUFModelManager:
                 self.available_models[model_file.name] = model_info
 
             except Exception as e:
-                logger.warning(f"Error scanning model {model_file}: {e}")
+                logger.warning("Error scanning model %s: %s", model_file, e)
 
-        logger.info(f"Found {len(self.available_models)} GGUF models")
+        logger.info("Found %s GGUF models", len(self.available_models))
 
     def list_models(self) -> dict[str, dict[str, Any]]:
         """List available models."""
@@ -810,7 +810,7 @@ class GGUFModelManager:
 
             model_path = self.models_directory / model_name
 
-            logger.info(f"Downloading model: {model_url}")
+            logger.info("Downloading model: %s", model_url)
 
             # Use requests to download with progress
             if requests is None:
@@ -830,14 +830,14 @@ class GGUFModelManager:
 
                         if total_size > 0:
                             progress = (downloaded / total_size) * 100
-                            logger.info(f"Download progress: {progress:.1f}%")
+                            logger.info("Download progress: %.1f%%", progress)
 
-            logger.info(f"Model downloaded: {model_path}")
+            logger.info("Model downloaded: %s", model_path)
             self.scan_models()  # Refresh model list
             return True
 
         except Exception as e:
-            logger.error(f"Failed to download model: {e}")
+            logger.error("Failed to download model: %s", e, exc_info=True)
             return False
 
     def load_model(self, model_name: str, **kwargs: object) -> bool:
@@ -853,7 +853,7 @@ class GGUFModelManager:
 
         """
         if model_name not in self.available_models:
-            logger.error(f"Model not found: {model_name}")
+            logger.error("Model not found: %s", model_name)
             return False
 
         model_path = self.available_models[model_name]["path"]
@@ -861,7 +861,7 @@ class GGUFModelManager:
 
         if success:
             self.current_model = model_name
-            logger.info(f"Loaded model: {model_name}")
+            logger.info("Loaded model: %s", model_name)
 
         return success
 
@@ -945,8 +945,8 @@ def create_gguf_server_with_intel_gpu(
     # Log GPU detection results
     if server.gpu_backend:
         logger.info("Intel GPU detected and configured:")
-        logger.info(f"  Backend: {server.gpu_backend}")
-        logger.info(f"  Devices: {', '.join(server.gpu_devices)}")
+        logger.info("  Backend: %s", server.gpu_backend)
+        logger.info("  Devices: %s", ", ".join(server.gpu_devices))
     else:
         logger.info("No Intel GPU detected, will use CPU")
 
@@ -954,14 +954,14 @@ def create_gguf_server_with_intel_gpu(
     if model_path:
         success = server.load_model(model_path, auto_gpu=True)
         if not success:
-            logger.error(f"Failed to load model: {model_path}")
+            logger.error("Failed to load model: %s", model_path)
             return None
 
     # Start server if requested
     if auto_start:
         if server.start_server():
-            logger.info(f"GGUF server started at http://{host}:{port}")
-            logger.info(f"GPU acceleration: {'Enabled' if server.gpu_backend else 'Disabled'}")
+            logger.info("GGUF server started at http://%s:%s", host, port)
+            logger.info("GPU acceleration: %s", "Enabled" if server.gpu_backend else "Disabled")
         else:
             logger.error("Failed to start GGUF server")
             return None

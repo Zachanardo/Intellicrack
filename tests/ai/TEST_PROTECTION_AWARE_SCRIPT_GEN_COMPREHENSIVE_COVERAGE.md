@@ -12,6 +12,7 @@
 ## Test Coverage Breakdown
 
 ### 1. All Protection Template Generators (15 methods)
+
 **Class**: `TestAllProtectionTemplateGenerators` (11 tests)
 
 Tests validate ALL 15 protection-specific script generators produce valid, production-ready bypass scripts:
@@ -33,6 +34,7 @@ Tests validate ALL 15 protection-specific script generators produce valid, produ
 ---
 
 ### 2. Helper Methods Coverage
+
 **Class**: `TestHelperMethodsCoverage` (11 tests)
 
 Complete coverage of internal helper methods:
@@ -54,6 +56,7 @@ Complete coverage of internal helper methods:
 ---
 
 ### 3. Core Script Generation Edge Cases
+
 **Class**: `TestGenerateBypassScriptEdgeCases` (5 tests)
 
 Edge case handling and error scenarios:
@@ -69,6 +72,7 @@ Edge case handling and error scenarios:
 ---
 
 ### 4. AI Prompt Generation
+
 **Class**: `TestGenerateAIPromptCoverage` (3 tests)
 
 Complete coverage of AI prompt generation:
@@ -82,6 +86,7 @@ Complete coverage of AI prompt generation:
 ---
 
 ### 5. Enhancement Integration
+
 **Class**: `TestEnhanceAIScriptGenerationFunction` (2 tests)
 
 Integration function testing:
@@ -94,6 +99,7 @@ Integration function testing:
 ---
 
 ### 6. Script Template Integrity
+
 **Class**: `TestScriptTemplateIntegrityValidation` (3 tests)
 
 Syntax validation for ALL generated scripts:
@@ -107,6 +113,7 @@ Syntax validation for ALL generated scripts:
 ---
 
 ### 7. Protection-Specific Features
+
 **Class**: `TestProtectionSpecificScriptFeatures` (4 tests)
 
 Validates protection-specific implementation details:
@@ -121,6 +128,7 @@ Validates protection-specific implementation details:
 ---
 
 ### 8. Real-World Binary Processing
+
 **Class**: `TestRealWorldBinaryProcessing` (2 tests)
 
 Production validation with actual binaries:
@@ -133,6 +141,7 @@ Production validation with actual binaries:
 ---
 
 ### 9. Knowledge Base Integration
+
 **Class**: `TestKnowledgeBaseIntegration` (3 tests)
 
 External dependency integration:
@@ -146,6 +155,7 @@ External dependency integration:
 ---
 
 ### 10. Performance and Scalability
+
 **Class**: `TestPerformanceAndScalability` (2 tests)
 
 Performance validation:
@@ -158,6 +168,7 @@ Performance validation:
 ---
 
 ### 11. Logging and Diagnostics
+
 **Class**: `TestLoggingAndDiagnostics` (2 tests)
 
 Logging behavior validation:
@@ -170,6 +181,7 @@ Logging behavior validation:
 ---
 
 ### 12. Script Metadata
+
 **Class**: `TestScriptHeaderMetadata` (2 tests)
 
 Header metadata validation:
@@ -184,24 +196,28 @@ Header metadata validation:
 ## Critical Testing Principles Applied
 
 ### 1. NO MOCKS for Core Functionality
+
 - Real protection detection via unified engine
 - Real script generation with actual templates
 - Real knowledge base integration
 - Mocks used ONLY for test data creation (UnifiedProtectionResult, ProtectionSchemeInfo)
 
 ### 2. Production-Ready Validation
+
 - All 15 protection templates tested for syntactic validity
 - Scripts validated for balanced braces, brackets, parentheses
 - Real binary processing when fixtures available
 - Error handling and edge cases comprehensively covered
 
 ### 3. Complete Type Annotations
+
 - Every test function has complete type hints
 - All parameters typed (generator: ProtectionAwareScriptGenerator)
 - Return types specified (-> None)
 - Dict types annotated (Dict[str, str], Dict[str, Any])
 
 ### 4. Real Offensive Capability Testing
+
 - HASP scripts tested for encryption emulation
 - FlexLM scripts tested for network license protocols
 - VMProtect scripts tested for VM handler detection
@@ -213,6 +229,7 @@ Header metadata validation:
 ## Coverage Metrics
 
 ### Methods Tested (Previously Untested)
+
 1. `_get_denuvo_scripts()` ✓
 2. `_get_ms_activation_scripts()` ✓
 3. `_get_themida_scripts()` ✓
@@ -230,12 +247,14 @@ Header metadata validation:
 15. `_get_recommended_techniques()` ✓
 
 ### Code Paths Tested
+
 - **Success paths**: Protection detection → Script generation → Metadata inclusion
 - **Error paths**: Invalid files, corrupted binaries, engine exceptions
 - **Edge cases**: Multiple protections, unknown protections, missing fixtures
 - **Integration paths**: Knowledge base queries, unified engine analysis
 
 ### Expected Coverage Achievement
+
 - **Line Coverage**: 85%+ (comprehensive method testing)
 - **Branch Coverage**: 80%+ (error paths, conditionals, fallbacks)
 
@@ -244,12 +263,14 @@ Header metadata validation:
 ## Running the Tests
 
 ### Execute Comprehensive Tests Only
+
 ```bash
 cd D:\Intellicrack
 pixi run pytest tests/ai/test_protection_aware_script_gen_comprehensive.py -v
 ```
 
 ### Execute with Coverage Report
+
 ```bash
 pixi run pytest tests/ai/test_protection_aware_script_gen_comprehensive.py \
     --cov=intellicrack.ai.protection_aware_script_gen \
@@ -258,6 +279,7 @@ pixi run pytest tests/ai/test_protection_aware_script_gen_comprehensive.py \
 ```
 
 ### Execute Combined with Original Tests
+
 ```bash
 pixi run pytest tests/ai/test_protection_aware_script_gen*.py -v
 ```
@@ -267,6 +289,7 @@ pixi run pytest tests/ai/test_protection_aware_script_gen*.py -v
 ## Test Fixtures Required
 
 ### Available Test Binaries (skip if missing)
+
 - `D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe`
 - `D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe`
 - `D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe`
@@ -280,16 +303,19 @@ All tests use `pytest.skip()` when fixtures are unavailable, allowing CI/CD exec
 ## Key Test Characteristics
 
 ### Windows Platform Compatibility
+
 - All file paths use Path objects
 - Tests work on Windows (primary platform)
 - No Linux-specific assumptions
 
 ### Skip Guards
+
 - Tests skip gracefully when binaries unavailable
 - AIScriptGenerator import failures handled
 - Knowledge base missing data handled
 
 ### Performance Requirements
+
 - Small binary processing < 10 seconds
 - Large binary processing < 60 seconds
 - No memory leaks across sequential generations
@@ -299,14 +325,17 @@ All tests use `pytest.skip()` when fixtures are unavailable, allowing CI/CD exec
 ## Integration with Existing Tests
 
 ### Original Test File
+
 - `test_protection_aware_script_gen.py` (45 tests, 959 lines)
 - Covers: Initialization, Frida scripts, Ghidra scripts, detection integration
 
 ### Comprehensive Test File
+
 - `test_protection_aware_script_gen_comprehensive.py` (51 tests, 1,045 lines)
 - Covers: All protection templates, helper methods, edge cases, AI prompts
 
 ### Combined Coverage
+
 - **Total Tests**: 96 tests
 - **Total Lines**: 2,004 lines
 - **Expected Coverage**: 90%+ combined line coverage
@@ -316,12 +345,14 @@ All tests use `pytest.skip()` when fixtures are unavailable, allowing CI/CD exec
 ## Test Quality Assurance
 
 ### Syntax Validation
+
 ✓ Python compilation passes
 ✓ All imports resolve
 ✓ Type hints complete
 ✓ No mocks for core functionality
 
 ### Principle Adherence
+
 ✓ Production-ready code only
 ✓ No placeholders or TODOs
 ✓ Real offensive capability validation
@@ -333,6 +364,7 @@ All tests use `pytest.skip()` when fixtures are unavailable, allowing CI/CD exec
 ## Deliverable Summary
 
 **Files Created**:
+
 1. `tests/ai/test_protection_aware_script_gen_comprehensive.py` (1,045 lines)
 2. `tests/ai/TEST_PROTECTION_AWARE_SCRIPT_GEN_COMPREHENSIVE_COVERAGE.md` (this file)
 

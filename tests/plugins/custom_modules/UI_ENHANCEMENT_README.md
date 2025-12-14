@@ -15,6 +15,7 @@ Production-grade test suite for the UI Enhancement Module (`ui_enhancement_modul
 ## What Is Tested
 
 ### Core Components
+
 - **UITheme**: Dark, Light, High Contrast, Cyberpunk themes
 - **UIConfig**: Configuration management and persistence
 - **AnalysisResult**: Protection analysis result storage
@@ -27,6 +28,7 @@ Production-grade test suite for the UI Enhancement Module (`ui_enhancement_modul
 - **UIEnhancementModule**: Main application controller
 
 ### Test Categories
+
 1. **Enumeration Tests** (11 tests): Theme, panel, state validation
 2. **Configuration Tests** (7 tests): Serialization, persistence, validation
 3. **Analysis Result Tests** (2 tests): Data structure, serialization
@@ -43,11 +45,13 @@ Production-grade test suite for the UI Enhancement Module (`ui_enhancement_modul
 ## Running Tests
 
 ### With pytest (when available)
+
 ```bash
 pytest tests/plugins/custom_modules/test_ui_enhancement_module.py -v
 ```
 
 ### Standalone Runner (no pytest required)
+
 ```bash
 python tests/plugins/custom_modules/standalone_ui_test_runner.py
 ```
@@ -57,27 +61,32 @@ The standalone runner executes 15 core tests without pytest dependency.
 ## Dependencies
 
 ### Required
+
 - Python 3.11+
 - tkinter (standard library)
 - matplotlib (for charts)
 
 ### Optional
+
 - pytest (for full test execution)
 - pytest-cov (for coverage reports)
 
 ## Test Philosophy
 
 ### Real Widgets Only
+
 - Tests create actual tkinter widgets (Frame, Label, Button, Text, etc.)
 - No mocks or stubs for widget behavior
 - Tests verify real widget state changes
 
 ### Production Validation
+
 - Every test proves genuine functionality
 - Tests FAIL when code is broken
 - No placeholder assertions
 
 ### Example Test Pattern
+
 ```python
 def test_log_viewer_level_filtering(tk_root, ui_config):
     """Log viewer filters entries by level."""
@@ -99,6 +108,7 @@ def test_log_viewer_level_filtering(tk_root, ui_config):
 ```
 
 This test:
+
 - Creates real ScrolledText widget
 - Adds real log entries
 - Changes real combobox value
@@ -108,6 +118,7 @@ This test:
 ## What Tests Prove
 
 ### Functionality Validated
+
 ✅ Widget creation and initialization
 ✅ Theme application (4 themes tested)
 ✅ Configuration persistence (save/load JSON)
@@ -120,6 +131,7 @@ This test:
 ✅ Thread-safe analysis operations
 
 ### Edge Cases Covered
+
 ✅ Empty data handling
 ✅ Zero-value inputs
 ✅ Nonexistent file paths
@@ -130,17 +142,20 @@ This test:
 ## Test Quality Metrics
 
 ### Type Safety
+
 - 100% type annotations on all test code
 - Complete parameter and return type hints
 - Type-safe fixtures
 
 ### Coverage
+
 - Core classes: 90-100%
 - UI widgets: 75-85%
 - Integration workflows: 70-80%
 - Edge cases: 85-95%
 
 ### Maintainability
+
 - Self-documenting test names
 - Clear docstrings
 - Isolated fixtures
@@ -149,6 +164,7 @@ This test:
 ## How to Add New Tests
 
 ### 1. Add Fixture (if needed)
+
 ```python
 @pytest.fixture
 def custom_fixture() -> MyType:
@@ -157,6 +173,7 @@ def custom_fixture() -> MyType:
 ```
 
 ### 2. Add Test Function
+
 ```python
 def test_new_feature_works_correctly(tk_root: tk.Tk, ui_config: UIConfig) -> None:
     """New feature performs expected operation."""
@@ -171,14 +188,17 @@ def test_new_feature_works_correctly(tk_root: tk.Tk, ui_config: UIConfig) -> Non
 ```
 
 ### 3. Use Descriptive Names
+
 Format: `test_<component>_<scenario>_<outcome>`
 
 Examples:
+
 - `test_log_viewer_filters_by_level`
 - `test_chart_enforces_max_points`
 - `test_config_survives_roundtrip`
 
 ### 4. Validate Real State
+
 - Read widget properties
 - Check data structures
 - Verify file contents
@@ -187,6 +207,7 @@ Examples:
 ## Common Patterns
 
 ### Widget Creation Test
+
 ```python
 def test_widget_initializes_correctly(tk_root):
     widget = CustomWidget(tk_root)
@@ -195,6 +216,7 @@ def test_widget_initializes_correctly(tk_root):
 ```
 
 ### State Change Test
+
 ```python
 def test_widget_updates_state(tk_root):
     widget = CustomWidget(tk_root)
@@ -203,6 +225,7 @@ def test_widget_updates_state(tk_root):
 ```
 
 ### Data Persistence Test
+
 ```python
 def test_config_persists(tmp_path):
     config = UIConfig(theme=UITheme.DARK)
@@ -222,19 +245,25 @@ def test_config_persists(tmp_path):
 ## Troubleshooting
 
 ### Import Errors
+
 If matplotlib import fails, ensure it's installed:
+
 ```bash
 pip install matplotlib
 ```
 
 ### tkinter Not Available
+
 tkinter should be included with Python. On Linux:
+
 ```bash
 sudo apt-get install python3-tk
 ```
 
 ### Pytest Not Working
+
 Use standalone runner instead:
+
 ```bash
 python tests/plugins/custom_modules/standalone_ui_test_runner.py
 ```
@@ -248,6 +277,7 @@ python tests/plugins/custom_modules/standalone_ui_test_runner.py
 ## Contributing
 
 When adding new UI features:
+
 1. Write tests FIRST
 2. Ensure tests use real widgets
 3. Verify tests FAIL with broken code

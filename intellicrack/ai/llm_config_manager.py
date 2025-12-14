@@ -773,12 +773,15 @@ class LLMConfigManager:
             },
         }
 
-        backend_defaults = defaults.get(backend_name, {
-            "api_base": "",
-            "default_model": "default",
-            "context_length": 4096,
-            "max_tokens": 2048,
-        })
+        backend_defaults = defaults.get(
+            backend_name,
+            {
+                "api_base": "",
+                "default_model": "default",
+                "context_length": 4096,
+                "max_tokens": 2048,
+            },
+        )
 
         return {
             "enabled": True,

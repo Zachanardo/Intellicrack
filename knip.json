@@ -1,46 +1,44 @@
 {
-  "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "intellicrack/scripts/frida/**/*.js",
-    "intellicrack/core/certificate/frida_scripts/**/*.js",
-    "intellicrack/dashboard/static/js/**/*.js",
-    "eslint.config.mjs"
-  ],
-  "project": [
-    "intellicrack/**/*.js"
-  ],
-  "ignore": [
-    "tools/**",
-    ".pixi/**",
-    ".venv*/**",
-    "node_modules/**",
-    "build/**",
-    "dist/**",
-    ".github/**",
-    "*.min.js"
-  ],
-  "ignoreDependencies": [],
-  "ignoreExportsUsedInFile": false,
-  "includeEntryExports": true,
-  "ignoreWorkspaces": [],
-  "github-actions": false,
-  "eslint": {
-    "entry": ["eslint.config.js"]
-  },
-  "rules": {
-    "files": "error",
-    "exports": "error",
-    "nsExports": "error",
-    "classMembers": "error",
-    "types": "error",
-    "nsTypes": "error",
-    "enumMembers": "error",
-    "duplicates": "error",
-    "dependencies": "error",
-    "devDependencies": "error",
-    "optionalPeerDependencies": "error",
-    "unlisted": "error",
-    "binaries": "error",
-    "unresolved": "error"
-  }
+    "$schema": "https://unpkg.com/knip@latest/schema.json",
+    "entry": [
+        "intellicrack/scripts/frida/**/*.js",
+        "intellicrack/core/certificate/frida_scripts/**/*.js",
+        "intellicrack/dashboard/static/js/**/*.js",
+        "eslint.config.mjs"
+    ],
+    "project": ["intellicrack/**/*.js"],
+    "ignore": [
+        "tools/**",
+        ".pixi/**",
+        ".venv*/**",
+        "node_modules/**",
+        "build/**",
+        "dist/**",
+        ".github/**",
+        "*.min.js"
+    ],
+    "ignoreDependencies": [],
+    "ignoreExportsUsedInFile": false,
+    "includeEntryExports": true,
+    "ignoreWorkspaces": [],
+    "github-actions": false,
+    "eslint": {
+        "entry": ["eslint.config.js"]
+    },
+    "rules": {
+        "files": "error",
+        "exports": "error",
+        "nsExports": "error",
+        "classMembers": "error",
+        "types": "error",
+        "nsTypes": "error",
+        "enumMembers": "error",
+        "duplicates": "error",
+        "dependencies": "error",
+        "devDependencies": "error",
+        "optionalPeerDependencies": "error",
+        "unlisted": "error",
+        "binaries": "error",
+        "unresolved": "error"
+    }
 }

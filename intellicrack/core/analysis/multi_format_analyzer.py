@@ -389,10 +389,22 @@ class MultiFormatBinaryAnalyzer:
 
                 info: dict[str, Any] = {
                     "format": "ELF",
-                    "machine": getattr(binary.header.machine_type, "name", str(binary.header.machine_type)) if hasattr(binary, "header") and hasattr(binary.header, "machine_type") else "Unknown",
-                    "class": "64-bit" if (hasattr(binary, "header") and hasattr(binary.header, "identity_class") and binary.header.identity_class.name == "CLASS64") else "32-bit",
-                    "type": getattr(binary.header.file_type, "name", str(binary.header.file_type)) if hasattr(binary, "header") and hasattr(binary.header, "file_type") else "Unknown",
-                    "entry_point": hex(binary.header.entrypoint) if hasattr(binary, "header") and hasattr(binary.header, "entrypoint") else "0x0",
+                    "machine": getattr(binary.header.machine_type, "name", str(binary.header.machine_type))
+                    if hasattr(binary, "header") and hasattr(binary.header, "machine_type")
+                    else "Unknown",
+                    "class": "64-bit"
+                    if (
+                        hasattr(binary, "header")
+                        and hasattr(binary.header, "identity_class")
+                        and binary.header.identity_class.name == "CLASS64"
+                    )
+                    else "32-bit",
+                    "type": getattr(binary.header.file_type, "name", str(binary.header.file_type))
+                    if hasattr(binary, "header") and hasattr(binary.header, "file_type")
+                    else "Unknown",
+                    "entry_point": hex(binary.header.entrypoint)
+                    if hasattr(binary, "header") and hasattr(binary.header, "entrypoint")
+                    else "0x0",
                     "sections": [],
                     "symbols": [],
                     "dynamic": [],
@@ -511,8 +523,12 @@ class MultiFormatBinaryAnalyzer:
                 if hasattr(binary, "magic") and hasattr(binary, "header"):
                     header_info: dict[str, Any] = {
                         "magic": hex(binary.magic) if isinstance(binary.magic, int) else str(binary.magic),
-                        "cpu_type": getattr(binary.header.cpu_type, "name", str(binary.header.cpu_type)) if hasattr(binary.header, "cpu_type") else "Unknown",
-                        "file_type": getattr(binary.header.file_type, "name", str(binary.header.file_type)) if hasattr(binary.header, "file_type") else "Unknown",
+                        "cpu_type": getattr(binary.header.cpu_type, "name", str(binary.header.cpu_type))
+                        if hasattr(binary.header, "cpu_type")
+                        else "Unknown",
+                        "file_type": getattr(binary.header.file_type, "name", str(binary.header.file_type))
+                        if hasattr(binary.header, "file_type")
+                        else "Unknown",
                     }
                     info["headers"].append(header_info)
 
@@ -1213,8 +1229,12 @@ class MultiFormatBinaryAnalyzer:
 
         """
         result: dict[str, Any] = {
-            "architecture": (str(binary.header.architecture) if hasattr(binary, "header") and hasattr(binary.header, "architecture") else "Unknown"),
-            "endianness": (str(binary.header.endianness) if hasattr(binary, "header") and hasattr(binary.header, "endianness") else "Unknown"),
+            "architecture": (
+                str(binary.header.architecture) if hasattr(binary, "header") and hasattr(binary.header, "architecture") else "Unknown"
+            ),
+            "endianness": (
+                str(binary.header.endianness) if hasattr(binary, "header") and hasattr(binary.header, "endianness") else "Unknown"
+            ),
         }
 
         # Get sections

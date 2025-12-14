@@ -613,7 +613,9 @@ class R2SignatureAnalyzer:
             return 0.8
         return 0.7 if matches > 1 else 0.6
 
-    def _detect_anti_analysis_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _detect_anti_analysis_functions(
+        self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Detect anti-analysis and anti-debugging functions."""
         anti_analysis: list[dict[str, Any]] = []
 
@@ -755,7 +757,9 @@ class R2SignatureAnalyzer:
 
         return base_risk
 
-    def _identify_license_validation_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _identify_license_validation_functions(
+        self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify potential license validation functions."""
         license_functions: list[dict[str, Any]] = []
 
@@ -888,7 +892,9 @@ class R2SignatureAnalyzer:
             return "registration_validation"
         return "general_validation"
 
-    def _check_vulnerability_signatures(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _check_vulnerability_signatures(
+        self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Check for known vulnerability signatures."""
         vulnerability_sigs: list[dict[str, Any]] = []
 
@@ -1157,7 +1163,6 @@ class R2SignatureAnalyzer:
                 self.logger.debug(f"Failed to analyze {func_name} with custom patterns: {e}")
 
             for pattern_name, pattern in custom_patterns.items():
-
                 if re.search(pattern, func_name, re.IGNORECASE):
                     # Enhance match with r2 analysis
                     confidence = 0.6

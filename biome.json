@@ -1,159 +1,159 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
-  "root": true,
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "includes": [
-      "intellicrack/**/*.js",
-      "intellicrack/**/*.cjs",
-      "intellicrack/**/*.mjs",
-      "eslint.config.mjs",
-      "!**/node_modules",
-      "!**/.pixi",
-      "!**/tools",
-      "!**/docs/_build",
-      "!**/htmlcov",
-      "!**/coverage",
-      "!**/.git",
-      "!**/target",
-      "!**/*.min.js",
-      "!**/dist",
-      "!**/build"
-    ],
-    "ignoreUnknown": true,
-    "maxSize": 2097152
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 4,
-    "lineWidth": 100,
-    "lineEnding": "lf",
-    "bracketSpacing": true
-  },
-  "javascript": {
+    "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+    "root": true,
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "includes": [
+            "intellicrack/**/*.js",
+            "intellicrack/**/*.cjs",
+            "intellicrack/**/*.mjs",
+            "eslint.config.mjs",
+            "!**/node_modules",
+            "!**/.pixi",
+            "!**/tools",
+            "!**/docs/_build",
+            "!**/htmlcov",
+            "!**/coverage",
+            "!**/.git",
+            "!**/target",
+            "!**/*.min.js",
+            "!**/dist",
+            "!**/build"
+        ],
+        "ignoreUnknown": true,
+        "maxSize": 2097152
+    },
     "formatter": {
-      "enabled": true,
-      "quoteStyle": "single",
-      "jsxQuoteStyle": "double",
-      "trailingCommas": "es5",
-      "semicolons": "always",
-      "arrowParentheses": "asNeeded",
-      "bracketSameLine": false,
-      "quoteProperties": "asNeeded"
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 100,
+        "lineEnding": "lf",
+        "bracketSpacing": true
+    },
+    "javascript": {
+        "formatter": {
+            "enabled": true,
+            "quoteStyle": "single",
+            "jsxQuoteStyle": "double",
+            "trailingCommas": "es5",
+            "semicolons": "always",
+            "arrowParentheses": "asNeeded",
+            "bracketSameLine": false,
+            "quoteProperties": "asNeeded"
+        },
+        "linter": {
+            "enabled": true
+        },
+        "globals": [
+            "Frida",
+            "Java",
+            "ObjC",
+            "Interceptor",
+            "Memory",
+            "Module",
+            "Process",
+            "Thread",
+            "NativeFunction",
+            "NativeCallback",
+            "NativePointer",
+            "ptr",
+            "NULL",
+            "send",
+            "recv",
+            "rpc",
+            "console",
+            "hexdump",
+            "int64",
+            "uint64",
+            "Instruction",
+            "ApiResolver",
+            "DebugSymbol",
+            "Kernel",
+            "Socket",
+            "Stream",
+            "File",
+            "Stalker",
+            "WeakRef",
+            "Script",
+            "Worker",
+            "CModule",
+            "Swift",
+            "ObjCIvar"
+        ]
+    },
+    "json": {
+        "formatter": {
+            "enabled": true,
+            "indentWidth": 2,
+            "lineWidth": 100,
+            "trailingCommas": "none"
+        },
+        "linter": {
+            "enabled": true
+        }
     },
     "linter": {
-      "enabled": true
-    },
-    "globals": [
-      "Frida",
-      "Java",
-      "ObjC",
-      "Interceptor",
-      "Memory",
-      "Module",
-      "Process",
-      "Thread",
-      "NativeFunction",
-      "NativeCallback",
-      "NativePointer",
-      "ptr",
-      "NULL",
-      "send",
-      "recv",
-      "rpc",
-      "console",
-      "hexdump",
-      "int64",
-      "uint64",
-      "Instruction",
-      "ApiResolver",
-      "DebugSymbol",
-      "Kernel",
-      "Socket",
-      "Stream",
-      "File",
-      "Stalker",
-      "WeakRef",
-      "Script",
-      "Worker",
-      "CModule",
-      "Swift",
-      "ObjCIvar"
-    ]
-  },
-  "json": {
-    "formatter": {
-      "enabled": true,
-      "indentWidth": 2,
-      "lineWidth": 100,
-      "trailingCommas": "none"
-    },
-    "linter": {
-      "enabled": true
-    }
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "correctness": {
-        "noNodejsModules": "off",
-        "noUndeclaredDependencies": "off"
-      },
-      "style": {
-        "noDefaultExport": "off",
-        "useNamingConvention": "off",
-        "useFilenamingConvention": "off",
-        "noCommonJs": "off",
-        "useConst": "error",
-        "useBlockStatements": "error",
-        "useTemplate": "error",
-        "useSingleVarDeclarator": "error",
-        "useExplicitLengthCheck": "warn",
-        "useCollapsedElseIf": "warn",
-        "useForOf": "warn"
-      },
-      "suspicious": {
-        "noDebugger": "warn",
-        "noDoubleEquals": "error"
-      },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "warn",
-          "options": {
-            "maxAllowedComplexity": 25
-          }
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "correctness": {
+                "noNodejsModules": "off",
+                "noUndeclaredDependencies": "off"
+            },
+            "style": {
+                "noDefaultExport": "off",
+                "useNamingConvention": "off",
+                "useFilenamingConvention": "off",
+                "noCommonJs": "off",
+                "useConst": "error",
+                "useBlockStatements": "error",
+                "useTemplate": "error",
+                "useSingleVarDeclarator": "error",
+                "useExplicitLengthCheck": "warn",
+                "useCollapsedElseIf": "warn",
+                "useForOf": "warn"
+            },
+            "suspicious": {
+                "noDebugger": "warn",
+                "noDoubleEquals": "error"
+            },
+            "complexity": {
+                "noExcessiveCognitiveComplexity": {
+                    "level": "warn",
+                    "options": {
+                        "maxAllowedComplexity": 25
+                    }
+                }
+            },
+            "security": {
+                "noGlobalEval": "error"
+            },
+            "a11y": {
+                "recommended": true
+            },
+            "performance": {
+                "noAccumulatingSpread": "warn",
+                "noDelete": "warn"
+            },
+            "nursery": {
+                "noFloatingPromises": "error",
+                "noShadow": "warn"
+            }
         }
-      },
-      "security": {
-        "noGlobalEval": "error"
-      },
-      "a11y": {
-        "recommended": true
-      },
-      "performance": {
-        "noAccumulatingSpread": "warn",
-        "noDelete": "warn"
-      },
-      "nursery": {
-        "noFloatingPromises": "error",
-        "noShadow": "warn"
-      }
-    }
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": {
-          "level": "on"
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": {
+                    "level": "on"
+                }
+            }
         }
-      }
     }
-  }
 }

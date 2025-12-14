@@ -411,12 +411,10 @@ class ExportDialog(QDialog):
         lines = []
 
         if self.include_size_check.isChecked():
-            lines.extend(
-                (
-                    f"public static final int {var_name.upper()}_SIZE = {len(data)};",
-                    "",
-                )
-            )
+            lines.extend((
+                f"public static final int {var_name.upper()}_SIZE = {len(data)};",
+                "",
+            ))
         lines.append(f"public static final byte[] {var_name} = {{")
 
         for i in range(0, len(data), items_per_line):

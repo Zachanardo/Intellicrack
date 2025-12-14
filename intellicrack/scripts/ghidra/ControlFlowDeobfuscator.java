@@ -131,7 +131,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     Address fallthrough = inst.getFallThrough();
 
     if (target1 != null && fallthrough != null) {
-        return analyzeBranchPaths(target1, fallthrough);
+      return analyzeBranchPaths(target1, fallthrough);
     }
 
     return false;
@@ -257,7 +257,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
         Address trueTarget = trueInst.getAddress(0);
         Address falseTarget = falseInst.getAddress(0);
 
-          return trueTarget != null && falseTarget != null && trueTarget.equals(falseTarget);
+        return trueTarget != null && falseTarget != null && trueTarget.equals(falseTarget);
       }
     }
 
@@ -318,7 +318,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
       }
 
     } catch (Exception e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
 
     return foundDeadCode;
@@ -484,7 +484,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
                     .getAddress(target.getOffset());
             return addr;
           } catch (Exception e) {
-              throw new RuntimeException(e);
+            throw new RuntimeException(e);
           }
         }
       }
@@ -536,7 +536,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
       }
 
     } catch (Exception e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
 
     return foundFlattening;

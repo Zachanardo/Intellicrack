@@ -38,8 +38,8 @@ logger = logging.getLogger(__name__)
 # Import protection knowledge base
 try:
     from .protection_knowledge_base import get_protection_knowledge_base
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
+except ImportError:
+    logger.error("Import error in __init__", exc_info=True)
     get_protection_knowledge_base = None
 
 # Export main interface

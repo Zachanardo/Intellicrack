@@ -831,12 +831,10 @@ class TestScriptDialog(BaseDialog):
             f"Language: {results.get('language', 'Unknown')}",
         ]
 
-        lines.extend(
-            (
-                f"Status: {'OK Valid' if results.get('syntax_valid', False) else 'FAIL Invalid'}",
-                "",
-            )
-        )
+        lines.extend((
+            f"Status: {'OK Valid' if results.get('syntax_valid', False) else 'FAIL Invalid'}",
+            "",
+        ))
         if tests := results.get("tests", []):
             lines.append("Tests Performed:")
             lines.extend([f"  {test}" for test in tests])
@@ -870,12 +868,10 @@ class TestScriptDialog(BaseDialog):
 
         risk_level = results.get("risk_level", "unknown")
         risk_colors = {"low": "[LOW]", "medium": "[MEDIUM]", "high": "[HIGH]"}
-        lines.extend(
-            (
-                f"Overall Risk Level: {risk_colors.get(risk_level, '[UNKNOWN]')} {risk_level.upper()}",
-                "",
-            )
-        )
+        lines.extend((
+            f"Overall Risk Level: {risk_colors.get(risk_level, '[UNKNOWN]')} {risk_level.upper()}",
+            "",
+        ))
         if vulnerabilities := results.get("vulnerabilities", []):
             lines.append("Security Issues Found:")
             for vuln in vulnerabilities:
@@ -905,12 +901,10 @@ class TestScriptDialog(BaseDialog):
 
         complexity = results.get("complexity", "unknown")
         complexity_icons = {"low": "[LOW]", "medium": "[MEDIUM]", "high": "[HIGH]"}
-        lines.extend(
-            (
-                f"Code Complexity: {complexity_icons.get(complexity, '[?]')} {complexity.upper()}",
-                "",
-            )
-        )
+        lines.extend((
+            f"Code Complexity: {complexity_icons.get(complexity, '[?]')} {complexity.upper()}",
+            "",
+        ))
         if bottlenecks := results.get("bottlenecks", []):
             lines.append("Potential Bottlenecks:")
             lines.extend([f"  WARNING {bottleneck}" for bottleneck in bottlenecks])
@@ -921,13 +915,11 @@ class TestScriptDialog(BaseDialog):
             lines.extend([f"   {opt}" for opt in optimizations])
             lines.append("")
 
-        lines.extend(
-            (
-                "Performance Estimates:",
-                f"  Execution Time: {results.get('estimated_execution_time', 'Unknown')}",
-                f"  Memory Usage: {results.get('memory_usage', 'Unknown')}",
-            )
-        )
+        lines.extend((
+            "Performance Estimates:",
+            f"  Execution Time: {results.get('estimated_execution_time', 'Unknown')}",
+            f"  Memory Usage: {results.get('memory_usage', 'Unknown')}",
+        ))
         if self.performance_results is not None:
             self.performance_results.setText("\n".join(lines))
 
@@ -1001,13 +993,11 @@ class TestScriptDialog(BaseDialog):
             lines.append("")
 
         timestamp = results.get("timestamp", time.time())
-        lines.extend(
-            (
-                f"Test completed: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))}",
-                f"Script size: {len(self.script_content)} characters",
-                f"Script type: {self.script_type}",
-            )
-        )
+        lines.extend((
+            f"Test completed: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))}",
+            f"Script size: {len(self.script_content)} characters",
+            f"Script type: {self.script_type}",
+        ))
         if self.summary_results is not None:
             self.summary_results.setText("\n".join(lines))
 

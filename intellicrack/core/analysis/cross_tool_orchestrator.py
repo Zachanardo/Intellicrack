@@ -108,14 +108,14 @@ class SharedMemoryIPC:
             self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
             self.mmap_obj[: self.size] = b"\x00" * self.size
             self.is_creator = True
-            logger.info(f"Created shared memory segment: {self.name}")
+            logger.info("Created shared memory segment: %s", self.name)
         except Exception:
             # Connect to existing shared memory
             try:
                 self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
-                logger.info(f"Connected to existing shared memory: {self.name}")
+                logger.info("Connected to existing shared memory: %s", self.name)
             except Exception as conn_err:
-                logger.error(f"Failed to initialize shared memory: {conn_err}")
+                logger.error("Failed to initialize shared memory: %s", conn_err, exc_info=True)
                 raise
 
     def send_message(self, msg_type: MessageType, data: dict | list | str | int | bool | None) -> bool:
@@ -134,7 +134,7 @@ class SharedMemoryIPC:
                 # Serialize data
                 serialized = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 if len(serialized) > self.max_data_size:
-                    logger.error(f"Message too large: {len(serialized)} > {self.max_data_size}")
+                    logger.error("Message too large: %s > %s", len(serialized), self.max_data_size)
                     return False
 
                 # Calculate checksum
@@ -152,7 +152,7 @@ class SharedMemoryIPC:
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to send message: {e}")
+                logger.error("Failed to send message: %s", e, exc_info=True)
                 return False
 
     def receive_message(self) -> tuple[MessageType, Any] | None:
@@ -196,7 +196,7 @@ class SharedMemoryIPC:
                 return (msg_type, deserialized)
 
             except Exception as e:
-                logger.error(f"Failed to receive message: {e}")
+                logger.error("Failed to receive message: %s", e, exc_info=True)
                 return None
 
     def cleanup(self) -> None:
@@ -204,9 +204,9 @@ class SharedMemoryIPC:
         if self.mmap_obj:
             try:
                 self.mmap_obj.close()
-                logger.info(f"Closed shared memory: {self.name}")
+                logger.info("Closed shared memory: %s", self.name)
             except Exception as e:
-                logger.error(f"Error closing shared memory: {e}")
+                logger.error("Error closing shared memory: %s", e, exc_info=True)
 
 
 class ResultSerializer:
@@ -268,12 +268,12 @@ class ResultSerializer:
 
             # Validate version
             if package.get("version") != ResultSerializer.PROTOCOL_VERSION:
-                logger.warning(f"Protocol version mismatch: {package.get('version')} != {ResultSerializer.PROTOCOL_VERSION}")
+                logger.warning("Protocol version mismatch: %s != %s", package.get('version'), ResultSerializer.PROTOCOL_VERSION)
 
             return package
 
         except Exception as e:
-            logger.error(f"Failed to deserialize result: {e}")
+            logger.error("Failed to deserialize result: %s", e, exc_info=True)
             return {}
 
 
@@ -306,9 +306,9 @@ class ToolMonitor:
                 "io_read_mb": 0,
                 "io_write_mb": 0,
             }
-            logger.info(f"Registered process {pid} for tool {tool_name}")
+            logger.info("Registered process %s for tool %s", pid, tool_name)
         except psutil.NoSuchProcess:
-            logger.error(f"Process {pid} not found for tool {tool_name}")
+            logger.error("Process %s not found for tool %s", pid, tool_name, exc_info=True)
             self.status[tool_name] = ToolStatus.FAILED
 
     def start_monitoring(self, interval: float = 1.0) -> None:
@@ -413,7 +413,7 @@ class FailureRecovery:
 
         """
         self.recovery_strategies[tool_name] = strategy
-        logger.info(f"Registered recovery strategy for {tool_name}")
+        logger.info("Registered recovery strategy for %s", tool_name)
 
     def handle_failure(self, tool_name: str, error: Exception, context: dict[str, Any] = None) -> bool:
         """Handle tool failure with recovery.
@@ -433,19 +433,19 @@ class FailureRecovery:
         # Check retry count
         self.retry_counts[tool_name] = self.retry_counts.get(tool_name, 0) + 1
         if self.retry_counts[tool_name] > self.max_retries:
-            logger.error(f"Max retries exceeded for {tool_name}")
+            logger.error("Max retries exceeded for %s", tool_name)
             return False
 
-        logger.warning(f"Attempting recovery for {tool_name} (attempt {self.retry_counts[tool_name]})")
+        logger.warning("Attempting recovery for %s (attempt %s)", tool_name, self.retry_counts[tool_name])
 
         # Execute recovery strategy
         if tool_name in self.recovery_strategies:
             try:
                 self.recovery_strategies[tool_name](error, context)
-                logger.info(f"Recovery successful for {tool_name}")
+                logger.info("Recovery successful for %s", tool_name)
                 return True
             except Exception as recovery_error:
-                logger.error(f"Recovery failed for {tool_name}: {recovery_error}")
+                logger.error("Recovery failed for %s: %s", tool_name, recovery_error, exc_info=True)
                 return False
         else:
             # Default recovery: wait and retry
@@ -530,14 +530,12 @@ class ResultConflictResolver:
                     resolved.append(merged)
 
                 # Log conflict
-                self.conflict_log.append(
-                    {
-                        "type": "function",
-                        "name": name,
-                        "sources": len(group),
-                        "resolution": "merged",
-                    }
-                )
+                self.conflict_log.append({
+                    "type": "function",
+                    "name": name,
+                    "sources": len(group),
+                    "resolution": "merged",
+                })
 
         return resolved
 
@@ -600,7 +598,7 @@ class ResultConflictResolver:
                 if result := rule(group):
                     return result
             except Exception as e:
-                logger.error(f"Resolution rule failed: {e}")
+                logger.error("Resolution rule failed: %s", e, exc_info=True)
         return None
 
     def _merge_functions(self, group: list[dict]) -> dict:
@@ -635,13 +633,11 @@ class ResultConflictResolver:
             merged.setdefault("notes", []).extend(func.get("notes", []))
 
         # Recalculate confidence
-        sources = sum(
-            [
-                1 if merged.get("ghidra_data") else 0,
-                1 if merged.get("r2_data") else 0,
-                1 if merged.get("frida_data") else 0,
-            ]
-        )
+        sources = sum([
+            1 if merged.get("ghidra_data") else 0,
+            1 if merged.get("r2_data") else 0,
+            1 if merged.get("frida_data") else 0,
+        ])
         merged["confidence_score"] = sources / 3.0
 
         return merged
@@ -695,12 +691,12 @@ class LoadBalancer:
 
         # Check CPU
         if current_load["cpu_percent"] + estimated_resources.get("cpu", 0) > self.cpu_threshold:
-            logger.warning(f"CPU threshold would be exceeded by starting {tool_name}")
+            logger.warning("CPU threshold would be exceeded by starting %s", tool_name)
             return False
 
         # Check memory
         if current_load["memory_percent"] + estimated_resources.get("memory", 0) > self.memory_threshold:
-            logger.warning(f"Memory threshold would be exceeded by starting {tool_name}")
+            logger.warning("Memory threshold would be exceeded by starting %s", tool_name)
             return False
 
         return True
@@ -960,14 +956,14 @@ class CrossToolOrchestrator:
                 self.logger.info("Initialized Frida manager")
                 self.tool_monitor.status["frida"] = ToolStatus.IDLE
             except Exception as e:
-                self.logger.warning(f"Frida initialization failed: {e}")
+                self.logger.warning("Frida initialization failed: %s", e)
                 self.frida_manager = None
                 self.tool_monitor.status["frida"] = ToolStatus.FAILED
 
             self.tool_monitor.status["ghidra"] = ToolStatus.IDLE
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize tools: {e}")
+            self.logger.error("Failed to initialize tools: %s", e, exc_info=True)
 
     def run_parallel_analysis(self, tools: list[str] | None = None) -> UnifiedAnalysisResult:
         """Run analysis in parallel across specified tools.
@@ -982,14 +978,14 @@ class CrossToolOrchestrator:
         if tools is None:
             tools = ["ghidra", "radare2", "frida"]
 
-        self.logger.info(f"Starting parallel analysis with tools: {tools}")
+        self.logger.info("Starting parallel analysis with tools: %s", tools)
 
         # Use load balancer to optimize execution
         batches = self.load_balancer.optimize_parallel_execution(tools)
-        self.logger.info(f"Optimized execution batches: {batches}")
+        self.logger.info("Optimized execution batches: %s", batches)
 
         for batch_idx, batch in enumerate(batches):
-            self.logger.info(f"Starting batch {batch_idx + 1}: {batch}")
+            self.logger.info("Starting batch %s: %s", batch_idx + 1, batch)
             batch_threads = []
 
             for tool in batch:
@@ -1001,7 +997,7 @@ class CrossToolOrchestrator:
                 }.get(tool, {"cpu": 20, "memory": 10})
 
                 if not self.load_balancer.can_start_tool(tool, resources):
-                    self.logger.warning(f"Skipping {tool} due to resource constraints")
+                    self.logger.warning("Skipping %s due to resource constraints", tool)
                     continue
 
                 # Update tool status
@@ -1029,7 +1025,7 @@ class CrossToolOrchestrator:
             for tool, thread in batch_threads:
                 thread.join(timeout=60)
                 if thread.is_alive():
-                    self.logger.error(f"{tool} analysis timed out")
+                    self.logger.error("%s analysis timed out", tool)
                     self.tool_monitor.status[tool] = ToolStatus.FAILED
 
             # Small delay between batches
@@ -1049,7 +1045,7 @@ class CrossToolOrchestrator:
             UnifiedAnalysisResult
 
         """
-        self.logger.info(f"Starting sequential analysis with {len(workflow)} steps")
+        self.logger.info("Starting sequential analysis with %s steps", len(workflow))
 
         for step in workflow:
             tool = step.get("tool")
@@ -1069,7 +1065,7 @@ class CrossToolOrchestrator:
             elif tool == "frida":
                 self._run_frida_analysis(config)
             else:
-                self.logger.warning(f"Unknown tool in workflow: {tool}")
+                self.logger.warning("Unknown tool in workflow: %s", tool)
 
         return self._correlate_results()
 
@@ -1180,7 +1176,7 @@ class CrossToolOrchestrator:
             self.logger.info("Ghidra analysis complete")
 
         except Exception as e:
-            self.logger.error(f"Ghidra analysis failed: {e}")
+            self.logger.error("Ghidra analysis failed: %s", e, exc_info=True)
             self.tool_monitor.status["ghidra"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1227,7 +1223,7 @@ class CrossToolOrchestrator:
             self.logger.info("Radare2 analysis complete")
 
         except Exception as e:
-            self.logger.error(f"Radare2 analysis failed: {e}")
+            self.logger.error("Radare2 analysis failed: %s", e, exc_info=True)
             self.tool_monitor.status["radare2"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1299,7 +1295,7 @@ class CrossToolOrchestrator:
             self.logger.info("Frida analysis complete")
 
         except Exception as e:
-            self.logger.error(f"Frida analysis failed: {e}")
+            self.logger.error("Frida analysis failed: %s", e, exc_info=True)
             self.tool_monitor.status["frida"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1362,7 +1358,7 @@ class CrossToolOrchestrator:
             else:
                 self.logger.debug("Frida script injection method not available")
         except Exception as e:
-            self.logger.error(f"Memory scan failed: {e}")
+            self.logger.error("Memory scan failed: %s", e, exc_info=True)
 
         return results
 
@@ -1408,7 +1404,7 @@ class CrossToolOrchestrator:
             else:
                 self.logger.debug("Frida script injection method not available")
         except Exception as e:
-            self.logger.error(f"API monitoring failed: {e}")
+            self.logger.error("API monitoring failed: %s", e, exc_info=True)
 
         return api_calls
 
@@ -1463,7 +1459,7 @@ class CrossToolOrchestrator:
             else:
                 self.logger.debug("Frida script injection method not available")
         except Exception as e:
-            self.logger.error(f"Hook detection failed: {e}")
+            self.logger.error("Hook detection failed: %s", e, exc_info=True)
 
         return hooks
 
@@ -1698,13 +1694,11 @@ class CrossToolOrchestrator:
             total_funcs = len(self.ghidra_results.functions)
             unnamed_funcs = sum(bool(f.get("name", "").startswith("sub_")) for f in self.ghidra_results.functions)
             if total_funcs > 0 and unnamed_funcs / total_funcs > 0.7:
-                protections.append(
-                    {
-                        "type": "obfuscation",
-                        "mechanism": "symbol_stripping",
-                        "confidence": unnamed_funcs / total_funcs,
-                    }
-                )
+                protections.append({
+                    "type": "obfuscation",
+                    "mechanism": "symbol_stripping",
+                    "confidence": unnamed_funcs / total_funcs,
+                })
 
         return protections
 
@@ -1761,14 +1755,12 @@ class CrossToolOrchestrator:
             for func in self.ghidra_results.functions:
                 node_id = func.get("name", "")
                 if all(n["id"] != node_id for n in graph["nodes"]):
-                    graph["nodes"].append(
-                        {
-                            "id": node_id,
-                            "label": node_id,
-                            "source": "ghidra",
-                            "address": func.get("address", 0),
-                        }
-                    )
+                    graph["nodes"].append({
+                        "id": node_id,
+                        "label": node_id,
+                        "source": "ghidra",
+                        "address": func.get("address", 0),
+                    })
 
         return graph
 
@@ -1821,7 +1813,7 @@ class CrossToolOrchestrator:
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
-        self.logger.info(f"Exported unified report to {output_path}")
+        self.logger.info("Exported unified report to %s", output_path)
 
     def cleanup(self) -> None:
         """Clean up resources."""

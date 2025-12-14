@@ -630,8 +630,7 @@ class SettingsTab(BaseTab):
         reset_btn.setToolTip("Reset to auto-discovered path")
         reset_btn.clicked.connect(
             lambda checked, key=tool_key: (
-                self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key)
-                or self.reset_tool_path(key)
+                self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key) or self.reset_tool_path(key)
             )
         )
 

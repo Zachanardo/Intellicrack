@@ -1,6 +1,5 @@
 ---
-description:
-    Builds production-ready offensive cracking and analysis capabilities for
+description: Builds production-ready offensive cracking and analysis capabilities for
     Intellicrack
 ---
 

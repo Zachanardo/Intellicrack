@@ -62,6 +62,8 @@ from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
 
 
+logger = logging.getLogger(__name__)
+
 """
 Pattern Evolution Tracker with Adaptive Learning
 
@@ -955,6 +957,7 @@ class PatternMatcher:
 
     def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7) -> None:
         """Initialize pattern matcher with bloom filter and pattern caching."""
+        self.logger = logging.getLogger(__name__)
         self.bloom_size = bloom_size
         self.num_hashes = num_hashes
         self.bloom_filter = np.zeros(bloom_size, dtype=bool)
@@ -975,8 +978,8 @@ class PatternMatcher:
         if pattern.type == PatternType.STRING_PATTERN:
             try:
                 self.compiled_patterns[pattern.id] = re.compile(pattern.pattern_data)
-            except re.error as e:
-                self.logger.debug("Invalid regex pattern %s: %s", pattern.id, e)
+            except re.error:
+                self.logger.debug("Invalid regex pattern %s", pattern.id, exc_info=True)
 
     def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
         """Match data against patterns, return (``pattern_id``, confidence) tuples."""
@@ -1042,10 +1045,10 @@ class PatternMatcher:
             if matches := regex.findall(text):
                 # Confidence based on number of matches
                 return min(1.0, len(matches) / 10.0)
-        except (re.error, KeyError, AttributeError) as e:
-            self.logger.debug(f"Failed to match string pattern {pattern.id}: {e}")
-        except UnicodeDecodeError as e:
-            self.logger.debug(f"Unicode decode error in pattern matching: {e}")
+        except (re.error, KeyError, AttributeError):
+            self.logger.debug("Failed to match string pattern %s", pattern.id, exc_info=True)
+        except UnicodeDecodeError:
+            self.logger.debug("Unicode decode error in pattern matching", exc_info=True)
 
         return 0.0
 
@@ -1294,8 +1297,8 @@ class PatternEvolutionTracker:
                 # Use 1-p_value as a similarity measure (higher value means more similar)
                 similarity = max(0.0, 1 - p_value)
                 return min(similarity, 1.0)
-            except Exception as e:
-                self.logger.debug("Chi2 calculation failed, using fallback: %s", e)
+            except Exception:
+                self.logger.debug("Chi2 calculation failed, using fallback", exc_info=True)
 
         return self.similarity_calculator.calculate_similarity(pattern1, pattern2)
 
@@ -1374,7 +1377,7 @@ class PatternEvolutionTracker:
         """Evolve one generation of patterns with advanced learning."""
         types_to_evolve = [pattern_type] if pattern_type else list(PatternType)
         for ptype in types_to_evolve:
-            self.logger.info(f"Evolving {ptype.value} patterns")
+            self.logger.info("Evolving %s patterns", ptype.value)
 
             population = self.populations[ptype]
             if not population:
@@ -1445,13 +1448,15 @@ class PatternEvolutionTracker:
 
             # Cluster into families
             families = self.cluster_into_families(ptype)
-            self.logger.info(f"Identified {len(families)} pattern families for {ptype.value}")
+            self.logger.info("Identified %d pattern families for %s", len(families), ptype.value)
 
             # Analyze temporal evolution
             temporal_analysis = self.analyze_temporal_evolution(ptype)
             self.logger.info(
-                f"Evolution rate for {ptype.value}: {temporal_analysis['evolution_rate']['rate']:.4f} "
-                f"(acceleration: {temporal_analysis['evolution_rate']['acceleration']:.4f})",
+                "Evolution rate for %s: %.4f (acceleration: %.4f)",
+                ptype.value,
+                temporal_analysis["evolution_rate"]["rate"],
+                temporal_analysis["evolution_rate"]["acceleration"],
             )
 
         self._notify_observers()
@@ -1618,8 +1623,8 @@ class PatternEvolutionTracker:
         for observer in self.observers:
             try:
                 observer.on_patterns_updated(self)
-            except Exception as e:
-                self.logger.error(f"Error notifying observer: {e}")
+            except Exception:
+                self.logger.error("Error notifying observer", exc_info=True)
 
     def export_patterns(self, output_file: str, pattern_type: PatternType | None = None) -> None:
         """Export patterns to JSON file."""
@@ -1650,7 +1655,7 @@ class PatternEvolutionTracker:
                 indent=2,
             )
 
-        self.logger.info(f"Exported {len(patterns_data)} patterns to {output_file}")
+        self.logger.info("Exported %d patterns to %s", len(patterns_data), output_file)
 
     def import_patterns(self, input_file: str) -> None:
         """Import patterns from JSON file."""
@@ -1694,10 +1699,10 @@ class PatternEvolutionTracker:
 
                 imported_count += 1
 
-            except Exception as e:
-                self.logger.error(f"Error importing pattern: {e}")
+            except Exception:
+                self.logger.error("Error importing pattern", exc_info=True)
 
-        self.logger.info(f"Imported {imported_count} patterns from {input_file}")
+        self.logger.info("Imported %d patterns from %s", imported_count, input_file)
 
         # Trim populations to size
         for ptype in PatternType:
@@ -1758,15 +1763,26 @@ class PatternEvolutionTracker:
 class PatternUpdateObserver:
     """Demonstrate observer for pattern updates."""
 
+    def __init__(self) -> None:
+        """Initialize the observer with a logger."""
+        self.logger = logging.getLogger(__name__)
+
     def on_patterns_updated(self, tracker: PatternEvolutionTracker) -> None:
         """Handle pattern updates."""
         stats = tracker.get_statistics()
-        print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
+        self.logger.info(
+            "Generation %d: Best fitness: %.3f, Detections: %d",
+            stats["generations"],
+            stats.get("best_fitness", 0),
+            stats["detections"],
+        )
 
 
 def main() -> None:
     """Run the pattern evolution command-line interface."""
     import argparse
+
+    main_logger = logging.getLogger(__name__)
 
     parser = argparse.ArgumentParser(description="Pattern Evolution Tracker")
     parser.add_argument("--evolve", type=int, help="Run N evolution generations")
@@ -1786,45 +1802,50 @@ def main() -> None:
 
     try:
         if args.evolve:
-            print(f"Running {args.evolve} evolution generations...")
+            main_logger.info("Running %d evolution generations...", args.evolve)
             for i in range(args.evolve):
                 tracker.evolve_generation()
-                print(f"Generation {i + 1} complete")
+                main_logger.info("Generation %d complete", i + 1)
 
         if args.detect:
-            print(f"Detecting patterns in {args.detect}...")
+            main_logger.info("Detecting patterns in %s...", args.detect)
             with open(args.detect, "rb") as f:
                 data = f.read()
 
             results = tracker.detect(data)
-            print("Detection results:")
-            print(f"  Confidence: {results['confidence']:.3f}")
-            print(f"  Patterns matched: {len(results['patterns_matched'])}")
+            main_logger.info("Detection results:")
+            main_logger.info("  Confidence: %.3f", results["confidence"])
+            main_logger.info("  Patterns matched: %d", len(results["patterns_matched"]))
 
             for detection in results["detections"]:
-                print(f"  - {detection['type']}: {detection['confidence']:.3f} (gen {detection['generation']})")
+                main_logger.info(
+                    "  - %s: %.3f (gen %d)",
+                    detection["type"],
+                    detection["confidence"],
+                    detection["generation"],
+                )
 
         if args.export:
             tracker.export_patterns(args.export)
-            print(f"Patterns exported to {args.export}")
+            main_logger.info("Patterns exported to %s", args.export)
 
         if args.import_file:
             tracker.import_patterns(args.import_file)
-            print(f"Patterns imported from {args.import_file}")
+            main_logger.info("Patterns imported from %s", args.import_file)
 
         if args.stats:
             stats = tracker.get_statistics()
-            print("\n=== Pattern Evolution Statistics ===")
+            main_logger.info("=== Pattern Evolution Statistics ===")
             for key, value in stats.items():
-                print(f"{key}: {value}")
+                main_logger.info("%s: %s", key, value)
 
             # Show clustering info
             for ptype in PatternType:
                 clusters = tracker.cluster_patterns(ptype)
                 if len(clusters) > 1:
-                    print(f"\n{ptype.value} clusters: {len(clusters)}")
+                    main_logger.info("%s clusters: %d", ptype.value, len(clusters))
                     for cluster_id, patterns in clusters.items():
-                        print(f"  Cluster {cluster_id}: {len(patterns)} patterns")
+                        main_logger.info("  Cluster %s: %d patterns", cluster_id, len(patterns))
 
     finally:
         tracker.shutdown()

@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import logging
 import os
 import sys
 from typing import Any
@@ -33,38 +34,8 @@ from .intellicrack_protection_core import DetectionResult, ProtectionAnalysis, P
 from .unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult
 
 
-print("[DEBUG protection_detector] Module loading started")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] Importing get_logger...")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] get_logger imported OK")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] Importing get_driver_path...")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] get_driver_path imported OK")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] Importing intellicrack_protection_core...")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] intellicrack_protection_core imported OK")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] Importing unified_protection_engine...")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] unified_protection_engine imported OK")
-sys.stdout.flush()
-
-print("[DEBUG protection_detector] Getting logger...")
-sys.stdout.flush()
 logger = get_logger(__name__)
-print("[DEBUG protection_detector] logger obtained OK")
-sys.stdout.flush()
+logger.debug("protection_detector module loaded successfully")
 
 
 class ProtectionDetector:
@@ -102,9 +73,8 @@ class ProtectionDetector:
 
         """
         if not os.path.exists(file_path):
-            logger.warning(f"File not found: {file_path}")
             error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
+            logger.error("File not found: %s", file_path)
             raise FileNotFoundError(error_msg)
 
         # Use unified engine
@@ -152,7 +122,7 @@ class ProtectionDetector:
             List of ProtectionAnalysis results
 
         """
-        logger.info(f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}")
+        logger.info("Starting directory analysis: %s, recursive=%s, deep_scan=%s", directory, recursive, deep_scan)
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
 
@@ -165,7 +135,7 @@ class ProtectionDetector:
                             analysis = self.detect_protections(file_path, deep_scan=deep_scan)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error(f"Error analyzing {file_path}: {e}")
+                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
         else:
             for file in os.listdir(directory):
                 if any(file.lower().endswith(ext) for ext in extensions):
@@ -175,9 +145,9 @@ class ProtectionDetector:
                             analysis = self.detect_protections(file_path, deep_scan=deep_scan)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error(f"Error analyzing {file_path}: {e}")
+                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
 
-        logger.info(f"Completed directory analysis: {len(results)} files analyzed successfully")
+        logger.info("Completed directory analysis: %s files analyzed successfully", len(results))
         return results
 
     def get_bypass_strategies(self, file_path: str) -> list[dict[str, Any]]:
@@ -336,7 +306,7 @@ class ProtectionDetector:
             return "\n".join(lines)
 
         error_msg = f"Unknown output format: {output_format}"
-        logger.error(error_msg)
+        logger.error("Unknown output format: %s", output_format)
         raise ValueError(error_msg)
 
     def detect_virtualization_protection(self, binary_path: str | None = None) -> dict[str, Any]:
@@ -357,7 +327,7 @@ class ProtectionDetector:
         }
 
         if binary_path:
-            logger.debug(f"Analyzing virtualization protection for binary: {binary_path}")
+            logger.debug("Analyzing virtualization protection for binary: %s", binary_path)
 
         try:
             # Check for known VM detection techniques
@@ -423,17 +393,17 @@ class ProtectionDetector:
                                     results["indicators"].append(f"VM indicator in {vm_file}: {indicator}")
                                     results["virtualization_detected"] = True
                     except Exception as e:
-                        logger.error("Exception in virtualization detection: %s", e)
+                        logger.error("Exception in virtualization detection: %s", e, exc_info=True)
 
             # Calculate confidence
             if results["virtualization_detected"]:
                 results["confidence"] = min(len(results["indicators"]) * 0.3, 1.0)
                 results["protection_types"].append("VM Detection")
 
-            logger.info(f"Virtualization detection complete: {results['virtualization_detected']}")
+            logger.info("Virtualization detection complete: %s", results["virtualization_detected"])
 
         except Exception as e:
-            logger.error("Error in virtualization detection: %s", e)
+            logger.error("Error in virtualization detection: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -473,7 +443,7 @@ class ProtectionDetector:
             logger.warning("Themida analyzer not available, falling back to signature detection")
             return {"detected": False, "error": "Advanced analyzer not available"}
         except Exception as e:
-            logger.error(f"Themida advanced detection failed: {e}")
+            logger.error("Themida advanced detection failed: %s", e, exc_info=True)
             return {"detected": False, "error": str(e)}
 
     def detect_denuvo_advanced(self, binary_path: str) -> dict[str, Any]:
@@ -512,7 +482,7 @@ class ProtectionDetector:
             logger.warning("Denuvo analyzer not available, falling back to signature detection")
             return {"detected": False, "error": "Advanced analyzer not available"}
         except Exception as e:
-            logger.error(f"Denuvo advanced detection failed: {e}")
+            logger.error("Denuvo advanced detection failed: %s", e, exc_info=True)
             return {"detected": False, "error": str(e)}
 
     def analyze_denuvo_ticket(
@@ -538,7 +508,7 @@ class ProtectionDetector:
                     with open(ticket_data, "rb") as f:
                         data = f.read()
                 else:
-                    logger.error(f"Ticket file not found: {ticket_data}")
+                    logger.error("Ticket file not found: %s", ticket_data)
                     return {"error": "File not found"}
             else:
                 data = ticket_data
@@ -579,7 +549,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error(f"Ticket analysis failed: {e}")
+            logger.error("Ticket analysis failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def generate_denuvo_activation(
@@ -635,7 +605,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"success": False, "error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error(f"Activation generation failed: {e}")
+            logger.error("Activation generation failed: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
 
     def forge_denuvo_token(
@@ -693,7 +663,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"success": False, "error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error(f"Token forging failed: {e}")
+            logger.error("Token forging failed: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
 
     def detect_commercial_protections(self, binary_path: str) -> dict[str, Any]:
@@ -785,7 +755,7 @@ class ProtectionDetector:
                             )
 
         except Exception as e:
-            logger.error(f"Error detecting commercial protections: {e}")
+            logger.error("Error detecting commercial protections: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -839,7 +809,7 @@ class ProtectionDetector:
                             results["indicators"].append(f"Assembly pattern: {sig.hex()}")
 
         except Exception as e:
-            logger.error(f"Error detecting checksum verification: {e}")
+            logger.error("Error detecting checksum verification: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -894,7 +864,7 @@ class ProtectionDetector:
                 results["techniques"] = list(set(results["techniques"]))
 
         except Exception as e:
-            logger.error(f"Error detecting self-healing code: {e}")
+            logger.error("Error detecting self-healing code: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -956,7 +926,7 @@ class ProtectionDetector:
                     results["indicators"].append(f"High jump density: {jmp_count}")
 
         except Exception as e:
-            logger.error(f"Error detecting obfuscation: {e}")
+            logger.error("Error detecting obfuscation: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1042,7 +1012,7 @@ class ProtectionDetector:
                     results["indicators"].append("Heap walking detection")
 
         except Exception as e:
-            logger.error(f"Error detecting anti-debugging: {e}")
+            logger.error("Error detecting anti-debugging: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1088,7 +1058,7 @@ class ProtectionDetector:
                         results["indicators"].append(f"TPM function: {func_name}")
 
         except Exception as e:
-            logger.error(f"Error detecting TPM protection: {e}")
+            logger.error("Error detecting TPM protection: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1133,7 +1103,7 @@ class ProtectionDetector:
             Combined detection results
 
         """
-        logger.info(f"Starting comprehensive protection detection for {binary_path}")
+        logger.info("Starting comprehensive protection detection for %s", binary_path)
         results = {
             "file_path": binary_path,
             "virtualization": self.detect_virtualization_protection(binary_path),
@@ -1170,7 +1140,7 @@ class ProtectionDetector:
                 ],
             ),
         }
-        logger.info(f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found")
+        logger.info("Completed comprehensive protection detection: %s protections found", results["summary"]["protection_count"])
         return results
 
 
@@ -1304,32 +1274,30 @@ def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
 
 
 if __name__ == "__main__":
-    # Example usage
     import sys
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     if len(sys.argv) > 1:
         target_file = sys.argv[1]
         detector = ProtectionDetector()
 
-        # Quick analysis
-        print("=== QUICK ANALYSIS ===")
+        logger.info("=== QUICK ANALYSIS ===")
         summary = detector.get_quick_summary(target_file)
-        print(f"Protected: {summary['protected']}")
-        print(f"Main Protection: {summary.get('main_protection', 'None')}")
-        print(f"Confidence: {summary['confidence']:.0f}%")
+        logger.info("Protected: %s", summary["protected"])
+        logger.info("Main Protection: %s", summary.get("main_protection", "None"))
+        logger.info("Confidence: %.0f%%", summary["confidence"])
 
-        # Full analysis
-        print("\n=== FULL ANALYSIS ===")
+        logger.info("\n=== FULL ANALYSIS ===")
         analysis = detector.detect_protections(target_file)
-        print(detector.get_summary(analysis))
+        logger.info("%s", detector.get_summary(analysis))
 
-        # Bypass strategies
-        print("\n=== BYPASS STRATEGIES ===")
+        logger.info("\n=== BYPASS STRATEGIES ===")
         strategies = detector.get_bypass_strategies(target_file)
         for strategy in strategies:
-            print(f"\n{strategy['name']} ({strategy['difficulty']})")
-            print(f"  {strategy['description']}")
+            logger.info("\n%s (%s)", strategy["name"], strategy["difficulty"])
+            logger.info("  %s", strategy["description"])
             if "tools" in strategy:
-                print(f"  Tools: {', '.join(strategy['tools'])}")
+                logger.info("  Tools: %s", ", ".join(strategy["tools"]))
     else:
-        print("Usage: python protection_detector.py <binary_file>")
+        logger.info("Usage: python protection_detector.py <binary_file>")

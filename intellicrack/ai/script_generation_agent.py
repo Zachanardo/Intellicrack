@@ -35,18 +35,20 @@ import lief
 import lief.ELF
 import pefile
 
-from ..core.analysis.frida_script_manager import FridaScriptManager, FridaScriptConfig, ScriptResult
+from ..core.analysis.frida_script_manager import FridaScriptConfig, FridaScriptManager, ScriptResult
 from ..core.logging.audit_logger import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
-from ..core.resources import get_resource_manager, ResourceManager
+from ..core.resources import ResourceManager, get_resource_manager
 from ..utils.logger import get_logger
 from ..utils.path_resolver import get_project_root
 from .ai_script_generator import AIScriptGenerator, GeneratedScript, ScriptType
 from .common_types import ExecutionResult
 
+
 if TYPE_CHECKING:
     from .qemu_manager import QEMUManager
 
 from ..core.logging.audit_logger import AuditLogger
+
 
 logger = get_logger(__name__)
 
@@ -165,7 +167,7 @@ class AIAgent:
         self.validation_results: list[ExecutionResult] = []
         self.refinement_history: list[dict[str, Any]] = []
 
-        self.qemu_manager: "QEMUManager | None" = None
+        self.qemu_manager: QEMUManager | None = None
 
         self._active_vms: dict[str, dict[str, Any]] = {}
         self._vm_snapshots: dict[str, dict[str, Any]] = {}
@@ -176,7 +178,7 @@ class AIAgent:
 
         scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
         self.frida_manager = FridaScriptManager(scripts_dir)
-        logger.info(f"Initialized FridaScriptManager with {len(self.frida_manager.scripts)} scripts")
+        logger.info("Initialized FridaScriptManager with %s scripts", len(self.frida_manager.scripts))
 
     def process_request(self, user_request: str) -> dict[str, Any]:
         """Process a user request autonomously, similar to Claude Code.
@@ -232,19 +234,19 @@ class AIAgent:
 
         except FileNotFoundError as e:
             self.workflow_state = WorkflowState.ERROR
-            logger.error(f"Binary file not found: {e}", exc_info=True)
+            logger.error("Binary file not found: %s", e, exc_info=True)
             return self._error_result(f"File not found: {e!s}")
         except TimeoutError as e:
             self.workflow_state = WorkflowState.ERROR
-            logger.error(f"Operation timed out: {e}", exc_info=True)
+            logger.error("Operation timed out: %s", e, exc_info=True)
             return self._error_result(f"Operation timed out: {e!s}")
         except OSError as e:
             self.workflow_state = WorkflowState.ERROR
-            logger.error(f"File access error: {e}", exc_info=True)
+            logger.error("File access error: %s", e, exc_info=True)
             return self._error_result(f"File access error: {e!s}")
         except (AttributeError, KeyError, ValueError) as e:
             self.workflow_state = WorkflowState.ERROR
-            logger.error(f"Autonomous workflow failed: {e}", exc_info=True)
+            logger.error("Autonomous workflow failed: %s", e, exc_info=True)
             return self._error_result(f"Workflow error: {e!s}")
 
     def _parse_request(self, request: str) -> TaskRequest:
@@ -362,11 +364,11 @@ class AIAgent:
             return analysis_results
 
         except OSError as e:
-            logger.error(f"Binary file access error: {e}", exc_info=True)
+            logger.error("Binary file access error: %s", e, exc_info=True)
             self._log_to_user(f"File access error: {e}")
             return None
         except (AttributeError, KeyError, ValueError) as e:
-            logger.error(f"Target analysis failed: {e}", exc_info=True)
+            logger.error("Target analysis failed: %s", e, exc_info=True)
             self._log_to_user(f"Analysis failed: {e}")
             return None
 
@@ -390,7 +392,7 @@ class AIAgent:
                 "platform": "windows" if binary_path.endswith(".exe") else "unknown",
             }
         except OSError as e:
-            logger.debug(f"Failed to get binary info: {e}", exc_info=True)
+            logger.debug("Failed to get binary info: %s", e, exc_info=True)
             return {"name": "unknown", "size": 0, "type": "unknown"}
 
     def _extract_strings(self, binary_path: str) -> list[str]:
@@ -415,12 +417,12 @@ class AIAgent:
             all_strings = self._normalize_strings_data(analysis_results.get("strings", {}))
             strings = self._filter_license_related_strings(all_strings)
 
-            logger.info(f"Extracted {len(strings)} license-related strings from {binary_path}")
+            logger.info("Extracted %s license-related strings from %s", len(strings), binary_path)
 
         except ImportError as e:
-            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+            logger.error("Failed to import BinaryAnalyzer: %s", e, exc_info=True)
         except Exception as e:
-            logger.error(f"String extraction failed: {e}", exc_info=True)
+            logger.error("String extraction failed: %s", e, exc_info=True)
 
         return strings
 
@@ -527,7 +529,7 @@ class AIAgent:
                 logger.warning("Binary path outside allowed directories: %s", real_path)
                 return False
         except (OSError, ValueError) as e:
-            logger.error("Error validating binary path: %s", e)
+            logger.error("Error validating binary path: %s", e, exc_info=True)
             return False
 
         return True
@@ -645,9 +647,9 @@ class AIAgent:
                 with open(binary_path, "rb") as f:
                     data = f.read()
             except OSError as e:
-                logger.error(f"Failed to read binary file {binary_path}: {e}")
+                logger.error("Failed to read binary file %s: %s", binary_path, e, exc_info=True)
             except Exception as e:
-                logger.error(f"Unexpected error reading binary file: {e}")
+                logger.error("Unexpected error reading binary file: %s", e, exc_info=True)
 
         return data or b""
 
@@ -675,7 +677,7 @@ class AIAgent:
         functions: list[dict[str, Any]] = []
         try:
             if not Path(binary_path).exists():
-                logger.warning(f"Binary path does not exist: {binary_path}")
+                logger.warning("Binary path does not exist: %s", binary_path)
                 return functions
 
             from ..core.analysis.binary_analyzer import BinaryAnalyzer
@@ -687,12 +689,12 @@ class AIAgent:
             if isinstance(functions_data, list):
                 functions = self._process_function_entries(functions_data, binary_path)
 
-            logger.info(f"Analyzed {len(functions)} functions in {binary_path}")
+            logger.info("Analyzed %s functions in %s", len(functions), binary_path)
 
         except ImportError as e:
-            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+            logger.error("Failed to import BinaryAnalyzer: %s", e, exc_info=True)
         except Exception as e:
-            logger.error(f"Function analysis failed for {binary_path}: {e}", exc_info=True)
+            logger.error("Function analysis failed for %s: %s", binary_path, e, exc_info=True)
 
         return functions
 
@@ -806,12 +808,12 @@ class AIAgent:
             if isinstance(imports_data, list):
                 imports = self._process_import_entries(imports_data)
 
-            logger.info(f"Analyzed {len(imports)} imports from {binary_path}")
+            logger.info("Analyzed %s imports from %s", len(imports), binary_path)
 
         except ImportError as e:
-            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+            logger.error("Failed to import BinaryAnalyzer: %s", e, exc_info=True)
         except Exception as e:
-            logger.error(f"Import analysis failed for {binary_path}: {e}", exc_info=True)
+            logger.error("Import analysis failed for %s: %s", binary_path, e, exc_info=True)
 
         return imports
 
@@ -825,10 +827,10 @@ class AIAgent:
             Description of return value.
         """
         if not Path(binary_path).is_absolute():
-            logger.warning(f"Binary path is not absolute: {binary_path}")
+            logger.warning("Binary path is not absolute: %s", binary_path)
             return False
         if not os.path.exists(binary_path):
-            logger.warning(f"Binary path does not exist: {binary_path}")
+            logger.warning("Binary path does not exist: %s", binary_path)
             return False
         return True
 
@@ -878,7 +880,7 @@ class AIAgent:
         protections: list[dict[str, Any]] = []
         try:
             if not Path(binary_path).exists():
-                logger.warning(f"Binary path does not exist: {binary_path}")
+                logger.warning("Binary path does not exist: %s", binary_path)
                 return protections
 
             from ..core.analysis.protection_scanner import EnhancedProtectionScanner as ProtectionScanner
@@ -889,34 +891,30 @@ class AIAgent:
             for protection_name, detection_data in scan_results.items():
                 if isinstance(detection_data, dict):
                     if detection_data.get("detected", False):
-                        protections.append(
-                            {
-                                "type": protection_name,
-                                "confidence": detection_data.get("confidence", 0.0),
-                                "description": detection_data.get("description", f"{protection_name} detected"),
-                                "indicators": detection_data.get("indicators", []),
-                                "binary_path": binary_path,
-                                "details": detection_data.get("details", {}),
-                            }
-                        )
-                elif detection_data:
-                    protections.append(
-                        {
+                        protections.append({
                             "type": protection_name,
-                            "confidence": 1.0,
-                            "description": f"{protection_name} detected",
-                            "indicators": [],
+                            "confidence": detection_data.get("confidence", 0.0),
+                            "description": detection_data.get("description", f"{protection_name} detected"),
+                            "indicators": detection_data.get("indicators", []),
                             "binary_path": binary_path,
-                            "details": {},
-                        }
-                    )
+                            "details": detection_data.get("details", {}),
+                        })
+                elif detection_data:
+                    protections.append({
+                        "type": protection_name,
+                        "confidence": 1.0,
+                        "description": f"{protection_name} detected",
+                        "indicators": [],
+                        "binary_path": binary_path,
+                        "details": {},
+                    })
 
-            logger.info(f"Detected {len(protections)} protection mechanisms in {binary_path}")
+            logger.info("Detected %s protection mechanisms in %s", len(protections), binary_path)
 
         except ImportError as e:
-            logger.error(f"Failed to import ProtectionScanner: {e}", exc_info=True)
+            logger.error("Failed to import ProtectionScanner: %s", e, exc_info=True)
         except Exception as e:
-            logger.error(f"Protection detection failed for {binary_path}: {e}", exc_info=True)
+            logger.error("Protection detection failed for %s: %s", binary_path, e, exc_info=True)
 
         return protections
 
@@ -932,7 +930,7 @@ class AIAgent:
         try:
             # Verify binary exists
             if not Path(binary_path).exists():
-                logger.warning(f"Binary path does not exist: {binary_path}")
+                logger.warning("Binary path does not exist: %s", binary_path)
                 return {
                     "has_network": False,
                     "endpoints": [],
@@ -966,30 +964,30 @@ class AIAgent:
                 imports_found.extend(network_imports)
                 has_network = True
                 network_indicators.extend(network_imports)
-                logger.info(f"Found {len(network_imports)} network-related imports in {binary_path}")
+                logger.info("Found %s network-related imports in %s", len(network_imports), binary_path)
 
             if network_strings := self._analyze_network_strings(binary_path):
-                strings_found.extend(cast(list[str], network_strings.get("strings", [])))
-                endpoints_found.extend(cast(list[str], network_strings.get("endpoints", [])))
-                protocols_found.extend(cast(list[str], network_strings.get("protocols", [])))
+                strings_found.extend(cast("list[str]", network_strings.get("strings", [])))
+                endpoints_found.extend(cast("list[str]", network_strings.get("endpoints", [])))
+                protocols_found.extend(cast("list[str]", network_strings.get("protocols", [])))
                 if network_strings.get("count", 0) > 0:
                     has_network = True
-                    network_indicators.extend(cast(list[str], network_strings.get("strings", [])))
-                logger.info(f"Found {network_strings.get('count', 0)} network-related strings in {binary_path}")
+                    network_indicators.extend(cast("list[str]", network_strings.get("strings", [])))
+                logger.info("Found %s network-related strings in %s", network_strings.get("count", 0), binary_path)
 
             code_analysis = self._analyze_network_code_patterns(binary_path)
             if code_analysis.get("found", False):
-                network_apis_found.extend(cast(list[str], code_analysis.get("apis", [])))
+                network_apis_found.extend(cast("list[str]", code_analysis.get("apis", [])))
                 has_network = True
-                network_indicators.extend(cast(list[str], code_analysis.get("apis", [])))
-                logger.info(f"Found {len(code_analysis.get('apis', []))} network API usage patterns in {binary_path}")
+                network_indicators.extend(cast("list[str]", code_analysis.get("apis", [])))
+                logger.info("Found %s network API usage patterns in %s", len(code_analysis.get("apis", [])), binary_path)
 
             binary_format_analysis = self._analyze_binary_format_networking(binary_path)
             if binary_format_analysis.get("has_network", False):
                 has_network = True
-                endpoints_found.extend(cast(list[str], binary_format_analysis.get("endpoints", [])))
-                protocols_found.extend(cast(list[str], binary_format_analysis.get("protocols", [])))
-                network_indicators.extend(cast(list[str], binary_format_analysis.get("indicators", [])))
+                endpoints_found.extend(cast("list[str]", binary_format_analysis.get("endpoints", [])))
+                protocols_found.extend(cast("list[str]", binary_format_analysis.get("protocols", [])))
+                network_indicators.extend(cast("list[str]", binary_format_analysis.get("indicators", [])))
 
             result["has_network"] = has_network
 
@@ -1005,21 +1003,21 @@ class AIAgent:
 
             result["confidence"] = min(1.0, confidence_factors)
 
-            endpoints_list: list[str] = cast(list[str], result["endpoints"])
-            protocols_list: list[str] = cast(list[str], result["protocols"])
+            endpoints_list: list[str] = cast("list[str]", result["endpoints"])
+            protocols_list: list[str] = cast("list[str]", result["protocols"])
             result["endpoints"] = list(set(endpoints_list))
             result["protocols"] = list(set(protocols_list))
 
             if result["has_network"]:
-                logger.info(f"Network activity detected in {binary_path} with confidence {result['confidence']:.2f}")
-                logger.info(f"Found {len(network_indicators)} network indicators total")
+                logger.info("Network activity detected in %s with confidence %.2f", binary_path, result["confidence"])
+                logger.info("Found %s network indicators total", len(network_indicators))
             else:
-                logger.info(f"No network activity detected in {binary_path}")
+                logger.info("No network activity detected in %s", binary_path)
 
             return result
 
         except OSError as e:
-            logger.error(f"Network activity check failed for {binary_path}: {e}", exc_info=True)
+            logger.error("Network activity check failed for %s: %s", binary_path, e, exc_info=True)
             return {"has_network": False, "endpoints": [], "protocols": [], "error": str(e)}
 
     def _analyze_network_imports(self, binary_path: str) -> list[str]:
@@ -1044,7 +1042,7 @@ class AIAgent:
             return list(set(network_apis))  # Remove duplicates
 
         except Exception as e:
-            logger.debug(f"Import analysis failed for {binary_path}: {e}")
+            logger.debug("Import analysis failed for %s: %s", binary_path, e, exc_info=True)
             return []
 
     def _analyze_pe_imports(self, binary_path: str) -> list[str]:
@@ -1072,7 +1070,7 @@ class AIAgent:
         except ImportError:
             logger.debug("pefile module not available for PE analysis")
         except Exception as e:
-            logger.debug(f"Not a PE file or PE analysis failed: {e}")
+            logger.debug("Not a PE file or PE analysis failed: %s", e, exc_info=True)
         return []
 
     def _extract_dll_imports(self, pe: pefile.PE, network_api_patterns: list[str]) -> list[str]:
@@ -1141,7 +1139,7 @@ class AIAgent:
         except ImportError:
             logger.debug("lief module not available for ELF analysis")
         except Exception as e:
-            logger.debug(f"ELF analysis failed: {e}")
+            logger.debug("ELF analysis failed: %s", e, exc_info=True)
         return []
 
     def _get_network_api_patterns(self) -> list[str]:
@@ -1236,7 +1234,7 @@ class AIAgent:
             return result
 
         except Exception as e:
-            logger.debug(f"String analysis failed for {binary_path}: {e}")
+            logger.debug("String analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"strings": [], "endpoints": [], "protocols": [], "count": 0}
 
     def _extract_urls(self, text_content: str, result: dict[str, Any]) -> None:
@@ -1369,7 +1367,7 @@ class AIAgent:
             return {"found": found, "apis": apis_found}
 
         except Exception as e:
-            logger.debug(f"Code pattern analysis failed for {binary_path}: {e}")
+            logger.debug("Code pattern analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"found": False, "apis": []}
 
     def _analyze_binary_format_networking(self, binary_path: str) -> dict[str, Any]:
@@ -1392,7 +1390,7 @@ class AIAgent:
 
             return result
         except Exception as e:
-            logger.debug(f"Binary format analysis failed for {binary_path}: {e}")
+            logger.debug("Binary format analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
 
     def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]) -> None:
@@ -1426,7 +1424,7 @@ class AIAgent:
         except ImportError:
             logger.debug("pefile module not available for PE analysis")
         except Exception as e:
-            logger.debug(f"PE analysis failed: {e}")
+            logger.debug("PE analysis failed: %s", e, exc_info=True)
 
     def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]) -> None:
         """Analyze ELF-specific networking features.
@@ -1460,7 +1458,7 @@ class AIAgent:
         except ImportError:
             logger.debug("lief module not available for ELF analysis")
         except Exception as e:
-            logger.debug(f"ELF analysis failed: {e}")
+            logger.debug("ELF analysis failed: %s", e, exc_info=True)
 
     def _elf_section_indicates_network(self, section: Any) -> bool:
         """Return True if a section name likely indicates networking functionality.
@@ -1521,7 +1519,7 @@ class AIAgent:
                     self._log_to_user(f"Generated {script_type.value} script successfully")
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError) as e:
-            logger.error(f"Script generation failed: {e}", exc_info=True)
+            logger.error("Script generation failed: %s", e, exc_info=True)
             self._log_to_user(f"Script generation error: {e}")
 
         return scripts
@@ -1941,7 +1939,7 @@ class AIAgent:
             try:
                 self._initialize_qemu_manager()
             except Exception as e:
-                logger.error(f"Failed to initialize QEMU manager: {e}")
+                logger.error("Failed to initialize QEMU manager: %s", e, exc_info=True)
                 return ExecutionResult(
                     success=False,
                     output="",
@@ -1975,7 +1973,7 @@ class AIAgent:
                     runtime_ms=0,
                 )
 
-            test_command = f"python -c \"{script.content.replace('\"', '\\\"')}\""
+            test_command = f'python -c "{script.content.replace('"', '\\"')}"'
             result = self.qemu_manager.execute_in_vm(
                 test_command,
                 timeout=execution_config.get("timeout", 30),
@@ -1999,7 +1997,7 @@ class AIAgent:
             )
 
         except Exception as e:
-            logger.error(f"QEMU test execution failed: {e}")
+            logger.error("QEMU test execution failed: %s", e, exc_info=True)
             return ExecutionResult(
                 success=False,
                 output=f"QEMU: Script execution failed for {binary_path}",
@@ -2030,7 +2028,7 @@ class AIAgent:
                 return self._test_in_windows_sandbox(script, binary_path, has_network)
             return self._test_in_linux_firejail(script, binary_path, has_network)
         except Exception as e:
-            logger.error(f"Sandbox execution failed: {e}")
+            logger.error("Sandbox execution failed: %s", e, exc_info=True)
             return self._fallback_execution(script, binary_path)
 
     def _test_in_windows_sandbox(self, script: GeneratedScript, binary_path: str, has_network: bool) -> ExecutionResult:
@@ -2172,14 +2170,12 @@ class AIAgent:
         # Validate paths to prevent command injection
         script_path_str = str(script_path).replace(";", "").replace("|", "").replace("&", "")
         sandboxed_binary_clean = sandboxed_binary.replace(";", "").replace("|", "").replace("&", "")
-        cmd.extend(
-            [
-                f"--private={temp_dir}",
-                "python3",
-                script_path_str,
-                sandboxed_binary_clean,
-            ]
-        )
+        cmd.extend([
+            f"--private={temp_dir}",
+            "python3",
+            script_path_str,
+            sandboxed_binary_clean,
+        ])
         return cmd
 
     def _parse_sandbox_result(self, result: subprocess.CompletedProcess[str], binary_path: str, runtime_ms: int) -> ExecutionResult:
@@ -2398,8 +2394,11 @@ class AIAgent:
 
         # Log verification details
         logger.info(
-            f"Bypass verification for {binary_path}: score={verification_score:.2f}, "
-            f"protections={len(protections)}, duration={validation_result.runtime_ms}ms",
+            "Bypass verification for %s: score=%.2f, protections=%s, duration=%sms",
+            binary_path,
+            verification_score,
+            len(protections),
+            validation_result.runtime_ms,
         )
 
         return verification_score >= 0.8
@@ -2444,7 +2443,9 @@ class AIAgent:
 
         except (AttributeError, ValueError, TypeError, KeyError) as e:
             logger.error(
-                f"Script refinement failed for {analysis.get('binary_path', 'unknown')}: {e}",
+                "Script refinement failed for %s: %s",
+                analysis.get("binary_path", "unknown"),
+                e,
                 exc_info=True,
             )
             return None
@@ -2611,7 +2612,7 @@ class AIAgent:
             refined_script.metadata.success_probability *= improvement_factor
             refined_script.metadata.success_probability = min(0.95, refined_script.metadata.success_probability)
 
-        logger.info(f"Refined script for {binary_path}: {len(notes)} improvements")
+        logger.info("Refined script for %s: %s improvements", binary_path, len(notes))
         return refined_script
 
     def _deploy_scripts(self, scripts: list[GeneratedScript]) -> list[dict[str, Any]]:
@@ -2627,7 +2628,11 @@ class AIAgent:
 
         for script in scripts:
             try:
-                if self.current_task is not None and self.current_task.user_confirmation_required and not self._get_user_confirmation(script):
+                if (
+                    self.current_task is not None
+                    and self.current_task.user_confirmation_required
+                    and not self._get_user_confirmation(script)
+                ):
                     deployment_results.append(
                         {
                             "script_id": script.metadata.script_id,
@@ -2652,7 +2657,7 @@ class AIAgent:
                 self._log_to_user(f"OK Script deployed: {script_path}")
 
             except (OSError, AttributeError) as e:
-                logger.error("Error in ai_agent: %s", e)
+                logger.error("Error in ai_agent: %s", e, exc_info=True)
                 deployment_results.append(
                     {
                         "script_id": script.metadata.script_id,
@@ -2729,9 +2734,9 @@ class AIAgent:
         try:
             with tempfile.NamedTemporaryFile(mode="w", suffix="_error.json", delete=False) as f:
                 json.dump(result, f, indent=2)
-                logger.info(f"Error result saved to: {f.name}")
+                logger.info("Error result saved to: %s", f.name)
         except (OSError, json.JSONDecodeError, AttributeError) as e:
-            logger.warning(f"Failed to save error result: {e}", exc_info=True)
+            logger.warning("Failed to save error result: %s", e, exc_info=True)
 
         return result
 
@@ -2753,7 +2758,7 @@ class AIAgent:
             return self._execute_in_temp_environment(script, target_binary)
 
         except Exception as e:
-            logger.error(f"QEMU script testing failed: {e}", exc_info=True)
+            logger.error("QEMU script testing failed: %s", e, exc_info=True)
             return ExecutionResult(
                 success=False,
                 output="",
@@ -2792,7 +2797,7 @@ class AIAgent:
                 runtime_ms=0,
             )
 
-        test_command = f"python -c \"{script.replace('\"', '\\\"')}\""
+        test_command = f'python -c "{script.replace('"', '\\"')}"'
         result = self.qemu_manager.execute_in_vm(test_command, timeout=30)
         return ExecutionResult(
             success=result.success,
@@ -2821,7 +2826,7 @@ class AIAgent:
                 _, target_path = self._prepare_test_files(script, target_binary, temp_dir)
                 return self._attempt_execution(script, target_binary, target_path, temp_dir, start_time)
         except Exception as e:
-            logger.error(f"QEMU test environment creation failed: {e}")
+            logger.error("QEMU test environment creation failed: %s", e, exc_info=True)
             return self._fallback_analysis(script, target_binary)
 
     def _prepare_test_files(self, script: str, target_binary: str, temp_dir: str) -> tuple[Path, Path]:
@@ -2997,13 +3002,13 @@ class AIAgent:
             Description of return value.
         """
         if script in self.frida_manager.scripts:
-            logger.info(f"Executing library script: {script}")
+            logger.info("Executing library script: %s", script)
             output_lines.append(f"Executing library script: {script}")
             return script
 
         script_path = Path(temp_dir) / "custom_frida_script.js"
         script_path.write_text(script, encoding="utf-8")
-        logger.info(f"Executing custom script ({len(script)} bytes)")
+        logger.info("Executing custom script (%s bytes)", len(script))
         output_lines.append(f"Executing custom Frida script ({len(script)} bytes)")
         return str(script_path)
 
@@ -3042,12 +3047,12 @@ class AIAgent:
         execution_time_ms = int((result.end_time - result.start_time) * 1000)
         if result.success:
             self._append_frida_success_output(result, output_lines, execution_time_ms)
-            logger.info(f"Frida script executed successfully: {execution_time_ms}ms")
+            logger.info("Frida script executed successfully: %sms", execution_time_ms)
             return True, output_lines
 
         error_msg = "; ".join(result.errors) if result.errors else "Unknown error"
         self._append_frida_failure_output(result, output_lines, error_msg)
-        logger.error(f"Frida script execution failed: {error_msg}")
+        logger.error("Frida script execution failed: %s", error_msg)
         return False, output_lines
 
     def _append_frida_success_output(
@@ -3064,12 +3069,10 @@ class AIAgent:
             execution_time_ms: Execution time in milliseconds
 
         """
-        output_lines.extend(
-            (
-                "Frida script execution completed successfully",
-                f"Execution time: {execution_time_ms}ms",
-            )
-        )
+        output_lines.extend((
+            "Frida script execution completed successfully",
+            f"Execution time: {execution_time_ms}ms",
+        ))
         if result.messages:
             for msg in result.messages[:50]:
                 output_lines.append(str(msg.get("payload", msg)))
@@ -3206,7 +3209,7 @@ class AIAgent:
         Returns:
             Description of return value.
         """
-        logger.info(f"Executing library script '{script_name}' against {target_binary}")
+        logger.info("Executing library script '%s' against %s", script_name, target_binary)
         output_lines.append(f"Executing: {script_name}")
         output_lines.extend((f"Target: {Path(target_binary).name}", f"Mode: {mode}"))
 
@@ -3389,7 +3392,7 @@ class AIAgent:
             Description of return value.
         """
         try:
-            logger.info(f"Starting autonomous task: {task_config.get('type', 'unknown')}")
+            logger.info("Starting autonomous task: %s", task_config.get("type", "unknown"))
 
             task_type = task_config.get("type", "analysis")
             target_binary = task_config.get("target_binary", "")
@@ -3433,7 +3436,7 @@ class AIAgent:
             return self._error_result(f"Unknown task type: {task_type}")
 
         except Exception as e:
-            logger.error(f"Error executing autonomous task: {e}")
+            logger.error("Error executing autonomous task: %s", e, exc_info=True)
             return self._error_result(f"Task execution failed: {e!s}")
 
     def get_status(self) -> dict[str, Any]:
@@ -3503,17 +3506,17 @@ class AIAgent:
                 with open(output_path, "w") as f:
                     json.dump(session_data, f, indent=2)
 
-            logger.info(f"Session data saved to: {output_path}")
+            logger.info("Session data saved to: %s", output_path)
             return output_path
 
         except OSError as e:
-            logger.error(f"Failed to save session data: {e}")
+            logger.error("Failed to save session data: %s", e, exc_info=True)
             raise RuntimeError(f"Could not save session data: {e!s}") from e
         except (TypeError, ValueError) as e:
-            logger.error(f"Failed to encode session data as JSON: {e}")
+            logger.error("Failed to encode session data as JSON: %s", e, exc_info=True)
             raise RuntimeError(f"Invalid session data format: {e!s}") from e
         except Exception as e:
-            logger.error(f"Unexpected error saving session data: {e}")
+            logger.error("Unexpected error saving session data: %s", e, exc_info=True)
             raise RuntimeError(f"Session save failed: {e!s}") from e
 
     # ==================== VM Lifecycle Management ====================
@@ -3549,10 +3552,10 @@ class AIAgent:
             )
 
         except ImportError as e:
-            logger.error(f"Failed to import QEMU manager: {e}")
+            logger.error("Failed to import QEMU manager: %s", e, exc_info=True)
             raise RuntimeError("QEMU test manager not available") from e
         except Exception as e:
-            logger.error(f"Failed to initialize QEMU manager: {e}")
+            logger.error("Failed to initialize QEMU manager: %s", e, exc_info=True)
             raise
 
     def _create_vm(self, vm_name: str, config: dict[str, Any]) -> str:
@@ -3600,11 +3603,11 @@ class AIAgent:
 
             self._audit_logger.log_vm_operation("start", vm_name, success=True)
 
-            logger.info(f"Created VM {vm_name} with ID {vm_id}")
+            logger.info("Created VM %s with ID %s", vm_name, vm_id)
             return vm_id
 
         except Exception as e:
-            logger.error(f"Failed to create VM {vm_name}: {e}")
+            logger.error("Failed to create VM %s: %s", vm_name, e, exc_info=True)
             self._audit_logger.log_vm_operation("start", vm_name, success=False, error=str(e))
             raise
 
@@ -3619,12 +3622,12 @@ class AIAgent:
 
         """
         if vm_id not in self._active_vms:
-            logger.error(f"VM {vm_id} not found")
+            logger.error("VM %s not found", vm_id)
             return False
 
         vm_info = self._active_vms[vm_id]
         if vm_info["state"] == "running":
-            logger.info(f"VM {vm_id} is already running")
+            logger.info("VM %s is already running", vm_id)
             return True
 
         try:
@@ -3641,13 +3644,13 @@ class AIAgent:
 
                 self._audit_logger.log_vm_operation("start", vm_info["name"], success=True)
 
-                logger.info(f"Started VM {vm_id}")
+                logger.info("Started VM %s", vm_id)
                 return True
-            logger.error(f"Failed to start VM {vm_id}")
+            logger.error("Failed to start VM %s", vm_id)
             return False
 
         except Exception as e:
-            logger.error(f"Error starting VM {vm_id}: {e}")
+            logger.error("Error starting VM %s: %s", vm_id, e, exc_info=True)
             self._audit_logger.log_vm_operation("start", vm_info["name"], success=False, error=str(e))
             return False
 
@@ -3662,12 +3665,12 @@ class AIAgent:
 
         """
         if vm_id not in self._active_vms:
-            logger.error(f"VM {vm_id} not found")
+            logger.error("VM %s not found", vm_id)
             return False
 
         vm_info = self._active_vms[vm_id]
         if vm_info["state"] == "stopped":
-            logger.info(f"VM {vm_id} is already stopped")
+            logger.info("VM %s is already stopped", vm_id)
             return True
 
         try:
@@ -3684,13 +3687,13 @@ class AIAgent:
 
                 self._audit_logger.log_vm_operation("stop", vm_info["name"], success=True)
 
-                logger.info(f"Stopped VM {vm_id}")
+                logger.info("Stopped VM %s", vm_id)
                 return True
-            logger.error(f"Failed to stop VM {vm_id}")
+            logger.error("Failed to stop VM %s", vm_id)
             return False
 
         except Exception as e:
-            logger.error(f"Error stopping VM {vm_id}: {e}")
+            logger.error("Error stopping VM %s: %s", vm_id, e, exc_info=True)
             self._audit_logger.log_vm_operation("stop", vm_info["name"], success=False, error=str(e))
             return False
 
@@ -3706,7 +3709,7 @@ class AIAgent:
 
         """
         if vm_id not in self._active_vms:
-            logger.error(f"VM {vm_id} not found")
+            logger.error("VM %s not found", vm_id)
             return None
 
         vm_info = self._active_vms[vm_id]
@@ -3733,13 +3736,13 @@ class AIAgent:
 
                 self._audit_logger.log_vm_operation("snapshot", vm_info["name"], success=True)
 
-                logger.info(f"Created snapshot {snapshot_name} for VM {vm_id}")
+                logger.info("Created snapshot %s for VM %s", snapshot_name, vm_id)
                 return snapshot_id
-            logger.error(f"Failed to create snapshot for VM {vm_id}")
+            logger.error("Failed to create snapshot for VM %s", vm_id)
             return None
 
         except Exception as e:
-            logger.error(f"Error creating snapshot for VM {vm_id}: {e}")
+            logger.error("Error creating snapshot for VM %s: %s", vm_id, e, exc_info=True)
             self._audit_logger.log_vm_operation("snapshot", vm_info["name"], success=False, error=str(e))
             return None
 
@@ -3755,11 +3758,11 @@ class AIAgent:
 
         """
         if vm_id not in self._active_vms:
-            logger.error(f"VM {vm_id} not found")
+            logger.error("VM %s not found", vm_id)
             return False
 
         if snapshot_id not in self._vm_snapshots:
-            logger.error(f"Snapshot {snapshot_id} not found")
+            logger.error("Snapshot %s not found", snapshot_id)
             return False
 
         vm_info = self._active_vms[vm_id]
@@ -3783,11 +3786,11 @@ class AIAgent:
                 ),
             )
 
-            logger.info(f"Restored VM {vm_id} from snapshot {snapshot_id}")
+            logger.info("Restored VM %s from snapshot %s", vm_id, snapshot_id)
             return True
 
         except Exception as e:
-            logger.error(f"Error restoring snapshot {snapshot_id} for VM {vm_id}: {e}")
+            logger.error("Error restoring snapshot %s for VM %s: %s", snapshot_id, vm_id, e, exc_info=True)
             return False
 
     def _delete_snapshot(self, snapshot_id: str) -> bool:
@@ -3801,14 +3804,14 @@ class AIAgent:
 
         """
         if snapshot_id not in self._vm_snapshots:
-            logger.error(f"Snapshot {snapshot_id} not found")
+            logger.error("Snapshot %s not found", snapshot_id)
             return False
 
         snapshot_data = self._vm_snapshots[snapshot_id]
         vm_id = snapshot_data["vm_id"]
 
         if vm_id not in self._active_vms:
-            logger.error(f"VM {vm_id} not found for snapshot {snapshot_id}")
+            logger.error("VM %s not found for snapshot %s", vm_id, snapshot_id)
             return False
 
         vm_info = self._active_vms[vm_id]
@@ -3817,11 +3820,11 @@ class AIAgent:
             vm_info["snapshots"] = [s for s in vm_info["snapshots"] if s["id"] != snapshot_id]
             del self._vm_snapshots[snapshot_id]
 
-            logger.info(f"Deleted snapshot {snapshot_id}")
+            logger.info("Deleted snapshot %s", snapshot_id)
             return True
 
         except Exception as e:
-            logger.error(f"Error deleting snapshot {snapshot_id}: {e}")
+            logger.error("Error deleting snapshot %s: %s", snapshot_id, e, exc_info=True)
             return False
 
     def _cleanup_vm(self, vm_id: str) -> bool:
@@ -3835,7 +3838,7 @@ class AIAgent:
 
         """
         if vm_id not in self._active_vms:
-            logger.warning(f"VM {vm_id} not found for cleanup")
+            logger.warning("VM %s not found for cleanup", vm_id)
             return True
 
         vm_info = self._active_vms[vm_id]
@@ -3863,11 +3866,11 @@ class AIAgent:
                 ),
             )
 
-            logger.info(f"Cleaned up VM {vm_id}")
+            logger.info("Cleaned up VM %s", vm_id)
             return True
 
         except Exception as e:
-            logger.error(f"Error cleaning up VM {vm_id}: {e}")
+            logger.error("Error cleaning up VM %s: %s", vm_id, e, exc_info=True)
             return False
 
     def _cleanup_all_vms(self) -> None:
@@ -3882,7 +3885,7 @@ class AIAgent:
             try:
                 self._cleanup_vm(vm_id)
             except Exception as e:
-                logger.error(f"Failed to cleanup VM {vm_id}: {e}")
+                logger.error("Failed to cleanup VM %s: %s", vm_id, e, exc_info=True)
 
         # Clear tracking
         self._active_vms.clear()
@@ -3964,7 +3967,7 @@ class AIAgent:
                 return str(image_path)
 
         # Fallback to empty image
-        logger.warning(f"No default disk image found for {arch}, using empty image")
+        logger.warning("No default disk image found for %s, using empty image", arch)
         return str(images_dir / f"empty_{arch}.qcow2")
 
     def _get_free_port(self) -> int:
@@ -3983,13 +3986,13 @@ class AIAgent:
                 port: int = int(s.getsockname()[1])
             return port
         except OSError as e:
-            logger.error(f"Failed to get free port: {e}")
+            logger.error("Failed to get free port: %s", e, exc_info=True)
             # Return a random high port as fallback
             import secrets
 
             return secrets.randbelow(16384) + 49152
         except Exception as e:
-            logger.error(f"Unexpected error getting free port: {e}")
+            logger.error("Unexpected error getting free port: %s", e, exc_info=True)
             import secrets
 
             return secrets.randbelow(16384) + 49152
@@ -4003,4 +4006,4 @@ class AIAgent:
         try:
             self._cleanup_all_vms()
         except Exception as e:
-            logger.debug(f"Error during cleanup: {e}")
+            logger.debug("Error during cleanup: %s", e, exc_info=True)

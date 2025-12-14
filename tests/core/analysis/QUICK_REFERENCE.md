@@ -1,11 +1,13 @@
 # Frida Tests - Quick Reference Card
 
 ## Run All Tests
+
 ```bash
 pytest tests/core/analysis/test_frida_analyzer_production.py -v
 ```
 
 ## Run By Category
+
 ```bash
 # Message handling
 pytest tests/core/analysis/test_frida_analyzer_production.py::TestFridaMessageHandling -v
@@ -30,11 +32,13 @@ pytest tests/core/analysis/test_frida_analyzer_production.py::TestFridaErrorHand
 ```
 
 ## Run Single Test
+
 ```bash
 pytest tests/core/analysis/test_frida_analyzer_production.py::TestFridaHookingCapabilities::test_frida_intercepts_createfilew_calls_in_notepad -v
 ```
 
 ## Coverage Report
+
 ```bash
 pytest tests/core/analysis/test_frida_analyzer_production.py \
   --cov=intellicrack/core/analysis/frida_analyzer \
@@ -46,6 +50,7 @@ pytest tests/core/analysis/test_frida_analyzer_production.py \
 ## Troubleshooting
 
 ### Tests won't run
+
 ```bash
 # Check Frida installed
 python -c "import frida; print(frida.__version__)"
@@ -60,12 +65,14 @@ pytest tests/core/analysis/test_frida_analyzer_production.py -v
 ```
 
 ### Access denied errors
+
 ```bash
 # Run as administrator
 pytest tests/core/analysis/test_frida_analyzer_production.py -v --tb=short
 ```
 
 ### Process spawn failures
+
 ```bash
 # Check Frida service
 frida --version
@@ -77,24 +84,25 @@ frida notepad.exe
 
 ## Test Statistics
 
-| Category | Tests | Focus |
-|----------|-------|-------|
-| Message Handling | 5 | JavaScript ↔ Python communication |
-| Process Lifecycle | 4 | Spawn, attach, detach |
-| Script Execution | 3 | JavaScript injection |
-| Session Management | 4 | Multi-binary tracking |
-| Stalker Integration | 6 | Instruction tracing setup |
-| Stalker Control | 7 | Trace management |
-| Stalker Messages | 5 | Trace data aggregation |
-| Data Export | 3 | Results persistence |
-| Scripts Whitelist | 4 | Approved scripts |
-| Error Handling | 4 | Graceful failures |
-| Hooking Capabilities | 3 | API interception |
-| **TOTAL** | **48** | **Complete coverage** |
+| Category             | Tests  | Focus                             |
+| -------------------- | ------ | --------------------------------- |
+| Message Handling     | 5      | JavaScript ↔ Python communication |
+| Process Lifecycle    | 4      | Spawn, attach, detach             |
+| Script Execution     | 3      | JavaScript injection              |
+| Session Management   | 4      | Multi-binary tracking             |
+| Stalker Integration  | 6      | Instruction tracing setup         |
+| Stalker Control      | 7      | Trace management                  |
+| Stalker Messages     | 5      | Trace data aggregation            |
+| Data Export          | 3      | Results persistence               |
+| Scripts Whitelist    | 4      | Approved scripts                  |
+| Error Handling       | 4      | Graceful failures                 |
+| Hooking Capabilities | 3      | API interception                  |
+| **TOTAL**            | **48** | **Complete coverage**             |
 
 ## What Tests Validate
 
 ### Real Offensive Capabilities ✓
+
 - Process injection into notepad.exe and calc.exe
 - API hooking (CreateFileW interception)
 - Memory reading (PE headers, modules)
@@ -102,6 +110,7 @@ frida notepad.exe
 - Licensing routine detection
 
 ### NOT Validated (UI-Dependent) ✗
+
 - Script selection dialog
 - Real-time UI updates
 - User interaction workflows
@@ -117,6 +126,7 @@ frida notepad.exe
 ## Common Test Patterns
 
 ### Process Lifecycle Pattern
+
 ```python
 device: frida.core.Device = frida.get_local_device()
 pid: int = device.spawn([NOTEPAD_PATH])
@@ -132,6 +142,7 @@ finally:
 ```
 
 ### Script Injection Pattern
+
 ```python
 script_source = """
 send({type: 'ready', message: 'Script loaded'});
@@ -144,6 +155,7 @@ device.resume(pid)
 ```
 
 ### Message Handling Pattern
+
 ```python
 messages: list[dict[str, Any]] = []
 
@@ -182,12 +194,12 @@ assert messages[0]["type"] == "expected_type"
 
 ```yaml
 test-frida:
-  script:
-    - pixi shell
-    - pytest tests/core/analysis/test_frida_analyzer_production.py --cov --cov-report=xml
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+    script:
+        - pixi shell
+        - pytest tests/core/analysis/test_frida_analyzer_production.py --cov --cov-report=xml
+    artifacts:
+        reports:
+            coverage_report:
+                coverage_format: cobertura
+                path: coverage.xml
 ```

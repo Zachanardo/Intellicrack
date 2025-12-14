@@ -98,7 +98,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
                     if icon_image and output_path:
                         # Save the icon
                         icon_image.save(output_path, format="PNG")
-                        logger.info(f"Icon extracted and saved to {output_path}")
+                        logger.info("Icon extracted and saved to %s", output_path)
 
                     return icon_image
 
@@ -106,7 +106,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
         return None
 
     except Exception as e:
-        logger.error(f"Error extracting PE icon: {e}")
+        logger.error("Error extracting PE icon: %s", e, exc_info=True)
         return None
 
 
@@ -187,7 +187,7 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
         return None
 
     except Exception as e:
-        logger.error(f"Error extracting icon from resources: {e}")
+        logger.error("Error extracting icon from resources: %s", e, exc_info=True)
         return None
 
 
@@ -244,14 +244,14 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
                 img = Image.open(icon_io)
                 return img
             except Exception as e:
-                logger.debug(f"Failed to parse icon data as image format: {e}")
+                logger.debug("Failed to parse icon data as image format: %s", e)
                 continue
 
         logger.debug("Could not parse icon data as any known format")
         return None
 
     except Exception as e:
-        logger.error(f"Error creating image from icon data: {e}")
+        logger.error("Error creating image from icon data: %s", e, exc_info=True)
         return None
 
 
@@ -300,19 +300,19 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                         icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
-                                        logger.info(f"Extracted icon: {icon_path}")
+                                        logger.info("Extracted icon: %s", icon_path)
                                 except Exception as e:
-                                    logger.error(f"Error extracting icon {icon_index}: {e}")
+                                    logger.error("Error extracting icon %s: %s", icon_index, e, exc_info=True)
 
         if not saved_icons:
             logger.info("No icons found in PE file")
         else:
-            logger.info(f"Extracted {len(saved_icons)} icons from PE file")
+            logger.info("Extracted %s icons from PE file", len(saved_icons))
 
         return saved_icons
 
     except Exception as e:
-        logger.error(f"Error extracting all PE icons: {e}")
+        logger.error("Error extracting all PE icons: %s", e, exc_info=True)
         return saved_icons
 
 
@@ -375,7 +375,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
         return icon_info
 
     except Exception as e:
-        logger.error(f"Error getting PE icon info: {e}")
+        logger.error("Error getting PE icon info: %s", e, exc_info=True)
         return icon_info
 
 
@@ -417,7 +417,7 @@ class PEAnalyzer:
                 "entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
             }
         except Exception as e:
-            self.logger.error(f"PE analysis failed for {file_path}: {e}")
+            self.logger.error("PE analysis failed for %s: %s", file_path, e, exc_info=True)
             return {"error": str(e)}
 
     def _extract_imports(self, pe: object) -> list[dict]:
@@ -447,7 +447,7 @@ class PEAnalyzer:
                     ]
                     imports.append({"dll": dll_name, "functions": functions})
         except Exception as e:
-            self.logger.debug(f"Import extraction failed: {e}")
+            self.logger.debug("Import extraction failed: %s", e)
 
         return imports
 
@@ -474,7 +474,7 @@ class PEAnalyzer:
                     for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
                 )
         except Exception as e:
-            self.logger.debug(f"Export extraction failed: {e}")
+            self.logger.debug("Export extraction failed: %s", e)
 
         return exports
 
@@ -516,7 +516,7 @@ class PEAnalyzer:
                 "file_alignment": pe.OPTIONAL_HEADER.FileAlignment,
             }
         except Exception as e:
-            self.logger.debug(f"Header extraction failed: {e}")
+            self.logger.debug("Header extraction failed: %s", e)
 
         return headers
 
@@ -546,7 +546,7 @@ class PEAnalyzer:
                         )
                         resources["total_resources"] += 1
         except Exception as e:
-            self.logger.debug(f"Resource extraction failed: {e}")
+            self.logger.debug("Resource extraction failed: %s", e)
 
         return resources
 
@@ -567,7 +567,7 @@ class PEAnalyzer:
                 certs["has_certificates"] = True
                 certs["certificate_count"] = len(pe.DIRECTORY_ENTRY_SECURITY)
         except Exception as e:
-            self.logger.debug(f"Certificate extraction failed: {e}")
+            self.logger.debug("Certificate extraction failed: %s", e)
 
         return certs
 
@@ -591,5 +591,5 @@ class PEAnalyzer:
             }
             return architecture_map.get(machine_type, f"Unknown (0x{machine_type:04x})")
         except Exception as e:
-            self.logger.debug(f"Architecture detection failed: {e}")
+            self.logger.debug("Architecture detection failed: %s", e)
             return "Unknown"

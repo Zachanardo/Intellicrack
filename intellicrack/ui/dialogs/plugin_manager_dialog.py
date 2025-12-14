@@ -114,6 +114,7 @@ if not HAS_PYQT:
 
             """
             return 0
+
 else:
 
     class PluginInstallThread(QThread):
@@ -156,7 +157,7 @@ else:
                     self.installation_finished.emit(False, "No Python files found in plugin")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in plugin_manager_dialog: %s", e)
+                logger.error("Error in plugin_manager_dialog: %s", e, exc_info=True)
                 self.installation_finished.emit(False, f"Installation failed: {e!s}")
 
     class PluginManagerDialog(QDialog):
@@ -295,7 +296,7 @@ else:
                 # Repository change handled - available plugins functionality removed
                 pass
             except Exception as e:
-                logger.error(f"Failed to load repository {repository_name}: {e}")
+                logger.error("Failed to load repository %s: %s", repository_name, e, exc_info=True)
 
         def auto_refresh_plugins(self) -> None:
             """Auto-refresh plugin lists."""
@@ -303,14 +304,14 @@ else:
                 self.refresh_plugin_lists()
                 logger.debug("Auto-refreshed plugin lists")
             except Exception as e:
-                logger.warning(f"Auto-refresh failed: {e}")
+                logger.warning("Auto-refresh failed: %s", e)
 
         def refresh_plugin_lists(self) -> None:
             """Refresh installed plugin lists."""
             try:
                 self.load_installed_plugins()
             except Exception as e:
-                logger.error(f"Failed to refresh plugin lists: {e}")
+                logger.error("Failed to refresh plugin lists: %s", e, exc_info=True)
 
         def check_for_updates(self) -> None:
             """Check for plugin updates."""
@@ -332,7 +333,7 @@ else:
                         current_version = plugin_info.get("version", "1.0.0")
 
                         if repo_url := self._get_plugin_repository_url(plugin_info):
-                            logger.debug(f"Checking updates for {plugin_name} from {repo_url}")
+                            logger.debug("Checking updates for %s from %s", plugin_name, repo_url)
 
                             if latest_version_info := self._fetch_latest_version(repo_url, plugin_name):
                                 latest_version = latest_version_info.get("version", current_version)
@@ -350,12 +351,12 @@ else:
                                                 "url": repo_url,
                                             },
                                         )
-                                        logger.info(f"Update available for {plugin_name}: {current_version} -> {latest_version}")
+                                        logger.info("Update available for %s: %s -> %s", plugin_name, current_version, latest_version)
                                 except Exception as version_error:
-                                    logger.debug(f"Version comparison failed for {plugin_name}: {version_error}")
+                                    logger.debug("Version comparison failed for %s: %s", plugin_name, version_error)
 
                     except Exception as plugin_error:
-                        logger.debug(f"Failed to check updates for plugin {plugin_name}: {plugin_error}")
+                        logger.debug("Failed to check updates for plugin %s: %s", plugin_name, plugin_error)
 
                 # Show results to user
                 if updates_available > 0:
@@ -373,7 +374,7 @@ else:
                     QMessageBox.information(self, "Updates Check", "All plugins are up to date!")
 
             except Exception as e:
-                logger.warning(f"Update check failed: {e}")
+                logger.warning("Update check failed: %s", e)
 
         def _get_plugin_repository_url(self, plugin_info: dict) -> str | None:
             """Determine repository URL for a plugin."""
@@ -404,7 +405,7 @@ else:
                     "https://api.github.com/repos/intellicrack/community-plugins",
                 )
             except Exception as e:
-                logger.debug(f"Failed to determine repository URL for plugin {plugin_info.get('name', 'unknown')}: {e}")
+                logger.debug("Failed to determine repository URL for plugin %s: %s", plugin_info.get("name", "unknown"), e)
                 return None
 
         def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict | None:
@@ -484,15 +485,15 @@ else:
                                     "published_at": version_data.get("updated", ""),
                                 }
                         except Exception as file_error:
-                            logger.debug(f"Failed to fetch {file_name} for {plugin_name}: {file_error}")
+                            logger.debug("Failed to fetch %s for %s: %s", file_name, plugin_name, file_error)
 
                 return None
 
             except requests.RequestError as req_error:
-                logger.debug(f"Network error fetching version for {plugin_name}: {req_error}")
+                logger.debug("Network error fetching version for %s: %s", plugin_name, req_error)
                 return None
             except Exception as e:
-                logger.debug(f"Failed to fetch latest version for {plugin_name}: {e}")
+                logger.debug("Failed to fetch latest version for %s: %s", plugin_name, e)
                 return None
 
         def show_welcome_message(self) -> None:
@@ -527,7 +528,7 @@ else:
                         self.repositories.update(config["plugin_repositories"])
 
             except Exception as e:
-                logger.debug(f"Failed to load plugin settings: {e}")
+                logger.debug("Failed to load plugin settings: %s", e)
 
         def setup_installed_tab(self, tab: object) -> None:
             """Set up the installed plugins tab."""
@@ -715,7 +716,7 @@ else:
 
                             self.installed_list.addItem(list_item)
             except Exception as e:
-                logger.error(f"Error loading installed plugins: {e}")
+                logger.error("Error loading installed plugins: %s", e, exc_info=True)
 
         def get_plugin_info(self, plugin_path: str) -> dict:
             """Extract information about a plugin."""
@@ -748,7 +749,7 @@ else:
                             info["has_main"] = True
 
             except Exception as e:
-                logger.debug(f"Could not read plugin metadata: {e}")
+                logger.debug("Could not read plugin metadata: %s", e)
 
             return info
 
@@ -813,7 +814,7 @@ Description: {plugin_info.get("description", "No description available")}"""
                         self.load_installed_plugins()  # Refresh list
                         QMessageBox.information(self, "Success", "Plugin removed successfully")
                     except Exception as e:
-                        logger.error("Exception in plugin_manager_dialog: %s", e)
+                        logger.error("Exception in plugin_manager_dialog: %s", e, exc_info=True)
                         QMessageBox.critical(self, "Error", f"Failed to remove plugin: {e!s}")
 
         def configure_selected_plugin(self) -> None:
@@ -1051,7 +1052,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             with open(config_file, "w") as f:
                                 json.dump(new_config, f, indent=2)
                         except Exception as e:
-                            logger.warning(f"Failed to save plugin configuration: {e}")
+                            logger.warning("Failed to save plugin configuration: %s", e)
 
                     config_dialog.accept()
                     QMessageBox.information(self, "Success", f"Configuration saved for {plugin_name}")
@@ -1265,13 +1266,13 @@ Path: {plugin_info.get("path", "Unknown")}"""
                             status_label.setText("Installation failed!")
                             log_text.append(f"Network error: {net_error!s}")
                             progress_bar.setValue(0)
-                            logger.error(f"Network error downloading plugin: {net_error}")
+                            logger.error("Network error downloading plugin: %s", net_error, exc_info=True)
 
                     except Exception as e:
                         status_label.setText("Installation failed!")
                         log_text.append(f"Error: {e!s}")
                         progress_bar.setValue(0)
-                        logger.error(f"Plugin installation error: {e}")
+                        logger.error("Plugin installation error: %s", e, exc_info=True)
 
                 cancel_btn.clicked.connect(install_dialog.reject)
 
@@ -1307,9 +1308,9 @@ Path: {plugin_info.get("path", "Unknown")}"""
             try:
                 with open(filepath, "w", encoding="utf-8") as f:
                     f.write(plugin_code)
-                logger.info(f"Created fallback plugin: {filepath}")
+                logger.info("Created fallback plugin: %s", filepath)
             except Exception as e:
-                logger.error(f"Failed to create fallback plugin: {e}")
+                logger.error("Failed to create fallback plugin: %s", e, exc_info=True)
                 raise
 
         def _generate_analysis_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
@@ -2592,7 +2593,7 @@ if __name__ == '__main__':
                 self.load_installed_plugins()  # Refresh list
 
             except Exception as e:
-                logger.error("Exception in plugin_manager_dialog: %s", e)
+                logger.error("Exception in plugin_manager_dialog: %s", e, exc_info=True)
                 QMessageBox.critical(self, "Error", f"Failed to create template: {e!s}")
 
         def browse_test_plugin(self) -> None:
@@ -2649,10 +2650,10 @@ if __name__ == '__main__':
                 self.test_output.append("\nOK Plugin test completed successfully")
 
             except SyntaxError as e:
-                logger.error("SyntaxError in plugin_manager_dialog: %s", e)
+                logger.error("SyntaxError in plugin_manager_dialog: %s", e, exc_info=True)
                 self.test_output.append(f"ERROR Syntax error: {e}")
             except Exception as e:
-                logger.error("Exception in plugin_manager_dialog: %s", e)
+                logger.error("Exception in plugin_manager_dialog: %s", e, exc_info=True)
                 self.test_output.append(f"ERROR Test failed: {e}")
 
         def refresh_plugins(self) -> None:

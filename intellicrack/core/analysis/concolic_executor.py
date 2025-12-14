@@ -80,33 +80,37 @@ class NativeConcolicState:
         """Initialize a new execution state."""
         self.pc: int = pc
         self.memory: dict[int, int] = memory if memory is not None else {}
-        self.registers: dict[str, int] = registers if registers is not None else {
-            "eax": 0,
-            "ebx": 0,
-            "ecx": 0,
-            "edx": 0,
-            "esp": 0x7FFF0000,
-            "ebp": 0x7FFF0000,
-            "esi": 0,
-            "edi": 0,
-            "eflags": 0,
-            "rax": 0,
-            "rbx": 0,
-            "rcx": 0,
-            "rdx": 0,
-            "rsp": 0x7FFF0000,
-            "rbp": 0x7FFF0000,
-            "rsi": 0,
-            "rdi": 0,
-            "r8": 0,
-            "r9": 0,
-            "r10": 0,
-            "r11": 0,
-            "r12": 0,
-            "r13": 0,
-            "r14": 0,
-            "r15": 0,
-        }
+        self.registers: dict[str, int] = (
+            registers
+            if registers is not None
+            else {
+                "eax": 0,
+                "ebx": 0,
+                "ecx": 0,
+                "edx": 0,
+                "esp": 0x7FFF0000,
+                "ebp": 0x7FFF0000,
+                "esi": 0,
+                "edi": 0,
+                "eflags": 0,
+                "rax": 0,
+                "rbx": 0,
+                "rcx": 0,
+                "rdx": 0,
+                "rsp": 0x7FFF0000,
+                "rbp": 0x7FFF0000,
+                "rsi": 0,
+                "rdi": 0,
+                "r8": 0,
+                "r9": 0,
+                "r10": 0,
+                "r11": 0,
+                "r12": 0,
+                "r13": 0,
+                "r14": 0,
+                "r15": 0,
+            }
+        )
         self.symbolic_memory: dict[int | str, int | bytes] = {}
         self.symbolic_registers: dict[str, int | bytes] = {}
         self.constraints: list[str] = []
@@ -248,9 +252,7 @@ class NativePlugin:
         """Call after execution completes."""
         self._logger.debug("Execution finished on executor %s", type(executor).__name__)
 
-    def will_fork_state_callback(
-        self, state: NativeConcolicState, new_state: NativeConcolicState, *args: object, **kwargs: object
-    ) -> None:
+    def will_fork_state_callback(self, state: NativeConcolicState, new_state: NativeConcolicState, *args: object, **kwargs: object) -> None:
         """Call before state fork."""
         self._logger.debug("State fork: PC 0x%x -> 0x%x", state.pc, new_state.pc)
 
@@ -805,9 +807,30 @@ class NativeManticore:
         """Set value to operand (register or memory)."""
         operand = operand.strip()
         valid_regs = {
-            "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
-            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-            "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp",
+            "rax",
+            "rbx",
+            "rcx",
+            "rdx",
+            "rsi",
+            "rdi",
+            "rbp",
+            "rsp",
+            "r8",
+            "r9",
+            "r10",
+            "r11",
+            "r12",
+            "r13",
+            "r14",
+            "r15",
+            "eax",
+            "ebx",
+            "ecx",
+            "edx",
+            "esi",
+            "edi",
+            "ebp",
+            "esp",
         }
 
         if operand in valid_regs:
@@ -906,9 +929,7 @@ class NativeManticore:
             if len(instruction_bytes) >= 2:
                 displacement = struct.unpack("b", instruction_bytes[1:2])[0]
 
-                take_branch = (opcode == 0x74 and state.flags.get("ZF", False)) or (
-                    opcode == 0x75 and not state.flags.get("ZF", False)
-                )
+                take_branch = (opcode == 0x74 and state.flags.get("ZF", False)) or (opcode == 0x75 and not state.flags.get("ZF", False))
                 if take_branch:
                     state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
                     state.pc = state.pc + 2 + displacement
@@ -1106,9 +1127,7 @@ class NativeManticore:
         """Check if address points to valid code section."""
         return any(section["start"] <= addr < section["end"] for section in self.code_sections)
 
-    def _prioritize_states(
-        self, states: list[NativeConcolicState], max_count: int
-    ) -> list[NativeConcolicState]:
+    def _prioritize_states(self, states: list[NativeConcolicState], max_count: int) -> list[NativeConcolicState]:
         """Prioritize states for exploration based on heuristics."""
         if len(states) <= max_count:
             return states
@@ -1200,9 +1219,7 @@ class ConcolicExecutionEngine:
         self.max_states = 1000
         self.instruction_limit = 100000
 
-    def explore_paths(
-        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
-    ) -> dict[str, Any]:
+    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
         """Perform concolic execution to explore program paths."""
         try:
             self._logger.info("Starting concolic execution on %s", self.binary_path)

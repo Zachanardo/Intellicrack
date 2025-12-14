@@ -81,7 +81,7 @@ class FridaWorkerThread(QThread):
 
             if not success:
                 error_msg = "Failed to attach to target process"
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
                 raise Exception(error_msg)
 
             self.progress_update.emit("Successfully attached to process")
@@ -129,7 +129,7 @@ class FridaWorkerThread(QThread):
         script_path = self.options.get("script_path")
         if not script_path:
             error_msg = "No script path provided"
-            logger.error(error_msg)
+            logger.error(error_msg, exc_info=True)
             raise Exception(error_msg)
 
         self.progress_update.emit(f"Loading script: {script_path}")
@@ -1690,6 +1690,7 @@ setTimeout(function() {{
                     self.hook_delay_spin.setValue(settings["hook_delay"])
 
             except Exception as e:
+                logger.exception("Failed to load settings: %s", e)
                 self.log_message(f"Failed to load settings: {e!s}", "orange")
 
     def closeEvent(self, event: object) -> None:

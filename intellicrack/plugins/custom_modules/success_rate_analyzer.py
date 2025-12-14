@@ -1007,7 +1007,7 @@ class ReportGenerator:
             return np.eye(n)
 
         except Exception as e:
-            logger.warning(f"Failed to calculate correlations: {e}")
+            logger.warning("Failed to calculate correlations: %s", e, exc_info=True)
             return None
 
 
@@ -1452,7 +1452,7 @@ if __name__ == "__main__":
     analyzer = SuccessRateAnalyzer()
 
     # Connect to existing Intellicrack database or create new one
-    print("Initializing Success Rate Analysis System...")
+    logger.info("Initializing Success Rate Analysis System...")
 
     # Import actual Intellicrack components for real-time tracking
     from intellicrack.core.analysis.protection_detector import ProtectionDetector
@@ -1500,75 +1500,80 @@ if __name__ == "__main__":
         }
 
     # Load historical events from existing database if available
-    print("Loading historical analysis data...")
+    logger.info("Loading historical analysis data...")
     historical_events = analyzer.event_tracker.get_events()
 
     if historical_events:
-        print(f"Found {len(historical_events)} historical events in database")
+        logger.info("Found %s historical events in database", len(historical_events))
 
         # Train ML models on historical data
         if len(historical_events) > 100:
-            print("Training machine learning models on historical data...")
+            logger.info("Training machine learning models on historical data...")
             analyzer.ml_predictor.train(historical_events)
-            print("ML models trained successfully")
+            logger.info("ML models trained successfully")
     else:
-        print("No historical data found. Starting fresh tracking...")
+        logger.info("No historical data found. Starting fresh tracking...")
 
     # Perform real analysis on actual data
-    print("\nPerforming real-time analysis...")
+    logger.info("Performing real-time analysis...")
 
     # Overall success rates
     overall_stats = analyzer.get_component_statistics()
     components = list(overall_stats.keys())
-    print("Component Statistics:")
+    logger.info("Component Statistics:")
     for component, stats in overall_stats.items():
-        print(
-            f"  {component}: {stats['success_rate']:.3f} "
-            f"({stats['confidence_interval'][0]:.3f}-{stats['confidence_interval'][1]:.3f}) "
-            f"n={stats['sample_size']}",
+        logger.info(
+            "  %s: %.3f (%.3f-%.3f) n=%s",
+            component,
+            stats["success_rate"],
+            stats["confidence_interval"][0],
+            stats["confidence_interval"][1],
+            stats["sample_size"],
         )
 
     # Bayesian analysis
-    print("\nBayesian Analysis:")
+    logger.info("Bayesian Analysis:")
     for component in components:
         bayesian_result = analyzer.get_bayesian_success_rate(component)
-        print(
-            f"  {component}: posterior={bayesian_result['posterior_mean']:.3f}, "
-            f"P(>50%)={bayesian_result['probability_above_50_percent']:.3f}",
+        logger.info(
+            "  %s: posterior=%.3f, P(>50%%)=%.3f",
+            component,
+            bayesian_result["posterior_mean"],
+            bayesian_result["probability_above_50_percent"],
         )
 
     # Component comparison
-    print("\nComponent Comparison:")
+    logger.info("Component Comparison:")
     comparison = analyzer.compare_success_rates(components[0], components[1])
     if "error" not in comparison:
-        print(f"  {comparison['component1']['name']} vs {comparison['component2']['name']}")
-        print(f"  Success rates: {comparison['component1']['success_rate']:.3f} vs {comparison['component2']['success_rate']:.3f}")
-        print(f"  Significant difference: {comparison['significant_difference']}")
-        print(f"  p-value: {comparison['statistical_test']['p_value']:.4f}")
+        logger.info("  %s vs %s", comparison["component1"]["name"], comparison["component2"]["name"])
+        logger.info("  Success rates: %.3f vs %.3f", comparison["component1"]["success_rate"], comparison["component2"]["success_rate"])
+        logger.info("  Significant difference: %s", comparison["significant_difference"])
+        logger.info("  p-value: %.4f", comparison["statistical_test"]["p_value"])
 
     # Trend analysis
-    print("\nTrend Analysis:")
+    logger.info("Trend Analysis:")
     for component in components:
         trend = analyzer.get_trend_analysis(component)
-        print(f"  {component}: {trend.trend_direction} (strength: {trend.trend_strength:.3f})")
+        logger.info("  %s: %s (strength: %.3f)", component, trend.trend_direction, trend.trend_strength)
 
     # Dashboard data
-    print("\nDashboard Summary:")
+    logger.info("Dashboard Summary:")
     dashboard = analyzer.generate_performance_dashboard()
-    print(f"  Total events (24h): {dashboard['overall_metrics']['total_events_24h']}")
-    print(f"  Overall success rate (24h): {dashboard['overall_metrics']['overall_success_rate_24h']:.3f}")
+    logger.info("  Total events (24h): %s", dashboard["overall_metrics"]["total_events_24h"])
+    logger.info("  Overall success rate (24h): %.3f", dashboard["overall_metrics"]["overall_success_rate_24h"])
 
     # Generate report
-    print("\nGenerating comprehensive report...")
+    logger.info("Generating comprehensive report...")
     report_path = analyzer.generate_comprehensive_report()
-    print(f"Report saved to: {report_path}")
+    logger.info("Report saved to: %s", report_path)
 
     # Export data
     json_file = analyzer.export_data("json")
     csv_file = analyzer.export_data("csv")
-    print(f"Data exported to: {json_file}, {csv_file}")
+    logger.info("Data exported to: %s, %s", json_file, csv_file)
 
-    print("\nSuccess rate analysis demonstration completed!")
+    logger.info("Success rate analysis demonstration completed!")
 
     # Cleanup
     analyzer.shutdown()

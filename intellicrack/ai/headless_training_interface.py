@@ -100,7 +100,7 @@ class HeadlessTrainingInterface:
                 json.dump(config, f, indent=2)
             logger.info("Configuration saved to %s", config_path)
         except Exception as e:
-            logger.error("Failed to save configuration to %s: %s", config_path, e)
+            logger.error("Failed to save configuration to %s: %s", config_path, e, exc_info=True)
             raise
 
     def start_training(
@@ -362,7 +362,7 @@ class HeadlessTrainingInterface:
             logger.info("Model saved to: %s", model_path)
 
     def _handle_training_error(self, error: Exception) -> None:
-        logger.error("Training worker error: %s", error)
+        logger.error("Training worker error: %s", error, exc_info=True)
         if self.callbacks.get("status"):
             self.callbacks["status"](f"Training error: {error!s}")
 
@@ -452,7 +452,7 @@ class HeadlessTrainingInterface:
             return avg_train_loss, train_accuracy, avg_val_loss, val_accuracy
 
         except Exception as e:
-            logger.error(f"Training epoch {epoch} failed: {e}")
+            logger.error("Training epoch %d failed: %s", epoch, e, exc_info=True)
             # Adaptive error recovery using historical metrics
             return self._generate_recovery_metrics(epoch, model_config)
 
@@ -499,7 +499,7 @@ class HeadlessTrainingInterface:
             return data, []
 
         except Exception as e:
-            logger.error(f"Failed to load dataset from {dataset_path}: {e}")
+            logger.error("Failed to load dataset from %s: %s", dataset_path, e, exc_info=True)
             return [], []
 
     def _generate_training_data(self, num_samples: int) -> list:
@@ -534,7 +534,8 @@ class HeadlessTrainingInterface:
 
             return samples
 
-        except Exception:
+        except Exception as e:
+            logger.error("Failed to generate training data: %s", e, exc_info=True)
             return []
 
     def _process_training_batch(
@@ -585,7 +586,7 @@ class HeadlessTrainingInterface:
             return avg_loss, correct_predictions, total_samples
 
         except Exception as e:
-            logger.error(f"Training batch processing failed: {e}")
+            logger.error("Training batch processing failed: %s", e, exc_info=True)
             return 1.0, 0, len(batch_data)
 
     def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
@@ -627,7 +628,7 @@ class HeadlessTrainingInterface:
             return avg_loss, correct_predictions, total_samples
 
         except Exception as e:
-            logger.error(f"Validation batch processing failed: {e}")
+            logger.error("Validation batch processing failed: %s", e, exc_info=True)
             return 1.0, 0, len(batch_data)
 
     def _generate_recovery_metrics(self, epoch: int, model_config: dict[str, Any]) -> tuple[float, float, float, float]:
@@ -735,7 +736,7 @@ class HeadlessTrainingInterface:
             return train_loss, train_acc, val_loss, val_acc
 
         except Exception as e:
-            logger.debug(f"Recovery metrics generation error: {e}")
+            logger.debug("Recovery metrics generation error: %s", e, exc_info=True)
             # Ultimate fallback - return conservative estimates
             train_loss = 2.0 * math.exp(-0.05 * epoch) + 0.1
             train_acc = 1.0 - train_loss / 3.0
@@ -826,8 +827,8 @@ class HeadlessTrainingInterface:
             return float(output[0])
 
         except Exception as e:
-            logger.error(f"Forward pass failed: {e}")
-            return 0.5  # Default prediction on error  # Default prediction on error
+            logger.error("Forward pass failed: %s", e, exc_info=True)
+            return 0.5
 
     def _initialize_model_weights(self, input_size: int, model_config: dict[str, Any]) -> None:
         """Initialize neural network weights using He initialization.
@@ -949,11 +950,10 @@ class ConsoleTrainingManager:
         """
         try:
             config = self.interface.load_configuration(config_path)
-            print(f"Loaded configuration: {config.get('model_name', 'Unknown Model')}")
-            print(f"Model type: {config.get('model_type', 'Unknown')}")
-            print(f"Epochs: {config.get('epochs', 'Unknown')}")
-            print(f"Learning rate: {config.get('learning_rate', 'Unknown')}")
-            print()
+            logger.info("Loaded configuration: %s", config.get("model_name", "Unknown Model"))
+            logger.info("Model type: %s", config.get("model_type", "Unknown"))
+            logger.info("Epochs: %s", config.get("epochs", "Unknown"))
+            logger.info("Learning rate: %s", config.get("learning_rate", "Unknown"))
 
             # Start training with console callbacks
             self.interface.start_training(
@@ -962,8 +962,7 @@ class ConsoleTrainingManager:
                 status_callback=self._status_callback,
             )
 
-            # Interactive control loop
-            print("Training started. Commands: 'pause', 'resume', 'stop', 'status', 'quit'")
+            logger.info("Training started. Commands: 'pause', 'resume', 'stop', 'status', 'quit'")
             self.running = True
 
             while self.running and self.interface.is_training:
@@ -971,15 +970,14 @@ class ConsoleTrainingManager:
                     command = input("Training> ").strip().lower()
                     self._handle_command(command)
                 except (EOFError, KeyboardInterrupt):
-                    print("\nStopping training...")
+                    logger.info("Stopping training...")
                     self.interface.stop_training()
                     break
 
-            print("Training session ended.")
+            logger.info("Training session ended.")
 
         except Exception as e:
-            logger.error("Interactive training session error: %s", e)
-            print(f"Error: {e}")
+            logger.error("Interactive training session error: %s", e, exc_info=True)
 
     def _progress_callback(self, progress: float) -> None:
         """Handle progress updates.
@@ -988,8 +986,8 @@ class ConsoleTrainingManager:
             progress: Training progress percentage
 
         """
-        if int(progress) % 10 == 0:  # Print every 10%
-            print(f"Progress: {progress:.1f}%")
+        if int(progress) % 10 == 0:
+            logger.info("Progress: %.1f%%", progress)
 
     def _status_callback(self, status: str) -> None:
         """Handle status updates.
@@ -998,7 +996,7 @@ class ConsoleTrainingManager:
             status: Status message
 
         """
-        print(f"Status: {status}")
+        logger.info("Status: %s", status)
 
     def _handle_command(self, command: str) -> None:
         """Handle interactive commands.
@@ -1016,33 +1014,35 @@ class ConsoleTrainingManager:
             self.running = False
         elif command == "status":
             status = self.interface.get_training_status()
-            print("Training Status:")
-            print(f"  Active: {status['is_training']}")
-            print(f"  Paused: {status['is_paused']}")
-            print(f"  Epoch: {status['current_epoch']}/{status['total_epochs']}")
-            print(f"  Progress: {status['progress_percent']:.1f}%")
+            logger.info("Training Status:")
+            logger.info("  Active: %s", status["is_training"])
+            logger.info("  Paused: %s", status["is_paused"])
+            logger.info("  Epoch: %d/%d", status["current_epoch"], status["total_epochs"])
+            logger.info("  Progress: %.1f%%", status["progress_percent"])
             if status["metrics"]:
-                print(f"  Current Loss: {status['metrics'].get('train_loss', 'N/A')}")
-                print(f"  Current Accuracy: {status['metrics'].get('train_accuracy', 'N/A')}")
+                logger.info("  Current Loss: %s", status["metrics"].get("train_loss", "N/A"))
+                logger.info("  Current Accuracy: %s", status["metrics"].get("train_accuracy", "N/A"))
         elif command == "quit":
             self._handle_command("stop")
         elif command == "help":
-            print("Available commands:")
-            print("  pause  - Pause training")
-            print("  resume - Resume training")
-            print("  stop   - Stop training")
-            print("  status - Show training status")
-            print("  quit   - Quit training session")
-            print("  help   - Show this help")
+            logger.info("Available commands:")
+            logger.info("  pause  - Pause training")
+            logger.info("  resume - Resume training")
+            logger.info("  stop   - Stop training")
+            logger.info("  status - Show training status")
+            logger.info("  quit   - Quit training session")
+            logger.info("  help   - Show this help")
         else:
-            print(f"Unknown command: {command}. Type 'help' for available commands.")
+            logger.warning("Unknown command: %s. Type 'help' for available commands.", command)
 
 
 if __name__ == "__main__":
     import sys
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
     if len(sys.argv) != 2:
-        print("Usage: python headless_training_interface.py <config_path>")
+        logger.error("Usage: python headless_training_interface.py <config_path>")
         sys.exit(1)
 
     config_path = sys.argv[1]

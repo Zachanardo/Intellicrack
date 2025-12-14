@@ -873,6 +873,277 @@ def process_psscriptanalyzer_text(text_output: str) -> tuple[dict[str, list[dict
     return grouped, cnt
 
 
+def process_flake8_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process flake8 style linting text output.
+
+    Flake8 output format: file:line:col: CODE message
+    Example: intellicrack/core/analysis/analyzer.py:15:1: E302 expected 2 blank lines
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*([A-Z]\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_wemake_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process wemake-python-styleguide text output.
+
+    Wemake is a flake8 plugin with same format: file:line:col: CODE message
+    Codes include WPS (wemake), C (complexity), and standard flake8 codes.
+    Example: intellicrack/core/main.py:42:1: WPS226 Found string literal over-use
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*([A-Z]+\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_mccabe_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process mccabe complexity checker text output.
+
+    McCabe output format: file:line:col: C901 'func' is too complex (N)
+    Example: intellicrack/core/main.py:100:1: C901 'process_binary' is too complex (15)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*(C\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            complexity = None
+            complexity_match = re.search(r'\((\d+)\)$', message)
+            if complexity_match:
+                complexity = int(complexity_match.group(1))
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "complexity": complexity,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_pydocstyle_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process pydocstyle docstring linting text output.
+
+    Pydocstyle outputs in two-line format:
+    file:line func/class name:
+        CODE: message
+    Example:
+    intellicrack\core\main.py:15 in public function `process`:
+        D103: Missing docstring in public function
+    Also handles single-line format: file:line: CODE: message
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    lines = text_output.strip().split('\n')
+    current_file = ""
+    current_line = 0
+    current_context = ""
+    location_pattern = re.compile(r'^(.+\.py):(\d+)\s+(.*)$')
+    code_pattern = re.compile(r'^\s*(D\d+):\s*(.+)$')
+    single_line_pattern = re.compile(r'^(.+\.py):(\d+):\s*(D\d+):\s*(.+)$')
+
+    for line in lines:
+        if not line.strip():
+            continue
+        single_match = single_line_pattern.match(line)
+        if single_match:
+            fp = single_match.group(1)
+            line_num = int(single_match.group(2))
+            code = single_match.group(3)
+            message = single_match.group(4).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+            continue
+        loc_match = location_pattern.match(line)
+        if loc_match:
+            current_file = loc_match.group(1)
+            current_line = int(loc_match.group(2))
+            current_context = loc_match.group(3).strip()
+            continue
+        code_match = code_pattern.match(line)
+        if code_match and current_file:
+            code = code_match.group(1)
+            message = code_match.group(2).strip()
+            if current_context:
+                message = f"{current_context} - {message}"
+            grouped[current_file].append({
+                "line": current_line,
+                "column": None,
+                "code": code,
+                "context": current_context,
+                "message": message,
+                "raw": f"{current_file}:{current_line}: {code}: {message}"
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_radon_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process radon complexity metrics text output.
+
+    Radon cc (cyclomatic complexity) output formats:
+    file
+        line:col: class/method name - rank (complexity)
+
+    Example:
+    intellicrack\core\main.py
+        M 100:4 process_binary - C (15)
+        F 200:0 helper_func - A (3)
+
+    Codes: F=function, M=method, C=class
+    Ranks: A (1-5), B (6-10), C (11-20), D (21-30), E (31-40), F (41+)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    lines = text_output.strip().split('\n')
+    current_file = ""
+    file_pattern = re.compile(r'^(\S+\.py)\s*$')
+    finding_pattern = re.compile(r'^\s+([FMCE])\s+(\d+):(\d+)\s+(.+?)\s+-\s+([A-F])\s+\((\d+)\)$')
+
+    for line in lines:
+        if not line.strip():
+            continue
+        file_match = file_pattern.match(line)
+        if file_match:
+            current_file = file_match.group(1)
+            continue
+        finding_match = finding_pattern.match(line)
+        if finding_match and current_file:
+            entity_type = finding_match.group(1)
+            line_num = int(finding_match.group(2))
+            col_num = int(finding_match.group(3))
+            name = finding_match.group(4).strip()
+            rank = finding_match.group(5)
+            complexity = int(finding_match.group(6))
+            type_names = {"F": "function", "M": "method", "C": "class", "E": "exception"}
+            entity_name = type_names.get(entity_type, entity_type)
+            grouped[current_file].append({
+                "line": line_num,
+                "column": col_num,
+                "entity_type": entity_type,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"{entity_name} '{name}' - complexity {complexity} (rank {rank})",
+                "raw": f"{current_file}:{line_num}:{col_num}: {entity_name} '{name}' - complexity {complexity} (rank {rank})"
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_xenon_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process xenon code complexity monitoring text output.
+
+    Xenon output format (when thresholds exceeded):
+    ERROR:xenon:block "file:line name" has a rank of X
+
+    Example:
+    ERROR:xenon:block "intellicrack\config.py:150 get_system_path" has a rank of C
+
+    Ranks: A (1-5), B (6-10), C (11-20), D (21-30), E (31-40), F (41+)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    error_pattern = re.compile(
+        r'^ERROR:xenon:block\s+"([^"]+):(\d+)\s+([^"]+)"\s+has a rank of\s+([A-F])$'
+    )
+    alt_pattern = re.compile(r'^(.+\.py)\s+-\s+([FMCE])\s+(.+?)\s+-\s+([A-F])\s+\((\d+)\)$')
+
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = error_pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            name = match.group(3).strip()
+            rank = match.group(4)
+            rank_complexity = {"A": 5, "B": 10, "C": 20, "D": 30, "E": 40, "F": 50}
+            complexity = rank_complexity.get(rank, 0)
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"'{name}' has rank {rank} (complexity > threshold)",
+                "raw": f"{fp}:{line_num}: '{name}' has rank {rank}"
+            })
+            continue
+        alt_match = alt_pattern.match(line)
+        if alt_match:
+            fp = alt_match.group(1)
+            entity_type = alt_match.group(2)
+            name = alt_match.group(3).strip()
+            rank = alt_match.group(4)
+            complexity = int(alt_match.group(5))
+            type_names = {"F": "function", "M": "method", "C": "class", "E": "exception"}
+            entity_name = type_names.get(entity_type, entity_type)
+            grouped[fp].append({
+                "line": None,
+                "column": None,
+                "entity_type": entity_type,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"{entity_name} '{name}' exceeds threshold - rank {rank} (complexity {complexity})",
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
 def escape_xml(s: str) -> str:
     """Escape special XML characters."""
     return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
@@ -995,6 +1266,12 @@ TEXT_PROCESSORS: dict[str, Callable[[str], tuple[dict[str, list[dict[str, Any]]]
     "jsonlint": process_jsonlint_text,
     "psscriptanalyzer": process_psscriptanalyzer_text,
     "biome": process_biome_text,
+    "flake8": process_flake8_text,
+    "wemake": process_wemake_text,
+    "mccabe": process_mccabe_text,
+    "pydocstyle": process_pydocstyle_text,
+    "radon": process_radon_text,
+    "xenon": process_xenon_text,
 }
 
 JSON_PROCESSORS: dict[str, tuple[Callable[..., tuple[dict[str, list[dict[str, Any]]], int]], Any]] = {

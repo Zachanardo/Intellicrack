@@ -79,8 +79,8 @@ class CacheManager:
             try:
                 with open(self.index_file) as f:
                     return json.load(f)
-            except (OSError, json.JSONDecodeError) as e:
-                logger.warning(f"Failed to load cache index: {e}")
+            except (OSError, json.JSONDecodeError):
+                logger.warning("Failed to load cache index", exc_info=True)
 
         return {}
 
@@ -89,8 +89,8 @@ class CacheManager:
         try:
             with open(self.index_file, "w") as f:
                 json.dump(self.cache_index, f, indent=2)
-        except OSError as e:
-            logger.warning(f"Failed to save cache index: {e}")
+        except OSError:
+            logger.warning("Failed to save cache index", exc_info=True)
 
     def _get_cache_file_path(self, key: str) -> str:
         """Get the file path for a cache key."""
@@ -127,8 +127,8 @@ class CacheManager:
         try:
             with open(cache_file) as f:
                 return json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
-            logger.warning(f"Failed to read cache file for {key}: {e}")
+        except (OSError, json.JSONDecodeError):
+            logger.warning("Failed to read cache file for %s", key, exc_info=True)
             self._remove_entry(key)
             return None
 
@@ -166,8 +166,8 @@ class CacheManager:
 
             self._save_index()
             return True
-        except (OSError, TypeError) as e:
-            logger.warning(f"Failed to cache item {key}: {e}")
+        except (OSError, TypeError):
+            logger.warning("Failed to cache item %s", key, exc_info=True)
             return False
 
     def clear_cache(self) -> None:
@@ -184,8 +184,8 @@ class CacheManager:
             if os.path.exists(cache_file):
                 try:
                     os.remove(cache_file)
-                except OSError as e:
-                    logger.warning(f"Failed to remove cache file for {key}: {e}")
+                except OSError:
+                    logger.warning("Failed to remove cache file for %s", key, exc_info=True)
 
             del self.cache_index[key]
 
@@ -437,7 +437,9 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 str(params) if params else "",
                 str(headers) if headers else "",
             ]
-            cache_key = hashlib.sha256(":".join(cache_key_parts).encode()).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 for cache key generation, not sensitive data
+            cache_key = hashlib.sha256(
+                ":".join(cache_key_parts).encode()
+            ).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 for cache key generation, not sensitive data
 
             if cached_data := self.cache_manager.get_cached_item(cache_key):
                 logger.debug(f"Cache hit for {url}")
@@ -485,9 +487,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
             # Parse response data (assume JSON)
             try:
                 response_data = response.json()
-            except ValueError as e:
-                logger.error("Value error in base: %s", e)
-                # Not JSON, return raw text
+            except ValueError:
+                logger.error("Value error in base", exc_info=True)
                 response_data = response.text
 
             # Cache successful GET responses
@@ -496,9 +497,9 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             return True, response_data, ""
 
-        except requests.RequestError as e:
-            logger.error(f"Request error: {e!s}")
-            return False, None, f"Request error: {e!s}"
+        except requests.RequestError:
+            logger.error("Request error", exc_info=True)
+            return False, None, "Request error"
 
     # pylint: disable=too-many-locals
     def download_model(
@@ -580,16 +581,16 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
                 return True, "Download complete"
 
-        except requests.RequestError as e:
-            logger.error("requests.RequestError in base: %s", e)
+        except requests.RequestError:
+            logger.error("requests.RequestError in base", exc_info=True)
             if progress_callback:
-                progress_callback.on_complete(False, f"Download failed: {e!s}")
-            return False, f"Download failed: {e!s}"
-        except OSError as e:
-            logger.error("IO error in base: %s", e)
+                progress_callback.on_complete(False, "Download failed")
+            return False, "Download failed"
+        except OSError:
+            logger.error("IO error in base", exc_info=True)
             if progress_callback:
-                progress_callback.on_complete(False, f"File I/O error: {e!s}")
-            return False, f"File I/O error: {e!s}"
+                progress_callback.on_complete(False, "File I/O error")
+            return False, "File I/O error"
 
     def _verify_checksum(self, file_path: str, expected_checksum: str) -> bool:
         """Verify the checksum of a downloaded file.
@@ -611,8 +612,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             actual_checksum = sha256_hash.hexdigest()
             return actual_checksum == expected_checksum
-        except OSError as e:
-            logger.error(f"Failed to compute checksum: {e!s}")
+        except OSError:
+            logger.error("Failed to compute checksum", exc_info=True)
             return False
 
     @abstractmethod

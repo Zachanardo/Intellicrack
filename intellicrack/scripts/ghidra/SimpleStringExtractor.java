@@ -68,11 +68,12 @@ public class SimpleStringExtractor extends GhidraScript {
   private StringExportEngine exportEngine;
   private StringPatternEngine patternEngine;
 
-    private FunctionManager functionManager;
-    private ReferenceManager referenceManager;
+  private FunctionManager functionManager;
+  private ReferenceManager referenceManager;
   private final Map<DataType, Set<ExtractedString>> dataTypeStringMap = new HashMap<>();
   private final Map<Structure, List<ExtractedString>> structureStrings = new HashMap<>();
-  private final Map<ghidra.program.model.data.Enum, List<ExtractedString>> enumStrings = new HashMap<>();
+  private final Map<ghidra.program.model.data.Enum, List<ExtractedString>> enumStrings =
+      new HashMap<>();
   private final Map<AddressSpace, AddressSet> stringsBySpace = new HashMap<>();
   private final Set<CodeUnit> stringCodeUnits = new HashSet<>();
   private final Set<Instruction> stringInstructions = new HashSet<>();
@@ -358,9 +359,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
     println("STRING CATEGORIES:");
     categorizedStrings.entrySet().stream()
-        .sorted(
-            Map.Entry.comparingByValue(
-                (a, b) -> Integer.compare(b.size(), a.size())))
+        .sorted(Map.Entry.comparingByValue((a, b) -> Integer.compare(b.size(), a.size())))
         .forEach(
             entry -> {
               if (!entry.getValue().isEmpty()) {
@@ -954,7 +953,7 @@ public class SimpleStringExtractor extends GhidraScript {
       }
 
       // Skip very low entropy strings (likely repetitive/junk)
-        return !(str.entropy < 1.0) || str.length <= 10;
+      return !(str.entropy < 1.0) || str.length <= 10;
     }
   }
 
@@ -1342,7 +1341,7 @@ public class SimpleStringExtractor extends GhidraScript {
         throws Exception {
 
       switch (config.outputFormat.toLowerCase()) {
-          case "csv":
+        case "csv":
           exportAsCSV(localAllStrings, localStats, config);
           break;
         case "json":
@@ -1354,8 +1353,8 @@ public class SimpleStringExtractor extends GhidraScript {
         case "html":
           exportAsHTML(localAllStrings, localCategorizedStrings, localStats, config);
           break;
-          case "txt":
-          default:
+        case "txt":
+        default:
           exportAsText(localAllStrings, localCategorizedStrings, localStats, config);
           break;
       }
@@ -1707,9 +1706,7 @@ public class SimpleStringExtractor extends GhidraScript {
       writer.println("\nCATEGORY BREAKDOWN:");
 
       localCategorizedStrings.entrySet().stream()
-          .sorted(
-              Map.Entry.comparingByValue(
-                  (a, b) -> Integer.compare(b.size(), a.size())))
+          .sorted(Map.Entry.comparingByValue((a, b) -> Integer.compare(b.size(), a.size())))
           .forEach(
               entry -> {
                 if (!entry.getValue().isEmpty()) {
@@ -1841,8 +1838,8 @@ public class SimpleStringExtractor extends GhidraScript {
     long startTime = System.currentTimeMillis();
 
     // Initialize data type manager and structures
-      // Comprehensive analysis components using all imports
-      DataTypeManager dataTypeManager = currentProgram.getDataTypeManager();
+    // Comprehensive analysis components using all imports
+    DataTypeManager dataTypeManager = currentProgram.getDataTypeManager();
 
     println("  Analyzing data types for string associations...");
 
@@ -1865,7 +1862,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
         // Analyze structures specifically
         if (dataType instanceof Structure structure) {
-            List<ExtractedString> structStrings = analyzeStructureStrings(structure);
+          List<ExtractedString> structStrings = analyzeStructureStrings(structure);
           if (!structStrings.isEmpty()) {
             structureStrings.put(structure, structStrings);
           }
@@ -1873,7 +1870,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
         // Analyze enums specifically
         if (dataType instanceof ghidra.program.model.data.Enum enumType) {
-            List<ExtractedString> analyzedEnumStrings = analyzeEnumStrings(enumType);
+          List<ExtractedString> analyzedEnumStrings = analyzeEnumStrings(enumType);
           if (!analyzedEnumStrings.isEmpty()) {
             this.enumStrings.put(enumType, analyzedEnumStrings);
           }
@@ -1937,7 +1934,7 @@ public class SimpleStringExtractor extends GhidraScript {
     if (typeName.contains("float") && str.value.matches(".*%[fFeEgG].*")) {
       return true;
     }
-      return typeName.contains("char") && str.value.matches(".*%[sc].*");
+    return typeName.contains("char") && str.value.matches(".*%[sc].*");
   }
 
   private List<ExtractedString> analyzeStructureStrings(Structure structure) {
@@ -2154,7 +2151,7 @@ public class SimpleStringExtractor extends GhidraScript {
     long startTime = System.currentTimeMillis();
 
     // Initialize symbol analysis components
-      SymbolTable symbolTable = currentProgram.getSymbolTable();
+    SymbolTable symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
 
     println("  Performing comprehensive symbol analysis...");
@@ -2297,7 +2294,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
         // If it's an instruction, perform instruction-specific analysis
         if (codeUnit instanceof Instruction instruction) {
-            if (isInstructionAssociatedWithStrings(instruction)) {
+          if (isInstructionAssociatedWithStrings(instruction)) {
             stringInstructions.add(instruction);
             stringInstructionsFound++;
 
@@ -2357,7 +2354,7 @@ public class SimpleStringExtractor extends GhidraScript {
       Object[] opObjects = instruction.getOpObjects(i);
       for (Object obj : opObjects) {
         if (obj instanceof Address addr) {
-            Data data = currentProgram.getListing().getDataAt(addr);
+          Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null && data.hasStringValue()) {
             return true;
           }

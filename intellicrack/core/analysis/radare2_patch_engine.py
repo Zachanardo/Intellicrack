@@ -149,7 +149,7 @@ class Radare2PatchEngine:
             logger.info(f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Radare2: {e}")
+            logger.error(f"Failed to initialize Radare2: {e}", exc_info=True)
             raise
 
     def create_nop_sled(self, address: int, length: int) -> PatchInstruction:
@@ -761,7 +761,7 @@ class Radare2PatchEngine:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply patch: {e}")
+            logger.error(f"Failed to apply patch: {e}", exc_info=True)
             return False
 
     def apply_patch_set(self, patch_set_name: str) -> bool:
@@ -815,7 +815,7 @@ class Radare2PatchEngine:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to revert patch: {e}")
+            logger.error(f"Failed to revert patch: {e}", exc_info=True)
             return False
 
     def create_patch_set(self, name: str, patches: list[PatchInstruction]) -> PatchSet:

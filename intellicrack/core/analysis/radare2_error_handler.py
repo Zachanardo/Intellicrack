@@ -232,7 +232,7 @@ class R2ErrorHandler:
 
                 # Check circuit breaker
                 if self._is_circuit_broken(operation_name):
-                    self.logger.error(f"Circuit breaker open for {operation_name}, aborting")
+                    self.logger.error("Circuit breaker open for %s, aborting", operation_name)
                     return False
 
                 # Record error
@@ -256,7 +256,7 @@ class R2ErrorHandler:
                 return False
 
             except Exception as recovery_error:
-                self.logger.critical(f"Error in error handler: {recovery_error}")
+                self.logger.critical("Error in error handler: %s", recovery_error, exc_info=True)
                 return False
 
     def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
@@ -343,7 +343,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error(f"Recovery execution failed: {e}")
+            self.logger.error("Recovery execution failed: %s", e, exc_info=True)
             return False
 
     def _execute_retry_recovery(self, error_event: ErrorEvent) -> bool:
@@ -395,28 +395,26 @@ class R2ErrorHandler:
         # Record in session stats for intervention tracking
         if "interventions_required" not in self.session_stats:
             self.session_stats["interventions_required"] = []
-        self.session_stats["interventions_required"].append(
-            {
-                "timestamp": datetime.now(),
-                "operation": error_event.context.get("operation", "unknown"),
-                "error_type": error_event.error_type,
-                "message": intervention_message,
-            }
-        )
+        self.session_stats["interventions_required"].append({
+            "timestamp": datetime.now(),
+            "operation": error_event.context.get("operation", "unknown"),
+            "error_type": error_event.error_type,
+            "message": intervention_message,
+        })
 
         return False
 
     def _execute_recovery_action(self, action_name: str, error_event: ErrorEvent) -> bool:
         """Execute specific recovery action."""
         if action_name not in self.recovery_actions:
-            self.logger.error(f"Unknown recovery action: {action_name}")
+            self.logger.error("Unknown recovery action: %s", action_name)
             return False
 
         action = self.recovery_actions[action_name]
 
         # Check if already exceeded max attempts
         if error_event.recovery_attempts >= action.max_attempts:
-            self.logger.warning(f"Max recovery attempts exceeded for {action_name}")
+            self.logger.warning("Max recovery attempts exceeded for %s", action_name)
             return False
 
         # Calculate delay with exponential backoff
@@ -434,16 +432,16 @@ class R2ErrorHandler:
             success = action.action(error_event)
 
             if success:
-                self.logger.info(f"Recovery action {action_name} succeeded")
+                self.logger.info("Recovery action %s succeeded", action_name)
                 self._record_recovery_success(action_name)
             else:
-                self.logger.warning(f"Recovery action {action_name} failed")
+                self.logger.warning("Recovery action %s failed", action_name)
                 self._record_recovery_failure(action_name)
 
             return success
 
         except Exception as e:
-            self.logger.error(f"Recovery action {action_name} threw exception: {e}")
+            self.logger.error("Recovery action %s threw exception: %s", action_name, e, exc_info=True)
             self._record_recovery_failure(action_name)
             return False
 
@@ -461,7 +459,7 @@ class R2ErrorHandler:
                 try:
                     r2_session.quit()
                 except Exception as e:
-                    self.logger.debug(f"Error closing r2 session during recovery: {e}")
+                    self.logger.debug("Error closing r2 session during recovery: %s", e, exc_info=True)
 
                 # Create new session
                 new_session = r2pipe.open(binary_path, flags=["-2"])
@@ -476,7 +474,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error(f"Failed to restart R2 session: {e}")
+            self.logger.error("Failed to restart R2 session: %s", e, exc_info=True)
             return False
 
     def _re_analyze_binary(self, error_event: ErrorEvent) -> bool:
@@ -495,7 +493,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error(f"Failed to re-analyze binary: {e}")
+            self.logger.error("Failed to re-analyze binary: %s", e, exc_info=True)
             return False
 
     def _retry_with_fallback(self, error_event: ErrorEvent) -> bool:
@@ -508,7 +506,7 @@ class R2ErrorHandler:
             return True
 
         except Exception as e:
-            self.logger.error(f"Retry with fallback failed: {e}")
+            self.logger.error("Retry with fallback failed: %s", e, exc_info=True)
             return False
 
     def _cleanup_memory(self, error_event: ErrorEvent) -> bool:
@@ -520,7 +518,7 @@ class R2ErrorHandler:
                     r2_session.cmd("af-*")
                     r2_session.cmd("fs-*")
                 except Exception as e:
-                    self.logger.debug(f"Error closing r2 session during recovery: {e}")
+                    self.logger.debug("Error closing r2 session during recovery: %s", e, exc_info=True)
 
             # Clean up temporary files
             temp_files = error_event.context.get("temp_files", [])
@@ -529,13 +527,13 @@ class R2ErrorHandler:
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                 except Exception as e:
-                    self.logger.debug(f"Error removing temp file during recovery: {e}")
+                    self.logger.debug("Error removing temp file during recovery: %s", e, exc_info=True)
 
             self.logger.info("Memory cleanup completed")
             return True
 
         except Exception as e:
-            self.logger.error(f"Memory cleanup failed: {e}")
+            self.logger.error("Memory cleanup failed: %s", e, exc_info=True)
             return False
 
     def _graceful_degradation(self, error_event: ErrorEvent) -> bool:
@@ -555,11 +553,11 @@ class R2ErrorHandler:
 
             self.circuit_breakers[operation]["degraded"] = True
 
-            self.logger.info(f"Graceful degradation activated for {operation}")
+            self.logger.info("Graceful degradation activated for %s", operation)
             return True
 
         except Exception as e:
-            self.logger.error(f"Graceful degradation failed: {e}")
+            self.logger.error("Graceful degradation failed: %s", e, exc_info=True)
             return False
 
     # Circuit breaker pattern implementation
@@ -671,7 +669,7 @@ class R2ErrorHandler:
     def add_recovery_action(self, name: str, action: RecoveryAction) -> None:
         """Add custom recovery action."""
         self.recovery_actions[name] = action
-        self.logger.info(f"Added custom recovery action: {name}")
+        self.logger.info("Added custom recovery action: %s", name)
 
     def get_error_statistics(self) -> dict[str, Any]:
         """Get error statistics."""
@@ -735,7 +733,7 @@ class R2ErrorHandler:
                 "last_failure": None,
                 "degraded": False,
             }
-            self.logger.info(f"Reset circuit breaker for {operation_name}")
+            self.logger.info("Reset circuit breaker for %s", operation_name)
 
     def clear_error_history(self) -> None:
         """Clear error history."""

@@ -12,6 +12,7 @@ This comprehensive test suite validates the memory patching functionality used t
 ## Test Categories
 
 ### 1. Utility Function Tests (`TestLogMessage`)
+
 **Tests:** 3
 **Purpose:** Validate log message formatting utility
 
@@ -22,37 +23,45 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** All tests assert on actual string output, verifying real formatting behavior.
 
 ### 2. Windows Type Creation Tests (`TestWinTypeCreation`)
+
 **Tests:** 13
 **Purpose:** Validate Windows type implementations for cross-platform compatibility
 
 #### DWORD Type Tests:
+
 - `test_create_dword_type_valid_values` - 32-bit value handling
 - `test_create_dword_type_boundary_values` - Max/min boundary enforcement
 - `test_create_dword_type_negative_clamping` - Negative value clamping to 0
 - `test_create_dword_type_overflow_clamping` - Overflow clamping to 0xFFFFFFFF
 
 #### BOOL Type Tests:
+
 - `test_create_bool_type_truthiness` - Boolean conversion correctness
 - `test_create_bool_type_nonzero_is_true` - Non-zero values treated as true
 
 #### WORD Type Tests:
+
 - `test_create_word_type_valid_values` - 16-bit value handling
 - `test_create_word_type_masks_overflow` - Automatic masking to 16-bit range
 
 #### BYTE Type Tests:
+
 - `test_create_byte_type_valid_values` - 8-bit value handling
 - `test_create_byte_type_masks_overflow` - Automatic masking to 8-bit range
 
 #### HANDLE Type Tests:
+
 - `test_create_handle_types_validity_checking` - Valid/invalid handle detection
 - `test_create_handle_types_subclasses` - HWND/HDC/HINSTANCE type distinction
 
 #### Pointer Type Tests:
+
 - `test_create_pointer_types_representation` - LPVOID/SIZE_T/ULONG_PTR formatting
 
 **Validation:** Each test creates actual ctypes instances and verifies values, ensuring type implementations work correctly for real memory operations.
 
 ### 3. Wintypes Module Tests (`TestGetWintypes`)
+
 **Tests:** 3
 **Purpose:** Validate Windows type module retrieval and fallback
 
@@ -63,27 +72,32 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests create actual type instances and verify operations work.
 
 ### 4. Windows Memory Protection Tests (`TestWindowsMemoryProtection`)
+
 **Tests:** 8
 **Platform:** Windows only (skipif on Unix)
 **Purpose:** Validate Windows-specific memory protection bypass
 
 #### Protection Bypass Tests:
+
 - `test_bypass_memory_protection_windows_changes_protection` - VirtualProtect succeeds
 - `test_bypass_memory_protection_windows_allows_write` - Memory becomes writable after bypass
 - `test_bypass_memory_protection_windows_invalid_address` - Graceful handling of invalid addresses
 - `test_bypass_memory_protection_windows_custom_protection` - Custom protection flags accepted
 
 #### Memory Patching Tests:
+
 - `test_patch_memory_windows_modifies_memory` - WriteProcessMemory writes correct bytes
 - `test_patch_memory_windows_preserves_surrounding_memory` - Patching doesn't corrupt adjacent memory
 
 #### Guard Page Tests:
+
 - `test_handle_guard_pages_windows_detects_guard` - PAGE_GUARD detection works
 - `test_handle_guard_pages_windows_removes_guard` - PAGE_GUARD removal works
 
 **Validation:** Tests use real ctypes buffers, perform actual VirtualProtect/WriteProcessMemory calls, and verify memory contents with `ctypes.string_at()`. Tests FAIL if protection bypass doesn't actually work.
 
 ### 5. Unix Memory Protection Tests (`TestUnixMemoryProtection`)
+
 **Tests:** 5
 **Platform:** Unix/Linux/macOS only (skipif on Windows)
 **Purpose:** Validate Unix-specific memory protection bypass
@@ -98,6 +112,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests use real memory buffers and mprotect system calls. Tests verify actual protection changes occur.
 
 ### 6. Cross-Platform Interface Tests (`TestCrossPlatformMemoryProtection`)
+
 **Tests:** 4
 **Purpose:** Validate platform-agnostic API correctly dispatches to platform implementations
 
@@ -109,6 +124,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests verify return types and behavior across platforms.
 
 ### 7. Guard Page Detection Tests (`TestDetectAndBypassGuardPages`)
+
 **Tests:** 3
 **Platform:** Windows only
 **Purpose:** Validate comprehensive guard page detection and bypass
@@ -120,6 +136,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests use real process handles and VirtualQuery/VirtualProtectEx operations. Verifies actual memory state.
 
 ### 8. Launcher Script Generation Tests (`TestLauncherScriptGeneration`)
+
 **Tests:** 9
 **Purpose:** Validate Frida launcher script generation for memory patching
 
@@ -135,6 +152,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests read actual generated script files and verify contents. Uses real tmp_path fixtures, not mocked file I/O.
 
 ### 9. Memory Patching Setup Tests (`TestSetupMemoryPatching`)
+
 **Tests:** 4
 **Purpose:** Validate memory patching setup workflow
 
@@ -146,6 +164,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests use mocked protection detectors to verify detection workflow, but verify actual UI interaction and error handling.
 
 ### 10. Edge Case Tests (`TestMemoryPatchingEdgeCases`)
+
 **Tests:** 7
 **Purpose:** Validate error handling and boundary conditions
 
@@ -159,6 +178,7 @@ This comprehensive test suite validates the memory patching functionality used t
 **Validation:** Tests verify functions handle edge cases gracefully without crashes.
 
 ### 11. Integration Tests (`TestMemoryPatchingIntegration`)
+
 **Tests:** 3
 **Purpose:** Validate complete memory patching workflows
 
@@ -167,6 +187,7 @@ This comprehensive test suite validates the memory patching functionality used t
 - `test_patch_verification_after_write` - Patch verification confirms write
 
 **Validation:** Tests perform **actual end-to-end memory patching operations**:
+
 1. Create real ctypes buffer with test data
 2. Bypass memory protection using VirtualProtect/mprotect
 3. Handle any guard pages
@@ -178,13 +199,17 @@ These tests **FAIL if any step doesn't actually work**.
 ## Test Fixtures
 
 ### `test_address` Fixture
+
 Creates a real ctypes buffer and returns its address for testing.
 
 ### `test_buffer` Fixture
+
 Creates a 4KB ctypes buffer pre-filled with test pattern data. Used for write/read verification tests.
 
 ### `mock_app` Fixture
+
 Creates mock application with:
+
 - Real file path to target binary
 - Sample patch definitions (license check bypass, serial validation NOP)
 - Mock UI update signals
@@ -192,21 +217,27 @@ Creates mock application with:
 ## Critical Testing Principles Followed
 
 ### 1. Real Memory Operations
+
 All tests use **actual ctypes buffers** and **real system calls**:
+
 - Windows: VirtualProtect, VirtualProtectEx, WriteProcessMemory, VirtualQuery
 - Unix: mprotect, ptrace, /proc/pid/mem
 
 ### 2. Verification of Actual Results
+
 Tests verify:
+
 - Memory protection changes (VirtualQuery to check protection flags)
 - Actual bytes written (ctypes.string_at to read back data)
 - File generation (Path.exists(), Path.read_text())
 - Return value correctness
 
 ### 3. No Mocks for Core Functionality
+
 Only UI components (QMessageBox, app.update_output) are mocked. All memory operations use real system APIs.
 
 ### 4. Platform-Specific Testing
+
 Tests use `@pytest.mark.skipif` to run Windows-specific tests only on Windows and Unix-specific tests only on Unix platforms.
 
 ## Type Safety
@@ -227,6 +258,7 @@ Tests use `@pytest.mark.skipif` to run Windows-specific tests only on Windows an
 The test suite covers:
 
 ### Core Functions (100%):
+
 - `bypass_memory_protection` - Cross-platform protection bypass
 - `patch_memory_direct` - Cross-platform memory patching
 - `handle_guard_pages` - Guard page handling
@@ -236,6 +268,7 @@ The test suite covers:
 - `log_message` - Utility formatting
 
 ### Platform-Specific Functions (100%):
+
 - `_bypass_memory_protection_windows` - Windows VirtualProtect
 - `_bypass_memory_protection_unix` - Unix mprotect
 - `_patch_memory_windows` - Windows WriteProcessMemory
@@ -244,6 +277,7 @@ The test suite covers:
 - `_handle_guard_pages_unix` - Unix guard page handling
 
 ### Type Creation Functions (100%):
+
 - `_create_dword_type` - DWORD implementation
 - `_create_bool_type` - BOOL implementation
 - `_create_word_type` - WORD implementation
@@ -253,6 +287,7 @@ The test suite covers:
 - `_get_wintypes` - Type module retrieval
 
 ### Edge Cases Covered:
+
 - Zero-size memory regions
 - Very large memory regions (256MB)
 - Empty patch data
@@ -269,26 +304,31 @@ The test suite covers:
 ## Test Execution
 
 ### Run All Tests:
+
 ```bash
 pixi run pytest tests/core/patching/test_memory_patcher_comprehensive.py -v
 ```
 
 ### Run Windows-Specific Tests Only:
+
 ```bash
 pixi run pytest tests/core/patching/test_memory_patcher_comprehensive.py -v -k "windows"
 ```
 
 ### Run Unix-Specific Tests Only:
+
 ```bash
 pixi run pytest tests/core/patching/test_memory_patcher_comprehensive.py -v -k "unix"
 ```
 
 ### Run Integration Tests:
+
 ```bash
 pixi run pytest tests/core/patching/test_memory_patcher_comprehensive.py::TestMemoryPatchingIntegration -v
 ```
 
 ### Run with Coverage:
+
 ```bash
 pixi run pytest tests/core/patching/test_memory_patcher_comprehensive.py --cov=intellicrack.core.patching.memory_patcher --cov-report=html
 ```
@@ -314,6 +354,7 @@ All tests use **real system calls** and **actual memory operations**. If the imp
 ## Source Code Fix
 
 During test creation, fixed missing `Any` import in source module:
+
 - **File:** `intellicrack/core/patching/memory_patcher.py`
 - **Fix:** Added `Any` to imports from `typing`
 - **Reason:** `_get_wintypes()` return type uses `tuple[Any, bool]`
@@ -323,6 +364,7 @@ During test creation, fixed missing `Any` import in source module:
 This comprehensive test suite provides **production-ready validation** of memory patching capabilities essential for defeating software licensing protections. All tests verify **actual functionality** using **real memory operations** - no simulations or mocks.
 
 The tests ensure Intellicrack can reliably:
+
 - Modify protected process memory
 - Bypass memory protection mechanisms
 - Generate runtime patching tools

@@ -222,22 +222,18 @@ class BinaryPatcherPlugin:
                 with open(binary_path, "wb") as f:
                     f.write(data)
 
-                results.extend(
-                    (
-                        f"Successfully applied {patches_applied} patches",
-                        "Patch types applied:",
-                        "- License check bypass (defensive research)",
-                        "- Trial period text neutralization",
-                        "File integrity maintained",
-                    )
-                )
+                results.extend((
+                    f"Successfully applied {patches_applied} patches",
+                    "Patch types applied:",
+                    "- License check bypass (defensive research)",
+                    "- Trial period text neutralization",
+                    "File integrity maintained",
+                ))
             else:
-                results.extend(
-                    (
-                        "No applicable patches found",
-                        "File analysis completed - no modifications needed",
-                    )
-                )
+                results.extend((
+                    "No applicable patches found",
+                    "File analysis completed - no modifications needed",
+                ))
         except Exception as e:
             self.logger.exception(f"Patching error: {e}")
             results.append(f"Patching error: {e}")

@@ -19,6 +19,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 ## Test Suite Structure
 
 ### 1. TestShannonEntropyCoreAlgorithm (12 tests)
+
 **Purpose:** Validate mathematical correctness of Shannon entropy formula
 
 - ✅ Empty data returns exactly 0.0 entropy
@@ -28,7 +29,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 - ✅ Four distinct bytes yields exactly 2.0 bits
 - ✅ Eight distinct bytes yields exactly 3.0 bits
 - ✅ Sixteen distinct bytes yields exactly 4.0 bits
-- ✅ Shannon formula H(X) = -Σ P(xi) * log2(P(xi)) verified manually
+- ✅ Shannon formula H(X) = -Σ P(xi) \* log2(P(xi)) verified manually
 - ✅ Entropy always within theoretical bounds [0.0, 8.0]
 - ✅ log2 calculation precision validated
 - ✅ Probability calculations accurate to machine precision
@@ -37,6 +38,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** All 12 tests PASSING ✅
 
 ### 2. TestCompressedDataEntropy (5 tests)
+
 **Purpose:** Validate entropy characteristics of compressed data
 
 - ✅ Zlib compressed data exhibits high entropy (>5.0)
@@ -48,6 +50,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Needs threshold adjustments for realistic compression entropy ranges
 
 ### 3. TestEncryptedDataEntropy (5 tests)
+
 **Purpose:** Validate entropy of encrypted and encrypted-style data
 
 - Simulated AES ciphertext shows near-maximum entropy (>7.8)
@@ -59,6 +62,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Needs validation against real encryption schemes
 
 ### 4. TestPlaintextEntropyCharacteristics (5 tests)
+
 **Purpose:** Validate entropy characteristics of unencrypted data
 
 - ✅ English text has medium entropy (3.5-5.5)
@@ -70,6 +74,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** All 5 tests PASSING ✅
 
 ### 5. TestPEStructureEntropy (5 tests)
+
 **Purpose:** Validate entropy of PE binary structures
 
 - ✅ DOS header has low entropy (<3.0)
@@ -81,6 +86,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** All 5 tests PASSING ✅
 
 ### 6. TestPackedExecutableEntropy (5 tests)
+
 **Purpose:** Validate entropy patterns in packed executables
 
 - UPX packed binaries show high entropy (>6.5)
@@ -92,6 +98,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests validate packing detection via entropy analysis
 
 ### 7. TestEntropyClassificationAccuracy (5 tests)
+
 **Purpose:** Validate entropy classification thresholds
 
 - ✅ Low entropy: values < 5.0
@@ -103,6 +110,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** All 5 tests PASSING ✅
 
 ### 8. TestFileAnalysisWorkflow (5 tests)
+
 **Purpose:** Test complete file analysis workflow
 
 - File analysis returns all required result fields
@@ -114,6 +122,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests validate end-to-end file analysis pipeline
 
 ### 9. TestRealWindowsBinaryEntropy (5 tests)
+
 **Purpose:** Test entropy analysis on actual Windows system binaries
 
 - notepad.exe has typical unprotected binary entropy (4.0-6.5)
@@ -125,6 +134,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests prove real-world applicability on production binaries
 
 ### 10. TestObfuscationDetectionCapability (4 tests)
+
 **Purpose:** Test detection of code obfuscation via entropy
 
 - XOR obfuscated code shows higher entropy than plaintext
@@ -135,6 +145,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests validate obfuscation detection capabilities
 
 ### 11. TestLicenseProtectionScenarios (4 tests)
+
 **Purpose:** Test entropy analysis in license protection contexts
 
 - Encrypted license key storage detectable via high entropy (>6.0)
@@ -145,6 +156,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests prove effectiveness for license cracking workflows
 
 ### 12. TestEdgeCasesAndErrorHandling (5 tests)
+
 **Purpose:** Test edge cases and error handling robustness
 
 - ✅ Very large data sets (10M bytes) processed correctly
@@ -156,6 +168,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** 4/5 tests passing, validates robustness
 
 ### 13. TestPerformanceRequirements (4 tests)
+
 **Purpose:** Test performance requirements for production use
 
 - ✅ 1KB entropy calculation completes in <1ms
@@ -166,6 +179,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** 3/4 tests passing, proves production-ready performance
 
 ### 14. TestRealWorldPackerProfiles (4 tests)
+
 **Purpose:** Test detection of real-world packer entropy profiles
 
 - UPX packed binaries show 6.5-7.5 entropy range
@@ -176,6 +190,7 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 **Status:** Tests validate packer-specific entropy signatures
 
 ### 15. TestProductionReadinessValidation (3 tests)
+
 **Purpose:** Validate production readiness with real-world scenarios
 
 - Real zlib compression detected via entropy (>6.5)
@@ -208,17 +223,20 @@ Comprehensive production-ready test suite for `intellicrack/core/analysis/entrop
 ## Running the Tests
 
 ### Run all tests:
+
 ```bash
 cd D:\Intellicrack
 python -m pytest tests/core/analysis/test_entropy_analyzer_production.py -v
 ```
 
 ### Run specific test class:
+
 ```bash
 python -m pytest tests/core/analysis/test_entropy_analyzer_production.py::TestShannonEntropyCoreAlgorithm -v
 ```
 
 ### Run with coverage:
+
 ```bash
 python -m pytest tests/core/analysis/test_entropy_analyzer_production.py --cov=intellicrack.core.analysis.entropy_analyzer --cov-report=term-missing
 ```
@@ -243,7 +261,7 @@ python -m pytest tests/core/analysis/test_entropy_analyzer_production.py --cov=i
 
 When tests fail, check:
 
-1. **Shannon Entropy Formula:** Is H(X) = -Σ P(xi) * log2(P(xi)) implemented correctly?
+1. **Shannon Entropy Formula:** Is H(X) = -Σ P(xi) \* log2(P(xi)) implemented correctly?
 2. **Byte Counting:** Are all 256 possible byte values tracked correctly?
 3. **Probability Calculation:** Is probability = count / total_length accurate?
 4. **Log2 Implementation:** Is math.log2() used correctly with proper handling of zero?

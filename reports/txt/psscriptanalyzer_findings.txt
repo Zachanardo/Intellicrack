@@ -1,12 +1,4 @@
-67 findings in D:\Intellicrack\TypeFix.ps1
-
-D:\Intellicrack\TypeFix.ps1:73:10: [Warning] The cmdlet 'Select-Workers' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\TypeFix.ps1:112:10: [Warning] The cmdlet 'Select-MaxFiles' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\TypeFix.ps1:131:10: [Warning] The cmdlet 'Select-MaxIterations' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\TypeFix.ps1:227:10: [Warning] The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+68 findings in D:\Intellicrack\TypeFix.ps1
 
 D:\Intellicrack\TypeFix.ps1:28:5: [Warning] File 'TypeFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
@@ -133,6 +125,16 @@ D:\Intellicrack\TypeFix.ps1:352:5: [Warning] File 'TypeFix.ps1' uses Write-Host.
 D:\Intellicrack\TypeFix.ps1:355:1: [Warning] File 'TypeFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 D:\Intellicrack\TypeFix.ps1:356:1: [Warning] File 'TypeFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
+
+D:\Intellicrack\TypeFix.ps1:12:1: [Warning] 'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)
+
+D:\Intellicrack\TypeFix.ps1:73:10: [Warning] The cmdlet 'Select-Workers' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\TypeFix.ps1:112:10: [Warning] The cmdlet 'Select-MaxFiles' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\TypeFix.ps1:131:10: [Warning] The cmdlet 'Select-MaxIterations' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\TypeFix.ps1:227:10: [Warning] The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
 
 62 findings in D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\build.ps1
@@ -264,32 +266,6 @@ D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\build.ps1:66:10: [Warning] 
 
 56 findings in D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1
 
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:215:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:229:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:234:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:244:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:251:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:302:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:305:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:319:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:324:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:342:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:345:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:359:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:364:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
-
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:53:9: [Warning] File 'build.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:54:9: [Warning] File 'build.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
@@ -375,6 +351,32 @@ D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:449:1: [Warning] File 'build.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:76:10: [Warning] The cmdlet 'Download-File' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:215:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:229:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:234:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:244:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:251:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:302:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:305:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:319:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:324:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:342:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:345:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:359:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:364:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
 
 
 47 findings in D:\Intellicrack\CLI Coding\UpdateTools.ps1
@@ -507,12 +509,6 @@ D:\Intellicrack\tests\launcher\run_launcher_test.ps1:40:5: [Warning] File 'run_l
 
 13 findings in D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1
 
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:16:10: [Warning] The cmdlet 'Find-App-Properties' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:66:10: [Warning] The cmdlet 'Compute-Ssh-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:104:10: [Warning] The cmdlet 'Mitigate-Scp-PyModules' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:89:3: [Warning] File 'setuputils.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:95:3: [Warning] File 'setuputils.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
@@ -533,8 +529,22 @@ D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setupu
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:104:10: [Warning] The cmdlet 'Mitigate-Scp-PyModules' uses an unapproved verb. (PSUseApprovedVerbs)
 
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:16:10: [Warning] The cmdlet 'Find-App-Properties' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:66:10: [Warning] The cmdlet 'Compute-Ssh-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setuputils.ps1:104:10: [Warning] The cmdlet 'Mitigate-Scp-PyModules' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
 
 12 findings in D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:68:10: [Warning] The cmdlet 'Compute-Lldb-Usermode-Args' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Lldb-Platform-Args' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Lldb-Remote-Args' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:110:10: [Warning] The cmdlet 'Compute-Lldb-PipInstall-Args' uses an unapproved verb. (PSUseApprovedVerbs)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:18:10: [Warning] The cmdlet 'Add-Lldb-Init-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
@@ -552,37 +562,14 @@ D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbs
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:64:13: [Warning] The parameter 'ArgList' has been declared but not used. (PSReviewUnusedParameter)
 
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:68:10: [Warning] The cmdlet 'Compute-Lldb-Usermode-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Lldb-Platform-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Lldb-Remote-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:110:10: [Warning] The cmdlet 'Compute-Lldb-PipInstall-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-
-9 findings in D:\Intellicrack\scripts\test_eslint.ps1
-
-D:\Intellicrack\scripts\test_eslint.ps1:1:11: [Information] Cmdlet 'yarn' has positional parameter. Please use named parameters instead of positional parameters when calling a command. (PSAvoidUsingPositionalParameters)
-
-D:\Intellicrack\scripts\test_eslint.ps1:2:1: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:5:1: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:8:1: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:11:5: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:12:5: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:14:5: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:15:5: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
-D:\Intellicrack\scripts\test_eslint.ps1:17:9: [Warning] File 'test_eslint.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
-
 
 9 findings in D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:68:10: [Warning] The cmdlet 'Compute-Gdb-Usermode-Args' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Gdb-Remote-Args' uses an unapproved verb. (PSUseApprovedVerbs)
+
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Gdb-PipInstall-Args' uses an unapproved verb. (PSUseApprovedVerbs)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:18:10: [Warning] The cmdlet 'Add-Gdb-Init-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
@@ -595,23 +582,6 @@ D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbset
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Gdb-Remote-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Gdb-PipInstall-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:68:10: [Warning] The cmdlet 'Compute-Gdb-Usermode-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Gdb-Remote-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Gdb-PipInstall-Args' uses an unapproved verb. (PSUseApprovedVerbs)
-
-
-4 findings in D:\Intellicrack\setup\install.ps1
-
-D:\Intellicrack\setup\install.ps1:38:5: [Information] Cmdlet 'Write-ColorOutput' has positional parameter. Please use named parameters instead of positional parameters when calling a command. (PSAvoidUsingPositionalParameters)
-
-D:\Intellicrack\setup\install.ps1:18:13: [Warning] The parameter 'SkipXPU' has been declared but not used. (PSReviewUnusedParameter)
-
-D:\Intellicrack\setup\install.ps1:19:13: [Warning] The parameter 'Dev' has been declared but not used. (PSReviewUnusedParameter)
-
-D:\Intellicrack\setup\install.ps1:28:5: [Warning] File 'install.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 
 4 findings in D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\WinTrust\patch_wintrust.ps1
@@ -634,6 +604,15 @@ D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\WinTrust\patch_wintrust.ps1
 D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\WinTrust\patch_wintrust.ps1:19:9: [Warning] File 'patch_wintrust.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
 D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\WinTrust\patch_wintrust.ps1:20:9: [Warning] File 'patch_wintrust.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
+
+
+3 findings in D:\Intellicrack\setup\install.ps1
+
+D:\Intellicrack\setup\install.ps1:28:5: [Warning] File 'install.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
+
+D:\Intellicrack\setup\install.ps1:41:1: [Warning] 'Write-Warning' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)
+
+D:\Intellicrack\setup\install.ps1:46:1: [Warning] 'Write-Error' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)
 
 
 3 findings in D:\Intellicrack\tools\resource_hacker\download_rh.ps1

@@ -139,15 +139,13 @@ def _build_ghidra_command(
     if overwrite:
         command.append("-overwrite")
 
-    command.extend(
-        [
-            "-scriptPath",
-            os.path.dirname(script_path),
-            "-postScript",
-            os.path.basename(script_path),
-            "-headless",
-        ]
-    )
+    command.extend([
+        "-scriptPath",
+        os.path.dirname(script_path),
+        "-postScript",
+        os.path.basename(script_path),
+        "-headless",
+    ])
     return command
 
 

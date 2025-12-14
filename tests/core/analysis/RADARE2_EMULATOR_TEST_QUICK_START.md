@@ -69,56 +69,56 @@ All tests run on **REAL Windows system binaries**:
 
 ## Test Breakdown by Category
 
-| Category | Tests | Focus Area |
-|----------|-------|------------|
-| ESIL Initialization | 5 | Binary opening, VM setup, architecture detection |
-| Register Management | 4 | Register read/write, state tracking |
-| Memory Operations | 4 | Memory read/write, stack initialization |
-| Instruction Stepping | 5 | Code execution, path tracking |
-| License Validation | 4 | CMP, XOR, conditional branches |
-| Stack Operations | 4 | PUSH, POP, CALL, RET |
-| Conditional Branches | 3 | Jump detection, constraint extraction |
-| Loop Detection | 2 | Loop identification, infinite loop prevention |
-| Unicorn Engine | 5 | Engine setup, section mapping, execution |
-| Symbolic Execution | 3 | Path discovery, constraint generation |
-| Taint Analysis | 2 | Taint propagation, register tracking |
-| Constraint Solving | 3 | Z3 solver integration |
-| Vulnerability Detection | 3 | Dangerous functions, overflow patterns |
-| Exploit Generation | 5 | Buffer overflow, format string, UAF, integer overflow |
-| Performance | 3 | Execution time benchmarks |
-| Edge Cases | 6 | Error handling, invalid inputs |
-| Memory Mapping | 2 | Section mapping, access control |
-| State Snapshots | 2 | State capture, metadata preservation |
-| Complex Scenarios | 3 | Multi-branch, loops+calls, optimized code |
+| Category                | Tests | Focus Area                                            |
+| ----------------------- | ----- | ----------------------------------------------------- |
+| ESIL Initialization     | 5     | Binary opening, VM setup, architecture detection      |
+| Register Management     | 4     | Register read/write, state tracking                   |
+| Memory Operations       | 4     | Memory read/write, stack initialization               |
+| Instruction Stepping    | 5     | Code execution, path tracking                         |
+| License Validation      | 4     | CMP, XOR, conditional branches                        |
+| Stack Operations        | 4     | PUSH, POP, CALL, RET                                  |
+| Conditional Branches    | 3     | Jump detection, constraint extraction                 |
+| Loop Detection          | 2     | Loop identification, infinite loop prevention         |
+| Unicorn Engine          | 5     | Engine setup, section mapping, execution              |
+| Symbolic Execution      | 3     | Path discovery, constraint generation                 |
+| Taint Analysis          | 2     | Taint propagation, register tracking                  |
+| Constraint Solving      | 3     | Z3 solver integration                                 |
+| Vulnerability Detection | 3     | Dangerous functions, overflow patterns                |
+| Exploit Generation      | 5     | Buffer overflow, format string, UAF, integer overflow |
+| Performance             | 3     | Execution time benchmarks                             |
+| Edge Cases              | 6     | Error handling, invalid inputs                        |
+| Memory Mapping          | 2     | Section mapping, access control                       |
+| State Snapshots         | 2     | State capture, metadata preservation                  |
+| Complex Scenarios       | 3     | Multi-branch, loops+calls, optimized code             |
 
 ## Critical Test Highlights
 
 ### Most Important Tests
 
 1. **test_emulator_opens_real_binary_successfully**
-   - Validates core functionality works
-   - Tests radare2 integration
-   - Verifies binary loading
+    - Validates core functionality works
+    - Tests radare2 integration
+    - Verifies binary loading
 
 2. **test_esil_steps_through_instructions**
-   - Proves emulation actually executes code
-   - Tracks execution path
-   - Validates instruction-by-instruction stepping
+    - Proves emulation actually executes code
+    - Tracks execution path
+    - Validates instruction-by-instruction stepping
 
 3. **test_unicorn_emulation_executes_instructions**
-   - Validates Unicorn engine integration
-   - Tests alternative emulation backend
-   - Proves multi-engine support
+    - Validates Unicorn engine integration
+    - Tests alternative emulation backend
+    - Proves multi-engine support
 
 4. **test_generates_buffer_overflow_exploit**
-   - Validates exploit generation works
-   - Creates real exploit primitives
-   - Tests shellcode generation
+    - Validates exploit generation works
+    - Creates real exploit primitives
+    - Tests shellcode generation
 
 5. **test_symbolic_execution_finds_paths**
-   - Validates symbolic execution works
-   - Tests Z3 integration
-   - Proves path discovery capability
+    - Validates symbolic execution works
+    - Tests Z3 integration
+    - Proves path discovery capability
 
 ## Expected Test Results
 
@@ -131,21 +131,27 @@ All tests run on **REAL Windows system binaries**:
 ### Typical Failures
 
 **Binary Not Found**:
+
 ```
 AssertionError: notepad.exe must exist
 ```
+
 → Run on Windows with standard system directories
 
 **Radare2 Not Installed**:
+
 ```
 ModuleNotFoundError: No module named 'r2pipe'
 ```
+
 → Install radare2 and r2pipe: `pip install r2pipe`
 
 **Timeout Exceeded**:
+
 ```
 Test exceeded timeout
 ```
+
 → Performance regression - check emulation implementation
 
 ## Test Validation Approach
@@ -260,11 +266,11 @@ pytest tests/core/analysis/test_radare2_emulator_production.py -v --log-cli-leve
 ```yaml
 - name: Run Radare2 Emulator Tests
   run: |
-    pytest tests/core/analysis/test_radare2_emulator_production.py \
-      -v \
-      --cov=intellicrack.core.analysis.radare2_emulator \
-      --cov-report=xml \
-      --junit-xml=test-results.xml
+      pytest tests/core/analysis/test_radare2_emulator_production.py \
+        -v \
+        --cov=intellicrack.core.analysis.radare2_emulator \
+        --cov-report=xml \
+        --junit-xml=test-results.xml
 ```
 
 ### Jenkins

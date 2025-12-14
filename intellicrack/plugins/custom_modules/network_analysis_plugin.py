@@ -92,6 +92,7 @@ class NetworkAnalysisPlugin:
                     results.append("No obvious network indicators found")
 
         except Exception as e:
+            logger.exception("Binary network analysis failed: %s", e)
             results.append(f"Analysis error: {e}")
 
         return results
@@ -150,6 +151,7 @@ class NetworkAnalysisPlugin:
                 results.append("No socket API references found")
 
         except Exception as e:
+            logger.exception("Socket API detection failed: %s", e)
             results.append(f"Error detecting socket APIs: {e}")
 
         return results
@@ -193,6 +195,7 @@ class NetworkAnalysisPlugin:
             result["message"] = f"Server listening on {actual_host}:{actual_port}"
 
         except Exception as e:
+            logger.exception("Socket server creation failed: %s", e)
             result["error"] = str(e)
             result["message"] = f"Failed to create server: {e}"
 
@@ -213,7 +216,8 @@ class NetworkAnalysisPlugin:
                     service_name = "unknown"
                     try:
                         service_name = socket.getservbyport(port)
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Could not resolve service name for port %d: %s", port, e, exc_info=True)
                         # Common port services
                         common_ports = {
                             21: "ftp",
@@ -249,7 +253,7 @@ class NetworkAnalysisPlugin:
                 pass
             except Exception as e:
                 # Other errors
-                logger.debug(f"Port scan error on {port}: {e}")
+                logger.debug("Port scan error on %d: %s", port, e, exc_info=True)
             finally:
                 sock.close()
 
@@ -317,7 +321,7 @@ class NetworkAnalysisPlugin:
                     time.sleep(1)  # Check every second
 
             except Exception as e:
-                logger.error(f"Socket monitoring error: {e}")
+                logger.error("Socket monitoring error: %s", e, exc_info=True)
             finally:
                 self.monitoring = False
 
@@ -408,6 +412,7 @@ class NetworkAnalysisPlugin:
                 )
 
         except Exception as e:
+            logger.exception("Socket traffic analysis failed: %s", e)
             result["error"] = str(e)
 
         return result
@@ -516,23 +521,21 @@ class NetworkAnalysisPlugin:
                     results.append(f"  ... and {len(listening_ports) - 5} more listening ports")
 
             if net_io := psutil.net_io_counters():
-                results.extend(
-                    (
-                        "\nNetwork I/O Statistics:",
-                        f"  Bytes sent: {net_io.bytes_sent:,}",
-                    )
-                )
-                results.extend(
-                    (
-                        f"  Bytes received: {net_io.bytes_recv:,}",
-                        f"  Packets sent: {net_io.packets_sent:,}",
-                        f"  Packets received: {net_io.packets_recv:,}",
-                    )
-                )
-        except ImportError:
+                results.extend((
+                    "\nNetwork I/O Statistics:",
+                    f"  Bytes sent: {net_io.bytes_sent:,}",
+                ))
+                results.extend((
+                    f"  Bytes received: {net_io.bytes_recv:,}",
+                    f"  Packets sent: {net_io.packets_sent:,}",
+                    f"  Packets received: {net_io.packets_recv:,}",
+                ))
+        except ImportError as e:
+            logger.debug("psutil not available: %s", e, exc_info=True)
             results.append("Error: psutil library not available for network monitoring")
             results.append("Install with: pip install psutil")
         except Exception as e:
+            logger.exception("Network monitoring error: %s", e)
             results.append(f"Network monitoring error: {e}")
 
         return results
@@ -552,7 +555,8 @@ class NetworkAnalysisPlugin:
                 info["local_address"] = f"{local_addr[0]}:{local_addr[1]}"
             else:
                 info["local_address"] = str(local_addr)
-        except Exception:
+        except Exception as e:
+            logger.debug("Could not get local address: %s", e, exc_info=True)
             info["local_address"] = "Not bound"
 
         try:
@@ -562,7 +566,8 @@ class NetworkAnalysisPlugin:
                 info["remote_address"] = f"{peer_addr[0]}:{peer_addr[1]}"
             else:
                 info["remote_address"] = str(peer_addr)
-        except Exception:
+        except Exception as e:
+            logger.debug("Could not get remote address: %s", e, exc_info=True)
             info["remote_address"] = "Not connected"
 
         # Get socket options

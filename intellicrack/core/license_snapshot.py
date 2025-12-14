@@ -134,14 +134,12 @@ class LicenseSnapshot:
             for drive in win32api.GetLogicalDriveStrings().split("\000")[:-1]:
                 try:
                     volume_info = win32api.GetVolumeInformation(drive)
-                    volumes.append(
-                        {
-                            "drive": drive,
-                            "name": volume_info[0],
-                            "serial": volume_info[1],
-                            "filesystem": volume_info[4],
-                        }
-                    )
+                    volumes.append({
+                        "drive": drive,
+                        "name": volume_info[0],
+                        "serial": volume_info[1],
+                        "filesystem": volume_info[4],
+                    })
                 except (win32api.error, OSError) as e:
                     logger.debug(f"Failed to get volume info for drive {drive}: {e}")
             info["volumes"] = volumes

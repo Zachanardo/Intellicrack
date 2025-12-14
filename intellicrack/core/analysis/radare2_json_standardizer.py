@@ -128,7 +128,7 @@ class R2JSONStandardizer:
             return standardized
 
         except Exception as e:
-            self.logger.error(f"Failed to standardize {analysis_type} result: {e}")
+            self.logger.error(f"Failed to standardize {analysis_type} result: {e}", exc_info=True)
             return self._create_error_result(analysis_type, binary_path, str(e))
 
     def _create_base_structure(self, analysis_type: str, binary_path: str, metadata: dict[str, Any] | None) -> dict[str, Any]:
@@ -626,7 +626,7 @@ class R2JSONStandardizer:
             try:
                 return f"0x{int(address):x}"
             except ValueError as e:
-                self.logger.error("Value error in radare2_json_standardizer: %s", e)
+                self.logger.error("Value error in radare2_json_standardizer: %s", e, exc_info=True)
                 return "0x0"
         elif isinstance(address, int):
             return f"0x{address:x}"
@@ -2528,7 +2528,7 @@ def batch_standardize_results(
             standardized = standardizer.standardize_analysis_result(analysis_type, raw_result, binary_path)
             standardized_results.append(standardized)
         except Exception as e:
-            logger.error(f"Failed to standardize {analysis_type} result: {e}")
+            logger.error(f"Failed to standardize {analysis_type} result: {e}", exc_info=True)
             error_result = standardizer._create_error_result(analysis_type, binary_path, str(e))
             standardized_results.append(error_result)
 

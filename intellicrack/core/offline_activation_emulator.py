@@ -19,7 +19,7 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
-import defusedxml.ElementTree as ET
+import defusedxml.ElementTree as ElementTree
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -56,7 +56,7 @@ class RequestFormat(Enum):
     JSON = "json"
     BASE64 = "base64"
     BINARY = "binary"
-    PROPRIETARY = "proprietary"
+    PROPRIElementTreeARY = "proprietary"
 
 
 @dataclass
@@ -160,7 +160,7 @@ class OfflineActivationEmulator:
             "custom_aes": self._aes_based_activation,
             "custom_ecc": self._ecc_based_activation,
         }
-        logger.debug(f"Initialized {len(algorithms)} activation algorithms.")
+        logger.debug("Initialized %s activation algorithms.", len(algorithms))
         return algorithms
 
     def _load_known_schemes(self) -> dict[str, dict]:
@@ -185,42 +185,42 @@ class OfflineActivationEmulator:
                 "request_format": "alphanumeric",
             },
         }
-        logger.debug(f"Loaded {len(schemes)} known activation schemes.")
+        logger.debug("Loaded %s known activation schemes.", len(schemes))
         return schemes
 
     def get_hardware_profile(self) -> HardwareProfile:
         """Get actual hardware profile from system."""
         logger.debug("Retrieving CPU ID...")
         cpu_id = self._get_cpu_id()
-        logger.debug(f"CPU ID: {cpu_id}")
+        logger.debug("CPU ID: %s", cpu_id)
 
         logger.debug("Retrieving Motherboard Serial...")
         motherboard_serial = self._get_motherboard_serial()
-        logger.debug(f"Motherboard Serial: {motherboard_serial}")
+        logger.debug("Motherboard Serial: %s", motherboard_serial)
 
         logger.debug("Retrieving Disk Serial...")
         disk_serial = self._get_disk_serial()
-        logger.debug(f"Disk Serial: {disk_serial}")
+        logger.debug("Disk Serial: %s", disk_serial)
 
         logger.debug("Retrieving MAC Addresses...")
         mac_addresses = self._get_mac_addresses()
-        logger.debug(f"MAC Addresses retrieved: {len(mac_addresses)} found")
+        logger.debug("MAC Addresses retrieved: %s found", len(mac_addresses))
 
         logger.debug("Retrieving BIOS Serial...")
         bios_serial = self._get_bios_serial()
-        logger.debug(f"BIOS Serial: {bios_serial}")
+        logger.debug("BIOS Serial: %s", bios_serial)
 
         logger.debug("Retrieving System UUID...")
         system_uuid = self._get_system_uuid()
-        logger.debug(f"System UUID: {system_uuid}")
+        logger.debug("System UUID: %s", system_uuid)
 
         logger.debug("Retrieving Volume Serial...")
         volume_serial = self._get_volume_serial()
-        logger.debug(f"Volume Serial: {volume_serial}")
+        logger.debug("Volume Serial: %s", volume_serial)
 
         logger.debug("Retrieving Machine GUID...")
         machine_guid = self._get_machine_guid()
-        logger.debug(f"Machine GUID: {machine_guid}")
+        logger.debug("Machine GUID: %s", machine_guid)
 
         profile = HardwareProfile(
             cpu_id=cpu_id,
@@ -256,7 +256,7 @@ class OfflineActivationEmulator:
                     if "ID:" in line:
                         return line.split("ID:")[1].strip()
         except Exception as e:
-            logger.debug(f"Processor ID extraction failed: {e}")
+            logger.debug("Processor ID extraction failed: %s", e, exc_info=True)
 
         # Fallback
         return hashlib.sha256(platform.processor().encode()).hexdigest()[:16].upper()
@@ -281,7 +281,7 @@ class OfflineActivationEmulator:
                     if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
         except Exception as e:
-            logger.debug(f"Serial number extraction failed: {e}")
+            logger.debug("Serial number extraction failed: %s", e, exc_info=True)
 
         return hashlib.sha256(socket.gethostname().encode()).hexdigest()[:16].upper()
 
@@ -306,7 +306,7 @@ class OfflineActivationEmulator:
                     if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
         except Exception as e:
-            logger.debug(f"Disk serial extraction failed: {e}")
+            logger.debug("Disk serial extraction failed: %s", e, exc_info=True)
 
         serial_length = secrets.randbelow(5) + 12
         serial_part = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(serial_length))
@@ -402,7 +402,7 @@ class OfflineActivationEmulator:
                     if SERIAL_NUMBER_LABEL in line:
                         return line.split(":")[1].strip()
         except Exception as e:
-            logger.debug(f"BIOS serial extraction failed: {e}")
+            logger.debug("BIOS serial extraction failed: %s", e, exc_info=True)
 
         return hashlib.sha256(platform.node().encode()).hexdigest()[:16].upper()
 
@@ -424,7 +424,7 @@ class OfflineActivationEmulator:
                 result = subprocess.run(["dmidecode", "-s", "system-uuid"], capture_output=True, text=True)
                 return result.stdout.strip()
         except Exception as e:
-            logger.debug(f"System UUID extraction failed: {e}")
+            logger.debug("System UUID extraction failed: %s", e, exc_info=True)
 
         return str(uuid.uuid4()).upper()
 
@@ -452,7 +452,7 @@ class OfflineActivationEmulator:
                 )
                 return result.stdout.strip()[:8].upper()
         except Exception as e:
-            logger.debug(f"Block device UUID extraction failed: {e}")
+            logger.debug("Block device UUID extraction failed: %s", e, exc_info=True)
 
         return hashlib.sha256(os.urandom(8)).hexdigest()[:8].upper()
 
@@ -475,13 +475,13 @@ class OfflineActivationEmulator:
                 with open("/etc/machine-id") as f:
                     return f.read().strip()
         except Exception as e:
-            logger.debug(f"Machine ID extraction failed: {e}")
+            logger.debug("Machine ID extraction failed: %s", e, exc_info=True)
 
         return str(uuid.uuid4()).upper()
 
     def generate_hardware_id(self, profile: HardwareProfile | None = None, algorithm: str = "standard") -> str:
         """Generate hardware ID from profile."""
-        logger.debug(f"Generating hardware ID using algorithm: {algorithm}")
+        logger.debug("Generating hardware ID using algorithm: %s", algorithm)
         if not profile:
             profile = self.get_hardware_profile()
             logger.debug("Using current system hardware profile.")
@@ -508,7 +508,7 @@ class OfflineActivationEmulator:
 
             # Add separators for readability
             formatted = "-".join([hw_id[i : i + 5] for i in range(0, len(hw_id), 5)])
-            logger.debug(f"Generated standard hardware ID: {formatted}")
+            logger.debug("Generated standard hardware ID: %s", formatted)
             return formatted
 
         if algorithm == "microsoft":
@@ -526,11 +526,12 @@ class OfflineActivationEmulator:
             for comp in components:
                 try:
                     result ^= int(comp, 16)
-                except ValueError:
+                except ValueError as e:
+                    logger.debug("ValueError during hardware ID generation: %s", e, exc_info=True)
                     result ^= int(hashlib.sha256(comp.encode()).hexdigest()[:8], 16)
 
             formatted = format(result, "08X")
-            logger.debug(f"Generated Microsoft-style hardware ID: {formatted}")
+            logger.debug("Generated Microsoft-style hardware ID: %s", formatted)
             return formatted
 
         if algorithm == "adobe":
@@ -543,13 +544,13 @@ class OfflineActivationEmulator:
 
             digest = h.hexdigest().upper()
             formatted = f"{digest[:8]}-{digest[8:12]}-{digest[12:16]}-{digest[16:20]}"
-            logger.debug(f"Generated Adobe-style hardware ID: {formatted}")
+            logger.debug("Generated Adobe-style hardware ID: %s", formatted)
             return formatted
 
         logger.debug("Using custom hardware ID generation.")
         # Custom algorithm
         formatted = self._custom_hardware_id(profile)
-        logger.debug(f"Generated custom hardware ID: {formatted}")
+        logger.debug("Generated custom hardware ID: %s", formatted)
         return formatted
 
     def _custom_hardware_id(self, profile: HardwareProfile) -> str:
@@ -582,7 +583,8 @@ class OfflineActivationEmulator:
             )
             key = kdf.derive(password)
             return base64.b64encode(key[:24]).decode("ascii")
-        except Exception:
+        except Exception as e:
+            logger.debug("PBKDF2 key derivation failed: %s", e, exc_info=True)
             return hashlib.sha256((profile.cpu_id + profile.motherboard_serial).encode()).hexdigest()[:32]
 
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
@@ -600,7 +602,7 @@ class OfflineActivationEmulator:
             Formatted installation ID with groups of 6 hexadecimal characters.
 
         """
-        logger.debug(f"Generating installation ID for product '{product_id}' with hardware ID '{hardware_id}'.")
+        logger.debug("Generating installation ID for product '%s' with hardware ID '%s'.", product_id, hardware_id)
         # Combine product and hardware
 
         # Generate installation ID
@@ -611,7 +613,7 @@ class OfflineActivationEmulator:
         # Format as groups
         groups = [install_id[i : i + 6] for i in range(0, 36, 6)]
         formatted_install_id = "-".join(groups)
-        logger.debug(f"Generated installation ID: {formatted_install_id}")
+        logger.debug("Generated installation ID: %s", formatted_install_id)
         return formatted_install_id
 
     def generate_request_code(self, installation_id: str) -> str:
@@ -628,7 +630,7 @@ class OfflineActivationEmulator:
             Numeric request code formatted as groups of 6 digits separated by hyphens.
 
         """
-        logger.debug(f"Generating request code for installation ID: {installation_id}")
+        logger.debug("Generating request code for installation ID: %s", installation_id)
         # Hash installation ID
         h = hashlib.sha256(installation_id.encode())
 
@@ -641,7 +643,7 @@ class OfflineActivationEmulator:
 
         groups = [request_code[i : i + 6] for i in range(0, 54, 6)]
         formatted_request_code = "-".join(groups)
-        logger.debug(f"Generated request code: {formatted_request_code}")
+        logger.debug("Generated request code: %s", formatted_request_code)
         return formatted_request_code
 
     def generate_activation_response(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
@@ -660,14 +662,14 @@ class OfflineActivationEmulator:
             ActivationResponse object with activation code, license key, and signature.
 
         """
-        logger.debug(f"Generating activation response for product ID: {request.product_id}")
+        logger.debug("Generating activation response for product ID: %s", request.product_id)
         # Determine activation algorithm
         algorithm = self._detect_activation_algorithm(request.product_id)
-        logger.debug(f"Detected activation algorithm: {algorithm}")
+        logger.debug("Detected activation algorithm: %s", algorithm)
 
         if algorithm in self.activation_algorithms:
             response = self.activation_algorithms[algorithm](request, product_key)
-            logger.debug(f"Generated activation response using {algorithm} algorithm.")
+            logger.debug("Generated activation response using %s algorithm.", algorithm)
             return response
         # Default activation
         response = self._default_activation(request, product_key)
@@ -704,7 +706,7 @@ class OfflineActivationEmulator:
             detected_algo = "solidworks"
         else:
             detected_algo = "custom_rsa"
-        logger.debug(f"Detected activation algorithm for product '{product_id}': {detected_algo}")
+        logger.debug("Detected activation algorithm for product '%s': %s", product_id, detected_algo)
         return detected_algo
 
     def _microsoft_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
@@ -746,7 +748,7 @@ class OfflineActivationEmulator:
             confirmation_blocks.append(str(value).zfill(6))
 
         confirmation_id = "-".join(confirmation_blocks)
-        logger.debug(f"Generated Microsoft-style confirmation ID: {confirmation_id}")
+        logger.debug("Generated Microsoft-style confirmation ID: %s", confirmation_id)
 
         return ActivationResponse(
             activation_code=confirmation_id,
@@ -781,12 +783,12 @@ class OfflineActivationEmulator:
         h.update(request.hardware_id.encode())
 
         response_hash = h.hexdigest()
-        logger.debug(f"Adobe activation response hash: {response_hash}")
+        logger.debug("Adobe activation response hash: %s", response_hash)
 
         # Format as Adobe response code
         response_code = response_hash[:24].upper()
         formatted = "-".join([response_code[i : i + 4] for i in range(0, 24, 4)])
-        logger.debug(f"Formatted Adobe activation code: {formatted}")
+        logger.debug("Formatted Adobe activation code: %s", formatted)
 
         # Generate license content
         license_data = self._generate_adobe_license(request, response_code)
@@ -815,34 +817,34 @@ class OfflineActivationEmulator:
             XML license file content in UTF-8 bytes format.
 
         """
-        root = ET.Element("License")
+        root = ElementTree.Element("License")
 
         # Add license elements
-        product = ET.SubElement(root, "Product")
+        product = ElementTree.SubElement(root, "Product")
         product.text = request.product_id
 
-        version = ET.SubElement(root, "Version")
+        version = ElementTree.SubElement(root, "Version")
         version.text = request.product_version
 
-        serial = ET.SubElement(root, "SerialNumber")
+        serial = ElementTree.SubElement(root, "SerialNumber")
         serial.text = response_code
 
-        hwid = ET.SubElement(root, "HardwareID")
+        hwid = ElementTree.SubElement(root, "HardwareID")
         hwid.text = request.hardware_id
 
-        activation = ET.SubElement(root, "ActivationDate")
+        activation = ElementTree.SubElement(root, "ActivationDate")
         activation.text = datetime.now().isoformat()
 
-        expiry = ET.SubElement(root, "ExpiryDate")
+        expiry = ElementTree.SubElement(root, "ExpiryDate")
         expiry.text = (datetime.now() + timedelta(days=365)).isoformat()
 
         # Features
-        features = ET.SubElement(root, "Features")
+        features = ElementTree.SubElement(root, "Features")
         for feature in ["Photoshop", "Illustrator", "Premiere", "AfterEffects"]:
-            feat = ET.SubElement(features, "Feature")
+            feat = ElementTree.SubElement(features, "Feature")
             feat.text = feature
 
-        return ET.tostring(root, encoding="utf-8")
+        return ElementTree.tostring(root, encoding="utf-8")
 
     def _autodesk_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
         """Generate Autodesk activation response with XOR-based transformation.
@@ -871,12 +873,12 @@ class OfflineActivationEmulator:
 
         # Generate response
         response_value = (request_value ^ magic1) + magic2
-        logger.debug(f"Autodesk activation raw response value: {response_value}")
+        logger.debug("Autodesk activation raw response value: %s", response_value)
         response_code = format(response_value, "016X")
 
         # Format as Autodesk activation code
         formatted = "-".join([response_code[i : i + 4] for i in range(0, 16, 4)])
-        logger.debug(f"Formatted Autodesk activation code: {formatted}")
+        logger.debug("Formatted Autodesk activation code: %s", formatted)
 
         return ActivationResponse(
             activation_code=formatted,
@@ -912,11 +914,11 @@ class OfflineActivationEmulator:
         for i in range(20):
             idx = hw_hash[i] % len(chars)
             activation_code += chars[idx]
-        logger.debug(f"VMware activation raw activation code: {activation_code}")
+        logger.debug("VMware activation raw activation code: %s", activation_code)
 
         # Format as VMware key
         formatted = "-".join([activation_code[i : i + 5] for i in range(0, 20, 5)])
-        logger.debug(f"Formatted VMware activation key: {formatted}")
+        logger.debug("Formatted VMware activation key: %s", formatted)
 
         return ActivationResponse(
             activation_code=formatted,
@@ -950,9 +952,9 @@ class OfflineActivationEmulator:
         h.update(request.hardware_id.encode())
 
         activation_hash = h.hexdigest().upper()
-        logger.debug(f"MATLAB activation hash: {activation_hash}")
+        logger.debug("MATLAB activation hash: %s", activation_hash)
         activation_code = "-".join([activation_hash[i : i + 5] for i in range(0, 20, 5)])
-        logger.debug(f"Formatted MATLAB activation code: {activation_code}")
+        logger.debug("Formatted MATLAB activation code: %s", activation_code)
 
         # Generate license file content
         license_content = self._generate_matlab_license(request)
@@ -1021,10 +1023,10 @@ class OfflineActivationEmulator:
             value = sum(ord(c) for c in part)
             transformed = (value * 12345) % 1000000
             response_parts.append(str(transformed).zfill(6))
-        logger.debug(f"SolidWorks activation response parts: {response_parts}")
+        logger.debug("SolidWorks activation response parts: %s", response_parts)
 
         activation_code = "-".join(response_parts)
-        logger.debug(f"Formatted SolidWorks activation code: {activation_code}")
+        logger.debug("Formatted SolidWorks activation code: %s", activation_code)
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -1072,7 +1074,7 @@ class OfflineActivationEmulator:
 
         # Generate activation code
         activation_code = base64.b64encode(signature[:32]).decode("ascii")
-        logger.debug(f"Generated RSA-based activation code: {activation_code}")
+        logger.debug("Generated RSA-based activation code: %s", activation_code)
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -1119,7 +1121,7 @@ class OfflineActivationEmulator:
 
         # Create activation code
         activation_code = base64.b64encode(iv + encrypted[:32]).decode("ascii")
-        logger.debug(f"Generated AES-based activation code: {activation_code}")
+        logger.debug("Generated AES-based activation code: %s", activation_code)
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -1158,7 +1160,7 @@ class OfflineActivationEmulator:
 
         # Create activation code from signature
         activation_code = base64.b32encode(signature[:30]).decode("ascii").rstrip("=")
-        logger.debug(f"Generated ECC-based activation code: {activation_code}")
+        logger.debug("Generated ECC-based activation code: %s", activation_code)
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -1192,7 +1194,7 @@ class OfflineActivationEmulator:
 
         activation_hash = h.hexdigest()
         activation_code = "-".join([activation_hash[i : i + 8] for i in range(0, 32, 8)])
-        logger.debug(f"Generated default activation code: {activation_code}")
+        logger.debug("Generated default activation code: %s", activation_code)
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -1244,7 +1246,7 @@ class OfflineActivationEmulator:
         chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         key = "".join(secrets.choice(chars) for _ in range(25))
         formatted_key = "-".join([key[i : i + 5] for i in range(0, 25, 5)])
-        logger.debug(f"Generated generic product key: {formatted_key}")
+        logger.debug("Generated generic product key: %s", formatted_key)
         return formatted_key
 
     def _sign_license_data(self, data: bytes) -> bytes:
@@ -1288,7 +1290,7 @@ class OfflineActivationEmulator:
             License file data in bytes format ready for deployment.
 
         """
-        logger.debug(f"Creating license file in format: {format}")
+        logger.debug("Creating license file in format: %s", format)
         if format == "xml":
             return self._create_xml_license(response)
         if format == "json":
@@ -1311,31 +1313,31 @@ class OfflineActivationEmulator:
             XML license file in UTF-8 bytes format.
 
         """
-        root = ET.Element("License")
+        root = ElementTree.Element("License")
 
-        key = ET.SubElement(root, "LicenseKey")
+        key = ElementTree.SubElement(root, "LicenseKey")
         key.text = response.license_key
 
-        activation = ET.SubElement(root, "ActivationCode")
+        activation = ElementTree.SubElement(root, "ActivationCode")
         activation.text = response.activation_code
 
         if response.expiry_date:
-            expiry = ET.SubElement(root, "ExpiryDate")
+            expiry = ElementTree.SubElement(root, "ExpiryDate")
             expiry.text = response.expiry_date.isoformat()
 
-        features = ET.SubElement(root, "Features")
+        features = ElementTree.SubElement(root, "Features")
         for feature in response.features:
-            feat = ET.SubElement(features, "Feature")
+            feat = ElementTree.SubElement(features, "Feature")
             feat.text = feature
 
-        hw_locked = ET.SubElement(root, "HardwareLocked")
+        hw_locked = ElementTree.SubElement(root, "HardwareLocked")
         hw_locked.text = str(response.hardware_locked)
 
         if response.signature:
-            sig = ET.SubElement(root, "Signature")
+            sig = ElementTree.SubElement(root, "Signature")
             sig.text = base64.b64encode(response.signature).decode("ascii")
 
-        return ET.tostring(root, encoding="utf-8")
+        return ElementTree.tostring(root, encoding="utf-8")
 
     def _create_json_license(self, response: ActivationResponse) -> bytes:
         """Create JSON-formatted license file with structured metadata.
@@ -1503,7 +1505,7 @@ class OfflineActivationEmulator:
             date bypass, and network bypass strategies.
 
         """
-        logger.debug(f"Generating trial restriction bypass data for product: {product_id}")
+        logger.debug("Generating trial restriction bypass data for product: %s", product_id)
         bypass_data = {
             "trial_reset": self._generate_trial_reset_data(product_id),
             "registry_keys": self._generate_registry_keys(product_id),
@@ -1511,7 +1513,7 @@ class OfflineActivationEmulator:
             "date_bypass": self._generate_date_bypass_data(),
             "network_bypass": self._generate_network_bypass_data(),
         }
-        logger.debug(f"Generated trial bypass data: {bypass_data}")
+        logger.debug("Generated trial bypass data: %s", bypass_data)
         return bypass_data
 
     def _generate_trial_reset_data(self, product_id: str) -> dict[str, Any]:
@@ -1679,7 +1681,7 @@ class OfflineActivationEmulator:
                 if mac_address != self._generate_realistic_mac():
                     break
         except (AttributeError, TypeError) as e:
-            logger.debug(f"Failed to generate activation response: {e}")
+            logger.debug("Failed to generate activation response: %s", e, exc_info=True)
 
         # Get disk serial
         disk_serial = self._get_disk_serial()
@@ -1795,7 +1797,9 @@ class OfflineActivationEmulator:
             Activation request string in specified format, ready for server submission.
 
         """
-        logger.debug(f"Generating activation request for product '{product_id}' with serial '{serial_number}' in format: {format.value}")
+        logger.debug(
+            "Generating activation request for product '%s' with serial '%s' in format: %s", product_id, serial_number, format.value
+        )
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
             self.machine_profile = self._generate_machine_profile()
@@ -1812,7 +1816,7 @@ class OfflineActivationEmulator:
             timestamp=int(time.time()),
             format=format,
         )
-        logger.debug(f"Generated activation request ID: {request.request_id}")
+        logger.debug("Generated activation request ID: %s", request.request_id)
 
         # Format based on type
         if format == RequestFormat.XML:
@@ -1836,34 +1840,34 @@ class OfflineActivationEmulator:
             XML-formatted activation request string with signature element.
 
         """
-        root = ET.Element("ActivationRequest")
+        root = ElementTree.Element("ActivationRequest")
 
         # Add request metadata
-        ET.SubElement(root, "RequestID").text = request.request_id
-        ET.SubElement(root, "ProductID").text = request.product_id
-        ET.SubElement(root, "ProductVersion").text = request.product_version
-        ET.SubElement(root, "SerialNumber").text = request.serial_number
-        ET.SubElement(root, "Timestamp").text = str(request.timestamp)
+        ElementTree.SubElement(root, "RequestID").text = request.request_id
+        ElementTree.SubElement(root, "ProductID").text = request.product_id
+        ElementTree.SubElement(root, "ProductVersion").text = request.product_version
+        ElementTree.SubElement(root, "SerialNumber").text = request.serial_number
+        ElementTree.SubElement(root, "Timestamp").text = str(request.timestamp)
 
         # Add machine profile
-        machine = ET.SubElement(root, "MachineProfile")
-        ET.SubElement(machine, "MachineID").text = request.machine_profile.machine_id
-        ET.SubElement(machine, "CPUID").text = request.machine_profile.cpu_id
-        ET.SubElement(machine, "MotherboardSerial").text = request.machine_profile.motherboard_serial
-        ET.SubElement(machine, "DiskSerial").text = request.machine_profile.disk_serial
-        ET.SubElement(machine, "MACAddress").text = request.machine_profile.mac_address
-        ET.SubElement(machine, "Hostname").text = request.machine_profile.hostname
-        ET.SubElement(machine, "Username").text = request.machine_profile.username
-        ET.SubElement(machine, "OSVersion").text = request.machine_profile.os_version
-        ET.SubElement(machine, "InstallDate").text = str(request.machine_profile.install_date)
-        ET.SubElement(machine, "InstallPath").text = request.machine_profile.install_path
+        machine = ElementTree.SubElement(root, "MachineProfile")
+        ElementTree.SubElement(machine, "MachineID").text = request.machine_profile.machine_id
+        ElementTree.SubElement(machine, "CPUID").text = request.machine_profile.cpu_id
+        ElementTree.SubElement(machine, "MotherboardSerial").text = request.machine_profile.motherboard_serial
+        ElementTree.SubElement(machine, "DiskSerial").text = request.machine_profile.disk_serial
+        ElementTree.SubElement(machine, "MACAddress").text = request.machine_profile.mac_address
+        ElementTree.SubElement(machine, "Hostname").text = request.machine_profile.hostname
+        ElementTree.SubElement(machine, "Username").text = request.machine_profile.username
+        ElementTree.SubElement(machine, "OSVersion").text = request.machine_profile.os_version
+        ElementTree.SubElement(machine, "InstallDate").text = str(request.machine_profile.install_date)
+        ElementTree.SubElement(machine, "InstallPath").text = request.machine_profile.install_path
 
         # Sign the request
-        xml_str = ET.tostring(root, encoding="unicode")
+        xml_str = ElementTree.tostring(root, encoding="unicode")
         signature = self._sign_request(xml_str.encode())
-        ET.SubElement(root, "Signature").text = base64.b64encode(signature).decode()
+        ElementTree.SubElement(root, "Signature").text = base64.b64encode(signature).decode()
 
-        return ET.tostring(root, encoding="unicode")
+        return ElementTree.tostring(root, encoding="unicode")
 
     def _format_json_request(self, request: ExtendedActivationRequest) -> str:
         """Format activation request as JSON with RSA signature.
@@ -2127,24 +2131,24 @@ class OfflineActivationEmulator:
             Base64-encoded response suitable for server validation.
 
         """
-        logger.debug(f"Bypassing challenge-response for challenge: {challenge}")
+        logger.debug("Bypassing challenge-response for challenge: %s", challenge)
         # Decode challenge
         try:
             challenge_bytes = base64.b64decode(challenge)
             logger.debug("Challenge successfully base64 decoded.")
-        except (base64.binascii.Error, ValueError):
+        except (base64.binascii.Error, ValueError) as e:
             challenge_bytes = challenge.encode()
-            logger.debug("Challenge not base64 encoded, using raw bytes.")
+            logger.debug("Challenge not base64 encoded, using raw bytes: %s", e, exc_info=True)
 
         # Extract challenge components
         if len(challenge_bytes) >= 16:
             nonce = challenge_bytes[:16]
             data = challenge_bytes[16:]
-            logger.debug(f"Extracted nonce ({nonce.hex()}) and data ({data.hex()}) from challenge.")
+            logger.debug("Extracted nonce (%s) and data (%s) from challenge.", nonce.hex(), data.hex())
         else:
             nonce = challenge_bytes
             data = b""
-            logger.debug(f"Challenge too short, using full challenge as nonce ({nonce.hex()}).")
+            logger.debug("Challenge too short, using full challenge as nonce (%s).", nonce.hex())
 
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
@@ -2157,11 +2161,11 @@ class OfflineActivationEmulator:
         response_data = hashlib.sha256(
             nonce + data + self.machine_profile.machine_id.encode() + self.machine_profile.cpu_id.encode(),
         ).digest()
-        logger.debug(f"Generated raw response data: {response_data.hex()}")
+        logger.debug("Generated raw response data: %s", response_data.hex())
 
         # Format response
         response = base64.b64encode(response_data).decode("ascii")
-        logger.debug(f"Formatted challenge-response: {response}")
+        logger.debug("Formatted challenge-response: %s", response)
 
         return response
 
@@ -2191,7 +2195,7 @@ class OfflineActivationEmulator:
                 - errors: List of validation errors encountered
 
         """
-        logger.debug(f"Validating license file: {file_path}")
+        logger.debug("Validating license file: %s", file_path)
         result: dict[str, Any] = {
             "valid": False,
             "format": "unknown",
@@ -2224,31 +2228,25 @@ class OfflineActivationEmulator:
             self._validate_signature(file_content, license_data, result)
             self._extract_license_features(license_data, result)
 
-            result["valid"] = (
-                not result["expired"]
-                and result["hardware_match"]
-                and len(result["errors"]) == 0
-            )
+            result["valid"] = not result["expired"] and result["hardware_match"] and len(result["errors"]) == 0
 
-            logger.debug(f"License validation complete: valid={result['valid']}")
+            logger.debug("License validation complete: valid=%s", result["valid"])
             return result
 
         except FileNotFoundError:
             result["errors"].append(f"License file not found: {file_path}")
-            logger.error(f"License file not found: {file_path}")
+            logger.error("License file not found: %s", file_path, exc_info=True)
             return result
         except PermissionError:
             result["errors"].append(f"Permission denied reading license file: {file_path}")
-            logger.error(f"Permission denied: {file_path}")
+            logger.error("Permission denied: %s", file_path, exc_info=True)
             return result
         except Exception as e:
             result["errors"].append(f"Error reading license file: {e}")
-            logger.error(f"Error validating license file: {e}")
+            logger.error("Error validating license file: %s", e, exc_info=True)
             return result
 
-    def _detect_and_parse_license_format(
-        self, file_content: bytes, result: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def _detect_and_parse_license_format(self, file_content: bytes, result: dict[str, Any]) -> dict[str, Any] | None:
         """Detect license file format and parse content accordingly."""
         license_data: dict[str, Any] = {}
 
@@ -2270,7 +2268,8 @@ class OfflineActivationEmulator:
                 else:
                     result["errors"].append("Unrecognized license file format")
                     return None
-            except Exception:
+            except Exception as e:
+                logger.debug("Unable to parse license file content: %s", e, exc_info=True)
                 result["errors"].append("Unable to parse license file content")
                 return None
 
@@ -2280,7 +2279,7 @@ class OfflineActivationEmulator:
         """Parse XML format license file."""
         license_data: dict[str, Any] = {}
         try:
-            root = ET.fromstring(content)
+            root = ElementTree.fromstring(content)
 
             license_key_elem = root.find("LicenseKey")
             if license_key_elem is not None and license_key_elem.text:
@@ -2307,16 +2306,15 @@ class OfflineActivationEmulator:
 
             features_elem = root.find("Features")
             if features_elem is not None:
-                license_data["features"] = [
-                    feat.text for feat in features_elem.findall("Feature") if feat.text
-                ]
+                license_data["features"] = [feat.text for feat in features_elem.findall("Feature") if feat.text]
 
             sig_elem = root.find("Signature")
             if sig_elem is not None and sig_elem.text:
                 license_data["signature"] = sig_elem.text
 
-        except ET.ParseError as e:
+        except ElementTree.ParseError as e:
             result["errors"].append(f"XML parsing error: {e}")
+            logger.debug("XML parsing error: %s", e, exc_info=True)
 
         return license_data
 
@@ -2352,6 +2350,7 @@ class OfflineActivationEmulator:
 
         except json.JSONDecodeError as e:
             result["errors"].append(f"JSON parsing error: {e}")
+            logger.debug("JSON parsing error: %s", e, exc_info=True)
 
         return license_data
 
@@ -2360,52 +2359,52 @@ class OfflineActivationEmulator:
         license_data: dict[str, Any] = {}
         try:
             offset = 0
-            magic = content[offset:offset + 4]
+            magic = content[offset : offset + 4]
             offset += 4
 
             if magic == b"LICX":
-                version = struct.unpack("<I", content[offset:offset + 4])[0]
+                version = struct.unpack("<I", content[offset : offset + 4])[0]
                 offset += 4
                 license_data["version"] = version
 
-                key_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                key_len = struct.unpack("<I", content[offset : offset + 4])[0]
                 offset += 4
-                license_key = content[offset:offset + key_len].decode("utf-8", errors="ignore")
+                license_key = content[offset : offset + key_len].decode("utf-8", errors="ignore")
                 offset += key_len
                 result["license_key"] = license_key
                 license_data["license_key"] = license_key
 
-                act_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                act_len = struct.unpack("<I", content[offset : offset + 4])[0]
                 offset += 4
-                activation_code = content[offset:offset + act_len].decode("utf-8", errors="ignore")
+                activation_code = content[offset : offset + act_len].decode("utf-8", errors="ignore")
                 offset += act_len
                 result["activation_code"] = activation_code
                 license_data["activation_code"] = activation_code
 
-                expiry_timestamp = struct.unpack("<Q", content[offset:offset + 8])[0]
+                expiry_timestamp = struct.unpack("<Q", content[offset : offset + 8])[0]
                 offset += 8
                 if expiry_timestamp > 0:
                     license_data["expiry_timestamp"] = expiry_timestamp
 
-                feat_count = struct.unpack("<I", content[offset:offset + 4])[0]
+                feat_count = struct.unpack("<I", content[offset : offset + 4])[0]
                 offset += 4
                 features = []
                 for _ in range(feat_count):
-                    feat_len = struct.unpack("<I", content[offset:offset + 4])[0]
+                    feat_len = struct.unpack("<I", content[offset : offset + 4])[0]
                     offset += 4
-                    feat = content[offset:offset + feat_len].decode("utf-8", errors="ignore")
+                    feat = content[offset : offset + feat_len].decode("utf-8", errors="ignore")
                     offset += feat_len
                     features.append(feat)
                 license_data["features"] = features
 
-                hw_locked = struct.unpack("<?", content[offset:offset + 1])[0]
+                hw_locked = struct.unpack("<?", content[offset : offset + 1])[0]
                 offset += 1
                 result["hardware_locked"] = hw_locked
                 license_data["hardware_locked"] = hw_locked
 
             elif magic == b"ACTF":
                 offset += 4
-                iv = content[offset:offset + 16]
+                iv = content[offset : offset + 16]
                 offset += 16
                 encrypted_data = content[offset:]
                 license_data["encrypted"] = True
@@ -2418,11 +2417,7 @@ class OfflineActivationEmulator:
                         from cryptography.hazmat.backends import default_backend
                         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-                        cipher = Cipher(
-                            algorithms.AES(self.encryption_key),
-                            modes.CBC(iv),
-                            backend=default_backend()
-                        )
+                        cipher = Cipher(algorithms.AES(self.encryption_key), modes.CBC(iv), backend=default_backend())
                         decryptor = cipher.decryptor()
                         decrypted = decryptor.update(encrypted_data) + decryptor.finalize()
                         padding_len = decrypted[-1] if decrypted else 0
@@ -2433,9 +2428,11 @@ class OfflineActivationEmulator:
                     except Exception as decrypt_err:
                         license_data["decryption_error"] = str(decrypt_err)
                         license_data["decryption_success"] = False
+                        logger.debug("Decryption error: %s", decrypt_err, exc_info=True)
 
         except (struct.error, IndexError) as e:
             result["errors"].append(f"Binary parsing error: {e}")
+            logger.debug("Binary parsing error: %s", e, exc_info=True)
 
         return license_data
 
@@ -2477,8 +2474,8 @@ class OfflineActivationEmulator:
                     expiry_date = datetime.fromisoformat(expiry_str.replace("Z", "+00:00"))
                 else:
                     expiry_date = datetime.strptime(expiry_str, "%Y-%m-%d")
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.debug("Failed to parse expiry date: %s", e, exc_info=True)
 
         if "expiry_timestamp" in license_data and license_data["expiry_timestamp"] > 0:
             expiry_date = datetime.fromtimestamp(license_data["expiry_timestamp"], tz=UTC)
@@ -2488,9 +2485,7 @@ class OfflineActivationEmulator:
             now = datetime.now(UTC) if expiry_date.tzinfo else datetime.now()
             result["expired"] = now > expiry_date
 
-    def _validate_hardware_binding(
-        self, license_data: dict[str, Any], hardware_id: str | None, result: dict[str, Any]
-    ) -> None:
+    def _validate_hardware_binding(self, license_data: dict[str, Any], hardware_id: str | None, result: dict[str, Any]) -> None:
         """Validate hardware ID binding if applicable."""
         if not result["hardware_locked"]:
             result["hardware_match"] = True
@@ -2509,9 +2504,7 @@ class OfflineActivationEmulator:
         else:
             result["hardware_match"] = True
 
-    def _validate_signature(
-        self, file_content: bytes, license_data: dict[str, Any], result: dict[str, Any]
-    ) -> None:
+    def _validate_signature(self, file_content: bytes, license_data: dict[str, Any], result: dict[str, Any]) -> None:
         """Validate digital signature if present."""
         if "signature" not in license_data:
             result["signature_valid"] = True
@@ -2527,7 +2520,8 @@ class OfflineActivationEmulator:
                 result["signature_valid"] = False
                 result["errors"].append("Invalid signature length")
 
-        except (base64.binascii.Error, ValueError):
+        except (base64.binascii.Error, ValueError) as e:
+            logger.debug("Invalid signature encoding: %s", e, exc_info=True)
             result["signature_valid"] = False
             result["errors"].append("Invalid signature encoding")
 
@@ -2536,9 +2530,7 @@ class OfflineActivationEmulator:
         if license_data.get("features"):
             result["features"] = license_data["features"]
 
-    def export_license_file(
-        self, response: ActivationResponse, file_path: str, format_type: str = "xml"
-    ) -> str:
+    def export_license_file(self, response: ActivationResponse, file_path: str, format_type: str = "xml") -> str:
         """Export activation response to a license file.
 
         Creates a license file from an activation response in the specified format.
@@ -2558,12 +2550,12 @@ class OfflineActivationEmulator:
             IOError: If the file cannot be written.
 
         """
-        logger.debug(f"Exporting license to {file_path} in {format_type} format")
+        logger.debug("Exporting license to %s in %s format", file_path, format_type)
 
         license_content = self.create_license_file(response, format_type)
 
         with open(file_path, "wb") as f:
             f.write(license_content)
 
-        logger.info(f"License file exported to {file_path}")
+        logger.info("License file exported to %s", file_path)
         return file_path

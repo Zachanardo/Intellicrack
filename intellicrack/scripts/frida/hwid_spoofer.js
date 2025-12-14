@@ -33,8 +33,8 @@ if (getVolumeInfo) {
         onLeave: function (retval) {
             if (retval.toInt32() !== 0) {
                 // Modify volume serial number (5th parameter)
-              const serialPtr = this.context.r8;
-              if (serialPtr && !serialPtr.isNull()) {
+                const serialPtr = this.context.r8;
+                if (serialPtr && !serialPtr.isNull()) {
                     serialPtr.writeU32(0x12345678); // Spoofed serial
                     send({
                         type: 'bypass',
@@ -55,10 +55,10 @@ if (getAdaptersInfo) {
         onLeave: function (retval) {
             if (retval.toInt32() === 0) {
                 // NO_ERROR
-              const adapterInfo = this.context.rcx;
-              if (adapterInfo && !adapterInfo.isNull()) {
+                const adapterInfo = this.context.rcx;
+                if (adapterInfo && !adapterInfo.isNull()) {
                     // Replace MAC address with spoofed one
-                  const macAddr = adapterInfo.add(8); // Address offset in IP_ADAPTER_INFO
+                    const macAddr = adapterInfo.add(8); // Address offset in IP_ADAPTER_INFO
                     macAddr.writeByteArray([0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
                     send({
                         type: 'bypass',
@@ -87,7 +87,7 @@ if (getSystemInfo) {
                 });
             }
 
-          const sysInfo = this.context.rcx; // SYSTEM_INFO pointer
+            const sysInfo = this.context.rcx; // SYSTEM_INFO pointer
             if (sysInfo && !sysInfo.isNull()) {
                 // Modify processor architecture and count
                 sysInfo.writeU16(9); // PROCESSOR_ARCHITECTURE_AMD64
@@ -109,18 +109,18 @@ const regQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueE
 if (regQueryValueExW) {
     Interceptor.attach(regQueryValueExW, {
         onEnter: function (args) {
-          const valueName = args[1].readUtf16String();
-          if (valueName?.includes('MachineGuid')) {
+            const valueName = args[1].readUtf16String();
+            if (valueName?.includes('MachineGuid')) {
                 this.spoofGuid = true;
             }
         },
         onLeave: function (retval) {
             if (this.spoofGuid && retval.toInt32() === 0) {
-              const buffer = this.context.r8; // lpData
+                const buffer = this.context.r8; // lpData
                 if (buffer && !buffer.isNull()) {
                     // Write spoofed GUID
-                  const spoofedGuid = '{12345678-1234-1234-1234-123456789ABC}';
-                  buffer.writeUtf16String(spoofedGuid);
+                    const spoofedGuid = '{12345678-1234-1234-1234-123456789ABC}';
+                    buffer.writeUtf16String(spoofedGuid);
                     send({
                         type: 'bypass',
                         target: 'machine_guid',

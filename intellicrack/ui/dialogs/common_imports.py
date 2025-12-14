@@ -167,9 +167,7 @@ except ImportError as e:
             A callable that serves as a no-op signal.
 
         """
-        return lambda *signal_args: (
-            logger.debug("No-op signal called with args: %s", signal_args) or None
-        )
+        return lambda *signal_args: (logger.debug("No-op signal called with args: %s", signal_args) or None)
 
     QFont = None
     QIcon = None

@@ -66,7 +66,7 @@ class AdvancedDynamicAnalyzer:
                  runtime analysis, and process behavior information
 
         """
-        self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
+        self.logger.info("Running comprehensive dynamic analysis for %s. Payload provided: %s", self.binary_path, bool(payload))
 
         analysis_results = {
             "subprocess_execution": self._subprocess_analysis(),
@@ -518,7 +518,7 @@ class AdvancedDynamicAnalyzer:
                 if pid is not None:
                     frida.kill(pid)
             except Exception as cleanup_error:
-                self.logger.error("Error during Frida cleanup: %s", cleanup_error)
+                self.logger.error("Error during Frida cleanup: %s", cleanup_error, exc_info=True)
 
     def _process_behavior_analysis(self) -> dict[str, Any]:
         """Analyze process behavior and resource interactions.
@@ -598,7 +598,7 @@ class AdvancedDynamicAnalyzer:
             Dictionary containing scan results with matches, addresses, and context
 
         """
-        self.logger.info(f"Starting memory keyword scan for: {keywords}")
+        self.logger.info("Starting memory keyword scan for: %s", keywords)
 
         try:
             if FRIDA_AVAILABLE:
@@ -607,7 +607,7 @@ class AdvancedDynamicAnalyzer:
                 return self._psutil_memory_scan(keywords, target_process)
             return self._fallback_memory_scan(keywords, target_process)
         except Exception as e:
-            self.logger.error(f"Memory scanning error: {e}")
+            self.logger.error("Memory scanning error: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
@@ -636,7 +636,7 @@ class AdvancedDynamicAnalyzer:
                     frida.resume(pid)
                     time.sleep(2)  # Allow process to initialize
                 except Exception as e:
-                    logger.error("Exception in dynamic_analyzer: %s", e)
+                    self.logger.error("Exception in dynamic_analyzer: %s", e, exc_info=True)
                     return {
                         "status": "error",
                         "error": f"Could not attach to or spawn process: {process_name}",
@@ -711,14 +711,14 @@ class AdvancedDynamicAnalyzer:
 
             def on_message(message: dict[str, Any], data: bytes | None) -> None:
                 if data:
-                    self.logger.debug(f"Message data: {len(data)} bytes")
+                    self.logger.debug("Message data: %s bytes", len(data))
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "scan_complete":
                         results["matches"].extend(payload["matches"])
                         results["scan_count"] = payload["scan_count"]
                     elif payload["type"] == "error":
-                        self.logger.error(f"Frida script error: {payload['message']}")
+                        self.logger.error("Frida script error: %s", payload["message"])
                     elif payload["type"] == "complete":
                         results["status"] = "complete"
 
@@ -744,12 +744,12 @@ class AdvancedDynamicAnalyzer:
                     unique_matches.append(match)
 
             results["matches"] = sorted(unique_matches, key=lambda x: int(x["address"], 16))
-            self.logger.info(f"Frida memory scan found {len(results['matches'])} matches")
+            self.logger.info("Frida memory scan found %s matches", len(results["matches"]))
 
             return results
 
         except Exception as e:
-            self.logger.error(f"Frida memory scan error: {e}")
+            self.logger.error("Frida memory scan error: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
@@ -771,7 +771,7 @@ class AdvancedDynamicAnalyzer:
                         target_proc = proc
                         break
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    self.logger.error("Error in dynamic_analyzer: %s", e)
+                    self.logger.error("Error in dynamic_analyzer: %s", e, exc_info=True)
                     continue
 
             if not target_proc:
@@ -781,7 +781,7 @@ class AdvancedDynamicAnalyzer:
                     time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
                 except Exception as e:
-                    logger.error("Exception in dynamic_analyzer: %s", e)
+                    self.logger.error("Exception in dynamic_analyzer: %s", e, exc_info=True)
                     return {
                         "status": "error",
                         "error": f"Could not find or start process: {process_name}",
@@ -807,7 +807,7 @@ class AdvancedDynamicAnalyzer:
             with contextlib.suppress(AttributeError, OSError, PermissionError):
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
 
-            self.logger.info(f"Memory scan found {len(matches)} matches")
+            self.logger.info("Memory scan found %s matches", len(matches))
 
             return {
                 "status": "success",
@@ -821,7 +821,7 @@ class AdvancedDynamicAnalyzer:
             }
 
         except Exception as e:
-            self.logger.error(f"Memory scan error: {e}")
+            self.logger.error("Memory scan error: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
@@ -1056,7 +1056,7 @@ class AdvancedDynamicAnalyzer:
                         continue
 
         except Exception as e:
-            self.logger.error(f"Linux memory scan error: {e}")
+            self.logger.error("Linux memory scan error: %s", e, exc_info=True)
 
         return matches
 
@@ -1123,12 +1123,12 @@ print(matches)
                         ]
                         scan_result = subprocess.run(lldb_cmd, capture_output=True, text=True, timeout=10)
                         if scan_result.stdout:
-                            self.logger.debug(f"LLDB memory scan output: {scan_result.stdout}")
+                            self.logger.debug("LLDB memory scan output: %s", scan_result.stdout)
             # Fallback to generic scanning
             return self._generic_memory_scan(psutil.Process(pid), keywords)
 
         except Exception as e:
-            self.logger.error(f"macOS memory scan error: {e}")
+            self.logger.error("macOS memory scan error: %s", e, exc_info=True)
             return matches
 
     def _generic_memory_scan(self, process: psutil.Process, keywords: list[str]) -> list[dict]:
@@ -1221,7 +1221,7 @@ print(matches)
                         )
 
         except Exception as e:
-            self.logger.error(f"Generic memory scan error: {e}")
+            self.logger.error("Generic memory scan error: %s", e, exc_info=True)
 
         return matches
 
@@ -1229,7 +1229,7 @@ print(matches)
         """Fallback memory scanning using binary file analysis."""
         try:
             if target_process:
-                self.logger.info(f"Using fallback memory scan for process {target_process}")
+                self.logger.info("Using fallback memory scan for process %s", target_process)
             else:
                 self.logger.info("Using fallback memory scan (binary file analysis)")
 
@@ -1269,7 +1269,7 @@ print(matches)
 
                     offset = index + len(keyword)
 
-            self.logger.info(f"Fallback memory scan found {len(matches)} matches")
+            self.logger.info("Fallback memory scan found %s matches", len(matches))
 
             return {
                 "status": "success",
@@ -1278,7 +1278,7 @@ print(matches)
             }
 
         except Exception as e:
-            self.logger.error(f"Fallback memory scan error: {e}")
+            self.logger.error("Fallback memory scan error: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
@@ -1476,7 +1476,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         script.load()
 
         # Monitor for specified timeout
-        logs.append(f"Monitoring for {timeout / 1000} seconds...")
+        logs.append("Monitoring for %s seconds..." % (timeout / 1000))
         time.sleep(timeout / 1000)
 
         # Detach and terminate
@@ -1489,7 +1489,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         logs.append("Runtime monitoring complete")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in dynamic_analyzer: %s", e)
+        logger.error("Error in dynamic_analyzer: %s", e, exc_info=True)
         logs.append(f"Error during runtime monitoring: {e}")
 
     return logs

@@ -441,7 +441,9 @@ const _wasmProtectionBypass = {
             let pos = offset + 1;
 
             // Skip section size (LEB128)
-            while (bytes[pos] && 0x80) { pos++; }
+            while (bytes[pos] && 0x80) {
+                pos++;
+            }
             pos++;
 
             // Read export count (simplified)
@@ -532,14 +534,18 @@ const _wasmProtectionBypass = {
         let pos = 8; // Skip magic and version
         while (pos < bytes.length) {
             const sectionId = bytes[pos++];
-            if (pos >= bytes.length) { break; }
+            if (pos >= bytes.length) {
+                break;
+            }
 
             // Read section size (LEB128)
             let sectionSize = 0;
             let shift = 0;
             let byte;
             do {
-                if (pos >= bytes.length) { break; }
+                if (pos >= bytes.length) {
+                    break;
+                }
                 byte = bytes[pos++];
                 sectionSize |= (byte & 0x7f) << shift;
                 shift += 7;
@@ -562,7 +568,9 @@ const _wasmProtectionBypass = {
                 let numFunctions = 0;
                 shift = 0;
                 do {
-                    if (funcPos >= sectionEnd) { break; }
+                    if (funcPos >= sectionEnd) {
+                        break;
+                    }
                     byte = bytes[funcPos++];
                     numFunctions |= (byte & 0x7f) << shift;
                     shift += 7;
@@ -575,7 +583,9 @@ const _wasmProtectionBypass = {
                     shift = 0;
                     const _bodySizeStart = funcPos;
                     do {
-                        if (funcPos >= sectionEnd) { break; }
+                        if (funcPos >= sectionEnd) {
+                            break;
+                        }
                         byte = bytes[funcPos++];
                         bodySize |= (byte & 0x7f) << shift;
                         shift += 7;
@@ -585,9 +595,7 @@ const _wasmProtectionBypass = {
                     const bodyEnd = funcPos + bodySize;
 
                     // Check if this is a license function by index
-                    if (
-                        analysis.licenseFunctionIndices?.includes(i)
-                    ) {
+                    if (analysis.licenseFunctionIndices?.includes(i)) {
                         // 3. Patch function body to bypass license validation
                         send({
                             type: 'bypass',
@@ -641,7 +649,9 @@ const _wasmProtectionBypass = {
                 let numExports = 0;
                 shift = 0;
                 do {
-                    if (exportPos >= sectionEnd) { break; }
+                    if (exportPos >= sectionEnd) {
+                        break;
+                    }
                     byte = bytes[exportPos++];
                     numExports |= (byte & 0x7f) << shift;
                     shift += 7;
@@ -656,7 +666,9 @@ const _wasmProtectionBypass = {
                     let nameLen = 0;
                     shift = 0;
                     do {
-                        if (exportPos >= sectionEnd) { break; }
+                        if (exportPos >= sectionEnd) {
+                            break;
+                        }
                         byte = bytes[exportPos++];
                         nameLen |= (byte & 0x7f) << shift;
                         shift += 7;
@@ -676,7 +688,9 @@ const _wasmProtectionBypass = {
                     let index = 0;
                     shift = 0;
                     do {
-                        if (exportPos >= sectionEnd) { break; }
+                        if (exportPos >= sectionEnd) {
+                            break;
+                        }
                         byte = bytes[exportPos++];
                         index |= (byte & 0x7f) << shift;
                         shift += 7;
@@ -1065,7 +1079,9 @@ const _wasmProtectionBypass = {
 
     // Hook WASM loading via fetch
     hookWASMLoading: function () {
-        if (!this.config.detection.monitor_fetch) { return; }
+        if (!this.config.detection.monitor_fetch) {
+            return;
+        }
 
         // Hook fetch
         const originalFetch = window.fetch;
@@ -1448,7 +1464,9 @@ const _wasmProtectionBypass = {
 
     // Hook WebWorker WASM support
     hookWebWorkerWASM: function () {
-        if (!this.config.modernFeatures.webWorkers.enabled) { return; }
+        if (!this.config.modernFeatures.webWorkers.enabled) {
+            return;
+        }
 
         // Hook Worker constructor to intercept WASM in workers
         if (typeof Worker !== 'undefined') {
@@ -1513,7 +1531,9 @@ const _wasmProtectionBypass = {
 
     // Hook SharedArrayBuffer and Atomics for shared WASM memory
     hookSharedMemoryFeatures: function () {
-        if (!this.config.modernFeatures.sharedMemory.enabled) { return; }
+        if (!this.config.modernFeatures.sharedMemory.enabled) {
+            return;
+        }
 
         // Hook SharedArrayBuffer creation
         if (typeof SharedArrayBuffer !== 'undefined') {
@@ -1607,8 +1627,12 @@ const _wasmProtectionBypass = {
 
     // Hook BigInt WASM integration for license bypass
     hookBigIntWASMFeatures: function () {
-        if (!this.config.modernFeatures.bigIntSupport.enabled) { return; }
-        if (typeof BigInt === 'undefined') { return; }
+        if (!this.config.modernFeatures.bigIntSupport.enabled) {
+            return;
+        }
+        if (typeof BigInt === 'undefined') {
+            return;
+        }
 
         // Hook BigInt constructor for license key spoofing
         const originalBigInt = BigInt;
@@ -1657,7 +1681,9 @@ const _wasmProtectionBypass = {
 
     // Hook Memory64 WASM features
     hookMemory64Features: function () {
-        if (!this.config.modernFeatures.memory64.enabled) { return; }
+        if (!this.config.modernFeatures.memory64.enabled) {
+            return;
+        }
 
         // Hook WebAssembly.Memory for 64-bit memory bypass
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Memory) {
@@ -1727,7 +1753,9 @@ const _wasmProtectionBypass = {
 
     // Hook SIMD instructions for license bypass
     hookSIMDFeatures: function () {
-        if (!this.config.modernFeatures.simdInstructions.enabled) { return; }
+        if (!this.config.modernFeatures.simdInstructions.enabled) {
+            return;
+        }
 
         // Hook WASM SIMD globals if they exist
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Global) {
@@ -2283,8 +2311,12 @@ const _wasmProtectionBypass = {
                 // Prevent license failure exceptions
                 if (values && values.length > 0) {
                     values = values.map(v => {
-                        if (v === 0 || v === false) { return 1; }
-                        if (typeof v === 'string' && v.includes('LICENSE')) { return 'VALID'; }
+                        if (v === 0 || v === false) {
+                            return 1;
+                        }
+                        if (typeof v === 'string' && v.includes('LICENSE')) {
+                            return 'VALID';
+                        }
                         return v;
                     });
                 }
@@ -2698,7 +2730,6 @@ const _wasmProtectionBypass = {
                                 action: 'rust_panic_suppressed',
                             });
                             // Don't throw on license failures
-
                         };
                     }
 

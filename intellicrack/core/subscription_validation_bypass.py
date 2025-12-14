@@ -1192,7 +1192,8 @@ class SubscriptionValidationBypass:
                                     })
                                 except Exception:
                                     pass
-                except Exception:
+                except Exception as e:
+                    logger.debug("Error searching for tokens: %s", e)
                     continue
 
             for token_name in token_file_names:
@@ -1202,7 +1203,8 @@ class SubscriptionValidationBypass:
                             result["found"] = True
                             if str(match) not in result["token_locations"]:
                                 result["token_locations"].append(str(match))
-                except Exception:
+                except Exception as e:
+                    logger.debug("Error searching for tokens: %s", e)
                     continue
 
         if result["found"]:

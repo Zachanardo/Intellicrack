@@ -43,6 +43,7 @@ _joblib: ModuleType | None = None
 JOBLIB_AVAILABLE = False
 try:
     import joblib as _joblib_module
+
     _joblib = _joblib_module
     JOBLIB_AVAILABLE = True
 except ImportError as e:
@@ -54,6 +55,7 @@ _psutil: ModuleType | None = None
 PSUTIL_AVAILABLE = False
 try:
     from intellicrack.handlers.psutil_handler import psutil as _psutil_module
+
     _psutil = _psutil_module
     PSUTIL_AVAILABLE = True
 except ImportError as e:

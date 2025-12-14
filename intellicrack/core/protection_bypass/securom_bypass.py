@@ -152,7 +152,7 @@ class SecuROMBypass:
             self._kernel32.CloseHandle.restype = wintypes.BOOL
 
         except Exception as e:
-            self.logger.warning(f"Failed to setup Windows API functions: {e}")
+            self.logger.warning("Failed to setup Windows API functions: %s", e, exc_info=True)
 
     def remove_securom(self) -> SecuROMRemovalResult:
         """Perform complete SecuROM removal from system.
@@ -236,7 +236,7 @@ class SecuROMBypass:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.warning(f"Failed to stop SecuROM services: {e}")
+            self.logger.warning("Failed to stop SecuROM services: %s", e, exc_info=True)
 
         return stopped
 
@@ -267,7 +267,7 @@ class SecuROMBypass:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.warning(f"Failed to delete SecuROM services: {e}")
+            self.logger.warning("Failed to delete SecuROM services: %s", e, exc_info=True)
 
         return deleted
 
@@ -335,7 +335,7 @@ class SecuROMBypass:
                     path.unlink()
                     removed.append(driver_path)
                 except Exception as e:
-                    self.logger.debug(f"Failed to remove driver {driver_path}: {e}")
+                    self.logger.debug("Failed to remove driver %s: %s", driver_path, e, exc_info=True)
 
         return removed
 
@@ -358,7 +358,7 @@ class SecuROMBypass:
                     shutil.rmtree(sr_dir)
                     deleted.append(str(sr_dir))
                 except Exception as e:
-                    self.logger.debug(f"Failed to remove SecuROM directory {sr_dir}: {e}")
+                    self.logger.debug("Failed to remove SecuROM directory %s: %s", sr_dir, e, exc_info=True)
 
         return deleted
 
@@ -604,6 +604,7 @@ class SecuROMBypass:
             details = f"Removed {triggers_removed} online validation triggers"
 
         except Exception as e:
+            self.logger.exception("Failed to remove triggers: %s", e)
             errors.append(str(e))
             success = False
             details = "Failed to remove triggers"

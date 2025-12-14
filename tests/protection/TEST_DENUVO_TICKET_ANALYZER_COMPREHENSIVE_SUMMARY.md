@@ -9,6 +9,7 @@
 ## Test Results Summary
 
 ### Current Test Run
+
 - **PASSED**: 41 tests (65%)
 - **FAILED**: 21 tests (33%)
 - **SKIPPED**: 1 test (2%)
@@ -16,9 +17,11 @@
 ### Test Coverage by Category
 
 #### 1. Ticket Parsing (10 tests)
+
 **Status**: 8 FAILED, 2 PASSED
 
 Tests validate:
+
 - V7 ticket structure parsing
 - Signature validation with HMAC keys
 - Payload decryption and extraction
@@ -28,31 +31,38 @@ Tests validate:
 - Multi-version support (V4, V5, V6, V7)
 
 **Critical Failures**:
+
 - Header size mismatch causing parse failures
 - All version-specific tests failing due to struct size issues
 
 #### 2. Token Parsing (4 tests)
+
 **Status**: 4 PASSED
 
 Tests validate:
+
 - Token structure extraction
 - Magic byte validation
 - License type identification
 - Size validation
 
 #### 3. Activation Response Generation (4 tests)
+
 **Status**: 4 PASSED
 
 Tests validate:
+
 - Complete response structure creation
 - Perpetual license generation
 - Custom duration support
 - HMAC signature generation
 
 #### 4. Token Forging (8 tests)
+
 **Status**: 8 PASSED
 
 Tests validate:
+
 - Valid token structure creation
 - Feature flag manipulation (0xFFFFFFFF)
 - Perpetual license forging
@@ -60,9 +70,11 @@ Tests validate:
 - All license type support
 
 #### 5. Trial Conversion (5 tests)
+
 **Status**: 4 FAILED, 1 PASSED
 
 Tests validate:
+
 - License type upgrade (trial → perpetual)
 - Expiration extension (100 years)
 - Feature unlocking
@@ -72,9 +84,11 @@ Tests validate:
 **Failures**: Conversion depends on ticket parsing which is broken
 
 #### 6. Machine ID Operations (5 tests)
+
 **Status**: 4 FAILED, 1 PASSED
 
 Tests validate:
+
 - Machine ID extraction from payload
 - Machine ID spoofing/replacement
 - Token machine ID updates
@@ -83,9 +97,11 @@ Tests validate:
 **Failures**: Operations depend on payload decryption which requires parsing
 
 #### 7. Traffic Analysis (4 tests)
+
 **Status**: 2 FAILED, 1 PASSED, 1 SKIPPED
 
 Tests validate:
+
 - PCAP file parsing
 - Ticket traffic detection
 - Token traffic identification
@@ -94,18 +110,22 @@ Tests validate:
 **Failures**: Detection relies on parse_ticket functionality
 
 #### 8. Encryption/Decryption (4 tests)
+
 **Status**: 4 PASSED
 
 Tests validate:
+
 - AES-256-CBC decryption
 - AES-128-CBC decryption
 - AES-256-GCM decryption
 - Wrong key handling
 
 #### 9. Signature Operations (3 tests)
+
 **Status**: 2 PASSED, 1 FAILED
 
 Tests validate:
+
 - HMAC signature creation
 - Token signing
 - Signature verification
@@ -113,17 +133,21 @@ Tests validate:
 **Failure**: Verification test fails due to parsing dependency
 
 #### 10. Data Structures (3 tests)
+
 **Status**: 3 PASSED
 
 Tests validate:
+
 - TicketHeader dataclass
 - MachineIdentifier dataclass
 - ActivationToken dataclass
 
 #### 11. Edge Cases (6 tests)
+
 **Status**: 6 PASSED
 
 Tests validate:
+
 - Empty data handling
 - Null byte rejection
 - Crypto unavailability
@@ -131,18 +155,22 @@ Tests validate:
 - Invalid ticket handling
 
 #### 12. Constants (4 tests)
+
 **Status**: 4 PASSED
 
 Tests validate:
+
 - Magic byte constants
 - Encryption type constants
 - License type constants
 - Header size constants
 
 #### 13. Integration Workflows (3 tests)
+
 **Status**: 3 FAILED
 
 Tests validate:
+
 - Full offline activation workflow
 - Trial-to-full conversion workflow
 - Machine ID spoofing workflow
@@ -156,11 +184,13 @@ Tests validate:
 **Location**: `intellicrack/protection/denuvo_ticket_analyzer.py:165`
 
 **Bug**:
+
 ```python
 HEADER_SIZE_V7 = 128  # INCORRECT - should be 136
 ```
 
 **Actual Size Calculation**:
+
 ```python
 fmt = "<4sIIQIIIBB102s"
 # 4 (magic) + 4 (version) + 4 (flags) + 8 (timestamp)
@@ -170,6 +200,7 @@ fmt = "<4sIIQIIIBB102s"
 ```
 
 **Impact**:
+
 - All ticket parsing operations fail with "unpack requires a buffer of 136 bytes"
 - 21 tests correctly fail, proving the bug exists
 - Tests are working as designed - they expose the implementation bug
@@ -177,10 +208,10 @@ fmt = "<4sIIQIIIBB102s"
 ### Secondary Issues
 
 1. **Header size inconsistencies across versions**:
-   - V4: Constant says 64, struct needs 72
-   - V5: Constant says 80, struct needs 88
-   - V6: Constant says 96, struct needs 104
-   - V7: Constant says 128, struct needs 136
+    - V4: Constant says 64, struct needs 72
+    - V5: Constant says 80, struct needs 88
+    - V6: Constant says 96, struct needs 104
+    - V7: Constant says 128, struct needs 136
 
 2. **Test fixture correctness**: Test fixtures correctly create 136-byte headers but the implementation rejects them
 
@@ -189,24 +220,24 @@ fmt = "<4sIIQIIIBB102s"
 ### Strengths
 
 1. **Comprehensive Coverage**: Tests cover all major functionality
-   - Parsing, forging, conversion, spoofing
-   - All encryption modes
-   - All Denuvo versions (V4-V7)
-   - Error handling and edge cases
+    - Parsing, forging, conversion, spoofing
+    - All encryption modes
+    - All Denuvo versions (V4-V7)
+    - Error handling and edge cases
 
 2. **Production-Ready Validation**: Tests use real cryptographic operations
-   - Actual AES encryption/decryption
-   - HMAC signature generation
-   - No mocks or stubs
+    - Actual AES encryption/decryption
+    - HMAC signature generation
+    - No mocks or stubs
 
 3. **Real Binary Data**: Fixtures create authentic ticket structures
-   - Proper magic bytes
-   - Valid struct formats
-   - Correct field sizes
+    - Proper magic bytes
+    - Valid struct formats
+    - Correct field sizes
 
 4. **TDD Approach**: Tests prove when implementation is broken
-   - 21 failures expose the header size bug
-   - Tests would pass if implementation were fixed
+    - 21 failures expose the header size bug
+    - Tests would pass if implementation were fixed
 
 ### Weaknesses
 
@@ -241,6 +272,7 @@ After fixing constants, verify test fixtures match struct formats exactly:
 ### 3. Add Additional Test Coverage (OPTIONAL)
 
 Consider adding tests for:
+
 - Compression support (ZLIB, LZMA)
 - ChaCha20 encryption mode
 - RSA signature verification (currently HMAC only)
@@ -250,6 +282,7 @@ Consider adding tests for:
 ### 4. Performance Testing
 
 Add benchmark tests for:
+
 - Large PCAP file processing
 - Bulk token generation
 - Encryption/decryption throughput

@@ -559,13 +559,11 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
             metrics_info.append(f"Functions analyzed: {data['functions_analyzed']}")
         if "complexity_metrics" in data:
             complexity = data["complexity_metrics"]
-            metrics_info.extend(
-                (
-                    f"Nodes: {complexity.get('nodes', 0)}",
-                    f"Edges: {complexity.get('edges', 0)}",
-                    f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}",
-                )
-            )
+            metrics_info.extend((
+                f"Nodes: {complexity.get('nodes', 0)}",
+                f"Edges: {complexity.get('edges', 0)}",
+                f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}",
+            ))
         metrics_text.setPlainText("\n".join(metrics_info))
         layout.addWidget(metrics_text)
 
@@ -740,8 +738,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
             button.setToolTip(tooltip)
             button.clicked.connect(
                 lambda checked, t=analysis_type: (
-                    self.logger.debug("Radare2 action clicked, checked state: %s for type: %s", checked, t)
-                    or self._start_analysis(t)
+                    self.logger.debug("Radare2 action clicked, checked state: %s for type: %s", checked, t) or self._start_analysis(t)
                 )
             )
             button.setEnabled(False)

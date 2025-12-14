@@ -12,14 +12,15 @@ Comprehensive production-ready tests for `intellicrack/core/analysis/radare2_emu
 - **Lines of Code**: 1,200+
 - **Test Count**: 48 comprehensive tests
 - **Real Binaries Used**:
-  - `C:\Windows\System32\notepad.exe` (primary test target)
-  - `C:\Windows\System32\kernel32.dll` (system library testing)
-  - `C:\Windows\System32\ntdll.dll` (low-level API testing)
-  - `C:\Windows\System32\calc.exe` (complex binary testing)
+    - `C:\Windows\System32\notepad.exe` (primary test target)
+    - `C:\Windows\System32\kernel32.dll` (system library testing)
+    - `C:\Windows\System32\ntdll.dll` (low-level API testing)
+    - `C:\Windows\System32\calc.exe` (complex binary testing)
 
 ## Test Categories (48 Tests Total)
 
 ### 1. ESIL Emulation Initialization (5 tests)
+
 Tests emulator initialization and ESIL VM setup on real binaries.
 
 - `test_emulator_opens_real_binary_successfully` - Validates radare2 opens Windows binaries
@@ -31,6 +32,7 @@ Tests emulator initialization and ESIL VM setup on real binaries.
 **Validation Method**: Tests FAIL if emulator cannot initialize or detect binary properties.
 
 ### 2. Register State Management (4 tests)
+
 Tests register read/write operations during emulation.
 
 - `test_esil_reads_initial_register_state` - Reads register values from ESIL VM
@@ -41,6 +43,7 @@ Tests register read/write operations during emulation.
 **Validation Method**: Tests verify actual register values match expected values. FAIL if values incorrect.
 
 ### 3. Memory Read/Write Emulation (4 tests)
+
 Tests memory operations during emulation.
 
 - `test_esil_initializes_stack_memory` - Validates stack pointer initialization
@@ -51,6 +54,7 @@ Tests memory operations during emulation.
 **Validation Method**: Tests verify memory contains expected data. FAIL if memory operations incorrect.
 
 ### 4. Instruction Stepping Execution (5 tests)
+
 Tests instruction-by-instruction emulation through real code.
 
 - `test_esil_steps_through_instructions` - Steps through 10 instructions
@@ -62,6 +66,7 @@ Tests instruction-by-instruction emulation through real code.
 **Validation Method**: Tests verify execution paths are non-empty and instruction counts correct. FAIL if emulation doesn't progress.
 
 ### 5. License Validation Routine Emulation (4 tests)
+
 Tests emulation of patterns found in license validation code.
 
 - `test_esil_emulates_comparison_operations` - Emulates CMP instructions
@@ -72,6 +77,7 @@ Tests emulation of patterns found in license validation code.
 **Validation Method**: Tests find functions with license-check patterns (CMP, XOR, conditional jumps) and verify emulation succeeds.
 
 ### 6. Stack Operations Emulation (4 tests)
+
 Tests stack operation handling.
 
 - `test_esil_handles_push_operation` - Emulates PUSH instructions
@@ -82,6 +88,7 @@ Tests stack operation handling.
 **Validation Method**: Tests verify stack operations complete successfully.
 
 ### 7. Conditional Branch Emulation (3 tests)
+
 Tests conditional branch handling.
 
 - `test_esil_identifies_conditional_jumps` - Finds JE, JNE, JZ, etc.
@@ -91,6 +98,7 @@ Tests conditional branch handling.
 **Validation Method**: Tests verify constraint extraction from conditional branches.
 
 ### 8. Loop Detection and Handling (2 tests)
+
 Tests loop detection and execution limiting.
 
 - `test_esil_detects_simple_loop_structure` - Detects backward jumps
@@ -99,6 +107,7 @@ Tests loop detection and execution limiting.
 **Validation Method**: Tests verify execution limits are enforced (max 100 instructions).
 
 ### 9. Unicorn Engine Integration (5 tests)
+
 Tests Unicorn engine emulation capabilities.
 
 - `test_unicorn_engine_setup_succeeds` - Initializes Unicorn engine
@@ -110,6 +119,7 @@ Tests Unicorn engine emulation capabilities.
 **Validation Method**: Tests verify Unicorn engine initializes and executes code. FAIL if engine doesn't work.
 
 ### 10. Symbolic Execution (3 tests)
+
 Tests symbolic execution path discovery with Z3.
 
 - `test_symbolic_execution_finds_paths` - Discovers execution paths
@@ -119,6 +129,7 @@ Tests symbolic execution path discovery with Z3.
 **Validation Method**: Tests verify path discovery and constraint generation.
 
 ### 11. Taint Analysis (2 tests)
+
 Tests taint tracking and propagation.
 
 - `test_taint_analysis_tracks_propagation` - Tracks taint propagation
@@ -127,6 +138,7 @@ Tests taint tracking and propagation.
 **Validation Method**: Tests verify taint sources are tracked through execution.
 
 ### 12. Constraint Solving with Z3 (3 tests)
+
 Tests Z3 constraint solving capabilities.
 
 - `test_constraint_solver_solves_simple_equation` - Solves x == 42
@@ -136,6 +148,7 @@ Tests Z3 constraint solving capabilities.
 **Validation Method**: Tests verify Z3 produces correct solutions or None for UNSAT.
 
 ### 13. Vulnerability Detection (3 tests)
+
 Tests automatic vulnerability detection.
 
 - `test_finds_dangerous_function_imports` - Finds strcpy, sprintf, etc.
@@ -145,6 +158,7 @@ Tests automatic vulnerability detection.
 **Validation Method**: Tests verify vulnerability scanner identifies risky patterns.
 
 ### 14. Exploit Generation (5 tests)
+
 Tests exploit generation for identified vulnerabilities.
 
 - `test_generates_buffer_overflow_exploit` - Creates buffer overflow exploit
@@ -154,12 +168,14 @@ Tests exploit generation for identified vulnerabilities.
 - `test_exploit_report_generation` - Generates comprehensive exploit report
 
 **Validation Method**: Tests verify exploits contain:
+
 - Non-empty trigger input
 - Valid payload data
 - Reliability score (0.0-1.0)
 - Metadata with exploitation details
 
 ### 15. Performance Benchmarks (3 tests)
+
 Tests emulation performance on real binaries.
 
 - `test_esil_emulation_performance` - ESIL completes in < 10 seconds
@@ -169,6 +185,7 @@ Tests emulation performance on real binaries.
 **Validation Method**: Tests FAIL if emulation takes longer than specified timeout.
 
 ### 16. Edge Cases and Error Handling (6 tests)
+
 Tests error handling and edge cases.
 
 - `test_handles_invalid_start_address` - Handles 0xDEADBEEF address
@@ -181,6 +198,7 @@ Tests error handling and edge cases.
 **Validation Method**: Tests verify emulator doesn't crash on invalid inputs.
 
 ### 17. Memory Mapping and Access Control (2 tests)
+
 Tests memory region mapping.
 
 - `test_unicorn_maps_code_section` - Maps executable sections
@@ -189,6 +207,7 @@ Tests memory region mapping.
 **Validation Method**: Tests verify all sections are mapped with correct permissions.
 
 ### 18. Emulation State Snapshots (2 tests)
+
 Tests state capture and preservation.
 
 - `test_esil_captures_final_register_state` - Captures register state
@@ -197,6 +216,7 @@ Tests state capture and preservation.
 **Validation Method**: Tests verify EmulationResult contains complete state information.
 
 ### 19. Complex Emulation Scenarios (3 tests)
+
 Tests real-world complex scenarios.
 
 - `test_emulates_function_with_multiple_branches` - Handles 3+ conditional branches
@@ -260,41 +280,41 @@ pytest tests/core/analysis/test_radare2_emulator_production.py --cov=intellicrac
 ### Covered Functionality
 
 1. **ESIL Emulation Core** (100%):
-   - VM initialization
-   - Register operations
-   - Memory operations
-   - Instruction stepping
-   - Constraint extraction
+    - VM initialization
+    - Register operations
+    - Memory operations
+    - Instruction stepping
+    - Constraint extraction
 
 2. **Unicorn Engine** (90%):
-   - Engine setup
-   - Section mapping
-   - Execution hooks
-   - Register reading
-   - Memory tracking
+    - Engine setup
+    - Section mapping
+    - Execution hooks
+    - Register reading
+    - Memory tracking
 
 3. **Symbolic Execution** (85%):
-   - Path discovery
-   - Basic block analysis
-   - Constraint generation
-   - Z3 solver integration
+    - Path discovery
+    - Basic block analysis
+    - Constraint generation
+    - Z3 solver integration
 
 4. **Taint Analysis** (80%):
-   - Taint source initialization
-   - Register propagation
-   - Memory propagation
+    - Taint source initialization
+    - Register propagation
+    - Memory propagation
 
 5. **Exploit Generation** (90%):
-   - Buffer overflow exploits
-   - Format string exploits
-   - Integer overflow exploits
-   - Use-after-free exploits
-   - Exploit reporting
+    - Buffer overflow exploits
+    - Format string exploits
+    - Integer overflow exploits
+    - Use-after-free exploits
+    - Exploit reporting
 
 6. **Vulnerability Detection** (85%):
-   - Dangerous function detection
-   - Integer overflow detection
-   - Import analysis
+    - Dangerous function detection
+    - Integer overflow detection
+    - Import analysis
 
 ## Test Validation Strategy
 
@@ -400,49 +420,49 @@ name: Radare2 Emulator Tests
 on: [push, pull_request]
 
 jobs:
-  test:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-      - name: Run tests
-        run: |
-          pytest tests/core/analysis/test_radare2_emulator_production.py -v --cov --cov-report=xml
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+    test:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: '3.10'
+            - name: Install dependencies
+              run: |
+                  pip install -r requirements.txt
+            - name: Run tests
+              run: |
+                  pytest tests/core/analysis/test_radare2_emulator_production.py -v --cov --cov-report=xml
+            - name: Upload coverage
+              uses: codecov/codecov-action@v3
 ```
 
 ## Performance Benchmarks
 
 ### Expected Execution Times (Windows 11, i7-9700K)
 
-| Test Category | Count | Avg Time | Max Time |
-|--------------|-------|----------|----------|
-| ESIL Init | 5 | 0.8s | 2s |
-| Register Mgmt | 4 | 0.5s | 1s |
-| Memory Ops | 4 | 0.6s | 1.5s |
-| Instruction Step | 5 | 1.2s | 3s |
-| License Emulation | 4 | 1.5s | 4s |
-| Stack Ops | 4 | 0.7s | 2s |
-| Branches | 3 | 1.0s | 2.5s |
-| Loops | 2 | 1.5s | 3s |
-| Unicorn | 5 | 2.5s | 8s |
-| Symbolic | 3 | 5.0s | 15s |
-| Taint | 2 | 3.0s | 8s |
-| Constraints | 3 | 0.3s | 1s |
-| Vuln Detection | 3 | 2.0s | 5s |
-| Exploit Gen | 5 | 1.5s | 4s |
-| Performance | 3 | 8.0s | 20s |
-| Edge Cases | 6 | 1.0s | 3s |
-| Memory Mapping | 2 | 1.5s | 4s |
-| State Snapshots | 2 | 1.0s | 2.5s |
-| Complex Scenarios | 3 | 3.0s | 8s |
+| Test Category     | Count | Avg Time | Max Time |
+| ----------------- | ----- | -------- | -------- |
+| ESIL Init         | 5     | 0.8s     | 2s       |
+| Register Mgmt     | 4     | 0.5s     | 1s       |
+| Memory Ops        | 4     | 0.6s     | 1.5s     |
+| Instruction Step  | 5     | 1.2s     | 3s       |
+| License Emulation | 4     | 1.5s     | 4s       |
+| Stack Ops         | 4     | 0.7s     | 2s       |
+| Branches          | 3     | 1.0s     | 2.5s     |
+| Loops             | 2     | 1.5s     | 3s       |
+| Unicorn           | 5     | 2.5s     | 8s       |
+| Symbolic          | 3     | 5.0s     | 15s      |
+| Taint             | 2     | 3.0s     | 8s       |
+| Constraints       | 3     | 0.3s     | 1s       |
+| Vuln Detection    | 3     | 2.0s     | 5s       |
+| Exploit Gen       | 5     | 1.5s     | 4s       |
+| Performance       | 3     | 8.0s     | 20s      |
+| Edge Cases        | 6     | 1.0s     | 3s       |
+| Memory Mapping    | 2     | 1.5s     | 4s       |
+| State Snapshots   | 2     | 1.0s     | 2.5s     |
+| Complex Scenarios | 3     | 3.0s     | 8s       |
 
 **Total Suite Runtime**: ~90-180 seconds (depending on system)
 
@@ -485,6 +505,7 @@ jobs:
 These 48 comprehensive tests provide **production-ready validation** of the radare2 emulator's capabilities. Every test uses **real Windows binaries** and validates **actual functionality** - no mocks, no stubs, no simulations.
 
 Tests prove the emulator can:
+
 - ✓ Initialize and analyze real binaries
 - ✓ Emulate x86/x64 instructions via ESIL
 - ✓ Emulate via Unicorn engine

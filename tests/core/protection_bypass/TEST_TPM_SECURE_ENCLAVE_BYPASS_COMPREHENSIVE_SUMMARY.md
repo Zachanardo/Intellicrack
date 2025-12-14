@@ -11,6 +11,7 @@
 ### Total Test Count: 67 Tests
 
 ### Test Classes:
+
 1. **TestTPMEmulator** (27 tests) - TPM emulation bypass tests
 2. **TestSGXEmulator** (17 tests) - SGX enclave emulation bypass tests
 3. **TestSecureEnclaveBypass** (19 tests) - Unified bypass system tests
@@ -32,14 +33,16 @@
 **Issue**: The implementation uses `TPM_RC.AUTH_FAIL` (lines 556, 625, 754) but the enum defines `TPM_RC.AUTHFAIL` (line 34).
 
 **Impact**:
+
 - All authorization failure checks return an undefined attribute
 - This will cause `AttributeError` exceptions in production use
 - Affects 3 critical security functions:
-  - `create_primary_key()` - Line 556
-  - `sign()` - Line 625
-  - `unseal()` - Line 754
+    - `create_primary_key()` - Line 556
+    - `sign()` - Line 625
+    - `unseal()` - Line 754
 
 **Failed Tests Due to This Bug**:
+
 1. `test_create_primary_key_fails_with_wrong_auth_enforcing_security`
 2. `test_sign_fails_with_wrong_auth`
 3. `test_unseal_fails_with_wrong_auth`
@@ -49,6 +52,7 @@
 ### Missing Dependencies for Advanced Features
 
 **Issue**: Several tests fail due to missing optional dependencies:
+
 - `wmi` module (Windows Management Instrumentation)
 - `cpuinfo` module (CPU information detection)
 - `keystone` module (Assembly generation for driver code)
@@ -56,6 +60,7 @@
 - `frida` module (Dynamic instrumentation)
 
 **Failed Tests Due to Missing Dependencies**:
+
 1. `test_bypass_remote_attestation_generates_valid_response_defeating_attestation_checks`
 2. `test_tpm_quote_creation_generates_valid_quote_bypassing_tpm_attestation`
 3. `test_sgx_quote_creation_generates_valid_quote_bypassing_sgx_attestation`
@@ -81,21 +86,21 @@
 ### Test Methodology:
 
 1. **Real Cryptographic Operations**:
-   - RSA key generation and signing (2048-bit)
-   - ECC key generation and signing (P-256 curve)
-   - SHA-256 hashing for PCR measurements
-   - ECDSA signatures for SGX quotes
+    - RSA key generation and signing (2048-bit)
+    - ECC key generation and signing (P-256 curve)
+    - SHA-256 hashing for PCR measurements
+    - ECDSA signatures for SGX quotes
 
 2. **Hardware Bypass Validation**:
-   - TPM emulator creates valid TPM 2.0 state
-   - SGX emulator generates valid enclave measurements
-   - Attestation bypass produces properly formatted quotes
-   - Platform certificate generation matches real hardware
+    - TPM emulator creates valid TPM 2.0 state
+    - SGX emulator generates valid enclave measurements
+    - Attestation bypass produces properly formatted quotes
+    - Platform certificate generation matches real hardware
 
 3. **Error Handling Verification**:
-   - Tests validate proper error codes returned
-   - Edge cases tested (invalid indices, corrupted data)
-   - Authorization checks enforced correctly (found bug here)
+    - Tests validate proper error codes returned
+    - Edge cases tested (invalid indices, corrupted data)
+    - Authorization checks enforced correctly (found bug here)
 
 ## Offensive Capability Validation
 
@@ -120,6 +125,7 @@
 ### Remote Attestation Bypass:
 
 Tests validate that the bypass system can:
+
 - Generate TPM quotes that pass verification
 - Create SGX quotes matching Intel specifications
 - Extract/generate platform certificates
@@ -132,6 +138,7 @@ Tests validate that the bypass system can:
 **Average per test**: ~0.72 seconds
 
 Slower tests involve cryptographic operations:
+
 - RSA key generation: ~0.5-1s per test
 - ECC key generation: ~0.2-0.5s per test
 - Quote generation: ~1-2s per test
@@ -147,6 +154,7 @@ Slower tests involve cryptographic operations:
 ## Test Scenarios Covered
 
 ### Positive Test Cases (Features Working):
+
 - Valid TPM operations with correct auth
 - Valid SGX operations on existing enclaves
 - Successful sealing/unsealing with matching PCRs
@@ -154,6 +162,7 @@ Slower tests involve cryptographic operations:
 - Quote structure validation
 
 ### Negative Test Cases (Error Handling):
+
 - Invalid hierarchy handles
 - Wrong authorization values (**FOUND BUG HERE**)
 - Invalid PCR indices
@@ -162,6 +171,7 @@ Slower tests involve cryptographic operations:
 - Invalid enclave IDs
 
 ### Edge Cases:
+
 - PCR extend chaining (multiple extends)
 - Different enclave measurements (ensuring isolation)
 - Random value uniqueness
@@ -197,6 +207,7 @@ Slower tests involve cryptographic operations:
 The test suite successfully validates the TPM and SGX bypass implementation's offensive capabilities. **Tests discovered a critical bug** in the authorization failure handling that would cause runtime errors in production use. After fixing this bug and installing missing dependencies, this bypass system will provide robust capabilities for defeating hardware-based license protections in controlled security research environments.
 
 The tests prove that:
+
 1. TPM emulation works correctly for defeating TPM-based license checks
 2. SGX emulation successfully bypasses enclave-based protections
 3. Remote attestation bypass generates valid quotes

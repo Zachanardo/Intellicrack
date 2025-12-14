@@ -596,11 +596,7 @@ class SystemUtilitiesDialog(QDialog):
             try:
                 pixmap = QPixmap(output_path)
                 if not pixmap.isNull():
-                    scaled_pixmap = pixmap.scaled(
-                        128, 128,
-                        Qt.AspectRatioMode.KeepAspectRatio,
-                        Qt.TransformationMode.SmoothTransformation
-                    )
+                    scaled_pixmap = pixmap.scaled(128, 128, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                     if self.icon_preview is not None:
                         self.icon_preview.setPixmap(scaled_pixmap)
                 elif self.icon_preview is not None:

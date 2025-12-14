@@ -54,7 +54,7 @@ class AnalysisStatsGenerator:
             return dict(counts)
 
         except Exception as e:
-            logger.debug(f"Attribute counting failed: {e}")
+            logger.debug("Attribute counting failed: %s", e, exc_info=True)
             return {}
 
     @staticmethod
@@ -78,7 +78,7 @@ class AnalysisStatsGenerator:
 
             return {key: (count / total) * 100.0 for key, count in counts.items()}
         except Exception as e:
-            logger.debug(f"Distribution calculation failed: {e}")
+            logger.debug("Distribution calculation failed: %s", e, exc_info=True)
             return {}
 
     @staticmethod
@@ -119,7 +119,7 @@ class AnalysisStatsGenerator:
             }
 
         except Exception as e:
-            logger.debug(f"Numeric stats calculation failed: {e}")
+            logger.debug("Numeric stats calculation failed: %s", e, exc_info=True)
             return {
                 "count": 0,
                 "min": 0.0,
@@ -167,7 +167,7 @@ class AnalysisStatsGenerator:
             return correlation_matrix
 
         except Exception as e:
-            logger.debug(f"Correlation matrix generation failed: {e}")
+            logger.debug("Correlation matrix generation failed: %s", e, exc_info=True)
             return {}
 
     @staticmethod
@@ -188,7 +188,7 @@ class AnalysisStatsGenerator:
 
             return 0.0 if denominator == 0 else numerator / denominator
         except Exception as e:
-            logger.debug(f"Correlation calculation failed: {e}")
+            logger.debug("Correlation calculation failed: %s", e, exc_info=True)
             return 0.0
 
     @staticmethod
@@ -240,7 +240,7 @@ class AnalysisStatsGenerator:
             }
 
         except Exception as e:
-            logger.debug(f"Time series stats generation failed: {e}")
+            logger.debug("Time series stats generation failed: %s", e, exc_info=True)
             return {
                 "interval_seconds": interval_seconds,
                 "total_buckets": 0,
@@ -268,7 +268,7 @@ class AnalysisStatsGenerator:
         try:
             return stats_function()
         except Exception as e:
-            logger.debug(f"Stats generation failed: {e}")
+            logger.debug("Stats generation failed: %s", e, exc_info=True)
             return default_return
 
     @classmethod
@@ -297,13 +297,13 @@ class AnalysisStatsGenerator:
                 return result
             return [str(result)] if result else ["No specific recommendations available"]
         except TypeError as e:
-            logger.debug(f"Recommendation generation type error: {e}")
+            logger.debug("Recommendation generation type error: %s", e, exc_info=True)
             return ["Unable to generate recommendations - type error occurred"]
         except ValueError as e:
-            logger.debug(f"Recommendation generation value error: {e}")
+            logger.debug("Recommendation generation value error: %s", e, exc_info=True)
             return ["Unable to generate recommendations - invalid value encountered"]
         except Exception as e:
-            logger.debug(f"Recommendation generation failed: {e}")
+            logger.debug("Recommendation generation failed: %s", e, exc_info=True)
             return ["Unable to generate recommendations - please review manually"]
 
     @staticmethod
@@ -376,7 +376,7 @@ class AnalysisStatsGenerator:
             return "\n".join(report_lines)
 
         except Exception as e:
-            logger.debug(f"Summary report generation failed: {e}")
+            logger.debug("Summary report generation failed: %s", e, exc_info=True)
             return f"{title}\n{'=' * len(title)}\n\nError generating report: {e}"
 
     @staticmethod
@@ -399,7 +399,7 @@ class AnalysisStatsGenerator:
             return round(growth_rate, 2)
 
         except Exception as e:
-            logger.debug(f"Growth rate calculation failed: {e}")
+            logger.debug("Growth rate calculation failed: %s", e, exc_info=True)
             return 0.0
 
     @staticmethod
@@ -451,7 +451,7 @@ class AnalysisStatsGenerator:
             return outlier_indices
 
         except Exception as e:
-            logger.debug(f"Outlier detection failed: {e}")
+            logger.debug("Outlier detection failed: %s", e, exc_info=True)
             return []
 
     @staticmethod
@@ -493,7 +493,7 @@ class AnalysisStatsGenerator:
             return result
 
         except Exception as e:
-            logger.debug(f"Percentile calculation failed: {e}")
+            logger.debug("Percentile calculation failed: %s", e, exc_info=True)
             return {}
 
 
@@ -539,7 +539,7 @@ class PerformanceTracker:
                 del self.start_times[operation_name]
 
         except Exception as e:
-            logger.debug(f"Performance tracking failed: {e}")
+            logger.debug("Performance tracking failed: %s", e, exc_info=True)
 
     def get_metrics(self) -> dict[str, Any]:
         """Get all collected metrics."""

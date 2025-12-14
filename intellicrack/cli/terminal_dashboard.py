@@ -30,6 +30,8 @@ from typing import Any
 from intellicrack.handlers.psutil_handler import psutil
 
 
+logger = logging.getLogger(__name__)
+
 # Optional imports for enhanced dashboard
 try:
     from rich.align import Align
@@ -236,8 +238,8 @@ class TerminalDashboard:
             if len(self.memory_history) > self.max_history:
                 self.memory_history.pop(0)
 
-        except Exception as e:
-            self.logger.debug(f"Failed to collect system metrics: {e}")
+        except Exception:
+            self.logger.debug("Failed to collect system metrics", exc_info=True)
 
     def _create_system_panel(self) -> Panel:
         """Create system metrics panel."""
@@ -573,10 +575,8 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
                 print("           INTELLICRACK TERMINAL DASHBOARD")
                 print("=" * 60)
 
-                # Update metrics
                 self._update_system_metrics()
 
-                # System metrics
                 print("\nSYSTEM METRICS:")
                 print(f"  CPU Usage:     {self.system_metrics.cpu_percent:5.1f}%")
                 print(f"  Memory Usage:  {self.system_metrics.memory_percent:5.1f}%")
@@ -584,14 +584,12 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
                 print(f"  Processes:     {self.system_metrics.process_count}")
                 print(f"  Uptime:        {self._format_duration(self.system_metrics.uptime)}")
 
-                # Analysis stats
                 print("\nANALYSIS STATISTICS:")
                 print(f"  Binaries:      {self.analysis_stats.total_binaries}")
                 print(f"  Completed:     {self.analysis_stats.analyses_completed}")
                 print(f"  Vulnerabilities: {self.analysis_stats.vulnerabilities_found}")
                 print(f"  Projects:      {self.analysis_stats.active_projects}")
 
-                # Session info
                 session_duration = datetime.now() - self.session_info.start_time
                 print("\nCURRENT SESSION:")
                 print(f"  Duration:      {self._format_duration(session_duration.total_seconds())}")
@@ -602,7 +600,6 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
                 if self.session_info.current_binary:
                     print(f"  Binary:        {os.path.basename(self.session_info.current_binary)}")
 
-                # Recent activity
                 if self.activity_log:
                     print("\nRECENT ACTIVITY:")
                     for activity in self.activity_log[-5:]:

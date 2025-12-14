@@ -1,6 +1,7 @@
 # Radare2 JSON Standardizer Test Coverage Summary
 
 ## Test File
+
 **Location:** `tests/core/analysis/test_radare2_json_standardizer.py`
 **Module Under Test:** `intellicrack.core.analysis.radare2_json_standardizer`
 **Total Tests:** 73
@@ -9,178 +10,209 @@
 ## Test Coverage Overview
 
 ### 1. Initialization and Setup (4 tests)
+
 - **TestR2JSONStandardizerInitialization**
-  - Unique analysis ID generation
-  - ISO timestamp creation
-  - Schema version validation
-  - Analysis type definitions
+    - Unique analysis ID generation
+    - ISO timestamp creation
+    - Schema version validation
+    - Analysis type definitions
 
 ### 2. Base Structure Creation (4 tests)
+
 - **TestBaseStructureCreation**
-  - Required fields validation
-  - Schema versioning
-  - Analysis metadata completeness
-  - Binary metadata calculation (hash, size)
-  - Missing file handling
+    - Required fields validation
+    - Schema versioning
+    - Analysis metadata completeness
+    - Binary metadata calculation (hash, size)
+    - Missing file handling
 
 ### 3. Decompilation Standardization (3 tests)
+
 - **TestDecompilationStandardization**
-  - Function list normalization
-  - Summary statistics calculation
-  - ML feature extraction
+    - Function list normalization
+    - Summary statistics calculation
+    - ML feature extraction
 
 ### 4. Vulnerability Analysis Standardization (3 tests)
+
 - **TestVulnerabilityStandardization**
-  - Multi-category vulnerability aggregation
-  - Severity counting (critical/high/medium/low)
-  - Risk score calculation
+    - Multi-category vulnerability aggregation
+    - Severity counting (critical/high/medium/low)
+    - Risk score calculation
 
 ### 5. String Analysis Standardization (2 tests)
+
 - **TestStringsStandardization**
-  - String data normalization
-  - Comprehensive statistics (entropy, patterns, counts)
+    - String data normalization
+    - Comprehensive statistics (entropy, patterns, counts)
 
 ### 6. Import/Export Analysis Standardization (3 tests)
+
 - **TestImportsStandardization**
-  - Import data normalization
-  - API diversity scoring
-  - Suspicious API identification
+    - Import data normalization
+    - API diversity scoring
+    - Suspicious API identification
 
 ### 7. Control Flow Graph Standardization (2 tests)
+
 - **TestCFGStandardization**
-  - Complexity metrics normalization
-  - Graph density calculation
+    - Complexity metrics normalization
+    - Graph density calculation
 
 ### 8. Address Normalization (4 tests)
+
 - **TestAddressNormalization**
-  - Hex string conversion
-  - Decimal string to hex conversion
-  - Integer to hex conversion
-  - Invalid input handling
+    - Hex string conversion
+    - Decimal string to hex conversion
+    - Integer to hex conversion
+    - Invalid input handling
 
 ### 9. File Operations (4 tests)
+
 - **TestFileOperations**
-  - SHA256 hash calculation
-  - Missing file hash handling
-  - File size calculation
-  - Missing file size handling
+    - SHA256 hash calculation
+    - Missing file hash handling
+    - File size calculation
+    - Missing file size handling
 
 ### 10. Validation System (4 tests)
+
 - **TestValidationSystem**
-  - Schema validation (valid/invalid structures)
-  - Completeness score calculation
-  - Quality score evaluation
-  - Checksum generation
+    - Schema validation (valid/invalid structures)
+    - Completeness score calculation
+    - Quality score evaluation
+    - Checksum generation
 
 ### 11. ML Feature Extraction (4 tests)
+
 - **TestMLFeatureExtraction**
-  - Function feature metrics
-  - Vulnerability vector analysis
-  - String entropy features
-  - API usage categorization
+    - Function feature metrics
+    - Vulnerability vector analysis
+    - String entropy features
+    - API usage categorization
 
 ### 12. Statistical Calculations (4 tests)
+
 - **TestStatisticalCalculations**
-  - Variance computation
-  - Empty list handling
-  - Histogram binning
-  - Percentile distribution
+    - Variance computation
+    - Empty list handling
+    - Histogram binning
+    - Percentile distribution
 
 ### 13. API Analysis Helpers (3 tests)
+
 - **TestAPIAnalysisHelpers**
-  - API categorization by function type
-  - Suspicious API detection
-  - Common library identification
+    - API categorization by function type
+    - Suspicious API detection
+    - Common library identification
 
 ### 14. Comprehensive Analysis (2 tests)
+
 - **TestComprehensiveAnalysisStandardization**
-  - Multi-component aggregation
-  - Overall metrics calculation
+    - Multi-component aggregation
+    - Overall metrics calculation
 
 ### 15. Cross-Component Analysis (3 tests)
+
 - **TestCrossComponentAnalysis**
-  - Component interaction detection
-  - Shared indicator identification
-  - Correlation matrix computation
+    - Component interaction detection
+    - Shared indicator identification
+    - Correlation matrix computation
 
 ### 16. Error Handling (2 tests)
+
 - **TestErrorHandling**
-  - Exception handling in standardization
-  - Error result structure validation
+    - Exception handling in standardization
+    - Error result structure validation
 
 ### 17. Batch Processing (2 tests)
+
 - **TestBatchStandardization**
-  - Multi-result batch processing
-  - Individual failure handling
+    - Multi-result batch processing
+    - Individual failure handling
 
 ### 18. Standalone Functions (1 test)
+
 - **TestStandardizeR2ResultFunction**
-  - Single result standardization
+    - Single result standardization
 
 ### 19. Data Normalization (3 tests)
+
 - **TestDataNormalization**
-  - Function list standardization
-  - String list format handling
-  - Import list standardization
+    - Function list standardization
+    - String list format handling
+    - Import list standardization
 
 ### 20. Entropy Analysis (1 test)
+
 - **TestEntropyAnalysis**
-  - Entropy data standardization
+    - Entropy data standardization
 
 ### 21. CVE Matching (1 test)
+
 - **TestCVEMatching**
-  - CVE data normalization
+    - CVE data normalization
 
 ### 22. AI Analysis (2 tests)
+
 - **TestAIAnalysisStandardization**
-  - AI license detection standardization
-  - Function clustering standardization
+    - AI license detection standardization
+    - Function clustering standardization
 
 ### 23. Nesting Depth (2 tests)
+
 - **TestNestingDepthCalculation**
-  - Nested dictionary depth measurement
-  - Nested list depth measurement
+    - Nested dictionary depth measurement
+    - Nested list depth measurement
 
 ### 24. Generic Data (2 tests)
+
 - **TestGenericDataStandardization**
-  - Unknown type handling
-  - Recursive normalization
+    - Unknown type handling
+    - Recursive normalization
 
 ### 25. Complexity Features (1 test)
+
 - **TestComplexityFeatures**
-  - Function complexity categorization
+    - Function complexity categorization
 
 ### 26. Real-World Scenarios (2 tests)
+
 - **TestRealWorldScenarios**
-  - Complete decompilation workflow validation
-  - Complete vulnerability analysis validation
+    - Complete decompilation workflow validation
+    - Complete vulnerability analysis validation
 
 ### 27. Edge Cases (3 tests)
+
 - **TestEdgeCases**
-  - Empty result handling
-  - Malformed data graceful handling
-  - Very large dataset processing
+    - Empty result handling
+    - Malformed data graceful handling
+    - Very large dataset processing
 
 ## Key Testing Principles Applied
 
 ### 1. Real Data Processing
+
 - All tests use actual JSON structures representing radare2 output
 - No mocked JSON parsing - real transformation validation
 - Actual file operations with temporary files
 - Real SHA256 hashing and file size calculations
 
 ### 2. Type Safety
+
 - Complete type annotations on all test functions
 - Proper typing of parameters and return values
 - Type-safe assertions throughout
 
 ### 3. Production Readiness
+
 - No placeholders or stub implementations
 - Tests prove actual functionality works
 - Comprehensive edge case coverage
 - Error handling validation
 
 ### 4. Real-World Validation
+
 - Tests use realistic binary analysis data structures
 - Validates actual r2 JSON output formats
 - Tests cross-version compatibility handling
@@ -189,7 +221,9 @@
 ## Test Categories
 
 ### Functional Tests (60 tests)
+
 Tests validating core JSON standardization functionality:
+
 - Schema validation and versioning
 - Data transformation and normalization
 - Feature extraction for ML pipelines
@@ -197,14 +231,18 @@ Tests validating core JSON standardization functionality:
 - Cross-reference analysis
 
 ### Integration Tests (8 tests)
+
 Tests validating component interaction:
+
 - Batch processing workflows
 - Cross-component analysis
 - Comprehensive result aggregation
 - Error propagation
 
 ### Edge Case Tests (5 tests)
+
 Tests validating boundary conditions:
+
 - Empty data handling
 - Malformed input recovery
 - Large dataset scalability
@@ -213,6 +251,7 @@ Tests validating boundary conditions:
 ## Coverage Validation
 
 ### Critical Paths Tested
+
 - ✅ All 12 analysis type standardization methods
 - ✅ Base structure creation with metadata
 - ✅ Address normalization (all formats)
@@ -226,6 +265,7 @@ Tests validating boundary conditions:
 - ✅ Error handling and recovery
 
 ### Data Transformation Tested
+
 - ✅ Function list normalization
 - ✅ Vulnerability categorization
 - ✅ String analysis standardization
@@ -236,6 +276,7 @@ Tests validating boundary conditions:
 - ✅ Entropy analysis normalization
 
 ### Quality Metrics Tested
+
 - ✅ Completeness score calculation
 - ✅ Quality score evaluation
 - ✅ Data checksum generation
@@ -246,6 +287,7 @@ Tests validating boundary conditions:
 ## Execution Requirements
 
 ### Dependencies
+
 - pytest
 - pytest-cov (for coverage)
 - pathlib (standard library)
@@ -255,6 +297,7 @@ Tests validating boundary conditions:
 - typing (standard library)
 
 ### Test Execution
+
 ```bash
 # Run all tests
 pixi run pytest tests/core/analysis/test_radare2_json_standardizer.py -v
@@ -272,6 +315,7 @@ pixi run pytest tests/core/analysis/test_radare2_json_standardizer.py -vv --tb=s
 ## Test Quality Metrics
 
 ### Validation Strength
+
 - **No mocks for core functionality**: All JSON processing uses real data
 - **Real file operations**: Actual file creation, hashing, size calculation
 - **Production data structures**: Tests use realistic r2 output formats
@@ -279,6 +323,7 @@ pixi run pytest tests/core/analysis/test_radare2_json_standardizer.py -vv --tb=s
 - **Type safety**: Full type annotations throughout
 
 ### Code Coverage Target
+
 - **Minimum line coverage**: 85%
 - **Minimum branch coverage**: 80%
 - **All public methods tested**
@@ -288,7 +333,9 @@ pixi run pytest tests/core/analysis/test_radare2_json_standardizer.py -vv --tb=s
 ## Real-World Scenarios Validated
 
 ### License Analysis Workflow
+
 Tests validate complete workflow for analyzing software licensing:
+
 1. Parse decompilation results with license function detection
 2. Normalize function metadata (addresses, sizes, complexity)
 3. Extract ML features for pattern recognition
@@ -296,7 +343,9 @@ Tests validate complete workflow for analyzing software licensing:
 5. Generate standardized output
 
 ### Vulnerability Analysis Workflow
+
 Tests validate vulnerability detection and analysis:
+
 1. Aggregate vulnerabilities from multiple categories
 2. Normalize severity levels and exploit data
 3. Calculate risk scores
@@ -304,7 +353,9 @@ Tests validate vulnerability detection and analysis:
 5. Generate comprehensive reports
 
 ### Import Analysis Workflow
+
 Tests validate API usage analysis:
+
 1. Normalize import/export data
 2. Categorize APIs by function type
 3. Identify suspicious API patterns
@@ -314,6 +365,7 @@ Tests validate API usage analysis:
 ## Success Criteria
 
 ### Test Pass Requirements
+
 ✅ All 73 tests must pass
 ✅ No mocked core functionality
 ✅ Real data transformation validation
@@ -321,12 +373,14 @@ Tests validate API usage analysis:
 ✅ Proper error handling
 
 ### Coverage Requirements
+
 ✅ Minimum 85% line coverage
 ✅ Minimum 80% branch coverage
 ✅ All public methods tested
 ✅ All error paths validated
 
 ### Quality Requirements
+
 ✅ Production-ready code only
 ✅ No placeholders or TODOs
 ✅ Comprehensive edge cases
@@ -337,6 +391,7 @@ Tests validate API usage analysis:
 **Status:** ✅ COMPLETE
 
 **Deliverables:**
+
 1. ✅ 73 production-grade tests created
 2. ✅ Zero mocks for core JSON processing
 3. ✅ Complete type annotations

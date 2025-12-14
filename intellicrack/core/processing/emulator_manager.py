@@ -108,17 +108,17 @@ class EmulatorManager(QObject):
         binary_path = os.path.abspath(binary_path)
 
         # Log the binary being emulated
-        self.logger.info(f"Ensuring QEMU is running for binary: {binary_path}")
+        self.logger.info("Ensuring QEMU is running for binary: %s", binary_path)
 
         with self.lock:
             # Check if already running
             if self.qemu_running and self.qemu_instance:
                 # Check if we're using the same binary
                 if hasattr(self.qemu_instance, "binary_path") and self.qemu_instance.binary_path == binary_path:
-                    self.logger.debug(f"QEMU already running for binary: {binary_path}")
+                    self.logger.debug("QEMU already running for binary: %s", binary_path)
                     return True
                 # Different binary, need to restart
-                self.logger.info(f"QEMU running for different binary, restarting for: {binary_path}")
+                self.logger.info("QEMU running for different binary, restarting for: %s", binary_path)
                 self.stop_qemu()
 
             # Check if already starting
@@ -165,7 +165,7 @@ class EmulatorManager(QObject):
                 self.qemu_starting = False
 
             error_msg = f"Failed to start QEMU for {binary_path}: {e!s}"
-            self.logger.error(error_msg)
+            self.logger.error("Failed to start QEMU for %s: %s", binary_path, e, exc_info=True)
             self.emulator_error.emit("QEMU", error_msg)
             self.emulator_status_changed.emit("QEMU", False, "QEMU failed to start")
             return False
@@ -196,7 +196,7 @@ class EmulatorManager(QObject):
 
         except Exception as e:
             error_msg = f"Failed to initialize Qiling: {e!s}"
-            self.logger.error(error_msg)
+            self.logger.error("Failed to initialize Qiling: %s", e, exc_info=True)
             self.emulator_error.emit("Qiling", error_msg)
             self.emulator_status_changed.emit("Qiling", False, "Qiling initialization failed")
             return None
@@ -210,7 +210,7 @@ class EmulatorManager(QObject):
                     self.qemu_running = False
                 self.emulator_status_changed.emit("QEMU", False, "QEMU emulator stopped")
             except Exception as e:
-                self.logger.error(f"Error stopping QEMU: {e}")
+                self.logger.error("Error stopping QEMU: %s", e, exc_info=True)
 
     def cleanup(self) -> None:
         """Clean up all emulator resources."""
@@ -254,7 +254,7 @@ def run_with_qemu(binary_path: str, analysis_func: Callable, config: dict[str, A
     try:
         return analysis_func()
     except Exception as e:
-        logger.error("Exception in emulator_manager: %s", e)
+        logger.error("Exception in emulator_manager: %s", e, exc_info=True)
         return {
             "status": "error",
             "error": f"Analysis failed: {e!s}",
@@ -285,7 +285,7 @@ def run_with_qiling(binary_path: str, analysis_func: Callable) -> dict[str, Any]
     try:
         return analysis_func(qiling_instance)
     except Exception as e:
-        logger.error("Exception in emulator_manager: %s", e)
+        logger.error("Exception in emulator_manager: %s", e, exc_info=True)
         return {
             "status": "error",
             "error": f"Analysis failed: {e!s}",

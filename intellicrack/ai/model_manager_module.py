@@ -88,7 +88,7 @@ try:
 
     HAS_TENSORFLOW = True
 except ImportError as e:
-    logger.error("Import error in model_manager_module: %s", e)
+    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
 
 onnx: Any = None
 ort: Any = None
@@ -102,14 +102,14 @@ try:
     ort = _ort
     HAS_ONNX = True
 except (ImportError, AttributeError) as e:
-    logger.error("Import error in model_manager_module: %s", e)
+    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
 
 try:
     import joblib
 
     HAS_JOBLIB = True
 except ImportError as e:
-    logger.error("Import error in model_manager_module: %s", e)
+    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
     HAS_JOBLIB = False
 
 
@@ -143,7 +143,7 @@ class PyTorchBackend(ModelBackend):
                 model.eval()
             return model
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load PyTorch model: %s", e)
+            logger.error("Failed to load PyTorch model: %s", e, exc_info=True)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -164,7 +164,7 @@ class PyTorchBackend(ModelBackend):
 
             return output.numpy() if hasattr(output, "numpy") else output
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("PyTorch prediction failed: %s", e)
+            logger.error("PyTorch prediction failed: %s", e, exc_info=True)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -195,7 +195,7 @@ class TensorFlowBackend(ModelBackend):
         try:
             return keras.models.load_model(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load TensorFlow model: %s", e)
+            logger.error("Failed to load TensorFlow model: %s", e, exc_info=True)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -209,7 +209,7 @@ class TensorFlowBackend(ModelBackend):
 
             return model.predict(input_data)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("TensorFlow prediction failed: %s", e)
+            logger.error("TensorFlow prediction failed: %s", e, exc_info=True)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -244,7 +244,7 @@ class ONNXBackend(ModelBackend):
 
             return ort.InferenceSession(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load ONNX model: %s", e)
+            logger.error("Failed to load ONNX model: %s", e, exc_info=True)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -261,7 +261,7 @@ class ONNXBackend(ModelBackend):
 
             return outputs[0] if len(outputs) == 1 else outputs
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("ONNX prediction failed: %s", e)
+            logger.error("ONNX prediction failed: %s", e, exc_info=True)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -308,7 +308,7 @@ class SklearnBackend(ModelBackend):
         try:
             return joblib.load(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load sklearn model: %s", e)
+            logger.error("Failed to load sklearn model: %s", e, exc_info=True)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -321,7 +321,7 @@ class SklearnBackend(ModelBackend):
                 return model.predict_proba(input_data)
             return model.predict(input_data)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Sklearn prediction failed: %s", e)
+            logger.error("Sklearn prediction failed: %s", e, exc_info=True)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -368,7 +368,7 @@ class ModelCache:
             key_string = f"{model_path}_{mtime}"
             return hashlib.sha256(key_string.encode()).hexdigest()
         except (OSError, ValueError) as e:
-            self.logger.error("Error in model_manager_module: %s", e)
+            self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
             return hashlib.sha256(model_path.encode()).hexdigest()
 
     def get(self, model_path: str) -> Any:
@@ -447,9 +447,9 @@ class ModelManager:
             try:
                 self.gpu_info = get_gpu_info()
                 if self.gpu_info:
-                    logger.info(f"ModelManager initialized with GPU: {self.gpu_info}")
+                    logger.info("ModelManager initialized with GPU: %s", self.gpu_info)
             except Exception as e:
-                logger.debug(f"Could not get GPU info: {e}")
+                logger.debug("Could not get GPU info: %s", e, exc_info=True)
 
         os.makedirs(self.models_dir, exist_ok=True)
         self._load_model_metadata()
@@ -497,7 +497,7 @@ class ModelManager:
             with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(self.model_metadata, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to save model metadata: %s", e)
+            logger.error("Failed to save model metadata: %s", e, exc_info=True)
 
     def _detect_model_type(self, model_path: str) -> str:
         """Detect the model type from file extension or content."""
@@ -562,7 +562,7 @@ class ModelManager:
             if model_id not in self.model_metadata:
                 # Try to download from model zoo
                 if self._download_model_from_zoo(model_id):
-                    logger.info(f"Downloaded model {model_id} from model zoo")
+                    logger.info("Downloaded model %s from model zoo", model_id)
                 else:
                     raise ValueError(f"Model not registered and not found in zoo: {model_id}")
 
@@ -611,7 +611,7 @@ class ModelManager:
 
         if model_id in model_map:
             if model_id not in self.loaded_models:
-                logger.info(f"Creating pre-trained model: {model_id}")
+                logger.info("Creating pre-trained model: %s", model_id)
                 model = model_map[model_id]()
                 self.loaded_models[model_id] = model
             return self.loaded_models[model_id]
@@ -672,12 +672,10 @@ class ModelManager:
                                 vuln_idx = int(top_k.indices[i][j].item())
                                 confidence = top_k.values[i][j].item()
                                 if confidence > 0.3:
-                                    vulns.append(
-                                        {
-                                            "type": self.vulnerability_types[vuln_idx],
-                                            "confidence": confidence,
-                                        }
-                                    )
+                                    vulns.append({
+                                        "type": self.vulnerability_types[vuln_idx],
+                                        "confidence": confidence,
+                                    })
                             results.append(vulns)
                         return results
 
@@ -984,7 +982,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         model_path = os.path.join(self.models_dir, model_filename)
 
         try:
-            logger.info(f"Downloading model {model_id} from {model_url}")
+            logger.info("Downloading model %s from %s", model_id, model_url)
             urllib.request.urlretrieve(model_url, model_path)  # noqa: S310  # Legitimate AI model download for security research tool
 
             # Register the downloaded model
@@ -996,13 +994,13 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             )
             return True
         except Exception as e:
-            logger.error(f"Failed to download model {model_id}: {e}")
+            logger.error("Failed to download model %s: %s", model_id, e, exc_info=True)
             return False
 
     def _load_model_with_fallback(self, model_path: str, model_type: str, model_id: str) -> object:
         """Load model with fallback mechanisms for missing files."""
         if not os.path.exists(model_path):
-            logger.warning(f"Model file not found: {model_path}")
+            logger.warning("Model file not found: %s", model_path)
             # Try to create a default model
             if model_type == "pytorch":
                 if HAS_TORCH:
@@ -1010,14 +1008,14 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
                     # Create a simple neural network as fallback
                     model = nn.Sequential(nn.Linear(100, 50), nn.ReLU(), nn.Linear(50, 10), nn.Softmax(dim=1))
-                    logger.info(f"Created default PyTorch model for {model_id}")
+                    logger.info("Created default PyTorch model for %s", model_id)
                     return model
             elif model_type == "sklearn":
                 if HAS_JOBLIB:
                     from sklearn.ensemble import RandomForestClassifier
 
                     model = RandomForestClassifier(n_estimators=10, random_state=42)
-                    logger.info(f"Created default sklearn model for {model_id}")
+                    logger.info("Created default sklearn model for %s", model_id)
                     return model
 
             raise FileNotFoundError(f"Model file not found and no fallback available: {model_path}")
@@ -1035,15 +1033,15 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     if device != "cpu":
                         if to_device is not None:
                             model = to_device(model, device)
-                            logger.info(f"Moved model {model_id} to {device}")
+                            logger.info("Moved model %s to %s", model_id, device)
 
                         if optimize_for_gpu is not None:
                             optimized_model = optimize_for_gpu(model)
                             if optimized_model is not None:
                                 model = optimized_model
-                                logger.info(f"Applied GPU optimizations to model {model_id}")
+                                logger.info("Applied GPU optimizations to model %s", model_id)
             except Exception as e:
-                logger.debug(f"Could not optimize model for GPU: {e}")
+                logger.debug("Could not optimize model for GPU: %s", e, exc_info=True)
 
         if model_type == "pytorch" and HAS_TORCH:
             try:
@@ -1057,10 +1055,10 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         if first_param is not None and not first_param.is_cuda:
                             if hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic"):
                                 quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
-                                logger.info(f"Applied quantization to {model_id}")
+                                logger.info("Applied quantization to %s", model_id)
                                 return quantized
             except Exception as e:
-                logger.debug(f"Could not quantize model: {e}")
+                logger.debug("Could not quantize model: %s", e, exc_info=True)
 
         return model
 
@@ -1280,7 +1278,9 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "obfuscation": ["packing", "encryption", "code_virtualization"],
         }
 
-        categorized: dict[str, list[dict[str, Any]]] = {category: [p for p in protections if p["type"] in types] for category, types in protection_categories.items()}
+        categorized: dict[str, list[dict[str, Any]]] = {
+            category: [p for p in protections if p["type"] in types] for category, types in protection_categories.items()
+        }
         return {
             "protections": protections,
             "categorized": categorized,
@@ -1530,22 +1530,20 @@ Interceptor.attach(IsDebuggerPresent, {
         sections: list[dict[str, Any]] = []
 
         if binary_data[:2] == b"MZ":
-            sections.extend(
-                (
-                    {
-                        "name": ".text",
-                        "size": 0x1000,
-                        "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
-                        "executable": True,
-                    },
-                    {
-                        "name": ".data",
-                        "size": 0x500,
-                        "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
-                        "executable": False,
-                    },
-                )
-            )
+            sections.extend((
+                {
+                    "name": ".text",
+                    "size": 0x1000,
+                    "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
+                    "executable": True,
+                },
+                {
+                    "name": ".data",
+                    "size": 0x500,
+                    "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
+                    "executable": False,
+                },
+            ))
         return sections
 
     def _find_suspicious_imports(self, binary_data: bytes) -> list[str]:
@@ -1614,9 +1612,9 @@ Interceptor.attach(IsDebuggerPresent, {
                 optimized_model = gpu_autoloader(model)
                 if optimized_model is not None:
                     model = optimized_model
-                    logger.debug(f"Applied GPU batch optimization to model {model_id}")
+                    logger.debug("Applied GPU batch optimization to model %s", model_id)
             except Exception as e:
-                logger.debug(f"Could not apply batch optimization: {e}")
+                logger.debug("Could not apply batch optimization: %s", e, exc_info=True)
 
         # Process batch
         backend = self.backends[model_type]
@@ -1626,7 +1624,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 result = backend.predict(model, data)
                 results.append(result)
             except Exception as e:
-                logger.error(f"Batch prediction error: {e}")
+                logger.error("Batch prediction error: %s", e, exc_info=True)
                 results.append(None)
 
         return results
@@ -1717,7 +1715,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "type": model_type,
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to import local model: %s", e)
+            logger.error("Failed to import local model: %s", e, exc_info=True)
             return None
 
     def get_available_repositories(self) -> list[str]:
@@ -1779,7 +1777,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     self._save_model_metadata()
                     return p
 
-        logger.warning(f"Model path not found for model_id: {model_id}")
+        logger.warning("Model path not found for model_id: %s", model_id)
         return ""
 
     def import_api_model(self, model_name: str, api_config: dict[str, Any]) -> dict[str, Any] | None:
@@ -1803,7 +1801,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "config": api_config,
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to import API model: %s", e)
+            logger.error("Failed to import API model: %s", e, exc_info=True)
             return None
 
     def train_model(self, training_data: Any, model_type: str) -> bool:
@@ -1822,7 +1820,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
             # Check if we have the appropriate backend
             if model_type.lower() not in self.backends:
-                logger.error("Backend not available for model type: %s", model_type)
+                logger.error("Backend not available for model type: %s. Available: %s", model_type, list(self.backends.keys()))
                 return False
 
             # Create training workflow adapted to the specific model type and data format
@@ -1865,7 +1863,7 @@ Interceptor.attach(IsDebuggerPresent, {
                         stratify=y if len(np.unique(y)) > 1 else None,
                     )
 
-                    logger.info(f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples")
+                    logger.info("Split data: %s training samples, %s validation samples", len(X_train), len(X_val))
 
                     # Create and train model
                     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -1873,7 +1871,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
                     # Evaluate on validation set
                     val_score = model.score(X_val, y_val)
-                    logger.info(f"Validation accuracy: {val_score:.4f}")
+                    logger.info("Validation accuracy: %.4f", val_score)
 
                     # Store trained model in cache
                     model_id = f"trained_model_{model_type}_{len(self.cache.cache)}"
@@ -2011,10 +2009,12 @@ Interceptor.attach(IsDebuggerPresent, {
                         val_acc = 100 * val_correct / val_total
 
                         logger.info(
-                            f"Epoch [{epoch + 1}/{num_epochs}], "
-                            f"Train Loss: {train_loss / len(train_loader):.4f}, "
-                            f"Train Acc: {train_acc:.2f}%, "
-                            f"Val Acc: {val_acc:.2f}%",
+                            "Epoch [%s/%s], Train Loss: %.4f, Train Acc: %.2f%%, Val Acc: %.2f%%",
+                            epoch + 1,
+                            num_epochs,
+                            train_loss / len(train_loader),
+                            train_acc,
+                            val_acc,
                         )
 
                         best_val_acc = max(best_val_acc, val_acc)
@@ -2037,14 +2037,14 @@ Interceptor.attach(IsDebuggerPresent, {
                     }
                     self.cache.put(model_id, model_data)
 
-                    logger.info(f"PyTorch model training completed: {model_id}")
+                    logger.info("PyTorch model training completed: %s", model_id)
                     return True
 
                 except ImportError:
                     logger.warning("PyTorch not available for training")
                     return False
                 except Exception as e:
-                    logger.error(f"PyTorch training error: {e}")
+                    logger.error("PyTorch training error: %s", e, exc_info=True)
                     return False
 
             elif model_type.lower() == "tensorflow":
@@ -2134,7 +2134,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     tf_val_loss: float = float(eval_result[0])
                     tf_val_acc: float = float(eval_result[1])
 
-                    logger.info(f"TensorFlow training completed - Val Loss: {tf_val_loss:.4f}, Val Acc: {tf_val_acc:.4f}")
+                    logger.info("TensorFlow training completed - Val Loss: %.4f, Val Acc: %.4f", tf_val_loss, tf_val_acc)
 
                     tf_model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
                     tf_model_data: dict[str, Any] = {
@@ -2154,14 +2154,14 @@ Interceptor.attach(IsDebuggerPresent, {
                     }
                     self.cache.put(tf_model_id, tf_model_data)
 
-                    logger.info(f"TensorFlow model training completed: {tf_model_id}")
+                    logger.info("TensorFlow model training completed: %s", tf_model_id)
                     return True
 
                 except ImportError:
                     logger.warning("TensorFlow not available for training")
                     return False
                 except Exception as e:
-                    logger.error(f"TensorFlow training error: {e}")
+                    logger.error("TensorFlow training error: %s", e, exc_info=True)
                     return False
 
             else:
@@ -2169,7 +2169,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 return False
 
         except Exception as e:
-            logger.error("Model training failed: %s", e)
+            logger.error("Model training failed: %s", e, exc_info=True)
             return False
 
     def save_model(self, model: Any, path: str) -> bool:
@@ -2228,7 +2228,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.error("Model does not have save method")
                     return False
                 except Exception as tf_error:
-                    logger.error("TensorFlow model save failed: %s", tf_error)
+                    logger.error("TensorFlow model save failed: %s", tf_error, exc_info=True)
                     return False
 
             else:
@@ -2238,7 +2238,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 return True
 
         except Exception as e:
-            logger.error("Model save failed: %s", e)
+            logger.error("Model save failed: %s", e, exc_info=True)
             return False
 
     @property
@@ -2272,7 +2272,7 @@ Interceptor.attach(IsDebuggerPresent, {
 
             model_data = self.cache.get(model_id)
             if not model_data:
-                logger.error(f"Model {model_id} not found in cache")
+                logger.error("Model %s not found in cache", model_id)
                 return {"error": "Model not found"}
 
             model: Any = model_data.get("model")
@@ -2291,7 +2291,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 stratify=labels if len(np.unique(labels)) > 1 else None,
             )
 
-            logger.info(f"Split data into {len(X_train)} training and {len(X_test)} test samples")
+            logger.info("Split data into %s training and %s test samples", len(X_train), len(X_test))
 
             evaluation_results: dict[str, Any] = {
                 "train_size": len(X_train),
@@ -2362,15 +2362,16 @@ Interceptor.attach(IsDebuggerPresent, {
                 }
 
             logger.info(
-                f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}",
+                "Model evaluation completed with test score: %s",
+                evaluation_results.get("test_score", evaluation_results.get("test_accuracy", "N/A")),
             )
             return evaluation_results
 
         except ImportError as e:
-            logger.error(f"Failed to import required libraries: {e}")
+            logger.error("Failed to import required libraries: %s", e, exc_info=True)
             return {"error": f"Missing dependencies: {e}"}
         except Exception as e:
-            logger.error(f"Model evaluation failed: {e}")
+            logger.error("Model evaluation failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
 
@@ -2409,7 +2410,7 @@ class AsyncModelManager:
                 if callback:
                     callback(True, model, None)
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in model_manager_module: %s", e)
+                self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
                 if callback:
                     callback(False, None, str(e))
 
@@ -2440,7 +2441,7 @@ class AsyncModelManager:
                 if callback:
                     callback(True, result, None)
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in model_manager_module: %s", e)
+                self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
                 if callback:
                     callback(False, None, str(e))
 
@@ -2602,7 +2603,7 @@ class ModelFineTuner:
                 logger.info("Fine-tuning completed. New model ID: %s", fine_tuned_id)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Fine-tuning failed: %s", e)
+                logger.error("Fine-tuning failed: %s", e, exc_info=True)
                 results["error"] = str(e)
 
             return results
@@ -2625,7 +2626,7 @@ class ModelFineTuner:
             from torch import optim
             from torch.utils.data import DataLoader, TensorDataset
         except ImportError as e:
-            self.logger.error("Import error in model_manager_module: %s", e)
+            self.logger.error("Import error in model_manager_module: %s", e, exc_info=True)
             return {"error": "PyTorch components not available"}
 
         model.train()
@@ -2802,7 +2803,7 @@ def import_custom_model(model_path: str, model_type: str | None = None, model_id
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to import model: %s", e)
+        logger.error("Failed to import model: %s", e, exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -2848,7 +2849,7 @@ def load_model(model_id: str, model_path: str | None = None) -> object:
         return manager.load_model(model_id)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to load model %s: %s", model_id, e)
+        logger.error("Failed to load model %s: %s", model_id, e, exc_info=True)
         raise
 
 
@@ -2915,7 +2916,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to save model %s: %s", model_id, e)
+        logger.error("Failed to save model %s: %s", model_id, e, exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -2942,7 +2943,7 @@ def list_available_models() -> dict[str, Any]:
                 info = manager.get_model_info(model_id)
                 detailed_models[model_id] = info
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in model_manager_module: %s", e)
+                logger.error("Error in model_manager_module: %s", e, exc_info=True)
                 detailed_models[model_id] = {"error": str(e)}
 
         return {
@@ -2952,7 +2953,7 @@ def list_available_models() -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to list models: %s", e)
+        logger.error("Failed to list models: %s", e, exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -3021,7 +3022,7 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to configure AI provider %s: %s", provider_name, e)
+        logger.error("Failed to configure AI provider %s: %s", provider_name, e, exc_info=True)
         return {
             "success": False,
             "error": str(e),

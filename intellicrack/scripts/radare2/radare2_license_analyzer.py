@@ -32,6 +32,9 @@ import networkx as nx
 import r2pipe
 
 
+logger = logging.getLogger(__name__)
+
+
 """
 Radare2 License Analyzer Module
 
@@ -171,7 +174,7 @@ class R2LicenseAnalyzer:
 
     def _init_analysis(self) -> None:
         """Initialize r2 analysis."""
-        print("[*] Initializing Radare2 analysis...")
+        logger.info("Initializing Radare2 analysis...")
 
         # Analyze all
         self.r2.cmd("aaa")
@@ -192,7 +195,7 @@ class R2LicenseAnalyzer:
 
     def _load_strings(self) -> None:
         """Load and categorize strings."""
-        print("[*] Loading strings...")
+        logger.info("Loading strings...")
 
         strings = self.r2.cmdj("izj")
         if not strings:
@@ -210,7 +213,7 @@ class R2LicenseAnalyzer:
 
     def _load_imports(self) -> None:
         """Load and categorize imports."""
-        print("[*] Loading imports...")
+        logger.info("Loading imports...")
 
         imports = self.r2.cmdj("iij")
         if not imports:
@@ -227,7 +230,7 @@ class R2LicenseAnalyzer:
 
     def _build_call_graph(self) -> None:
         """Build function call graph."""
-        print("[*] Building call graph...")
+        logger.info("Building call graph...")
 
         functions = self.r2.cmdj("aflj")
         if not functions:
@@ -252,12 +255,12 @@ class R2LicenseAnalyzer:
                     if line.startswith("offset:"):
                         return int(line.split()[1], 16)
             except Exception as e:
-                self.logger.debug("Error finding license check offset: %s", e)
+                self.logger.debug("Error finding license check offset: %s", e, exc_info=True)
         return None
 
     def analyze(self) -> list[LicenseFunction]:
         """Perform comprehensive license analysis."""
-        print("\n[*] Starting license function detection...")
+        logger.info("Starting license function detection...")
 
         # Phase 1: Function name analysis
         self._analyze_function_names()
@@ -287,7 +290,7 @@ class R2LicenseAnalyzer:
 
     def _analyze_function_names(self) -> None:
         """Analyze function names for license patterns."""
-        print("[*] Analyzing function names...")
+        logger.info("Analyzing function names...")
 
         functions = self.r2.cmdj("aflj")
         if not functions:
@@ -331,7 +334,7 @@ class R2LicenseAnalyzer:
 
     def _analyze_string_references(self) -> None:
         """Analyze string references in functions."""
-        print("[*] Analyzing string references...")
+        logger.info("Analyzing string references...")
 
         # Check existing license functions
         for lic_func in self.license_functions:
@@ -398,7 +401,7 @@ class R2LicenseAnalyzer:
 
     def _analyze_api_calls(self) -> None:
         """Analyze API calls in functions."""
-        print("[*] Analyzing API calls...")
+        logger.info("Analyzing API calls...")
 
         # Update existing functions
         for lic_func in self.license_functions:
@@ -431,7 +434,7 @@ class R2LicenseAnalyzer:
 
     def _analyze_control_flow(self) -> None:
         """Analyze control flow complexity."""
-        print("[*] Analyzing control flow patterns...")
+        logger.info("Analyzing control flow patterns...")
 
         for lic_func in self.license_functions:
             # Get function basic blocks
@@ -469,7 +472,7 @@ class R2LicenseAnalyzer:
 
     def _detect_crypto_operations(self) -> None:
         """Detect cryptographic operations."""
-        print("[*] Detecting cryptographic operations...")
+        logger.info("Detecting cryptographic operations...")
 
         # Search for crypto constants
         crypto_constants = {
@@ -509,7 +512,7 @@ class R2LicenseAnalyzer:
 
     def _pattern_matching(self) -> None:
         """Advanced pattern matching for license functions."""
-        print("[*] Performing pattern matching...")
+        logger.info("Performing pattern matching...")
 
         # Common license validation patterns
         patterns = [
@@ -582,7 +585,7 @@ class R2LicenseAnalyzer:
 
     def _generate_bypass_strategies(self) -> None:
         """Generate bypass strategies for each license function."""
-        print("[*] Generating bypass strategies...")
+        logger.info("Generating bypass strategies...")
 
         for lic_func in self.license_functions:
             strategies = [
@@ -649,7 +652,7 @@ class R2LicenseAnalyzer:
         with open(output_file, "w") as f:
             json.dump(report, f, indent=2)
 
-        print(f"\n[+] Report exported to {output_file}")
+        logger.info("Report exported to %s", output_file)
 
     def generate_r2_script(self, output_file: str = "patch_license.r2") -> None:
         """Generate r2 patching script."""
@@ -679,19 +682,19 @@ class R2LicenseAnalyzer:
                             f.write(f"wa jmp @ 0x{jmp_addr:x}\n")
                             break
 
-        print(f"[+] R2 script generated: {output_file}")
+        logger.info("R2 script generated: %s", output_file)
 
     def interactive_analysis(self) -> None:
         """Interactive analysis mode."""
-        print("\n=== Interactive License Analysis ===")
+        logger.info("=== Interactive License Analysis ===")
 
         while True:
-            print("\nOptions:")
-            print("1. List detected license functions")
-            print("2. Analyze specific function")
-            print("3. Generate patches")
-            print("4. Export report")
-            print("5. Exit")
+            logger.info("Options:")
+            logger.info("1. List detected license functions")
+            logger.info("2. Analyze specific function")
+            logger.info("3. Generate patches")
+            logger.info("4. Export report")
+            logger.info("5. Exit")
 
             choice = input("\nChoice: ")
 
@@ -708,14 +711,14 @@ class R2LicenseAnalyzer:
 
     def _list_functions(self) -> None:
         """List detected license functions."""
-        print("\nDetected License Functions:")
-        print("-" * 80)
+        logger.info("Detected License Functions:")
+        logger.info("-" * 80)
 
         for i, lic_func in enumerate(self.license_functions):
-            print(f"{i + 1}. 0x{lic_func.address:08x} - {lic_func.name}")
-            print(f"   Type: {lic_func.type.value}")
-            print(f"   Confidence: {lic_func.confidence:.2%}")
-            print(f"   Protection: {lic_func.protection_level.name}")
+            logger.info("%d. 0x%08x - %s", i + 1, lic_func.address, lic_func.name)
+            logger.info("   Type: %s", lic_func.type.value)
+            logger.info("   Confidence: %.2f%%", lic_func.confidence * 100)
+            logger.info("   Protection: %s", lic_func.protection_level.name)
 
     def _analyze_specific(self) -> None:
         """Analyze specific function in detail."""
@@ -724,31 +727,30 @@ class R2LicenseAnalyzer:
         if 0 <= idx < len(self.license_functions):
             lic_func = self.license_functions[idx]
 
-            print(f"\n=== Detailed Analysis: {lic_func.name} ===")
-            print(f"Address: 0x{lic_func.address:08x}")
-            print(f"Size: {lic_func.size} bytes")
-            print(f"Type: {lic_func.type.value}")
-            print(f"Confidence: {lic_func.confidence:.2%}")
+            logger.info("=== Detailed Analysis: %s ===", lic_func.name)
+            logger.info("Address: 0x%08x", lic_func.address)
+            logger.info("Size: %d bytes", lic_func.size)
+            logger.info("Type: %s", lic_func.type.value)
+            logger.info("Confidence: %.2f%%", lic_func.confidence * 100)
 
-            print("\nStrings:")
+            logger.info("Strings:")
             for s in lic_func.strings[:10]:
-                print(f"  - {s}")
+                logger.info("  - %s", s)
 
-            print("\nAPI Calls:")
+            logger.info("API Calls:")
             for api in lic_func.api_calls[:10]:
-                print(f"  - {api}")
+                logger.info("  - %s", api)
 
-            print("\nBypass Strategies:")
+            logger.info("Bypass Strategies:")
             for strategy in lic_func.bypass_strategies:
-                print(f"  - {strategy}")
+                logger.info("  - %s", strategy)
 
-            # Show disassembly
-            print("\nDisassembly (first 20 instructions):")
-            print(self.r2.cmd(f"pd 20 @ {lic_func.address}"))
+            logger.info("Disassembly (first 20 instructions):")
+            logger.info("%s", self.r2.cmd(f"pd 20 @ {lic_func.address}"))
 
     def _generate_patches(self) -> None:
         """Generate patches interactively."""
-        print("\nGenerating patches...")
+        logger.info("Generating patches...")
 
         self.generate_r2_script()
 
@@ -772,7 +774,7 @@ class R2LicenseAnalyzer:
                     },
                 )
 
-        print(f"\nGenerated {len(patches)} patches")
+        logger.info("Generated %d patches", len(patches))
 
         # Save patches
         with open("patches.json", "w") as f:
@@ -867,7 +869,7 @@ class R2LicenseAnalyzer:
             self.logger.debug("Capstone not available, using fallback instruction detection")
             return self._find_patch_location_fallback(lic_func, func_bytes)
         except Exception as e:
-            self.logger.error(f"Error in capstone disassembly: {e}")
+            self.logger.error("Error in capstone disassembly: %s", e, exc_info=True)
             return self._find_patch_location_fallback(lic_func, func_bytes)
 
         return None, None
@@ -928,12 +930,12 @@ class R2LicenseAnalyzer:
 def main() -> None:
     """Run the Radare2 license analyzer."""
     if len(sys.argv) < 2:
-        print("Usage: radare2_license_analyzer.py <binary>")
+        logger.error("Usage: radare2_license_analyzer.py <binary>")
         sys.exit(1)
 
     binary = sys.argv[1]
 
-    print(f"[*] Analyzing {binary}")
+    logger.info("Analyzing %s", binary)
 
     # Create analyzer
     analyzer = R2LicenseAnalyzer(filename=binary)
@@ -941,17 +943,16 @@ def main() -> None:
     # Run analysis
     results = analyzer.analyze()
 
-    print(f"\n[+] Found {len(results)} potential license functions")
+    logger.info("Found %d potential license functions", len(results))
 
-    # Show top results
-    print("\nTop License Functions:")
-    print("-" * 80)
+    logger.info("Top License Functions:")
+    logger.info("-" * 80)
 
     for func in results[:10]:
-        print(f"0x{func.address:08x} - {func.name}")
-        print(f"  Type: {func.type.value}")
-        print(f"  Confidence: {func.confidence:.2%}")
-        print(f"  Protection: {func.protection_level.name}")
+        logger.info("0x%08x - %s", func.address, func.name)
+        logger.info("  Type: %s", func.type.value)
+        logger.info("  Confidence: %.2f%%", func.confidence * 100)
+        logger.info("  Protection: %s", func.protection_level.name)
 
     # Export report
     analyzer.export_report()
@@ -963,7 +964,7 @@ def main() -> None:
     if input("\nEnter interactive mode? (y/n): ").lower() == "y":
         analyzer.interactive_analysis()
 
-    print("\n[+] Analysis complete!")
+    logger.info("Analysis complete!")
 
 
 if __name__ == "__main__":

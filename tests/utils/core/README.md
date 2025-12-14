@@ -11,94 +11,94 @@ This directory contains comprehensive, production-grade tests for `intellicrack/
 Comprehensive pytest-based test suite with 100+ test cases validating:
 
 - **Hash Calculation** (10 tests)
-  - SHA256, MD5, and other hash algorithms
-  - Binary file hashing with chunked reading
-  - PE section hash computation
-  - Changed section identification
-  - Hash functions for various data types
+    - SHA256, MD5, and other hash algorithms
+    - Binary file hashing with chunked reading
+    - PE section hash computation
+    - Changed section identification
+    - Hash functions for various data types
 
 - **File Utilities** (8 tests)
-  - File icon detection for various types
-  - Resource type classification (binary, source, config, etc.)
-  - Cross-platform file handling
+    - File icon detection for various types
+    - Resource type classification (binary, source, config, etc.)
+    - Cross-platform file handling
 
 - **Cache Operations** (3 tests)
-  - Analysis result caching with timestamps
-  - Directory creation and management
-  - Cache overwriting behavior
+    - Analysis result caching with timestamps
+    - Directory creation and management
+    - Cache overwriting behavior
 
 - **Network Request Capture** (4 tests)
-  - Captured request retrieval and aggregation
-  - Request metadata validation
-  - Limit enforcement
-  - Multi-source request collection
+    - Captured request retrieval and aggregation
+    - Request metadata validation
+    - Limit enforcement
+    - Multi-source request collection
 
 - **Memory Management** (3 tests)
-  - Garbage collection and cleanup
-  - Memory optimizer initialization
-  - System memory monitoring
+    - Garbage collection and cleanup
+    - Memory optimizer initialization
+    - System memory monitoring
 
 - **Process Sandboxing** (2 tests)
-  - Sandboxed command execution
-  - Timeout handling
+    - Sandboxed command execution
+    - Timeout handling
 
 - **Text Utilities** (4 tests)
-  - Text truncation with custom suffixes
-  - Length preservation for short text
+    - Text truncation with custom suffixes
+    - Length preservation for short text
 
 - **Backend Selection** (4 tests)
-  - CPU/GPU workload backend selection
-  - Fallback mechanisms
-  - Priority-based selection
+    - CPU/GPU workload backend selection
+    - Fallback mechanisms
+    - Priority-based selection
 
 - **Async Wrapper** (2 tests)
-  - Thread-based async execution
-  - Return value validation
+    - Thread-based async execution
+    - Return value validation
 
 - **Report Generation** (3 tests)
-  - Metrics export to JSON
-  - Local report submission
-  - Remote endpoint handling
+    - Metrics export to JSON
+    - Local report submission
+    - Remote endpoint handling
 
 - **Dataset Operations** (6 tests)
-  - Dataset creation with metadata
-  - Dataset augmentation (noise, duplication)
-  - JSON/JSONL file preview loading
-  - Row addition
+    - Dataset creation with metadata
+    - Dataset augmentation (noise, duplication)
+    - JSON/JSONL file preview loading
+    - Row addition
 
 - **Model Operations** (4 tests)
-  - Feature model creation
-  - Vulnerability prediction
-  - Risk assessment based on binary features
+    - Feature model creation
+    - Vulnerability prediction
+    - Risk assessment based on binary features
 
 - **Training Operations** (3 tests)
-  - Training start/stop management
-  - Progress updates
+    - Training start/stop management
+    - Progress updates
 
 - **Miscellaneous Utilities** (8 tests)
-  - Code snippet management
-  - Image addition and validation
-  - Recommendations tracking
-  - Patch reordering
-  - HTTP request handling
-  - Patch validation display
+    - Code snippet management
+    - Image addition and validation
+    - Recommendations tracking
+    - Patch reordering
+    - HTTP request handling
+    - Patch validation display
 
 - **Windows Clipboard** (2 tests)
-  - Platform-specific clipboard operations
+    - Platform-specific clipboard operations
 
 - **Edge Cases** (7 tests)
-  - Empty input handling
-  - Invalid paths
-  - Corrupted data
+    - Empty input handling
+    - Invalid paths
+    - Corrupted data
 
 - **Real-World Scenarios** (3 tests)
-  - Complete binary analysis workflow
-  - Report generation workflow
-  - Dataset processing workflow
+    - Complete binary analysis workflow
+    - Report generation workflow
+    - Dataset processing workflow
 
 - **Performance Tests** (2 tests)
-  - Large file hash calculation timing
-  - Dataset augmentation performance
+    - Large file hash calculation timing
+    - Dataset augmentation performance
 
 ### `run_final_utilities_tests.py`
 
@@ -132,6 +132,7 @@ All tests in this suite follow Intellicrack's production-grade testing standards
 ## Coverage
 
 The test suite provides comprehensive coverage of:
+
 - Line coverage: ~90%
 - Branch coverage: ~85%
 - All critical utility paths
@@ -141,18 +142,23 @@ The test suite provides comprehensive coverage of:
 ## Fixtures
 
 ### `temp_dir`
+
 Provides isolated temporary directory for each test, automatically cleaned up after test completion.
 
 ### `sample_binary`
+
 Creates a realistic binary file with MZ header and random data for testing binary operations.
 
 ### `sample_pe_binary`
+
 Creates a minimal valid PE (Portable Executable) binary with proper headers and sections for PE-specific tests.
 
 ### `sample_json_file`
+
 Creates a JSON file with structured test data for dataset operations.
 
 ### `sample_jsonl_file`
+
 Creates a JSON Lines file for streaming dataset tests.
 
 ## Notes

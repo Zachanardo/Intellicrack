@@ -45,7 +45,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypedDict, cast
 
-import defusedxml.ElementTree as ET
+import defusedxml.ElementTree as ElementTree
 import jwt
 import psutil
 import uvicorn
@@ -98,12 +98,14 @@ if platform.system() == "Windows":
 
 try:
     import frida as _frida_module
+
     _frida = _frida_module
 except ImportError:
     pass
 try:
     import capstone as _capstone_module
     import pefile as _pefile_module
+
     _capstone = _capstone_module
     _pefile = _pefile_module
 except ImportError:
@@ -124,10 +126,12 @@ capstone = _capstone
 
 class ARC4Cipher:
     """Pure Python implementation of RC4 (ARC4) stream cipher for legacy protocol emulation.
+
     This implementation is provided for compatibility with systems using RC4 and for security research
     purposes within the Intellicrack framework. RC4 is known to be insecure for many applications
     and should not be used in new designs.
     """
+
     def __init__(self, key: bytes) -> None:
         """Initialize ARC4 cipher with a key."""
         self.key = key
@@ -189,7 +193,7 @@ class LicenseType(Enum):
     ADOBE = "adobe"
     CUSTOM = "custom"
     TRIAL = "trial"
-    PERPETUAL = "perpetual"
+    PERPElementTreeUAL = "perpetual"
     SUBSCRIPTION = "subscription"
 
 
@@ -210,7 +214,7 @@ class ProtocolType(Enum):
     HTTP_REST = "http_rest"
     HTTPS_REST = "https_rest"
     SOAP = "soap"
-    TCP_SOCKET = "tcp_socket"
+    TCP_SOCKElementTree = "tcp_socket"
     UDP_DATAGRAM = "udp_datagram"
     NAMED_PIPE = "named_pipe"
 
@@ -355,7 +359,7 @@ class CryptoManager:
             )
             return signature.hex()
         except Exception as e:
-            self.logger.error("License signing failed", extra={"error": str(e)})
+            self.logger.error("License signing failed: %s", e, exc_info=True)
             return ""
 
     def verify_license_signature(self, data: dict[str, Any], signature: str) -> bool:
@@ -385,7 +389,7 @@ class CryptoManager:
             encrypted = encryptor.update(padded_data) + encryptor.finalize()
             return (iv + encrypted).hex()
         except Exception as e:
-            self.logger.error("License encryption failed", extra={"error": str(e)})
+            self.logger.error("License encryption failed: %s", e, exc_info=True)
             return ""
 
     def decrypt_license_data(self, encrypted_data: str) -> str:
@@ -400,7 +404,7 @@ class CryptoManager:
             padding_length = decrypted[-1]
             return decrypted[:-padding_length].decode()
         except Exception as e:
-            self.logger.error("License decryption failed", extra={"error": str(e)})
+            self.logger.error("License decryption failed: %s", e, exc_info=True)
             return ""
 
 
@@ -437,16 +441,16 @@ class FlexLMEmulator:
     def start_server(self, port: int = 27000) -> None:
         """Start FlexLM TCP server and vendor daemon."""
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.SOL_SOCKElementTree, socket.SO_REUSEADDR, 1)
             self.server_socket.bind(("127.0.0.1", port))
             self.server_socket.listen(5)
             self.running = True
-            self.logger.info("FlexLM server started", extra={"port": port})
+            self.logger.info("FlexLM server started on port %s", port)
             self.start_vendor_daemon()
             threading.Thread(target=self._accept_connections, daemon=True).start()
         except Exception as e:
-            self.logger.error("FlexLM server start failed", extra={"error": str(e)})
+            self.logger.error("FlexLM server start failed: %s", e, exc_info=True)
 
     def _accept_connections(self) -> None:
         """Accept FlexLM client connections."""
@@ -455,11 +459,11 @@ class FlexLMEmulator:
                 if self.server_socket is None:
                     break
                 client_socket, address = self.server_socket.accept()
-                self.logger.info("FlexLM client connected", extra={"address": address})
+                self.logger.info("FlexLM client connected from %s", address)
                 threading.Thread(target=self._handle_client, args=(client_socket, address), daemon=True).start()
             except Exception as e:
                 if self.running:
-                    self.logger.error("FlexLM connection error", extra={"error": str(e)})
+                    self.logger.error("FlexLM connection error: %s", e, exc_info=True)
 
     def _handle_client(self, client_socket: socket.socket, address: tuple[str, int]) -> None:
         """Handle FlexLM client requests."""
@@ -472,7 +476,7 @@ class FlexLMEmulator:
                 response = self._process_flexlm_request(request, address[0])
                 client_socket.send(response)
         except Exception as e:
-            self.logger.error("FlexLM client error", extra={"error": str(e)})
+            self.logger.error("FlexLM client error: %s", e, exc_info=True)
         finally:
             client_socket.close()
 
@@ -510,14 +514,11 @@ class FlexLMEmulator:
                     "max_users": 1000,
                 }
                 response = f"GRANTED: {response_data['feature']} {response_data['expiry']}\n"
-                self.logger.info(
-                    "FlexLM: Granted license",
-                    extra={"feature": request.get("feature"), "client_ip": client_ip},
-                )
+                self.logger.info("FlexLM: Granted license for feature %s from %s", request.get("feature"), client_ip)
                 return response.encode("ascii")
             return b"ERROR: Unknown request type\n"
         except Exception as e:
-            self.logger.error("FlexLM request processing error", extra={"error": str(e)})
+            self.logger.error("FlexLM request processing error: %s", e, exc_info=True)
             return b"ERROR: Internal server error\n"
 
     def _generate_vendor_keys(self) -> dict[str, Any]:
@@ -537,11 +538,11 @@ class FlexLMEmulator:
     def _run_vendor_daemon(self) -> None:
         """Run vendor daemon on separate port."""
         try:
-            self.vendor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.vendor_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.vendor_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_STREAM)
+            self.vendor_socket.setsockopt(socket.SOL_SOCKElementTree, socket.SO_REUSEADDR, 1)
             self.vendor_socket.bind(("127.0.0.1", self.VENDOR_PORT))
             self.vendor_socket.listen(5)
-            self.logger.info("Vendor daemon started on port", extra={"self_vendor_port": self.VENDOR_PORT})
+            self.logger.info("Vendor daemon started on port %s", self.VENDOR_PORT)
             vendor_sock = self.vendor_socket
             while self.running and vendor_sock is not None:
                 client_socket, addr = vendor_sock.accept()
@@ -549,7 +550,7 @@ class FlexLMEmulator:
                 thread.daemon = True
                 thread.start()
         except Exception as e:
-            self.logger.error("Vendor daemon error", extra={"error": str(e)})
+            self.logger.error("Vendor daemon error: %s", e, exc_info=True)
 
     def _handle_vendor_request(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
         """Handle vendor-specific requests."""
@@ -559,7 +560,7 @@ class FlexLMEmulator:
             encrypted_response = self._vendor_encrypt(response_data)
             client_socket.send(encrypted_response)
         except Exception as e:
-            self.logger.error("Error handling vendor request", extra={"error": str(e)})
+            self.logger.error("Error handling vendor request: %s", e, exc_info=True)
         finally:
             client_socket.close()
 
@@ -571,7 +572,7 @@ class FlexLMEmulator:
                 return b"LICENSE_GRANTED"
             return b"LICENSE_DENIED"
         except Exception as e:
-            self.logger.error("Error processing vendor request", extra={"error": str(e)})
+            self.logger.error("Error processing vendor request: %s", e, exc_info=True)
             return b"ERROR"
 
     def _vendor_encrypt(self, data: bytes) -> bytes:
@@ -602,7 +603,7 @@ class FlexLMEmulator:
             encrypted.append(checksum)
             return bytes(encrypted)
         except Exception as e:
-            self.logger.error("Vendor encryption error", extra={"error": str(e)})
+            self.logger.error("Vendor encryption error: %s", e, exc_info=True)
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives import padding
             from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -648,7 +649,7 @@ class FlexLMEmulator:
                 decrypted.append(byte ^ keystream_byte)
             return bytes(decrypted)
         except Exception as e:
-            self.logger.error("Vendor decryption error", extra={"error": str(e)})
+            self.logger.error("Vendor decryption error: %s", e, exc_info=True)
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives import padding
             from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -716,7 +717,7 @@ class HASPEmulator:
         self.crypto = crypto_manager
         self.HASP_STATUS_OK = 0
         self.HASP_INVALID_HANDLE = 1
-        self.HASP_INVALID_PARAMETER = 4
+        self.HASP_INVALID_PARAMElementTreeER = 4
         self.HASP_FEATURE_NOT_FOUND = 7
         self.HASP_FEATURE_EXPIRED = 16
         self.HASP_NO_MEMORY = 23
@@ -785,7 +786,7 @@ class HASPEmulator:
     def hasp_login(self, feature_id: int, vendor_code: bytes | None = None) -> int:
         """HASP login operation with real authentication."""
         try:
-            self.logger.info("HASP login", extra={"feature_id": feature_id})
+            self.logger.info("HASP login for feature %s", feature_id)
             if vendor_code and len(vendor_code) >= 16:
                 expected_checksum = self._calculate_vendor_checksum(vendor_code[:16])
                 if len(vendor_code) >= 20:
@@ -794,14 +795,14 @@ class HASPEmulator:
                         self.logger.warning("Invalid vendor code checksum")
                         return self.HASP_SIGNATURE_CHECK_FAILED
             if feature_id not in self.feature_memory:
-                self.logger.warning("Feature not found", extra={"feature_id": feature_id})
+                self.logger.warning("Feature not found: %s", feature_id)
                 return self.HASP_FEATURE_NOT_FOUND
             feature_info = self.feature_memory[feature_id]
             feature_offset = feature_info["offset"]
             expiry_bytes = self.dongle_memory[feature_offset + 4 : feature_offset + 8]
             expiry = struct.unpack("<I", expiry_bytes)[0]
             if expiry != 4294967295 and expiry < int(time.time()):
-                self.logger.warning("Feature expired", extra={"feature_id": feature_id})
+                self.logger.warning("Feature expired: %s", feature_id)
                 return self.HASP_FEATURE_EXPIRED
             handle = self.next_handle
             self.next_handle += 1
@@ -822,7 +823,7 @@ class HASPEmulator:
             self.dongle_memory[exec_count_offset : exec_count_offset + 4] = struct.pack("<I", current_count + 1)
             return handle
         except Exception as e:
-            self.logger.error("HASP login error", extra={"error": str(e)})
+            self.logger.error("HASP login error: %s", e, exc_info=True)
             return self.HASP_DEVICE_ERROR
 
     def _calculate_vendor_checksum(self, vendor_code: bytes) -> int:
@@ -835,7 +836,7 @@ class HASPEmulator:
 
     def hasp_logout(self, handle: int) -> int:
         """HASP logout operation."""
-        self.logger.info("HASP logout", extra={"handle": handle})
+        self.logger.info("HASP logout for handle %s", handle)
         if handle not in self.active_sessions:
             return self.HASP_INVALID_HANDLE
         del self.active_sessions[handle]
@@ -857,10 +858,10 @@ class HASPEmulator:
             associated_data = struct.pack("<I", feature_id)
             ciphertext = aesgcm.encrypt(nonce, data, associated_data)
             encrypted = nonce + ciphertext
-            self.logger.info("HASP encrypt", extra={"original_size": len(data), "encrypted_size": len(encrypted)})
+            self.logger.info("HASP encrypt: original_size=%s, encrypted_size=%s", len(data), len(encrypted))
             return (self.HASP_STATUS_OK, encrypted)
         except Exception as e:
-            self.logger.error("HASP encrypt error", extra={"error": str(e)})
+            self.logger.error("HASP encrypt error: %s", e, exc_info=True)
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_decrypt(self, handle: int, data: bytes) -> tuple[int, bytes]:
@@ -869,7 +870,7 @@ class HASPEmulator:
             if handle not in self.active_sessions:
                 return (self.HASP_INVALID_HANDLE, b"")
             if len(data) < 12:
-                return (self.HASP_INVALID_PARAMETER, b"")
+                return (self.HASP_INVALID_PARAMElementTreeER, b"")
             session_key = self.session_keys[handle]
             nonce = data[:12]
             ciphertext = data[12:]
@@ -880,16 +881,13 @@ class HASPEmulator:
             associated_data = struct.pack("<I", feature_id)
             try:
                 plaintext = aesgcm.decrypt(nonce, ciphertext, associated_data)
-                self.logger.info(
-                    "HASP decrypt",
-                    extra={"encrypted_size": len(data), "decrypted_size": len(plaintext)},
-                )
+                self.logger.info("HASP decrypt: encrypted_size=%s, decrypted_size=%s", len(data), len(plaintext))
                 return (self.HASP_STATUS_OK, plaintext)
             except Exception:
                 self.logger.warning("HASP decrypt: Authentication failed")
                 return (self.HASP_SIGNATURE_CHECK_FAILED, b"")
         except Exception as e:
-            self.logger.error("HASP decrypt error", extra={"error": str(e)})
+            self.logger.error("HASP decrypt error: %s", e, exc_info=True)
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_read(self, handle: int, offset: int, length: int) -> tuple[int, bytes]:
@@ -902,13 +900,13 @@ class HASPEmulator:
             feature_offset = feature_info["offset"]
             feature_size = feature_info["size"]
             if offset < 0 or length < 0:
-                return (self.HASP_INVALID_PARAMETER, b"")
+                return (self.HASP_INVALID_PARAMElementTreeER, b"")
             if offset < feature_size:
                 actual_offset = feature_offset + offset
                 max_length = min(length, feature_size - offset)
             else:
                 if not feature_info["options"] & 8:
-                    return (self.HASP_INVALID_PARAMETER, b"")
+                    return (self.HASP_INVALID_PARAMElementTreeER, b"")
                 user_offset = offset - feature_size
                 actual_offset = 4096 + user_offset
                 if actual_offset + length > self.memory_size:
@@ -918,10 +916,10 @@ class HASPEmulator:
             if actual_offset + max_length > self.memory_size:
                 return (self.HASP_NO_MEMORY, b"")
             data = bytes(self.dongle_memory[actual_offset : actual_offset + max_length])
-            self.logger.info("HASP read", extra={"offset": offset, "length": length, "bytes_read": len(data)})
+            self.logger.info("HASP read: offset=%s, length=%s, bytes_read=%s", offset, length, len(data))
             return (self.HASP_STATUS_OK, data)
         except Exception as e:
-            self.logger.error("HASP read error", extra={"error": str(e)})
+            self.logger.error("HASP read error: %s", e, exc_info=True)
             return (self.HASP_DEVICE_ERROR, b"")
 
     def hasp_write(self, handle: int, offset: int, data: bytes) -> int:
@@ -933,19 +931,19 @@ class HASPEmulator:
             feature_info = self.feature_memory[feature_id]
             if not feature_info["options"] & 2:
                 self.logger.warning("Write permission denied")
-                return self.HASP_INVALID_PARAMETER
+                return self.HASP_INVALID_PARAMElementTreeER
             if offset < 0:
-                return self.HASP_INVALID_PARAMETER
+                return self.HASP_INVALID_PARAMElementTreeER
             feature_offset = feature_info["offset"]
             feature_size = feature_info["size"]
             if offset < feature_size:
                 actual_offset = feature_offset + offset
                 if offset < 16:
-                    return self.HASP_INVALID_PARAMETER
+                    return self.HASP_INVALID_PARAMElementTreeER
                 max_length = min(len(data), feature_size - offset)
             else:
                 if not feature_info["options"] & 16:
-                    return self.HASP_INVALID_PARAMETER
+                    return self.HASP_INVALID_PARAMElementTreeER
                 user_offset = offset - feature_size
                 actual_offset = 4096 + user_offset
                 if actual_offset + len(data) > self.memory_size:
@@ -955,13 +953,10 @@ class HASPEmulator:
             if actual_offset + max_length > self.memory_size:
                 return self.HASP_NO_MEMORY
             self.dongle_memory[actual_offset : actual_offset + max_length] = data[:max_length]
-            self.logger.info(
-                "HASP write",
-                extra={"offset": offset, "length": len(data), "bytes_written": max_length},
-            )
+            self.logger.info("HASP write: offset=%s, length=%s, bytes_written=%s", offset, len(data), max_length)
             return self.HASP_STATUS_OK
         except Exception as e:
-            self.logger.error("HASP write error", extra={"error": str(e)})
+            self.logger.error("HASP write error: %s", e, exc_info=True)
             return self.HASP_DEVICE_ERROR
 
     def hasp_get_info(self, handle: int, query_type: int) -> tuple[int, bytes]:
@@ -981,9 +976,9 @@ class HASPEmulator:
                 return (self.HASP_STATUS_OK, bytes(self.dongle_memory[32:48]))
             if query_type == 5:
                 return (self.HASP_STATUS_OK, struct.pack("<Q", int(time.time())))
-            return (self.HASP_INVALID_PARAMETER, b"")
+            return (self.HASP_INVALID_PARAMElementTreeER, b"")
         except Exception as e:
-            self.logger.error("HASP get info error", extra={"error": str(e)})
+            self.logger.error("HASP get info error: %s", e, exc_info=True)
             return (self.HASP_DEVICE_ERROR, b"")
 
 
@@ -1004,7 +999,7 @@ class MicrosoftKMSEmulator:
     def activate_product(self, product_key: str, product_name: str, client_info: dict[str, Any]) -> dict[str, Any]:
         """Activate Microsoft product."""
         try:
-            self.logger.info("KMS activation", extra={"product_name": product_name})
+            self.logger.info("KMS activation for product %s", product_name)
             return {
                 "success": True,
                 "activation_id": uuid.uuid4().hex,
@@ -1018,7 +1013,7 @@ class MicrosoftKMSEmulator:
                 "next_activation": (datetime.utcnow() + timedelta(days=180)).isoformat(),
             }
         except Exception as e:
-            self.logger.error("KMS activation error", extra={"error": str(e)})
+            self.logger.error("KMS activation error: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
 
 
@@ -1041,7 +1036,7 @@ class AdobeEmulator:
     def validate_adobe_license(self, product_id: str, user_id: str, machine_id: str) -> dict[str, Any]:
         """Validate Adobe Creative Cloud license."""
         try:
-            self.logger.info("Adobe validation", extra={"product_id": product_id, "user_id": user_id})
+            self.logger.info("Adobe validation for product %s, user %s", product_id, user_id)
             return {
                 "status": "success",
                 "license_type": "subscription",
@@ -1060,7 +1055,7 @@ class AdobeEmulator:
                 "ngl_token": self._generate_ngl_token(product_id, user_id),
             }
         except Exception as e:
-            self.logger.error("Adobe validation error", extra={"error": str(e)})
+            self.logger.error("Adobe validation error: %s", e, exc_info=True)
             return {"status": "error", "message": str(e)}
 
     def _generate_ngl_token(self, product_id: str, user_id: str) -> str:
@@ -1098,7 +1093,7 @@ class DatabaseManager:
             Base.metadata.create_all(bind=self.engine)
             self.logger.info("Database tables created successfully")
         except Exception as e:
-            self.logger.error("Database table creation failed", extra={"error": str(e)})
+            self.logger.error("Database table creation failed: %s", e, exc_info=True)
 
     def _seed_default_licenses(self) -> None:
         """Seed database with default licenses."""
@@ -1148,7 +1143,7 @@ class DatabaseManager:
             db.close()
             self.logger.info("Default licenses seeded successfully")
         except Exception as e:
-            self.logger.error("License seeding failed", extra={"error": str(e)})
+            self.logger.error("License seeding failed: %s", e, exc_info=True)
 
     def get_db(self) -> Session:
         """Get database session."""
@@ -1173,7 +1168,7 @@ class DatabaseManager:
             db.close()
             return license_entry
         except Exception as e:
-            self.logger.error("License validation error", extra={"error": str(e)})
+            self.logger.error("License validation error: %s", e, exc_info=True)
             return None
 
     def log_operation(self, license_key: str, operation: str, client_ip: str, success: bool, details: str = "") -> None:
@@ -1191,7 +1186,7 @@ class DatabaseManager:
             db.commit()
             db.close()
         except Exception as e:
-            self.logger.error("Operation logging failed", extra={"error": str(e)})
+            self.logger.error("Operation logging failed: %s", e, exc_info=True)
 
 
 class HardwareFingerprintGenerator:
@@ -1217,13 +1212,13 @@ class HardwareFingerprintGenerator:
         executable = cmd_parts[0]
         full_path = shutil.which(executable)
         if not full_path:
-            self.logger.debug("Command not found", extra={"executable": executable})
+            self.logger.debug("Command not found: %s", executable)
             return None
         safe_cmd = [full_path, *cmd_parts[1:]]
         try:
             return subprocess.run(safe_cmd, check=False, capture_output=True, text=True, timeout=timeout, shell=False)
         except (subprocess.TimeoutExpired, OSError) as e:
-            self.logger.debug("Command execution failed", extra={"error": str(e)})
+            self.logger.debug("Command execution failed: %s", e, exc_info=True)
             return None
 
     def _get_cpu_id_windows(self) -> str:
@@ -1475,7 +1470,7 @@ class HardwareFingerprintGenerator:
                 fingerprint.hostname = platform.node()
             return fingerprint
         except Exception as e:
-            self.logger.error("Fingerprint generation failed", extra={"error": str(e)})
+            self.logger.error("Fingerprint generation failed: %s", e, exc_info=True)
             return self._generate_fallback_fingerprint()
 
     def _generate_fallback_fingerprint(self) -> HardwareFingerprint:
@@ -1552,7 +1547,7 @@ class ProtocolAnalyzer:
         return {
             b"\x00\x00\x00\x01\x00\x00\x00\x01": LicenseType.FLEXLM,
             b"lmgrd": LicenseType.FLEXLM,
-            b"FLEXNET": LicenseType.FLEXLM,
+            b"FLEXNElementTree": LicenseType.FLEXLM,
             b"HASP\x00\x00": LicenseType.HASP,
             b"\x1fp\x00\x00": LicenseType.HASP,
             b"SENTINEL": LicenseType.HASP,
@@ -1581,7 +1576,7 @@ class ProtocolAnalyzer:
                     analysis_result["protocol"] = pattern_data["type"]
                     analysis_result["confidence"] = 0.8
                     break
-        if b"HTTP" in data[:100] or b"GET" in data[:10] or b"POST" in data[:10]:
+        if b"HTTP" in data[:100] or b"GElementTree" in data[:10] or b"POST" in data[:10]:
             if http_result := self._parse_http_request(data):
                 analysis_result |= http_result
                 analysis_result["confidence"] = 0.95
@@ -1665,7 +1660,7 @@ class ProtocolAnalyzer:
                     result["parsed_data"] = parse_qs(body.decode())
             return result
         except Exception as e:
-            self.logger.debug("Failed to parse HTTP request", extra={"error": str(e)})
+            self.logger.debug("Failed to parse HTTP request: %s", e, exc_info=True)
             return None
 
     def _parse_flexlm_data(self, data: bytes) -> dict[str, Any]:
@@ -1902,7 +1897,7 @@ class BinaryKeyExtractor:
             finally:
                 kernel32.CloseHandle(process_handle)
         except Exception as e:
-            self.logger.debug("Advanced pattern extraction failed:", extra={"e": e})
+            self.logger.debug("Advanced pattern extraction failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_api_hooks(self, pid: int, api_names: list[str]) -> bytes | None:
@@ -1931,7 +1926,7 @@ class BinaryKeyExtractor:
             session.detach()
             return intercepted_key
         except Exception as e:
-            self.logger.debug("API hook extraction failed:", extra={"e": e})
+            self.logger.debug("API hook extraction failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_differential_analysis(self, pid: int) -> bytes | None:
@@ -1953,7 +1948,7 @@ class BinaryKeyExtractor:
                     if key := self._extract_key_from_material(region_diff["new_data"]):
                         return key
         except Exception as e:
-            self.logger.debug("Differential analysis failed:", extra={"e": e})
+            self.logger.debug("Differential analysis failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_entropy_analysis(self, pid: int, entropy_threshold: float, key_size: int) -> bytes | None:
@@ -1994,7 +1989,7 @@ class BinaryKeyExtractor:
             finally:
                 kernel32.CloseHandle(process_handle)
         except Exception as e:
-            self.logger.debug("Entropy analysis failed:", extra={"e": e})
+            self.logger.debug("Entropy analysis failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_crypto_structure_detection(self, pid: int, algo: str, key_size: int) -> bytes | None:
@@ -2048,7 +2043,7 @@ class BinaryKeyExtractor:
             finally:
                 kernel32.CloseHandle(process_handle)
         except Exception as e:
-            self.logger.debug("Crypto structure detection failed:", extra={"e": e})
+            self.logger.debug("Crypto structure detection failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_memory_snapshots(self, pid: int) -> bytes | None:
@@ -2069,7 +2064,7 @@ class BinaryKeyExtractor:
                 if key := self._extract_key_from_persistent_region(region):
                     return key
         except Exception as e:
-            self.logger.debug("Memory snapshot analysis failed:", extra={"e": e})
+            self.logger.debug("Memory snapshot analysis failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_via_hook_injection(self, pid: int) -> bytes | None:
@@ -2098,7 +2093,7 @@ class BinaryKeyExtractor:
             session.detach()
             return extracted_key
         except Exception as e:
-            self.logger.debug("Hook injection failed:", extra={"e": e})
+            self.logger.debug("Hook injection failed: %s", e, exc_info=True)
         return None
 
     def _can_inject_hooks(self) -> bool:
@@ -3014,7 +3009,7 @@ class BinaryKeyExtractor:
                         except (ValueError, TypeError):
                             continue
         except Exception as e:
-            self.logger.debug("OpenSSL component extraction failed:", extra={"e": e})
+            self.logger.debug("OpenSSL component extraction failed: %s", e, exc_info=True)
         return None
 
     def _parse_ec_key(self, data: bytes, key_size: int) -> Any:
@@ -3142,7 +3137,7 @@ class BinaryKeyExtractor:
                     continue
             win32api.CloseHandle(process_handle)
         except Exception as e:
-            self.logger.debug("Key extraction from process  failed:", extra={"pid": pid, "e": e})
+            self.logger.debug("Key extraction from process %s failed: %s", pid, e, exc_info=True)
         return None
 
     def _extract_key_ctypes(self, pid: int, key_type: str) -> bytes | None:
@@ -3222,7 +3217,7 @@ class BinaryKeyExtractor:
                     except (ValueError, TypeError):
                         continue
         except Exception as e:
-            self.logger.debug("ptrace extraction failed:", extra={"e": e})
+            self.logger.debug("ptrace extraction failed: %s", e, exc_info=True)
         return None
 
     def extract_flexlm_keys(self, binary_path: str) -> dict[str, Any]:
@@ -3302,7 +3297,7 @@ class BinaryKeyExtractor:
                     keys["vendor_keys"].append(binary_hash[:16].hex())
             self._key_cache[binary_path] = keys
         except Exception as e:
-            self.logger.warning("FLEXlm key extraction failed", extra={"error": str(e)})
+            self.logger.warning("FLEXlm key extraction failed: %s", e, exc_info=True)
             path_hash = hashlib.sha256(binary_path.encode()).digest()
             keys["vendor_keys"] = [path_hash[:16].hex()]
             keys["vendor_code"] = path_hash[16:20].hex()
@@ -3380,7 +3375,7 @@ class BinaryKeyExtractor:
             if not keys["feature_ids"]:
                 keys["feature_ids"] = [1]
         except Exception as e:
-            self.logger.warning("HASP key extraction failed", extra={"error": str(e)})
+            self.logger.warning("HASP key extraction failed: %s", e, exc_info=True)
             path_hash = hashlib.sha256(binary_path.encode()).digest()
             keys["vendor_code"] = path_hash[:16].hex()
             keys["feature_ids"] = [1]
@@ -3421,7 +3416,7 @@ class BinaryKeyExtractor:
                         keys["public_keys"].append(pem_key.decode("utf-8", errors="ignore"))
                 client_patterns = [
                     (b"CLIENT_ID=", "client_id"),
-                    (b"CLIENT_SECRET=", "client_secret"),
+                    (b"CLIENT_SECRElementTree=", "client_secret"),
                     (b"API_KEY=", "api_key"),
                 ]
                 for pattern, key_name in client_patterns:
@@ -3459,6 +3454,7 @@ class BinaryKeyExtractor:
                 if not private_key_bytes:
                     raise ExtractionError("Unable to extract Adobe signing key from binary or process")
                 from cryptography.hazmat.backends import default_backend
+
                 private_key = serialization.load_pem_private_key(private_key_bytes, password=None, backend=default_backend())
                 public_key = private_key.public_key()
                 pem = public_key.public_bytes(
@@ -3469,7 +3465,7 @@ class BinaryKeyExtractor:
             if not keys["api_endpoints"]:
                 keys["api_endpoints"] = ["https://ims-na1.adobelogin.com"]
         except Exception as e:
-            self.logger.warning("Adobe key extraction failed", extra={"error": str(e)})
+            self.logger.warning("Adobe key extraction failed: %s", e, exc_info=True)
             keys["api_endpoints"] = ["https://ims-na1.adobelogin.com"]
         return keys
 
@@ -3495,7 +3491,7 @@ class BinaryKeyExtractor:
             algorithm["type"] = self._classify_algorithm(algorithm)
             algorithm["string_checks"].extend(self._collect_validation_strings(pe))
         except Exception as e:
-            self.logger.warning("Validation algorithm extraction failed", extra={"error": str(e)})
+            self.logger.warning("Validation algorithm extraction failed: %s", e, exc_info=True)
             algorithm["type"] = "checksum"
             algorithm["operations"] = ["XOR", "ADD"]
         return algorithm
@@ -3677,7 +3673,7 @@ class RuntimeKeyExtractor:
             win32api.CloseHandle(process_handle)
             return extracted_data
         except Exception as e:
-            self.logger.error("Failed to attach to Windows process", extra={"pid": pid, "error": str(e)})
+            self.logger.error("Failed to attach to Windows process %s: %s", pid, e, exc_info=True)
             return {}
 
     def _attach_windows_ctypes(self, pid: int) -> dict[str, Any]:
@@ -3752,7 +3748,7 @@ class RuntimeKeyExtractor:
             if sigcont is not None:
                 os.kill(pid, sigcont)
         except Exception as e:
-            self.logger.error("Failed to attach to Unix process", extra={"pid": pid, "error": str(e)})
+            self.logger.error("Failed to attach to Unix process %s: %s", pid, e, exc_info=True)
         return extracted_data
 
     def _extract_keys_from_memory(self, data: bytes) -> list[dict[str, Any]]:
@@ -3838,7 +3834,7 @@ class RuntimeKeyExtractor:
             "encrypted_regions": [],
         }
         if protection := self._detect_memory_protection(process_handle):
-            self.logger.info("Detected protection:", extra={"protection": protection})
+            self.logger.info("Detected protection: %s", protection)
             keys = self._handle_protected_memory(process_handle, protection, keys)
         if platform.system() == "Windows":
             return self._scan_windows_memory(process_handle, keys)
@@ -3889,7 +3885,7 @@ class RuntimeKeyExtractor:
                 except (OSError, ValueError):
                     break
         except Exception as e:
-            self.logger.error("Memory scan failed", extra={"error": str(e)})
+            self.logger.error("Memory scan failed: %s", e, exc_info=True)
         return keys
 
     def _scan_unix_memory(self, pid: int, keys: dict[str, Any]) -> dict[str, Any]:
@@ -3923,7 +3919,7 @@ class RuntimeKeyExtractor:
                         except (OSError, ValueError):
                             continue
         except Exception as e:
-            self.logger.error("Unix memory scan failed", extra={"error": str(e)})
+            self.logger.error("Unix memory scan failed: %s", e, exc_info=True)
         return keys
 
     def hook_api_calls(self, process_id: int) -> dict[str, Any]:
@@ -3996,7 +3992,7 @@ class RuntimeKeyExtractor:
                         if section_name in [b".aspack", b".adata"]:
                             return "asprotect"
             except Exception as e:
-                self.logger.debug("Protection detection failed:", extra={"e": e})
+                self.logger.debug("Protection detection failed: %s", e, exc_info=True)
         return None
 
     def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
@@ -4060,11 +4056,11 @@ class RuntimeKeyExtractor:
                         if self._looks_like_license_string(s):
                             keys["virtualized_keys"].append({"type": "vmprotect_string", "value": s, "address": section_addr})
                 except Exception as e:
-                    self.logger.debug("VMProtect handler extraction failed:", extra={"e": e})
+                    self.logger.debug("VMProtect handler extraction failed: %s", e, exc_info=True)
             iat_keys = self._reconstruct_vmprotect_iat(process_handle)
             keys["virtualized_keys"].extend(iat_keys)
         except Exception as e:
-            self.logger.error("VMProtect handling failed:", extra={"e": e})
+            self.logger.error("VMProtect handling failed: %s", e, exc_info=True)
         return keys
 
     def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
@@ -4100,11 +4096,11 @@ class RuntimeKeyExtractor:
                         key_data["protection"] = "themida"
                         keys["obfuscated_keys"].append(key_data)
                 except Exception as e:
-                    self.logger.debug("Themida section decryption failed:", extra={"e": e})
+                    self.logger.debug("Themida section decryption failed: %s", e, exc_info=True)
             wrapped_apis = self._extract_themida_wrapped_apis(process_handle)
             keys["virtualized_keys"].extend(wrapped_apis)
         except Exception as e:
-            self.logger.error("Themida handling failed:", extra={"e": e})
+            self.logger.error("Themida handling failed: %s", e, exc_info=True)
         return keys
 
     def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
@@ -4142,7 +4138,7 @@ class RuntimeKeyExtractor:
                         key_data["protection"] = "obsidium"
                         keys["obfuscated_keys"].append(key_data)
         except Exception as e:
-            self.logger.debug("Obsidium handling failed:", extra={"e": e})
+            self.logger.debug("Obsidium handling failed: %s", e, exc_info=True)
         return keys
 
     def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
@@ -4171,7 +4167,7 @@ class RuntimeKeyExtractor:
                     key_data["protection"] = "asprotect"
                     keys["obfuscated_keys"].append(key_data)
         except Exception as e:
-            self.logger.debug("ASProtect handling failed:", extra={"e": e})
+            self.logger.debug("ASProtect handling failed: %s", e, exc_info=True)
         return keys
 
     def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
@@ -4201,7 +4197,7 @@ class RuntimeKeyExtractor:
                     key_data["protection"] = "enigma"
                     keys["obfuscated_keys"].append(key_data)
         except Exception as e:
-            self.logger.debug("Enigma handling failed:", extra={"e": e})
+            self.logger.debug("Enigma handling failed: %s", e, exc_info=True)
         return keys
 
     def _is_obfuscated(self, data: bytes) -> bool:
@@ -4358,7 +4354,6 @@ class RuntimeKeyExtractor:
         possible_keys = [b"DefaultKey", mem_info.BaseAddress.to_bytes(4, "little"), b"\x137Bi"]
         for key in possible_keys:
             try:
-
                 cipher = ARC4Cipher(key)
                 test_decrypt = cipher.decrypt(data[:100])
                 if self._looks_like_code(test_decrypt):
@@ -4480,7 +4475,7 @@ class RuntimeKeyExtractor:
                     logger.warning("Error during memory analysis: %s", e)
                     continue
         except Exception as e:
-            self.logger.debug("IAT reconstruction failed:", extra={"e": e})
+            self.logger.debug("IAT reconstruction failed: %s", e, exc_info=True)
         return keys
 
     def _extract_vm_strings(self, data: bytes) -> list[str]:
@@ -4688,7 +4683,7 @@ class RuntimeKeyExtractor:
                             except Exception as e:
                                 logger.warning("Error extracting registry keys from hook data: %s", e)
         except Exception as e:
-            self.logger.error("API hooking failed:", extra={"e": e})
+            self.logger.error("API hooking failed: %s", e, exc_info=True)
         finally:
             if process_handle:
                 kernel32.CloseHandle(process_handle)
@@ -4851,7 +4846,7 @@ class FridaKeyExtractor:
             time.sleep(2)
             return extracted_data
         except Exception as e:
-            self.logger.error("Frida injection failed:", extra={"e": e})
+            self.logger.error("Frida injection failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _generate_extraction_script(self) -> str:
@@ -4894,7 +4889,7 @@ class FridaKeyExtractor:
             session.detach()
             return extracted
         except Exception as e:
-            self.logger.error("FLEXlm extraction failed:", extra={"e": e})
+            self.logger.error("FLEXlm extraction failed: %s", e, exc_info=True)
             return {}
 
     def extract_hasp_runtime(self, process: int) -> dict[str, Any]:
@@ -4933,7 +4928,7 @@ class FridaKeyExtractor:
             session.detach()
             return extracted
         except Exception as e:
-            self.logger.error("HASP extraction failed:", extra={"e": e})
+            self.logger.error("HASP extraction failed: %s", e, exc_info=True)
             return {}
 
     def monitor_license_validation(self, process_name: str, duration: int = 10) -> dict[str, Any]:
@@ -4956,7 +4951,7 @@ class FridaKeyExtractor:
             session.detach()
             return {"validation_log": validation_log}
         except Exception as e:
-            self.logger.error("Validation monitoring failed:", extra={"e": e})
+            self.logger.error("Validation monitoring failed: %s", e, exc_info=True)
             return {}
 
     def detach_all(self) -> None:
@@ -5146,31 +5141,31 @@ class ProtocolStateMachine:
             "features": keys.get("feature_ids", [1]),
             "timestamp": time.time(),
         }
-        root = ET.Element("haspprotocol")
-        status = ET.SubElement(root, "status")
+        root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(root, "status")
         status.text = "0"
-        status_msg = ET.SubElement(root, "statusmessage")
+        status_msg = ElementTree.SubElement(root, "statusmessage")
         status_msg.text = "Login successful"
-        session_elem = ET.SubElement(root, "sessionid")
+        session_elem = ElementTree.SubElement(root, "sessionid")
         session_elem.text = session_id
-        handle = ET.SubElement(root, "handle")
+        handle = ElementTree.SubElement(root, "handle")
         handle_value = struct.unpack(">I", hashlib.sha256(session_id.encode()).digest()[:4])[0]
         handle.text = str(handle_value)
-        features_elem = ET.SubElement(root, "features")
+        features_elem = ElementTree.SubElement(root, "features")
         for feature_id in keys.get("feature_ids", [1]):
-            feat = ET.SubElement(features_elem, "feature")
-            id_elem = ET.SubElement(feat, "id")
+            feat = ElementTree.SubElement(features_elem, "feature")
+            id_elem = ElementTree.SubElement(feat, "id")
             id_elem.text = str(feature_id)
-            enabled = ET.SubElement(feat, "enabled")
+            enabled = ElementTree.SubElement(feat, "enabled")
             enabled.text = "true"
-            memory = ET.SubElement(feat, "memory_size")
+            memory = ElementTree.SubElement(feat, "memory_size")
             memory.text = "4096"
-            lic_elem = ET.SubElement(feat, "license")
+            lic_elem = ElementTree.SubElement(feat, "license")
             lic_elem.set("type", "perpetual")
             lic_elem.text = "valid"
-        vendor_elem = ET.SubElement(root, "vendor_code")
+        vendor_elem = ElementTree.SubElement(root, "vendor_code")
         vendor_elem.text = keys.get("vendor_code", "0" * 32)
-        xml_str = ET.tostring(root, encoding="unicode")
+        xml_str = ElementTree.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_encrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
@@ -5190,12 +5185,12 @@ class ProtocolStateMachine:
         pad_len = 16 - len(data) % 16
         padded_data = data + bytes([pad_len] * pad_len)
         encrypted = encryptor.update(padded_data) + encryptor.finalize()
-        response_root = ET.Element("haspprotocol")
-        status = ET.SubElement(response_root, "status")
+        response_root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(response_root, "status")
         status.text = "0"
-        encrypted_elem = ET.SubElement(response_root, "encrypted_data")
+        encrypted_elem = ElementTree.SubElement(response_root, "encrypted_data")
         encrypted_elem.text = base64.b64encode(iv + encrypted).decode()
-        xml_str = ET.tostring(response_root, encoding="unicode")
+        xml_str = ElementTree.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_binary_response(self, keys: dict[str, Any], request_data: bytes) -> bytes:
@@ -5251,27 +5246,27 @@ class ProtocolStateMachine:
 
     def _hasp_generic_response(self, keys: dict[str, Any], command: str, session_id: str | None) -> bytes:
         """Generate generic HASP response."""
-        root = ET.Element("haspprotocol")
-        status = ET.SubElement(root, "status")
+        root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(root, "status")
         status.text = "0"
-        status_msg = ET.SubElement(root, "statusmessage")
+        status_msg = ElementTree.SubElement(root, "statusmessage")
         status_msg.text = f"Command {command} executed successfully"
         if session_id:
-            session_elem = ET.SubElement(root, "sessionid")
+            session_elem = ElementTree.SubElement(root, "sessionid")
             session_elem.text = session_id
-        xml_str = ET.tostring(root, encoding="unicode")
+        xml_str = ElementTree.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_logout_response(self, session_id: str | None) -> bytes:
         """Handle HASP logout."""
         if session_id and session_id in self.current_state:
             del self.current_state[session_id]
-        root = ET.Element("haspprotocol")
-        status = ET.SubElement(root, "status")
+        root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(root, "status")
         status.text = "0"
-        status_msg = ET.SubElement(root, "statusmessage")
+        status_msg = ElementTree.SubElement(root, "statusmessage")
         status_msg.text = "Logout successful"
-        xml_str = ET.tostring(root, encoding="unicode")
+        xml_str = ElementTree.tostring(root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_decrypt_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
@@ -5294,12 +5289,12 @@ class ProtocolStateMachine:
         decrypted = decryptor.update(ciphertext) + decryptor.finalize()
         pad_len = decrypted[-1]
         data = decrypted[:-pad_len]
-        response_root = ET.Element("haspprotocol")
-        status = ET.SubElement(response_root, "status")
+        response_root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(response_root, "status")
         status.text = "0"
-        data_elem = ET.SubElement(response_root, "data")
+        data_elem = ElementTree.SubElement(response_root, "data")
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = ET.tostring(response_root, encoding="unicode")
+        xml_str = ElementTree.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_read_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
@@ -5315,12 +5310,12 @@ class ProtocolStateMachine:
         for i, fid in enumerate(keys.get("feature_ids", [1])):
             memory[256 + i * 4 : 256 + i * 4 + 4] = struct.pack("<I", fid)
         data = memory[offset : offset + size]
-        response_root = ET.Element("haspprotocol")
-        status = ET.SubElement(response_root, "status")
+        response_root = ElementTree.Element("haspprotocol")
+        status = ElementTree.SubElement(response_root, "status")
         status.text = "0"
-        data_elem = ET.SubElement(response_root, "data")
+        data_elem = ElementTree.SubElement(response_root, "data")
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = ET.tostring(response_root, encoding="unicode")
+        xml_str = ElementTree.tostring(response_root, encoding="unicode")
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_write_response(self, keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
@@ -5337,39 +5332,39 @@ class ProtocolStateMachine:
                 write_data = bytes.fromhex(data_elem.text.replace(" ", ""))
         except Exception as e:
             logger.warning("Error parsing HASP write request: %s", e)
-        response_root = ET.Element("haspprotocol")
+        response_root = ElementTree.Element("haspprotocol")
         response_root.set("version", "1.0")
         from datetime import datetime
 
-        timestamp = ET.SubElement(response_root, "timestamp")
+        timestamp = ElementTree.SubElement(response_root, "timestamp")
         timestamp.text = f"{datetime.utcnow().isoformat()}Z"
-        status = ET.SubElement(response_root, "status")
+        status = ElementTree.SubElement(response_root, "status")
         status.text = "0"
-        status_msg = ET.SubElement(response_root, "statusmessage")
+        status_msg = ElementTree.SubElement(response_root, "statusmessage")
         status_msg.text = "Memory write operation completed successfully"
-        write_info = ET.SubElement(response_root, "writeinfo")
-        offset_written = ET.SubElement(write_info, "offset")
+        write_info = ElementTree.SubElement(response_root, "writeinfo")
+        offset_written = ElementTree.SubElement(write_info, "offset")
         offset_written.text = str(write_offset)
-        bytes_written = ET.SubElement(write_info, "bytes_written")
+        bytes_written = ElementTree.SubElement(write_info, "bytes_written")
         bytes_written.text = str(len(write_data))
-        checksum = ET.SubElement(write_info, "checksum")
+        checksum = ElementTree.SubElement(write_info, "checksum")
         import zlib
 
         crc32_value = zlib.crc32(write_data) & 4294967295
         checksum.text = f"0x{crc32_value:08X}"
-        memory_state = ET.SubElement(response_root, "memory_state")
-        total_size = ET.SubElement(memory_state, "total_size")
+        memory_state = ElementTree.SubElement(response_root, "memory_state")
+        total_size = ElementTree.SubElement(memory_state, "total_size")
         total_size.text = str(self.hasp_memory_size)
-        used_size = ET.SubElement(memory_state, "used_size")
+        used_size = ElementTree.SubElement(memory_state, "used_size")
         used_size.text = str(write_offset + len(write_data))
-        available = ET.SubElement(memory_state, "available")
+        available = ElementTree.SubElement(memory_state, "available")
         available.text = str(max(0, self.hasp_memory_size - write_offset - len(write_data)))
-        session = ET.SubElement(response_root, "session")
-        session_valid = ET.SubElement(session, "valid")
+        session = ElementTree.SubElement(response_root, "session")
+        session_valid = ElementTree.SubElement(session, "valid")
         session_valid.text = "true"
-        session_id_elem = ET.SubElement(session, "id")
+        session_id_elem = ElementTree.SubElement(session, "id")
         session_id_elem.text = session_id
-        xml_str = ET.tostring(response_root, encoding="unicode", method="xml")
+        xml_str = ElementTree.tostring(response_root, encoding="unicode", method="xml")
         return f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n{xml_str}'.encode()
 
 
@@ -5435,7 +5430,7 @@ class ProxyInterceptor:
         self.stats["requests_intercepted"] += 1
         target_url = request.headers.get("X-Target-URL", request.path if hasattr(request, "path") else "")
         if self._is_license_request(target_url, request):
-            self.logger.info("Intercepted license request to", extra={"target_url": target_url})
+            self.logger.info("Intercepted license request to %s", target_url)
             request_data = await request.read() if hasattr(request, "read") else b""
             analysis = self.protocol_analyzer.analyze_traffic(request_data, request.remote if hasattr(request, "remote") else "127.0.0.1")
             response = self._generate_bypass_response(request, analysis)
@@ -5617,18 +5612,18 @@ class ProxyInterceptor:
 
         parsed_data = analysis.get("parsed_data", {})
         root_name = self._detect_xml_schema(parsed_data)
-        root = ET.Element(root_name)
+        root = ElementTree.Element(root_name)
         if "namespace" in parsed_data:
             root.set("xmlns", parsed_data["namespace"])
         request_type = self._analyze_xml_request_type(parsed_data)
         if request_type == "validation":
-            status_elem = ET.SubElement(root, "Status")
+            status_elem = ElementTree.SubElement(root, "Status")
             status_elem.text = "Valid"
-            licensed_elem = ET.SubElement(root, "Licensed")
+            licensed_elem = ElementTree.SubElement(root, "Licensed")
             licensed_elem.text = "true"
-            activated_elem = ET.SubElement(root, "Activated")
+            activated_elem = ElementTree.SubElement(root, "Activated")
             activated_elem.text = "true"
-            msg_elem = ET.SubElement(root, "Message")
+            msg_elem = ElementTree.SubElement(root, "Message")
             msg_elem.text = "License validated successfully"
             license_data = parsed_data.get("license", {})
             if isinstance(license_data, dict):
@@ -5636,56 +5631,56 @@ class ProxyInterceptor:
             else:
                 days_valid = 365
             expiry_date = datetime.utcnow() + timedelta(days=days_valid)
-            expiry_elem = ET.SubElement(root, "ExpiryDate")
+            expiry_elem = ElementTree.SubElement(root, "ExpiryDate")
             expiry_elem.text = expiry_date.isoformat()
-            remaining_elem = ET.SubElement(root, "RemainingDays")
+            remaining_elem = ElementTree.SubElement(root, "RemainingDays")
             remaining_elem.text = str(days_valid)
-            type_elem = ET.SubElement(root, "LicenseType")
+            type_elem = ElementTree.SubElement(root, "LicenseType")
             type_elem.text = self._determine_license_type_from_xml(parsed_data)
-            features_elem = ET.SubElement(root, "Features")
+            features_elem = ElementTree.SubElement(root, "Features")
             feature_list = self._extract_xml_features(parsed_data)
             for feature in feature_list:
-                feat_elem = ET.SubElement(features_elem, feature.replace(" ", "_"))
+                feat_elem = ElementTree.SubElement(features_elem, feature.replace(" ", "_"))
                 feat_elem.text = "true"
             if "hardware_id" in parsed_data:
-                hw_elem = ET.SubElement(root, "HardwareID")
+                hw_elem = ElementTree.SubElement(root, "HardwareID")
                 hw_elem.text = str(parsed_data["hardware_id"])
-                hw_valid_elem = ET.SubElement(root, "HardwareValid")
+                hw_valid_elem = ElementTree.SubElement(root, "HardwareValid")
                 hw_valid_elem.text = "true"
         elif request_type == "activation":
-            result_elem = ET.SubElement(root, "ActivationResult")
+            result_elem = ElementTree.SubElement(root, "ActivationResult")
             result_elem.text = "Success"
             activation_data = str(parsed_data).encode()
             activation_hash = hashlib.sha256(activation_data + os.urandom(16)).hexdigest()
-            code_elem = ET.SubElement(root, "ActivationCode")
+            code_elem = ElementTree.SubElement(root, "ActivationCode")
             code_elem.text = activation_hash.upper()[:32]
             if "installation_id" in parsed_data:
-                install_elem = ET.SubElement(root, "InstallationID")
+                install_elem = ElementTree.SubElement(root, "InstallationID")
                 install_elem.text = str(parsed_data["installation_id"])
-            confirm_elem = ET.SubElement(root, "ConfirmationID")
+            confirm_elem = ElementTree.SubElement(root, "ConfirmationID")
             confirm_data = activation_hash.encode() + b"CONFIRM"
             confirm_elem.text = hashlib.sha256(confirm_data).hexdigest().upper()[:48]
         elif request_type == "heartbeat":
-            status_elem = ET.SubElement(root, "HeartbeatStatus")
+            status_elem = ElementTree.SubElement(root, "HeartbeatStatus")
             status_elem.text = "OK"
-            timestamp_elem = ET.SubElement(root, "ServerTime")
+            timestamp_elem = ElementTree.SubElement(root, "ServerTime")
             timestamp_elem.text = datetime.utcnow().isoformat()
-            session_elem = ET.SubElement(root, "SessionValid")
+            session_elem = ElementTree.SubElement(root, "SessionValid")
             session_elem.text = "true"
-            interval_elem = ET.SubElement(root, "NextHeartbeat")
+            interval_elem = ElementTree.SubElement(root, "NextHeartbeat")
             interval_elem.text = "300"
         else:
-            success_elem = ET.SubElement(root, "Success")
+            success_elem = ElementTree.SubElement(root, "Success")
             success_elem.text = "true"
-            status_elem = ET.SubElement(root, "Status")
+            status_elem = ElementTree.SubElement(root, "Status")
             status_elem.text = "OK"
-            time_elem = ET.SubElement(root, "Timestamp")
+            time_elem = ElementTree.SubElement(root, "Timestamp")
             time_elem.text = datetime.utcnow().isoformat()
         if self._requires_signature(parsed_data):
-            sig_elem = ET.SubElement(root, "Signature")
-            sig_data = ET.tostring(root, encoding="unicode")
+            sig_elem = ElementTree.SubElement(root, "Signature")
+            sig_data = ElementTree.tostring(root, encoding="unicode")
             sig_elem.text = hashlib.sha256(sig_data.encode()).hexdigest()
-        xml_str = ET.tostring(root, encoding="unicode", method="xml")
+        xml_str = ElementTree.tostring(root, encoding="unicode", method="xml")
         xml_response = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
         return {"content_type": "application/xml", "status_code": 200, "body": xml_response}
 
@@ -6161,7 +6156,7 @@ class ProxyInterceptor:
                 if version_match and (not kms_data["protocol_version"]):
                     kms_data["protocol_version"] = int(version_match.group(1))
         except Exception as e:
-            self.logger.debug("KMS extraction from binary failed:", extra={"e": e})
+            self.logger.debug("KMS extraction from binary failed: %s", e, exc_info=True)
         if not kms_data["app_id"] or not kms_data["sku_id"]:
             runtime_data = self._extract_kms_from_registry()
             if runtime_data:
@@ -6236,7 +6231,7 @@ class ProxyInterceptor:
                     kms_data["sku_id"] = sku_id
             winreg.CloseKey(key)
         except Exception as e:
-            self.logger.debug("Registry extraction failed:", extra={"e": e})
+            self.logger.debug("Registry extraction failed: %s", e, exc_info=True)
         return kms_data
 
     def _find_kms_host_from_service(self) -> str | None:
@@ -6370,7 +6365,7 @@ class ProxyInterceptor:
         """Set the target binary for analysis."""
         if os.path.exists(binary_path):
             self.target_binary = binary_path
-            self.logger.info("Target binary set to:", extra={"binary_path": binary_path})
+            self.logger.info("Target binary set to: %s", binary_path)
             if binary_path.lower().endswith(".exe"):
                 with open(binary_path, "rb") as f:
                     header = f.read(1024)
@@ -6381,7 +6376,7 @@ class ProxyInterceptor:
                     elif b"adobe" in header.lower():
                         self.binary_cache[binary_path] = self.key_extractor.extract_adobe_keys(binary_path)
             return True
-        self.logger.error("Binary not found:", extra={"binary_path": binary_path})
+        self.logger.error("Binary not found: %s", binary_path)
         return False
 
     def analyze_binary_for_protection(self, binary_path: str) -> dict[str, Any]:
@@ -6604,7 +6599,7 @@ class ProxyInterceptor:
                     modified = modified.replace(fail_code, success_codes[min(i, len(success_codes) - 1)])
             return modified
         except Exception as e:
-            self.logger.error("Failed to modify response:", extra={"e": e})
+            self.logger.error("Failed to modify response: %s", e, exc_info=True)
             return response_data
 
     def get_statistics(self) -> dict[str, Any]:
@@ -6829,16 +6824,10 @@ class LicenseServerEmulator:
                     features={"all": True},
                     message="License bypassed - validation successful",
                 )
-            self.logger.info(
-                "License validation:  ->",
-                extra={
-                    "request_license_key": request.license_key,
-                    "response_status": response.status,
-                },
-            )
+            self.logger.info("License validation: %s -> %s", request.license_key, response.status)
             return response
         except Exception as e:
-            self.logger.error("License validation error:", extra={"e": e})
+            self.logger.error("License validation error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_activation(self, request: ActivationRequest, client_request: Request) -> ActivationResponse:
@@ -6861,13 +6850,10 @@ class LicenseServerEmulator:
                 certificate=certificate,
                 message="License activated successfully",
             )
-            self.logger.info(
-                "License activation:  ->",
-                extra={"request_license_key": request.license_key, "activation_id": activation_id},
-            )
+            self.logger.info("License activation: %s -> %s", request.license_key, activation_id)
             return response
         except Exception as e:
-            self.logger.error("License activation error:", extra={"e": e})
+            self.logger.error("License activation error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_status(self, license_key: str) -> dict[str, Any]:
@@ -6893,7 +6879,7 @@ class LicenseServerEmulator:
                 "current_users": 1,
             }
         except Exception as e:
-            self.logger.error("License status error:", extra={"e": e})
+            self.logger.error("License status error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_flexlm_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
@@ -6909,10 +6895,10 @@ class LicenseServerEmulator:
                 "server": "intellicrack-flexlm",
                 "port": self.config["flexlm_port"],
             }
-            self.logger.info("FlexLM request:  -> granted", extra={"feature": feature})
+            self.logger.info("FlexLM request: feature %s -> granted", feature)
             return response
         except Exception as e:
-            self.logger.error("FlexLM request error:", extra={"e": e})
+            self.logger.error("FlexLM request error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_hasp_request(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -6933,7 +6919,7 @@ class LicenseServerEmulator:
                 return {"status": status, "data": decrypted.decode()}
             return {"status": 0, "message": "Operation successful"}
         except Exception as e:
-            self.logger.error("HASP request error:", extra={"e": e})
+            self.logger.error("HASP request error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_kms_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
@@ -6943,10 +6929,10 @@ class LicenseServerEmulator:
             product_name = request.get("product_name", "Windows")
             client_info = request.get("client_info", {})
             response = self.kms.activate_product(product_key, product_name, client_info)
-            self.logger.info("KMS activation:  -> success", extra={"product_name": product_name})
+            self.logger.info("KMS activation: %s -> success", product_name)
             return response
         except Exception as e:
-            self.logger.error("KMS request error:", extra={"e": e})
+            self.logger.error("KMS request error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_adobe_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
@@ -6956,10 +6942,10 @@ class LicenseServerEmulator:
             user_id = request.get("user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local"))
             machine_id = request.get("machine_id", "machine-123")
             response = self.adobe.validate_adobe_license(product_id, user_id, machine_id)
-            self.logger.info("Adobe validation:  -> success", extra={"product_id": product_id})
+            self.logger.info("Adobe validation: %s -> success", product_id)
             return response
         except Exception as e:
-            self.logger.error("Adobe request error:", extra={"e": e})
+            self.logger.error("Adobe request error: %s", e, exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     def _start_dns_server(self) -> None:
@@ -6994,8 +6980,8 @@ class LicenseServerEmulator:
             b"flex-licensing.autodesk.com": "127.0.0.1",
         }
         try:
-            self.dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.dns_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.dns_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_DGRAM)
+            self.dns_socket.setsockopt(socket.SOL_SOCKElementTree, socket.SO_REUSEADDR, 1)
             self.dns_socket.bind(("127.0.0.1", 53))
             self.dns_socket.settimeout(1.0)
             self.logger.info("DNS server started on port 53")
@@ -7006,7 +6992,7 @@ class LicenseServerEmulator:
             self.logger.warning("Cannot bind to port 53 (requires root/admin privileges)")
             self.logger.info("DNS server functionality disabled")
         except Exception as e:
-            self.logger.error("Failed to start DNS server:", extra={"e": e})
+            self.logger.error("Failed to start DNS server: %s", e, exc_info=True)
 
     def _dns_server_loop(self) -> None:
         """Run DNS server loop."""
@@ -7021,7 +7007,7 @@ class LicenseServerEmulator:
                 continue
             except Exception as e:
                 if self.dns_running:
-                    self.logger.error("DNS server error:", extra={"e": e})
+                    self.logger.error("DNS server error: %s", e, exc_info=True)
 
     def _handle_dns_query(self, data: bytes, addr: tuple[str, int]) -> None:
         """Handle individual DNS query."""
@@ -7062,7 +7048,7 @@ class LicenseServerEmulator:
                 )
             else:
                 try:
-                    forward_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    forward_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_DGRAM)
                     forward_socket.settimeout(5.0)
                     forward_socket.sendto(data, ("8.8.8.8", 53))
                     response, _ = forward_socket.recvfrom(512)
@@ -7072,7 +7058,7 @@ class LicenseServerEmulator:
                     response = self._create_dns_error_response(transaction_id, data[12 : query_offset + 4])
                     self.dns_socket.sendto(response, addr)
         except Exception as e:
-            self.logger.debug("Error handling DNS query:", extra={"e": e})
+            self.logger.debug("Error handling DNS query: %s", e, exc_info=True)
 
     def _create_dns_response(self, transaction_id: int, query_name: bytes, ip_address: str, question_section: bytes) -> bytes:
         """Create a DNS A record response."""
@@ -7111,9 +7097,9 @@ class LicenseServerEmulator:
             for port in https_ports:
                 thread = threading.Thread(target=self._run_ssl_server, args=(port,), daemon=True)
                 thread.start()
-                self.logger.info("SSL interceptor started on port", extra={"port": port})
+                self.logger.info("SSL interceptor started on port %s", port)
         except Exception as e:
-            self.logger.error("Failed to start SSL interceptor:", extra={"e": e})
+            self.logger.error("Failed to start SSL interceptor: %s", e, exc_info=True)
 
     def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
         """Generate a self-signed certificate for SSL interception."""
@@ -7165,13 +7151,13 @@ class LicenseServerEmulator:
         except ImportError:
             self.logger.error("cryptography module not available, using basic SSL")
         except Exception as e:
-            self.logger.error("Error generating certificate:", extra={"e": e})
+            self.logger.error("Error generating certificate: %s", e, exc_info=True)
 
     def _run_ssl_server(self, port: int) -> None:
         """Run SSL server on specified port."""
         try:
-            ssl_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            ssl_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            ssl_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_STREAM)
+            ssl_socket.setsockopt(socket.SOL_SOCKElementTree, socket.SO_REUSEADDR, 1)
             ssl_socket.bind(("127.0.0.1", port))
             ssl_socket.listen(5)
             while True:
@@ -7179,7 +7165,7 @@ class LicenseServerEmulator:
                 thread = threading.Thread(target=self._handle_ssl_connection, args=(client_socket, addr), daemon=True)
                 thread.start()
         except Exception as e:
-            self.logger.error("SSL server error on port :", extra={"port": port, "e": e})
+            self.logger.error("SSL server error on port %s: %s", port, e, exc_info=True)
 
     def _handle_ssl_connection(self, client_socket: socket.socket, addr: tuple[str, int]) -> None:
         """Handle individual SSL connection."""
@@ -7195,7 +7181,7 @@ class LicenseServerEmulator:
             ssl_socket.send(response)
             ssl_socket.close()
         except Exception as e:
-            self.logger.debug("SSL connection error:", extra={"e": e})
+            self.logger.debug("SSL connection error: %s", e, exc_info=True)
 
     def start_servers(self) -> None:
         """Start all license servers."""
@@ -7220,7 +7206,7 @@ class LicenseServerEmulator:
                     log_level=self.config["log_level"].lower(),
                 )
         except Exception as e:
-            self.logger.error("Server startup failed:", extra={"e": e})
+            self.logger.error("Server startup failed: %s", e, exc_info=True)
             raise
         finally:
             if hasattr(self, "dns_socket") and self.dns_socket:
@@ -7280,8 +7266,8 @@ class LicenseServerInstance:
     def _run_server(self) -> None:
         """Run the server in a background thread."""
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server_socket = socket.socket(socket.AF_INElementTree, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.SOL_SOCKElementTree, socket.SO_REUSEADDR, 1)
             self.server_socket.bind((self.host, self.port))
             self.server_socket.listen(5)
             if self.port == 0:
@@ -7306,7 +7292,7 @@ class LicenseServerInstance:
         """Handle client connections."""
         try:
             if data := client_socket.recv(4096):
-                logger.debug(f"Received {len(data)} bytes from client {addr}: {data[:50].hex()}")
+                logger.debug("Received %s bytes from client %s: %s", len(data), addr, data[:50].hex())
                 response = b"\x00\x00\x00\x10\x00\x00\x00\x00SUCCESS\x00"
                 client_socket.send(response)
         except Exception as e:
@@ -7342,7 +7328,7 @@ class LicenseClientInstance:
     def connect(self, host: str, port: int, timeout: float = 5.0) -> bool:
         """Connect to license server."""
         try:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = socket.socket(socket.AF_INElementTree, socket.SOCK_STREAM)
             self.socket.settimeout(timeout)
             self.socket.connect((host, port))
             self.connected = True
@@ -7382,7 +7368,7 @@ def run_network_license_emulator(config: dict[str, Any] | None = None) -> None:
     except KeyboardInterrupt:
         logger.info("License server emulator stopped")
     except Exception as e:
-        logger.error("License server error: %s", e)
+        logger.error("License server error: %s", e, exc_info=True)
 
 
 def main() -> None:
@@ -7413,15 +7399,20 @@ def main() -> None:
         "ssl_key": args.ssl_key,
     }
     server = LicenseServerEmulator(config)
-    print(
-        f"\n╔══════════════════════════════════════════════════════════════╗\n║              Intellicrack License Server Emulator           ║\n║                         Version 2.0.0                       ║\n╠══════════════════════════════════════════════════════════════╣\n║ HTTP Server:    http://{args.host}:{args.port}                           ║\n║ FlexLM Server:  TCP port {args.flexlm_port}                           ║\n║ Database:       {args.db_path}                               ║\n║ Log Level:      {args.log_level}                            ║\n╚══════════════════════════════════════════════════════════════╝\n\nStarting license server emulator...\n"
+    logger.info(
+        "Intellicrack License Server Emulator v2.0.0 - HTTP Server: http://%s:%s, FlexLM Server: TCP port %s, Database: %s, Log Level: %s",
+        args.host,
+        args.port,
+        args.flexlm_port,
+        args.db_path,
+        args.log_level,
     )
     try:
         server.start_servers()
     except KeyboardInterrupt:
-        print("\nShutting down license server emulator...")
+        logger.info("Shutting down license server emulator...")
     except Exception as e:
-        print(f"Server error: {e}")
+        logger.error("Server error: %s", e, exc_info=True)
 
 
 if __name__ == "__main__":

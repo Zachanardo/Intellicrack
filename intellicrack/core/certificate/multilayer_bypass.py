@@ -177,7 +177,7 @@ class MultiLayerBypass:
         result = MultiLayerResult(overall_success=False)
 
         sorted_layers = dependency_graph.topological_sort()
-        logger.info(f"Executing {len(sorted_layers)}-layer bypass in order: {sorted_layers}")
+        logger.info("Executing %d-layer bypass in order: %s", len(sorted_layers), sorted_layers)
 
         stage_number = 1
         for layer_type in sorted_layers:
@@ -187,14 +187,15 @@ class MultiLayerBypass:
 
             if not self._check_dependencies_satisfied(layer_type, dependency_graph, result):
                 logger.warning(
-                    f"Skipping {layer_type.value} - dependencies not satisfied",
+                    "Skipping %s - dependencies not satisfied",
+                    layer_type.value,
                 )
                 result.failed_layers.append(
                     (layer_type, "Dependencies not satisfied"),
                 )
                 continue
 
-            logger.info(f"Stage {stage_number}: Bypassing {layer_type.value}")
+            logger.info("Stage %d: Bypassing %s", stage_number, layer_type.value)
 
             stage_result = self._execute_stage_bypass(
                 stage_number,
@@ -206,7 +207,9 @@ class MultiLayerBypass:
 
             if not stage_result.success:
                 logger.error(
-                    f"Stage {stage_number} failed: {stage_result.error_message}",
+                    "Stage %d failed: %s",
+                    stage_number,
+                    stage_result.error_message,
                 )
                 self._rollback_previous_stages(result)
                 return result
@@ -216,7 +219,8 @@ class MultiLayerBypass:
 
             if not verified:
                 logger.warning(
-                    f"Verification failed for {layer_type.value} - bypass may not be effective",
+                    "Verification failed for %s - bypass may not be effective",
+                    layer_type.value,
                 )
 
             stage_number += 1
@@ -277,7 +281,7 @@ class MultiLayerBypass:
             bypassed = []
             for func in os_level_functions[:5]:
                 if template := select_template(func.api_name, "x64"):
-                    logger.debug(f"Using template for {func.api_name}: {template.name}")
+                    logger.debug("Using template for %s: %s", func.api_name, template.name)
                     try:
                         patch_result = self._patcher.patch_certificate_validation(
                             detection_report,
@@ -285,14 +289,14 @@ class MultiLayerBypass:
                         if patch_result.success:
                             bypassed.append(func.api_name)
                     except Exception as e:
-                        logger.warning(f"Failed to patch {func.api_name}: {e}")
+                        logger.warning("Failed to patch %s: %s", func.api_name, e, exc_info=True)
 
             if not bypassed:
                 try:
                     if self._frida_hooks.attach(target) and self._frida_hooks.inject_specific_bypass("cryptoapi"):
                         bypassed.append("Frida: CryptoAPI hooks")
                 except Exception as e:
-                    logger.error(f"Frida hook injection failed: {e}")
+                    logger.error("Frida hook injection failed: %s", e, exc_info=True)
 
             return StageResult(
                 stage_number=stage_number,
@@ -303,7 +307,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error(f"OS-level bypass failed: {e}")
+            logger.error("OS-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -348,11 +352,11 @@ class MultiLayerBypass:
                     if self._frida_hooks.inject_specific_bypass("boringssl"):
                         bypassed.append("Frida: BoringSSL hooks")
             except Exception as e:
-                logger.warning(f"Frida injection failed, trying binary patching: {e}")
+                logger.warning("Frida injection failed, trying binary patching: %s", e, exc_info=True)
 
                 for func in library_functions[:3]:
                     if template := select_template(func.api_name, "x64"):
-                        logger.debug(f"Applying binary patch template for {func.api_name}: {template.name}")
+                        logger.debug("Applying binary patch template for %s: %s", func.api_name, template.name)
                         try:
                             patch_result = self._patcher.patch_certificate_validation(
                                 detection_report,
@@ -360,7 +364,7 @@ class MultiLayerBypass:
                             if patch_result.success:
                                 bypassed.append(func.api_name)
                         except Exception as patch_error:
-                            logger.warning(f"Failed to patch {func.api_name}: {patch_error}")
+                            logger.warning("Failed to patch %s: %s", func.api_name, patch_error, exc_info=True)
 
             return StageResult(
                 stage_number=stage_number,
@@ -371,7 +375,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error(f"Library-level bypass failed: {e}")
+            logger.error("Library-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -400,7 +404,7 @@ class MultiLayerBypass:
                     if status.get("pinning_bypassed"):
                         bypassed.append("Frida: Certificate pinning bypass")
             except Exception as e:
-                logger.warning(f"Frida-based application bypass failed: {e}")
+                logger.warning("Frida-based application bypass failed: %s", e, exc_info=True)
 
             if not bypassed:
                 logger.info("Attempting binary patch for application-level validation")
@@ -416,7 +420,7 @@ class MultiLayerBypass:
                         if patch_result.success:
                             bypassed.append(f"Patched: {func.api_name}")
                     except Exception as e:
-                        logger.warning(f"Patch failed for {func.api_name}: {e}")
+                        logger.warning("Patch failed for %s: %s", func.api_name, e, exc_info=True)
 
             return StageResult(
                 stage_number=stage_number,
@@ -427,7 +431,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error(f"Application-level bypass failed: {e}")
+            logger.error("Application-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -456,7 +460,7 @@ class MultiLayerBypass:
                         bypassed.append("Frida: WinHTTP bypass")
 
             except Exception as e:
-                logger.warning(f"Server-level Frida bypass failed: {e}")
+                logger.warning("Server-level Frida bypass failed: %s", e, exc_info=True)
 
             logger.info(
                 "Server-level bypass may require MITM proxy - consider using bypass_orchestrator with MITM_PROXY method",
@@ -471,7 +475,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error(f"Server-level bypass failed: {e}")
+            logger.error("Server-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -513,7 +517,7 @@ class MultiLayerBypass:
             return False
 
         except Exception as e:
-            logger.error(f"Verification failed for {layer.value}: {e}")
+            logger.error("Verification failed for %s: %s", layer.value, e, exc_info=True)
             return False
 
     def _verify_os_level_bypass(self, target: str) -> bool:
@@ -524,7 +528,7 @@ class MultiLayerBypass:
                 return status.get("cryptoapi_bypassed", False)
             return True
         except Exception as e:
-            logger.warning(f"OS-level verification failed: {e}")
+            logger.warning("OS-level verification failed: %s", e, exc_info=True)
             return True
 
     def _verify_library_level_bypass(self, target: str) -> bool:
@@ -535,7 +539,7 @@ class MultiLayerBypass:
                 return status.get("openssl_bypassed", False) or status.get("nss_bypassed", False) or status.get("boringssl_bypassed", False)
             return True
         except Exception as e:
-            logger.warning(f"Library-level verification failed: {e}")
+            logger.warning("Library-level verification failed: %s", e, exc_info=True)
             return True
 
     def _verify_application_level_bypass(self, target: str) -> bool:
@@ -546,7 +550,7 @@ class MultiLayerBypass:
                 return status.get("pinning_bypassed", False)
             return True
         except Exception as e:
-            logger.warning(f"Application-level verification failed: {e}")
+            logger.warning("Application-level verification failed: %s", e, exc_info=True)
             return True
 
     def _verify_server_level_bypass(self, target: str) -> bool:
@@ -557,7 +561,7 @@ class MultiLayerBypass:
                 return status.get("winhttp_bypassed", False)
             return True
         except Exception as e:
-            logger.warning(f"Server-level verification failed: {e}")
+            logger.warning("Server-level verification failed: %s", e, exc_info=True)
             return True
 
     def _rollback_previous_stages(self, result: MultiLayerResult) -> None:
@@ -569,13 +573,13 @@ class MultiLayerBypass:
                 self._frida_hooks.detach()
                 logger.info("Detached Frida hooks")
         except Exception as e:
-            logger.error(f"Failed to detach Frida: {e}")
+            logger.error("Failed to detach Frida: %s", e, exc_info=True)
 
         for layer in result.rollback_data:
             try:
-                logger.info(f"Rolling back {layer.value}")
+                logger.info("Rolling back %s", layer.value)
             except Exception as e:
-                logger.error(f"Failed to rollback {layer.value}: {e}")
+                logger.error("Failed to rollback %s: %s", layer.value, e, exc_info=True)
 
     def cleanup(self) -> None:
         """Clean up resources used by the bypass."""
@@ -583,4 +587,4 @@ class MultiLayerBypass:
             if hasattr(self._frida_hooks, "_session") and self._frida_hooks._session:
                 self._frida_hooks.detach()
         except Exception as e:
-            logger.error(f"Cleanup failed: {e}")
+            logger.error("Cleanup failed: %s", e, exc_info=True)

@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 from typing import NoReturn
+
+
+logger = logging.getLogger(__name__)
 
 
 """Anti-Analysis Technique Detector.
@@ -71,7 +75,7 @@ except ImportError:
             if hasattr(self, "println"):
                 self.println(message)
             else:
-                print(message)
+                logger.info("%s", message)
 
         def println(self, message: str) -> None:
             """Print a message to the console.
@@ -80,7 +84,7 @@ except ImportError:
                 message: The message to print
 
             """
-            print(message)
+            logger.info("%s", message)
 
         def printerr(self, message: str) -> None:
             """Print an error message to the console.
@@ -89,7 +93,7 @@ except ImportError:
                 message: The error message to print
 
             """
-            print(f"ERROR: {message}", file=sys.stderr)
+            logger.error("ERROR: %s", message)
 
         def askYesNo(self, title: str, question: str) -> bool:
             """Ask a yes/no question (returns False in non-interactive mode).
@@ -102,7 +106,7 @@ except ImportError:
                 bool: Always False in non-Ghidra environment
 
             """
-            print(f"{title}: {question}")
+            logger.info("%s: %s", title, question)
             return False
 
         def askString(self, title: str, prompt: str, default_value: str = "") -> str:
@@ -117,7 +121,7 @@ except ImportError:
                 str: The default value in non-interactive mode
 
             """
-            print(f"{title}: {prompt} (default: {default_value})")
+            logger.info("%s: %s (default: %s)", title, prompt, default_value)
             return default_value
 
         def askInt(self, title: str, prompt: str, default_value: int = 0) -> int:
@@ -132,7 +136,7 @@ except ImportError:
                 int: The default value in non-interactive mode
 
             """
-            print(f"{title}: {prompt} (default: {default_value})")
+            logger.info("%s: %s (default: %s)", title, prompt, default_value)
             return default_value
 
         def getScriptName(self) -> str:
@@ -187,7 +191,7 @@ except ImportError:
                 message: Message to display
 
             """
-            print(f"POPUP: {message}")
+            logger.info("POPUP: %s", message)
 
         def isRunningHeadless(self) -> bool:
             """Check if running in headless mode.
@@ -281,7 +285,7 @@ except ImportError:
 
             """
             self._message = message
-            print(f"STATUS: {message}")
+            logger.info("STATUS: %s", message)
 
         def getMessage(self) -> str:
             """Get current status message.
@@ -450,16 +454,16 @@ class AntiAnalysisDetector(GhidraScript):
         for each category of anti-analysis technique detected.
         """
         if not GHIDRA_AVAILABLE:
-            print("Error: This script must be run within Ghidra environment")
+            logger.error("This script must be run within Ghidra environment")
             return
 
         # Access Ghidra globals - use helper function to avoid pylint errors
         program = get_current_program()
         if program is None:
-            print("Error: No program loaded in Ghidra")
+            logger.error("No program loaded in Ghidra")
             return
 
-        print("=== Anti-Analysis Technique Detector ===\n")
+        logger.info("=== Anti-Analysis Technique Detector ===")
 
         findings = {
             "anti_debug": [],
@@ -470,23 +474,23 @@ class AntiAnalysisDetector(GhidraScript):
         }
 
         # Check for anti-debugging APIs
-        print("Checking for anti-debugging APIs...")
+        logger.info("Checking for anti-debugging APIs...")
         self.find_anti_debug_apis(findings)
 
         # Check for VM detection strings
-        print("\nChecking for VM detection artifacts...")
+        logger.info("Checking for VM detection artifacts...")
         self.find_vm_artifacts(findings)
 
         # Check for detection instructions
-        print("\nChecking for detection instructions...")
+        logger.info("Checking for detection instructions...")
         self.find_detection_instructions(findings)
 
         # Check for timing-based detection
-        print("\nChecking for timing-based detection...")
+        logger.info("Checking for timing-based detection...")
         self.find_timing_checks(findings)
 
         # Check for exception-based tricks
-        print("\nChecking for exception-based anti-analysis...")
+        logger.info("Checking for exception-based anti-analysis...")
         self.find_exception_tricks(findings)
 
         # Generate report
@@ -517,7 +521,7 @@ class AntiAnalysisDetector(GhidraScript):
                                     "description": self.get_api_description(api),
                                 },
                             )
-                            print(f"  [+] Found {api} at {ref.getFromAddress()}")
+                            logger.info("  [+] Found %s at %s", api, ref.getFromAddress())
                             safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
 
     def find_vm_artifacts(self, findings: dict[str, list[dict[str, object]]]) -> None:
@@ -547,7 +551,7 @@ class AntiAnalysisDetector(GhidraScript):
                                     "description": "Potential VM detection string",
                                 },
                             )
-                            print(f"  [+] Found VM artifact '{artifact}' at {addr}")
+                            logger.info("  [+] Found VM artifact '%s' at %s", artifact, addr)
                             safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
 
     def find_detection_instructions(self, findings: dict[str, list[dict[str, object]]]) -> None:
@@ -574,7 +578,7 @@ class AntiAnalysisDetector(GhidraScript):
                         "description": self.get_instruction_description(mnemonic),
                     },
                 )
-                print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
+                logger.info("  [+] Found %s instruction at %s", mnemonic, instr.getAddress())
                 safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
 
     def find_timing_checks(self, findings: dict[str, list[dict[str, object]]]) -> None:
@@ -608,7 +612,7 @@ class AntiAnalysisDetector(GhidraScript):
                         "description": "Potential timing-based anti-debugging check",
                     },
                 )
-                print(f"  [+] Found timing check between {addr1} and {addr2}")
+                logger.info("  [+] Found timing check between %s and %s", addr1, addr2)
                 safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
 
     def find_exception_tricks(self, findings: dict[str, list[dict[str, object]]]) -> None:
@@ -736,35 +740,35 @@ class AntiAnalysisDetector(GhidraScript):
             findings: Dictionary containing findings organized by category.
 
         """
-        print("\n=== Anti-Analysis Technique Report ===")
+        logger.info("=== Anti-Analysis Technique Report ===")
 
         total = sum(len(v) for v in findings.values())
-        print(f"\nTotal anti-analysis techniques found: {total}")
+        logger.info("Total anti-analysis techniques found: %s", total)
 
         if findings["anti_debug"]:
-            print(f"\nAnti-Debugging ({len(findings['anti_debug'])} found):")
+            logger.info("Anti-Debugging (%s found):", len(findings["anti_debug"]))
             for item in findings["anti_debug"][:5]:
-                print(f"  - {item['name']} at {item['address']}")
+                logger.info("  - %s at %s", item["name"], item["address"])
 
         if findings["anti_vm"]:
-            print(f"\nAnti-VM ({len(findings['anti_vm'])} found):")
+            logger.info("Anti-VM (%s found):", len(findings["anti_vm"]))
             for item in findings["anti_vm"][:5]:
-                print(f"  - '{item['name']}' at {item['address']}")
+                logger.info("  - '%s' at %s", item["name"], item["address"])
 
         if findings["timing_checks"]:
-            print(f"\nTiming Checks ({len(findings['timing_checks'])} found):")
+            logger.info("Timing Checks (%s found):", len(findings["timing_checks"]))
             for item in findings["timing_checks"][:5]:
-                print(f"  - Check between {item['start']} and {item['end']}")
+                logger.info("  - Check between %s and %s", item["start"], item["end"])
 
         if findings["cpu_detection"]:
-            print(f"\nCPU Detection ({len(findings['cpu_detection'])} found):")
+            logger.info("CPU Detection (%s found):", len(findings["cpu_detection"]))
             for item in findings["cpu_detection"][:5]:
-                print(f"  - {item['instruction']} at {item['address']}")
+                logger.info("  - %s at %s", item["instruction"], item["address"])
 
         # Protection level assessment
         protection_level = self.assess_protection_level(findings)
-        print(f"\n[*] Protection Level: {protection_level}")
-        print("[*] Check bookmarks for all findings")
+        logger.info("[*] Protection Level: %s", protection_level)
+        logger.info("[*] Check bookmarks for all findings")
 
     def assess_protection_level(self, findings: dict[str, list[dict[str, object]]]) -> str:
         """Assess overall protection level.

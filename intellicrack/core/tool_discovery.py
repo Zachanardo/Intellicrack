@@ -28,8 +28,9 @@ import shutil
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, TypedDict
+from typing import Any, TypedDict
 
 
 logger = logging.getLogger(__name__)

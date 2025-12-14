@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+
 from __future__ import annotations
 
 import logging
@@ -163,7 +164,7 @@ def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_perfor
     file_size = Path(binary_path).stat().st_size
     file_size_mb = file_size / 1024 / 1024
 
-    logger.info(f"Starting optimized analysis of {Path(binary_path).name} ({file_size_mb:.1f}MB)")
+    logger.info("Starting optimized analysis of %s (%.1fMB)", Path(binary_path).name, file_size_mb)
 
     # Use performance optimizer for large files
     if use_performance_optimizer and PERFORMANCE_OPTIMIZER_AVAILABLE and file_size_mb > 50:
@@ -186,7 +187,12 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> dic
         ]
 
         if detailed:
-            analysis_functions = [*list(analysis_functions), _optimized_section_analysis, _optimized_import_analysis, _optimized_pattern_analysis]
+            analysis_functions = [
+                *list(analysis_functions),
+                _optimized_section_analysis,
+                _optimized_import_analysis,
+                _optimized_pattern_analysis,
+            ]
 
         optimizer_results: dict[str, Any] = cast(
             "dict[str, Any]",
@@ -209,7 +215,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> dic
                 results[func_name] = func_result
             else:
                 error_msg = func_result.get("error", "unknown") if isinstance(func_result, dict) else "unknown"
-                logger.warning(f"Analysis function {func_name} failed: {error_msg}")
+                logger.warning("Analysis function %s failed: %s", func_name, error_msg)
 
         return results
 
@@ -277,7 +283,7 @@ def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_pat
         # Import AI components
         from ...ai.orchestrator import get_orchestrator
 
-        logger.info(f"Integrating AI script generation for {binary_path}")
+        logger.info("Integrating AI script generation for %s", binary_path)
 
         # Get AI orchestrator
         orchestrator = get_orchestrator()
@@ -304,8 +310,7 @@ def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_pat
         logger.info("AI script generation integration completed successfully")
 
     except Exception as e:
-        logger.error(f"Error in AI script generation integration: {e}")
-        # Add error info but don't fail the analysis
+        logger.error("Error in AI script generation integration: %s", e, exc_info=True)
         analysis_results["ai_integration"] = {"enabled": False, "error": str(e)}
 
     return analysis_results
@@ -313,7 +318,7 @@ def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_pat
 
 def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_path: str) -> dict[str, Any]:
     """Generate AI script suggestions based on analysis results."""
-    logger.debug(f"Generating AI script suggestions for binary: {binary_path}")
+    logger.debug("Generating AI script suggestions for binary: %s", binary_path)
     frida_scripts: list[dict[str, Any]] = []
     ghidra_scripts: list[dict[str, Any]] = []
     auto_generate_confidence: float = 0.0
@@ -383,7 +388,7 @@ def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_pat
             priority_targets.append("trial_restrictions")
 
     except Exception as e:
-        logger.error(f"Error generating AI script suggestions: {e}")
+        logger.error("Error generating AI script suggestions: %s", e, exc_info=True)
 
     return {
         "frida_scripts": frida_scripts,
@@ -403,12 +408,10 @@ def _get_recommended_ai_actions(analysis_results: dict[str, Any]) -> list[str]:
     try:
         binary_format = str(analysis_results.get("format", "")).upper()
         if binary_format == "ELF":
-            actions.extend(
-                [
-                    "Analyze ELF symbols and dynamic linking",
-                    "Generate GOT (Global Offset Table) manipulation scripts",
-                ]
-            )
+            actions.extend([
+                "Analyze ELF symbols and dynamic linking",
+                "Generate GOT (Global Offset Table) manipulation scripts",
+            ])
         elif binary_format == "PE":
             actions.append("Analyze PE imports and exports for bypass opportunities")
             actions.append("Generate IAT (Import Address Table) hook scripts")
@@ -418,7 +421,7 @@ def _get_recommended_ai_actions(analysis_results: dict[str, Any]) -> list[str]:
             actions.append("Create adaptive bypass scripts with fallback mechanisms")
 
     except Exception as e:
-        logger.error(f"Error getting recommended AI actions: {e}")
+        logger.error("Error getting recommended AI actions: %s", e, exc_info=True)
 
     return actions
 
@@ -466,7 +469,7 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
             )
 
     except Exception as e:
-        logger.error(f"Error identifying auto-generation candidates: {e}")
+        logger.error("Error identifying auto-generation candidates: %s", e, exc_info=True)
 
     return candidates
 
@@ -495,7 +498,7 @@ def _trigger_autonomous_script_generation(orchestrator: Any, analysis_results: d
                 f"Use autonomous mode with testing and refinement."
             )
 
-            logger.info(f"Triggering autonomous script generation: {autonomous_request}")
+            logger.info("Triggering autonomous script generation: %s", autonomous_request)
 
             # Process request in background (non-blocking)
             import threading
@@ -511,7 +514,7 @@ def _trigger_autonomous_script_generation(orchestrator: Any, analysis_results: d
             }
 
     except Exception as e:
-        logger.error(f"Error triggering autonomous script generation: {e}")
+        logger.error("Error triggering autonomous script generation: %s", e, exc_info=True)
 
 
 def identify_binary_format(binary_path: str) -> str:
@@ -1038,9 +1041,7 @@ def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> d
                     },
                 )
 
-        statistics["total_matches"] = sum(
-            m.get("count", 0) for m in matches_list if isinstance(m.get("count"), int)
-        )
+        statistics["total_matches"] = sum(m.get("count", 0) for m in matches_list if isinstance(m.get("count"), int))
         statistics["unique_patterns_found"] = len(matches_list)
 
         return results
@@ -1246,7 +1247,7 @@ def _try_import_scapy() -> bool:
 
         # Store version information for debugging
         if hasattr(scapy, "__version__"):
-            logger.debug(f"Scapy version {scapy.__version__} available for network analysis")
+            logger.debug("Scapy version %s available for network analysis", scapy.__version__)
         return True
     except ImportError as e:
         logger.error("Import error in binary_analysis: %s", e)
@@ -1259,7 +1260,7 @@ def _try_import_pyshark() -> bool:
         import pyshark
 
         if hasattr(pyshark, "__version__"):
-            logger.debug(f"Pyshark version {pyshark.__version__} available for network analysis")
+            logger.debug("Pyshark version %s available for network analysis", pyshark.__version__)
         else:
             logger.debug("Pyshark available for network analysis")
         return True
@@ -1271,7 +1272,7 @@ def _try_import_pyshark() -> bool:
 def _is_suspicious_connection(src_ip: str, dst_ip: str, port: int) -> bool:
     """Check if connection is suspicious."""
     # Log connection details for debugging
-    logger.debug(f"Checking connection from {src_ip} to {dst_ip}:{port}")
+    logger.debug("Checking connection from %s to %s:%s", src_ip, dst_ip, port)
 
     # Check for common backdoor ports
     suspicious_ports = [4444, 4445, 8888, 9999, 1337, 31337]
@@ -1360,7 +1361,7 @@ def analyze_pe_resources(pe: PEFile) -> list[dict[str, Any]]:
             level: Current depth level in resource tree hierarchy
 
         """
-        logger.debug(f"Walking resources at level {level}")
+        logger.debug("Walking resources at level %s", level)
 
         for entry in directory.entries:
             if hasattr(entry, "data"):
@@ -1893,7 +1894,7 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> list[
         return disasm_lines
 
     except Exception as e:
-        logger.debug(f"Quick disassembly error: {e}")
+        logger.debug("Quick disassembly error: %s", e, exc_info=True)
         return _get_basic_disassembly_info(binary_path)
 
 

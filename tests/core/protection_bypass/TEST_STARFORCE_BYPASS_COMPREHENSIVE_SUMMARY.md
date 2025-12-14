@@ -25,6 +25,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate StarForce bypass system initialization and Windows API setup.
 
 **Tests**:
+
 - `test_bypass_initialization_creates_logger` - Verifies logger initialization
 - `test_bypass_initializes_winapi_dlls` - Validates Windows API DLL loading (advapi32, kernel32, ntdll)
 - `test_bypass_driver_paths_defined` - Confirms comprehensive StarForce driver path definitions
@@ -32,6 +33,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_bypass_registry_keys_defined` - Confirms StarForce registry key definitions
 
 **Offensive Capabilities Validated**:
+
 - Windows API initialization for driver/service manipulation
 - Comprehensive targeting of StarForce components (drivers, services, registry)
 
@@ -40,12 +42,14 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate complete StarForce protection removal from system.
 
 **Tests**:
+
 - `test_remove_starforce_returns_removal_result` - Validates removal result structure
 - `test_remove_starforce_reports_success_when_items_removed` - Confirms success reporting
 - `test_remove_starforce_removes_driver_files` - Validates actual driver file deletion
 - `test_remove_starforce_cleans_registry_keys` - Confirms registry cleaning
 
 **Offensive Capabilities Validated**:
+
 - Driver file removal from system directories
 - Service termination and deletion
 - Registry key cleanup
@@ -56,6 +60,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate StarForce anti-debugging detection bypass.
 
 **Tests**:
+
 - `test_bypass_anti_debug_returns_bypass_result` - Validates bypass result structure
 - `test_bypass_anti_debug_targets_current_process_when_no_pid_provided` - Confirms current process targeting
 - `test_bypass_anti_debug_attempts_peb_patch` - Validates PEB BeingDebugged flag patching
@@ -64,6 +69,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_bypass_anti_debug_reports_success_when_techniques_applied` - Confirms success reporting
 
 **Offensive Capabilities Validated**:
+
 - PEB BeingDebugged flag manipulation
 - Hardware debug register clearing (Dr0-Dr7)
 - Timing function normalization to defeat timing checks
@@ -74,6 +80,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate StarForce disc authentication bypass.
 
 **Tests**:
+
 - `test_bypass_disc_check_returns_bypass_result` - Validates bypass result structure
 - `test_bypass_disc_check_fails_when_pefile_unavailable` - Confirms graceful pefile dependency handling
 - `test_bypass_disc_check_fails_when_target_missing` - Validates error handling for missing targets
@@ -82,6 +89,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_bypass_disc_check_emulates_virtual_drive` - Confirms virtual drive emulation
 
 **Offensive Capabilities Validated**:
+
 - Disc check API call patching (DeviceIoControl, CreateFileW/A)
 - Virtual drive emulation for disc authentication bypass
 - Binary backup creation before modifications
@@ -92,6 +100,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate StarForce license validation bypass.
 
 **Tests**:
+
 - `test_bypass_license_validation_returns_bypass_result` - Validates bypass result structure
 - `test_bypass_license_validation_fails_when_pefile_unavailable` - Confirms graceful dependency handling
 - `test_bypass_license_validation_fails_when_target_missing` - Validates error handling
@@ -102,6 +111,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_bypass_license_validation_creates_backup_before_patching` - Confirms backup creation
 
 **Offensive Capabilities Validated**:
+
 - License validation check patching in PE binaries
 - Conditional jump instruction modification (JE/JNE -> JMP/NOP)
 - Custom license data injection into executable sections
@@ -113,6 +123,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate hardware ID spoofing for node-locked license bypass.
 
 **Tests**:
+
 - `test_spoof_hardware_id_returns_bypass_result` - Validates bypass result structure
 - `test_spoof_hardware_id_spoofs_disk_serial` - Confirms disk serial number spoofing
 - `test_spoof_hardware_id_spoofs_mac_address` - Validates MAC address spoofing
@@ -120,6 +131,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_spoof_hardware_id_reports_success_when_techniques_applied` - Validates success reporting
 
 **Offensive Capabilities Validated**:
+
 - Disk volume serial number spoofing via registry
 - Network adapter MAC address spoofing
 - CPU identification spoofing
@@ -130,11 +142,13 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate complete StarForce bypass workflows.
 
 **Tests**:
+
 - `test_complete_starforce_defeat_workflow` - Validates end-to-end bypass workflow
 - `test_bypass_creates_backups_before_modifications` - Confirms backup creation across operations
 - `test_bypass_handles_missing_pefile_gracefully` - Validates dependency error handling
 
 **Offensive Capabilities Validated**:
+
 - Complete multi-stage StarForce defeat workflow
 - Driver removal + anti-debug + disc check + license bypass + HWID spoof
 - Backup creation safety measures
@@ -145,6 +159,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate bypass robustness against edge cases and error conditions.
 
 **Tests**:
+
 - `test_bypass_handles_corrupted_pe_gracefully` - Validates corrupted PE handling
 - `test_bypass_handles_empty_file_gracefully` - Confirms empty file handling
 - `test_bypass_handles_nonexistent_file_gracefully` - Validates missing file handling
@@ -153,6 +168,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - `test_bypass_handles_readonly_file` - Confirms read-only file handling
 
 **Offensive Capabilities Validated**:
+
 - Robust error handling for corrupted/malformed binaries
 - Graceful failure for invalid inputs
 - Access denied error recovery
@@ -163,28 +179,33 @@ This document provides a comprehensive summary of the test suite for `intellicra
 **Purpose**: Validate data structure integrity.
 
 **Tests**:
+
 - `test_bypass_result_dataclass_structure` - Validates BypassResult structure
 - `test_starforce_removal_result_dataclass_structure` - Validates StarForceRemovalResult structure
 
 **Offensive Capabilities Validated**:
+
 - Correct result data structure for bypass operations
 - Comprehensive reporting of bypass success/failure
 
 ## Critical Offensive Capabilities Validated
 
 ### 1. Driver and Service Manipulation
+
 - Windows Service Control Manager (SCM) interaction
 - Service termination (ControlService with SERVICE_CONTROL_STOP)
 - Service deletion (DeleteService)
 - Driver file deletion from System32\drivers
 
 ### 2. Registry Manipulation
+
 - Recursive registry key deletion
 - Registry-based license creation
 - Hardware ID spoofing via registry modification
 - Multi-root key targeting (HKLM, HKCU)
 
 ### 3. Binary Patching
+
 - PE file structure modification
 - Conditional jump instruction patching (JE->JMP, JNE->NOP)
 - API call patching (DeviceIoControl, CreateFileW/A)
@@ -192,6 +213,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - Backup creation before modifications
 
 ### 4. Anti-Debug Bypass
+
 - PEB (Process Environment Block) manipulation
 - BeingDebugged flag patching via NtQueryInformationProcess
 - Hardware debug register clearing (Dr0-Dr7)
@@ -199,6 +221,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 - Timing function normalization
 
 ### 5. Hardware ID Spoofing
+
 - Disk serial number modification
 - MAC address spoofing across network adapters
 - CPU identification modification
@@ -207,24 +230,28 @@ This document provides a comprehensive summary of the test suite for `intellicra
 ## Test Design Principles
 
 ### 1. Real Binary Testing
+
 - Uses actual PE binary fixtures (not mocked data)
 - Creates minimal valid PE executables for testing
 - Injects real StarForce protection patterns
 - Tests against actual Windows API calls
 
 ### 2. No Mocking for Core Functionality
+
 - Tests validate actual bypass operations
 - No mocking of pefile, winreg, or ctypes operations
 - Only conditional skipping when dependencies unavailable
 - Real file system and registry operations
 
 ### 3. Comprehensive Coverage
+
 - All public methods tested
 - All bypass techniques validated
 - Edge cases and error conditions covered
 - Integration workflows tested end-to-end
 
 ### 4. Production-Ready Validation
+
 - Tests fail if bypass doesn't actually work
 - Validates actual success indicators (files deleted, registry modified, binaries patched)
 - Confirms backup creation before destructive operations
@@ -235,12 +262,14 @@ This document provides a comprehensive summary of the test suite for `intellicra
 ### Fixture Design
 
 **Minimal PE Binary Fixture**:
+
 - Creates valid x64 PE executable
 - Includes DOS header, PE header, COFF header, optional header
 - Contains .text (code) and .data sections
 - Valid for pefile parsing
 
 **StarForce Protected Binary Fixture**:
+
 - Extends minimal PE with StarForce patterns
 - Includes protection signatures (StarForce, Protection Technology)
 - Contains disc check API calls (DeviceIoControl, CreateFileW)
@@ -249,12 +278,14 @@ This document provides a comprehensive summary of the test suite for `intellicra
 ### Validation Approach
 
 **Success Validation**:
+
 - Checks BypassResult.success field
 - Validates specific technique application in details field
 - Confirms actual modifications to binaries/registry
 - Verifies backup file creation
 
 **Error Handling Validation**:
+
 - Tests with missing files
 - Tests with corrupted binaries
 - Tests with invalid process IDs
@@ -263,18 +294,21 @@ This document provides a comprehensive summary of the test suite for `intellicra
 ## Windows-Specific Testing
 
 **Platform Requirements**:
+
 - Tests are designed for Windows platforms
 - Uses Windows-specific APIs (advapi32, kernel32, ntdll)
 - Requires administrative privileges for some operations
 - Tests skip gracefully on non-Windows platforms
 
 **Registry Operations**:
+
 - Tests interact with real Windows registry
 - Validates HKLM and HKCU key manipulation
 - Confirms registry-based license creation
 - Tests hardware ID spoofing via registry
 
 **Service Operations**:
+
 - Tests interact with Windows Service Control Manager
 - Validates service termination and deletion
 - Confirms driver file removal from System32
@@ -282,6 +316,7 @@ This document provides a comprehensive summary of the test suite for `intellicra
 ## Performance Characteristics
 
 **Test Execution**:
+
 - Total execution time: ~30 seconds for 45 tests
 - Average test time: ~0.67 seconds per test
 - No long-running operations

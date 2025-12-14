@@ -780,7 +780,9 @@ class _FallbackFunctions:
         return FallbackArray(result, dtype_arg, (N, actual_M))
 
     @staticmethod
-    def arange_func(start: float | int, stop: float | int | None = None, step: float | int = 1, dtype_arg: type[Any] | None = None) -> FallbackArray:
+    def arange_func(
+        start: float | int, stop: float | int | None = None, step: float | int = 1, dtype_arg: type[Any] | None = None
+    ) -> FallbackArray:
         """Create array with range of values.
 
         Args:
@@ -1544,9 +1546,9 @@ class FallbackNumPy:
 
 
 if TYPE_CHECKING:
-    import numpy as _np
+    import numpy as np
 
-    NpOrFallback = _np.ndarray[Any, Any] | FallbackArray
+    NpOrFallback = np.ndarray[Any, Any] | FallbackArray
 
 
 HAS_NUMPY: bool
@@ -1609,68 +1611,67 @@ cross: Any
 
 
 try:
-    import numpy as _numpy_module
+    import numpy as np
 
     HAS_NUMPY = True
-    NUMPY_VERSION = str(_numpy_module.__version__)
-    np = _numpy_module
-    numpy = _numpy_module
+    NUMPY_VERSION = str(np.__version__)
+    numpy = np
 
-    ndarray = _numpy_module.ndarray
-    dtype = _numpy_module.dtype
-    float32 = _numpy_module.float32
-    float64 = _numpy_module.float64
-    int32 = _numpy_module.int32
-    int64 = _numpy_module.int64
-    uint8 = _numpy_module.uint8
-    uint16 = _numpy_module.uint16
-    uint32 = _numpy_module.uint32
+    ndarray = np.ndarray
+    dtype = np.dtype
+    float32 = np.float32
+    float64 = np.float64
+    int32 = np.int32
+    int64 = np.int64
+    uint8 = np.uint8
+    uint16 = np.uint16
+    uint32 = np.uint32
 
-    linalg = _numpy_module.linalg
-    fft = _numpy_module.fft
-    random = _numpy_module.random
+    linalg = np.linalg
+    fft = np.fft
+    random = np.random
 
-    array = _numpy_module.array
-    zeros = _numpy_module.zeros
-    ones = _numpy_module.ones
-    empty = _numpy_module.empty
-    full = _numpy_module.full
-    eye = _numpy_module.eye
-    arange = _numpy_module.arange
-    linspace = _numpy_module.linspace
-    meshgrid = _numpy_module.meshgrid
-    sqrt = _numpy_module.sqrt
-    np_abs = _numpy_module.abs
-    np_round = _numpy_module.round
-    floor = _numpy_module.floor
-    ceil = _numpy_module.ceil
-    concatenate = _numpy_module.concatenate
-    stack = _numpy_module.stack
-    reshape = _numpy_module.reshape
-    transpose = _numpy_module.transpose
-    unique = _numpy_module.unique
-    sort = _numpy_module.sort
-    argsort = _numpy_module.argsort
-    where = _numpy_module.where
-    allclose = _numpy_module.allclose
-    array_equal = _numpy_module.array_equal
-    asarray = _numpy_module.asarray
-    np_sum = _numpy_module.sum
-    mean = _numpy_module.mean
-    std = _numpy_module.std
-    var = _numpy_module.var
-    np_min = _numpy_module.min
-    np_max = _numpy_module.max
-    argmin = _numpy_module.argmin
-    argmax = _numpy_module.argmax
-    gradient = _numpy_module.gradient
-    diff = _numpy_module.diff
-    cumsum = _numpy_module.cumsum
-    histogram = _numpy_module.histogram
-    percentile = _numpy_module.percentile
-    median = _numpy_module.median
-    dot = _numpy_module.dot
-    cross = _numpy_module.cross
+    array = np.array
+    zeros = np.zeros
+    ones = np.ones
+    empty = np.empty
+    full = np.full
+    eye = np.eye
+    arange = np.arange
+    linspace = np.linspace
+    meshgrid = np.meshgrid
+    sqrt = np.sqrt
+    np_abs = np.abs
+    np_round = np.round
+    floor = np.floor
+    ceil = np.ceil
+    concatenate = np.concatenate
+    stack = np.stack
+    reshape = np.reshape
+    transpose = np.transpose
+    unique = np.unique
+    sort = np.sort
+    argsort = np.argsort
+    where = np.where
+    allclose = np.allclose
+    array_equal = np.array_equal
+    asarray = np.asarray
+    np_sum = np.sum
+    mean = np.mean
+    std = np.std
+    var = np.var
+    np_min = np.min
+    np_max = np.max
+    argmin = np.argmin
+    argmax = np.argmax
+    gradient = np.gradient
+    diff = np.diff
+    cumsum = np.cumsum
+    histogram = np.histogram
+    percentile = np.percentile
+    median = np.median
+    dot = np.dot
+    cross = np.cross
 
 except ImportError as e:
     logger.error("NumPy not available, using fallback implementations: %s", e)

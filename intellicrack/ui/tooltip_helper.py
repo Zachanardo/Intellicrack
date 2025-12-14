@@ -278,6 +278,7 @@ def _apply_tooltips_to_buttons(parent_widget: object, all_tooltips: dict[str, st
     button_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         button_class = QPushButton
     except ImportError as e:
         logger.error("Import error in tooltip_helper: %s", e)
@@ -300,9 +301,11 @@ def _apply_tooltips_to_labels(parent_widget: object, all_tooltips: dict[str, str
     label_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QLabel
+
         label_class = QLabel
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         label_class = QPushButton
 
     labels: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(label_class)
@@ -329,13 +332,16 @@ def _apply_tooltips_to_line_edits(parent_widget: object, all_tooltips: dict[str,
     line_edit_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QLineEdit
+
         line_edit_class = QLineEdit
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         line_edit_class = QPushButton
 
     line_edits: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(line_edit_class)
     for line_edit in line_edits:
+
         def get_hint_text_from_props(current_line_edit: Any) -> str:
             props: list[Any] = getattr(current_line_edit, "dynamicPropertyNames", lambda: [])()
             for prop in props:
@@ -343,9 +349,7 @@ def _apply_tooltips_to_line_edits(parent_widget: object, all_tooltips: dict[str,
                 prop_data_bytes = prop_data_func()
                 prop_name: str = prop_data_bytes.decode() if isinstance(prop_data_bytes, bytes) else str(prop_data_bytes)
                 if prop_name == "hintText":
-                    hint_result = getattr(current_line_edit, "property", lambda x: lambda: "")(
-                        "hintText"
-                    )
+                    hint_result = getattr(current_line_edit, "property", lambda x: lambda: "")("hintText")
                     return str(hint_result) if hint_result else ""
             return ""
 
@@ -371,9 +375,11 @@ def _apply_tooltips_to_combo_boxes(parent_widget: object, all_tooltips: dict[str
     combo_box_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QComboBox
+
         combo_box_class = QComboBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         combo_box_class = QPushButton
 
     combo_boxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(combo_box_class)
@@ -400,9 +406,11 @@ def _apply_tooltips_to_checkboxes(parent_widget: object, all_tooltips: dict[str,
     checkbox_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QCheckBox
+
         checkbox_class = QCheckBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         checkbox_class = QPushButton
 
     checkboxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(checkbox_class)
@@ -430,13 +438,17 @@ def _apply_tooltips_to_spinboxes(parent_widget: object, all_tooltips: dict[str, 
     double_spinbox_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QDoubleSpinBox, QSpinBox
+
         spinbox_class = QSpinBox
         double_spinbox_class = QDoubleSpinBox
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         spinbox_class = double_spinbox_class = QPushButton
 
-    spinboxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(spinbox_class) + getattr(parent_widget, "findChildren", lambda x: [])(double_spinbox_class)
+    spinboxes: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(spinbox_class) + getattr(
+        parent_widget, "findChildren", lambda x: []
+    )(double_spinbox_class)
     for spinbox in spinboxes:
         object_name: str = getattr(spinbox, "objectName", lambda: "")()
 
@@ -457,9 +469,11 @@ def _apply_tooltips_to_tab_widgets(parent_widget: object, all_tooltips: dict[str
     tab_widget_class: Any = object
     try:
         from intellicrack.handlers.pyqt6_handler import QTabWidget
+
         tab_widget_class = QTabWidget
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         tab_widget_class = QPushButton
 
     tab_widgets: list[Any] = getattr(parent_widget, "findChildren", lambda x: [])(tab_widget_class)
@@ -499,6 +513,7 @@ def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[s
             QTextEdit,
             QTreeWidget,
         )
+
         slider_class = QSlider
         progress_bar_class = QProgressBar
         text_edit_class = QTextEdit
@@ -508,6 +523,7 @@ def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[s
         table_widget_class = QTableWidget
     except ImportError:
         from intellicrack.handlers.pyqt6_handler import QPushButton
+
         slider_class = progress_bar_class = text_edit_class = plain_text_edit_class = QPushButton
         list_widget_class = tree_widget_class = table_widget_class = QPushButton
 

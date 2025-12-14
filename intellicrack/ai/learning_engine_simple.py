@@ -249,9 +249,7 @@ class AILearningEngine:
                 self.learning_stats["success_count"] = current_success_count + len(success_indicators)
                 total_records = self.learning_stats["records_processed"]
                 if total_records > 0:
-                    self.learning_stats["success_rate"] = (
-                        self.learning_stats["success_count"] / total_records
-                    )
+                    self.learning_stats["success_rate"] = self.learning_stats["success_count"] / total_records
 
             logger.debug(
                 "Updated knowledge from agent %s: task_type=%s, patterns=%d",

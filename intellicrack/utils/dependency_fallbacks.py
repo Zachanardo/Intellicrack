@@ -57,9 +57,9 @@ def safe_import_numpy() -> object:
         return create_numpy_fallback()
     except Exception as e:
         if "numpy.dtype size changed" in str(e):
-            logger.warning("numpy compatibility issue - using fallback")
+            logger.warning("numpy compatibility issue - using fallback", exc_info=True)
         else:
-            logger.warning(f"numpy import error: {e} - using fallback")
+            logger.warning("numpy import error: %s - using fallback", e, exc_info=True)
         NUMPY_AVAILABLE = False
         return create_numpy_fallback()
 
@@ -83,9 +83,9 @@ def safe_import_pandas() -> object:
         return create_pandas_fallback()
     except Exception as e:
         if "numpy.dtype size changed" in str(e):
-            logger.warning("pandas compatibility issue - using fallback")
+            logger.warning("pandas compatibility issue - using fallback", exc_info=True)
         else:
-            logger.warning(f"pandas import error: {e} - using fallback")
+            logger.warning("pandas import error: %s - using fallback", e, exc_info=True)
         PANDAS_AVAILABLE = False
         return create_pandas_fallback()
 
@@ -109,9 +109,9 @@ def safe_import_sklearn() -> object:
         return create_sklearn_fallback()
     except Exception as e:
         if "numpy.dtype size changed" in str(e):
-            logger.warning("sklearn compatibility issue - using fallback")
+            logger.warning("sklearn compatibility issue - using fallback", exc_info=True)
         else:
-            logger.warning(f"sklearn import error: {e} - using fallback")
+            logger.warning("sklearn import error: %s - using fallback", e, exc_info=True)
         SKLEARN_AVAILABLE = False
         return create_sklearn_fallback()
 
@@ -850,7 +850,7 @@ def initialize_safe_imports() -> None:
         test_array = np.array([1, 2, 3])
         logger.info("numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
-        logger.warning(f"numpy issue detected: {e}")
+        logger.warning("numpy issue detected: %s", e, exc_info=True)
         _module_replacer.replace_module("numpy", create_numpy_fallback)
 
     # Test and replace pandas if needed
@@ -860,14 +860,14 @@ def initialize_safe_imports() -> None:
         test_df = pd.DataFrame({"test": [1, 2, 3]})
         logger.info("pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
-        logger.warning(f"pandas issue detected: {e}")
+        logger.warning("pandas issue detected: %s", e, exc_info=True)
         _module_replacer.replace_module("pandas", create_pandas_fallback)
 
     # Test and replace sklearn if needed
     try:
         logger.info("sklearn working correctly")
     except Exception as e:
-        logger.warning(f"sklearn issue detected: {e}")
+        logger.warning("sklearn issue detected: %s", e, exc_info=True)
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
         _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
         _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
@@ -906,4 +906,4 @@ def get_dependency_status() -> dict[str, bool]:
 try:
     initialize_safe_imports()
 except Exception as e:
-    logger.error(f"Failed to initialize safe imports: {e}")
+    logger.error("Failed to initialize safe imports: %s", e, exc_info=True)

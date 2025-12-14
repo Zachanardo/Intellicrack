@@ -57,7 +57,6 @@ if (!Java.available) {
                 }
 
                 send({ type: 'pinning_bypass', method: 'OkHttp3', hostname: hostname });
-
             };
             log('Successfully hooked OkHttp3 CertificatePinner.check');
         } catch (_e) {
@@ -107,7 +106,6 @@ if (!Java.available) {
             NetworkSecurityTrustManager.checkPins.implementation = _pins => {
                 log('NetworkSecurityTrustManager.checkPins: Bypassing pin check');
                 send({ type: 'network_security_bypass' });
-
             };
             log('Successfully hooked NetworkSecurityTrustManager.checkPins');
         } catch (_e) {
@@ -153,7 +151,6 @@ if (!Java.available) {
                                 }
 
                                 send({ type: 'x509_bypass', className: className });
-
                             };
                         }
 
@@ -173,7 +170,6 @@ if (!Java.available) {
                                     `X509TrustManager.checkServerTrusted (with host): Bypassing for host="${host}"`
                                 );
                                 send({ type: 'x509_bypass_with_host', host: host });
-
                             };
                         }
                     } catch (e) {
@@ -299,7 +295,6 @@ if (!Java.available) {
             PinningTrustManager.checkServerTrusted.implementation = (_chain, _authType) => {
                 log('Appcelerator PinningTrustManager: Bypassing');
                 send({ type: 'appcelerator_bypass' });
-
             };
             log('Successfully hooked Appcelerator PinningTrustManager');
         } catch (_e) {

@@ -358,13 +358,11 @@ class IntellicrackProtectionWidget(QWidget):
             f"File: {os.path.basename(analysis.file_path)}",
         ]
 
-        summary_lines.extend(
-            (
-                f"Full Path: {analysis.file_path}",
-                f"File Type: {analysis.file_type}",
-                f"Architecture: {analysis.architecture}",
-            )
-        )
+        summary_lines.extend((
+            f"Full Path: {analysis.file_path}",
+            f"File Type: {analysis.file_type}",
+            f"Architecture: {analysis.architecture}",
+        ))
         if analysis.compiler:
             summary_lines.append(f"Compiler: {analysis.compiler}")
 
@@ -461,24 +459,18 @@ class IntellicrackProtectionWidget(QWidget):
             for i, recommendation in enumerate(detection.bypass_recommendations, 1):
                 bypass_lines.append(f"{i}. {recommendation}")
 
-            bypass_lines.extend(
-                (
-                    "",
-                    "Note: These are general recommendations. Actual bypass methods may vary based on:",
-                )
-            )
-            bypass_lines.extend(
-                (
-                    "   Specific version of the protection",
-                    "   Target application implementation",
-                )
-            )
-            bypass_lines.extend(
-                (
-                    "   Additional protections present",
-                    "   Legal and ethical considerations",
-                )
-            )
+            bypass_lines.extend((
+                "",
+                "Note: These are general recommendations. Actual bypass methods may vary based on:",
+            ))
+            bypass_lines.extend((
+                "   Specific version of the protection",
+                "   Target application implementation",
+            ))
+            bypass_lines.extend((
+                "   Additional protections present",
+                "   Legal and ethical considerations",
+            ))
         else:
             bypass_lines.append("No specific bypass recommendations available.")
             bypass_lines.append("")
@@ -630,13 +622,11 @@ class IntellicrackProtectionWidget(QWidget):
             self.ai_reasoning_text.setText("\n".join(reasoning_lines))
             return
 
-        reasoning_lines.extend(
-            (
-                f"Task Type: {reasoning_result.get('task_type', 'Unknown')}",
-                f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%",
-                "",
-            )
-        )
+        reasoning_lines.extend((
+            f"Task Type: {reasoning_result.get('task_type', 'Unknown')}",
+            f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%",
+            "",
+        ))
         # Display evidence
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
@@ -668,12 +658,10 @@ class IntellicrackProtectionWidget(QWidget):
                 if detection.bypass_recommendations:
                     reasoning_lines.append("  Bypass Complexity Analysis:")
                     if len(detection.bypass_recommendations) > 3:
-                        reasoning_lines.extend(
-                            (
-                                "    - Multiple bypass approaches available",
-                                "    - Suggests well-studied protection scheme",
-                            )
-                        )
+                        reasoning_lines.extend((
+                            "    - Multiple bypass approaches available",
+                            "    - Suggests well-studied protection scheme",
+                        ))
                     else:
                         reasoning_lines.append("    - Limited bypass options")
                         reasoning_lines.append("    - May require custom approach")

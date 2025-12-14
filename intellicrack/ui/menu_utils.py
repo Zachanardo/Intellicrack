@@ -31,8 +31,8 @@ from intellicrack.utils.logger import logger
 try:
     from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar
 except ImportError as e:
-    logger.error("Import error in menu_utils: %s", e)
-    from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar
+    logger.error("Import error in menu_utils: %s", e, exc_info=True)
+    raise
 
 
 def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:

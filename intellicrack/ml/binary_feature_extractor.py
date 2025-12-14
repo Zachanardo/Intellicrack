@@ -17,11 +17,15 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import contextlib
-import logging
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+from ..utils.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 try:
@@ -30,6 +34,7 @@ try:
 
     CAPSTONE_AVAILABLE = True
 except ImportError:
+    logger.debug("Capstone not available", exc_info=True)
     CAPSTONE_AVAILABLE = False
     capstone = None
 
@@ -38,6 +43,7 @@ try:
 
     PEFILE_AVAILABLE = True
 except ImportError:
+    logger.debug("pefile not available", exc_info=True)
     PEFILE_AVAILABLE = False
     pefile = None
 
@@ -46,6 +52,7 @@ try:
 
     NETWORKX_AVAILABLE = True
 except ImportError:
+    logger.debug("NetworkX not available", exc_info=True)
     NETWORKX_AVAILABLE = False
     nx = None
 
@@ -54,6 +61,7 @@ try:
 
     LIEF_AVAILABLE = True
 except ImportError:
+    logger.debug("LIEF not available", exc_info=True)
     LIEF_AVAILABLE = False
     lief = None
 
@@ -64,7 +72,7 @@ class BinaryFeatureExtractor:
     def __init__(self, binary_path: str) -> None:
         """Initialize feature extractor with binary file."""
         self.binary_path = Path(binary_path)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.data = None
         self.pe = None
         self.lief_binary = None
@@ -95,7 +103,7 @@ class BinaryFeatureExtractor:
                 else:
                     self.mode = CS_MODE_32
             except Exception as e:
-                self.logger.warning(f"PE parsing failed: {e}")
+                self.logger.warning("PE parsing failed: %s", e, exc_info=True)
 
         # Try LIEF for cross-platform support
         if LIEF_AVAILABLE and not self.pe:
@@ -109,7 +117,7 @@ class BinaryFeatureExtractor:
                         self.arch = CS_ARCH_X86
                         self.mode = CS_MODE_64
             except Exception as e:
-                self.logger.warning(f"LIEF parsing failed: {e}")
+                self.logger.warning("LIEF parsing failed: %s", e, exc_info=True)
 
         # Default to x86-64 if unable to determine
         if not self.arch:
@@ -149,7 +157,7 @@ class BinaryFeatureExtractor:
                     opcode_counts[insn.mnemonic] = opcode_counts.get(insn.mnemonic, 0) + 1
                     total_instructions += 1
             except Exception as e:
-                self.logger.debug(f"Disassembly error: {e}")
+                self.logger.debug("Disassembly error: %s", e, exc_info=True)
 
         # Create feature vector for most common opcodes
         common_opcodes = [
@@ -342,7 +350,7 @@ class BinaryFeatureExtractor:
                     blocks.append(current_block)
 
             except Exception as e:
-                self.logger.debug(f"Basic block extraction error: {e}")
+                self.logger.debug("Basic block extraction error: %s", e, exc_info=True)
 
         return blocks
 
@@ -432,13 +440,13 @@ class BinaryFeatureExtractor:
                     for entry in self.pe.DIRECTORY_ENTRY_IMPORT:
                         imports.extend(imp.name.decode("utf-8", errors="ignore") for imp in entry.imports if imp.name)
             except Exception as e:
-                self.logger.debug(f"Import extraction error: {e}")
+                self.logger.debug("Import extraction error: %s", e, exc_info=True)
         elif self.lief_binary:
             try:
                 for imported in self.lief_binary.imports:
                     imports.extend(entry.name for entry in imported.entries if entry.name)
             except Exception as e:
-                self.logger.debug(f"LIEF import extraction error: {e}")
+                self.logger.debug("LIEF import extraction error: %s", e, exc_info=True)
 
         return imports
 

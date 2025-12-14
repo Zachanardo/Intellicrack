@@ -424,10 +424,11 @@ class PatternEvolutionEngine:
     @profile_ai_operation("pattern_evolution")
     def evolve_patterns(self) -> dict[str, Any]:
         """Evolve patterns based on learning data."""
+        logger.debug("Entering PatternEvolutionEngine.evolve_patterns")
         logger.info("Starting pattern evolution process")
 
-        # Get recent learning records
         recent_records = self.database.get_learning_records(limit=5000)
+        logger.info("Retrieved %d learning records for analysis", len(recent_records))
 
         evolution_results = {
             "patterns_analyzed": 0,
@@ -457,10 +458,10 @@ class PatternEvolutionEngine:
         insights = self._generate_evolution_insights(recent_records)
         evolution_results["evolution_insights"] = insights
 
-        # Update cache
         self._update_pattern_cache()
 
-        logger.info(f"Pattern evolution completed: {evolution_results}")
+        logger.info("Pattern evolution completed: %s", evolution_results)
+        logger.debug("Exiting PatternEvolutionEngine.evolve_patterns")
         return evolution_results
 
     def _analyze_success_patterns(self, records: list[LearningRecord]) -> dict[str, Any]:
@@ -630,7 +631,7 @@ class PatternEvolutionEngine:
 
             return False
         except Exception as e:
-            logger.error("Exception in learning_engine: %s", e)
+            logger.error("Exception in learning_engine: %s", e, exc_info=True)
             return False
 
     def _deprecate_ineffective_patterns(self) -> list[PatternRule]:
@@ -771,7 +772,7 @@ class PatternEvolutionEngine:
         platform = context.get("platform", "unknown")
         complexity = context.get("complexity", "medium")
 
-        logger.debug(f"Finding patterns for context: target={target_type}, platform={platform}, complexity={complexity}")
+        logger.debug("Finding patterns for context: target=%s, platform=%s, complexity=%s", target_type, platform, complexity)
 
         for pattern_list in self.pattern_cache.values():
             applicable_patterns.extend(pattern for pattern in pattern_list if pattern.effectiveness_score > self.evolution_threshold)
@@ -835,7 +836,7 @@ class PatternEvolutionEngine:
             }
 
         except Exception as e:
-            logger.error(f"Error getting pattern insights: {e}")
+            logger.error("Error getting pattern insights: %s", e, exc_info=True)
             return {
                 "total_patterns": 0,
                 "error": str(e),
@@ -860,12 +861,14 @@ class FailureAnalysisEngine:
     @profile_ai_operation("failure_analysis")
     def analyze_failures(self) -> dict[str, Any]:
         """Analyze failure patterns and create improvement strategies."""
+        logger.debug("Entering FailureAnalysisEngine.analyze_failures")
         logger.info("Starting failure analysis")
 
-        # Get failed learning records
         failed_records = self.database.get_learning_records(success=False, limit=2000)
+        logger.info("Retrieved %d failed records for analysis", len(failed_records))
 
         if len(failed_records) < self.analysis_threshold:
+            logger.debug("Exiting FailureAnalysisEngine.analyze_failures - insufficient data")
             return {"message": "Insufficient failure data for analysis"}
 
         analysis_results = {
@@ -890,11 +893,11 @@ class FailureAnalysisEngine:
                     if analysis.impact_level in ["high", "critical"]:
                         analysis_results["critical_patterns"].append(analysis.pattern_signature)
 
-        # Generate improvement strategies
         strategies = self._generate_improvement_strategies(failed_records)
         analysis_results["improvement_strategies"] = strategies
 
-        logger.info(f"Failure analysis completed: {analysis_results}")
+        logger.info("Failure analysis completed: %s", analysis_results)
+        logger.debug("Exiting FailureAnalysisEngine.analyze_failures")
         return analysis_results
 
     def _categorize_failures(self, failed_records: list[LearningRecord]) -> dict[str, list[LearningRecord]]:
@@ -1036,7 +1039,7 @@ class FailureAnalysisEngine:
                 pattern = record.context.get("pattern_used", "unknown")
                 failure_patterns[pattern] = failure_patterns.get(pattern, 0) + 1
 
-        logger.debug(f"Analyzed {len(records)} records, found {len(failure_patterns)} failure patterns")
+        logger.debug("Analyzed %d records, found %d failure patterns", len(records), len(failure_patterns))
 
         if "timeout" in failure_type:
             fixes.extend(
@@ -1124,7 +1127,11 @@ class FailureAnalysisEngine:
                 failed_patterns.append(record.context.get("strategy", "unknown"))
 
         logger.debug(
-            f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns",
+            "Analyzed %d records for %s: %d successful, %d failed patterns",
+            len(records),
+            failure_type,
+            len(successful_patterns),
+            len(failed_patterns),
         )
 
         # Add type-specific strategies based on failure_type
@@ -1278,7 +1285,7 @@ class AILearningEngine:
             logger.info("ML models initialized successfully")
 
         except ImportError as e:
-            logger.warning(f"ML libraries not available: {e}. Using fallback learning.")
+            logger.warning("ML libraries not available: %s. Using fallback learning.", e)
             self.pattern_classifier = None
             self.neural_net = None
             self.anomaly_detector = None
@@ -1300,7 +1307,9 @@ class AILearningEngine:
         metadata: dict[str, object] | None = None,
     ) -> str:
         """Record AI learning experience."""
+        logger.debug("Entering AILearningEngine.record_experience for task_type=%s", task_type)
         if not self.learning_enabled:
+            logger.debug("Learning disabled, skipping record")
             return ""
 
         # Create hashes for input/output
@@ -1323,14 +1332,14 @@ class AILearningEngine:
             metadata=metadata or {},
         )
 
-        # Save to database
         self.database.save_learning_record(record)
         self.learning_stats["records_processed"] += 1
+        logger.info("Recorded learning experience: %s (success=%s)", record_id, success)
 
-        # Trigger evolution if needed
         if self._should_trigger_evolution():
             self._trigger_background_evolution()
 
+        logger.debug("Exiting AILearningEngine.record_experience")
         return record_id
 
     def _should_trigger_evolution(self) -> bool:
@@ -1351,7 +1360,7 @@ class AILearningEngine:
                 self.analyze_failures()
                 self.last_evolution = datetime.now()
             except Exception as e:
-                logger.error(f"Error in background evolution: {e}")
+                logger.error("Error in background evolution: %s", e, exc_info=True)
 
         evolution_thread = threading.Thread(target=evolution_worker, daemon=True)
         evolution_thread.start()
@@ -1440,20 +1449,24 @@ class AILearningEngine:
             min_samples: Minimum number of samples required to train models
 
         """
+        logger.debug("Entering AILearningEngine.learn with min_samples=%d", min_samples)
         if not self.learning_enabled:
             logger.info("Learning is disabled")
+            logger.debug("Exiting AILearningEngine.learn")
             return
 
         if self.pattern_classifier is None:
             logger.warning("ML models not available, using database patterns only")
+            logger.debug("Exiting AILearningEngine.learn")
             return
 
         try:
-            # Collect training data from database
             recent_records = self.database.get_recent_records(limit=1000)
+            logger.info("Retrieved %d records for learning", len(recent_records))
 
             if len(recent_records) < min_samples:
-                logger.info(f"Not enough samples for training ({len(recent_records)}/{min_samples})")
+                logger.info("Not enough samples for training (%d/%d)", len(recent_records), min_samples)
+                logger.debug("Exiting AILearningEngine.learn")
                 return
 
             # Extract features and labels from records
@@ -1513,13 +1526,13 @@ class AILearningEngine:
             # Discover new patterns
             self._discover_patterns(X_scaled, y, metadata)
 
-            # Trigger pattern evolution
             self.pattern_engine.evolve_patterns()
 
-            logger.info(f"Learning completed. Processed {len(features)} samples.")
+            logger.info("Learning completed. Processed %d samples.", len(features))
+            logger.debug("Exiting AILearningEngine.learn")
 
         except Exception as e:
-            logger.error(f"Error during learning: {e}")
+            logger.error("Error during learning: %s", e, exc_info=True)
 
     def _extract_features(self, record: dict[str, Any]) -> list[float] | None:
         """Extract numerical features from a learning record.
@@ -1568,7 +1581,7 @@ class AILearningEngine:
             return features
 
         except Exception as e:
-            logger.debug(f"Failed to extract features: {e}")
+            logger.debug("Failed to extract features: %s", e)
             return None
 
     def _calculate_protection_score(self, exploit_data: dict[str, Any]) -> float:
@@ -1690,10 +1703,10 @@ class AILearningEngine:
                 )
 
             self.learning_stats["patterns_discovered"] += len(anomalous_successes)
-            logger.info(f"Discovered {len(anomalous_successes)} new patterns")
+            logger.info("Discovered %d new patterns", len(anomalous_successes))
 
         except Exception as e:
-            logger.error(f"Error discovering patterns: {e}")
+            logger.error("Error discovering patterns: %s", e, exc_info=True)
 
     def predict_success(self, exploit_data: dict[str, Any]) -> dict[str, float]:
         """Predict the success probability of an exploit.
@@ -1737,7 +1750,7 @@ class AILearningEngine:
             }
 
         except Exception as e:
-            logger.error(f"Error predicting success: {e}")
+            logger.error("Error predicting success: %s", e, exc_info=True)
             return {"status": "prediction_error", "probability": 0.5, "error": str(e)}
 
     def _calculate_confidence(self, rf_prob: float, nn_prob: float) -> float:

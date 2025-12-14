@@ -15,6 +15,7 @@ This directory contains comprehensive production-grade tests for runtime executi
 ### NO MOCKS POLICY
 
 All tests in this directory use **real execution**:
+
 - Real subprocess calls (`subprocess.run()`)
 - Real file system operations
 - Real process enumeration
@@ -24,6 +25,7 @@ All tests in this directory use **real execution**:
 ### Production Validation
 
 Tests validate that functions work on real data:
+
 - Hash computation matches Python's hashlib
 - Subprocess execution captures actual output
 - Timeouts terminate real processes
@@ -33,21 +35,25 @@ Tests validate that functions work on real data:
 ## Running Tests
 
 ### All Tests
+
 ```bash
 python -m pytest tests/utils/runtime/test_additional_runners.py -v
 ```
 
 ### Specific Test Class
+
 ```bash
 python -m pytest tests/utils/runtime/test_additional_runners.py::TestExternalCommandExecution -v
 ```
 
 ### With Coverage
+
 ```bash
 python -m pytest tests/utils/runtime/test_additional_runners.py --cov=intellicrack.utils.runtime.additional_runners --cov-report=html
 ```
 
 ### Single Test
+
 ```bash
 python -m pytest tests/utils/runtime/test_additional_runners.py::TestFileHashComputation::test_compute_file_hash_sha256 -v
 ```
@@ -77,6 +83,7 @@ python -m pytest tests/utils/runtime/test_additional_runners.py::TestFileHashCom
 Critical functions have been manually validated:
 
 ### Hash Computation
+
 ```bash
 cd D:\Intellicrack
 .pixi/envs/default/python.exe -c "
@@ -95,6 +102,7 @@ print(f'Match: {computed == expected}')
 ```
 
 ### Command Execution
+
 ```bash
 cd D:\Intellicrack
 .pixi/envs/default/python.exe -c "
@@ -108,6 +116,7 @@ print(f'Output: {result[\"stdout\"]}')
 ```
 
 ### Pattern Analysis
+
 ```bash
 cd D:\Intellicrack
 .pixi/envs/default/python.exe -c "
@@ -123,6 +132,7 @@ print(f'License calls: {count}')
 ## Expected Behavior
 
 ### Tests MUST Pass
+
 - Hash computation produces correct hashes
 - Subprocess execution captures output
 - Timeouts terminate processes within limits
@@ -130,6 +140,7 @@ print(f'License calls: {count}')
 - Verification functions analyze real binaries
 
 ### Tests MUST Fail When
+
 - Subprocess execution is broken
 - Output capture is incomplete
 - Timeouts don't work
@@ -157,6 +168,7 @@ When adding new tests:
 ## Dependencies
 
 Tests require:
+
 - pytest
 - pytest-timeout (for timeout testing)
 - tempfile (for temporary file creation)

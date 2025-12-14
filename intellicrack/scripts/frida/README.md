@@ -659,8 +659,7 @@ function measurePerformance(operation, callback) {
         const endTime = Date.now();
 
         performanceMetrics.average_response_time =
-            (performanceMetrics.average_response_time + (endTime - startTime)) /
-            2;
+            (performanceMetrics.average_response_time + (endTime - startTime)) / 2;
 
         return result;
     } catch (e) {

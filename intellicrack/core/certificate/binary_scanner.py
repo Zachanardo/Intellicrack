@@ -67,8 +67,12 @@ PERFORMANCE NOTES:
 - Disable radare2 analysis for quick scans (imports/strings only)
 """
 
+import logging
 import re
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 
 try:
@@ -213,9 +217,7 @@ class BinaryScanner:
             strings.extend([m.decode("utf-16le", errors="ignore").rstrip("\x00") for m in matches])
 
         except Exception as e:
-            import logging
-
-            logging.getLogger(__name__).debug(f"Failed to extract strings: {e}")
+            logger.debug("Failed to extract strings: %s", e, exc_info=True)
 
         return list(set(strings))
 
@@ -270,7 +272,8 @@ class BinaryScanner:
             try:
                 self.r2_handle = r2pipe.open(str(self.binary_path))
                 self.r2_handle.cmd("aaa")
-            except Exception:
+            except Exception as e:
+                logger.debug("Failed to initialize radare2: %s", e, exc_info=True)
                 return False
 
         return True
@@ -298,7 +301,8 @@ class BinaryScanner:
 
             return addresses
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Radare2 API call search failed, falling back to LIEF: %s", e, exc_info=True)
             return self._find_api_calls_lief(api_name)
 
     def _find_api_calls_lief(self, api_name: str) -> list[int]:
@@ -354,7 +358,8 @@ class BinaryScanner:
                 cross_references=xrefs,
             )
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to analyze call context at %s: %s", hex(address), e, exc_info=True)
             return ContextInfo(address)
 
     def calculate_confidence(self, context: ContextInfo) -> float:
@@ -400,9 +405,7 @@ class BinaryScanner:
             try:
                 self.r2_handle.quit()
             except Exception as e:
-                import logging
-
-                logging.getLogger(__name__).debug(f"Failed to close radare2: {e}")
+                logger.debug("Failed to close radare2: %s", e, exc_info=True)
             self.r2_handle = None
 
     def __enter__(self) -> "BinaryScanner":

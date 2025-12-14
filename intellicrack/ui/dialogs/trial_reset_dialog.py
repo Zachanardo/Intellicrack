@@ -122,6 +122,7 @@ class TrialResetWorker(QThread):
                 self.result.emit({"operation": "backup", "path": backup_path})
 
         except Exception as e:
+            logger.exception("Trial reset worker operation failed: %s", self.operation)
             self.error.emit(str(e))
 
 
@@ -207,8 +208,7 @@ class TrialResetDialog(QDialog):
             btn = QPushButton(software)
             btn.clicked.connect(
                 lambda checked, s=software: (
-                    logger.debug("Quick scan button clicked, checked state: %s for software: %s", checked, s)
-                    or self.quick_scan(s)
+                    logger.debug("Quick scan button clicked, checked state: %s for software: %s", checked, s) or self.quick_scan(s)
                 )
             )
             quick_layout.addWidget(btn)
@@ -644,6 +644,7 @@ class TrialResetDialog(QDialog):
                     "Backup loaded. Note: This loads the trial information only, not the actual trial state.",
                 )
             except Exception as e:
+                logger.exception("Failed to load backup from file: %s", file_path)
                 self.handle_worker_error(f"Failed to load backup: {e}")
 
     def start_monitoring(self) -> None:
@@ -730,6 +731,7 @@ class TrialResetDialog(QDialog):
                     self.registry_output.appendPlainText(f"  {key}")
 
         except Exception as e:
+            logger.exception("Registry scan error for product: %s", product_name)
             self.handle_worker_error(f"Registry scan error: {e}")
 
     def clean_trial_registry(self) -> None:
@@ -752,6 +754,7 @@ class TrialResetDialog(QDialog):
                 self.log("Registry cleaned successfully")
                 self.registry_output.appendPlainText("\nOK Registry entries deleted")
             except Exception as e:
+                logger.exception("Registry clean error for product: %s", self.current_trial_info.product_name)
                 self.handle_worker_error(f"Registry clean error: {e}")
 
     def export_registry(self) -> None:
@@ -781,6 +784,7 @@ class TrialResetDialog(QDialog):
             for stream in ads:
                 self.file_output.appendPlainText(f"  {stream}")
         except Exception as e:
+            logger.exception("ADS scan error for product: %s", product_name)
             self.handle_worker_error(f"ADS scan error: {e}")
 
     def clear_alternate_streams(self) -> None:
@@ -794,6 +798,7 @@ class TrialResetDialog(QDialog):
             self.log("Alternate data streams cleared")
             self.file_output.appendPlainText("\nOK ADS cleared successfully")
         except Exception as e:
+            logger.exception("ADS clear error for product: %s", product_name)
             self.handle_worker_error(f"ADS clear error: {e}")
 
     def scan_hidden_files(self) -> None:
@@ -811,6 +816,7 @@ class TrialResetDialog(QDialog):
             for file in files:
                 self.file_output.appendPlainText(f"  {file}")
         except Exception as e:
+            logger.exception("Hidden file scan error for product: %s", product_name)
             self.handle_worker_error(f"Hidden file scan error: {e}")
 
     def clear_prefetch(self) -> None:
@@ -823,6 +829,7 @@ class TrialResetDialog(QDialog):
             self.engine._clear_prefetch_data(product_name)
             self.log("Prefetch data cleared")
         except Exception as e:
+            logger.exception("Prefetch clear error for product: %s", product_name)
             self.handle_worker_error(f"Prefetch clear error: {e}")
 
     def clear_event_logs(self) -> None:
@@ -835,6 +842,7 @@ class TrialResetDialog(QDialog):
             self.engine._clear_event_logs(product_name)
             self.log("Event logs cleared")
         except Exception as e:
+            logger.exception("Event log clear error for product: %s", product_name)
             self.handle_worker_error(f"Event log clear error: {e}")
 
     def enable_time_travel(self) -> None:
@@ -893,6 +901,7 @@ class TrialResetDialog(QDialog):
 
                 self.log(f"Scan results exported to {file_path}")
             except Exception as e:
+                logger.exception("Export scan results failed to file: %s", file_path)
                 self.handle_worker_error(f"Export failed: {e}")
 
     def load_from_history(self) -> None:
@@ -941,6 +950,7 @@ class TrialResetDialog(QDialog):
                     json.dump(self.scan_history, f, indent=2, default=str)
                 self.log(f"History exported to {file_path}")
             except Exception as e:
+                logger.exception("Export history failed to file: %s", file_path)
                 self.handle_worker_error(f"Export failed: {e}")
 
     def display_trial_info(self, trial_info: TrialInfo) -> None:

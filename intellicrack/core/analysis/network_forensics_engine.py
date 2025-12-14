@@ -293,15 +293,13 @@ class NetworkForensicsEngine:
                 try:
                     b64_str = b64.decode("utf-8", errors="ignore")
                     if len(b64_str) >= 20:  # Minimum meaningful base64
-                        artifacts.append(
-                            {
-                                "type": "Base64_Data",
-                                "value": (f"{b64_str[:100]}..." if len(b64_str) > 100 else b64_str),
-                                "offset": data.find(b64),
-                                "length": len(b64),
-                                "full_length": len(b64_str),
-                            }
-                        )
+                        artifacts.append({
+                            "type": "Base64_Data",
+                            "value": (f"{b64_str[:100]}..." if len(b64_str) > 100 else b64_str),
+                            "offset": data.find(b64),
+                            "length": len(b64),
+                            "full_length": len(b64_str),
+                        })
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
 

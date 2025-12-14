@@ -48,6 +48,8 @@ from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.protection_detection import detect_all_protections
 
 
+logger = logging.getLogger(__name__)
+
 """
 Enhanced CLI Runner for Intellicrack
 Integrates progress visualization and improved user experience
@@ -98,6 +100,7 @@ class EnhancedCLIRunner:
                     self.results[operation] = result
                     self.progress_manager.complete_task(operation, success=True)
                 except Exception as e:
+                    logger.error("Operation %s failed: %s", operation, e, exc_info=True)
                     self.results[operation] = {"error": str(e)}
                     self.progress_manager.complete_task(operation, success=False, error=str(e))
 
@@ -128,6 +131,7 @@ class EnhancedCLIRunner:
                     with open(binary_path, "rb") as f:
                         f.read(1024)  # Read first 1KB to verify
                 except Exception as e:
+                    logger.error("File access error for %s: %s", binary_path, e, exc_info=True)
                     results = {"error": f"File access error: {e}"}
                     break
 
@@ -143,6 +147,7 @@ class EnhancedCLIRunner:
                         else:
                             results["format"] = "Unknown"
                 except Exception:
+                    logger.error("Error reading headers from %s", binary_path, exc_info=True)
                     results["format"] = "Error reading headers"
 
             elif step_name == "Analyzing structure" and progress == 60:
@@ -154,6 +159,7 @@ class EnhancedCLIRunner:
                     results["file_size"] = stat_info.st_size
                     results["last_modified"] = stat_info.st_mtime
                 except Exception:
+                    logger.error("Error getting file stats for %s", binary_path, exc_info=True)
                     results["file_size"] = 0
 
             # Update progress
@@ -170,6 +176,7 @@ class EnhancedCLIRunner:
                     analysis_results = analyze_binary(binary_path)
                     results.update(analysis_results)
                 except Exception as e:
+                    logger.error("Comprehensive analysis failed for %s: %s", binary_path, e, exc_info=True)
                     results.setdefault("errors", []).append(str(e))
 
         return results
@@ -196,8 +203,8 @@ class EnhancedCLIRunner:
                             data = f.read()
                             if b"overflow" in data or b"buffer" in data:
                                 self.logger.debug("Found potential buffer overflow risk indicators")
-                    except Exception as e:
-                        self.logger.debug(f"Error analyzing buffer overflow risks: {e}")
+                    except Exception:
+                        self.logger.debug("Error analyzing buffer overflow risks", exc_info=True)
 
                 elif step_name == "Checking dangerous functions":
                     # Check for dangerous function usage
@@ -208,8 +215,8 @@ class EnhancedCLIRunner:
                             for func in dangerous_funcs:
                                 if func in data:
                                     break
-                    except Exception as e:
-                        self.logger.debug(f"Error analyzing function names: {e}")
+                    except Exception:
+                        self.logger.debug("Error analyzing function names", exc_info=True)
 
                 self.progress_manager.update_progress(
                     "Vulnerability Scan",
@@ -222,6 +229,7 @@ class EnhancedCLIRunner:
             vulnerabilities = engine.scan_binary(binary_path)
             return {"vulnerabilities": vulnerabilities}
         except Exception as e:
+            logger.error("Vulnerability scan failed for %s: %s", binary_path, e, exc_info=True)
             return {"error": str(e)}
 
     def _run_protection_detection(self, binary_path: str) -> dict[str, Any]:
@@ -244,8 +252,8 @@ class EnhancedCLIRunner:
                             data = f.read(8192)  # Read 8KB sample
                             if len(set(data)) > 200:  # High entropy indicator
                                 self.logger.debug("Detected high entropy - potentially packed/encrypted")
-                    except Exception as e:
-                        self.logger.debug(f"Error analyzing entropy patterns: {e}")
+                    except Exception:
+                        self.logger.debug("Error analyzing entropy patterns", exc_info=True)
 
                 elif step_name == "Checking for packer signatures":
                     # Look for common packer signatures
@@ -256,8 +264,8 @@ class EnhancedCLIRunner:
                             for sig in packer_sigs:
                                 if sig in data:
                                     break
-                    except Exception as e:
-                        self.logger.debug(f"Error checking anti-debug signatures: {e}")
+                    except Exception:
+                        self.logger.debug("Error checking anti-debug signatures", exc_info=True)
 
                 self.progress_manager.update_progress(
                     "Protection Detection",
@@ -270,6 +278,7 @@ class EnhancedCLIRunner:
             protections = detect_all_protections(binary_path)
             return {"protections": protections}
         except Exception as e:
+            logger.error("Protection detection failed for %s: %s", binary_path, e, exc_info=True)
             return {"error": str(e)}
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
@@ -299,6 +308,7 @@ class EnhancedCLIRunner:
                     active_connections = [c for c in connections if c.status == "ESTABLISHED"]
                     results["network"] = [f"Connection to {c.raddr}" for c in active_connections[:3]]
                 except Exception:
+                    logger.debug("Network monitoring unavailable", exc_info=True)
                     results["network"] = ["network_monitoring_unavailable"]
 
             elif step_name == "Loading binary in emulator":
@@ -313,6 +323,7 @@ class EnhancedCLIRunner:
                         else:
                             results["binary_type"] = "Unknown format"
                 except Exception as e:
+                    logger.error("Error loading binary %s: %s", binary_path, e, exc_info=True)
                     results["load_error"] = str(e)
 
             elif step_name == "Monitoring system calls":
@@ -321,6 +332,7 @@ class EnhancedCLIRunner:
                     results["baseline_processes"] = len(current_processes)
                     results["syscalls"] = ["GetCurrentProcess", "VirtualAlloc", "CreateThread"]
                 except Exception:
+                    logger.debug("System call monitoring unavailable", exc_info=True)
                     results["syscalls"] = ["monitoring_unavailable"]
 
             elif step_name == "Setting up sandbox environment":
@@ -340,6 +352,7 @@ class EnhancedCLIRunner:
                         temp_files = os.listdir(temp_dir)[:5]  # Sample temp files
                     results["files_accessed"] = temp_files or ["temp_file_monitoring"]
                 except Exception:
+                    logger.debug("File monitoring unavailable", exc_info=True)
                     results["files_accessed"] = ["file_monitoring_unavailable"]
 
             self.progress_manager.update_progress(
@@ -365,7 +378,7 @@ class EnhancedCLIRunner:
             analyzer = NetworkTrafficAnalyzer()
 
             # Initialize analyzer
-            self.logger.info(f"Network analyzer initialized for {binary_path}")
+            self.logger.info("Network analyzer initialized for %s", binary_path)
 
             # Perform real network analysis
             results = {
@@ -400,6 +413,7 @@ class EnhancedCLIRunner:
                             endpoints.extend([e for e in env_endpoints if e])
                             results["endpoints"] = endpoints or ["None detected"]
                     except Exception:
+                        logger.debug("Error analyzing endpoints in %s", binary_path, exc_info=True)
                         results["endpoints"] = ["Analysis error"]
 
                 elif step_name == "Detecting suspicious endpoints":
@@ -412,8 +426,8 @@ class EnhancedCLIRunner:
                             for pattern in suspicious_patterns:
                                 if pattern in data:
                                     suspicious_indicators.append(pattern.decode())
-                    except Exception as e:
-                        self.logger.debug(f"Error checking suspicious patterns: {e}")
+                    except Exception:
+                        self.logger.debug("Error checking suspicious patterns", exc_info=True)
 
                     results["suspicious"] = len(suspicious_indicators) > 0
                     results["network_indicators"] = suspicious_indicators
@@ -431,6 +445,7 @@ class EnhancedCLIRunner:
                                     found_protocols.append(protocol)
                             results["protocols"] = found_protocols or ["None detected"]
                     except Exception:
+                        logger.debug("Error scanning network strings in %s", binary_path, exc_info=True)
                         results["protocols"] = ["Scan error"]
 
                 # Use analyzer if it has proper methods
@@ -439,6 +454,7 @@ class EnhancedCLIRunner:
                         if analyzer_results := analyzer.analyze(binary_path):
                             results |= analyzer_results
                     except Exception as e:
+                        logger.error("Network analyzer error for %s: %s", binary_path, e, exc_info=True)
                         results["analyzer_error"] = str(e)
 
                 self.progress_manager.update_progress(
@@ -450,6 +466,7 @@ class EnhancedCLIRunner:
 
             return results
         except Exception as e:
+            logger.error("Network analysis failed for %s: %s", binary_path, e, exc_info=True)
             return {"error": str(e)}
 
     def display_results(self) -> None:

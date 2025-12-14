@@ -22,7 +22,11 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import ast
+import logging
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 
 class UnusedConfigCodeDetector(ast.NodeVisitor):
@@ -115,7 +119,7 @@ def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, 
             detector.legacy_config_patterns,
         )
     except Exception as e:
-        print(f"Error analyzing {file_path}: {e}")
+        logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
         return set(), set(), [], []
 
 
@@ -166,12 +170,10 @@ def generate_cleanup_report(results: dict) -> str:
         for info in results.values()
     )
 
-    report.extend(
-        (
-            f"Files with unused config code: {total_files}",
-            f"Total issues found: {total_issues}",
-        )
-    )
+    report.extend((
+        f"Files with unused config code: {total_files}",
+        f"Total issues found: {total_issues}",
+    ))
     report.append("")
 
     for file_path, info in sorted(results.items()):
@@ -227,7 +229,7 @@ def remove_unused_imports(file_path: Path, unused_imports: set[tuple[str, int]])
 
         return True
     except Exception as e:
-        print(f"Error removing imports from {file_path}: {e}")
+        logger.error("Error removing imports from %s: %s", file_path, e, exc_info=True)
         return False
 
 
@@ -251,7 +253,7 @@ def cleanup_file(file_path: Path, auto_fix: bool = False) -> int:
 
     if auto_fix and imports and remove_unused_imports(file_path, imports):
         fixed_count += len(imports)
-        print(f"Removed {len(imports)} unused imports from {file_path}")
+        logger.info("Removed %d unused imports from %s", len(imports), file_path)
 
     # For methods and other patterns, we'll just report them
     # Manual intervention is safer for method removal
@@ -263,15 +265,15 @@ if __name__ == "__main__":
     # Run cleanup analysis on the project
     project_root = Path(__file__).parent.parent.parent
 
-    print("Analyzing project for unused configuration code...")
+    logger.info("Analyzing project for unused configuration code...")
     if results := find_unused_config_code(project_root / "intellicrack"):
         report = generate_cleanup_report(results)
-        print(report)
+        logger.info("Cleanup report:\n%s", report)
 
         # Save report to file
         report_path = project_root / "config_cleanup_report.txt"
         with open(report_path, "w") as f:
             f.write(report)
-        print(f"\nReport saved to: {report_path}")
+        logger.info("Report saved to: %s", report_path)
     else:
-        print("No unused configuration code found!")
+        logger.info("No unused configuration code found!")

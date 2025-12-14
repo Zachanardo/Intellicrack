@@ -61,7 +61,7 @@ def mitigate_future_vulnerability() -> None:
         logger.info("Future package vulnerability mitigation applied (GHSA-xqrq-4mgf-ff32)")
 
     except Exception as e:
-        logger.error(f"Failed to apply future vulnerability mitigation: {e}")
+        logger.error("Failed to apply future vulnerability mitigation: %s", e, exc_info=True)
 
 
 def scan_for_malicious_test_files() -> list[Path]:

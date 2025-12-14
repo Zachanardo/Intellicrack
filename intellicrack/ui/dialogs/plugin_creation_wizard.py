@@ -444,7 +444,7 @@ class {info["name"].replace(" ", "")}(GhidraScript):
                 return True
 
             except Exception as e:
-                logger.error("Exception in plugin_creation_wizard: %s", e)
+                logger.error("Exception in plugin_creation_wizard: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Error",
@@ -777,7 +777,7 @@ class CodeGenerationPage(QWizardPage):
                     "Python syntax is valid!",
                 )
         except SyntaxError as e:
-            logger.error("SyntaxError in plugin_creation_wizard: %s", e)
+            logger.error("SyntaxError in plugin_creation_wizard: %s", e, exc_info=True)
             QMessageBox.warning(
                 self,
                 "Syntax Error",

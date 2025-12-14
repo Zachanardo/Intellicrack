@@ -67,9 +67,7 @@ class LicenseValidationBypass:
     def _build_rsa_patterns(self) -> list[re.Pattern]:
         """Build patterns for RSA key detection in binary data."""
         logger.debug("Building RSA key detection patterns.")
-        patterns = [
-            re.compile(rb"\x30[\x81\x82][\x01-\x02][\x00-\xff]\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01")
-        ]
+        patterns = [re.compile(rb"\x30[\x81\x82][\x01-\x02][\x00-\xff]\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01")]
 
         logger.debug("Added ASN.1 DER RSA public key pattern.")
 
@@ -93,7 +91,7 @@ class LicenseValidationBypass:
         patterns.append(re.compile(rb"RSA2"))  # PRIVATEKEYSTRUC
         logger.debug("Added Microsoft CryptoAPI marker patterns.")
 
-        logger.info(f"Built {len(patterns)} RSA key patterns.")
+        logger.info("Built %s RSA key patterns.", len(patterns))
         return patterns
 
     @log_function_call
@@ -120,7 +118,7 @@ class LicenseValidationBypass:
         patterns.append(re.compile(rb"-----BEGIN EC"))
         logger.debug("Added OpenSSL EC marker patterns.")
 
-        logger.info(f"Built {len(patterns)} ECC key patterns.")
+        logger.info("Built %s ECC key patterns.", len(patterns))
         return patterns
 
     @log_function_call
@@ -136,12 +134,12 @@ class LicenseValidationBypass:
         patterns.append(re.compile(rb"-----END CERTIFICATE"))
         logger.debug("Added certificate marker patterns.")
 
-        logger.info(f"Built {len(patterns)} certificate patterns.")
+        logger.info("Built %s certificate patterns.", len(patterns))
         return patterns
 
     def extract_rsa_keys_from_binary(self, binary_path: str) -> list[ExtractedKey]:
         """Extract RSA keys from binary with advanced heuristics."""
-        logger.info(f"Starting RSA key extraction from {binary_path}")
+        logger.info("Starting RSA key extraction from %s", binary_path)
         keys = []
 
         with open(binary_path, "rb") as f:
@@ -153,16 +151,16 @@ class LicenseValidationBypass:
             for match in pattern.finditer(data):
                 offset = match.start()
                 if key_candidate := self._extract_asn1_key(data[offset : offset + 4096]):
-                    logger.debug(f"Found potential ASN.1 key at offset {offset}")
+                    logger.debug("Found potential ASN.1 key at offset %s", offset)
                     key_candidate.address = offset
                     keys.append(key_candidate)
-        logger.debug(f"Method 1 (ASN.1 structures) completed. Found {len(keys)} keys so far.")
+        logger.debug("Method 1 (ASN.1 structures) completed. Found %s keys so far.", len(keys))
 
         logger.debug("Method 2: Scanning for large prime numbers (RSA moduli).")
         # Method 2: Scan for large prime numbers (RSA moduli)
         initial_keys_count = len(keys)
         keys.extend(self._scan_for_rsa_moduli(data))
-        logger.debug(f"Method 2 (RSA moduli scan) completed. Added {len(keys) - initial_keys_count} keys.")
+        logger.debug("Method 2 (RSA moduli scan) completed. Added %s keys.", len(keys) - initial_keys_count)
 
         # Method 3: Parse PE imports for CryptoAPI
         if binary_path.endswith((".exe", ".dll")):
@@ -170,21 +168,21 @@ class LicenseValidationBypass:
             initial_keys_count = len(keys)
             keys.extend(self._extract_from_pe_resources(binary_path))
             keys.extend(self._extract_from_crypto_api_calls(binary_path))
-            logger.debug(f"Method 3 (PE resources and CryptoAPI) completed. Added {len(keys) - initial_keys_count} keys.")
+            logger.debug("Method 3 (PE resources and CryptoAPI) completed. Added %s keys.", len(keys) - initial_keys_count)
 
         logger.debug("Method 4: Analyzing memory patterns for in-memory key structures.")
         # Method 4: Memory pattern analysis
         initial_keys_count = len(keys)
         keys.extend(self._analyze_memory_patterns(data))
-        logger.debug(f"Method 4 (Memory pattern analysis) completed. Added {len(keys) - initial_keys_count} keys.")
+        logger.debug("Method 4 (Memory pattern analysis) completed. Added %s keys.", len(keys) - initial_keys_count)
 
         logger.debug("Method 5: Detecting keys based on entropy analysis.")
         # Method 5: Entropy-based detection
         initial_keys_count = len(keys)
         keys.extend(self._entropy_based_key_detection(data))
-        logger.debug(f"Method 5 (Entropy-based detection) completed. Added {len(keys) - initial_keys_count} keys.")
+        logger.debug("Method 5 (Entropy-based detection) completed. Added %s keys.", len(keys) - initial_keys_count)
 
-        logger.info(f"Found {len(keys)} potential RSA keys in {binary_path}")
+        logger.info("Found %s potential RSA keys in %s", len(keys), binary_path)
         return keys
 
     def _extract_asn1_key(self, data: bytes) -> ExtractedKey | None:
@@ -220,11 +218,11 @@ class LicenseValidationBypass:
                             context="ASN.1 DER encoded private key",
                             key_object=key,
                         )
-                except (AttributeError, KeyError, ValueError) as e:
-                    logger.warning(f"Failed to process PKCS#1 RSA private key: {e}")
+                except (AttributeError, KeyError, ValueError):
+                    logger.warning("Failed to process PKCS#1 RSA private key", exc_info=True)
 
-        except Exception as e:
-            logger.warning(f"Private key extraction failed with an unexpected error: {e}")
+        except Exception:
+            logger.warning("Private key extraction failed with an unexpected error", exc_info=True)
 
         return None
 
@@ -234,13 +232,13 @@ class LicenseValidationBypass:
 
         # Look for 128, 256, 512-byte sequences with high entropy
         for key_size in [128, 256, 512]:
-            logger.debug(f"Scanning for RSA moduli of size {key_size} bytes.")
+            logger.debug("Scanning for RSA moduli of size %s bytes.", key_size)
             for offset in range(0, len(data) - key_size, 4):
                 chunk = data[offset : offset + key_size]
 
                 # Check entropy
                 entropy = self._calculate_entropy(chunk)
-                logger.debug(f"Chunk at offset {offset} (size {key_size}) has entropy: {entropy:.2f}")
+                logger.debug("Chunk at offset %s (size %s) has entropy: %.2f", offset, key_size, entropy)
                 if entropy < 7.5:  # RSA keys have high entropy
                     continue
 
@@ -308,7 +306,7 @@ class LicenseValidationBypass:
                             # Check for certificate or key data
                             if self._is_key_data(data):
                                 if extracted := self._parse_key_data(data):
-                                    logger.debug(f"Found {len(extracted)} key(s) in PE resource.")
+                                    logger.debug("Found %s key(s) in PE resource.", len(extracted))
                                     keys.extend(extracted)
 
             # Check data sections
@@ -317,11 +315,11 @@ class LicenseValidationBypass:
                 if section.Name.startswith(b".data") or section.Name.startswith(b".rdata"):
                     data = section.get_data()
                     if section_keys := self._scan_section_for_keys(data, section.VirtualAddress):
-                        logger.debug(f"Found {len(section_keys)} key(s) in section {section.Name.decode(errors='ignore')}.")
+                        logger.debug("Found %s key(s) in section %s.", len(section_keys), section.Name.decode(errors="ignore"))
                         keys.extend(section_keys)
 
-        except Exception as e:
-            logger.warning(f"PE resource and section scanning failed: {e}")
+        except Exception:
+            logger.warning("PE resource and section scanning failed", exc_info=True)
 
         return keys
 
@@ -351,7 +349,7 @@ class LicenseValidationBypass:
                         for imp in entry.imports
                         if imp.name and imp.name.decode("utf-8", errors="ignore") in crypto_apis
                     )
-            logger.debug(f"Found {len(crypto_imports)} CryptoAPI imports.")
+            logger.debug("Found %s CryptoAPI imports.", len(crypto_imports))
 
             # Analyze code around crypto API calls
             if crypto_imports:
@@ -365,8 +363,8 @@ class LicenseValidationBypass:
             else:
                 logger.debug("No CryptoAPI imports found to analyze.")
 
-        except Exception as e:
-            logger.warning(f"CryptoAPI analysis failed: {e}")
+        except Exception:
+            logger.warning("CryptoAPI analysis failed", exc_info=True)
 
         return keys
 
@@ -389,9 +387,9 @@ class LicenseValidationBypass:
                 if key := self._parse_openssl_rsa_struct(struct_data):
                     key.address = offset
                     keys.append(key)
-                    logger.debug(f"Found OpenSSL RSA structure at offset {offset}.")
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Failed to parse OpenSSL RSA structure at offset {offset}: {e}")
+                    logger.debug("Found OpenSSL RSA structure at offset %s.", offset)
+            except (ValueError, TypeError):
+                logger.warning("Failed to parse OpenSSL RSA structure at offset %s", offset, exc_info=True)
 
             offset += 1
 
@@ -408,9 +406,9 @@ class LicenseValidationBypass:
                 if key := self._parse_bcrypt_key_blob(data[offset : offset + 2048]):
                     key.address = offset
                     keys.append(key)
-                    logger.debug(f"Found Windows BCRYPT_RSAKEY_BLOB structure at offset {offset}.")
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Failed to parse BCRYPT key blob at offset {offset}: {e}")
+                    logger.debug("Found Windows BCRYPT_RSAKEY_BLOB structure at offset %s.", offset)
+            except (ValueError, TypeError):
+                logger.warning("Failed to parse BCRYPT key blob at offset %s", offset, exc_info=True)
 
             offset += 1
 
@@ -420,18 +418,18 @@ class LicenseValidationBypass:
         """Detect keys based on entropy analysis."""
         keys = []
         window_size = 256
-        logger.debug(f"Starting entropy-based key detection with window size: {window_size}")
+        logger.debug("Starting entropy-based key detection with window size: %s", window_size)
 
         for offset in range(0, len(data) - window_size, 16):
             chunk = data[offset : offset + window_size]
             entropy = self._calculate_entropy(chunk)
-            logger.debug(f"Chunk at offset {offset} has entropy: {entropy:.2f}")
+            logger.debug("Chunk at offset %s has entropy: %.2f", offset, entropy)
 
             if entropy > 7.8:  # Very high entropy
-                logger.debug(f"High entropy chunk found at offset {offset}. Checking for key structure.")
+                logger.debug("High entropy chunk found at offset %s. Checking for key structure.", offset)
                 # Check if it's structured like a key
                 if self._has_key_structure(chunk):
-                    logger.debug(f"Chunk at offset {offset} has key-like structure. Attempting to parse.")
+                    logger.debug("Chunk at offset %s has key-like structure. Attempting to parse.", offset)
                     # Try to parse as various key formats
                     for parser in [
                         self._try_parse_der,
@@ -442,7 +440,7 @@ class LicenseValidationBypass:
                             key.address = offset
                             key.confidence *= 0.8  # Lower confidence for entropy-based
                             keys.append(key)
-                            logger.debug(f"Successfully parsed key from high entropy chunk at offset {offset}.")
+                            logger.debug("Successfully parsed key from high entropy chunk at offset %s.", offset)
                             break
 
         return keys
@@ -567,8 +565,8 @@ class LicenseValidationBypass:
                                             for key in extracted:
                                                 key.context = f"Found near {imp_name.decode('utf-8', errors='ignore')} call"
                                             keys.extend(extracted)
-                            except (UnicodeDecodeError, AttributeError) as e:
-                                logger.debug(f"Failed to process import function: {e}")
+                            except (UnicodeDecodeError, AttributeError):
+                                logger.debug("Failed to process import function", exc_info=True)
 
         return keys
 
@@ -591,8 +589,8 @@ class LicenseValidationBypass:
             # Generic parser for unknown versions
             return self._parse_generic_openssl_rsa(data)
 
-        except Exception as e:
-            logger.warning(f"OpenSSL RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("OpenSSL RSA parsing failed", exc_info=True)
 
         return None
 
@@ -664,8 +662,8 @@ class LicenseValidationBypass:
                     confidence=0.85,
                     context="OpenSSL 1.0.x RSA public key structure",
                 )
-        except Exception as e:
-            logger.warning(f"OpenSSL 1.0.x RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("OpenSSL 1.0.x RSA parsing failed", exc_info=True)
 
         return None
 
@@ -693,7 +691,7 @@ class LicenseValidationBypass:
             # Check if private key components exist
             if offset + 32 < len(data):
                 if d := self._read_openssl_bignum_11x(data[offset:]):
-                    logger.debug(f"Found OpenSSL 1.1.x RSA private key with d component size: {len(d)}")
+                    logger.debug("Found OpenSSL 1.1.x RSA private key with d component size: %s", len(d))
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data[:2048],
@@ -713,8 +711,8 @@ class LicenseValidationBypass:
                 context="OpenSSL 1.1.x RSA public key structure",
             )
 
-        except Exception as e:
-            logger.warning(f"OpenSSL 1.1.x RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("OpenSSL 1.1.x RSA parsing failed", exc_info=True)
 
         return None
 
@@ -747,7 +745,7 @@ class LicenseValidationBypass:
             # Check for private key
             if flags & 0x01:  # Private key flag
                 if d := self._read_openssl_bignum_3x(data[offset:]):
-                    logger.debug(f"Found OpenSSL 3.x RSA private key with d component size: {len(d)}")
+                    logger.debug("Found OpenSSL 3.x RSA private key with d component size: %s", len(d))
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data[:2048],
@@ -767,8 +765,8 @@ class LicenseValidationBypass:
                 context="OpenSSL 3.x RSA public key structure",
             )
 
-        except Exception as e:
-            logger.warning(f"OpenSSL 3.x RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("OpenSSL 3.x RSA parsing failed", exc_info=True)
 
         return None
 
@@ -803,8 +801,8 @@ class LicenseValidationBypass:
                     context="OpenSSL RSA structure (generic parser)",
                 )
 
-        except Exception as e:
-            logger.warning(f"Generic OpenSSL RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("Generic OpenSSL RSA parsing failed", exc_info=True)
 
         return None
 
@@ -854,7 +852,7 @@ class LicenseValidationBypass:
                 word_offset = num_offset + (i * 8)
                 if word_offset + 8 > len(data):
                     break
-                word = struct.unpack("<Q", data[word_offset:word_offset + 8])[0]
+                word = struct.unpack("<Q", data[word_offset : word_offset + 8])[0]
                 num_bytes.extend(word.to_bytes(8, "little"))
 
             while num_bytes and num_bytes[-1] == 0:
@@ -866,8 +864,8 @@ class LicenseValidationBypass:
             value = int.from_bytes(bytes(num_bytes), "little")
             return value if neg == 0 else -value
 
-        except (struct.error, ValueError, IndexError) as e:
-            logger.debug(f"OpenSSL 1.0.x BIGNUM reading failed: {e}")
+        except (struct.error, ValueError, IndexError):
+            logger.debug("OpenSSL 1.0.x BIGNUM reading failed", exc_info=True)
             return None
 
     def _read_openssl_bignum_11x(self, data: bytes) -> int | None:
@@ -903,8 +901,8 @@ class LicenseValidationBypass:
                 value = int.from_bytes(bytes(num_bytes), "little")
                 return value if neg == 0 else -value
 
-        except Exception as e:
-            logger.debug(f"BIGNUM reading failed: {e}")
+        except Exception:
+            logger.debug("BIGNUM reading failed (1.1.x)", exc_info=True)
 
         return None
 
@@ -938,8 +936,8 @@ class LicenseValidationBypass:
                 value = int.from_bytes(num_bytes, "little")
                 return value if neg == 0 else -value
 
-        except Exception as e:
-            logger.debug(f"BIGNUM reading failed: {e}")
+        except Exception:
+            logger.debug("BIGNUM reading failed (3.x)", exc_info=True)
 
         return None
 
@@ -968,8 +966,8 @@ class LicenseValidationBypass:
             # Read number bytes
             num_bytes = data[8 : 8 + size]
             return int.from_bytes(num_bytes, byteorder="big")
-        except (ValueError, IndexError) as e:
-            logger.warning(f"Failed to read OpenSSL BIGNUM from memory: {e}")
+        except (ValueError, IndexError):
+            logger.warning("Failed to read OpenSSL BIGNUM from memory", exc_info=True)
             return None
 
     def _bignum_size(self, n: int) -> int:
@@ -1010,8 +1008,8 @@ class LicenseValidationBypass:
                 confidence=0.9,
                 context="Windows BCRYPT_RSAKEY_BLOB",
             )
-        except (ValueError, TypeError) as e:
-            logger.warning(f"Failed to parse BCRYPT key blob: {e}")
+        except (ValueError, TypeError):
+            logger.warning("Failed to parse BCRYPT key blob", exc_info=True)
             return None
 
     def _has_key_structure(self, data: bytes) -> bool:
@@ -1075,8 +1073,8 @@ class LicenseValidationBypass:
                         context="PEM encoded RSA public key",
                         key_object=key,
                     )
-        except (AttributeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse PEM RSA public key: {e}")
+        except (AttributeError, KeyError, ValueError):
+            logger.warning("Failed to parse PEM RSA public key", exc_info=True)
 
         return None
 
@@ -1120,8 +1118,8 @@ class LicenseValidationBypass:
                         context="PKCS#8 RSA private key",
                         key_object=key,
                     )
-        except (AttributeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to parse PKCS#8 RSA private key: {e}")
+        except (AttributeError, KeyError, ValueError):
+            logger.warning("Failed to parse PKCS#8 RSA private key", exc_info=True)
 
         return None
 
@@ -1394,8 +1392,8 @@ class LicenseValidationBypass:
                         context="OpenSSH RSA private key (unencrypted)",
                         key_object=private_key,
                     )
-        except Exception as e:
-            logger.warning(f"OpenSSH RSA parsing failed: {e}")
+        except Exception:
+            logger.warning("OpenSSH RSA parsing failed", exc_info=True)
 
         return None
 
@@ -1419,8 +1417,8 @@ class LicenseValidationBypass:
                     confidence=0.95,
                     context="JSON Web Key (JWK)",
                 )
-        except (ValueError, TypeError, json.JSONDecodeError) as e:
-            logger.warning(f"Failed to parse JSON Web Key: {e}")
+        except (ValueError, TypeError, json.JSONDecodeError):
+            logger.warning("Failed to parse JSON Web Key", exc_info=True)
 
         return None
 
@@ -1503,8 +1501,8 @@ class LicenseValidationBypass:
                     context="ASN.1 DER encoded ECC private key",
                     key_object=key,
                 )
-        except (AttributeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to extract ECC key: {e}")
+        except (AttributeError, KeyError, ValueError):
+            logger.warning("Failed to extract ECC key", exc_info=True)
 
         return None
 
@@ -1524,8 +1522,8 @@ class LicenseValidationBypass:
                     cert_data = data[offset : offset + 8192]
                     cert = x509.load_der_x509_certificate(cert_data, backend=self.backend)
                     certificates.append(cert)
-                except (ValueError, TypeError) as e:
-                    logger.warning(f"Failed to parse DER certificate at offset {offset}: {e}")
+                except (ValueError, TypeError):
+                    logger.warning("Failed to parse DER certificate at offset %s", offset, exc_info=True)
                     # Try PEM format
                     try:
                         end = data.find(b"-----END CERTIFICATE-----", offset)
@@ -1533,10 +1531,10 @@ class LicenseValidationBypass:
                             cert_data = data[offset : end + 25]
                             cert = x509.load_pem_x509_certificate(cert_data, backend=self.backend)
                             certificates.append(cert)
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"Failed to parse PEM certificate at offset {offset}: {e}")
+                    except (ValueError, TypeError):
+                        logger.warning("Failed to parse PEM certificate at offset %s", offset, exc_info=True)
 
-        logger.info(f"Found {len(certificates)} certificates in {binary_path}")
+        logger.info("Found %s certificates in %s", len(certificates), binary_path)
         return certificates
 
     def extract_all_keys(self, binary_path: str) -> dict[str, list[ExtractedKey]]:
@@ -1582,7 +1580,7 @@ class LicenseValidationBypass:
                 )
 
         total_keys = len(results["rsa"]) + len(results["ecc"]) + len(results["symmetric"])
-        logger.info(f"Extraction complete. Found {total_keys} total keys and {len(certs)} certificates in {binary_path}")
+        logger.info("Extraction complete. Found %s total keys and %s certificates in %s", total_keys, len(certs), binary_path)
         return results
 
     def _extract_symmetric_keys(self, binary_path: str) -> list[ExtractedKey]:

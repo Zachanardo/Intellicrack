@@ -18,7 +18,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
+
 from intellicrack.handlers.pyqt6_handler import QFrame, QLabel, QProgressBar, QPushButton, QTextEdit, QWidget
+
+
+logger = logging.getLogger(__name__)
 
 
 class StyleManager:
@@ -75,7 +80,7 @@ class StyleManager:
         "welcome_panel": "welcomePanel",
         "quick_start_panel": "quickStartPanel",
         "stage_widget": "stageWidget",
-        "placeholder_panel": "placeholderPanel",
+        "content_panel": "contentPanel",
         "preview_text": "previewText",
         # Console and output
         "console_output": "consoleOutput",
@@ -122,7 +127,7 @@ class StyleManager:
             object_name = cls.STYLE_MAPPINGS[style_name]
             widget.setObjectName(object_name)
         else:
-            print(f"Warning: Unknown style '{style_name}'")
+            logger.warning("Unknown style '%s'", style_name)
 
     @classmethod
     def style_label(cls, label: QLabel, style_type: str) -> None:

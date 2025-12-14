@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import platform
 from typing import Any
 
@@ -41,7 +42,9 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.utils.logger import logger
+
+
+logger = logging.getLogger(__name__)
 
 
 class CPUMonitorWorker(QObject):
@@ -83,6 +86,7 @@ class CPUMonitorWorker(QObject):
                 cpu_data = self._collect_cpu_data()
                 self.cpu_data_ready.emit(cpu_data)
             except Exception as e:
+                logger.error("CPU data collection failed: %s", e, exc_info=True)
                 self.error_occurred.emit(str(e))
 
             # Sleep for update interval
@@ -126,14 +130,15 @@ class CPUMonitorWorker(QObject):
                                 "memory_percent": pinfo["memory_percent"],
                             },
                         )
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug("Process access error during iteration: %s", e)
 
             # Sort by CPU usage
             processes.sort(key=lambda x: x["cpu_percent"], reverse=True)
             cpu_info["top_processes"] = processes[:10]
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to collect process info: %s", e)
             cpu_info["top_processes"] = []
 
         # Get CPU name/model

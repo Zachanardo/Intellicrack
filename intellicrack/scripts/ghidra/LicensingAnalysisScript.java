@@ -312,7 +312,7 @@ public class LicensingAnalysisScript extends GhidraScript {
       codeUnitCount++;
 
       if (codeUnit instanceof Instruction inst) {
-          mnemonics.add(inst.getMnemonicString());
+        mnemonics.add(inst.getMnemonicString());
 
         // Check for anti-debug instructions
         String mnemonic = inst.getMnemonicString().toUpperCase();

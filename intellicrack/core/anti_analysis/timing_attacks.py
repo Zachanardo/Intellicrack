@@ -132,7 +132,7 @@ class TimingAttackDefense:
             return True
 
         except Exception as e:
-            self.logger.error(f"Secure sleep failed: {e}")
+            self.logger.error(f"Secure sleep failed: {e}", exc_info=True)
             return False
 
     def stalling_code(self, min_duration: float, max_duration: float) -> None:
@@ -173,7 +173,7 @@ class TimingAttackDefense:
             self.logger.debug(f"Stalling completed: {elapsed:.2f}s, {iterations} iterations")
 
         except Exception as e:
-            self.logger.error(f"Stalling code failed: {e}")
+            self.logger.error(f"Stalling code failed: {e}", exc_info=True)
 
     def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
         """Create a time bomb that triggers after specific duration.
@@ -199,7 +199,7 @@ class TimingAttackDefense:
                     self.logger.warning("Time bomb detected acceleration, aborting")
 
             except Exception as e:
-                self.logger.error(f"Time bomb failed: {e}")
+                self.logger.error(f"Time bomb failed: {e}", exc_info=True)
 
         thread = threading.Thread(target=time_bomb_thread, daemon=True)
         thread.start()
@@ -244,7 +244,7 @@ class TimingAttackDefense:
                 self.secure_sleep(delay)
 
         except Exception as e:
-            self.logger.error(f"Execution delay failed: {e}")
+            self.logger.error(f"Execution delay failed: {e}", exc_info=True)
 
     def rdtsc_timing_check(self) -> bool:
         """Use RDTSC instruction for precise timing checks.
@@ -276,7 +276,7 @@ class TimingAttackDefense:
             return elapsed_ns >= expected_ns * 0.1
 
         except Exception as e:
-            self.logger.debug(f"RDTSC check failed: {e}")
+            self.logger.debug(f"RDTSC check failed: {e}", exc_info=True)
             return True
 
     def anti_acceleration_loop(self, duration: float) -> None:
@@ -310,7 +310,7 @@ class TimingAttackDefense:
                     self.stalling_code(1, 2)
 
         except Exception as e:
-            self.logger.error(f"Anti-acceleration loop failed: {e}")
+            self.logger.error(f"Anti-acceleration loop failed: {e}", exc_info=True)
 
     def _check_rdtsc_availability(self) -> bool:
         """Check if RDTSC instruction is available."""

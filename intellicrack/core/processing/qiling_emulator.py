@@ -53,7 +53,7 @@ try:
 
     QILING_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in qiling_emulator: %s", e)
+    logger.error("Import error in qiling_emulator: %s", e, exc_info=True)
     QILING_AVAILABLE = False
     Qiling = None
     QL_ARCH = None
@@ -289,7 +289,7 @@ class QilingEmulator:
                         },
                     )
             except (AttributeError, OSError) as e:
-                self.logger.debug("Could not map %s: %s", host, e)
+                self.logger.debug("Could not map %s: %s", host, e, exc_info=True)
 
     def add_license_detection_hooks(self) -> None:
         """Add hooks for common license check patterns."""
@@ -362,7 +362,7 @@ class QilingEmulator:
             )
 
         # Log potential license check
-        self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
+        self.logger.info("Potential license API: %s at %s", api_name, hex(address))
 
     def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int) -> None:
         """Monitor memory access with detailed analysis."""
@@ -387,7 +387,7 @@ class QilingEmulator:
                 elif hasattr(ql.arch.regs, "sp"):
                     cpu_state["sp"] = hex(ql.arch.regs.sp)
         except Exception as e:
-            self.logger.debug(f"Failed to extract CPU state: {e}")
+            self.logger.debug("Failed to extract CPU state: %s", e, exc_info=True)
 
         # Try to read memory content around the access
         memory_content = None
@@ -395,7 +395,7 @@ class QilingEmulator:
             if access == 1 and size <= 32:  # READ access, reasonable size
                 memory_content = ql.mem.read(address, size).hex()
         except Exception as e:
-            self.logger.debug(f"Failed to read memory at {hex(address)}: {e}")
+            self.logger.debug("Failed to read memory at %s: %s", hex(address), e, exc_info=True)
 
         # Check if this is a stack access
         is_stack_access = False
@@ -450,7 +450,7 @@ class QilingEmulator:
                         timeout,
                     )
                 except (RuntimeError, AttributeError) as e:
-                    logger.error("Error in qiling_emulator: %s", e)
+                    logger.error("Error in qiling_emulator: %s", e, exc_info=True)
 
         try:
             # Create Qiling instance
@@ -495,7 +495,7 @@ class QilingEmulator:
                 try:
                     self.ql.set_api(api_name, hook_func)
                 except (AttributeError, KeyError, RuntimeError) as e:
-                    logger.error("Error in qiling_emulator: %s", e)
+                    logger.error("Error in qiling_emulator: %s", e, exc_info=True)
                     # API might not exist for this OS
 
             # Set up timeout if specified
@@ -536,7 +536,7 @@ class QilingEmulator:
             if timeout_timer and timeout_timer.is_alive():
                 timeout_timer.cancel()
 
-            self.logger.error("Qiling emulation error: %s", e)
+            self.logger.error("Qiling emulation error: %s", e, exc_info=True)
             self.logger.debug(traceback.format_exc())
 
             return {
@@ -560,7 +560,7 @@ class QilingEmulator:
                 try:
                     self.ql.emu_stop()
                 except (RuntimeError, AttributeError) as e:
-                    logger.error("Error in qiling_emulator: %s", e)
+                    logger.error("Error in qiling_emulator: %s", e, exc_info=True)
 
     def get_arch_info(self) -> dict[str, Any]:
         """Get detailed architecture information using QL_ARCH constants."""
@@ -873,7 +873,7 @@ class QilingEmulator:
                 addr = patch["address"]
                 data = patch["bytes"]
                 ql.mem.write(addr, data)
-                self.logger.info(f"Applied patch at {hex(addr)}: {data.hex()}")
+                self.logger.info("Applied patch at %s: %s", hex(addr), data.hex())
 
         # Hook to apply patches after loading
         self.ql.hook_code(apply_patches, begin=0, end=0, user_data=None)
@@ -951,7 +951,7 @@ class QilingEmulator:
                     ]:
                         format_info["format"] = "Mach-O"
             except Exception as e:
-                logger.debug("Error reading binary file for format detection: %s", e)
+                logger.debug("Error reading binary file for format detection: %s", e, exc_info=True)
 
         return format_info
 
@@ -980,7 +980,7 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] = None) -> di
         try:
             from intellicrack.handlers.pefile_handler import pefile
         except ImportError as e:
-            logger.error("Import error in qiling_emulator: %s", e)
+            logger.error("Import error in qiling_emulator: %s", e, exc_info=True)
             pefile = None
 
         ostype = "windows"  # Default
@@ -995,7 +995,7 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] = None) -> di
                 arch = "x86_64"
             ostype = "windows"
         except (OSError, pefile.PEFormatError, AttributeError) as e:
-            logger.error("Error in qiling_emulator: %s", e)
+            logger.error("Error in qiling_emulator: %s", e, exc_info=True)
             # Try ELF
             with open(binary_path, "rb") as f:
                 magic = f.read(4)

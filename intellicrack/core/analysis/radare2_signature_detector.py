@@ -111,10 +111,10 @@ class Radare2SignatureDetector:
         try:
             self.r2 = r2pipe.open(self.binary_path)
             self.r2.cmd("aaa")  # Analyze
-            logger.info(f"Opened {self.binary_path} for signature detection")
+            logger.info("Opened %s for signature detection", self.binary_path)
             return True
         except Exception as e:
-            logger.error(f"Failed to open binary: {e}")
+            logger.error("Failed to open binary: %s", e, exc_info=True)
             return False
 
     def load_yara_rules(self, rules_path: str) -> bool:
@@ -126,7 +126,7 @@ class Radare2SignatureDetector:
                 # Single rule file
                 rules = yara.compile(filepath=str(path))
                 self.yara_rules.append(rules)
-                logger.info(f"Loaded YARA rules from {path}")
+                logger.info("Loaded YARA rules from %s", path)
 
             elif path.is_dir():
                 # Directory of rule files
@@ -134,14 +134,14 @@ class Radare2SignatureDetector:
                     try:
                         rules = yara.compile(filepath=str(rule_file))
                         self.yara_rules.append(rules)
-                        logger.info(f"Loaded YARA rules from {rule_file}")
+                        logger.info("Loaded YARA rules from %s", rule_file)
                     except Exception as e:
-                        logger.warning(f"Failed to load {rule_file}: {e}")
+                        logger.warning("Failed to load %s: %s", rule_file, e, exc_info=True)
 
             return len(self.yara_rules) > 0
 
         except Exception as e:
-            logger.error(f"Failed to load YARA rules: {e}")
+            logger.error("Failed to load YARA rules: %s", e, exc_info=True)
             return False
 
     def create_default_yara_rules(self) -> str:
@@ -531,10 +531,10 @@ rule CryptoAPI_Usage {
                             raw_match=match,
                         )
                         matches.append(sig_match)
-                        logger.info(f"YARA match: {match.rule} at offset {hex(string_match[0])}")
+                        logger.info("YARA match: %s at offset %s", match.rule, hex(string_match[0]))
 
         except Exception as e:
-            logger.error(f"YARA scanning failed: {e}")
+            logger.error("YARA scanning failed: %s", e, exc_info=True)
 
         self.matches.extend(matches)
         return matches
@@ -574,12 +574,12 @@ rule CryptoAPI_Usage {
                                 metadata={"scanner": "ClamAV", "file_path": self.binary_path},
                             )
                             matches.append(sig_match)
-                            logger.info(f"ClamAV detection: {threat_name}")
+                            logger.info("ClamAV detection: %s", threat_name)
 
         except FileNotFoundError:
             logger.debug("ClamAV not installed, skipping ClamAV scan")
         except Exception as e:
-            logger.error(f"ClamAV scanning failed: {e}")
+            logger.error("ClamAV scanning failed: %s", e, exc_info=True)
 
         self.matches.extend(matches)
         return matches
@@ -652,12 +652,12 @@ rule CryptoAPI_Usage {
                         metadata={"pattern": sig_bytes.hex()},
                     )
                     matches.append(sig_match)
-                    logger.info(f"Custom signature match: {sig_name} at offset {hex(pos)}")
+                    logger.info("Custom signature match: %s at offset %s", sig_name, hex(pos))
 
                     offset = pos + 1
 
         except Exception as e:
-            logger.error(f"Custom signature scanning failed: {e}")
+            logger.error("Custom signature scanning failed: %s", e, exc_info=True)
 
         self.matches.extend(matches)
         return matches
@@ -723,7 +723,7 @@ rule CryptoAPI_Usage {
                 matches.append(sig_match)
 
         except Exception as e:
-            logger.error(f"Protection scheme detection failed: {e}")
+            logger.error("Protection scheme detection failed: %s", e, exc_info=True)
 
         self.matches.extend(matches)
         return matches
@@ -838,7 +838,7 @@ rule CryptoAPI_Usage {
             )
 
         except Exception as e:
-            logger.error(f"Compiler detection failed: {e}")
+            logger.error("Compiler detection failed: %s", e, exc_info=True)
             return None
 
     def detect_libraries(self) -> list[LibraryInfo]:
@@ -903,7 +903,7 @@ rule CryptoAPI_Usage {
                         libraries.append(lib_info)
 
         except Exception as e:
-            logger.error(f"Library detection failed: {e}")
+            logger.error("Library detection failed: %s", e, exc_info=True)
 
         return libraries
 
@@ -912,8 +912,8 @@ rule CryptoAPI_Usage {
         report = ["=" * 60, "SIGNATURE DETECTION REPORT"]
         report.append("=" * 60)
         report.append(f"Binary: {self.binary_path}")
-        report.append(f"MD5: {self.file_hash['md5']}")
         report.append(f"SHA256: {self.file_hash['sha256']}")
+        report.append(f"SHA512: {self.file_hash['sha512']}")
         report.append(f"Size: {self.file_hash['size']} bytes")
         report.append("")
 
@@ -1012,21 +1012,19 @@ rule CryptoAPI_Usage {
                     writer.writerow(["Type", "Name", "Offset", "Size", "Confidence"])
 
                     for match in self.matches:
-                        writer.writerow(
-                            [
-                                match.signature_type.value,
-                                match.name,
-                                hex(match.offset),
-                                match.size,
-                                f"{match.confidence:.0%}",
-                            ]
-                        )
+                        writer.writerow([
+                            match.signature_type.value,
+                            match.name,
+                            hex(match.offset),
+                            match.size,
+                            f"{match.confidence:.0%}",
+                        ])
 
-            logger.info(f"Exported {len(self.matches)} signatures to {output_file}")
+            logger.info("Exported %s signatures to %s", len(self.matches), output_file)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to export signatures: {e}")
+            logger.error("Failed to export signatures: %s", e, exc_info=True)
             return False
 
     def close(self) -> None:
@@ -1063,7 +1061,6 @@ def main() -> None:
         if args.yara:
             detector.load_yara_rules(args.yara)
 
-        # Run all scans
         logger.info("Starting signature detection...")
 
         detector.scan_with_yara()

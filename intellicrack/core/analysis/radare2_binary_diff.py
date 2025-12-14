@@ -119,7 +119,7 @@ class R2BinaryDiff:
                 self.r2_secondary.cmd("aaa")  # Analyze all
                 self.logger.info(f"Initialized r2 session for secondary: {self.secondary_path}")
         except Exception as e:
-            self.logger.error(f"Failed to initialize r2 sessions: {e}")
+            self.logger.error(f"Failed to initialize r2 sessions: {e}", exc_info=True)
             self.r2_primary = None
             self.r2_secondary = None
 
@@ -144,7 +144,7 @@ class R2BinaryDiff:
                 self.r2_secondary.cmd("aaa")
                 self.logger.info(f"Set secondary binary: {secondary_path}")
             except Exception as e:
-                self.logger.error(f"Failed to set secondary binary: {e}")
+                self.logger.error(f"Failed to set secondary binary: {e}", exc_info=True)
                 self.r2_secondary = None
 
     def get_function_diffs(self) -> list[FunctionDiff]:
@@ -230,7 +230,7 @@ class R2BinaryDiff:
             self.logger.info(f"Found {len(diffs)} function differences")
 
         except Exception as e:
-            self.logger.error(f"Failed to get function diffs: {e}")
+            self.logger.error(f"Failed to get function diffs: {e}", exc_info=True)
 
         return diffs
 
@@ -307,7 +307,7 @@ class R2BinaryDiff:
             self.logger.info(f"Found {len(diffs)} basic block differences in {function_name}")
 
         except Exception as e:
-            self.logger.error(f"Failed to get basic block diffs: {e}")
+            self.logger.error(f"Failed to get basic block diffs: {e}", exc_info=True)
 
         return diffs
 
@@ -381,7 +381,7 @@ class R2BinaryDiff:
             self.logger.info(f"Found {len(diffs)} string differences")
 
         except Exception as e:
-            self.logger.error(f"Failed to get string diffs: {e}")
+            self.logger.error(f"Failed to get string diffs: {e}", exc_info=True)
 
         return diffs
 
@@ -413,24 +413,20 @@ class R2BinaryDiff:
                     continue
 
                 if import_name in primary_by_name and import_name not in secondary_by_name:
-                    diffs.append(
-                        {
-                            "name": import_name,
-                            "status": "removed",
-                            "details": primary_by_name[import_name],
-                        }
-                    )
+                    diffs.append({
+                        "name": import_name,
+                        "status": "removed",
+                        "details": primary_by_name[import_name],
+                    })
                 elif import_name not in primary_by_name and import_name in secondary_by_name:
-                    diffs.append(
-                        {
-                            "name": import_name,
-                            "status": "added",
-                            "details": secondary_by_name[import_name],
-                        }
-                    )
+                    diffs.append({
+                        "name": import_name,
+                        "status": "added",
+                        "details": secondary_by_name[import_name],
+                    })
 
         except Exception as e:
-            self.logger.error(f"Failed to get import diffs: {e}")
+            self.logger.error(f"Failed to get import diffs: {e}", exc_info=True)
 
         return diffs
 
@@ -492,7 +488,7 @@ class R2BinaryDiff:
 
             return 1.0 - (distance / max_len) if max_len > 0 else 1.0
         except Exception as e:
-            self.logger.error(f"Failed to calculate similarity: {e}")
+            self.logger.error(f"Failed to calculate similarity: {e}", exc_info=True)
             return 0.0
 
     def _levenshtein_distance(self, s1: list[str], s2: list[str]) -> int:
@@ -548,7 +544,7 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error(f"Failed to count opcode changes: {e}")
+            self.logger.error(f"Failed to count opcode changes: {e}", exc_info=True)
             return 0
 
     def _get_call_changes(self, func_name: str) -> list[str]:
@@ -576,7 +572,7 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error(f"Failed to get call changes: {e}")
+            self.logger.error(f"Failed to get call changes: {e}", exc_info=True)
             return []
 
     def _match_basic_blocks(self, primary_blocks: list[dict], secondary_blocks: list[dict]) -> dict[int, int]:

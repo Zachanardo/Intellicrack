@@ -64,7 +64,7 @@ try:
 
     HAS_PSUTIL = True
 except ImportError as e:
-    logger.error("Import error in final_utilities: %s", e)
+    logger.error("Import error in final_utilities: %s", e, exc_info=True)
     HAS_PSUTIL = False
 
 try:
@@ -72,7 +72,7 @@ try:
 
     REQUESTS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in final_utilities: %s", e)
+    logger.error("Import error in final_utilities: %s", e, exc_info=True)
     REQUESTS_AVAILABLE = False
 
 
@@ -169,7 +169,7 @@ def show_analysis_results(results: dict[str, object], parent: object | None = No
 
     """
     if not HAS_PYQT:
-        logger.info(f"Analysis Results: {json.dumps(results, indent=2)}")
+        logger.info("Analysis Results: %s", json.dumps(results, indent=2))
         return
 
     from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
@@ -262,7 +262,7 @@ def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0
             "percent": memory.percent,
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in final_utilities: %s", e)
+        logger.error("Error in final_utilities: %s", e, exc_info=True)
         return {"error": str(e)}
 
 
@@ -307,7 +307,7 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> str | No
                 hash_obj.update(chunk)
         return hash_obj.hexdigest()
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error computing hash: %s", e)
+        logger.error("Error computing hash: %s", e, exc_info=True)
         return None
 
 
@@ -335,11 +335,11 @@ def compute_section_hashes(binary_path: str) -> dict[str, str]:
             section_hashes[section_name] = section_hash
 
     except ImportError:
-        logger.warning("pefile not available, returning file hash only")
+        logger.warning("pefile not available, returning file hash only", exc_info=True)
         if file_hash := compute_binary_hash(binary_path):
             section_hashes["_file"] = file_hash
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error computing section hashes: %s", e)
+        logger.error("Error computing section hashes: %s", e, exc_info=True)
 
     return section_hashes
 
@@ -455,7 +455,7 @@ def cache_analysis_results(key: str, results: dict[str, object], cache_dir: str 
 
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to cache results: %s", e)
+        logger.error("Failed to cache results: %s", e, exc_info=True)
         return False
 
 
@@ -505,7 +505,7 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, object]]:
         return captured_requests
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error retrieving captured requests: %s", e)
+        logger.error("Error retrieving captured requests: %s", e, exc_info=True)
         return []
 
 
@@ -610,11 +610,11 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, object]]:
                         conn.close()
 
             except ImportError as e:
-                logger.error("Import error in final_utilities: %s", e)
+                logger.error("Import error in final_utilities: %s", e, exc_info=True)
                 continue
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error getting protocol handler requests: %s", e)
+        logger.debug("Error getting protocol handler requests: %s", e, exc_info=True)
 
     return request_list[:limit]
 
@@ -666,7 +666,7 @@ def _get_network_interceptor_requests(limit: int) -> list[dict[str, object]]:
             )
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error getting network interceptor requests: %s", e)
+        logger.debug("Error getting network interceptor requests: %s", e, exc_info=True)
 
     return request_list
 
@@ -711,7 +711,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, object]]:
                         break
 
                 except (json.JSONDecodeError, OSError) as e:
-                    logger.debug("Could not read cache file %s: %s", cache_file, e)
+                    logger.debug("Could not read cache file %s: %s", cache_file, e, exc_info=True)
                     continue
 
         # If no cached data found, return empty list
@@ -720,7 +720,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, object]]:
             logger.debug("No cached network requests found")
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error getting cached requests: %s", e)
+        logger.debug("Error getting cached requests: %s", e, exc_info=True)
 
     return request_list[:limit]
 
@@ -761,7 +761,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                     if conn.status == "ESTABLISHED" and conn.raddr
                 )
             except (AttributeError, OSError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.error("Error in final_utilities: %s", e, exc_info=True)
 
         # Add process-specific network activity
         if hasattr(psutil, "Process"):
@@ -787,14 +787,14 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                                     },
                                 )
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                        logger.error("Error in final_utilities: %s", e)
+                        logger.error("Error in final_utilities: %s", e, exc_info=True)
                         continue
 
             except (AttributeError, OSError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.error("Error in final_utilities: %s", e, exc_info=True)
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error getting system network requests: %s", e)
+        logger.debug("Error getting system network requests: %s", e, exc_info=True)
 
     return request_list[:limit]
 
@@ -872,7 +872,7 @@ def _enhance_request_metadata(request: dict[str, object]) -> None:
         }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error enhancing request metadata: %s", e)
+        logger.debug("Error enhancing request metadata: %s", e, exc_info=True)
 
 
 def _get_ip_geolocation(ip: str) -> dict[str, object]:
@@ -1118,13 +1118,13 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, object]:
             "returncode": result.returncode,
         }
     except subprocess.TimeoutExpired as e:
-        logger.error("Subprocess timeout in final_utilities: %s", e)
+        logger.error("Subprocess timeout in final_utilities: %s", e, exc_info=True)
         return {
             "success": False,
             "error": f"Process timed out after {timeout} seconds",
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in final_utilities: %s", e)
+        logger.error("Error in final_utilities: %s", e, exc_info=True)
         return {
             "success": False,
             "error": str(e),
@@ -1224,7 +1224,7 @@ def copy_to_clipboard(text: str) -> bool:
             subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to copy to clipboard: %s", e)
+        logger.error("Failed to copy to clipboard: %s", e, exc_info=True)
 
     return False
 
@@ -1296,7 +1296,7 @@ def export_metrics(metrics: dict[str, object], output_path: str) -> bool:
             json.dump(metrics, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to export metrics: %s", e)
+        logger.error("Failed to export metrics: %s", e, exc_info=True)
         return False
 
 
@@ -1356,7 +1356,7 @@ def submit_report(report_data: dict[str, object], endpoint: str | None = None) -
         return final_result
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during report submission: %s", e)
+        logger.error("Error during report submission: %s", e, exc_info=True)
         return {"status": "error", "error": str(e), "timestamp": time.time()}
 
 
@@ -1413,7 +1413,7 @@ def _validate_and_enhance_report(report_data: dict[str, object]) -> dict[str, ob
         return enhanced_report
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Error validating report: %s", e)
+        logger.error("Error validating report: %s", e, exc_info=True)
         return None
 
 
@@ -1509,7 +1509,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
                         "delivery_method": "http_post",
                     }
                 except requests.exceptions.RequestException as e:
-                    logger.warning("HTTP submission failed: %s", e)
+                    logger.warning("HTTP submission failed: %s", e, exc_info=True)
                     return {
                         "status": "failed",
                         "endpoint": endpoint,
@@ -1530,7 +1530,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
                 }
 
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            logger.error("HTTP submission failed: %s", e)
+            logger.error("HTTP submission failed: %s", e, exc_info=True)
             return {
                 "status": "failed",
                 "endpoint": endpoint,
@@ -1540,7 +1540,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
             }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Remote submission error: %s", e)
+        logger.error("Remote submission error: %s", e, exc_info=True)
         return {"status": "error", "error": str(e)}
 
 
@@ -1565,7 +1565,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
-            logger.error("Failed to save JSON report: %s", e)
+            logger.error("Failed to save JSON report: %s", e, exc_info=True)
 
         # 2. Human-readable text format
         txt_path = os.path.join(reports_dir, f"{report_id}.txt")
@@ -1574,7 +1574,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
                 f.write(_format_report_as_text(report_data))
             formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
-            logger.error("Failed to save text report: %s", e)
+            logger.error("Failed to save text report: %s", e, exc_info=True)
 
         # 3. CSV format for tabular data
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
@@ -1582,7 +1582,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
             if _save_report_as_csv(report_data, csv_path):
                 formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            logger.debug("Could not save CSV format: %s", e)
+            logger.debug("Could not save CSV format: %s", e, exc_info=True)
 
         # 4. Compressed archive
         archive_path = os.path.join(reports_dir, f"{report_id}.tar.gz")
@@ -1596,7 +1596,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
                     },
                 )
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            logger.debug("Could not create archive: %s", e)
+            logger.debug("Could not create archive: %s", e, exc_info=True)
 
         if formats_saved:
             return {
@@ -1614,7 +1614,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Local storage submission error: %s", e)
+        logger.error("Local storage submission error: %s", e, exc_info=True)
         return {"status": "error", "error": str(e)}
 
 
@@ -1633,7 +1633,7 @@ def _handle_additional_delivery_methods(report_data: dict[str, object], report_i
             additional_deliveries.append(db_result)
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.debug("Error in additional delivery methods: %s", e)
+        logger.debug("Error in additional delivery methods: %s", e, exc_info=True)
 
     return additional_deliveries
 
@@ -1685,14 +1685,14 @@ def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> d
             }
 
         except ImportError as e:
-            logger.error("Import error in final_utilities: %s", e)
+            logger.error("Import error in final_utilities: %s", e, exc_info=True)
             return {
                 "method": "email",
                 "status": "unavailable",
                 "message": "Email delivery requires Python's built-in smtplib",
             }
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            logger.warning("Email delivery failed: %s", e)
+            logger.warning("Email delivery failed: %s", e, exc_info=True)
             return {
                 "method": "email",
                 "status": "failed",
@@ -1701,7 +1701,7 @@ def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> d
             }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Email configuration error: %s", e)
+        logger.error("Email configuration error: %s", e, exc_info=True)
         return None
 
 
@@ -1750,7 +1750,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                 }
 
             except ImportError:
-                logger.warning("boto3 not installed - cannot upload to AWS S3")
+                logger.warning("boto3 not installed - cannot upload to AWS S3", exc_info=True)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1758,7 +1758,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                     "message": "AWS SDK (boto3) not installed. Install with: pip install boto3",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.error("Error in final_utilities: %s", e, exc_info=True)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1796,7 +1796,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                 }
 
             except ImportError:
-                logger.warning("azure-storage-blob not installed - cannot upload to Azure")
+                logger.warning("azure-storage-blob not installed - cannot upload to Azure", exc_info=True)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1804,7 +1804,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                     "message": "Azure SDK not installed. Install with: pip install azure-storage-blob",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.error("Error in final_utilities: %s", e, exc_info=True)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1821,14 +1821,14 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
             }
 
     except json.JSONDecodeError as e:
-        logger.error("json.JSONDecodeError in final_utilities: %s", e)
+        logger.error("json.JSONDecodeError in final_utilities: %s", e, exc_info=True)
         return {
             "method": "cloud_storage",
             "status": "failed",
             "message": "Invalid cloud configuration JSON in INTELLICRACK_CLOUD_CONFIG",
         }
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Error in final_utilities: %s", e)
+        logger.error("Error in final_utilities: %s", e, exc_info=True)
         return {
             "method": "cloud_storage",
             "status": "failed",
@@ -2557,7 +2557,7 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
         if display_mode == "json":
             import json
 
-            print(json.dumps(results, indent=2))
+            logger.info("Patch validation results (JSON): %s", json.dumps(results, indent=2))
             return
 
         # Extract key information
@@ -2611,52 +2611,51 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
 
         else:
             # Console output
-            print("=" * 60)
-            print("PATCH TESTING RESULTS")
-            print("=" * 60)
-            print(f"Status: {'SUCCESS' if success else 'FAILED'}")
-            print(f"Total Patches: {patches_total}")
-            print(f"Validated: {patches_validated}")
-            print(f"Failed: {patches_failed}")
+            logger.info("=" * 60)
+            logger.info("PATCH TESTING RESULTS")
+            logger.info("=" * 60)
+            logger.info("Status: %s", "SUCCESS" if success else "FAILED")
+            logger.info("Total Patches: %s", patches_total)
+            logger.info("Validated: %s", patches_validated)
+            logger.info("Failed: %s", patches_failed)
 
             if results.get("binary_path"):
-                print(f"Binary: {results['binary_path']}")
+                logger.info("Binary: %s", results["binary_path"])
             if results.get("test_mode") is not None:
-                print(f"Test Mode: {results['test_mode']}")
+                logger.info("Test Mode: %s", results["test_mode"])
             if results.get("temp_output"):
-                print(f"Output File: {results['temp_output']}")
+                logger.info("Output File: %s", results["temp_output"])
 
             if validation_results:
-                print("\n" + "=" * 60)
-                print("PATCH DETAILS")
-                print("=" * 60)
+                logger.info("\n%s", "=" * 60)
+                logger.info("PATCH DETAILS")
+                logger.info("=" * 60)
 
                 for i, patch_result in enumerate(validation_results):
-                    print(f"\nPatch {i + 1}:")
-                    print(f"  Offset: {hex(patch_result.get('offset', 0))}")
-                    print(f"  Description: {patch_result.get('description', 'N/A')}")
-                    print(f"  Success: {patch_result.get('success', False)}")
+                    logger.info("\nPatch %s:", i + 1)
+                    logger.info("  Offset: %s", hex(patch_result.get("offset", 0)))
+                    logger.info("  Description: %s", patch_result.get("description", "N/A"))
+                    logger.info("  Success: %s", patch_result.get("success", False))
 
                     if "error" in patch_result:
-                        print(f"  Error: {patch_result['error']}")
+                        logger.info("  Error: %s", patch_result["error"])
                     if "warning" in patch_result:
-                        print(f"  Warning: {patch_result['warning']}")
+                        logger.info("  Warning: %s", patch_result["warning"])
 
                     if validation := patch_result.get("validation", {}):
-                        print("  Validation:")
+                        logger.info("  Validation:")
                         for key, value in validation.items():
-                            print(f"    {key}: {value}")
+                            logger.info("    %s: %s", key, value)
 
-            print("\n" + "=" * 60)
+            logger.info("\n%s", "=" * 60)
 
             if results.get("summary"):
-                print(f"\nSummary: {results['summary']}")
+                logger.info("\nSummary: %s", results["summary"])
 
-        logger.info(f"Displayed patch testing results: {patches_validated}/{patches_total} validated")
+        logger.info("Displayed patch testing results: %s/%s validated", patches_validated, patches_total)
 
     except Exception as e:
-        logger.error(f"Error displaying results: {e}")
-        print(f"Error displaying results: {e}")
+        logger.error("Error displaying results: %s", e, exc_info=True)
 
 
 # Note: Exports are handled by the package-level __init__.py to avoid duplication

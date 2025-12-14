@@ -31,9 +31,13 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from .base_detector import BaseDetector
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @dataclass
@@ -262,11 +266,11 @@ class VMDetector(BaseDetector):
             if isinstance(detections_for_score, dict):
                 results["evasion_score"] = self._calculate_evasion_score(detections_for_score)
 
-            self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
+            self.logger.info("VM detection complete: %s (confidence: %.2f)", results["is_vm"], results["confidence"])
             return results
 
         except Exception as e:
-            self.logger.error(f"VM detection failed: {e}")
+            self.logger.error("VM detection failed: %s", e, exc_info=True)
             return results
 
     def _execute_cpuid(self, leaf: int, subleaf: int = 0) -> tuple[int, int, int, int] | None:
@@ -453,13 +457,13 @@ class VMDetector(BaseDetector):
                     return registers
 
                 except Exception as e:
-                    self.logger.debug(f"Linux CPUID execution failed: {e}")
+                    self.logger.debug("Linux CPUID execution failed: %s", e, exc_info=True)
                     return None
 
             return None
 
         except Exception as e:
-            self.logger.debug(f"CPUID execution failed for leaf 0x{leaf:X}: {e}")
+            self.logger.debug("CPUID execution failed for leaf 0x%X: %s", leaf, e, exc_info=True)
             return None
 
     def _check_cpuid_hypervisor_bit(self) -> tuple[bool, float, dict[str, Any]]:
@@ -474,11 +478,11 @@ class VMDetector(BaseDetector):
                 details["hypervisor_bit"] = bool(hypervisor_bit)
 
                 if hypervisor_bit:
-                    self.logger.info(f"Hypervisor bit detected in CPUID leaf 0x1: ECX=0x{ecx:08X}")
+                    self.logger.info("Hypervisor bit detected in CPUID leaf 0x1: ECX=0x%08X", ecx)
                     return True, 0.95, details
 
         except Exception as e:
-            self.logger.debug(f"CPUID hypervisor bit check failed: {e}")
+            self.logger.debug("CPUID hypervisor bit check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -503,16 +507,16 @@ class VMDetector(BaseDetector):
                     cpuid_vendor = signatures.get("cpuid_vendor", "")
                     if isinstance(cpuid_vendor, str) and cpuid_vendor and cpuid_vendor in vendor_string:
                         details["vm_type"] = vm_type
-                        self.logger.info(f"Detected {vm_type} via CPUID vendor string: {vendor_string}")
+                        self.logger.info("Detected %s via CPUID vendor string: %s", vm_type, vendor_string)
                         return True, 0.98, details
 
                 if vendor_string and len(vendor_string) > 3:
-                    self.logger.info(f"Unknown hypervisor vendor detected: {vendor_string}")
+                    self.logger.info("Unknown hypervisor vendor detected: %s", vendor_string)
                     details["vm_type"] = "unknown"
                     return True, 0.85, details
 
         except Exception as e:
-            self.logger.debug(f"CPUID vendor string check failed: {e}")
+            self.logger.debug("CPUID vendor string check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -543,11 +547,11 @@ class VMDetector(BaseDetector):
                 if avg_time > 500 or std_dev > 200:
                     details["anomaly_detected"] = True
                     confidence = min(0.75, (avg_time / 1000) * 0.5 + (std_dev / 500) * 0.25)
-                    self.logger.info(f"CPUID timing anomaly: avg={avg_time:.0f}ns, std={std_dev:.0f}ns")
+                    self.logger.info("CPUID timing anomaly: avg=%.0fns, std=%.0fns", avg_time, std_dev)
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"CPUID timing check failed: {e}")
+            self.logger.debug("CPUID timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -572,7 +576,7 @@ class VMDetector(BaseDetector):
                             return True, 0.9, details
 
         except Exception as e:
-            self.logger.debug(f"Hypervisor brand check failed: {e}")
+            self.logger.debug("Hypervisor brand check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -631,7 +635,7 @@ class VMDetector(BaseDetector):
                 return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Hardware signature check failed: {e}")
+            self.logger.debug("Hardware signature check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -641,7 +645,7 @@ class VMDetector(BaseDetector):
 
         try:
             processes, process_list = self.get_running_processes()
-            self.logger.debug(f"Scanning {len(process_list)} processes for VM indicators")
+            self.logger.debug("Scanning %d processes for VM indicators", len(process_list))
 
             for vm_type, sigs in self.vm_signatures.items():
                 proc_list = sigs.get("processes", [])
@@ -657,7 +661,7 @@ class VMDetector(BaseDetector):
                 return True, 0.7, details
 
         except Exception as e:
-            self.logger.debug(f"Process list check failed: {e}")
+            self.logger.debug("Process list check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -687,14 +691,14 @@ class VMDetector(BaseDetector):
                                 detected_keys.append(key_path)
                                 details["vm_type"] = vm_type
                         except Exception:
-                            self.logger.debug(f"Registry key not found: {key_path}")
+                            self.logger.debug("Registry key not found: %s", key_path)
 
             detected_keys_list = details["detected_keys"]
             if isinstance(detected_keys_list, list) and detected_keys_list:
                 return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Registry check failed: {e}")
+            self.logger.debug("Registry check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -717,7 +721,7 @@ class VMDetector(BaseDetector):
                 return True, 0.7, details
 
         except Exception as e:
-            self.logger.debug(f"File system check failed: {e}")
+            self.logger.debug("File system check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -852,12 +856,16 @@ class VMDetector(BaseDetector):
                     details["anomaly_detected"] = True
                     confidence = min(0.85, (avg_delta / 1000) * 0.4 + (std_dev / 500) * 0.3 + 0.15)
                     self.logger.info(
-                        f"RDTSC timing anomaly detected: avg={avg_delta:.0f} cycles, std={std_dev:.0f}, min={min_delta}, max={max_delta}",
+                        "RDTSC timing anomaly detected: avg=%.0f cycles, std=%.0f, min=%d, max=%d",
+                        avg_delta,
+                        std_dev,
+                        min_delta,
+                        max_delta,
                     )
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"RDTSC timing check failed: {e}")
+            self.logger.debug("RDTSC timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -887,11 +895,11 @@ class VMDetector(BaseDetector):
 
                 if avg_discrepancy > 2.0:
                     confidence = min(0.65, avg_discrepancy / 10.0)
-                    self.logger.info(f"Sleep timing discrepancy: {avg_discrepancy:.2f}ms")
+                    self.logger.info("Sleep timing discrepancy: %.2fms", avg_discrepancy)
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Sleep timing check failed: {e}")
+            self.logger.debug("Sleep timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -929,11 +937,11 @@ class VMDetector(BaseDetector):
 
             if overhead_pct > 150:
                 confidence = min(0.60, overhead_pct / 500)
-                self.logger.info(f"Instruction timing overhead: {overhead_pct:.1f}%")
+                self.logger.info("Instruction timing overhead: %.1f%%", overhead_pct)
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Instruction timing check failed: {e}")
+            self.logger.debug("Instruction timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -989,7 +997,7 @@ class VMDetector(BaseDetector):
                 return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Network adapter check failed: {e}")
+            self.logger.debug("Network adapter check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1024,7 +1032,7 @@ class VMDetector(BaseDetector):
                     self.logger.debug("Import error in vm_detector: %s", e)
 
         except Exception as e:
-            self.logger.debug(f"BIOS info check failed: {e}")
+            self.logger.debug("BIOS info check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1087,7 +1095,7 @@ class VMDetector(BaseDetector):
                 return True, 0.9, details
 
         except Exception as e:
-            self.logger.debug(f"Device driver check failed: {e}")
+            self.logger.debug("Device driver check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1150,11 +1158,11 @@ class VMDetector(BaseDetector):
             vm_indicators_list = details["vm_indicators"]
             if isinstance(vm_indicators_list, list) and vm_indicators_list:
                 confidence = min(0.90, len(vm_indicators_list) * 0.3 + 0.6)
-                self.logger.info(f"VM CPU detected: {details['cpu_model']}")
+                self.logger.info("VM CPU detected: %s", details["cpu_model"])
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"CPU model detection failed: {e}")
+            self.logger.debug("CPU model detection failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1204,11 +1212,11 @@ class VMDetector(BaseDetector):
             suspicious_values_list = details["suspicious_values"]
             if isinstance(suspicious_values_list, list) and suspicious_values_list:
                 confidence = min(0.55, len(suspicious_values_list) * 0.20)
-                self.logger.info(f"Suspicious hardware fingerprint: {details['suspicious_values']}")
+                self.logger.info("Suspicious hardware fingerprint: %s", details["suspicious_values"])
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Hardware fingerprint check failed: {e}")
+            self.logger.debug("Hardware fingerprint check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1280,11 +1288,11 @@ class VMDetector(BaseDetector):
             vm_patterns_list = details["vm_patterns_found"]
             if isinstance(vm_patterns_list, list) and vm_patterns_list:
                 confidence = min(0.85, len(vm_patterns_list) * 0.30 + 0.55)
-                self.logger.info(f"VM disk serial patterns detected: {details['vm_patterns_found']}")
+                self.logger.info("VM disk serial patterns detected: %s", details["vm_patterns_found"])
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Disk serial number check failed: {e}")
+            self.logger.debug("Disk serial number check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1345,11 +1353,11 @@ class VMDetector(BaseDetector):
             vm_macs_list = details["vm_macs"]
             if isinstance(vm_macs_list, list) and vm_macs_list:
                 confidence = min(0.88, len(vm_macs_list) * 0.30 + 0.58)
-                self.logger.info(f"VM MAC addresses detected: {details['vm_macs']}")
+                self.logger.info("VM MAC addresses detected: %s", details["vm_macs"])
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"MAC address pattern check failed: {e}")
+            self.logger.debug("MAC address pattern check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1408,7 +1416,7 @@ class VMDetector(BaseDetector):
                     return True, min(confidence, 0.85), details
 
         except Exception as e:
-            self.logger.debug(f"CPUID feature flag analysis failed: {e}")
+            self.logger.debug("CPUID feature flag analysis failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1451,7 +1459,7 @@ class VMDetector(BaseDetector):
                     return True, 0.80, details
 
         except Exception as e:
-            self.logger.debug(f"Extended CPUID leaf check failed: {e}")
+            self.logger.debug("Extended CPUID leaf check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1479,11 +1487,11 @@ class VMDetector(BaseDetector):
 
                 if vm_indicators:
                     confidence = min(0.90, len(vm_indicators) * 0.35 + 0.55)
-                    self.logger.info(f"VM detected in CPU brand: {brand_string}")
+                    self.logger.info("VM detected in CPU brand: %s", brand_string)
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"CPU brand string check failed: {e}")
+            self.logger.debug("CPU brand string check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1599,11 +1607,13 @@ class VMDetector(BaseDetector):
 
                 if vmexit_count > (samples * 0.05):
                     confidence = min(0.92, (vmexit_count / samples) * 2.0 + 0.60)
-                    self.logger.info(f"VM exit patterns detected: {vmexit_count}/{samples} samples ({details['vmexit_percentage']:.1f}%)")
+                    self.logger.info(
+                        "VM exit patterns detected: %d/%d samples (%.1f%%)", vmexit_count, samples, details["vmexit_percentage"]
+                    )
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"RDTSC VM exit detection failed: {e}")
+            self.logger.debug("RDTSC VM exit detection failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1650,7 +1660,7 @@ class VMDetector(BaseDetector):
                         details["paravirt_detected"] = True
                         details["working_instruction"] = instr_name
                         VirtualFree(exec_mem, 0, 0x8000)
-                        self.logger.info(f"Paravirtualization instruction {instr_name} executed successfully (VM detected)")
+                        self.logger.info("Paravirtualization instruction %s executed successfully (VM detected)", instr_name)
                         return True, 0.99, details
 
                     except Exception as exec_err:
@@ -1659,11 +1669,11 @@ class VMDetector(BaseDetector):
                     VirtualFree(exec_mem, 0, 0x8000)
 
                 except Exception as e:
-                    self.logger.debug(f"Testing {instr_name} failed: {e}")
+                    self.logger.debug("Testing %s failed: %s", instr_name, e, exc_info=True)
                     continue
 
         except Exception as e:
-            self.logger.debug(f"Paravirt instruction testing failed: {e}")
+            self.logger.debug("Paravirt instruction testing failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1720,7 +1730,7 @@ class VMDetector(BaseDetector):
                                     if pattern in data_str:
                                         vm_signatures_found.append(f"{acpi_path} contains '{pattern}'")
                         except Exception as e:
-                            self.logger.debug(f"Failed to read {acpi_path}: {e}")
+                            self.logger.debug("Failed to read %s: %s", acpi_path, e, exc_info=True)
 
             vm_sigs_list = details["vm_signatures_found"]
             if isinstance(vm_sigs_list, list) and vm_sigs_list:
@@ -1728,7 +1738,7 @@ class VMDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"ACPI table check failed: {e}")
+            self.logger.debug("ACPI table check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1792,7 +1802,7 @@ class VMDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"PCI device check failed: {e}")
+            self.logger.debug("PCI device check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1860,9 +1870,9 @@ class VMDetector(BaseDetector):
                                     sig_str = signature.decode("ascii", errors="ignore")
                                     if sig_str not in signatures_found:
                                         signatures_found.append(sig_str)
-                                        self.logger.info(f"Found hypervisor signature in memory: {sig_str}")
+                                        self.logger.info("Found hypervisor signature in memory: %s", sig_str)
                     except Exception as e:
-                        self.logger.debug(f"Memory region scan error: {e}")
+                        self.logger.debug("Memory region scan error: %s", e, exc_info=True)
 
                 regions_scanned += 1
                 address = base_address + region_size
@@ -1877,7 +1887,7 @@ class VMDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Memory artifact scan failed: {e}")
+            self.logger.debug("Memory artifact scan failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1917,7 +1927,7 @@ class VMDetector(BaseDetector):
                 return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Performance counter check failed: {e}")
+            self.logger.debug("Performance counter check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1997,11 +2007,11 @@ class VMDetector(BaseDetector):
                 if variance_pct > 5.0:
                     details["anomaly_detected"] = True
                     confidence = min(0.70, variance_pct / 20.0 + 0.40)
-                    self.logger.info(f"TSC frequency variance: {variance_pct:.2f}% (VM indicator)")
+                    self.logger.info("TSC frequency variance: %.2f%% (VM indicator)", variance_pct)
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"TSC frequency analysis failed: {e}")
+            self.logger.debug("TSC frequency analysis failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -2069,11 +2079,11 @@ class VMDetector(BaseDetector):
                 if actual_l2_ratio < (expected_l2_ratio * 0.5) or actual_mem_ratio < (expected_mem_ratio * 0.5):
                     details["anomaly_detected"] = True
                     confidence = 0.55
-                    self.logger.info(f"Cache timing anomaly: L2/L1={actual_l2_ratio:.2f}, Mem/L1={actual_mem_ratio:.2f}")
+                    self.logger.info("Cache timing anomaly: L2/L1=%.2f, Mem/L1=%.2f", actual_l2_ratio, actual_mem_ratio)
                     return True, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Cache timing analysis failed: {e}")
+            self.logger.debug("Cache timing analysis failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -2153,7 +2163,7 @@ class VMDetector(BaseDetector):
             self._hardware_fingerprint = fingerprint
 
         except Exception as e:
-            self.logger.debug(f"Hardware fingerprint collection failed: {e}")
+            self.logger.debug("Hardware fingerprint collection failed: %s", e, exc_info=True)
 
         return fingerprint
 
@@ -2191,7 +2201,7 @@ class VMDetector(BaseDetector):
                 measurements[op_name] = measurement
 
             except Exception as e:
-                self.logger.debug(f"Timing measurement for {op_name} failed: {e}")
+                self.logger.debug("Timing measurement for %s failed: %s", op_name, e, exc_info=True)
 
         self._timing_measurements = measurements
         return measurements
@@ -2203,7 +2213,7 @@ class VMDetector(BaseDetector):
         for method, result in detections.items():
             if isinstance(result, dict) and result.get("detected"):
                 details_str = str(result.get("details", "")).lower()
-                self.logger.debug(f"VM detection method '{method}' found evidence")
+                self.logger.debug("VM detection method '%s' found evidence", method)
 
                 for vm_type in self.vm_signatures:
                     if vm_type in details_str:
@@ -2222,7 +2232,7 @@ class VMDetector(BaseDetector):
     def generate_evasion_code(self, target_vm: str | None = None) -> str:
         """Generate code to evade VM detection."""
         if target_vm:
-            self.logger.debug(f"Generating evasion code specifically for {target_vm}")
+            self.logger.debug("Generating evasion code specifically for %s", target_vm)
         else:
             self.logger.debug("Generating general VM evasion code")
 
@@ -2293,7 +2303,7 @@ if (IsRunningInVM()) {
             Dictionary containing bypass strategies and implementation
 
         """
-        self.logger.info(f"Generating VM detection bypass for: {vm_type}")
+        self.logger.info("Generating VM detection bypass for: %s", vm_type)
 
         bypass_config: dict[str, Any] = {
             "vm_type": vm_type,

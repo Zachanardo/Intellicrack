@@ -1,6 +1,8 @@
-13 findings in .\intellicrack\scripts\frida\qodana.yaml
+14 findings in .\intellicrack\scripts\frida\qodana.yaml
 
 .\intellicrack\scripts\frida\qodana.yaml:1:2: [warning] missing starting space in comment  (comments)
+
+.\intellicrack\scripts\frida\qodana.yaml:1:82: [error] wrong new line character: expected \n  (new-lines)
 
 .\intellicrack\scripts\frida\qodana.yaml:4:2: [warning] missing starting space in comment  (comments)
 
@@ -134,6 +136,13 @@
 .\qodana.yaml:10:34: [error] no new line character at the end of file  (new-line-at-end-of-file)
 
 
+2 findings in .\.github\workflows\python-ci.yml
+
+.\.github\workflows\python-ci.yml:1:16: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\python-ci.yml:44:121: [warning] line too long (121 > 120 characters)  (line-length)
+
+
 2 findings in .\.github\workflows\qodana_code_quality.yml
 
 .\.github\workflows\qodana_code_quality.yml:1:13: [error] wrong new line character: expected \n  (new-lines)
@@ -141,6 +150,21 @@
 .\.github\workflows\qodana_code_quality.yml:20:121: [warning] line too long (125 > 120 characters)  (line-length)
 
 
-1 findings in .\.github\workflows\python-ci.yml
+1 findings in .\.readthedocs.yaml
 
-.\.github\workflows\python-ci.yml:44:121: [warning] line too long (121 > 120 characters)  (line-length)
+.\.readthedocs.yaml:1:35: [error] wrong new line character: expected \n  (new-lines)
+
+
+1 findings in .\.yarnrc.yml
+
+.\.yarnrc.yml:1:25: [error] wrong new line character: expected \n  (new-lines)
+
+
+1 findings in .\.github\dependabot.yml
+
+.\.github\dependabot.yml:1:11: [error] wrong new line character: expected \n  (new-lines)
+
+
+1 findings in .\tests\utils\audit_whitelist.yaml
+
+.\tests\utils\audit_whitelist.yaml:1:45: [error] wrong new line character: expected \n  (new-lines)

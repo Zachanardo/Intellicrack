@@ -410,7 +410,7 @@ class R2PerformanceMonitor:
                             self.logger.warning(f"Operation '{op.operation_name}' exceeds critical duration: {duration_ms:.0f}ms")
 
             except Exception as e:
-                self.logger.error(f"Error in monitoring loop: {e}")
+                self.logger.error(f"Error in monitoring loop: {e}", exc_info=True)
 
             self.stop_monitoring.wait(timeout=1)
 

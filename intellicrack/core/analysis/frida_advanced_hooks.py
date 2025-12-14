@@ -303,7 +303,7 @@ startThreadTrace(Process.getCurrentThreadId());
             result = self.script.exports.start_trace(thread_id)
             return result["success"]
         except Exception as e:
-            print(f"Failed to start trace: {e}")
+            logger.error("Failed to start trace: %s", e, exc_info=True)
             return False
 
     def stop_trace(self, thread_id: int) -> bool:
@@ -320,7 +320,7 @@ startThreadTrace(Process.getCurrentThreadId());
             result = self.script.exports.stop_trace(thread_id)
             return result["success"]
         except Exception as e:
-            print(f"Failed to stop trace: {e}")
+            logger.error("Failed to stop trace: %s", e, exc_info=True)
             return False
 
     def get_trace(self, thread_id: int) -> StalkerTrace | None:
@@ -1172,7 +1172,7 @@ send({ type: 'replacer_ready' });
         try:
             return self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
         except Exception as e:
-            print(f"Failed to replace function: {e}")
+            logger.error("Failed to replace function: %s", e, exc_info=True)
             return False
 
     def restore_function(self, address: int) -> bool:
@@ -1188,7 +1188,7 @@ send({ type: 'replacer_ready' });
         try:
             return self.script.exports.restore(address)
         except Exception as e:
-            print(f"Failed to restore function: {e}")
+            logger.error("Failed to restore function: %s", e, exc_info=True)
             return False
 
 

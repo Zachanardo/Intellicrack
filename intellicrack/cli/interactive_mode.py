@@ -57,44 +57,44 @@ class IntellicrackShell(cmd.Cmd):
     def do_load(self, arg: str) -> None:
         """Load a binary file for analysis: load <filepath>."""
         if not arg:
-            print("Usage: load <filepath>")
+            logger.warning("Usage: load <filepath>")
             return
 
         filepath = Path(arg)
         if not filepath.exists():
-            print(f"Error: File not found: {arg}")
+            logger.error("File not found: %s", arg)
             return
 
         self.current_file = filepath
-        print(f"Loaded: {filepath}")
+        logger.info("Loaded: %s", filepath)
 
     def do_analyze(self, arg: str) -> None:
         """Analyze the currently loaded file."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         try:
-            print(f"Analyzing {self.current_file}...")
+            logger.info("Analyzing %s...", self.current_file)
             self.analysis_results = run_comprehensive_analysis(str(self.current_file))
-            print("Analysis complete!")
+            logger.info("Analysis complete!")
         except Exception as e:
-            print(f"Analysis failed: {e}")
+            logger.error("Analysis failed: %s", e, exc_info=True)
 
     def do_status(self, arg: str) -> None:
         """Show current status."""
-        print(f"Current file: {self.current_file or 'None'}")
-        print(f"Analysis results: {'Available' if self.analysis_results else 'None'}")
+        logger.info("Current file: %s", self.current_file or "None")
+        logger.info("Analysis results: %s", "Available" if self.analysis_results else "None")
 
     def do_clear(self, arg: str) -> None:
         """Clear current session."""
         self.current_file = None
         self.analysis_results = None
-        print("Session cleared")
+        logger.info("Session cleared")
 
     def do_exit(self, arg: str) -> bool:
         """Exit the interactive shell."""
-        print("Goodbye!")
+        logger.info("Goodbye!")
         return True
 
     def do_quit(self, arg: str) -> bool:
@@ -104,30 +104,30 @@ class IntellicrackShell(cmd.Cmd):
     def do_scan(self, arg: str) -> None:
         """Scan for vulnerabilities: scan [--vulns]."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         try:
             from intellicrack.core.analysis.vulnerability_engine import run_vulnerability_scan
 
-            print(f"Scanning {self.current_file} for vulnerabilities...")
+            logger.info("Scanning %s for vulnerabilities...", self.current_file)
             results = run_vulnerability_scan(str(self.current_file))
 
             if results and results.get("vulnerabilities"):
-                print(f"\nFound {len(results['vulnerabilities'])} vulnerabilities:")
+                logger.info("Found %d vulnerabilities:", len(results["vulnerabilities"]))
                 for vuln in results["vulnerabilities"]:
-                    print(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', 'No description')}")
-                    print(f"    Severity: {vuln.get('severity', 'Unknown')}")
+                    logger.info("  - %s: %s", vuln.get("type", "Unknown"), vuln.get("description", "No description"))
+                    logger.info("    Severity: %s", vuln.get("severity", "Unknown"))
             else:
-                print("No vulnerabilities found.")
+                logger.info("No vulnerabilities found.")
 
         except Exception as e:
-            print(f"Scan failed: {e}")
+            logger.error("Scan failed: %s", e, exc_info=True)
 
     def do_strings(self, arg: str) -> None:
         """Extract strings from the loaded file: strings [min_length]."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -135,29 +135,29 @@ class IntellicrackShell(cmd.Cmd):
 
             from intellicrack.cli.analysis_cli import _extract_strings
 
-            print(f"Extracting strings (min length: {min_length})...")
+            logger.info("Extracting strings (min length: %d)...", min_length)
             if strings := _extract_strings(str(self.current_file), min_length):
-                print(f"\nFound {len(strings)} strings:")
-                for s in strings[:50]:  # Show first 50
-                    print(f"  {s}")
+                logger.info("Found %d strings:", len(strings))
+                for s in strings[:50]:
+                    logger.info("  %s", s)
                 if len(strings) > 50:
-                    print(f"  ... and {len(strings) - 50} more")
+                    logger.info("  ... and %d more", len(strings) - 50)
             else:
-                print("No strings found.")
+                logger.info("No strings found.")
 
         except Exception as e:
-            print(f"String extraction failed: {e}")
+            logger.error("String extraction failed: %s", e, exc_info=True)
 
     def do_export(self, arg: str) -> None:
         """Export analysis results: export <format> <output_file>."""
         if not self.analysis_results:
-            print("Error: No analysis results. Run 'analyze' first.")
+            logger.error("No analysis results. Run 'analyze' first.")
             return
 
         parts = arg.split()
         if len(parts) < 2:
-            print("Usage: export <format> <output_file>")
-            print("Formats: json, html, pdf, csv")
+            logger.warning("Usage: export <format> <output_file>")
+            logger.info("Formats: json, html, pdf, csv")
             return
 
         format_type = parts[0].lower()
@@ -166,14 +166,12 @@ class IntellicrackShell(cmd.Cmd):
         try:
             from intellicrack.cli.advanced_export import AdvancedExporter
 
-            # Validate that we have a loaded binary to export results from
             if not self.current_file:
-                print("Error: No binary file loaded. Use 'load <filepath>' to load a binary first.")
+                logger.error("No binary file loaded. Use 'load <filepath>' to load a binary first.")
                 return
 
-            # Ensure analysis results exist before attempting export
             if not self.analysis_results:
-                print("Error: No analysis results available. Run 'analyze' on a loaded binary first.")
+                logger.error("No analysis results available. Run 'analyze' on a loaded binary first.")
                 return
 
             binary_path = str(self.current_file)
@@ -193,22 +191,22 @@ class IntellicrackShell(cmd.Cmd):
             elif format_type == "yaml":
                 success = exporter.export_yaml_config(output_file)
             else:
-                print(f"Unknown format: {format_type}")
-                print("Supported formats: json, html, xml, csv, excel, yaml")
+                logger.warning("Unknown format: %s", format_type)
+                logger.info("Supported formats: json, html, xml, csv, excel, yaml")
                 return
 
             if success:
-                print(f"Successfully exported to {output_file}")
+                logger.info("Successfully exported to %s", output_file)
             else:
-                print(f"Export failed - check dependencies for {format_type} format")
+                logger.error("Export failed - check dependencies for %s format", format_type)
 
         except Exception as e:
-            print(f"Export failed: {e}")
+            logger.error("Export failed: %s", e, exc_info=True)
 
     def do_hexview(self, arg: str) -> None:
         """Open hex viewer for the loaded file."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -220,110 +218,105 @@ class IntellicrackShell(cmd.Cmd):
             curses.wrapper(viewer.run)
 
         except Exception as e:
-            print(f"Hex viewer failed: {e}")
+            logger.error("Hex viewer failed: %s", e, exc_info=True)
 
     def do_protection(self, arg: str) -> None:
         """Analyze protection mechanisms."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         try:
             from intellicrack.protection.protection_detector import detect_all_protections as analyze_protections
 
-            print(f"Analyzing protections in {self.current_file}...")
+            logger.info("Analyzing protections in %s...", self.current_file)
             if protections := analyze_protections(str(self.current_file)):
-                print("\nDetected protections:")
+                logger.info("Detected protections:")
                 for protection, details in protections.items():
                     if details.get("detected"):
-                        print(f"  - {protection}: {details.get('type', 'Unknown type')}")
+                        logger.info("  - %s: %s", protection, details.get("type", "Unknown type"))
                         if details.get("confidence"):
-                            print(f"    Confidence: {details['confidence']}%")
+                            logger.info("    Confidence: %d%%", details["confidence"])
             else:
-                print("No protections detected.")
+                logger.info("No protections detected.")
 
         except Exception as e:
-            print(f"Protection analysis failed: {e}")
+            logger.error("Protection analysis failed: %s", e, exc_info=True)
 
     def do_patch(self, arg: str) -> None:
         """Generate patches for the loaded file: patch <output_file>."""
         if not self.current_file:
-            print("Error: No file loaded. Use 'load' command first.")
+            logger.error("No file loaded. Use 'load' command first.")
             return
 
         if not arg:
-            print("Usage: patch <output_file>")
+            logger.warning("Usage: patch <output_file>")
             return
 
         try:
             from intellicrack.utils.patching.patch_generator import generate_patch
 
-            print(f"Generating patches for {self.current_file}...")
+            logger.info("Generating patches for %s...", self.current_file)
             patches = generate_patch(str(self.current_file))
 
             if patches and patches.get("patches"):
-                # Save patches to file
                 import json
 
                 with open(arg, "w") as f:
                     json.dump(patches, f, indent=2)
 
-                print(f"Generated {len(patches['patches'])} patches")
-                print(f"Patches saved to: {arg}")
+                logger.info("Generated %d patches", len(patches["patches"]))
+                logger.info("Patches saved to: %s", arg)
             else:
-                print("No patches generated.")
+                logger.info("No patches generated.")
 
         except Exception as e:
-            print(f"Patch generation failed: {e}")
+            logger.error("Patch generation failed: %s", e, exc_info=True)
 
     def do_ai(self, arg: str) -> None:
         """Interact with AI assistant: ai <question>."""
         if not arg:
-            print("Usage: ai <question>")
+            logger.warning("Usage: ai <question>")
             return
 
         try:
             from intellicrack.cli.ai_chat_interface import AIChatInterface
 
-            # Initialize AI chat if not already done
             if not hasattr(self, "ai_chat"):
                 self.ai_chat = AIChatInterface()
 
-            # Send question and get response
             response = self.ai_chat.ask(arg, context=self.analysis_results)
-            print(f"\nAI: {response}")
+            logger.info("AI: %s", response)
 
         except Exception as e:
-            print(f"AI assistant error: {e}")
+            logger.error("AI assistant error: %s", e, exc_info=True)
 
     def do_help(self, arg: str) -> None:
         """Show help for commands."""
         if arg:
-            # Show help for specific command
             super().do_help(arg)
         else:
-            print("\nAvailable commands:")
-            print("\n[File Operations]")
-            print("  load <file>      - Load a binary file for analysis")
-            print("  clear            - Clear current session")
-            print("  status           - Show current status")
+            logger.info("Available commands:")
+            logger.info("[File Operations]")
+            logger.info("  load <file>      - Load a binary file for analysis")
+            logger.info("  clear            - Clear current session")
+            logger.info("  status           - Show current status")
 
-            print("\n[Analysis]")
-            print("  analyze          - Comprehensive analysis of loaded file")
-            print("  scan [--vulns]   - Scan for vulnerabilities")
-            print("  strings [len]    - Extract strings (optional min length)")
-            print("  protection       - Analyze protection mechanisms")
-            print("  hexview          - Open interactive hex viewer")
+            logger.info("[Analysis]")
+            logger.info("  analyze          - Comprehensive analysis of loaded file")
+            logger.info("  scan [--vulns]   - Scan for vulnerabilities")
+            logger.info("  strings [len]    - Extract strings (optional min length)")
+            logger.info("  protection       - Analyze protection mechanisms")
+            logger.info("  hexview          - Open interactive hex viewer")
 
-            print("\n[Export & Patching]")
-            print("  export <fmt> <f> - Export results (json/html/pdf/csv)")
-            print("  patch <output>   - Generate patches")
+            logger.info("[Export & Patching]")
+            logger.info("  export <fmt> <f> - Export results (json/html/pdf/csv)")
+            logger.info("  patch <output>   - Generate patches")
 
-            print("\n[AI & Help]")
-            print("  ai <question>    - Ask AI assistant")
-            print("  help [cmd]       - Show help")
-            print("  exit/quit        - Exit the shell")
-            print()
+            logger.info("[AI & Help]")
+            logger.info("  ai <question>    - Ask AI assistant")
+            logger.info("  help [cmd]       - Show help")
+            logger.info("  exit/quit        - Exit the shell")
 
 
 def main() -> int:
@@ -332,7 +325,7 @@ def main() -> int:
     try:
         shell.cmdloop()
     except KeyboardInterrupt:
-        print("\n\nInterrupted. Use 'exit' to quit properly.")
+        logger.warning("Interrupted. Use 'exit' to quit properly.")
         return main()
 
     return 0

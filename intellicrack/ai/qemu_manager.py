@@ -60,7 +60,7 @@ FAILED_START_VM = "Failed to start VM: %s"
 SUBPROCESS_TIMEOUT_MSG = "Subprocess timeout in qemu_manager: %s"
 
 
-REMOTE_TEMP_DIR = "/tmp"
+REMOTE_TEMP_DIR = tempfile.gettempdir()
 
 
 class QEMUError(Exception):
@@ -3632,10 +3632,7 @@ exit 0
         if self.qemu_process is not None and self.qemu_process.poll() is None:
             return True
 
-        return any(
-            snapshot.vm_process is not None and snapshot.vm_process.poll() is None
-            for snapshot in self.snapshots.values()
-        )
+        return any(snapshot.vm_process is not None and snapshot.vm_process.poll() is None for snapshot in self.snapshots.values())
 
     def validate_ghidra_script(
         self,
@@ -4159,9 +4156,7 @@ exit 0
                 )
 
             if self.qemu_process is not None:
-                self.logger.warning(
-                    "VM process running but no snapshot available, trying monitor command"
-                )
+                self.logger.warning("VM process running but no snapshot available, trying monitor command")
                 result = self.execute_guest_command_via_monitor(command, timeout=timeout)
                 runtime_ms = int((time.time() - start_time) * 1000)
                 if result is not None:

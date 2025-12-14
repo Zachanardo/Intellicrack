@@ -927,33 +927,25 @@ class R2ScriptingEngine:
         recommendations = []
 
         if workflow_result.get("buffer_overflow_risks"):
-            recommendations.extend(
-                (
-                    "Replace unsafe string functions with safe alternatives",
-                    "Enable stack canaries and DEP/NX protection",
-                )
-            )
+            recommendations.extend((
+                "Replace unsafe string functions with safe alternatives",
+                "Enable stack canaries and DEP/NX protection",
+            ))
         if workflow_result.get("format_string_risks"):
-            recommendations.extend(
-                (
-                    "Use format string literals instead of variables",
-                    "Enable format string protection compiler flags",
-                )
-            )
+            recommendations.extend((
+                "Use format string literals instead of variables",
+                "Enable format string protection compiler flags",
+            ))
         if workflow_result.get("injection_risks"):
-            recommendations.extend(
-                (
-                    "Review process injection capabilities for legitimacy",
-                    "Implement strict input validation",
-                )
-            )
+            recommendations.extend((
+                "Review process injection capabilities for legitimacy",
+                "Implement strict input validation",
+            ))
         if workflow_result.get("privilege_escalation_risks"):
-            recommendations.extend(
-                (
-                    "Review privilege escalation code for necessity",
-                    "Implement least privilege principle",
-                )
-            )
+            recommendations.extend((
+                "Review privilege escalation code for necessity",
+                "Implement least privilege principle",
+            ))
         if workflow_result.get("overall_risk_score", 0) > 0.7:
             recommendations.append("Comprehensive security audit recommended")
 

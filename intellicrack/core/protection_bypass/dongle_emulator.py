@@ -388,7 +388,9 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(key[:32], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
+                cipher = AES.new(
+                    key[:32], AES.MODE_ECB
+                )  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
                 padded_data = data + b"\x00" * (16 - len(data) % 16)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES":
@@ -396,7 +398,9 @@ class CryptoEngine:
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             elif algorithm == "DES3":
-                cipher = DES3.new(key[:24], DES3.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
+                cipher = DES3.new(
+                    key[:24], DES3.MODE_ECB
+                )  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
                 return cipher.encrypt(padded_data)
             else:
@@ -413,7 +417,9 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(key[:32], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
+                cipher = AES.new(
+                    key[:32], AES.MODE_ECB
+                )  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES":
@@ -421,7 +427,9 @@ class CryptoEngine:
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES3":
-                cipher = DES3.new(key[:24], DES3.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
+                cipher = DES3.new(
+                    key[:24], DES3.MODE_ECB
+                )  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
                 decrypted = cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             else:
@@ -448,7 +456,9 @@ class CryptoEngine:
             response[i] = (challenge_byte ^ key_byte ^ (i * 17)) & 0xFF
 
         if CRYPTO_AVAILABLE:
-            cipher = AES.new(key[:16], AES.MODE_ECB)  # lgtm[py/weak-cryptographic-algorithm] ECB required for WibuKey protocol compatibility
+            cipher = AES.new(
+                key[:16], AES.MODE_ECB
+            )  # lgtm[py/weak-cryptographic-algorithm] ECB required for WibuKey protocol compatibility
             return cipher.encrypt(bytes(response))
 
         return bytes(response)
@@ -1353,13 +1363,11 @@ class HardwareDongleEmulator:
         console.log("[Dongle Emulator] All comprehensive dongle API hooks installed!");
         """
 
-        self.hooks.append(
-            {
-                "type": "frida",
-                "script": frida_script,
-                "target": f"Dongle APIs: {', '.join(dongle_types)}",
-            }
-        )
+        self.hooks.append({
+            "type": "frida",
+            "script": frida_script,
+            "target": f"Dongle APIs: {', '.join(dongle_types)}",
+        })
         self.logger.info(f"Comprehensive dongle API hooks installed for: {', '.join(dongle_types)}")
 
     def _patch_dongle_checks(self) -> None:
@@ -1426,14 +1434,12 @@ class HardwareDongleEmulator:
 
                 offset = binary_data.find(pattern)
                 while offset != -1:
-                    self.patches.append(
-                        {
-                            "offset": offset,
-                            "original": pattern,
-                            "patch": patch,
-                            "description": f"Dongle check bypass: {desc}",
-                        }
-                    )
+                    self.patches.append({
+                        "offset": offset,
+                        "original": pattern,
+                        "patch": patch,
+                        "description": f"Dongle check bypass: {desc}",
+                    })
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 

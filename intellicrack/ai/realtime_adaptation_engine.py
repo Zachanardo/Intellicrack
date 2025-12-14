@@ -39,7 +39,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in realtime_adaptation_engine: %s", e)
+    logger.error("Import error in realtime_adaptation_engine: %s", e, exc_info=True)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -178,7 +178,7 @@ class RuntimeMonitor:
                 time.sleep(self.monitor_interval)
 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error("Error in monitoring loop: %s", e, exc_info=True)
                 time.sleep(1.0)
 
     def _collect_system_metrics(self) -> None:
@@ -204,7 +204,7 @@ class RuntimeMonitor:
             self.record_metric("process.memory_vms", process_info.vms, "process")
 
         except Exception as e:
-            logger.error(f"Error collecting system metrics: {e}")
+            logger.error("Error collecting system metrics: %s", e, exc_info=True)
 
     def record_metric(
         self,
@@ -232,7 +232,7 @@ class RuntimeMonitor:
             try:
                 subscriber(metric)
             except Exception as e:
-                logger.error(f"Error notifying metric subscriber: {e}")
+                logger.error("Error notifying metric subscriber: %s", e, exc_info=True)
 
     def _process_metrics_buffer(self) -> None:
         """Process metrics buffer and update aggregates."""
@@ -264,13 +264,13 @@ class RuntimeMonitor:
             if metric_name in self.metric_aggregates:
                 current_value = self.metric_aggregates[metric_name]["last"]
                 if is_anomaly := detector.detect_anomaly(current_value):
-                    logger.warning(f"Anomaly detected in {metric_name}: {current_value} (anomaly_status: {is_anomaly})")
+                    logger.warning("Anomaly detected in %s: %s (anomaly_status: %s)", metric_name, current_value, is_anomaly)
                     self._notify_anomaly(metric_name, current_value)
 
     def _notify_anomaly(self, metric_name: str, value: float) -> None:
         """Notify about detected anomaly."""
         # Log the anomaly with details
-        logger.warning(f"Anomaly notification: {metric_name} = {value}")
+        logger.warning("Anomaly notification: %s = %s", metric_name, value)
 
         # Check if we have adaptation rules for this metric
         adaptation_triggered = False
@@ -278,12 +278,12 @@ class RuntimeMonitor:
         # Look for matching adaptation rules
         for rule_id, rule in self.adaptation_rules.items():
             if rule.get("metric_pattern") and metric_name in rule.get("metric_pattern", ""):
-                logger.info(f"Triggering adaptation rule {rule_id} for {metric_name}")
+                logger.info("Triggering adaptation rule %s for %s", rule_id, metric_name)
                 self._execute_adaptation_rule(rule_id, metric_name, value)
                 adaptation_triggered = True
 
         if not adaptation_triggered:
-            logger.debug(f"No adaptation rules found for metric {metric_name}")
+            logger.debug("No adaptation rules found for metric %s", metric_name)
 
         # Store anomaly in history for analysis
         if not hasattr(self, "anomaly_history"):
@@ -303,11 +303,11 @@ class RuntimeMonitor:
         try:
             rule = self.adaptation_rules.get(rule_id)
             if not rule:
-                logger.error(f"Adaptation rule {rule_id} not found")
+                logger.error("Adaptation rule %s not found", rule_id)
                 return
 
             action_type = rule.get("action_type", "log")
-            logger.info(f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}")
+            logger.info("Executing adaptation rule %s: %s for %s=%s", rule_id, action_type, metric_name, value)
 
             # Execute the adaptation action
             if action_type == "adjust_threshold":
@@ -316,15 +316,15 @@ class RuntimeMonitor:
                     detector = self.anomaly_detectors[metric_name]
                     if hasattr(detector, "threshold"):
                         detector.threshold *= rule.get("threshold_multiplier", 1.1)
-                        logger.info(f"Adjusted threshold for {metric_name} to {detector.threshold}")
+                        logger.info("Adjusted threshold for %s to %s", metric_name, detector.threshold)
             elif action_type == "restart_component":
                 # Signal component restart (would be handled by higher-level system)
-                logger.warning(f"Component restart requested for {metric_name} anomaly")
+                logger.warning("Component restart requested for %s anomaly", metric_name)
             else:
-                logger.debug(f"Unknown adaptation action: {action_type}")
+                logger.debug("Unknown adaptation action: %s", action_type)
 
         except Exception as e:
-            logger.error(f"Error executing adaptation rule {rule_id}: {e}")
+            logger.error("Error executing adaptation rule %s: %s", rule_id, e, exc_info=True)
 
     def subscribe_to_metrics(self, callback: Callable[[RuntimeMetric], None]) -> None:
         """Subscribe to real-time metrics."""
@@ -451,12 +451,12 @@ class DynamicHookManager:
             "modifications": [],
         }
 
-        logger.info(f"Registered hook point: {hook_id}")
+        logger.info("Registered hook point: %s", hook_id)
 
     def install_hook(self, hook_id: str, modification: dict[str, Any]) -> bool:
         """Install a hook modification."""
         if hook_id not in self.hook_registry:
-            logger.error(f"Hook point {hook_id} not registered")
+            logger.error("Hook point %s not registered", hook_id)
             return False
 
         try:
@@ -474,11 +474,11 @@ class DynamicHookManager:
                 hook_info["modifications"].append(modification)
                 self.active_hooks[hook_id] = hook_info
 
-                logger.info(f"Installed hook modification for {hook_id}")
+                logger.info("Installed hook modification for %s", hook_id)
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to install hook {hook_id}: {e}")
+            logger.error("Failed to install hook %s: %s", hook_id, e, exc_info=True)
 
         return False
 
@@ -496,11 +496,11 @@ class DynamicHookManager:
                 hook_info["modifications"].clear()
                 del self.active_hooks[hook_id]
 
-                logger.info(f"Removed hook modification for {hook_id}")
+                logger.info("Removed hook modification for %s", hook_id)
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to remove hook {hook_id}: {e}")
+            logger.error("Failed to remove hook %s: %s", hook_id, e, exc_info=True)
 
         return False
 
@@ -555,7 +555,7 @@ class DynamicHookManager:
                 return result
 
             except Exception as e:
-                logger.error(f"Error in hook modification {hook_id}: {e}")
+                logger.error("Error in hook modification %s: %s", hook_id, e, exc_info=True)
                 # Fall back to original function
                 return original_function(*args, **kwargs)
 
@@ -633,7 +633,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to install function hook: {e}")
+            logger.error("Failed to install function hook: %s", e, exc_info=True)
 
         return False
 
@@ -650,7 +650,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to restore original function: {e}")
+            logger.error("Failed to restore original function: %s", e, exc_info=True)
 
         return False
 
@@ -683,7 +683,7 @@ class LiveDebuggingSystem:
     def start_debug_session(self, session_id: str, target_component: str, debug_level: str = "info") -> bool:
         """Start a live debugging session."""
         if session_id in self.active_debug_sessions:
-            logger.warning(f"Debug session {session_id} already active")
+            logger.warning("Debug session %s already active", session_id)
             return False
 
         session = {
@@ -698,7 +698,7 @@ class LiveDebuggingSystem:
         }
 
         self.active_debug_sessions[session_id] = session
-        logger.info(f"Started debug session {session_id} for {target_component}")
+        logger.info("Started debug session %s for %s", session_id, target_component)
 
         return True
 
@@ -715,7 +715,7 @@ class LiveDebuggingSystem:
         self.debug_history.append(session)
         del self.active_debug_sessions[session_id]
 
-        logger.info(f"Stopped debug session {session_id}")
+        logger.info("Stopped debug session %s", session_id)
         return True
 
     def add_breakpoint(self, session_id: str, component: str, condition: str) -> bool:
@@ -732,7 +732,7 @@ class LiveDebuggingSystem:
         }
 
         self.active_debug_sessions[session_id]["breakpoints"].append(debug_breakpoint)
-        logger.info(f"Added breakpoint to session {session_id}: {component} - {condition}")
+        logger.info("Added breakpoint to session %s: %s - %s", session_id, component, condition)
 
         return True
 
@@ -751,7 +751,7 @@ class LiveDebuggingSystem:
         }
 
         self.active_debug_sessions[session_id]["watches"].append(watch)
-        logger.info(f"Added watch to session {session_id}: {expression}")
+        logger.info("Added watch to session %s: %s", session_id, expression)
 
         return True
 
@@ -791,7 +791,7 @@ class LiveDebuggingSystem:
                         },
                     )
                 except Exception as e:
-                    self.logger.error("Exception in realtime_adaptation_engine: %s", e)
+                    logger.error("Exception in realtime_adaptation_engine: %s", e, exc_info=True)
                     self._log_debug_event(
                         debug_session_id,
                         "automated_fix_failed",
@@ -814,7 +814,7 @@ class LiveDebuggingSystem:
     def register_automated_fix(self, metric_name: str, fix_function: Callable) -> None:
         """Register automated fix for metric."""
         self.automated_fixes[metric_name] = fix_function
-        logger.info(f"Registered automated fix for {metric_name}")
+        logger.info("Registered automated fix for %s", metric_name)
 
     def get_debug_insights(self, session_id: str) -> dict[str, Any]:
         """Get debugging insights for session."""
@@ -882,7 +882,7 @@ class LiveDebuggingSystem:
                             },
                         )
                 except Exception as e:
-                    logger.debug(f"Error checking watch alert condition: {e}")
+                    logger.debug("Error checking watch alert condition: %s", e)
 
         return alerts
 
@@ -1001,14 +1001,14 @@ class RealTimeAdaptationEngine:
     def add_adaptation_rule(self, rule: AdaptationRule) -> None:
         """Add custom adaptation rule."""
         self.adaptation_rules.append(rule)
-        logger.info(f"Added adaptation rule: {rule.name}")
+        logger.info("Added adaptation rule: %s", rule.name)
 
     def remove_adaptation_rule(self, rule_id: str) -> bool:
         """Remove adaptation rule."""
         for i, rule in enumerate(self.adaptation_rules):
             if rule.rule_id == rule_id:
                 del self.adaptation_rules[i]
-                logger.info(f"Removed adaptation rule: {rule_id}")
+                logger.info("Removed adaptation rule: %s", rule_id)
                 return True
         return False
 
@@ -1057,7 +1057,7 @@ class RealTimeAdaptationEngine:
         start_time = time.time()
 
         try:
-            logger.info(f"Triggering adaptation: {rule.name} (trigger: {trigger_metric.metric_name}={trigger_metric.value})")
+            logger.info("Triggering adaptation: %s (trigger: %s=%s)", rule.name, trigger_metric.metric_name, trigger_metric.value)
 
             # Execute adaptation action
             success = self._execute_adaptation_action(rule, trigger_metric, adaptation_id)
@@ -1133,7 +1133,7 @@ class RealTimeAdaptationEngine:
             self.adaptation_history.append(event)
             self.adaptation_stats["failed_adaptations"] += 1
 
-            logger.error(f"Adaptation failed: {rule.name} - {e}")
+            logger.error("Adaptation failed: %s - %s", rule.name, e, exc_info=True)
 
     def _execute_adaptation_action(self, rule: AdaptationRule, trigger_metric: RuntimeMetric, adaptation_id: str) -> bool:
         """Execute the adaptation action."""
@@ -1141,7 +1141,10 @@ class RealTimeAdaptationEngine:
 
         try:
             logger.debug(
-                f"Executing adaptation action '{action}' triggered by metric '{trigger_metric.name}' with value {trigger_metric.value}",
+                "Executing adaptation action '%s' triggered by metric '%s' with value %s",
+                action,
+                trigger_metric.metric_name,
+                trigger_metric.value,
             )
 
             if action == "reduce_concurrency":
@@ -1162,11 +1165,11 @@ class RealTimeAdaptationEngine:
             if action == "reduce_cache_size":
                 return self._reduce_cache_size()
 
-            logger.warning(f"Unknown adaptation action: {action}")
+            logger.warning("Unknown adaptation action: %s", action)
             return False
 
         except Exception as e:
-            logger.error(f"Error executing adaptation action {action}: {e}")
+            logger.error("Error executing adaptation action %s: %s", action, e, exc_info=True)
             return False
 
     def _reduce_system_concurrency(self) -> bool:
@@ -1181,7 +1184,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to reduce concurrency: {e}")
+            logger.error("Failed to reduce concurrency: %s", e, exc_info=True)
             return False
 
     def _trigger_garbage_collection(self) -> bool:
@@ -1190,10 +1193,10 @@ class RealTimeAdaptationEngine:
             import gc
 
             collected = gc.collect()
-            logger.info(f"Garbage collection triggered, collected {collected} objects")
+            logger.info("Garbage collection triggered, collected %s objects", collected)
             return True
         except Exception as e:
-            logger.error(f"Failed to trigger garbage collection: {e}")
+            logger.error("Failed to trigger garbage collection: %s", e, exc_info=True)
             return False
 
     def _enable_fallback_mode(self, adaptation_id: str) -> bool:
@@ -1216,7 +1219,7 @@ class RealTimeAdaptationEngine:
             }
 
             # Store the hook modification for later use
-            logger.info(f"Fallback mode enabled with hook: {hook_modification['hook_id']}")
+            logger.info("Fallback mode enabled with hook: %s", hook_modification['hook_id'])
 
             self.active_adaptations[adaptation_id] = {
                 "type": "fallback_mode",
@@ -1227,7 +1230,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to enable fallback mode: {e}")
+            logger.error("Failed to enable fallback mode: %s", e, exc_info=True)
             return False
 
     def _optimize_algorithm_selection(self) -> bool:
@@ -1241,7 +1244,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to optimize algorithm selection: {e}")
+            logger.error("Failed to optimize algorithm selection: %s", e, exc_info=True)
             return False
 
     def _increase_timeout_values(self) -> bool:
@@ -1254,7 +1257,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to increase timeout values: {e}")
+            logger.error("Failed to increase timeout values: %s", e, exc_info=True)
             return False
 
     def _reduce_cache_size(self) -> bool:
@@ -1269,7 +1272,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to reduce cache size: {e}")
+            logger.error("Failed to reduce cache size: %s", e, exc_info=True)
             return False
 
     def _measure_adaptation_impact(self, trigger_metric: RuntimeMetric) -> dict[str, float]:

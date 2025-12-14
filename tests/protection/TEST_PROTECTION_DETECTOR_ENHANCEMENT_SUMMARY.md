@@ -19,26 +19,31 @@ Enhanced the comprehensive test suite for `protection_detector.py` from 1130 lin
 ## New Test Classes Added
 
 ### 1. TestAllCommercialProtectionSignatures (14 tests)
+
 Validates detection of ALL commercial protection schemes listed in the source code:
 
 **Packers:**
+
 - ASPack Packer
 - PECompact
 - NsPack
 - MPRESS Packer
 
 **Protectors:**
+
 - Obsidium
 - Armadillo
 - Enigma Protector
 
 **DRM Systems:**
+
 - SecuROM
 - SafeDisc
 - StarForce
 - Denuvo
 
 **Licensing Systems:**
+
 - HASP
 - Sentinel
 - CodeMeter/WibuKey
@@ -46,6 +51,7 @@ Validates detection of ALL commercial protection schemes listed in the source co
 **Why This Matters**: Each test creates a binary with actual protection signatures and validates the detector identifies them correctly. Tests FAIL if signatures are not detected, proving genuine offensive capability.
 
 ### 2. TestEntropyCalculationAccuracy (6 tests)
+
 Validates Shannon entropy calculation accuracy across data types:
 
 - Perfectly random data (7.5-8.0 entropy)
@@ -58,6 +64,7 @@ Validates Shannon entropy calculation accuracy across data types:
 **Why This Matters**: Entropy calculation is critical for detecting packed/encrypted binaries. Tests validate algorithm accuracy using known entropy values for different data patterns.
 
 ### 3. TestSignatureOffsetTracking (2 tests)
+
 Validates that signature detection tracks file offsets correctly:
 
 - Single signature offset tracking
@@ -66,6 +73,7 @@ Validates that signature detection tracks file offsets correctly:
 **Why This Matters**: Offset information is essential for manual analysis and patching. Tests verify the detector provides precise location data for discovered protections.
 
 ### 4. TestBypassStrategyGeneration (3 tests)
+
 Validates bypass strategy generation for detected protections:
 
 - Difficulty ratings included
@@ -75,6 +83,7 @@ Validates bypass strategy generation for detected protections:
 **Why This Matters**: Bypass strategies prove the detector not only identifies protections but provides actionable intelligence for defeating them.
 
 ### 5. TestAntiDebugPatternDetection (3 tests)
+
 Validates comprehensive anti-debug technique detection:
 
 - PEB.BeingDebugged check (x86 assembly pattern)
@@ -84,6 +93,7 @@ Validates comprehensive anti-debug technique detection:
 **Why This Matters**: Anti-debug detection is crucial for successful binary analysis. Tests use actual x86 assembly patterns found in commercial protections.
 
 ### 6. TestObfuscationComplexPatterns (2 tests)
+
 Validates detection of advanced obfuscation techniques:
 
 - Control flow flattening (excessive jump instructions)
@@ -92,6 +102,7 @@ Validates detection of advanced obfuscation techniques:
 **Why This Matters**: Modern protections use obfuscation extensively. Tests validate detection of real obfuscation patterns.
 
 ### 7. TestPerformanceBenchmarks (3 tests)
+
 Validates detection performance on various binary sizes:
 
 - Small binaries (< 5 seconds)
@@ -101,6 +112,7 @@ Validates detection performance on various binary sizes:
 **Why This Matters**: Performance tests ensure the detector scales to real-world usage on large protected binaries.
 
 ### 8. TestDirectoryAnalysisComprehensive (3 tests)
+
 Validates batch analysis capabilities:
 
 - Extension filtering (only executables)
@@ -110,6 +122,7 @@ Validates batch analysis capabilities:
 **Why This Matters**: Real-world usage involves analyzing entire software installations. Tests validate batch processing works correctly.
 
 ### 9. TestExportFormatValidation (3 tests)
+
 Validates all export formats produce correct output:
 
 - JSON format (valid structure, all fields present)
@@ -119,6 +132,7 @@ Validates all export formats produce correct output:
 **Why This Matters**: Export functionality enables integration with other tools. Tests validate output formats are correct and parseable.
 
 ### 10. TestConversionMethods (3 tests)
+
 Validates internal type mapping and conversions:
 
 - All protection type mappings
@@ -128,6 +142,7 @@ Validates internal type mapping and conversions:
 **Why This Matters**: Type conversion is used throughout the codebase. Tests ensure enum mappings are complete and correct.
 
 ### 11. TestDetectionConfidenceScoring (2 tests)
+
 Validates confidence score calculation:
 
 - Single signature confidence
@@ -136,6 +151,7 @@ Validates confidence score calculation:
 **Why This Matters**: Confidence scores help prioritize analysis effort. Tests validate scoring algorithm works correctly.
 
 ### 12. TestChecksumDetectionComprehensive (2 tests)
+
 Validates comprehensive checksum/integrity check detection:
 
 - All hash algorithms (CRC32, MD5, SHA1, SHA256)
@@ -144,6 +160,7 @@ Validates comprehensive checksum/integrity check detection:
 **Why This Matters**: Checksum detection identifies integrity protection that prevents patching. Tests validate detection of both high-level APIs and low-level assembly patterns.
 
 ### 13. TestRealWorldScenarios (3 tests)
+
 Validates complete end-to-end workflows:
 
 - Detection → Bypass strategy generation → Summary
@@ -155,23 +172,27 @@ Validates complete end-to-end workflows:
 ## Key Testing Principles Applied
 
 ### 1. NO Mocks or Stubs
+
 - All tests use real binary data with actual protection signatures
 - Fixtures create genuine PE binaries with realistic headers
 - Detection must genuinely identify protections to pass
 
 ### 2. Production-Ready Code
+
 - Complete type hints on all test methods
 - Descriptive test names following pattern: `test_<feature>_<scenario>_<outcome>`
 - Proper pytest fixtures with appropriate scoping
 - Comprehensive assertions validating real capability
 
 ### 3. Offensive Capability Validation
+
 - Tests MUST FAIL if detection doesn't work
 - Each test validates genuine protection identification
 - Signatures match real commercial protection schemes
 - Assembly patterns from actual x86/x64 anti-debug code
 
 ### 4. Comprehensive Coverage
+
 - All public methods tested
 - Edge cases covered (empty files, large files, corrupted data)
 - Error handling validated
@@ -197,6 +218,7 @@ pixi run pytest tests/protection/test_protection_detector_comprehensive.py::Test
 The test suite creates realistic binary fixtures with actual protection signatures:
 
 ### Minimal PE Binary
+
 ```python
 pe_header = (
     b"MZ"                    # DOS signature
@@ -212,6 +234,7 @@ pe_header = (
 ```
 
 ### Protection Signature Patterns
+
 ```python
 # UPX Packer
 b"UPX0" + b"\x00" * 100 + b"UPX1"

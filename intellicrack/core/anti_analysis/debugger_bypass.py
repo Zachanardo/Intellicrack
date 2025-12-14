@@ -87,7 +87,7 @@ class DebuggerBypass:
             self.logger.info("Windows bypass mechanisms initialized")
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize Windows bypass: {e}")
+            self.logger.error("Failed to initialize Windows bypass: %s", e, exc_info=True)
 
     def _init_linux_bypass(self) -> None:
         """Initialize Linux-specific bypass mechanisms."""
@@ -102,7 +102,7 @@ class DebuggerBypass:
             self.logger.info("Linux bypass mechanisms initialized")
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize Linux bypass: {e}")
+            self.logger.error("Failed to initialize Linux bypass: %s", e, exc_info=True)
 
     def install_bypasses(self, methods: list[str] = None) -> dict[str, bool]:
         """Install anti-anti-debug bypasses using user-mode techniques.
@@ -122,7 +122,7 @@ class DebuggerBypass:
         if methods is None:
             methods = list(self.bypass_methods.keys())
 
-        self.logger.info(f"Installing {len(methods)} bypass methods")
+        self.logger.info("Installing %s bypass methods", len(methods))
 
         for method in methods:
             if method in self.bypass_methods:
@@ -130,14 +130,14 @@ class DebuggerBypass:
                     success = self.bypass_methods[method]()
                     results[method] = success
                     if success:
-                        self.logger.info(f"Successfully installed bypass: {method}")
+                        self.logger.info("Successfully installed bypass: %s", method)
                     else:
-                        self.logger.warning(f"Failed to install bypass: {method}")
+                        self.logger.warning("Failed to install bypass: %s", method)
                 except Exception as e:
-                    self.logger.error(f"Error installing bypass {method}: {e}")
+                    self.logger.error("Error installing bypass %s: %s", method, e, exc_info=True)
                     results[method] = False
             else:
-                self.logger.warning(f"Unknown bypass method: {method}")
+                self.logger.warning("Unknown bypass method: %s", method)
                 results[method] = False
 
         self.hooks_installed = any(results.values())
@@ -189,7 +189,7 @@ class DebuggerBypass:
             return False
 
         except Exception as e:
-            self.logger.debug(f"IsDebuggerPresent bypass failed: {e}")
+            self.logger.debug("IsDebuggerPresent bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_checkremotedebuggerpresent(self) -> bool:
@@ -201,7 +201,7 @@ class DebuggerBypass:
             return self._bypass_isdebuggerpresent()
 
         except Exception as e:
-            self.logger.debug(f"CheckRemoteDebuggerPresent bypass failed: {e}")
+            self.logger.debug("CheckRemoteDebuggerPresent bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_peb_flags(self) -> bool:
@@ -297,7 +297,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.debug(f"PEB flags bypass failed: {e}")
+            self.logger.debug("PEB flags bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_ntglobalflag(self) -> bool:
@@ -305,7 +305,7 @@ class DebuggerBypass:
         try:
             return self._bypass_peb_flags()
         except Exception as e:
-            self.logger.debug(f"NtGlobalFlag bypass failed: {e}")
+            self.logger.debug("NtGlobalFlag bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_debug_port(self) -> bool:
@@ -322,7 +322,7 @@ class DebuggerBypass:
             self.original_functions["NtQueryInformationProcess"] = original_func_addr
 
             if hook_code := self._generate_ntquery_hook():
-                self.logger.debug(f"NtQueryInformationProcess hook prepared ({len(hook_code)} bytes)")
+                self.logger.debug("NtQueryInformationProcess hook prepared (%s bytes)", len(hook_code))
                 self.hook_metadata["ntquery_hook"] = {
                     "size": len(hook_code),
                     "address": original_func_addr,
@@ -333,68 +333,64 @@ class DebuggerBypass:
             return False
 
         except Exception as e:
-            self.logger.debug(f"Debug port bypass failed: {e}")
+            self.logger.debug("Debug port bypass failed: %s", e, exc_info=True)
             return False
 
     def _generate_ntquery_hook(self) -> bytes:
         """Generate hook code for NtQueryInformationProcess."""
         try:
             return (
-                bytes(
-                    [
-                        0x48,
-                        0x83,
-                        0xFA,
-                        0x07,  # cmp rdx, 7 (ProcessDebugPort)
-                        0x74,
-                        0x0C,  # je skip_to_zero
-                        0x48,
-                        0xB8,  # mov rax, original_addr
-                        *list(
-                            struct.pack(
-                                "<Q",
-                                self.original_functions.get("NtQueryInformationProcess", 0),
-                            )
-                        ),
-                        0xFF,
-                        0xE0,  # jmp rax
-                        0x33,
-                        0xC0,  # xor eax, eax (STATUS_SUCCESS)
-                        0x48,
-                        0x89,
-                        0x01,  # mov [rcx], rax (write 0 to output)
-                        0xC3,  # ret
-                    ]
-                )
+                bytes([
+                    0x48,
+                    0x83,
+                    0xFA,
+                    0x07,  # cmp rdx, 7 (ProcessDebugPort)
+                    0x74,
+                    0x0C,  # je skip_to_zero
+                    0x48,
+                    0xB8,  # mov rax, original_addr
+                    *list(
+                        struct.pack(
+                            "<Q",
+                            self.original_functions.get("NtQueryInformationProcess", 0),
+                        )
+                    ),
+                    0xFF,
+                    0xE0,  # jmp rax
+                    0x33,
+                    0xC0,  # xor eax, eax (STATUS_SUCCESS)
+                    0x48,
+                    0x89,
+                    0x01,  # mov [rcx], rax (write 0 to output)
+                    0xC3,  # ret
+                ])
                 if platform.machine().endswith("64")
-                else bytes(
-                    [
-                        0x83,
-                        0xFA,
-                        0x07,  # cmp edx, 7
-                        0x74,
-                        0x08,  # je skip_to_zero
-                        0xB8,  # mov eax, original_addr
-                        *list(
-                            struct.pack(
-                                "<I",
-                                self.original_functions.get("NtQueryInformationProcess", 0),
-                            )
-                        ),
-                        0xFF,
-                        0xE0,  # jmp eax
-                        0x33,
-                        0xC0,  # xor eax, eax
-                        0x89,
-                        0x01,  # mov [ecx], eax
-                        0xC2,
-                        0x14,
-                        0x00,  # ret 0x14
-                    ]
-                )
+                else bytes([
+                    0x83,
+                    0xFA,
+                    0x07,  # cmp edx, 7
+                    0x74,
+                    0x08,  # je skip_to_zero
+                    0xB8,  # mov eax, original_addr
+                    *list(
+                        struct.pack(
+                            "<I",
+                            self.original_functions.get("NtQueryInformationProcess", 0),
+                        )
+                    ),
+                    0xFF,
+                    0xE0,  # jmp eax
+                    0x33,
+                    0xC0,  # xor eax, eax
+                    0x89,
+                    0x01,  # mov [ecx], eax
+                    0xC2,
+                    0x14,
+                    0x00,  # ret 0x14
+                ])
             )
         except Exception as e:
-            self.logger.debug(f"Hook generation failed: {e}")
+            self.logger.debug("Hook generation failed: %s", e, exc_info=True)
             return b""
 
     def _bypass_hardware_breakpoints(self) -> bool:
@@ -438,7 +434,7 @@ class DebuggerBypass:
             return False
 
         except Exception as e:
-            self.logger.debug(f"Hardware breakpoint bypass failed: {e}")
+            self.logger.debug("Hardware breakpoint bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_hardware_breakpoints_linux(self) -> bool:
@@ -458,13 +454,13 @@ class DebuggerBypass:
                 try:
                     libc.ptrace(PTRACE_POKEUSER, pid, offset, 0)
                 except Exception as e:
-                    self.logger.debug(f"Failed to clear debug register at offset {offset}: {e}")
+                    self.logger.debug("Failed to clear debug register at offset %s: %s", offset, e, exc_info=True)
 
             self.logger.debug("Linux debug registers cleared")
             return True
 
         except Exception as e:
-            self.logger.debug(f"Linux hardware breakpoint bypass failed: {e}")
+            self.logger.debug("Linux hardware breakpoint bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_timing(self) -> bool:
@@ -475,7 +471,7 @@ class DebuggerBypass:
             return self._bypass_timing_linux()
 
         except Exception as e:
-            self.logger.debug(f"Timing bypass failed: {e}")
+            self.logger.debug("Timing bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_timing_windows(self) -> bool:
@@ -495,7 +491,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Windows timing bypass failed: {e}")
+            self.logger.debug("Windows timing bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_timing_linux(self) -> bool:
@@ -521,7 +517,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.debug(f"Linux timing bypass failed: {e}")
+            self.logger.debug("Linux timing bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_exception_handling(self) -> bool:
@@ -539,7 +535,7 @@ class DebuggerBypass:
             return False
 
         except Exception as e:
-            self.logger.debug(f"Exception handling bypass failed: {e}")
+            self.logger.debug("Exception handling bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_window_detection(self) -> bool:
@@ -562,12 +558,12 @@ class DebuggerBypass:
             for window_class in debugger_window_classes:
                 if hwnd := self.user32.FindWindowA(window_class.encode(), None):
                     self.user32.ShowWindow(hwnd, 0)  # SW_HIDE
-                    self.logger.debug(f"Hidden debugger window: {window_class}")
+                    self.logger.debug("Hidden debugger window: %s", window_class)
 
             return True
 
         except Exception as e:
-            self.logger.debug(f"Window detection bypass failed: {e}")
+            self.logger.debug("Window detection bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_process_detection(self) -> bool:
@@ -586,12 +582,12 @@ class DebuggerBypass:
                         self.logger.debug("Process name masked")
                         return True
                     except Exception as e:
-                        self.logger.debug(f"Failed to mask process name: {e}")
+                        self.logger.debug("Failed to mask process name: %s", e, exc_info=True)
 
             return False
 
         except Exception as e:
-            self.logger.debug(f"Process detection bypass failed: {e}")
+            self.logger.debug("Process detection bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_ptrace_linux(self) -> bool:
@@ -613,12 +609,12 @@ class DebuggerBypass:
                     self.logger.debug("Ptrace detached")
 
             except Exception as e:
-                self.logger.debug(f"Ptrace detach failed: {e}")
+                self.logger.debug("Ptrace detach failed: %s", e, exc_info=True)
 
             return True
 
         except Exception as e:
-            self.logger.debug(f"Ptrace bypass failed: {e}")
+            self.logger.debug("Ptrace bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_proc_status(self) -> bool:
@@ -626,7 +622,7 @@ class DebuggerBypass:
         try:
             return self._bypass_ptrace_linux()
         except Exception as e:
-            self.logger.debug(f"Proc status bypass failed: {e}")
+            self.logger.debug("Proc status bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_ld_preload(self) -> bool:
@@ -645,7 +641,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.debug(f"LD_PRELOAD bypass failed: {e}")
+            self.logger.debug("LD_PRELOAD bypass failed: %s", e, exc_info=True)
             return False
 
     def enable_hypervisor_debugging(self) -> bool:
@@ -666,7 +662,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.error(f"Hypervisor debugging failed: {e}")
+            self.logger.error("Hypervisor debugging failed: %s", e, exc_info=True)
             return False
 
     def _check_hypervisor_support(self) -> bool:
@@ -691,7 +687,7 @@ class DebuggerBypass:
                 return False
 
         except Exception as e:
-            self.logger.debug(f"Hypervisor check failed: {e}")
+            self.logger.debug("Hypervisor check failed: %s", e, exc_info=True)
             return False
 
     def remove_bypasses(self) -> bool:
@@ -703,7 +699,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to remove bypasses: {e}")
+            self.logger.error("Failed to remove bypasses: %s", e, exc_info=True)
             return False
 
     def get_bypass_status(self) -> dict[str, Any]:

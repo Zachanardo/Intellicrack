@@ -287,7 +287,7 @@ public class FindCryptoSignatures extends GhidraScript {
     boolean verifyCryptoUsage(Address constantAddr) {
       Reference[] refs = getReferencesTo(constantAddr);
 
-        for (Reference ref : refs) {
+      for (Reference ref : refs) {
         Address fromAddr = ref.getFromAddress();
         Function func = getFunctionContaining(fromAddr);
 
@@ -700,7 +700,7 @@ public class FindCryptoSignatures extends GhidraScript {
       CodeUnit codeUnit = codeUnitIter.next();
 
       if (codeUnit instanceof Instruction instruction) {
-          instructionCount++;
+        instructionCount++;
 
         String mnemonic = instruction.getMnemonicString().toUpperCase();
 
@@ -1307,9 +1307,9 @@ public class FindCryptoSignatures extends GhidraScript {
       0xFF,
       0xFF00,
       0xFF0000,
-        0xffff_ffff_ff00_0000L,
+      0xffff_ffff_ff00_0000L,
       0xFFFF,
-        0xffff_ffff_ffff_0000L,
+      0xffff_ffff_ffff_0000L,
       0xF0F0F0F0L,
       0x0F0F0F0FL,
       0xAAAAAAAAL,
@@ -1395,7 +1395,7 @@ public class FindCryptoSignatures extends GhidraScript {
           }
         }
       } catch (Exception e) {
-          throw new RuntimeException(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -1718,7 +1718,7 @@ public class FindCryptoSignatures extends GhidraScript {
         result.confidence = Math.min(0.85, (xorOperations + loadStoreOperations) / 20.0);
       }
 
-        if (hasMultipleDataPaths(varnode, producers, consumers)) {
+      if (hasMultipleDataPaths(varnode, producers, consumers)) {
         result.confidence = Math.min(0.98, result.confidence * 1.2);
       }
 
@@ -1758,7 +1758,7 @@ public class FindCryptoSignatures extends GhidraScript {
       Varnode shiftAmount = op.getInput(1);
       if (shiftAmount != null && shiftAmount.isConstant()) {
         long shift = shiftAmount.getOffset();
-          return shift == 1 || shift == 3 || shift == 5 || shift == 7 || shift == 13 || shift == 17;
+        return shift == 1 || shift == 3 || shift == 5 || shift == 7 || shift == 13 || shift == 17;
       }
     }
 
@@ -1947,7 +1947,7 @@ public class FindCryptoSignatures extends GhidraScript {
           }
         }
       } catch (Exception e) {
-          throw new RuntimeException(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -1966,12 +1966,12 @@ public class FindCryptoSignatures extends GhidraScript {
           result.confidence = 0.88;
         }
       } catch (Exception e) {
-          throw new RuntimeException(e);
+        throw new RuntimeException(e);
       }
     }
 
     if (dataType instanceof ghidra.program.model.data.Array arrayType) {
-        int numElements = arrayType.getNumElements();
+      int numElements = arrayType.getNumElements();
       DataType elementType = arrayType.getDataType();
 
       if (numElements == 256 && elementType.getLength() == 1) {
@@ -2017,15 +2017,15 @@ public class FindCryptoSignatures extends GhidraScript {
     long[] sha256First = {0x428a2f98L, 0x71374491L, 0xb5c0fbcfL, 0xe9b5dba5L};
 
     for (int i = 0; i < 4; i++) {
-        long value =
-            ((bytes[i * 4] & 0xFFL) << 24)
-                | ((bytes[i * 4 + 1] & 0xFFL) << 16)
-                | ((bytes[i * 4 + 2] & 0xFFL) << 8)
-                | (bytes[i * 4 + 3] & 0xFFL);
+      long value =
+          ((bytes[i * 4] & 0xFFL) << 24)
+              | ((bytes[i * 4 + 1] & 0xFFL) << 16)
+              | ((bytes[i * 4 + 2] & 0xFFL) << 8)
+              | (bytes[i * 4 + 3] & 0xFFL);
 
-        if (value == sha256First[i]) {
-          return true;
-        }
+      if (value == sha256First[i]) {
+        return true;
+      }
     }
 
     return false;

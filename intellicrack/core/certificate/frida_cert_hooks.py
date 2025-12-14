@@ -254,10 +254,10 @@ class FridaCertificateHooks:
         try:
             with open(script_path, encoding="utf-8") as f:
                 content = f.read()
-            logger.info(f"Loaded script: {script_name} ({len(content)} bytes)")
+            logger.info("Loaded script: %s (%d bytes)", script_name, len(content))
             return content
         except Exception as e:
-            logger.error(f"Failed to load script {script_name}: {e}")
+            logger.error("Failed to load script %s: %s", script_name, e, exc_info=True)
             raise
 
     def attach(self, target: str | int) -> bool:
@@ -281,37 +281,37 @@ class FridaCertificateHooks:
 
         try:
             if isinstance(target, int):
-                logger.info(f"Attaching to process with PID: {target}")
+                logger.info("Attaching to process with PID: %d", target)
                 self.session = frida.attach(target)
             elif isinstance(target, str):
                 if target.isdigit():
                     pid = int(target)
-                    logger.info(f"Attaching to process with PID: {pid}")
+                    logger.info("Attaching to process with PID: %d", pid)
                     self.session = frida.attach(pid)
                 else:
-                    logger.info(f"Attaching to process by name: {target}")
+                    logger.info("Attaching to process by name: %s", target)
                     self.session = frida.attach(target)
             else:
                 raise TypeError(f"Invalid target type: {type(target)}")
 
             self.session.on("detached", self._on_detached)
             self._attached = True
-            logger.info(f"Successfully attached to target: {target}")
+            logger.info("Successfully attached to target: %s", target)
             return True
 
         except frida.ProcessNotFoundError:
             error_msg = f"Process not found: {target}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
         except frida.PermissionDeniedError:
             error_msg = f"Permission denied when attaching to: {target}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
         except Exception as e:
             error_msg = f"Failed to attach to {target}: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
 
@@ -330,7 +330,7 @@ class FridaCertificateHooks:
             return False
 
         try:
-            logger.info(f"Injecting script ({len(script_content)} bytes)")
+            logger.info("Injecting script (%d bytes)", len(script_content))
             self.script = self.session.create_script(script_content)
             self.script.on("message", self._on_message)
             self.script.load()
@@ -342,12 +342,12 @@ class FridaCertificateHooks:
             return True
         except frida.InvalidOperationError as e:
             error_msg = f"Invalid operation while injecting script: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
         except Exception as e:
             error_msg = f"Failed to inject script: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
 
@@ -372,7 +372,7 @@ class FridaCertificateHooks:
             return success
         except Exception as e:
             error_msg = f"Failed to inject universal bypass: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
 
@@ -388,25 +388,25 @@ class FridaCertificateHooks:
         """
         if library not in self.AVAILABLE_SCRIPTS:
             error_msg = f"Unknown library bypass: {library}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg)
             self.errors.append(error_msg)
             return False
 
-        logger.info(f"Injecting specific bypass for: {library}")
+        logger.info("Injecting specific bypass for: %s", library)
 
         try:
             script_content = self.load_script(library)
             success = self.inject_script(script_content)
 
             if success:
-                logger.info(f"Bypass for {library} injected successfully")
+                logger.info("Bypass for %s injected successfully", library)
             else:
-                logger.error(f"Failed to inject bypass for {library}")
+                logger.error("Failed to inject bypass for %s", library)
 
             return success
         except Exception as e:
             error_msg = f"Failed to inject {library} bypass: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
 
@@ -430,7 +430,7 @@ class FridaCertificateHooks:
             elif msg_type == "error":
                 self._handle_error_message(message)
             else:
-                logger.warning(f"Unknown message type: {msg_type}")
+                logger.warning("Unknown message type: %s", msg_type)
 
     def _handle_send_message(self, payload: object, data: bytes | None) -> None:
         """Process 'send' type messages from Frida scripts.
@@ -444,7 +444,7 @@ class FridaCertificateHooks:
 
         """
         if not isinstance(payload, dict):
-            logger.debug(f"Non-dict payload: {payload}")
+            logger.debug("Non-dict payload: %s", payload)
             return
 
         payload_type = payload.get("type")
@@ -460,16 +460,17 @@ class FridaCertificateHooks:
         if payload_type == "log":
             log_data = payload.get("data", {})
             level = log_data.get("level", "info")
-            message = log_data.get("message", "")
+            log_message = log_data.get("message", "")
             logger.log(
                 logging.INFO if level == "info" else logging.ERROR,
-                f"[Frida] {message}",
+                "[Frida] %s",
+                log_message,
             )
 
         elif payload_type == "certificate":
             cert_data = payload.get("data", {})
             self.intercepted_certificates.append(cert_data)
-            logger.info(f"Intercepted certificate: {cert_data}")
+            logger.info("Intercepted certificate: %s", cert_data)
 
         elif payload_type in {
             "https_request",
@@ -479,7 +480,7 @@ class FridaCertificateHooks:
         }:
             conn_data = payload.get("data", {})
             self.bypassed_connections.append(conn_data)
-            logger.debug(f"Connection bypassed: {payload_type}")
+            logger.debug("Connection bypassed: %s", payload_type)
 
         elif payload_type in {
             "bypass_success",
@@ -487,18 +488,18 @@ class FridaCertificateHooks:
             "universal_bypass_loaded",
         }:
             library = payload.get("library", payload.get("platform", "unknown"))
-            logger.info(f"Bypass activated: {library}")
+            logger.info("Bypass activated: %s", library)
 
         elif payload_type == "bypass_failure":
             library = payload.get("library", "unknown")
             reason = payload.get("reason", "unknown")
             error_msg = f"Bypass failed for {library}: {reason}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg)
             self.errors.append(error_msg)
 
         elif payload_type == "library_detected":
             lib_data = payload.get("data", {})
-            logger.info(f"Detected TLS library: {lib_data.get('type')} - {lib_data.get('name')}")
+            logger.info("Detected TLS library: %s - %s", lib_data.get("type"), lib_data.get("name"))
 
     def _handle_error_message(self, message: dict) -> None:
         """Process error messages from Frida scripts.
@@ -515,9 +516,9 @@ class FridaCertificateHooks:
         column_number = message.get("columnNumber", "?")
 
         error_msg = f"Frida script error at {line_number}:{column_number}: {description}"
-        logger.error(error_msg)
+        logger.error("%s", error_msg)
         if stack:
-            logger.error(f"Stack trace:\n{stack}")
+            logger.error("Stack trace:\n%s", stack)
 
         self.errors.append(error_msg)
 
@@ -531,9 +532,9 @@ class FridaCertificateHooks:
             crash: Crash information if process crashed, None otherwise.
 
         """
-        logger.warning(f"Detached from process. Reason: {reason}")
+        logger.warning("Detached from process. Reason: %s", reason)
         if crash:
-            logger.error(f"Process crashed: {crash}")
+            logger.error("Process crashed: %s", crash)
         self._attached = False
         self._script_loaded = False
 
@@ -575,7 +576,7 @@ class FridaCertificateHooks:
                 },
             )
         except Exception as e:
-            logger.error(f"Failed to get bypass status via RPC: {e}")
+            logger.error("Failed to get bypass status via RPC: %s", e, exc_info=True)
             return BypassStatus(
                 active=self._script_loaded,
                 library=None,
@@ -622,17 +623,17 @@ class FridaCertificateHooks:
             raise RuntimeError("Script not loaded. Inject a script first.")
 
         try:
-            logger.debug(f"Calling RPC function: {function_name} with args: {args}")
+            logger.debug("Calling RPC function: %s with args: %s", function_name, args)
             result = self.script.exports_sync[function_name](*args)
-            logger.debug(f"RPC call result: {result}")
+            logger.debug("RPC call result: %s", result)
             return result
         except (KeyError, AttributeError) as e:
             error_msg = f"RPC function not found: {function_name}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             raise RuntimeError(error_msg) from e
         except Exception as e:
             error_msg = f"RPC call failed for {function_name}: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             raise RuntimeError(error_msg) from e
 
     def detach(self) -> bool:
@@ -652,14 +653,14 @@ class FridaCertificateHooks:
                 self.script.unload()
                 logger.info("Script unloaded")
             except Exception as e:
-                logger.warning(f"Failed to unload script: {e}")
+                logger.warning("Failed to unload script: %s", e, exc_info=True)
 
         if self.session and self._attached:
             try:
                 self.session.detach()
                 logger.info("Session detached")
             except Exception as e:
-                logger.warning(f"Failed to detach session: {e}")
+                logger.warning("Failed to detach session: %s", e, exc_info=True)
 
         self._attached = False
         self._script_loaded = False
@@ -686,7 +687,7 @@ class FridaCertificateHooks:
             return True
         except Exception as e:
             error_msg = f"Failed to unload scripts: {e}"
-            logger.error(error_msg)
+            logger.error("%s", error_msg, exc_info=True)
             self.errors.append(error_msg)
             return False
 
@@ -723,7 +724,7 @@ class FridaCertificateHooks:
             try:
                 self.call_rpc("clearLogs")
             except Exception as e:
-                logger.warning(f"Failed to clear remote logs: {e}")
+                logger.warning("Failed to clear remote logs: %s", e, exc_info=True)
 
         logger.info("Local logs cleared")
         return True

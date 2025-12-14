@@ -28,12 +28,13 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate instruction-level tracing with Stalker on real process
 
 **Tests**:
+
 - `test_stalker_initialization`: Verifies Stalker engine initializes with session
 - `test_stalker_traces_thread_execution`: **CRITICAL** - Validates actual instruction trace capture including:
-  - Real instruction data (address, mnemonic, operands)
-  - Basic block identification
-  - Call graph construction
-  - Code coverage calculation
+    - Real instruction data (address, mnemonic, operands)
+    - Basic block identification
+    - Call graph construction
+    - Code coverage calculation
 - `test_stalker_start_stop_trace`: Validates trace control (start/stop)
 - `test_stalker_captures_call_graph`: Confirms real function call relationships are captured
 
@@ -44,11 +45,12 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate heap allocation tracking via malloc/free hooking
 
 **Tests**:
+
 - `test_heap_tracker_initialization`: Verifies heap tracker initializes and hooks memory functions
 - `test_heap_tracker_captures_allocations`: **CRITICAL** - Must intercept real malloc calls:
-  - Captures allocation address, size, timestamp
-  - Records thread ID and call stack
-  - Tracks freed status
+    - Captures allocation address, size, timestamp
+    - Records thread ID and call stack
+    - Tracks freed status
 - `test_heap_tracker_tracks_frees`: Validates free() interception and freed timestamp recording
 - `test_heap_tracker_get_stats`: Verifies accurate heap statistics (total allocations, frees, current allocated)
 - `test_heap_tracker_find_leaks`: Tests memory leak detection (allocations older than 1 minute)
@@ -60,10 +62,11 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate thread creation/termination monitoring
 
 **Tests**:
+
 - `test_thread_monitor_initialization`: Verifies thread monitor initialization
 - `test_thread_monitor_detects_threads`: **CRITICAL** - Captures real thread creation events:
-  - Thread ID, entry point, creation time
-  - Parent thread ID tracking
+    - Thread ID, entry point, creation time
+    - Parent thread ID tracking
 - `test_thread_monitor_tracks_current_threads`: Enumerates currently running threads via RPC
 - `test_thread_monitor_tracks_termination`: Detects thread termination with timestamps
 
@@ -74,6 +77,7 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate exception handler hooking
 
 **Tests**:
+
 - `test_exception_hooker_initialization`: Verifies exception hooker initialization
 - `test_exception_hooker_clear_exceptions`: Validates exception history clearing (local and remote)
 - `test_exception_hooker_get_exceptions`: Tests exception list retrieval
@@ -85,11 +89,12 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate native function replacement
 
 **Tests**:
+
 - `test_native_replacer_initialization`: Verifies native replacer initialization
 - `test_native_replacer_replace_function`: **CRITICAL** - Replaces real function in target:
-  - Finds actual exported function
-  - Replaces with licensing bypass implementation
-  - Validates replacement is active
+    - Finds actual exported function
+    - Replaces with licensing bypass implementation
+    - Validates replacement is active
 - `test_native_replacer_restore_function`: Tests function restoration (Interceptor.revert)
 
 **Failure Conditions**: Tests FAIL if Interceptor.replace doesn't actually replace functions
@@ -99,15 +104,16 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate RPC interface for complex operations
 
 **Tests**:
+
 - `test_rpc_interface_initialization`: Verifies RPC interface initialization
 - `test_rpc_memory_read`: **CRITICAL** - Reads real memory from module base address
 - `test_rpc_memory_write`: Allocates memory and writes/reads to validate write operations
 - `test_rpc_memory_scan`: Scans process memory for byte patterns
 - `test_rpc_module_find_export`: Finds real module exports (kernel32.dll or malloc)
 - `test_rpc_evaluate_javascript`: **CRITICAL** - Executes JavaScript in target context:
-  - Validates arithmetic evaluation
-  - Confirms Process.id access
-  - Verifies Process.platform retrieval
+    - Validates arithmetic evaluation
+    - Confirms Process.id access
+    - Verifies Process.platform retrieval
 
 **Failure Conditions**: Tests FAIL if memory operations don't access real process memory
 
@@ -116,6 +122,7 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate main orchestrator class
 
 **Tests**:
+
 - `test_advanced_hooking_initialization`: Verifies orchestrator initialization
 - `test_advanced_hooking_init_stalker`: Tests Stalker engine initialization
 - `test_advanced_hooking_init_heap_tracker`: Tests heap tracker initialization
@@ -132,19 +139,20 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate complete hooking workflows combining multiple features
 
 **Tests**:
+
 - `test_complete_process_instrumentation`: **CRITICAL END-TO-END** - Full instrumentation:
-  - All components active simultaneously
-  - Heap allocations captured
-  - Threads monitored
-  - RPC operations successful
-  - Memory reading functional
-  - Validates no component interference
+    - All components active simultaneously
+    - Heap allocations captured
+    - Threads monitored
+    - RPC operations successful
+    - Memory reading functional
+    - Validates no component interference
 - `test_memory_scan_and_patch_workflow`: Realistic cracking workflow:
-  - Allocate memory
-  - Write pattern
-  - Read back and verify
-  - Patch with NOPs
-  - Verify patch applied
+    - Allocate memory
+    - Write pattern
+    - Read back and verify
+    - Patch with NOPs
+    - Verify patch applied
 - `test_heap_tracking_with_leak_detection`: Complete heap analysis workflow
 
 **Failure Conditions**: Tests FAIL if any component doesn't work or components interfere
@@ -154,6 +162,7 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 **Purpose**: Validate Windows-only features (registry operations)
 
 **Tests**:
+
 - `test_rpc_registry_operations`: Reads real Windows registry values for license extraction scenarios
 
 **Platform**: Windows only (skipped on Linux/macOS)
@@ -161,21 +170,25 @@ This ensures tests validate actual Frida hook functionality, not simulated behav
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py::TestFridaHeapTracker -v
 ```
 
 ### Run with Coverage
+
 ```bash
 pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py --cov=intellicrack.core.analysis.frida_advanced_hooks --cov-report=html
 ```
 
 ### Run Integration Tests Only
+
 ```bash
 pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py::TestIntegrationScenarios -v
 ```
@@ -185,6 +198,7 @@ pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py::Tes
 **Platform**: Windows (primary), Linux/macOS supported but some features limited
 
 **Dependencies**:
+
 - frida
 - pytest
 - Running test process (automatically spawned)
@@ -232,6 +246,7 @@ pixi run pytest tests/core/analysis/test_frida_advanced_hooks_production.py::Tes
 ### Offensive Capability Validation:
 
 These tests prove Intellicrack can:
+
 - **Hook memory allocations** in protected software
 - **Trace execution** at instruction level for analysis
 - **Replace license validation functions** with bypass implementations

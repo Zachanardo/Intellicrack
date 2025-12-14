@@ -1290,7 +1290,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         codeUnitsAnalyzed++;
 
         if (codeUnit instanceof Instruction instruction) {
-            String mnemonic = instruction.getMnemonicString();
+          String mnemonic = instruction.getMnemonicString();
           instructionTypes.merge(mnemonic, 1, Integer::sum);
 
           // Analyze for crypto-related instruction patterns
@@ -1298,7 +1298,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
             cryptoRelatedFunctions.add(function);
           }
         } else if (codeUnit instanceof Data data) {
-            // Analyze embedded data for crypto constants
+          // Analyze embedded data for crypto constants
           analyzeCryptoDataInFunction(data, function);
         }
 
@@ -1469,11 +1469,11 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       localDataTypeStats.merge(typeName, 1, Integer::sum);
 
       if (dataType instanceof Structure structure) {
-          if (analyzeCryptoStructure(structure)) {
+        if (analyzeCryptoStructure(structure)) {
           cryptoStructures.add(structure);
         }
       } else if (dataType instanceof Enum enumType) {
-          if (analyzeCryptoEnum(enumType)) {
+        if (analyzeCryptoEnum(enumType)) {
           cryptoEnums.add(enumType);
         }
       }
@@ -2126,12 +2126,11 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     return sb.toString();
   }
 
-    // Inner classes
-    private record CryptoConstant(String algorithm, Object value) {
-    }
+  // Inner classes
+  private record CryptoConstant(String algorithm, Object value) {}
 
-    private record CryptoRoutine(String algorithm, Address address, String reason, double confidence) {
-    }
+  private record CryptoRoutine(
+      String algorithm, Address address, String reason, double confidence) {}
 
   private static class CryptoKey {
     final String algorithm;

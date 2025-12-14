@@ -886,13 +886,11 @@ class HardwareTokenBypass:
                         end_pos = data.find(end_marker, pos)
                         if end_pos != -1:
                             pem_data = data[pos : end_pos + len(end_marker)]
-                            certs.append(
-                                {
-                                    "format": "PEM",
-                                    "offset": pos,
-                                    "data": pem_data.decode("utf-8", errors="ignore"),
-                                }
-                            )
+                            certs.append({
+                                "format": "PEM",
+                                "offset": pos,
+                                "data": pem_data.decode("utf-8", errors="ignore"),
+                            })
                 except ValueError:
                     pass
 

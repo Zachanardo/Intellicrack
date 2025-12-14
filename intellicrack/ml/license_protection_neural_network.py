@@ -27,6 +27,11 @@ from typing import Any
 
 import numpy as np
 
+from ..utils.logger import get_logger
+
+
+logger = logging.getLogger(__name__)
+
 
 try:
     import torch
@@ -36,6 +41,7 @@ try:
 
     TORCH_AVAILABLE = True
 except ImportError:
+    logger.debug("PyTorch not available", exc_info=True)
     TORCH_AVAILABLE = False
     torch = None  # type: ignore[assignment]
     nn = None  # type: ignore[assignment]
@@ -51,6 +57,7 @@ try:
 
     TF_AVAILABLE = True
 except ImportError:
+    logger.debug("TensorFlow not available", exc_info=True)
     TF_AVAILABLE = False
     tf = None
     keras = None
@@ -196,9 +203,9 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained weights from {pretrained_path}")
+                logger.info("Loaded pre-trained weights from %s", pretrained_path)
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Could not load pre-trained weights: {e}")
+                logger.warning("Could not load pre-trained weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
@@ -207,7 +214,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
             save_dir.mkdir(exist_ok=True)
             path = save_dir / "license_cnn_weights.pth"
         torch.save(self.state_dict(), path)
-        logging.getLogger(__name__).info(f"Saved model weights to {path}")
+        logger.info("Saved model weights to %s", path)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass with attention and residual connections.
@@ -323,9 +330,9 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained Transformer weights from {pretrained_path}")
+                logger.info("Loaded pre-trained Transformer weights from %s", pretrained_path)
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Could not load pre-trained Transformer weights: {e}")
+                logger.warning("Could not load pre-trained Transformer weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
@@ -334,7 +341,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             save_dir.mkdir(exist_ok=True)
             path = save_dir / "license_transformer_weights.pth"
         torch.save(self.state_dict(), path)
-        logging.getLogger(__name__).info(f"Saved Transformer weights to {path}")
+        logger.info("Saved Transformer weights to %s", path)
 
     def _create_positional_encoding(self, max_len: int, d_model: int) -> torch.Tensor:
         """Create sinusoidal positional encoding."""
@@ -456,9 +463,9 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             try:
                 state_dict = torch.load(pretrained_path, map_location="cpu")
                 self.load_state_dict(state_dict, strict=False)
-                logging.getLogger(__name__).info(f"Loaded pre-trained Hybrid model weights from {pretrained_path}")
+                logger.info("Loaded pre-trained Hybrid model weights from %s", pretrained_path)
             except Exception as e:
-                logging.getLogger(__name__).warning(f"Could not load pre-trained Hybrid weights: {e}")
+                logger.warning("Could not load pre-trained Hybrid weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
@@ -467,7 +474,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             save_dir.mkdir(exist_ok=True)
             path = save_dir / "hybrid_analyzer_weights.pth"
         torch.save(self.state_dict(), path)
-        logging.getLogger(__name__).info(f"Saved Hybrid model weights to {path}")
+        logger.info("Saved Hybrid model weights to %s", path)
 
     def _create_gnn_branch(self) -> nn.Sequential:
         """Create Graph Neural Network branch for CFG analysis.
@@ -546,8 +553,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     def _load_data(self) -> None:
         """Load binary samples and labels from directory structure or metadata."""
         if not self.data_path.exists():
-            self.logger = logging.getLogger(__name__)
-            self.logger.warning(f"Dataset path does not exist: {self.data_path}")
+            logger.warning("Dataset path does not exist: %s", self.data_path)
             return
 
         # Try to load from metadata file
@@ -1171,8 +1177,6 @@ class LicenseProtectionTrainer:
         if TORCH_AVAILABLE:
             self.model = self.model.to(device)
 
-        self.logger = logging.getLogger(__name__)
-
         # Training configuration
         self.learning_rate = 0.001
         self.batch_size = 32
@@ -1312,10 +1316,10 @@ class LicenseProtectionTrainer:
 
         """
         if not TORCH_AVAILABLE:
-            self.logger.warning("PyTorch not available for training")
+            logger.warning("PyTorch not available for training")
             return
 
-        self.logger.info("Starting training...")
+        logger.info("Starting training...")
         best_val_acc = 0.0
 
         for epoch in range(self.num_epochs):
@@ -1335,13 +1339,17 @@ class LicenseProtectionTrainer:
                     best_val_acc = val_acc
                     self.save_checkpoint(f"best_model_epoch_{epoch}.pth")
 
-                self.logger.info(
-                    f"Epoch {epoch + 1}/{self.num_epochs} - "
-                    f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% - "
-                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%",
+                logger.info(
+                    "Epoch %s/%s - Train Loss: %.4f, Train Acc: %.2f%% - Val Loss: %.4f, Val Acc: %.2f%%",
+                    epoch + 1,
+                    self.num_epochs,
+                    train_loss,
+                    train_acc,
+                    val_loss,
+                    val_acc,
                 )
             else:
-                self.logger.info(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
+                logger.info("Epoch %s/%s - Train Loss: %.4f, Train Acc: %.2f%%", epoch + 1, self.num_epochs, train_loss, train_acc)
 
             # Learning rate scheduling
             self.scheduler.step()
@@ -1379,7 +1387,7 @@ class LicenseProtectionTrainer:
         }
 
         torch.save(checkpoint, filepath)
-        self.logger.info(f"Checkpoint saved to {filepath}")
+        logger.info("Checkpoint saved to %s", filepath)
 
         # Also save weights separately for production use
         if hasattr(self.model, "save_weights"):
@@ -1399,7 +1407,7 @@ class LicenseProtectionTrainer:
             return None
 
         if not Path(filepath).exists():
-            self.logger.error(f"Checkpoint file not found: {filepath}")
+            logger.error("Checkpoint file not found: %s", filepath)
             return False
 
         try:
@@ -1408,7 +1416,7 @@ class LicenseProtectionTrainer:
             # Validate checkpoint structure
             required_keys = ["model_state_dict", "optimizer_state_dict"]
             if any(key not in checkpoint for key in required_keys):
-                self.logger.error(f"Invalid checkpoint format in {filepath}")
+                logger.error("Invalid checkpoint format in %s", filepath)
                 return False
 
             # Load model state
@@ -1426,14 +1434,14 @@ class LicenseProtectionTrainer:
             # Log model info if present
             if "model_info" in checkpoint:
                 info = checkpoint["model_info"]
-                self.logger.info(f"Loaded {info.get('model_class', 'Unknown')} model from epoch {checkpoint.get('epoch', 0)}")
-                self.logger.info(f"Best validation accuracy: {checkpoint.get('best_val_acc', 0.0):.2f}%")
+                logger.info("Loaded %s model from epoch %s", info.get("model_class", "Unknown"), checkpoint.get("epoch", 0))
+                logger.info("Best validation accuracy: %.2f%%", checkpoint.get("best_val_acc", 0.0))
 
-            self.logger.info(f"Checkpoint loaded successfully from {filepath}")
+            logger.info("Checkpoint loaded successfully from %s", filepath)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error loading checkpoint from {filepath}: {e}")
+            logger.error("Error loading checkpoint from %s: %s", filepath, e, exc_info=True)
             return False
 
 
@@ -1442,8 +1450,6 @@ class LicenseProtectionPredictor:
 
     def __init__(self, model_path: str | None = None) -> None:
         """Initialize predictor with pre-trained model."""
-        self.logger = logging.getLogger(__name__)
-
         if TORCH_AVAILABLE:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model = HybridLicenseAnalyzer()
@@ -1451,11 +1457,11 @@ class LicenseProtectionPredictor:
             if model_path and os.path.exists(model_path):
                 self.load_model(model_path)
             else:
-                self.logger.warning("No pre-trained model loaded")
+                logger.warning("No pre-trained model loaded")
         else:
             self.device = "cpu"
             self.model = None
-            self.logger.warning("PyTorch not available for predictions")
+            logger.warning("PyTorch not available for predictions")
 
     def load_model(self, model_path: str) -> None:
         """Load pre-trained model.
@@ -1471,7 +1477,7 @@ class LicenseProtectionPredictor:
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.model.to(self.device)
         self.model.eval()
-        self.logger.info(f"Model loaded from {model_path}")
+        logger.info("Model loaded from %s", model_path)
 
     def predict(self, binary_path: str) -> dict[str, Any]:
         """Predict license protection type and characteristics."""
@@ -1725,7 +1731,7 @@ def train_license_model(
     try:
         train_loader, val_loader, test_loader = create_dataloaders(data_path, batch_size=batch_size)
     except Exception as e:
-        logger.error(f"Failed to create dataloaders: {e}")
+        logger.error("Failed to create dataloaders: %s", e, exc_info=True)
         return {"error": str(e)}
 
     # Calculate class weights for imbalanced dataset
@@ -1756,12 +1762,12 @@ def train_license_model(
         trainer.scheduler.total_steps = len(train_loader) * epochs
 
     # Train model
-    logger.info(f"Starting training on {device} for {epochs} epochs...")
+    logger.info("Starting training on %s for %s epochs...", device, epochs)
     trainer.train(train_loader, val_loader)
 
     # Evaluate on test set
     test_loss, test_acc = trainer.validate(test_loader)
-    logger.info(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.2f}%")
+    logger.info("Test Loss: %.4f, Test Accuracy: %.2f%%", test_loss, test_acc)
 
     # Save model
     if save_path is None:
@@ -1811,7 +1817,6 @@ def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, d
     predictions = []
     true_labels = []
 
-    # Evaluate
     logger.info("Starting evaluation...")
     with torch.no_grad():
         for features, labels in test_loader:
@@ -1863,9 +1868,9 @@ def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, d
         "true_labels": true_labels,
     }
 
-    logger.info(f"Overall Accuracy: {overall_accuracy:.2f}%")
+    logger.info("Overall Accuracy: %.2f%%", overall_accuracy)
     logger.info("Per-class Accuracy:")
     for cls, acc in per_class_accuracy.items():
-        logger.info(f"  {cls}: {acc:.2f}%")
+        logger.info("  %s: %.2f%%", cls, acc)
 
     return results

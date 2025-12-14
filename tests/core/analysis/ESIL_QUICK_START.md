@@ -3,6 +3,7 @@
 ## 1. Prerequisites
 
 ### Install Radare2
+
 ```bash
 # Windows (Chocolatey)
 choco install radare2
@@ -12,11 +13,13 @@ choco install radare2
 ```
 
 ### Install r2pipe
+
 ```bash
 pip install r2pipe
 ```
 
 ### Verify Installation
+
 ```bash
 radare2 -v
 python -c "import r2pipe; print('r2pipe OK')"
@@ -25,12 +28,14 @@ python -c "import r2pipe; print('r2pipe OK')"
 ## 2. Run Tests
 
 ### Quick Run (No Coverage)
+
 ```bash
 cd D:\Intellicrack
 pytest tests/core/analysis/test_radare2_esil_production.py -v --no-cov
 ```
 
 ### With Coverage Report
+
 ```bash
 pytest tests/core/analysis/test_radare2_esil_production.py \
   --cov=intellicrack.core.analysis.radare2_esil \
@@ -38,6 +43,7 @@ pytest tests/core/analysis/test_radare2_esil_production.py \
 ```
 
 ### Run Specific Test Category
+
 ```bash
 # Test ESIL VM initialization
 pytest tests/core/analysis/test_radare2_esil_production.py::TestESILVMInitialization -v
@@ -50,6 +56,7 @@ pytest tests/core/analysis/test_radare2_esil_production.py::TestLicenseCheckDete
 ```
 
 ### Run Performance Benchmarks
+
 ```bash
 pytest tests/core/analysis/test_radare2_esil_production.py::TestESILPerformance -v --benchmark-only
 ```
@@ -57,6 +64,7 @@ pytest tests/core/analysis/test_radare2_esil_production.py::TestESILPerformance 
 ## 3. Expected Output
 
 ### Success
+
 ```
 tests/core/analysis/test_radare2_esil_production.py::TestESILVMInitialization::test_esil_vm_initializes_successfully PASSED [1%]
 tests/core/analysis/test_radare2_esil_production.py::TestFunctionEmulation::test_emulate_function_returns_complete_results PASSED [2%]
@@ -65,6 +73,7 @@ tests/core/analysis/test_radare2_esil_production.py::TestFunctionEmulation::test
 ```
 
 ### Coverage
+
 ```
 ---------- coverage: platform win32, python 3.12.x -----------
 Name                                            Stmts   Miss  Cover
@@ -77,17 +86,22 @@ TOTAL                                             189     15    92%
 ## 4. Common Issues
 
 ### "RuntimeError: r2pipe not available"
+
 **Fix**: `pip install r2pipe`
 
 ### "radare2 not found"
+
 **Fix**: Install radare2 and add to PATH
 
 ### "Test binary not found"
+
 **Fix**: Ensure Windows binaries exist:
+
 - `C:\Windows\System32\notepad.exe`
 - `C:\Windows\System32\kernel32.dll`
 
 ### Tests Taking Too Long
+
 **Fix**: Run without coverage: `pytest --no-cov`
 
 ## 5. Test Categories
@@ -120,6 +134,7 @@ TOTAL                                             189     15    92%
 ## 7. Next Steps
 
 After successful test run:
+
 1. Review coverage report: `htmlcov/index.html`
 2. Check benchmark results
 3. Run with parallel execution: `pytest -n auto`

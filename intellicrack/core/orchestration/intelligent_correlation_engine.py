@@ -561,14 +561,12 @@ class IntelligentCorrelationEngine:
             features.append(float(getattr(result, "address", 0)))
 
         if isinstance(result, FunctionResult):
-            features.extend(
-                (
-                    float(result.size),
-                    float(result.cyclomatic_complexity),
-                    float(len(result.xrefs_to)),
-                    float(len(result.xrefs_from)),
-                )
-            )
+            features.extend((
+                float(result.size),
+                float(result.cyclomatic_complexity),
+                float(len(result.xrefs_to)),
+                float(len(result.xrefs_from)),
+            ))
         elif isinstance(result, StringResult):
             features.append(float(result.length))
             features.append(float(result.entropy))

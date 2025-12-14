@@ -7,6 +7,7 @@ This test suite validates REAL binary analysis capabilities against actual Windo
 ## Test Coverage
 
 ### Total Tests: 44 Tests
+
 - **8 Enhanced PE Analysis Tests** - Real Windows binary analysis
 - **4 Protection Detection Tests** - VMProtect, Themida, UPX signatures
 - **3 Entropy Analysis Tests** - Packed/encrypted section detection
@@ -22,11 +23,13 @@ This test suite validates REAL binary analysis capabilities against actual Windo
 - **1 Streaming Analysis Test** - Large binary performance
 
 ### Current Coverage: 33.01%
+
 Coverage on `intellicrack/core/analysis/binary_analyzer.py` from just the PE analysis tests alone.
 
 ## Test Categories
 
 ### 1. Enhanced PE Analysis
+
 Tests validate real Windows PE binary analysis capabilities:
 
 - **test_analyze_real_notepad_pe_structure** - Extracts valid PE structure from notepad.exe
@@ -39,11 +42,13 @@ Tests validate real Windows PE binary analysis capabilities:
 - **test_streaming_analysis_large_binary** - Handles large DLLs efficiently
 
 **Real Binaries Used:**
+
 - `C:\Windows\System32\notepad.exe`
 - `C:\Windows\System32\calc.exe`
 - `C:\Windows\System32\kernel32.dll`
 
 ### 2. Protection Detection
+
 Tests validate detection of commercial software protections:
 
 - **test_detect_upx_packer_signature** - UPX packer detection
@@ -52,12 +57,14 @@ Tests validate detection of commercial software protections:
 - **test_multiple_protection_detection** - Multi-layer protection detection
 
 **Protection Schemes Tested:**
+
 - UPX
 - VMProtect
 - Themida
 - Multi-layered protections
 
 ### 3. Entropy Analysis
+
 Tests validate entropy-based packing/encryption detection:
 
 - **test_high_entropy_detection_packed_section** - Detects packed sections (entropy > 7.0)
@@ -65,6 +72,7 @@ Tests validate entropy-based packing/encryption detection:
 - **test_entropy_analysis_real_binary** - Validates realistic entropy ranges (3.0-8.0)
 
 ### 4. String Extraction & License Pattern Detection
+
 Tests validate license-related string extraction:
 
 - **test_extract_license_validation_strings** - Finds "license" strings
@@ -73,9 +81,11 @@ Tests validate license-related string extraction:
 - **test_scan_license_patterns_streaming** - Streaming license pattern detection
 
 **Patterns Detected:**
+
 - `license`, `serial`, `activation`, `trial`, `expired`, `registration`
 
 ### 5. Hash Calculation
+
 Tests validate cryptographic hash accuracy:
 
 - **test_calculate_sha256_hash_matches** - SHA256 verification
@@ -85,6 +95,7 @@ Tests validate cryptographic hash accuracy:
 - **test_streaming_hash_calculation_large_file** - 60MB file streaming hash
 
 ### 6. Pattern Scanning
+
 Tests validate byte pattern detection:
 
 - **test_scan_single_pattern_finds_matches** - Single pattern detection
@@ -92,6 +103,7 @@ Tests validate byte pattern detection:
 - **test_pattern_scan_includes_context** - Context extraction around matches
 
 ### 7. Error Handling
+
 Tests validate graceful error handling:
 
 - **test_analyze_nonexistent_file_returns_error** - Nonexistent file handling
@@ -100,6 +112,7 @@ Tests validate graceful error handling:
 - **test_analyze_empty_file** - Empty file handling
 
 ### 8. Checkpoint Support
+
 Tests validate analysis resume functionality:
 
 - **test_save_analysis_checkpoint** - Checkpoint save
@@ -107,6 +120,7 @@ Tests validate analysis resume functionality:
 - **test_checkpoint_resume_workflow** - Resume interrupted analysis
 
 ### 9. Real-World Effectiveness
+
 Tests validate complete analysis workflows:
 
 - **test_analyze_complete_notepad_workflow** - Full notepad.exe analysis
@@ -116,16 +130,19 @@ Tests validate complete analysis workflows:
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 python -m pytest tests/core/analysis/test_enhanced_binary_analyzer_production.py -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 python -m pytest tests/core/analysis/test_enhanced_binary_analyzer_production.py::TestProtectionDetection -v
 ```
 
 ### Run with Coverage
+
 ```bash
 python -m pytest tests/core/analysis/test_enhanced_binary_analyzer_production.py --cov=intellicrack.core.analysis.binary_analyzer --cov-report=term-missing
 ```
@@ -153,6 +170,7 @@ All 44 tests **PASSED** successfully:
 ## Key Validations
 
 ### Offensive Capability Validation
+
 - ✅ Protection signature detection (UPX, VMProtect, Themida)
 - ✅ License string pattern extraction
 - ✅ Entropy-based packing detection
@@ -161,6 +179,7 @@ All 44 tests **PASSED** successfully:
 - ✅ Section analysis for code/data separation
 
 ### Production Readiness
+
 - ✅ Handles real Windows system binaries (notepad, calc, kernel32)
 - ✅ Graceful error handling for corrupted/malformed binaries
 - ✅ Streaming mode for large binaries (60MB+ files)
@@ -171,6 +190,7 @@ All 44 tests **PASSED** successfully:
 ## Test Fixtures
 
 ### Real System Binaries
+
 - `notepad.exe` - Text editor executable
 - `calc.exe` - Calculator application
 - `kernel32.dll` - Core Windows system DLL
@@ -178,6 +198,7 @@ All 44 tests **PASSED** successfully:
 - `ntdll.dll` - NT kernel interface DLL
 
 ### Custom Test Binaries
+
 - UPX-packed executable
 - VMProtect-protected executable
 - Themida-protected executable

@@ -86,10 +86,8 @@ def compute_file_hash(
         elif isinstance(e, ValueError) and "unsupported hash type" in str(e).lower():
             error_message = f"Unsupported hash algorithm '{algorithm}': {e}"
 
-        # Log the exception
-        logger.exception(f"{error_type} - {error_message}")
+        logger.exception("%s - %s", error_type, error_message)
 
-        # Include traceback information for debugging
         traceback_info = traceback.format_exc()
         logger.debug("Traceback: %s", traceback_info)
 
@@ -141,8 +139,7 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
                     break
             return b"".join(chunks)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error reading binary file %s: %s", file_path, e)
-        logger.error(e)
+        logger.error("Error reading binary file %s: %s", file_path, e, exc_info=True)
         raise
 
 
@@ -169,15 +166,14 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
 
-        # Write the data
         with open(file_path, "wb") as f:
             f.write(data)
 
-        logger.info(f"Successfully wrote {len(data)} bytes to {file_path}")
+        logger.info("Successfully wrote %s bytes to %s", len(data), file_path)
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error writing binary file %s: %s", file_path, e)
+        logger.error("Error writing binary file %s: %s", file_path, e, exc_info=True)
         return False
 
 
@@ -240,7 +236,7 @@ def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
         return format_info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing binary format for %s: %s", file_path, e)
+        logger.error("Error analyzing binary format for %s: %s", file_path, e, exc_info=True)
         return {"error": str(e)}
 
 
@@ -260,7 +256,7 @@ def is_binary_file(file_path: str | Path, sample_size: int = 8192) -> bool:
             chunk = f.read(sample_size)
             return b"\x00" in chunk
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking if file is binary: %s", e)
+        logger.error("Error checking if file is binary: %s", e, exc_info=True)
         return False
 
 
@@ -301,7 +297,7 @@ def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
         return entropy
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error calculating file entropy: %s", e)
+        logger.error("Error calculating file entropy: %s", e, exc_info=True)
         return 0.0
 
 

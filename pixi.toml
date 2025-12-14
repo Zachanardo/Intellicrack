@@ -49,100 +49,100 @@ cargo-audit = "*"
 cargo-deny = "*"
 
 [pypi-dependencies]
-intellicrack = { path = ".", editable = true }  # Editable install of Intellicrack for development
+intellicrack = { path = ".", editable = true } # Editable install of Intellicrack for development
 
 # Build Tools
-build = "*"  # PEP 517 package builder
+build = "*" # PEP 517 package builder
 
 # Code Quality & Linting
-black = "*"  # Opinionated Python code formatter
-pylint = "*"  # Comprehensive Python linter
-autopep8 = "*"  # Automatic PEP 8 code formatter
-flake8 = "*"  # Style guide enforcement tool
-ruff = "*"  # Fast Python linter written in Rust
-bandit = "*"  # Security vulnerability scanner for Python code
-vulture = "*"  # Dead code detector
-pyupgrade = "*"  # Automatically upgrade Python syntax for newer versions
-pydocstyle = "*"  # Docstring style checker
-sourcery = "*"  # AI-powered code reviewer and refactoring tool
-wemake-python-styleguide = "*"  # Strictest Python linter
-darglint = "*"  # Docstring argument checker
-pyroma = "*"  # Package quality checker
-mypy-extensions = "*"  # Extensions for mypy type checker
-dead = "*"  # Dead code and dependency detector
-uncalled = "*"  # Dead code finder using AST and regex
-deadcode = "*"  # Advanced unused code detector with more rules than vulture
-pygount = "*"  # Source code line counter
-pytest-deadfixtures = "*"  # Pytest plugin to find unused fixtures
-pyright = "*"  # Microsoft's static type checker for Python
-monkeytype = "*"  # Automatic type annotation generator
-ty = "*"  # Fast type checker
-mccabe = "*"  # McCabe complexity checker
-xenon = "*"  # Code complexity monitoring tool
-safety = "*"  # Dependency vulnerability scanner
-yamllint = "*"  # YAML file linter
+black = "*"                    # Opinionated Python code formatter
+pylint = "*"                   # Comprehensive Python linter
+autopep8 = "*"                 # Automatic PEP 8 code formatter
+flake8 = "*"                   # Style guide enforcement tool
+ruff = "*"                     # Fast Python linter written in Rust
+bandit = "*"                   # Security vulnerability scanner for Python code
+vulture = "*"                  # Dead code detector
+pyupgrade = "*"                # Automatically upgrade Python syntax for newer versions
+pydocstyle = "*"               # Docstring style checker
+sourcery = "*"                 # AI-powered code reviewer and refactoring tool
+wemake-python-styleguide = "*" # Strictest Python linter
+darglint = "*"                 # Docstring argument checker
+pyroma = "*"                   # Package quality checker
+mypy-extensions = "*"          # Extensions for mypy type checker
+dead = "*"                     # Dead code and dependency detector
+uncalled = "*"                 # Dead code finder using AST and regex
+deadcode = "*"                 # Advanced unused code detector with more rules than vulture
+pygount = "*"                  # Source code line counter
+pytest-deadfixtures = "*"      # Pytest plugin to find unused fixtures
+pyright = "*"                  # Microsoft's static type checker for Python
+monkeytype = "*"               # Automatic type annotation generator
+ty = "*"                       # Fast type checker
+mccabe = "*"                   # McCabe complexity checker
+xenon = "*"                    # Code complexity monitoring tool
+safety = "*"                   # Dependency vulnerability scanner
+yamllint = "*"                 # YAML file linter
 
 # Testing & Coverage
-pytest-cov = "*"  # Coverage plugin for pytest
-pytest-mock = "*"  # Mocking plugin for pytest
-pytest-asyncio = "*"  # Async test support for pytest
-pytest-xdist = "*"  # Parallel test execution for pytest
-pytest-timeout = "*"  # Test timeout plugin for pytest
-pytest-qt = "*"  # Qt application testing plugin for pytest
-pytest-benchmark = "*"  # Benchmarking plugin for pytest
-pytest-html = "*"  # HTML report generation for pytest
+pytest-cov = "*"       # Coverage plugin for pytest
+pytest-mock = "*"      # Mocking plugin for pytest
+pytest-asyncio = "*"   # Async test support for pytest
+pytest-xdist = "*"     # Parallel test execution for pytest
+pytest-timeout = "*"   # Test timeout plugin for pytest
+pytest-qt = "*"        # Qt application testing plugin for pytest
+pytest-benchmark = "*" # Benchmarking plugin for pytest
+pytest-html = "*"      # HTML report generation for pytest
 pytest-randomly = "*"  # Randomize test order to detect hidden dependencies
-pytest-sugar = "*"  # Enhanced pytest output with progress bar
-pytest-env = "*"  # Environment variable management for pytest
-pytest-instafail = "*"  # Show failures instantly during test runs
-hypothesis = "*"  # Property-based testing framework
-tox = "*"  # Test automation across multiple Python environments
-nox = "*"  # Flexible test automation tool
-coverage = "*"  # Code coverage measurement tool
-freezegun = "*"  # Time mocking library for tests
-responses = "*"  # HTTP request mocking library
-faker = "*"  # Fake data generator for tests
+pytest-sugar = "*"     # Enhanced pytest output with progress bar
+pytest-env = "*"       # Environment variable management for pytest
+pytest-instafail = "*" # Show failures instantly during test runs
+hypothesis = "*"       # Property-based testing framework
+tox = "*"              # Test automation across multiple Python environments
+nox = "*"              # Flexible test automation tool
+coverage = "*"         # Code coverage measurement tool
+freezegun = "*"        # Time mocking library for tests
+responses = "*"        # HTTP request mocking library
+faker = "*"            # Fake data generator for tests
 
 # Code Metrics
-radon = "*"  # Code complexity and maintainability metrics
+radon = "*" # Code complexity and maintainability metrics
 
 # Documentation
-sphinx = "*"  # Documentation generator
-sphinx-rtd-theme = "*"  # Read the Docs theme for Sphinx
-sphinx-autodoc-typehints = "*"  # Type hints support for Sphinx autodoc
-sphinx-copybutton = "*"  # Copy button for code blocks in Sphinx docs
-sphinx-tabs = "*"  # Tabbed content support for Sphinx
-sphinxcontrib-mermaid = "*"  # Mermaid diagram support for Sphinx
-sphinx-autobuild = "*"  # Auto-rebuild Sphinx docs on file changes
-pdoc3 = "*"  # Auto-generate API documentation
-mkdocs-material = "*"  # Material Design theme for MkDocs
-pymdown-extensions = "*"  # Markdown extensions for documentation
+sphinx = "*"                   # Documentation generator
+sphinx-rtd-theme = "*"         # Read the Docs theme for Sphinx
+sphinx-autodoc-typehints = "*" # Type hints support for Sphinx autodoc
+sphinx-copybutton = "*"        # Copy button for code blocks in Sphinx docs
+sphinx-tabs = "*"              # Tabbed content support for Sphinx
+sphinxcontrib-mermaid = "*"    # Mermaid diagram support for Sphinx
+sphinx-autobuild = "*"         # Auto-rebuild Sphinx docs on file changes
+pdoc3 = "*"                    # Auto-generate API documentation
+mkdocs-material = "*"          # Material Design theme for MkDocs
+pymdown-extensions = "*"       # Markdown extensions for documentation
 
 # Debugging & Profiling
-ipdb = "*"  # IPython-enabled debugger
-line-profiler = "*"  # Line-by-line profiling tool
-memory-profiler = "*"  # Memory usage profiler
-py-spy = "*"  # Sampling profiler for Python programs
-snakeviz = "*"  # Browser-based profiling visualization
-pyinstrument = "*"  # Statistical profiler with web UI
-scalene = "*"  # High-performance CPU/GPU/memory profiler
+ipdb = "*"            # IPython-enabled debugger
+line-profiler = "*"   # Line-by-line profiling tool
+memory-profiler = "*" # Memory usage profiler
+py-spy = "*"          # Sampling profiler for Python programs
+snakeviz = "*"        # Browser-based profiling visualization
+pyinstrument = "*"    # Statistical profiler with web UI
+scalene = "*"         # High-performance CPU/GPU/memory profiler
 
 # Development Utilities
-pre-commit = "*"  # Git pre-commit hook framework
-commitizen = "*"  # Standardized commit message tool
-bumpversion = "*"  # Version bumping tool
-pipdeptree = "*"  # Dependency tree visualization
-rope = "*"  # Python refactoring library
-astor = "*"  # AST manipulation and code generation
-yapf = "*"  # Google's Python code formatter
-pip-audit = "*"  # Audit Python packages for security vulnerabilities
-nodeenv = "*"  # Node.js virtual environment
-twine = "*"  # PyPI package uploader
-setuptools-scm = "*"  # Version management from git tags
-poetry = "*"  # Python dependency management and packaging
-pycallgraph2 = "*"  # Call graph visualization tool
-pre-commit-hooks = "*"  # Collection of pre-commit hooks
-detect-secrets = "*"  # Prevent secrets from being committed
+pre-commit = "*"       # Git pre-commit hook framework
+commitizen = "*"       # Standardized commit message tool
+bumpversion = "*"      # Version bumping tool
+pipdeptree = "*"       # Dependency tree visualization
+rope = "*"             # Python refactoring library
+astor = "*"            # AST manipulation and code generation
+yapf = "*"             # Google's Python code formatter
+pip-audit = "*"        # Audit Python packages for security vulnerabilities
+nodeenv = "*"          # Node.js virtual environment
+twine = "*"            # PyPI package uploader
+setuptools-scm = "*"   # Version management from git tags
+poetry = "*"           # Python dependency management and packaging
+pycallgraph2 = "*"     # Call graph visualization tool
+pre-commit-hooks = "*" # Collection of pre-commit hooks
+detect-secrets = "*"   # Prevent secrets from being committed
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]
@@ -159,14 +159,26 @@ generate-requirements = "pixi list --json | python -c \"import json,sys;[print(f
 build-rust-launcher = "cargo build --release --manifest-path intellicrack-launcher/Cargo.toml"
 
 # Create Windows shortcut for launcher
-create-shortcut = { cmd = "powershell -Command \"\\$s=(New-Object -ComObject WScript.Shell).CreateShortcut('Intellicrack.lnk'); \\$s.TargetPath='intellicrack-launcher\\target\\release\\Intellicrack.exe'; \\$s.IconLocation='intellicrack\\assets\\icon.ico'; \\$s.Save(); Write-Host 'Shortcut created'\"", depends-on = ["build-rust-launcher"] }
+create-shortcut = { cmd = "powershell -Command \"\\$s=(New-Object -ComObject WScript.Shell).CreateShortcut('Intellicrack.lnk'); \\$s.TargetPath='intellicrack-launcher\\target\\release\\Intellicrack.exe'; \\$s.IconLocation='intellicrack\\assets\\icon.ico'; \\$s.Save(); Write-Host 'Shortcut created'\"", depends-on = [
+    "build-rust-launcher",
+] }
 
 # Node.js package installation from package.json using Yarn (from conda)
 # Installs eslint, prettier, knip, typescript, and all plugins (conda packages have Windows path issues)
-install-yarn-deps = { cmd = "yarn install", inputs = ["package.json"], outputs = ["node_modules", "yarn.lock"] }
+install-yarn-deps = { cmd = "yarn install", inputs = [
+    "package.json",
+], outputs = [
+    "node_modules",
+    "yarn.lock",
+] }
 
 # CI/reproducible install (requires existing yarn.lock)
-install-yarn-deps-ci = { cmd = "yarn install --immutable", inputs = ["package.json", "yarn.lock"], outputs = ["node_modules"] }
+install-yarn-deps-ci = { cmd = "yarn install --immutable", inputs = [
+    "package.json",
+    "yarn.lock",
+], outputs = [
+    "node_modules",
+] }
 
 # Documentation generation tasks
 docs-apidoc = "sphinx-apidoc -f -o docs/source intellicrack"

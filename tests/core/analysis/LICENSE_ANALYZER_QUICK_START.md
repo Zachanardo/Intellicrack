@@ -13,12 +13,14 @@ D:\Intellicrack\tests\core\analysis\
 ## Run Tests
 
 ### All Tests (43)
+
 ```bash
 cd D:\Intellicrack
 python -m pytest tests/core/analysis/test_license_analyzer_production.py -v
 ```
 
 ### Specific Category
+
 ```bash
 # Serial validation tests (4)
 python -m pytest tests/core/analysis/test_license_analyzer_production.py::TestSerialValidationDetection -v
@@ -31,6 +33,7 @@ python -m pytest tests/core/analysis/test_license_analyzer_production.py::TestHa
 ```
 
 ### Single Test
+
 ```bash
 python -m pytest tests/core/analysis/test_license_analyzer_production.py::TestSerialValidationDetection::test_detect_serial_validation_patterns_in_real_binary -v
 ```
@@ -55,16 +58,19 @@ python -m pytest tests/core/analysis/test_license_analyzer_production.py::TestSe
 ## Key Features
 
 ### NO Mocks or Stubs
+
 - All tests use REAL Windows PE binaries
 - Genuine pattern detection validation
 - Real offensive capability testing
 
 ### Complete Type Safety
+
 - All functions fully typed
 - All parameters annotated
 - All return types specified
 
 ### Production Binary Generation
+
 - 13 specialized binary generators
 - Real PE structure (DOS header, PE header, sections)
 - Authentic x86/x64 assembly code
@@ -82,6 +88,7 @@ python -m pytest tests/core/analysis/test_license_analyzer_production.py::TestSe
 ## LicenseAnalyzer API
 
 ### Detection Methods
+
 ```python
 analyzer = LicenseAnalyzer("path/to/binary.exe")
 
@@ -103,6 +110,7 @@ analyzer.analyze_comprehensive()
 ```
 
 ### Result Structure
+
 ```python
 {
     "detected": bool,           # Protection found
@@ -115,39 +123,47 @@ analyzer.analyze_comprehensive()
 ## Detection Patterns
 
 ### Serial Validation
+
 - SERIAL, ValidateSerial, CheckSerial, ProductKey
 - XOR/ADD checksum algorithms
 
 ### Trial Expiration
+
 - GetSystemTime, GetTickCount
 - Trial, Expired, Days remaining
 - Registry persistence (RegQueryValueEx)
 
 ### Registration
+
 - Registration, RegKey, Licensed to
 - RSA, SHA, MD5 validation
 - AAAAA-BBBBB-CCCCC format
 
 ### Hardware Binding
+
 - GetVolumeInformation, GetAdaptersInfo
 - HWID, MAC Address, Volume Serial
 
 ### Online Activation
+
 - InternetOpen, HttpSendRequest
 - https://, POST, HTTP/1.1
 - Activation servers
 
 ### License Files
+
 - license.dat, license.lic, .key
 - CreateFile, ReadFile
 - ParseLicense functions
 
 ### Cryptographic
+
 - CryptVerifySignature, CryptHashData
 - RSA-2048, AES-256, SHA256
 - PEM public keys
 
 ### Obfuscation
+
 - EB 02, EB 05 junk jumps
 - XorDecrypt, Deobfuscate
 
@@ -169,12 +185,14 @@ create_multi_check_license_binary()
 ## Validation
 
 ### Tests Pass When
+
 - Detection algorithms work correctly
 - Pattern matching is accurate
 - Offsets are correct
 - Confidence scores are valid
 
 ### Tests Fail When
+
 - Detection logic is broken
 - Pattern matching fails
 - Offsets are inaccurate
@@ -203,6 +221,7 @@ def test_detect_serial_validation_patterns_in_real_binary(
 ## Quick Validation
 
 ### Verify Tests Pass
+
 ```bash
 cd D:\Intellicrack
 python -m pytest tests/core/analysis/test_license_analyzer_production.py -v --tb=short
@@ -211,6 +230,7 @@ python -m pytest tests/core/analysis/test_license_analyzer_production.py -v --tb
 Expected: `43 passed in ~24s`
 
 ### Check Test Collection
+
 ```bash
 python -m pytest tests/core/analysis/test_license_analyzer_production.py --collect-only -q
 ```
@@ -234,6 +254,7 @@ Expected: 43 tests listed
 ## Support
 
 For detailed information on:
+
 - Test implementation details → See test file comments
 - Binary generation → See `README_LICENSE_ANALYZER_TESTS.md`
 - Detection patterns → See delivery summary

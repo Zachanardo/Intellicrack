@@ -68,7 +68,7 @@ class Plugin:
             "callback_args": args,
             "callback_kwargs": kwargs,
         }
-        logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
+        logger.info("Starting analysis at %s", datetime.fromtimestamp(self.analysis_start_time))
 
     def did_finish_run_callback(self, *args: object, **kwargs: object) -> None:
         """Finalize after analysis finishes.
@@ -83,8 +83,8 @@ class Plugin:
         duration = end_time - getattr(self, "analysis_start_time", end_time)
 
         # Log completion statistics
-        logger.info(f"Analysis completed in {duration:.2f} seconds")
-        logger.info(f"Total states analyzed: {getattr(self, 'total_states_analyzed', 0)}")
+        logger.info("Analysis completed in %.2f seconds", duration)
+        logger.info("Total states analyzed: %s", getattr(self, "total_states_analyzed", 0))
 
         # Store final metrics
         if hasattr(self, "analysis_metadata"):
@@ -109,7 +109,7 @@ class Plugin:
         self.fork_count += 1
 
         # Log fork event
-        logger.debug(f"Forking state at address 0x{state.address:x} (fork #{self.fork_count})")
+        logger.debug("Forking state at address 0x%x (fork #%s)", state.address, self.fork_count)
 
         # Store fork metadata
         if not hasattr(self, "fork_history"):
@@ -145,7 +145,7 @@ class Plugin:
             "constraints_count": len(state.constraints) if hasattr(state, "constraints") else 0,
         }
 
-        logger.debug(f"State at 0x{state.address:x} pending termination")
+        logger.debug("State at 0x%x pending termination", state.address)
 
     def did_terminate_state_callback(self, state: State, *args: object, **kwargs: object) -> None:
         """Finalize after a state is terminated.
@@ -181,7 +181,7 @@ class Plugin:
         # Update total states analyzed
         self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
 
-        logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
+        logger.debug("State at 0x%x terminated (total: %s)", state.address, self.total_states_analyzed)
 
     def _get_memory_usage(self) -> float:
         """Get current memory usage in MB.
@@ -196,6 +196,7 @@ class Plugin:
             process = psutil.Process()
             return process.memory_info().rss / 1024 / 1024
         except Exception:
+            logger.debug("Failed to get memory usage", exc_info=True)
             return 0.0
 
 
@@ -307,7 +308,7 @@ class BinaryAnalyzer:
             self.hooks[address] = []
 
         self.hooks[address].append(callback)
-        self.logger.debug(f"Added hook at address 0x{address:x}")
+        self.logger.debug("Added hook at address 0x%x", address)
 
     def set_exec_timeout(self, timeout: int) -> None:
         """Set the execution timeout.

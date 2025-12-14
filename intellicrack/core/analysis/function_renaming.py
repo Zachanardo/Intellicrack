@@ -208,23 +208,16 @@ class FunctionRenamingEngine:
                 raise ValueError("Invalid PE file")
 
             pe_offset = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
-            if (
-                pe_offset >= len(self.pe_data)
-                or self.pe_data[pe_offset : pe_offset + 4] != b"PE\x00\x00"
-            ):
+            if pe_offset >= len(self.pe_data) or self.pe_data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
                 raise ValueError("Invalid PE signature")
 
             optional_header_offset = pe_offset + 24
             magic = struct.unpack("<H", self.pe_data[optional_header_offset : optional_header_offset + 2])[0]
 
             if magic == 0x10B:
-                self.image_base = struct.unpack(
-                    "<I", self.pe_data[optional_header_offset + 28 : optional_header_offset + 32]
-                )[0]
+                self.image_base = struct.unpack("<I", self.pe_data[optional_header_offset + 28 : optional_header_offset + 32])[0]
             elif magic == 0x20B:
-                self.image_base = struct.unpack(
-                    "<Q", self.pe_data[optional_header_offset + 24 : optional_header_offset + 32]
-                )[0]
+                self.image_base = struct.unpack("<Q", self.pe_data[optional_header_offset + 24 : optional_header_offset + 32])[0]
             else:
                 self.image_base = 0x400000
 
@@ -248,8 +241,8 @@ class FunctionRenamingEngine:
                     self.code_section_size = min(virtual_size, raw_size)
                     break
 
-        except Exception as e:
-            self.logger.error(f"Failed to load binary: {e}")
+        except Exception:
+            self.logger.exception("Failed to load binary")
             raise
 
     def scan_for_functions(self) -> dict[int, FunctionSignature]:
@@ -537,8 +530,8 @@ class FunctionRenamingEngine:
 
             return True
 
-        except Exception as e:
-            self.logger.error(f"Failed to export rename script: {e}")
+        except Exception:
+            self.logger.exception("Failed to export rename script")
             return False
 
     def _generate_ida_script(self, results: list[FunctionRenameResult]) -> str:
@@ -551,9 +544,7 @@ class FunctionRenamingEngine:
         ]
 
         for result in results:
-            lines.append(
-                f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)'
-            )
+            lines.append(f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)')
             lines.append(
                 f'    idc.set_func_cmt(0x{result.address:X}, "Type: {result.function_type.value}, Confidence: {result.confidence:.2f}", 1)'
             )
@@ -581,9 +572,7 @@ class FunctionRenamingEngine:
             lines.append("    func = fm.getFunctionAt(addr)")
             lines.append("    if func:")
             lines.append(f'        func.setName("{result.suggested_name}", SourceType.USER_DEFINED)')
-            lines.append(
-                f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")'
-            )
+            lines.append(f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")')
             lines.append("")
 
         lines.append("if __name__ == '__main__':")
@@ -598,9 +587,7 @@ class FunctionRenamingEngine:
 
         for result in results:
             lines.append(f"afn {result.suggested_name} 0x{result.address:X}")
-            lines.append(
-                f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}"
-            )
+            lines.append(f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}")
 
         return "\n".join(lines)
 

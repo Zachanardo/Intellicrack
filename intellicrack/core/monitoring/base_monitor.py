@@ -7,6 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import logging
 import threading
 import time
 from abc import ABC, abstractmethod
@@ -14,6 +15,9 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 class EventSource(Enum):
@@ -203,7 +207,7 @@ class BaseMonitor(ABC):
                     return True
                 return False
             except Exception as e:
-                print(f"[{self.name}] Failed to start: {e}")
+                logger.error("[%s] Failed to start: %s", self.name, e, exc_info=True)
                 return False
 
     def stop(self) -> None:
@@ -215,7 +219,7 @@ class BaseMonitor(ABC):
             try:
                 self._stop_monitoring()
             except Exception as e:
-                print(f"[{self.name}] Error stopping: {e}")
+                logger.error("[%s] Error stopping: %s", self.name, e, exc_info=True)
             finally:
                 self._running = False
 
@@ -263,7 +267,7 @@ class BaseMonitor(ABC):
             try:
                 callback(event)
             except Exception as e:
-                print(f"[{self.name}] Error in callback: {e}")
+                logger.error("[%s] Error in callback: %s", self.name, e, exc_info=True)
 
     def _handle_error(self, error: Exception) -> bool:
         """Handle monitoring error.
@@ -276,10 +280,10 @@ class BaseMonitor(ABC):
 
         """
         self._error_count += 1
-        print(f"[{self.name}] Error ({self._error_count}/{self._max_errors}): {error}")
+        logger.error("[%s] Error (%s/%s): %s", self.name, self._error_count, self._max_errors, error, exc_info=True)
 
         if self._error_count >= self._max_errors:
-            print(f"[{self.name}] Max errors reached, stopping monitor")
+            logger.warning("[%s] Max errors reached, stopping monitor", self.name)
             self.stop()
             return False
 

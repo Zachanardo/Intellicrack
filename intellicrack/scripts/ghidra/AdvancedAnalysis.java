@@ -94,7 +94,7 @@ public class AdvancedAnalysis extends GhidraScript {
   private final Map<Long, GhidraFunction> functions = new HashMap<>();
   private final Map<Long, GhidraInstruction> instructions = new HashMap<>();
   private Map<Long, List<Long>> callGraph = new HashMap<>();
-    private final List<Long> potentialLicenseChecks = new ArrayList<>();
+  private final List<Long> potentialLicenseChecks = new ArrayList<>();
   private final AddressSetView memoryRegionsOfInterest = new AddressSet();
   private final JsonObject analysisResults = new JsonObject();
   private Map<Long, Integer> functionComplexity = new HashMap<>();
@@ -1284,7 +1284,7 @@ public class AdvancedAnalysis extends GhidraScript {
 
   private void analyzeDataFlow() throws Exception {
     println("Analyzing data flow...");
-      Map<Long, List<Long>> dataFlow = new HashMap<>();
+    Map<Long, List<Long>> dataFlow = new HashMap<>();
 
     for (GhidraFunction func : functions.values()) {
       dataFlow.put(func.address, new ArrayList<>());
@@ -1654,11 +1654,9 @@ public class AdvancedAnalysis extends GhidraScript {
 
   // --- Data Structures ---
 
-    record GhidraFunction(String name, long address, String signature, int size) {
-    }
+  record GhidraFunction(String name, long address, String signature, int size) {}
 
-    record GhidraInstruction(long address, String mnemonic, String operands) {
-    }
+  record GhidraInstruction(long address, String mnemonic, String operands) {}
 
   // === ADVANCED ANALYSIS ENGINE CLASSES ===
 
@@ -1667,11 +1665,11 @@ public class AdvancedAnalysis extends GhidraScript {
    * classification
    */
   static class MLAnalysisEngine {
-      private final Map<String, Double> featureWeights = new HashMap<>();
+    private final Map<String, Double> featureWeights = new HashMap<>();
     private final List<MLPattern> knownPatterns = new ArrayList<>();
 
     public MLAnalysisEngine(Program program) {
-        initializeMLModels();
+      initializeMLModels();
     }
 
     private void initializeMLModels() {
@@ -2111,10 +2109,10 @@ public class AdvancedAnalysis extends GhidraScript {
    * Modern Protection Analysis Engine Detects and analyzes modern software protection mechanisms
    */
   static class ModernProtectionAnalysisEngine {
-      private final Map<String, ProtectionSignature> protectionSignatures = new HashMap<>();
+    private final Map<String, ProtectionSignature> protectionSignatures = new HashMap<>();
 
     public ModernProtectionAnalysisEngine(Program program) {
-        initializeProtectionSignatures();
+      initializeProtectionSignatures();
     }
 
     private void initializeProtectionSignatures() {
@@ -2283,10 +2281,10 @@ public class AdvancedAnalysis extends GhidraScript {
 
   /** Obfuscation Analysis Engine Detects and analyzes code obfuscation techniques */
   static class ObfuscationAnalysisEngine {
-      private final Map<String, ObfuscationTechnique> techniques = new HashMap<>();
+    private final Map<String, ObfuscationTechnique> techniques = new HashMap<>();
 
     public ObfuscationAnalysisEngine(Program program) {
-        initializeObfuscationTechniques();
+      initializeObfuscationTechniques();
     }
 
     private void initializeObfuscationTechniques() {
@@ -2489,8 +2487,7 @@ public class AdvancedAnalysis extends GhidraScript {
     }
   }
 
-    record AnalysisAlert(String severity, String type, String description, long address) {
-    }
+  record AnalysisAlert(String severity, String type, String description, long address) {}
 
   static class MLPattern {
     final String type;
@@ -2563,9 +2560,12 @@ public class AdvancedAnalysis extends GhidraScript {
     List<String> callSequence;
   }
 
-    record BehavioralSignature(String description, double confidence, String[] keywordPattern, int minMatches,
-                               int maxMatches) {
-    }
+  record BehavioralSignature(
+      String description,
+      double confidence,
+      String[] keywordPattern,
+      int minMatches,
+      int maxMatches) {}
 
   static class ProtectionAnalysisResults {
     List<ProtectionMechanism> detectedProtections;
@@ -2590,8 +2590,8 @@ public class AdvancedAnalysis extends GhidraScript {
     List<String> indicators;
   }
 
-    record ProtectionSignature(String name, String[] indicators, double accuracy, double sophistication) {
-    }
+  record ProtectionSignature(
+      String name, String[] indicators, double accuracy, double sophistication) {}
 
   static class ObfuscationResults {
     List<DetectedObfuscation> techniques;
@@ -2614,8 +2614,7 @@ public class AdvancedAnalysis extends GhidraScript {
     String description;
   }
 
-    record ObfuscationTechnique(String name, double detectionAccuracy, String[] indicators) {
-    }
+  record ObfuscationTechnique(String name, double detectionAccuracy, String[] indicators) {}
 
   static class ControlFlowAnalysis {
     long functionAddress;
@@ -3026,10 +3025,10 @@ public class AdvancedAnalysis extends GhidraScript {
   static class NetworkLicenseAnalysisEngine {
     private final Program program;
 
-      public NetworkLicenseAnalysisEngine(Program program) {
+    public NetworkLicenseAnalysisEngine(Program program) {
       this.program = program;
-          List<NetworkLicensePattern> detectedPatterns = new ArrayList<>();
-          Map<String, Double> confidenceMetrics = new HashMap<>();
+      List<NetworkLicensePattern> detectedPatterns = new ArrayList<>();
+      Map<String, Double> confidenceMetrics = new HashMap<>();
     }
 
     public NetworkLicenseResults analyzeNetworkLicensing(Map<Long, GhidraFunction> functions) {
@@ -3543,9 +3542,9 @@ public class AdvancedAnalysis extends GhidraScript {
   static class VirtualizationAnalysisEngine {
     private final Program program;
 
-      public VirtualizationAnalysisEngine(Program program) {
+    public VirtualizationAnalysisEngine(Program program) {
       this.program = program;
-          List<VirtualizationPattern> detectedPatterns = new ArrayList<>();
+      List<VirtualizationPattern> detectedPatterns = new ArrayList<>();
     }
 
     public VirtualizationResults analyzeVirtualizationProtection(
@@ -6875,8 +6874,7 @@ public class AdvancedAnalysis extends GhidraScript {
 
   static class RealTimeProtectionAnalysisEngine {
 
-      public RealTimeProtectionAnalysisEngine(Program program) {
-      }
+    public RealTimeProtectionAnalysisEngine(Program program) {}
 
     public RealTimeProtectionResults analyzeRealTimeProtections(
         Map<Long, GhidraFunction> functions) {

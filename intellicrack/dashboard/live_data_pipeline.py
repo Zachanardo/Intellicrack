@@ -83,7 +83,9 @@ class LiveDataPipeline:
         self.logger = logger
 
         # Event queues by priority
-        self.event_queues: dict[DataPriority, queue.PriorityQueue[tuple[float, DataEvent]]] = {priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority}
+        self.event_queues: dict[DataPriority, queue.PriorityQueue[tuple[float, DataEvent]]] = {
+            priority: queue.PriorityQueue(maxsize=self.config.get("queue_size", 10000)) for priority in DataPriority
+        }
 
         # Buffering configuration
         self.buffer_size = self.config.get("buffer_size", 100)

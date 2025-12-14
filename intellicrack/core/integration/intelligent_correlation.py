@@ -651,12 +651,10 @@ class PatternClusterer:
         # Name features
         name_len = len(item.name)
         features.extend((name_len, 1 if item.name.startswith("sub_") else 0))
-        features.extend(
-            (
-                1 if "_" in item.name else 0,
-                1 if any(c.isupper() for c in item.name) else 0,
-            )
-        )
+        features.extend((
+            1 if "_" in item.name else 0,
+            1 if any(c.isupper() for c in item.name) else 0,
+        ))
         features.extend((item.confidence, len(item.attributes)))
         return np.array(features)
 
@@ -751,7 +749,7 @@ class MachineLearningCorrelator:
         # Store training data
         self.training_data = list(zip(X, y, strict=False))
 
-        logger.info(f"Trained model with {len(positive_pairs)} positive and {len(negative_pairs)} negative pairs")
+        logger.info("Trained model with %s positive and %s negative pairs", len(positive_pairs), len(negative_pairs))
 
     def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> tuple[bool, float]:
         """Predict if items are correlated."""
@@ -824,7 +822,7 @@ class MachineLearningCorrelator:
             "training_data": self.training_data,
         }
         joblib.dump(model_data, path)
-        logger.info(f"Model saved to {path}")
+        logger.info("Model saved to %s", path)
 
     def load_model(self, path: str) -> None:
         """Load trained model."""
@@ -834,9 +832,9 @@ class MachineLearningCorrelator:
             self.scaler = model_data["scaler"]
             self.feature_names = model_data.get("feature_names", [])
             self.training_data = model_data.get("training_data", [])
-            logger.info(f"Model loaded from {path}")
-        except Exception as e:
-            logger.error(f"Failed to load model: {e}")
+            logger.info("Model loaded from %s", path)
+        except Exception:
+            logger.error("Failed to load model from %s", path, exc_info=True)
             self._initialize_model()
 
 
@@ -1103,16 +1101,16 @@ def main() -> None:
         # Correlate
         results = correlator.correlate(items, method="hybrid")
 
-        print(f"Found {len(results)} correlations:")
+        logger.info("Found %s correlations:", len(results))
         for result in results:
-            print(f"  Score: {result.correlation_score:.2f}, Confidence: {result.confidence:.2f}")
-            print(f"  Items: {[item.name for item in result.items]}")
-            print(f"  Method: {result.method}")
-            print()
+            logger.info("  Score: %.2f, Confidence: %.2f", result.correlation_score, result.confidence)
+            logger.info("  Items: %s", [item.name for item in result.items])
+            logger.info("  Method: %s", result.method)
+            logger.info("")
 
     elif args.train:
         # Load training data and train model
-        print(f"Loading training data from {args.train}...")
+        logger.info("Loading training data from %s...", args.train)
 
         try:
             with open(args.train) as f:
@@ -1168,7 +1166,7 @@ def main() -> None:
                 )
                 negative_pairs.append((item1, item2))
 
-            print(f"Loaded {len(positive_pairs)} positive and {len(negative_pairs)} negative pairs")
+            logger.info("Loaded %s positive and %s negative pairs", len(positive_pairs), len(negative_pairs))
 
             # Train the model
             correlator.ml_correlator.train(positive_pairs, negative_pairs)
@@ -1176,24 +1174,24 @@ def main() -> None:
             # Save model if path specified
             if args.model:
                 correlator.ml_correlator.save_model(args.model)
-                print(f"Model saved to {args.model}")
+                logger.info("Model saved to %s", args.model)
             else:
                 default_path = "correlation_model.pkl"
                 correlator.ml_correlator.save_model(default_path)
-                print(f"Model saved to {default_path}")
+                logger.info("Model saved to %s", default_path)
 
         except FileNotFoundError:
-            print(f"Error: Training file {args.train} not found")
+            logger.error("Training file %s not found", args.train, exc_info=True)
             sys.exit(1)
-        except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON in training file: {e}")
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in training file %s", args.train, exc_info=True)
             sys.exit(1)
-        except Exception as e:
-            print(f"Error loading training data: {e}")
+        except Exception:
+            logger.error("Error loading training data from %s", args.train, exc_info=True)
             sys.exit(1)
 
     else:
-        print("Use --test for testing or --train for training")
+        logger.info("Use --test for testing or --train for training")
 
 
 if __name__ == "__main__":

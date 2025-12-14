@@ -265,15 +265,15 @@ const HookEffectivenessMonitor = {
         });
 
         // Track when hooks are installed
-      const originalInterceptorAttach = Interceptor.attach;
-      const self = this;
+        const originalInterceptorAttach = Interceptor.attach;
+        const self = this;
 
-      Interceptor.attach = function (target, callbacks) {
-          const installStart = Date.now();
+        Interceptor.attach = function (target, callbacks) {
+            const installStart = Date.now();
 
-          try {
-              const result = originalInterceptorAttach.call(this, target, callbacks);
-              var installTime = Date.now() - installStart;
+            try {
+                const result = originalInterceptorAttach.call(this, target, callbacks);
+                var installTime = Date.now() - installStart;
 
                 // Record successful hook installation
                 self.recordHookInstallation(target, true, installTime, callbacks);
@@ -290,14 +290,14 @@ const HookEffectivenessMonitor = {
         };
 
         // Track when hooks are replaced
-      const originalInterceptorReplace = Interceptor.replace;
+        const originalInterceptorReplace = Interceptor.replace;
 
-      Interceptor.replace = function (target, replacement) {
-          const replaceStart = Date.now();
+        Interceptor.replace = function (target, replacement) {
+            const replaceStart = Date.now();
 
-          try {
-              const result = originalInterceptorReplace.call(this, target, replacement);
-              var replaceTime = Date.now() - replaceStart;
+            try {
+                const result = originalInterceptorReplace.call(this, target, replacement);
+                var replaceTime = Date.now() - replaceStart;
 
                 // Record successful hook replacement
                 self.recordHookReplacement(target, true, replaceTime, replacement);
@@ -323,18 +323,18 @@ const HookEffectivenessMonitor = {
 
         // This will be used to wrap hook callbacks to measure execution
         this.wrapHookCallbacks = function (originalCallbacks, hookId) {
-          const wrappedCallbacks = {};
-          const self = this;
+            const wrappedCallbacks = {};
+            const self = this;
 
-          if (originalCallbacks.onEnter) {
+            if (originalCallbacks.onEnter) {
                 wrappedCallbacks.onEnter = function (args) {
-                  const executionStart = Date.now();
-                  this.hookId = hookId;
+                    const executionStart = Date.now();
+                    this.hookId = hookId;
                     this.executionStart = executionStart;
 
                     try {
-                      const result = originalCallbacks.onEnter.call(this, args);
-                      self.recordHookExecution(
+                        const result = originalCallbacks.onEnter.call(this, args);
+                        self.recordHookExecution(
                             hookId,
                             'onEnter',
                             true,
@@ -356,11 +356,11 @@ const HookEffectivenessMonitor = {
 
             if (originalCallbacks.onLeave) {
                 wrappedCallbacks.onLeave = function (retval) {
-                  const executionStart = Date.now();
+                    const executionStart = Date.now();
 
-                  try {
-                      const result = originalCallbacks.onLeave.call(this, retval);
-                      self.recordHookExecution(
+                    try {
+                        const result = originalCallbacks.onLeave.call(this, retval);
+                        self.recordHookExecution(
                             this.hookId,
                             'onLeave',
                             true,
@@ -446,12 +446,14 @@ const HookEffectivenessMonitor = {
     },
 
     collectMetrics: function () {
-        if (!this.monitor.isRunning) { return; }
+        if (!this.monitor.isRunning) {
+            return;
+        }
 
         try {
-          const timestamp = Date.now();
+            const timestamp = Date.now();
 
-          // Collect hook metrics
+            // Collect hook metrics
             this.collectHookMetrics(timestamp);
 
             // Collect performance metrics
@@ -477,75 +479,75 @@ const HookEffectivenessMonitor = {
     collectHookMetrics: function (timestamp) {
         // Collect metrics for all active hooks
         this.monitor.activeHooks.forEach((hookData, hookId) => {
-          const metrics = {
-            timestamp: timestamp,
-            hookId: hookId,
-            executionCount: hookData.executionCount || 0,
-            successCount: hookData.successCount || 0,
-            failureCount: hookData.failureCount || 0,
-            averageExecutionTime: hookData.averageExecutionTime || 0,
-            isActive: hookData.isActive || false,
-            installTime: hookData.installTime || 0,
-          };
+            const metrics = {
+                timestamp: timestamp,
+                hookId: hookId,
+                executionCount: hookData.executionCount || 0,
+                successCount: hookData.successCount || 0,
+                failureCount: hookData.failureCount || 0,
+                averageExecutionTime: hookData.averageExecutionTime || 0,
+                isActive: hookData.isActive || false,
+                installTime: hookData.installTime || 0,
+            };
 
-          this.metrics.execution.set(`${hookId}_${timestamp}`, metrics);
+            this.metrics.execution.set(`${hookId}_${timestamp}`, metrics);
         });
     },
 
     collectPerformanceMetrics: function (timestamp) {
-      const performanceData = {
-        timestamp: timestamp,
-        cpuUsage: this.estimateCpuUsage(),
-        memoryUsage: this.estimateMemoryUsage(),
-        hookCount: this.monitor.activeHooks.size,
-        averageResponseTime: this.calculateAverageResponseTime(),
-        throughput: this.calculateThroughput(),
-      };
+        const performanceData = {
+            timestamp: timestamp,
+            cpuUsage: this.estimateCpuUsage(),
+            memoryUsage: this.estimateMemoryUsage(),
+            hookCount: this.monitor.activeHooks.size,
+            averageResponseTime: this.calculateAverageResponseTime(),
+            throughput: this.calculateThroughput(),
+        };
 
-      this.metrics.performance.set(timestamp, performanceData);
+        this.metrics.performance.set(timestamp, performanceData);
     },
 
     collectStabilityMetrics: function (timestamp) {
-      const stabilityData = {
-        timestamp: timestamp,
-        crashCount: this.getCrashCount(),
-        exceptionCount: this.getExceptionCount(),
-        hookFailures: this.getHookFailureCount(),
-        uptime: timestamp - this.monitor.startTime,
-        stabilityScore: this.calculateStabilityScore(),
-      };
+        const stabilityData = {
+            timestamp: timestamp,
+            crashCount: this.getCrashCount(),
+            exceptionCount: this.getExceptionCount(),
+            hookFailures: this.getHookFailureCount(),
+            uptime: timestamp - this.monitor.startTime,
+            stabilityScore: this.calculateStabilityScore(),
+        };
 
-      this.metrics.stability.set(timestamp, stabilityData);
+        this.metrics.stability.set(timestamp, stabilityData);
     },
 
     collectResourceMetrics: function (timestamp) {
-      const resourceData = {
-        timestamp: timestamp,
-        memoryFootprint: this.calculateMemoryFootprint(),
-        cpuTime: this.calculateCpuTime(),
-        hookOverhead: this.calculateHookOverhead(),
-        networkUsage: this.calculateNetworkUsage(),
-      };
+        const resourceData = {
+            timestamp: timestamp,
+            memoryFootprint: this.calculateMemoryFootprint(),
+            cpuTime: this.calculateCpuTime(),
+            hookOverhead: this.calculateHookOverhead(),
+            networkUsage: this.calculateNetworkUsage(),
+        };
 
-      this.metrics.resource.set(timestamp, resourceData);
+        this.metrics.resource.set(timestamp, resourceData);
     },
 
     // === HOOK RECORDING METHODS ===
     recordHookInstallation: function (target, success, installTime, callbacks, error) {
-      const hookId = this.generateHookId(target);
-      const timestamp = Date.now();
+        const hookId = this.generateHookId(target);
+        const timestamp = Date.now();
 
-      const installData = {
-        hookId: hookId,
-        target: target.toString(),
-        success: success,
-        installTime: installTime,
-        timestamp: timestamp,
-        callbacks: callbacks,
-        error: error || null,
-      };
+        const installData = {
+            hookId: hookId,
+            target: target.toString(),
+            success: success,
+            installTime: installTime,
+            timestamp: timestamp,
+            callbacks: callbacks,
+            error: error || null,
+        };
 
-      this.metrics.installation.set(hookId, installData);
+        this.metrics.installation.set(hookId, installData);
 
         if (success) {
             // Track active hook
@@ -581,20 +583,20 @@ const HookEffectivenessMonitor = {
     },
 
     recordHookReplacement: function (target, success, replaceTime, replacement, error) {
-      const hookId = this.generateHookId(target);
-      const timestamp = Date.now();
+        const hookId = this.generateHookId(target);
+        const timestamp = Date.now();
 
-      const replaceData = {
-        hookId: hookId,
-        target: target.toString(),
-        success: success,
-        replaceTime: replaceTime,
-        timestamp: timestamp,
-        replacement: replacement,
-        error: error || null,
-      };
+        const replaceData = {
+            hookId: hookId,
+            target: target.toString(),
+            success: success,
+            replaceTime: replaceTime,
+            timestamp: timestamp,
+            replacement: replacement,
+            error: error || null,
+        };
 
-      this.metrics.installation.set(`${hookId}_replace`, replaceData);
+        this.metrics.installation.set(`${hookId}_replace`, replaceData);
 
         if (success) {
             send({
@@ -616,8 +618,10 @@ const HookEffectivenessMonitor = {
     },
 
     recordHookExecution: function (hookId, phase, success, executionTime, error) {
-      const hookData = this.monitor.activeHooks.get(hookId);
-      if (!hookData) { return; }
+        const hookData = this.monitor.activeHooks.get(hookId);
+        if (!hookData) {
+            return;
+        }
 
         hookData.executionCount++;
 
@@ -628,22 +632,22 @@ const HookEffectivenessMonitor = {
         }
 
         // Update average execution time
-      const totalTime =
-        hookData.averageExecutionTime * (hookData.executionCount - 1) + executionTime;
-      hookData.averageExecutionTime = totalTime / hookData.executionCount;
+        const totalTime =
+            hookData.averageExecutionTime * (hookData.executionCount - 1) + executionTime;
+        hookData.averageExecutionTime = totalTime / hookData.executionCount;
 
         // Record execution metrics
-      const executionData = {
-        hookId: hookId,
-        phase: phase,
-        success: success,
-        executionTime: executionTime,
-        timestamp: Date.now(),
-        error: error || null,
-      };
+        const executionData = {
+            hookId: hookId,
+            phase: phase,
+            success: success,
+            executionTime: executionTime,
+            timestamp: Date.now(),
+            error: error || null,
+        };
 
-      const executionKey = `${hookId}_${Date.now()}_${phase}`;
-      this.metrics.execution.set(executionKey, executionData);
+        const executionKey = `${hookId}_${Date.now()}_${phase}`;
+        this.metrics.execution.set(executionKey, executionData);
 
         if (!success && error) {
             send({
@@ -658,15 +662,15 @@ const HookEffectivenessMonitor = {
     },
 
     recordBypassSuccess: function (technique, details) {
-      const successData = {
-        technique: technique,
-        timestamp: Date.now(),
-        details: details,
-        success: true,
-      };
+        const successData = {
+            technique: technique,
+            timestamp: Date.now(),
+            details: details,
+            success: true,
+        };
 
-      const successKey = `${technique}_${Date.now()}`;
-      this.metrics.success.set(successKey, successData);
+        const successKey = `${technique}_${Date.now()}`;
+        this.metrics.success.set(successKey, successData);
 
         send({
             type: 'bypass',
@@ -678,15 +682,15 @@ const HookEffectivenessMonitor = {
     },
 
     recordBypassFailure: function (technique, details) {
-      const failureData = {
-        technique: technique,
-        timestamp: Date.now(),
-        details: details,
-        success: false,
-      };
+        const failureData = {
+            technique: technique,
+            timestamp: Date.now(),
+            details: details,
+            success: false,
+        };
 
-      const failureKey = `${technique}_${Date.now()}`;
-      this.metrics.failure.set(failureKey, failureData);
+        const failureKey = `${technique}_${Date.now()}`;
+        this.metrics.failure.set(failureKey, failureData);
 
         send({
             type: 'error',
@@ -718,10 +722,10 @@ const HookEffectivenessMonitor = {
     },
 
     calculateAverageSuccessRate: function () {
-      let totalSuccess = 0;
-      let totalAttempts = 0;
+        let totalSuccess = 0;
+        let totalAttempts = 0;
 
-      this.monitor.activeHooks.forEach(hookData => {
+        this.monitor.activeHooks.forEach(hookData => {
             totalSuccess += hookData.successCount;
             totalAttempts += hookData.executionCount;
         });
@@ -730,10 +734,10 @@ const HookEffectivenessMonitor = {
     },
 
     calculateAverageResponseTime: function () {
-      let totalTime = 0;
-      let hookCount = 0;
+        let totalTime = 0;
+        let hookCount = 0;
 
-      this.monitor.activeHooks.forEach(hookData => {
+        this.monitor.activeHooks.forEach(hookData => {
             if (hookData.averageExecutionTime > 0) {
                 totalTime += hookData.averageExecutionTime;
                 hookCount++;
@@ -745,10 +749,10 @@ const HookEffectivenessMonitor = {
     },
 
     calculateStabilityScore: function () {
-      let totalExecutions = 0;
-      let totalFailures = 0;
+        let totalExecutions = 0;
+        let totalFailures = 0;
 
-      this.monitor.activeHooks.forEach(hookData => {
+        this.monitor.activeHooks.forEach(hookData => {
             totalExecutions += hookData.executionCount;
             totalFailures += hookData.failureCount;
         });
@@ -760,51 +764,51 @@ const HookEffectivenessMonitor = {
     },
 
     calculatePerformanceScore: function () {
-      const responseTimeScore =
-        this.statistics.averageResponseTime < this.config.thresholds.maxResponseTime
-          ? 1.0
-          : Math.max(
-            0,
-            1.0 -
-            (this.statistics.averageResponseTime -
-              this.config.thresholds.maxResponseTime) /
-            100
-          );
+        const responseTimeScore =
+            this.statistics.averageResponseTime < this.config.thresholds.maxResponseTime
+                ? 1.0
+                : Math.max(
+                      0,
+                      1.0 -
+                          (this.statistics.averageResponseTime -
+                              this.config.thresholds.maxResponseTime) /
+                              100
+                  );
 
-      const cpuUsageScore =
-        this.estimateCpuUsage() < this.config.thresholds.maxCpuUsage
-          ? 1.0
-          : Math.max(
-            0,
-            1.0 - (this.estimateCpuUsage() - this.config.thresholds.maxCpuUsage) / 10
-          );
+        const cpuUsageScore =
+            this.estimateCpuUsage() < this.config.thresholds.maxCpuUsage
+                ? 1.0
+                : Math.max(
+                      0,
+                      1.0 - (this.estimateCpuUsage() - this.config.thresholds.maxCpuUsage) / 10
+                  );
 
-      const memoryUsageScore =
-        this.estimateMemoryUsage() < this.config.thresholds.maxMemoryUsage
-          ? 1.0
-          : Math.max(
-            0,
-            1.0 -
-            (this.estimateMemoryUsage() - this.config.thresholds.maxMemoryUsage) / 50
-          );
+        const memoryUsageScore =
+            this.estimateMemoryUsage() < this.config.thresholds.maxMemoryUsage
+                ? 1.0
+                : Math.max(
+                      0,
+                      1.0 -
+                          (this.estimateMemoryUsage() - this.config.thresholds.maxMemoryUsage) / 50
+                  );
 
-      this.statistics.performanceScore =
+        this.statistics.performanceScore =
             (responseTimeScore + cpuUsageScore + memoryUsageScore) / 3;
         return this.statistics.performanceScore;
     },
 
     calculateOverallEffectiveness: function () {
-      const successRateWeight = 0.4;
-      const stabilityWeight = 0.3;
-      const performanceWeight = 0.2;
-      const bypassWeight = 0.1;
+        const successRateWeight = 0.4;
+        const stabilityWeight = 0.3;
+        const performanceWeight = 0.2;
+        const bypassWeight = 0.1;
 
-      const bypassScore =
-        this.statistics.totalBypassAttempts > 0
-          ? this.statistics.successfulBypasses / this.statistics.totalBypassAttempts
-          : 0;
+        const bypassScore =
+            this.statistics.totalBypassAttempts > 0
+                ? this.statistics.successfulBypasses / this.statistics.totalBypassAttempts
+                : 0;
 
-      this.statistics.overallEffectiveness =
+        this.statistics.overallEffectiveness =
             this.statistics.averageSuccessRate * successRateWeight +
             this.statistics.stabilityScore * stabilityWeight +
             this.statistics.performanceScore * performanceWeight +
@@ -820,15 +824,15 @@ const HookEffectivenessMonitor = {
     // === PERFORMANCE MEASUREMENT ===
     measurePerformanceImpact: function () {
         try {
-          const currentMetrics = {
-            timestamp: Date.now(),
-            cpuUsage: this.estimateCpuUsage(),
-            memoryUsage: this.estimateMemoryUsage(),
-            hookCount: this.monitor.activeHooks.size,
-            activeProcesses: this.getActiveProcessCount(),
-          };
+            const currentMetrics = {
+                timestamp: Date.now(),
+                cpuUsage: this.estimateCpuUsage(),
+                memoryUsage: this.estimateMemoryUsage(),
+                hookCount: this.monitor.activeHooks.size,
+                activeProcesses: this.getActiveProcessCount(),
+            };
 
-          this.recordPerformanceImpact(currentMetrics);
+            this.recordPerformanceImpact(currentMetrics);
         } catch (e) {
             send({
                 type: 'error',
@@ -840,8 +844,8 @@ const HookEffectivenessMonitor = {
     },
 
     recordPerformanceImpact: function (metrics) {
-      const impactKey = `perf_${metrics.timestamp}`;
-      this.metrics.performance.set(impactKey, metrics);
+        const impactKey = `perf_${metrics.timestamp}`;
+        this.metrics.performance.set(impactKey, metrics);
 
         // Check for performance issues
         if (metrics.cpuUsage > this.config.thresholds.maxCpuUsage) {
@@ -867,31 +871,31 @@ const HookEffectivenessMonitor = {
 
     estimateCpuUsage: function () {
         // Simplified CPU usage estimation based on hook activity
-      const activeHooks = this.monitor.activeHooks.size;
-      const executionRate = this.calculateExecutionRate();
+        const activeHooks = this.monitor.activeHooks.size;
+        const executionRate = this.calculateExecutionRate();
 
-      return Math.min(100, activeHooks * 0.5 + executionRate * 0.1);
+        return Math.min(100, activeHooks * 0.5 + executionRate * 0.1);
     },
 
     estimateMemoryUsage: function () {
         // Simplified memory usage estimation
-      const activeHooks = this.monitor.activeHooks.size;
-      const metricsSize = this.getMetricsStorageSize();
+        const activeHooks = this.monitor.activeHooks.size;
+        const metricsSize = this.getMetricsStorageSize();
 
-      return activeHooks * 0.1 + metricsSize / 1024 / 1024; // MB
+        return activeHooks * 0.1 + metricsSize / 1024 / 1024; // MB
     },
 
     calculateExecutionRate: function () {
-      const currentTime = Date.now();
-      const timeWindow = 10000; // 10 seconds
-      let executionCount = 0;
+        const currentTime = Date.now();
+        const timeWindow = 10000; // 10 seconds
+        let executionCount = 0;
 
-      this.monitor.activeHooks.forEach(hookData => {
+        this.monitor.activeHooks.forEach(hookData => {
             // Estimate executions in the last time window
             if (hookData.executionCount > 0) {
-              const timeSinceInstall = currentTime - hookData.installTimestamp;
-              const rate = (hookData.executionCount / timeSinceInstall) * timeWindow;
-              executionCount += rate;
+                const timeSinceInstall = currentTime - hookData.installTimestamp;
+                const rate = (hookData.executionCount / timeSinceInstall) * timeWindow;
+                executionCount += rate;
             }
         });
 
@@ -900,16 +904,16 @@ const HookEffectivenessMonitor = {
 
     getMetricsStorageSize: function () {
         // Estimate memory used by metrics storage
-      const totalEntries =
-        this.metrics.installation.size +
-        this.metrics.execution.size +
-        this.metrics.success.size +
-        this.metrics.failure.size +
-        this.metrics.performance.size +
-        this.metrics.stability.size +
-        this.metrics.resource.size;
+        const totalEntries =
+            this.metrics.installation.size +
+            this.metrics.execution.size +
+            this.metrics.success.size +
+            this.metrics.failure.size +
+            this.metrics.performance.size +
+            this.metrics.stability.size +
+            this.metrics.resource.size;
 
-      return totalEntries * 500; // Estimated 500 bytes per entry
+        return totalEntries * 500; // Estimated 500 bytes per entry
     },
 
     // === REPORTING SYSTEM ===
@@ -961,20 +965,20 @@ const HookEffectivenessMonitor = {
     },
 
     generateRealtimeReport: function () {
-      const report = {
-        timestamp: Date.now(),
-        type: 'realtime',
-        statistics: Object.assign({}, this.statistics),
-        activeHooks: this.monitor.activeHooks.size,
-        currentPerformance: {
-          cpuUsage: this.estimateCpuUsage(),
-          memoryUsage: this.estimateMemoryUsage(),
-          responseTime: this.statistics.averageResponseTime,
-        },
-        recentActivity: this.getRecentActivity(),
-      };
+        const report = {
+            timestamp: Date.now(),
+            type: 'realtime',
+            statistics: Object.assign({}, this.statistics),
+            activeHooks: this.monitor.activeHooks.size,
+            currentPerformance: {
+                cpuUsage: this.estimateCpuUsage(),
+                memoryUsage: this.estimateMemoryUsage(),
+                responseTime: this.statistics.averageResponseTime,
+            },
+            recentActivity: this.getRecentActivity(),
+        };
 
-      this.reports.realtime = report;
+        this.reports.realtime = report;
 
         if (this.config.monitoring.detailedLogging) {
             send({
@@ -989,19 +993,19 @@ const HookEffectivenessMonitor = {
     },
 
     generatePeriodicReport: function () {
-      const report = {
-        timestamp: Date.now(),
-        type: 'periodic',
-        timeWindow: this.config.reporting.summaryInterval,
-        statistics: Object.assign({}, this.statistics),
-        trends: this.calculateTrends(),
-        topPerformingHooks: this.getTopPerformingHooks(),
-        bottomPerformingHooks: this.getBottomPerformingHooks(),
-        performanceMetrics: this.getAggregatedPerformanceMetrics(),
-        issues: this.identifyIssues(),
-      };
+        const report = {
+            timestamp: Date.now(),
+            type: 'periodic',
+            timeWindow: this.config.reporting.summaryInterval,
+            statistics: Object.assign({}, this.statistics),
+            trends: this.calculateTrends(),
+            topPerformingHooks: this.getTopPerformingHooks(),
+            bottomPerformingHooks: this.getBottomPerformingHooks(),
+            performanceMetrics: this.getAggregatedPerformanceMetrics(),
+            issues: this.identifyIssues(),
+        };
 
-      this.reports.periodic.push(report);
+        this.reports.periodic.push(report);
 
         // Keep only recent periodic reports
         if (this.reports.periodic.length > 60) {
@@ -1019,20 +1023,20 @@ const HookEffectivenessMonitor = {
     },
 
     generateSummaryReport: function () {
-      const report = {
-        timestamp: Date.now(),
-        type: 'summary',
-        timeWindow: this.config.reporting.detailedInterval,
-        overallStatistics: Object.assign({}, this.statistics),
-        detailedMetrics: this.getDetailedMetrics(),
-        hookAnalysis: this.generateHookAnalysis(),
-        performanceAnalysis: this.generatePerformanceAnalysis(),
-        stabilityAnalysis: this.generateStabilityAnalysis(),
-        recommendations: this.generateRecommendations(),
-        alerts: this.generateAlerts(),
-      };
+        const report = {
+            timestamp: Date.now(),
+            type: 'summary',
+            timeWindow: this.config.reporting.detailedInterval,
+            overallStatistics: Object.assign({}, this.statistics),
+            detailedMetrics: this.getDetailedMetrics(),
+            hookAnalysis: this.generateHookAnalysis(),
+            performanceAnalysis: this.generatePerformanceAnalysis(),
+            stabilityAnalysis: this.generateStabilityAnalysis(),
+            recommendations: this.generateRecommendations(),
+            alerts: this.generateAlerts(),
+        };
 
-      this.reports.summary = report;
+        this.reports.summary = report;
 
         send({
             type: 'info',
@@ -1044,17 +1048,17 @@ const HookEffectivenessMonitor = {
 
     // === ANALYSIS METHODS ===
     getRecentActivity: function () {
-      const currentTime = Date.now();
-      const recentWindow = 30000; // 30 seconds
-      const activity = {
-        hookExecutions: 0,
-        successfulExecutions: 0,
-        failedExecutions: 0,
-        bypassAttempts: 0,
-        successfulBypasses: 0,
-      };
+        const currentTime = Date.now();
+        const recentWindow = 30000; // 30 seconds
+        const activity = {
+            hookExecutions: 0,
+            successfulExecutions: 0,
+            failedExecutions: 0,
+            bypassAttempts: 0,
+            successfulBypasses: 0,
+        };
 
-      // Count recent hook executions
+        // Count recent hook executions
         this.metrics.execution.forEach(execution => {
             if (currentTime - execution.timestamp < recentWindow) {
                 activity.hookExecutions++;
@@ -1084,59 +1088,69 @@ const HookEffectivenessMonitor = {
     },
 
     calculateTrends: function () {
-        if (!this.config.analysis.enableTrendAnalysis) { return {}; }
+        if (!this.config.analysis.enableTrendAnalysis) {
+            return {};
+        }
 
-      const trends = {
-        successRate: this.calculateSuccessRateTrend(),
-        responseTime: this.calculateResponseTimeTrend(),
-        stability: this.calculateStabilityTrend(),
-        performance: this.calculatePerformanceTrend(),
-      };
+        const trends = {
+            successRate: this.calculateSuccessRateTrend(),
+            responseTime: this.calculateResponseTimeTrend(),
+            stability: this.calculateStabilityTrend(),
+            performance: this.calculatePerformanceTrend(),
+        };
 
-      return trends;
+        return trends;
     },
 
     calculateSuccessRateTrend: function () {
-      const recentReports = this.reports.periodic.slice(-10); // Last 10 reports
-        if (recentReports.length < 2) { return 'stable'; }
+        const recentReports = this.reports.periodic.slice(-10); // Last 10 reports
+        if (recentReports.length < 2) {
+            return 'stable';
+        }
 
-      const rates = recentReports.map(r => r.statistics.averageSuccessRate);
-      const trend = this.calculateTrendDirection(rates);
+        const rates = recentReports.map(r => r.statistics.averageSuccessRate);
+        const trend = this.calculateTrendDirection(rates);
 
-      return trend;
+        return trend;
     },
 
     calculateResponseTimeTrend: function () {
-      const recentReports = this.reports.periodic.slice(-10);
-      if (recentReports.length < 2) { return 'stable'; }
+        const recentReports = this.reports.periodic.slice(-10);
+        if (recentReports.length < 2) {
+            return 'stable';
+        }
 
-      const times = recentReports.map(r => r.statistics.averageResponseTime);
-      const trend = this.calculateTrendDirection(times);
+        const times = recentReports.map(r => r.statistics.averageResponseTime);
+        const trend = this.calculateTrendDirection(times);
 
-      return trend;
+        return trend;
     },
 
     calculateTrendDirection: values => {
-        if (values.length < 2) { return 'stable'; }
+        if (values.length < 2) {
+            return 'stable';
+        }
 
-      let sum = 0;
-      for (let i = 1; i < values.length; i++) {
+        let sum = 0;
+        for (let i = 1; i < values.length; i++) {
             sum += values[i] - values[i - 1];
         }
 
-      const average = sum / (values.length - 1);
+        const average = sum / (values.length - 1);
 
-      if (Math.abs(average) < 0.01) { return 'stable'; }
+        if (Math.abs(average) < 0.01) {
+            return 'stable';
+        }
         return average > 0 ? 'increasing' : 'decreasing';
     },
 
     getTopPerformingHooks: function () {
-      const hooks = [];
+        const hooks = [];
 
-      this.monitor.activeHooks.forEach((hookData, hookId) => {
+        this.monitor.activeHooks.forEach((hookData, hookId) => {
             if (hookData.executionCount > 0) {
-              const successRate = hookData.successCount / hookData.executionCount;
-              hooks.push({
+                const successRate = hookData.successCount / hookData.executionCount;
+                hooks.push({
                     hookId: hookId,
                     successRate: successRate,
                     executionTime: hookData.averageExecutionTime,
@@ -1157,12 +1171,12 @@ const HookEffectivenessMonitor = {
     },
 
     getBottomPerformingHooks: function () {
-      const hooks = [];
+        const hooks = [];
 
-      this.monitor.activeHooks.forEach((hookData, hookId) => {
+        this.monitor.activeHooks.forEach((hookData, hookId) => {
             if (hookData.executionCount > 0) {
-              const successRate = hookData.successCount / hookData.executionCount;
-              hooks.push({
+                const successRate = hookData.successCount / hookData.executionCount;
+                hooks.push({
                     hookId: hookId,
                     successRate: successRate,
                     executionTime: hookData.averageExecutionTime,
@@ -1183,9 +1197,9 @@ const HookEffectivenessMonitor = {
     },
 
     identifyIssues: function () {
-      const issues = [];
+        const issues = [];
 
-      // Check success rate issues
+        // Check success rate issues
         if (this.statistics.averageSuccessRate < this.config.thresholds.minSuccessRate) {
             issues.push({
                 type: 'success_rate',
@@ -1219,8 +1233,8 @@ const HookEffectivenessMonitor = {
         }
 
         // Check resource usage issues
-      const cpuUsage = this.estimateCpuUsage();
-      if (cpuUsage > this.config.thresholds.maxCpuUsage) {
+        const cpuUsage = this.estimateCpuUsage();
+        if (cpuUsage > this.config.thresholds.maxCpuUsage) {
             issues.push({
                 type: 'cpu_usage',
                 severity: 'medium',
@@ -1230,8 +1244,8 @@ const HookEffectivenessMonitor = {
             });
         }
 
-      const memoryUsage = this.estimateMemoryUsage();
-      if (memoryUsage > this.config.thresholds.maxMemoryUsage) {
+        const memoryUsage = this.estimateMemoryUsage();
+        if (memoryUsage > this.config.thresholds.maxMemoryUsage) {
             issues.push({
                 type: 'memory_usage',
                 severity: 'medium',
@@ -1247,11 +1261,11 @@ const HookEffectivenessMonitor = {
     // === UTILITY METHODS ===
     generateHookId: target => {
         try {
-          const targetStr = target.toString();
-          let hash = 0;
-          for (let i = 0; i < targetStr.length; i++) {
-              const char = targetStr.charCodeAt(i);
-              hash = (hash << 5) - hash + char;
+            const targetStr = target.toString();
+            let hash = 0;
+            for (let i = 0; i < targetStr.length; i++) {
+                const char = targetStr.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
                 hash &= hash; // Convert to 32-bit integer
             }
             return `hook_${Math.abs(hash).toString(16)}`;
@@ -1267,8 +1281,8 @@ const HookEffectivenessMonitor = {
 
     getExceptionCount: function () {
         // Count exceptions from hook failures
-      let exceptionCount = 0;
-      this.metrics.execution.forEach(execution => {
+        let exceptionCount = 0;
+        this.metrics.execution.forEach(execution => {
             if (!execution.success && execution.error) {
                 exceptionCount++;
             }
@@ -1277,8 +1291,8 @@ const HookEffectivenessMonitor = {
     },
 
     getHookFailureCount: function () {
-      let failureCount = 0;
-      this.metrics.installation.forEach(installation => {
+        let failureCount = 0;
+        this.metrics.installation.forEach(installation => {
             if (!installation.success) {
                 failureCount++;
             }
@@ -1292,8 +1306,8 @@ const HookEffectivenessMonitor = {
 
     calculateCpuTime: function () {
         // Estimate CPU time based on hook executions
-      let totalExecutionTime = 0;
-      this.monitor.activeHooks.forEach(hookData => {
+        let totalExecutionTime = 0;
+        this.monitor.activeHooks.forEach(hookData => {
             totalExecutionTime += hookData.averageExecutionTime * hookData.executionCount;
         });
         return totalExecutionTime;
@@ -1301,7 +1315,7 @@ const HookEffectivenessMonitor = {
 
     calculateHookOverhead: function () {
         // Calculate overhead introduced by hooks
-      const baselineTime = 1.0; // Baseline execution time
+        const baselineTime = 1.0; // Baseline execution time
         return this.statistics.averageResponseTime / baselineTime;
     },
 
@@ -1311,11 +1325,11 @@ const HookEffectivenessMonitor = {
     },
 
     calculateThroughput: function () {
-      const timeWindow = 60000; // 1 minute
-      const currentTime = Date.now();
-      let executionCount = 0;
+        const timeWindow = 60000; // 1 minute
+        const currentTime = Date.now();
+        let executionCount = 0;
 
-      this.metrics.execution.forEach(execution => {
+        this.metrics.execution.forEach(execution => {
             if (currentTime - execution.timestamp < timeWindow) {
                 executionCount++;
             }
@@ -1356,10 +1370,10 @@ const HookEffectivenessMonitor = {
     },
 
     calculateAverageInstallationTime: function () {
-      let totalTime = 0;
-      let count = 0;
+        let totalTime = 0;
+        let count = 0;
 
-      this.metrics.installation.forEach(installation => {
+        this.metrics.installation.forEach(installation => {
             if (installation.success) {
                 totalTime += installation.installTime;
                 count++;
@@ -1370,21 +1384,21 @@ const HookEffectivenessMonitor = {
     },
 
     generateHookAnalysis: function () {
-      const analysis = {
-        totalHooks: this.monitor.activeHooks.size,
-        averageSuccessRate: this.statistics.averageSuccessRate,
-        mostActiveHooks: this.getMostActiveHooks(),
-        leastActiveHooks: this.getLeastActiveHooks(),
-        hooksByCategory: this.categorizeHooks(),
-      };
+        const analysis = {
+            totalHooks: this.monitor.activeHooks.size,
+            averageSuccessRate: this.statistics.averageSuccessRate,
+            mostActiveHooks: this.getMostActiveHooks(),
+            leastActiveHooks: this.getLeastActiveHooks(),
+            hooksByCategory: this.categorizeHooks(),
+        };
 
-      return analysis;
+        return analysis;
     },
 
     getMostActiveHooks: function () {
-      const hooks = [];
+        const hooks = [];
 
-      this.monitor.activeHooks.forEach((hookData, hookId) => {
+        this.monitor.activeHooks.forEach((hookData, hookId) => {
             hooks.push({
                 hookId: hookId,
                 executionCount: hookData.executionCount,
@@ -1396,9 +1410,9 @@ const HookEffectivenessMonitor = {
     },
 
     getLeastActiveHooks: function () {
-      const hooks = [];
+        const hooks = [];
 
-      this.monitor.activeHooks.forEach((hookData, hookId) => {
+        this.monitor.activeHooks.forEach((hookData, hookId) => {
             hooks.push({
                 hookId: hookId,
                 executionCount: hookData.executionCount,
@@ -1431,9 +1445,9 @@ const HookEffectivenessMonitor = {
     },
 
     identifyBottlenecks: function () {
-      const bottlenecks = [];
+        const bottlenecks = [];
 
-      if (this.statistics.averageResponseTime > this.config.thresholds.maxResponseTime) {
+        if (this.statistics.averageResponseTime > this.config.thresholds.maxResponseTime) {
             bottlenecks.push('High response time');
         }
 
@@ -1460,17 +1474,19 @@ const HookEffectivenessMonitor = {
     },
 
     calculateStabilityTrend: function () {
-      const recentReports = this.reports.periodic.slice(-5);
-      if (recentReports.length < 2) { return 'stable'; }
+        const recentReports = this.reports.periodic.slice(-5);
+        if (recentReports.length < 2) {
+            return 'stable';
+        }
 
-      const scores = recentReports.map(r => r.statistics.stabilityScore);
-      return this.calculateTrendDirection(scores);
+        const scores = recentReports.map(r => r.statistics.stabilityScore);
+        return this.calculateTrendDirection(scores);
     },
 
     generateRecommendations: function () {
-      const recommendations = [];
+        const recommendations = [];
 
-      if (this.statistics.averageSuccessRate < 0.9) {
+        if (this.statistics.averageSuccessRate < 0.9) {
             recommendations.push('Consider optimizing hook placement for better success rates');
         }
 
@@ -1490,10 +1506,10 @@ const HookEffectivenessMonitor = {
     },
 
     generateAlerts: function () {
-      const alerts = [];
-      const issues = this.identifyIssues();
+        const alerts = [];
+        const issues = this.identifyIssues();
 
-      issues.forEach(issue => {
+        issues.forEach(issue => {
             if (issue.severity === 'high') {
                 alerts.push({
                     level: 'critical',
@@ -1515,11 +1531,11 @@ const HookEffectivenessMonitor = {
     },
 
     getAggregatedPerformanceMetrics: function () {
-      const recentMetrics = [];
-      const currentTime = Date.now();
-      const timeWindow = this.config.reporting.summaryInterval;
+        const recentMetrics = [];
+        const currentTime = Date.now();
+        const timeWindow = this.config.reporting.summaryInterval;
 
-      this.metrics.performance.forEach(metric => {
+        this.metrics.performance.forEach(metric => {
             if (currentTime - metric.timestamp < timeWindow) {
                 recentMetrics.push(metric);
             }
@@ -1534,12 +1550,12 @@ const HookEffectivenessMonitor = {
             };
         }
 
-      const totalCpu = recentMetrics.reduce((sum, m) => sum + m.cpuUsage, 0);
-      const totalMemory = recentMetrics.reduce((sum, m) => sum + m.memoryUsage, 0);
-      const totalResponse = recentMetrics.reduce((sum, m) => sum + m.averageResponseTime, 0);
-      const totalThroughput = recentMetrics.reduce((sum, m) => sum + m.throughput, 0);
+        const totalCpu = recentMetrics.reduce((sum, m) => sum + m.cpuUsage, 0);
+        const totalMemory = recentMetrics.reduce((sum, m) => sum + m.memoryUsage, 0);
+        const totalResponse = recentMetrics.reduce((sum, m) => sum + m.averageResponseTime, 0);
+        const totalThroughput = recentMetrics.reduce((sum, m) => sum + m.throughput, 0);
 
-      return {
+        return {
             averageCpuUsage: totalCpu / recentMetrics.length,
             averageMemoryUsage: totalMemory / recentMetrics.length,
             averageResponseTime: totalResponse / recentMetrics.length,
@@ -1549,7 +1565,9 @@ const HookEffectivenessMonitor = {
 
     // === ANALYSIS ENGINE ===
     setupAnalysisEngine: function () {
-        if (!this.config.analysis.enableTrendAnalysis) { return; }
+        if (!this.config.analysis.enableTrendAnalysis) {
+            return;
+        }
 
         send({
             type: 'status',
@@ -1588,9 +1606,9 @@ const HookEffectivenessMonitor = {
     },
 
     performCorrelationAnalysis: function () {
-      const correlations = {};
+        const correlations = {};
 
-      // Analyze correlation between success rate and response time
+        // Analyze correlation between success rate and response time
         correlations.successRate_responseTime = this.calculateCorrelation(
             this.getSuccessRateHistory(),
             this.getResponseTimeHistory()
@@ -1610,24 +1628,24 @@ const HookEffectivenessMonitor = {
             return 0;
         }
 
-      const mean1 = series1.reduce((sum, val) => sum + val, 0) / series1.length;
-      const mean2 = series2.reduce((sum, val) => sum + val, 0) / series2.length;
+        const mean1 = series1.reduce((sum, val) => sum + val, 0) / series1.length;
+        const mean2 = series2.reduce((sum, val) => sum + val, 0) / series2.length;
 
-      let numerator = 0;
-      let sum1Sq = 0;
-      let sum2Sq = 0;
+        let numerator = 0;
+        let sum1Sq = 0;
+        let sum2Sq = 0;
 
-      for (let i = 0; i < series1.length; i++) {
-          const diff1 = series1[i] - mean1;
-          const diff2 = series2[i] - mean2;
+        for (let i = 0; i < series1.length; i++) {
+            const diff1 = series1[i] - mean1;
+            const diff2 = series2[i] - mean2;
 
-          numerator += diff1 * diff2;
+            numerator += diff1 * diff2;
             sum1Sq += diff1 * diff1;
             sum2Sq += diff2 * diff2;
         }
 
-      const denominator = Math.sqrt(sum1Sq * sum2Sq);
-      return denominator === 0 ? 0 : numerator / denominator;
+        const denominator = Math.sqrt(sum1Sq * sum2Sq);
+        return denominator === 0 ? 0 : numerator / denominator;
     },
 
     getSuccessRateHistory: function () {
@@ -1647,23 +1665,23 @@ const HookEffectivenessMonitor = {
     },
 
     performAnomalyDetection: function () {
-      const anomalies = [];
+        const anomalies = [];
 
-      // Detect success rate anomalies
-      const successRateAnomaly = this.detectAnomalyInSeries(
-        this.getSuccessRateHistory(),
-        'success_rate'
-      );
-      if (successRateAnomaly) {
+        // Detect success rate anomalies
+        const successRateAnomaly = this.detectAnomalyInSeries(
+            this.getSuccessRateHistory(),
+            'success_rate'
+        );
+        if (successRateAnomaly) {
             anomalies.push(successRateAnomaly);
         }
 
         // Detect response time anomalies
-      const responseTimeAnomaly = this.detectAnomalyInSeries(
-        this.getResponseTimeHistory(),
-        'response_time'
-      );
-      if (responseTimeAnomaly) {
+        const responseTimeAnomaly = this.detectAnomalyInSeries(
+            this.getResponseTimeHistory(),
+            'response_time'
+        );
+        if (responseTimeAnomaly) {
             anomalies.push(responseTimeAnomaly);
         }
 
@@ -1680,18 +1698,20 @@ const HookEffectivenessMonitor = {
     },
 
     detectAnomalyInSeries: (series, seriesName) => {
-        if (series.length < 5) { return null; }
+        if (series.length < 5) {
+            return null;
+        }
 
         // Calculate rolling average and standard deviation
-      const recent = series.slice(-5);
-      const mean = recent.reduce((sum, val) => sum + val, 0) / recent.length;
-      const variance = recent.reduce((sum, val) => sum + (val - mean) ** 2, 0) / recent.length;
-      const stdDev = Math.sqrt(variance);
+        const recent = series.slice(-5);
+        const mean = recent.reduce((sum, val) => sum + val, 0) / recent.length;
+        const variance = recent.reduce((sum, val) => sum + (val - mean) ** 2, 0) / recent.length;
+        const stdDev = Math.sqrt(variance);
 
-      const currentValue = series[series.length - 1];
-      const deviation = Math.abs(currentValue - mean) / stdDev;
+        const currentValue = series[series.length - 1];
+        const deviation = Math.abs(currentValue - mean) / stdDev;
 
-      if (deviation > 2.0) {
+        if (deviation > 2.0) {
             // 2 standard deviations
             return {
                 type: seriesName,
@@ -1726,8 +1746,8 @@ const HookEffectivenessMonitor = {
 
         if (report.alerts.length > 0) {
             for (var i = 0; i < report.alerts.length; i++) {
-              const alert = report.alerts[i];
-              send({
+                const alert = report.alerts[i];
+                send({
                     type: alert.level === 'critical' ? 'error' : 'warning',
                     target: 'hook_effectiveness_monitor',
                     action: 'summary_alert',
@@ -1751,10 +1771,10 @@ const HookEffectivenessMonitor = {
 
     // === CLEANUP ===
     cleanupOldData: function () {
-      const currentTime = Date.now();
-      const retentionTime = this.config.reporting.retentionPeriod;
+        const currentTime = Date.now();
+        const retentionTime = this.config.reporting.retentionPeriod;
 
-      // Clean up old metrics
+        // Clean up old metrics
         this.cleanupMetricsOlderThan(currentTime - retentionTime);
 
         // Clean up old reports
@@ -1762,17 +1782,17 @@ const HookEffectivenessMonitor = {
     },
 
     cleanupMetricsOlderThan: function (cutoffTime) {
-      const metricsToClean = [
-        this.metrics.installation,
-        this.metrics.execution,
-        this.metrics.success,
-        this.metrics.failure,
-        this.metrics.performance,
-        this.metrics.stability,
-        this.metrics.resource,
-      ];
+        const metricsToClean = [
+            this.metrics.installation,
+            this.metrics.execution,
+            this.metrics.success,
+            this.metrics.failure,
+            this.metrics.performance,
+            this.metrics.stability,
+            this.metrics.resource,
+        ];
 
-      metricsToClean.forEach(metricsMap => {
+        metricsToClean.forEach(metricsMap => {
             metricsMap.forEach((metric, key) => {
                 if (metric.timestamp && metric.timestamp < cutoffTime) {
                     metricsMap.delete(key);
@@ -1827,9 +1847,9 @@ const HookEffectivenessMonitor = {
                 overall_effectiveness: (this.statistics.overallEffectiveness * 100).toFixed(1),
             });
 
-          const activeFeatures = [];
+            const activeFeatures = [];
 
-          if (this.config.monitoring.enabled) {
+            if (this.config.monitoring.enabled) {
                 activeFeatures.push('Real-Time Hook Monitoring');
             }
             if (this.config.monitoring.performanceMetrics) {
@@ -2309,7 +2329,9 @@ const HookEffectivenessMonitor = {
     },
 
     calculateValidationMetrics: function () {
-        if (this.neuralPatternAnalysis.trainingData.length < 10) { return; }
+        if (this.neuralPatternAnalysis.trainingData.length < 10) {
+            return;
+        }
 
         const validationSamples = this.neuralPatternAnalysis.trainingData.slice(-10);
         let correct = 0;
@@ -2329,12 +2351,19 @@ const HookEffectivenessMonitor = {
             const predictedClass = prediction > 0.5 ? 1 : 0;
             const actualClass = sample.target > 0.5 ? 1 : 0;
 
-            if (predictedClass === actualClass) { correct++; }
+            if (predictedClass === actualClass) {
+                correct++;
+            }
 
-            if (actualClass === 1 && predictedClass === 1) { truePositives++; }
-            else if (actualClass === 0 && predictedClass === 1) { falsePositives++; }
-            else if (actualClass === 0 && predictedClass === 0) { _trueNegatives++; }
-            else if (actualClass === 1 && predictedClass === 0) { falseNegatives++; }
+            if (actualClass === 1 && predictedClass === 1) {
+                truePositives++;
+            } else if (actualClass === 0 && predictedClass === 1) {
+                falsePositives++;
+            } else if (actualClass === 0 && predictedClass === 0) {
+                _trueNegatives++;
+            } else if (actualClass === 1 && predictedClass === 0) {
+                falseNegatives++;
+            }
         }
 
         const accuracy = correct / validationSamples.length;
@@ -3473,7 +3502,9 @@ const HookEffectivenessMonitor = {
     },
 
     calculateAutocorrelation: (series, lag) => {
-        if (series.length <= lag) { return 0; }
+        if (series.length <= lag) {
+            return 0;
+        }
 
         const n = series.length - lag;
         const mean = series.reduce((a, b) => a + b, 0) / series.length;
@@ -3820,11 +3851,21 @@ const HookEffectivenessMonitor = {
 
         // Count IOCs across all feeds
         for (const [_feedType, feed] of this.threatIntelligence.iocFeeds) {
-            if (feed.md5) { feedStats.iocCount += feed.md5.size; }
-            if (feed.sha1) { feedStats.iocCount += feed.sha1.size; }
-            if (feed.sha256) { feedStats.iocCount += feed.sha256.size; }
-            if (feed.ipAddresses) { feedStats.iocCount += feed.ipAddresses.size; }
-            if (feed.domains) { feedStats.iocCount += feed.domains.size; }
+            if (feed.md5) {
+                feedStats.iocCount += feed.md5.size;
+            }
+            if (feed.sha1) {
+                feedStats.iocCount += feed.sha1.size;
+            }
+            if (feed.sha256) {
+                feedStats.iocCount += feed.sha256.size;
+            }
+            if (feed.ipAddresses) {
+                feedStats.iocCount += feed.ipAddresses.size;
+            }
+            if (feed.domains) {
+                feedStats.iocCount += feed.domains.size;
+            }
         }
 
         // Simulate new threat detection

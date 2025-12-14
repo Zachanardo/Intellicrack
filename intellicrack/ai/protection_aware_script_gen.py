@@ -23,6 +23,7 @@ from typing import Any
 
 from ..models.protection_knowledge_base import ProtectionSchemeInfo, get_protection_knowledge_base
 from ..protection.unified_protection_engine import UnifiedProtectionResult, get_unified_engine
+from ..utils.logger import get_logger
 
 
 """
@@ -32,7 +33,7 @@ This module enhances AI script generation by using ML-detected protection
 information to generate targeted bypass scripts.
 """
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ProtectionAwareScriptGenerator:
@@ -84,7 +85,7 @@ class ProtectionAwareScriptGenerator:
         try:
             result = self.unified_engine.analyze_file(binary_path, deep_scan=True)
         except Exception as e:
-            self.logger.error("Exception in protection_aware_script_gen: %s", e)
+            self.logger.error("Exception in protection_aware_script_gen: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": f"Failed to analyze protection: {e!s}",
@@ -1320,6 +1321,10 @@ import idautils
 import idc
 import struct
 import re
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger('FlexLMBypass')
 
 class FlexLMBypass:
     def __init__(self):
@@ -1329,7 +1334,7 @@ class FlexLMBypass:
         self.patches = []
 
     def run(self):
-        print("[FlexLM] Starting advanced license bypass...")
+        logger.info("[FlexLM] Starting advanced license bypass...")
 
         # Phase 1: Identify FlexLM components
         self.identify_flexlm()
@@ -1346,7 +1351,7 @@ class FlexLMBypass:
         # Phase 5: Generate license file
         self.generate_license_file()
 
-        print(f"[FlexLM] Complete! Applied {len(self.patches)} patches")
+        logger.info("[FlexLM] Complete! Applied %d patches", len(self.patches))
 
     def identify_flexlm(self):
         # Check imports for FlexLM libraries
@@ -1356,7 +1361,7 @@ class FlexLMBypass:
             for addr in idautils.Segments():
                 seg_name = idc.get_segm_name(addr).lower()
                 if imp_name in seg_name:
-                    print(f"[FlexLM] Found segment: {seg_name}")
+                    logger.info("[FlexLM] Found segment: %s", seg_name)
 
         # Find FlexLM API functions
         api_names = [
@@ -1369,12 +1374,12 @@ class FlexLMBypass:
             addr = idc.get_name_ea_simple(api)
             if addr != idaapi.BADADDR:
                 self.flexlm_apis[api] = addr
-                print(f"[FlexLM] Found API: {api} at {hex(addr)}")
+                logger.info("[FlexLM] Found API: %s at %s", api, hex(addr))
 
     def find_flexlm_apis(self):
         # For each found API, analyze usage
         for api_name, api_addr in self.flexlm_apis.items():
-            print(f"\\n[FlexLM] Analyzing {api_name}...")
+            logger.info("[FlexLM] Analyzing %s...", api_name)
 
             # Find all references
             for xref in idautils.XrefsTo(api_addr):
@@ -1382,7 +1387,7 @@ class FlexLMBypass:
                 func = idaapi.get_func(call_addr)
 
                 if func:
-                    print(f"  Called from {hex(func.start_ea)}")
+                    logger.debug("  Called from %s", hex(func.start_ea))
                     self.analyze_api_call(call_addr, api_name, func)
 
     def analyze_api_call(self, call_addr, api_name, func):
@@ -1422,7 +1427,7 @@ class FlexLMBypass:
 
     def patch_init_call(self, call_addr, func):
         # Patch initialization checks
-        print(f"    Patching lc_init at {hex(call_addr)}")
+        logger.debug("    Patching lc_init at %s", hex(call_addr))
 
         # Find where the handle is stored
         prev_addr = idc.prev_head(call_addr)
@@ -1432,13 +1437,13 @@ class FlexLMBypass:
                 # This might be the handle storage
                 op = idc.print_operand(prev_addr, 0)
                 if "[" in op:  # Memory operation
-                    print(f"    Handle stored at: {op}")
+                    logger.debug("    Handle stored at: %s", op)
                     break
             prev_addr = idc.prev_head(prev_addr)
 
     def patch_crypto_call(self, call_addr, func):
         # Patch cryptographic validation
-        print(f"    Patching crypto at {hex(call_addr)}")
+        logger.debug("    Patching crypto at %s", hex(call_addr))
 
         # These usually return 1 for success
         next_addr = idc.next_head(call_addr)
@@ -1478,7 +1483,7 @@ class FlexLMBypass:
         self.patches.append(patch_info)
 
     def analyze_license_validation(self):
-        print("\\n[FlexLM] Analyzing license validation...")
+        logger.info("[FlexLM] Analyzing license validation...")
 
         # Search for common license file patterns
         strings = ["FEATURE", "INCREMENT", "SERVER", "VENDOR", "USE_SERVER"]
@@ -1489,7 +1494,7 @@ class FlexLMBypass:
                 str_val = str_val.decode('utf-8', errors='ignore')
                 for pattern in strings:
                     if pattern in str_val:
-                        print(f"[FlexLM] Found license string at {hex(s.ea)}: {str_val[:50]}")
+                        logger.info("[FlexLM] Found license string at %s: %s", hex(s.ea), str_val[:50])
 
                         # Find references to this string
                         for xref in idautils.XrefsTo(s.ea):
@@ -1500,7 +1505,7 @@ class FlexLMBypass:
         if not func:
             return
 
-        print(f"  License parsing function at {hex(func.start_ea)}")
+        logger.info("  License parsing function at %s", hex(func.start_ea))
 
         # Look for validation patterns in this function
         addr = func.start_ea
@@ -1513,7 +1518,7 @@ class FlexLMBypass:
                 target_name = idc.get_func_name(target)
 
                 if target_name and any(x in target_name.lower() for x in ["crc", "check", "verify", "validate"]):
-                    print(f"    Found validation call to {target_name}")
+                    logger.info("    Found validation call to %s", target_name)
 
                     # Patch the result check
                     next_addr = idc.next_head(addr)
@@ -1525,14 +1530,14 @@ class FlexLMBypass:
             addr = idc.next_head(addr)
 
     def apply_patches(self):
-        print(f"\\n[FlexLM] Applying {len(self.patches)} patches...")
+        logger.info("[FlexLM] Applying %d patches...", len(self.patches))
 
         for patch in self.patches:
             addr = patch['addr']
             patch_bytes = patch['bytes']
             comment = patch['comment']
 
-            print(f"  Patching {hex(addr)}: {comment}")
+            logger.info("  Patching %s: %s", hex(addr), comment)
 
             # Save original bytes for reversal
             original = idc.get_bytes(addr, len(patch_bytes))
@@ -1545,7 +1550,7 @@ class FlexLMBypass:
             idc.set_color(addr, idc.CIC_ITEM, 0x00FF00)  # Green
 
     def generate_license_file(self):
-        print("\\n[FlexLM] Generating universal license file...")
+        logger.info("[FlexLM] Generating universal license file...")
 
         license_content = '''# FlexLM Universal License File
 # Generated by Intellicrack FlexLM Bypass
@@ -1574,13 +1579,13 @@ INCREMENT * * 999.9 permanent uncounted HOSTID=ANY \\
     SIGN="0000 0000 0000 0000 0000 0000 0000"
 '''
 
-        print("[FlexLM] License file content:")
-        print(license_content)
+        logger.info("[FlexLM] License file content:")
+        logger.info("%s", license_content)
 
-        print("\\n[FlexLM] Save this as 'license.lic' and set:")
-        print("  LM_LICENSE_FILE=path\\\\to\\\\license.lic")
-        print("  or")
-        print("  LM_LICENSE_FILE=27000@localhost")
+        logger.info("[FlexLM] Save this as 'license.lic' and set:")
+        logger.info("  LM_LICENSE_FILE=path\\\\to\\\\license.lic")
+        logger.info("  or")
+        logger.info("  LM_LICENSE_FILE=27000@localhost")
 
         return license_content
 
@@ -2246,6 +2251,10 @@ import idaapi
 import idautils
 import idc
 import struct
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger('SteamBypass')
 
 class SteamBypass:
     def __init__(self):
@@ -2255,7 +2264,7 @@ class SteamBypass:
         self.ceg_sections = []
 
     def run(self):
-        print("[Steam] Starting advanced Steam DRM bypass...")
+        logger.info("[Steam] Starting advanced Steam DRM bypass...")
 
         # Phase 1: Identify Steam components
         self.identify_steam()
@@ -2272,7 +2281,7 @@ class SteamBypass:
         # Phase 5: Generate steam_appid.txt
         self.generate_appid_file()
 
-        print(f"[Steam] Bypass complete! Applied {len(self.patches)} patches")
+        logger.info("[Steam] Bypass complete! Applied %d patches", len(self.patches))
 
     def identify_steam(self):
         # Find Steam API imports
@@ -2284,7 +2293,7 @@ class SteamBypass:
             for i in range(nimps):
                 name = idaapi.get_import_module_name(i)
                 if name and dll in name.lower():
-                    print(f"[Steam] Found import: {name}")
+                    logger.info("[Steam] Found import: %s", name)
                     self.enumerate_steam_imports(i)
 
         # Find embedded AppID
@@ -2294,7 +2303,7 @@ class SteamBypass:
         def imp_cb(ea, name, ordinal):
             if name:
                 self.steam_apis[name] = ea
-                print(f"  API: {name} at {hex(ea)}")
+                logger.debug("  API: %s at %s", name, hex(ea))
             return True
 
         idaapi.enum_import_names(mod_index, imp_cb)
@@ -2309,7 +2318,7 @@ class SteamBypass:
                 str_val = str_val.decode('utf-8', errors='ignore')
                 for pattern in strings:
                     if pattern in str_val:
-                        print(f"[Steam] Found AppID reference: {str_val}")
+                        logger.info("[Steam] Found AppID reference: %s", str_val)
 
                         # Try to extract AppID
                         for xref in idautils.XrefsTo(s.ea):
@@ -2328,12 +2337,12 @@ class SteamBypass:
                 op_val = idc.get_operand_value(addr, 1)
                 if 10000 < op_val < 10000000:  # Reasonable AppID range
                     self.app_id = op_val
-                    print(f"[Steam] Found AppID: {self.app_id}")
+                    logger.info("[Steam] Found AppID: %d", self.app_id)
                     return
             addr = idc.next_head(addr)
 
     def patch_steam_apis(self):
-        print("\\n[Steam] Patching Steam API calls...")
+        logger.info("[Steam] Patching Steam API calls...")
 
         # Critical APIs to patch
         critical_apis = [
@@ -2350,7 +2359,7 @@ class SteamBypass:
                     patch_func(addr, name)
 
     def patch_init(self, addr, name):
-        print(f"  Patching {name}...")
+        logger.debug("  Patching %s...", name)
 
         # Find all calls to SteamAPI_Init
         for xref in idautils.XrefsTo(addr):
@@ -2434,13 +2443,13 @@ class SteamBypass:
                         self.create_patch(jmp_addr, "Force logged on")
 
     def bypass_ceg(self):
-        print("\\n[Steam] Checking for CEG protection...")
+        logger.info("[Steam] Checking for CEG protection...")
 
         # Look for .bind section (CEG marker)
         for seg in idautils.Segments():
             seg_name = idc.get_segm_name(seg)
             if ".bind" in seg_name.lower():
-                print(f"[Steam] Found CEG section: {seg_name}")
+                logger.info("[Steam] Found CEG section: %s", seg_name)
                 self.ceg_sections.append(seg)
                 self.patch_ceg_section(seg)
 
@@ -2460,7 +2469,7 @@ class SteamBypass:
             while cur_ea < seg_end:
                 match = self.find_pattern(cur_ea, seg_end, pattern)
                 if match != idaapi.BADADDR:
-                    print(f"  Found {desc} at {hex(match)}")
+                    logger.debug("  Found %s at %s", desc, hex(match))
                     self.patch_ceg_check(match, desc)
                     cur_ea = match + 1
                 else:
@@ -2483,7 +2492,7 @@ class SteamBypass:
                     self.create_patch(jmp_addr, f"Bypass {desc}")
 
     def patch_drm_checks(self):
-        print("\\n[Steam] Patching DRM checks...")
+        logger.info("[Steam] Patching DRM checks...")
 
         # Common DRM check patterns
         drm_patterns = [
@@ -2499,7 +2508,7 @@ class SteamBypass:
                 str_val = str_val.decode('utf-8', errors='ignore')
                 for pattern, patch_func in drm_patterns:
                     if pattern.lower() in str_val.lower():
-                        print(f"[Steam] Found DRM string: {str_val[:50]}")
+                        logger.info("[Steam] Found DRM string: %s", str_val[:50])
 
                         for xref in idautils.XrefsTo(s.ea):
                             patch_func(xref.frm)
@@ -2572,7 +2581,7 @@ class SteamBypass:
         idc.set_cmt(addr, f"PATCHED: {description}", 0)
         idc.set_color(addr, idc.CIC_ITEM, 0x00FF00)
 
-        print(f"    Patched {hex(addr)}: {description}")
+        logger.debug("    Patched %s: %s", hex(addr), description)
 
     def find_pattern(self, start_ea, end_ea, pattern):
         # Pattern matching helper
@@ -2588,15 +2597,15 @@ class SteamBypass:
         return idaapi.BADADDR
 
     def generate_appid_file(self):
-        print("\\n[Steam] Generating steam_appid.txt...")
+        logger.info("[Steam] Generating steam_appid.txt...")
 
         if self.app_id == 0:
             self.app_id = 480  # Default to Spacewar
 
         content = str(self.app_id)
 
-        print(f"[Steam] steam_appid.txt content: {content}")
-        print("[Steam] Save this file in the same directory as the executable")
+        logger.info("[Steam] steam_appid.txt content: %s", content)
+        logger.info("[Steam] Save this file in the same directory as the executable")
 
         return content
 
@@ -2927,6 +2936,10 @@ import idaapi
 import idautils
 import idc
 import struct
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+logger = logging.getLogger('VMProtectBypass')
 
 class VMProtectBypass:
     def __init__(self):
@@ -2936,7 +2949,7 @@ class VMProtectBypass:
         self.patches = []
 
     def run(self):
-        print("[VMProtect] Starting advanced bypass analysis...")
+        logger.info("[VMProtect] Starting advanced bypass analysis...")
 
         # Phase 1: Identify VMProtect presence
         self.detect_vmprotect()
@@ -2953,14 +2966,14 @@ class VMProtectBypass:
         # Phase 5: Generate keygen data
         self.generate_keygen()
 
-        print(f"[VMProtect] Bypass complete! Applied {len(self.patches)} patches")
+        logger.info("[VMProtect] Bypass complete! Applied %d patches", len(self.patches))
 
     def detect_vmprotect(self):
         # Scan for VMProtect sections
         for seg in idautils.Segments():
             seg_name = idc.get_segm_name(seg)
             if 'vmp' in seg_name.lower() or '.vmp' in seg_name:
-                print(f"[VMProtect] Found VMProtect section: {seg_name}")
+                logger.info("[VMProtect] Found VMProtect section: %s", seg_name)
                 self.vmprotect_markers.append(seg)
 
         # Find VMProtect SDK imports
@@ -2974,14 +2987,14 @@ class VMProtectBypass:
         for func_name in sdk_funcs:
             func_addr = idc.get_name_ea_simple(func_name)
             if func_addr != idaapi.BADADDR:
-                print(f"[VMProtect] Found SDK function: {func_name} at {hex(func_addr)}")
+                logger.info("[VMProtect] Found SDK function: %s at %s", func_name, hex(func_addr))
                 self.analyze_sdk_usage(func_addr, func_name)
 
     def analyze_sdk_usage(self, func_addr, func_name):
         # Find all calls to this SDK function
         for xref in idautils.XrefsTo(func_addr):
             call_addr = xref.frm
-            print(f"  Called from: {hex(call_addr)}")
+            logger.debug("  Called from: %s", hex(call_addr))
 
             # Analyze the calling function
             func = idaapi.get_func(call_addr)
@@ -3011,7 +3024,7 @@ class VMProtectBypass:
                 jmp_mnem = idc.print_insn_mnem(jmp_addr)
 
                 if jmp_mnem.startswith("J"):
-                    print(f"    Patching jump at {hex(jmp_addr)}")
+                    logger.debug("    Patching jump at %s", hex(jmp_addr))
 
                     # Convert conditional jump to NOP or JMP
                     if "JZ" in jmp_mnem or "JE" in jmp_mnem:
@@ -3034,7 +3047,7 @@ class VMProtectBypass:
             next_addr = idc.next_head(next_addr)
 
     def analyze_virtualized(self):
-        print("[VMProtect] Analyzing virtualized code...")
+        logger.info("[VMProtect] Analyzing virtualized code...")
 
         # Find VM entry points (usually have specific patterns)
         vm_entries = []
@@ -3050,7 +3063,7 @@ class VMProtectBypass:
             if idaapi.get_bytes(addr, 6):
                 bytes_val = idaapi.get_bytes(addr, 6)
                 if bytes_val[0] == 0x68 and bytes_val[5] == 0xC3:
-                    print(f"[VMProtect] Found VM entry at {hex(addr)}")
+                    logger.info("[VMProtect] Found VM entry at %s", hex(addr))
                     vm_entries.append(addr)
                     self.patch_vm_entry(addr)
             addr += 1
@@ -3071,13 +3084,13 @@ class VMProtectBypass:
         })
 
     def generate_keygen(self):
-        print("[VMProtect] Generating keygen data...")
+        logger.info("[VMProtect] Generating keygen data...")
 
         # Analyze serial number format
         serial_format = self.analyze_serial_format()
 
         if serial_format:
-            print(f"[VMProtect] Serial format detected: {serial_format}")
+            logger.info("[VMProtect] Serial format detected: %s", serial_format)
 
             # Generate valid serials
             keygen_code = f'''
@@ -3103,11 +3116,11 @@ def generate_vmprotect_serial():
 
 # Generate 5 valid serials
 for i in range(5):
-    print(f"Serial {{i+1}}: {{generate_vmprotect_serial()}}")
+    logger.info("Serial %d: %s", i+1, generate_vmprotect_serial())
 '''
 
-            print("[VMProtect] Keygen code generated")
-            print(keygen_code)
+            logger.info("[VMProtect] Keygen code generated")
+            logger.info("%s", keygen_code)
 
     def analyze_serial_format(self):
         # Look for serial validation patterns
@@ -3136,7 +3149,7 @@ for i in range(5):
         return None
 
     def apply_patches(self):
-        print(f"[VMProtect] Applying {len(self.patches)} patches...")
+        logger.info("[VMProtect] Applying %d patches...", len(self.patches))
 
         for patch in self.patches:
             addr = patch['addr']
@@ -3145,10 +3158,10 @@ for i in range(5):
 
             # Apply the patch
             if idaapi.patch_bytes(addr, patch_bytes):
-                print(f"  Patched {hex(addr)}: {comment}")
+                logger.debug("  Patched %s: %s", hex(addr), comment)
                 idc.set_cmt(addr, comment, 0)
             else:
-                print(f"  Failed to patch {hex(addr)}")
+                logger.error("  Failed to patch %s", hex(addr))
 
 # Run the bypass
 bypass = VMProtectBypass()
@@ -5182,12 +5195,12 @@ console.log("[+] Generic {script_type} analysis started");
 // Failed to detect specific protection - running generic analysis
 
 // Generic analysis for {script_type}
-print("[?] Protection type could not be determined")
-print("[*] Running comprehensive {script_type} analysis...")
+logger.warning("[?] Protection type could not be determined")
+logger.info("[*] Running comprehensive %s analysis...", script_type)
 
 // Add {script_type}-specific analysis code here
 
-print("[+] Generic {script_type} analysis started")
+logger.info("[+] Generic %s analysis started", script_type)
 """
 
 

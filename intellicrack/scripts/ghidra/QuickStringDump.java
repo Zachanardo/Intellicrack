@@ -58,7 +58,7 @@ public class QuickStringDump extends GhidraScript {
 
   // Comprehensive analysis components using all imports
   private DataTypeManager dataTypeManager;
-    private SymbolTable symbolTable;
+  private SymbolTable symbolTable;
   private ReferenceManager referenceManager;
   private final Map<DataType, Set<Address>> dataTypeStringMap = new HashMap<>();
   private final Map<Structure, List<StringAnalysisResult>> structureStrings = new HashMap<>();
@@ -140,7 +140,7 @@ public class QuickStringDump extends GhidraScript {
   private void initializeComprehensiveComponents() throws MemoryAccessException {
     // Initialize all managers and analysis components using imported classes
     dataTypeManager = currentProgram.getDataTypeManager();
-      FunctionManager functionManager = currentProgram.getFunctionManager();
+    FunctionManager functionManager = currentProgram.getFunctionManager();
     symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
 
@@ -906,7 +906,7 @@ public class QuickStringDump extends GhidraScript {
     }
 
     // Check for long alphanumeric strings (common in API keys)
-      return str.length() >= 20 && str.length() <= 80 && str.matches("[a-zA-Z0-9_\\-\\.]+");
+    return str.length() >= 20 && str.length() <= 80 && str.matches("[a-zA-Z0-9_\\-\\.]+");
   }
 
   private void writeHeader(PrintWriter writer) {
@@ -1050,10 +1050,10 @@ public class QuickStringDump extends GhidraScript {
       DataType dataType = dataTypeIter.next();
 
       if (dataType instanceof Structure structure) {
-          analyzeStructureForStringData(structure);
+        analyzeStructureForStringData(structure);
         structuresAnalyzed++;
       } else if (dataType instanceof ghidra.program.model.data.Enum enumType) {
-          analyzeEnumForStringData(enumType);
+        analyzeEnumForStringData(enumType);
         enumsAnalyzed++;
       }
 
@@ -1295,7 +1295,7 @@ public class QuickStringDump extends GhidraScript {
 
         // Perform advanced P-code analysis if this is an instruction
         if (codeUnit instanceof Instruction instruction) {
-            analyzePcodeForStringOperations(instruction);
+          analyzePcodeForStringOperations(instruction);
         }
       }
 
@@ -1353,7 +1353,7 @@ public class QuickStringDump extends GhidraScript {
           for (Object obj : opObjects) {
             if (obj instanceof Address opAddr) {
 
-                // Check if this address corresponds to a string
+              // Check if this address corresponds to a string
               for (StringAnalysisResult result : analysisResults) {
                 if (result.address.equals(opAddr)) {
                   result.analysisNotes.add("P-code analysis: " + mnemonic + " operation");
@@ -1514,7 +1514,7 @@ public class QuickStringDump extends GhidraScript {
         // Extract and analyze string content
         Object value = data.getValue();
         if (value instanceof String stringValue) {
-            analyzeStringForLicensingPatterns(stringValue, addr, dataType);
+          analyzeStringForLicensingPatterns(stringValue, addr, dataType);
         }
       }
 
@@ -1542,7 +1542,7 @@ public class QuickStringDump extends GhidraScript {
         DataType dt = dataTypes.next();
 
         if (dt instanceof Pointer ptrType) {
-            DataType referencedType = ptrType.getDataType();
+          DataType referencedType = ptrType.getDataType();
 
           if (isStringRelatedType(referencedType)) {
             // Find instances of this pointer type
@@ -1592,7 +1592,7 @@ public class QuickStringDump extends GhidraScript {
         DataType dt = dataTypes.next();
 
         if (dt instanceof Array arrayType) {
-            DataType elementType = arrayType.getDataType();
+          DataType elementType = arrayType.getDataType();
 
           if (isStringRelatedType(elementType)) {
             // Find instances of string arrays
@@ -1650,7 +1650,7 @@ public class QuickStringDump extends GhidraScript {
 
         if (dt instanceof Union unionType) {
 
-            // Check union components for string types
+          // Check union components for string types
           for (int i = 0; i < unionType.getNumComponents(); i++) {
             DataTypeComponent component = unionType.getComponent(i);
             DataType componentType = component.getDataType();
@@ -1724,24 +1724,24 @@ public class QuickStringDump extends GhidraScript {
           // Find references to this string address
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(addr);
 
-            // This string is referenced - analyze referencing functions
-            for (Reference ref : refs) {
-              Address fromAddr = ref.getFromAddress();
-              Function func = currentProgram.getFunctionManager().getFunctionContaining(fromAddr);
+          // This string is referenced - analyze referencing functions
+          for (Reference ref : refs) {
+            Address fromAddr = ref.getFromAddress();
+            Function func = currentProgram.getFunctionManager().getFunctionContaining(fromAddr);
 
-              if (func != null) {
-                // Check for licensing-related function names
-                String funcName = func.getName().toLowerCase();
-                if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*")) {
-                  // High-value string in licensing context
-                  println(
-                      "      High-value string at "
-                          + addr
-                          + " referenced by licensing function: "
-                          + func.getName());
-                }
+            if (func != null) {
+              // Check for licensing-related function names
+              String funcName = func.getName().toLowerCase();
+              if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*")) {
+                // High-value string in licensing context
+                println(
+                    "      High-value string at "
+                        + addr
+                        + " referenced by licensing function: "
+                        + func.getName());
               }
             }
+          }
         }
       }
 
@@ -1823,7 +1823,7 @@ public class QuickStringDump extends GhidraScript {
         DataType dt = dataTypes.next();
 
         if (dt instanceof Structure struct) {
-            analyzeStructureForStrings(struct);
+          analyzeStructureForStrings(struct);
         }
       }
 
@@ -2120,7 +2120,7 @@ public class QuickStringDump extends GhidraScript {
           if (data != null) {
             Object value = data.getValue();
             if (value instanceof String stringValue) {
-                if (stringValue.length() >= MIN_STRING_LENGTH
+              if (stringValue.length() >= MIN_STRING_LENGTH
                   && stringValue.length() <= MAX_STRING_LENGTH) {
                 spaceStrings.add(addr);
 
@@ -2166,7 +2166,7 @@ public class QuickStringDump extends GhidraScript {
               Object value = data.getValue();
               if (value instanceof String stringValue) {
 
-                  // Extract patterns for cross-space comparison
+                // Extract patterns for cross-space comparison
                 String pattern = extractStringPattern(stringValue);
                 if (pattern != null) {
                   if (!stringPatternSpaces.containsKey(pattern)) {
@@ -2240,7 +2240,7 @@ public class QuickStringDump extends GhidraScript {
             if (data != null) {
               Object value = data.getValue();
               if (value instanceof String stringValue) {
-                  if (stringValue
+                if (stringValue
                     .toLowerCase()
                     .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*")) {
                   licensingStrings++;
@@ -2345,7 +2345,7 @@ public class QuickStringDump extends GhidraScript {
     try {
       // Check if code unit contains string data
       if (codeUnit instanceof Data data) {
-          DataType dataType = data.getDataType();
+        DataType dataType = data.getDataType();
 
         if (isStringRelatedType(dataType)) {
           return true;
@@ -2354,7 +2354,7 @@ public class QuickStringDump extends GhidraScript {
         // Check value
         Object value = data.getValue();
         if (value instanceof String stringValue) {
-            return stringValue.length() >= MIN_STRING_LENGTH
+          return stringValue.length() >= MIN_STRING_LENGTH
               && stringValue.length() <= MAX_STRING_LENGTH;
         }
       }
@@ -2362,7 +2362,7 @@ public class QuickStringDump extends GhidraScript {
       // Check for string references in instructions
       if (codeUnit instanceof Instruction inst) {
 
-          for (int i = 0; i < inst.getNumOperands(); i++) {
+        for (int i = 0; i < inst.getNumOperands(); i++) {
           Reference[] refs = inst.getOperandReferences(i);
           for (Reference ref : refs) {
             Address toAddr = ref.getToAddress();
@@ -2453,10 +2453,10 @@ public class QuickStringDump extends GhidraScript {
   private boolean isLicensingRelatedCodeUnit(CodeUnit codeUnit) {
     try {
       if (codeUnit instanceof Data data) {
-          Object value = data.getValue();
+        Object value = data.getValue();
 
         if (value instanceof String stringValue) {
-            return stringValue
+          return stringValue
               .toLowerCase()
               .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*");
         }
@@ -2484,11 +2484,11 @@ public class QuickStringDump extends GhidraScript {
       Address addr = codeUnit.getAddress();
 
       if (codeUnit instanceof Data data) {
-          Object value = data.getValue();
+        Object value = data.getValue();
 
         if (value instanceof String stringValue) {
 
-            // Analyze licensing string patterns
+          // Analyze licensing string patterns
           if (stringValue.length() > 10 && stringValue.matches(".*[0-9a-fA-F]{8,}.*")) {
             println(
                 "        Potential license key at "

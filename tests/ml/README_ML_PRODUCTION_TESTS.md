@@ -13,6 +13,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 ## Test Coverage Areas
 
 ### 1. ML Integration Initialization (5 tests)
+
 - ML integration disables correctly without trained model
 - ML integration enables with trained model
 - Incremental learning component initialization
@@ -22,6 +23,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Tests ensure ML components initialize correctly and gracefully handle missing models.
 
 ### 2. Binary Classification (10 tests)
+
 - Real binary classification with valid structured results
 - Alternative predictions inclusion
 - Multiple binary differentiation
@@ -33,6 +35,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Classification produces genuine ML predictions on real Windows executables with proper confidence scoring.
 
 ### 3. Feature Extraction (9 tests)
+
 - Feature extraction from real Windows binaries
 - Correct feature vector dimensionality
 - Entropy feature extraction and validation
@@ -46,6 +49,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Feature extractor produces valid, consistent feature vectors from real PE binaries.
 
 ### 4. Model Training and Prediction (5 tests)
+
 - Classifier training on real binary features
 - Prediction generation from trained models
 - Top-N alternative predictions
@@ -55,6 +59,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** ML models train successfully on real data and produce reproducible predictions.
 
 ### 5. Incremental Learning (4 tests)
+
 - Sample addition to learning buffer
 - Buffer statistics accuracy
 - Sample quality evaluation
@@ -63,6 +68,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Incremental learning system buffers samples and identifies candidates for manual labeling.
 
 ### 6. Sample Database (6 tests)
+
 - Sample addition with metadata tracking
 - Duplicate prevention
 - Higher confidence label updates
@@ -73,6 +79,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Sample database correctly stores, organizes, and retrieves training samples.
 
 ### 7. Complete ML Workflows (5 tests)
+
 - End-to-end ML analysis workflow
 - Verified sample addition across components
 - Learning statistics aggregation
@@ -82,6 +89,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** Complete workflows integrate all ML components correctly.
 
 ### 8. Performance Benchmarks (3 tests)
+
 - Feature extraction performance (< 5 seconds)
 - Prediction performance (< 6 seconds)
 - Batch classification throughput (< 10 seconds average)
@@ -89,6 +97,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** ML operations complete within production-acceptable timeframes.
 
 ### 9. Error Handling (4 tests)
+
 - Nonexistent file handling
 - Disabled ML integration behavior
 - Insufficient training samples
@@ -98,12 +107,14 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 **Key Validation:** System handles error conditions gracefully without crashes.
 
 ### 10. Feature Importance (2 tests)
+
 - Feature importance ranking
 - Feature importance normalization
 
 **Key Validation:** ML model provides interpretable feature importance scores.
 
 ### 11. Active Learning (1 test)
+
 - Uncertain sample identification for manual review
 
 **Key Validation:** Active learning identifies samples requiring human verification.
@@ -111,6 +122,7 @@ Comprehensive production-ready test suite for Intellicrack's machine learning in
 ## Real Binary Usage
 
 All tests use **actual Windows system binaries**:
+
 - `C:\Windows\System32\notepad.exe`
 - `C:\Windows\System32\calc.exe`
 - `C:\Windows\System32\kernel32.dll`
@@ -120,6 +132,7 @@ All tests use **actual Windows system binaries**:
 ## Zero Mocks Policy
 
 **NO mocks, stubs, or MagicMock instances** - All tests:
+
 - Extract features from real PE binaries
 - Train actual ML models with scikit-learn
 - Generate genuine predictions
@@ -129,21 +142,25 @@ All tests use **actual Windows system binaries**:
 ## Test Execution
 
 ### Run All Tests
+
 ```bash
 pixi run pytest tests/ml/test_ml_integration_production.py -v
 ```
 
 ### Run Without Coverage
+
 ```bash
 pixi run pytest tests/ml/test_ml_integration_production.py --no-cov -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 pixi run pytest tests/ml/test_ml_integration_production.py::TestFeatureExtraction -v
 ```
 
 ### Run Performance Tests Only
+
 ```bash
 pixi run pytest tests/ml/test_ml_integration_production.py::TestPerformanceBenchmarks -v
 ```
@@ -172,6 +189,7 @@ Tests validate genuine ML capabilities:
 ## Dependencies
 
 Required packages (managed via pixi):
+
 - pytest
 - pytest-benchmark
 - numpy
@@ -181,6 +199,7 @@ Required packages (managed via pixi):
 ## Coverage Impact
 
 These tests significantly improve coverage for:
+
 - `intellicrack/core/ml/ml_integration.py`
 - `intellicrack/core/ml/feature_extraction.py`
 - `intellicrack/core/ml/protection_classifier.py`
@@ -197,6 +216,7 @@ These tests significantly improve coverage for:
 ## Future Enhancements
 
 Potential additions:
+
 - Property-based testing with Hypothesis for algorithm validation
 - Adversarial testing with malformed PE structures
 - Large-scale performance benchmarks with 100+ binaries

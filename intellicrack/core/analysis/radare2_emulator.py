@@ -164,11 +164,11 @@ class Radare2Emulator:
             self.bits = self.info["bin"]["bits"]
             self.endian = self.info["bin"]["endian"]
 
-            logger.info(f"Opened {self.binary_path} for emulation")
+            logger.info("Opened %s for emulation", self.binary_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to open binary: {e}")
+            logger.error("Failed to open binary: %s", e, exc_info=True)
             return False
 
     def emulate_esil(self, start_addr: int, num_instructions: int = 100, initial_state: dict | None = None) -> EmulationResult:
@@ -230,7 +230,7 @@ class Radare2Emulator:
             )
 
         except Exception as e:
-            logger.error(f"ESIL emulation failed: {e}")
+            logger.error("ESIL emulation failed: %s", e, exc_info=True)
             return EmulationResult(
                 type=EmulationType.ESIL,
                 success=False,
@@ -330,9 +330,9 @@ class Radare2Emulator:
                     if data := self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}"):
                         self.uc.mem_write(addr, bytes(data))
 
-                    logger.info(f"Mapped section {section['name']} at {hex(addr)}")
+                    logger.info("Mapped section %s at %s", section["name"], hex(addr))
                 except Exception as e:
-                    logger.warning(f"Failed to map section {section['name']}: {e}")
+                    logger.warning("Failed to map section %s: %s", section["name"], e, exc_info=True)
 
             # Setup hooks
             self.uc.hook_add(UC_HOOK_CODE, self._unicorn_code_hook)
@@ -343,7 +343,7 @@ class Radare2Emulator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to setup Unicorn: {e}")
+            logger.error("Failed to setup Unicorn: %s", e, exc_info=True)
             return False
 
     def _unicorn_code_hook(self, uc: unicorn.Uc, address: int, size: int, user_data: object) -> None:
@@ -439,7 +439,7 @@ class Radare2Emulator:
             )
 
         except Exception as e:
-            logger.error(f"Unicorn emulation failed: {e}")
+            logger.error("Unicorn emulation failed: %s", e, exc_info=True)
             return EmulationResult(
                 type=EmulationType.UNICORN,
                 success=False,
@@ -625,7 +625,7 @@ class Radare2Emulator:
                 result["successors"].append((end_addr, z3.BoolVal(True)))
 
         except Exception as e:
-            logger.error(f"Symbolic execution of BB at {hex(addr)} failed: {e}")
+            logger.error("Symbolic execution of BB at %s failed: %s", hex(addr), e, exc_info=True)
 
         return result
 
@@ -1132,8 +1132,7 @@ class Radare2Emulator:
             return "glibc"  # Linux default
 
         except Exception as e:
-            logger.debug(f"Heap implementation detection failed: {e}")
-            # Default to glibc on error
+            logger.debug("Heap implementation detection failed: %s", e, exc_info=True)
             return "glibc"
 
     def _generate_generic_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> ExploitPrimitive:
@@ -1272,46 +1271,41 @@ def main() -> None:
 
     try:
         if args.mode == "esil":
-            # ESIL emulation
             result = emulator.emulate_esil(args.start or 0, args.num_inst)
-            print(f"ESIL Emulation: {'Success' if result.success else 'Failed'}")
-            print(f"Instructions executed: {len(result.execution_path)}")
-            print(f"Final registers: {result.registers}")
+            logger.info("ESIL Emulation: %s", "Success" if result.success else "Failed")
+            logger.info("Instructions executed: %s", len(result.execution_path))
+            logger.info("Final registers: %s", result.registers)
 
         elif args.mode == "unicorn":
-            # Unicorn emulation
             emulator.setup_unicorn_engine()
             result = emulator.emulate_unicorn(args.start or 0, args.end, count=args.num_inst)
-            print(f"Unicorn Emulation: {'Success' if result.success else 'Failed'}")
-            print(f"Instructions executed: {len(result.execution_path)}")
+            logger.info("Unicorn Emulation: %s", "Success" if result.success else "Failed")
+            logger.info("Instructions executed: %s", len(result.execution_path))
 
         elif args.mode == "symbolic":
-            # Symbolic execution
             results = emulator.symbolic_execution(args.start or 0, args.end or 0)
-            print(f"Found {len(results)} paths")
+            logger.info("Found %s paths", len(results))
             for i, result in enumerate(results):
-                print(f"Path {i + 1}: {len(result.execution_path)} instructions")
+                logger.info("Path %s: %s instructions", i + 1, len(result.execution_path))
 
         elif args.mode == "taint":
-            # Taint analysis
             taint_sources = [(0x1000, 4, "user_input")]
             taints = emulator.taint_analysis(taint_sources, args.start or 0, args.num_inst)
-            print(f"Taint analysis found {len(taints)} tainted locations")
+            logger.info("Taint analysis found %s tainted locations", len(taints))
 
         elif args.mode == "exploit":
-            # Find vulnerabilities and generate exploits
             vulns = emulator.find_vulnerabilities()
-            print(f"Found {len(vulns)} potential vulnerabilities")
+            logger.info("Found %s potential vulnerabilities", len(vulns))
 
             if args.exploit and vulns:
                 exploits = []
-                for vuln_type, vuln_addr in vulns[:5]:  # Limit to first 5
+                for vuln_type, vuln_addr in vulns[:5]:
                     if exploit := emulator.generate_exploit(vuln_type, vuln_addr):
                         exploits.append(exploit)
 
                 if exploits:
                     report = emulator.generate_exploit_report(exploits)
-                    print(report)
+                    logger.info("Exploit Report:\n%s", report)
 
     finally:
         emulator.close()

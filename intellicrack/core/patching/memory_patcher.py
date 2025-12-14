@@ -29,6 +29,8 @@ from intellicrack.handlers.pyqt6_handler import QMessageBox
 from ...utils.logger import get_logger
 
 
+logger = get_logger(__name__)
+
 T = TypeVar("T")
 
 
@@ -48,21 +50,15 @@ class ApplicationInterface(Protocol):
         pass
 
 
-print("[DEBUG memory_patcher] Importing pyqt6_handler...")
-sys.stdout.flush()
+logger.debug("%s", "Importing pyqt6_handler...")
 
-print("[DEBUG memory_patcher] pyqt6_handler imported OK")
-sys.stdout.flush()
+logger.debug("%s", "pyqt6_handler imported OK")
 
-print("[DEBUG memory_patcher] Skipping protection_detector import (will lazy load)")
-sys.stdout.flush()
+logger.debug("%s", "Skipping protection_detector import (will lazy load)")
 
-print("[DEBUG memory_patcher] Getting logger...")
-sys.stdout.flush()
+logger.debug("%s", "Getting logger...")
 
-logger = get_logger(__name__)
-print("[DEBUG memory_patcher] logger obtained OK")
-sys.stdout.flush()
+logger.debug("%s", "logger obtained OK")
 
 
 def _create_dword_type(ctypes_module: object) -> type:
@@ -263,7 +259,7 @@ def _get_wintypes() -> tuple[Any, bool]:
 
         return wintypes, True
     except ImportError as e:
-        logger.warning("Windows API not available, implementing comprehensive Windows types: %s", e)
+        logger.warning("Windows API not available, implementing comprehensive Windows types: %s", e, exc_info=True)
 
         import ctypes
 
@@ -371,8 +367,7 @@ try:
     if not HAS_FRIDA:
         print("Error: Frida is required. Install with: pip install frida-tools")
         sys.exit(1)
-except ImportError as e:
-    logger.error("Import error in memory_patcher: %s", e)
+except ImportError:
     print("Error: Frida is required. Install with: pip install frida-tools")
     sys.exit(1)
 
@@ -456,13 +451,11 @@ def launch_with_frida():
         try:
             while True:
                 time.sleep(1)
-        except KeyboardInterrupt as e:
-            logger.error("KeyboardInterrupt in memory_patcher: %s", e)
+        except KeyboardInterrupt:
             print("\\n[*] Detaching...")
             session.detach()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in memory_patcher: %s", e)
         print("[-] Error: " + str(e))
         return 1
 
@@ -475,7 +468,6 @@ def launch_normal():
         subprocess.Popen([TARGET_BINARY], encoding='utf-8')
         print("[+] Process launched")
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in memory_patcher: %s", e)
         print("[-] Error: " + str(e))
         return 1
     return 0
@@ -494,8 +486,7 @@ def main():
         try:
             print("[+] Frida is available")
             return launch_with_frida()
-        except ImportError as e:
-            logger.error("Import error in memory_patcher: %s", e)
+        except ImportError:
             print("[-] Frida not available, falling back to normal launch")
             return launch_normal()
     else:
@@ -551,7 +542,7 @@ if __name__ == "__main__":
         return launcher_path
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in memory_patcher: %s", e)
+        logger.error("Error in memory_patcher: %s", e, exc_info=True)
         app.update_output.emit(log_message(f"[Launcher] Error creating launcher script: {e}"))
         return None
 
@@ -665,7 +656,7 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
         return _bypass_memory_protection_windows(address, size, protection)
     if system in ["Linux", "Darwin"]:
         return _bypass_memory_protection_unix(address, size, protection)
-    logger.error(f"Unsupported platform for memory protection bypass: {system}")
+    logger.error("Unsupported platform for memory protection bypass: %s", system)
     return False
 
 
@@ -711,15 +702,15 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             protection,
             ctypes.byref(old_protection),
         ):
-            logger.info(f"Successfully changed memory protection at {hex(address)} (result: {success})")
-            logger.info(f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}")
+            logger.info("Successfully changed memory protection at %s (result: %s)", hex(address), success)
+            logger.info("Old protection: %s, New protection: %s", hex(old_protection.value), hex(protection))
             return True
         error = ctypes.get_last_error()
-        logger.error(f"VirtualProtect failed with error code: {error}")
+        logger.error("VirtualProtect failed with error code: %s", error)
         return False
 
     except Exception as e:
-        logger.error(f"Exception during Windows memory protection bypass: {e}")
+        logger.error("Exception during Windows memory protection bypass: %s", e, exc_info=True)
         return False
 
 
@@ -781,15 +772,15 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
         )
 
         if result == 0:
-            logger.info(f"Successfully changed memory protection at {hex(aligned_address)}")
-            logger.info(f"Protection flags: {hex(protection)}")
+            logger.info("Successfully changed memory protection at %s", hex(aligned_address))
+            logger.info("Protection flags: %s", hex(protection))
             return True
         errno = ctypes.get_errno()
-        logger.error(f"mprotect failed with errno: {errno}")
+        logger.error("mprotect failed with errno: %s", errno)
         return False
 
     except Exception as e:
-        logger.error(f"Exception during Unix memory protection bypass: {e}")
+        logger.error("Exception during Unix memory protection bypass: %s", e, exc_info=True)
         return False
 
 
@@ -813,7 +804,7 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
         return _patch_memory_windows(process_id, address, data)
     if system in ["Linux", "Darwin"]:
         return _patch_memory_unix(process_id, address, data)
-    logger.error(f"Unsupported platform for memory patching: {system}")
+    logger.error("Unsupported platform for memory patching: %s", system)
     return False
 
 
@@ -842,7 +833,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
         # Open process
         process_handle = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, process_id)
         if not process_handle:
-            logger.error(f"Failed to open process {process_id}")
+            logger.error("Failed to open process %s", process_id)
             return False
 
         try:
@@ -871,7 +862,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
             )
 
             if success and bytes_written.value == len(data):
-                logger.info(f"Successfully patched {len(data)} bytes at {hex(address)}")
+                logger.info("Successfully patched %s bytes at %s", len(data), hex(address))
 
                 # Restore original protection
                 kernel32.VirtualProtectEx(
@@ -891,7 +882,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
             kernel32.CloseHandle(process_handle)
 
     except Exception as e:
-        logger.error(f"Exception during Windows memory patching: {e}")
+        logger.error("Exception during Windows memory patching: %s", e, exc_info=True)
         return False
 
 
@@ -918,11 +909,11 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                     mem_file.write(data)
                     mem_file.flush()
 
-                logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem")
+                logger.info("Successfully patched %s bytes at %s via /proc/pid/mem", len(data), hex(address))
                 return True
 
             except OSError as e:
-                logger.warning(f"Failed to patch via /proc/pid/mem: {e}")
+                logger.warning("Failed to patch via /proc/pid/mem: %s", e, exc_info=True)
 
         # Fallback to ptrace
         import ctypes
@@ -954,10 +945,10 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                     )
                     < 0
                 ):
-                    logger.error(f"Failed to write at offset {i}")
+                    logger.error("Failed to write at offset %s", i)
                     return False
 
-            logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via ptrace")
+            logger.info("Successfully patched %s bytes at %s via ptrace", len(data), hex(address))
             return True
 
         finally:
@@ -965,7 +956,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
             ptrace(PTRACE_DETACH, process_id, None, None)
 
     except Exception as e:
-        logger.error(f"Exception during Unix memory patching: {e}")
+        logger.error("Exception during Unix memory patching: %s", e, exc_info=True)
         return False
 
 
@@ -990,7 +981,7 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
         return _handle_guard_pages_windows(address, size, process_handle)
     if system in ["Linux", "Darwin"]:
         return _handle_guard_pages_unix(address, size, process_handle)
-    logger.error(f"Unsupported platform for guard page handling: {system}")
+    logger.error("Unsupported platform for guard page handling: %s", system)
     return False
 
 
@@ -1047,12 +1038,12 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
 
         if not result:
             error = ctypes.get_last_error()
-            logger.error(f"VirtualQuery failed with error: {error}")
+            logger.error("VirtualQuery failed with error: %s", error)
             return False
 
         # Check if PAGE_GUARD is set
         if mbi.Protect & PAGE_GUARD:
-            logger.info(f"PAGE_GUARD detected at {hex(address)}")
+            logger.info("PAGE_GUARD detected at %s", hex(address))
 
             # Remove PAGE_GUARD by changing protection
             old_protection = wintypes.DWORD() if HAS_WINTYPES else ctypes.c_ulong()
@@ -1077,7 +1068,7 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
                 )
 
             if success:
-                logger.info(f"Removed PAGE_GUARD from {hex(address)}")
+                logger.info("Removed PAGE_GUARD from %s", hex(address))
 
                 # Optionally trigger the guard page to clear it
                 if not process_handle:  # Only for current process
@@ -1086,17 +1077,17 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
                         guard_trigger_byte = ctypes.c_byte()
                         ctypes.memmove(ctypes.byref(guard_trigger_byte), address, 1)
                     except Exception as e:
-                        logger.error("Error in memory_patcher: %s", e)
+                        logger.error("Error in memory_patcher: %s", e, exc_info=True)
 
                 return True
             error = ctypes.get_last_error()
-            logger.error(f"Failed to remove PAGE_GUARD: {error}")
+            logger.error("Failed to remove PAGE_GUARD: %s", error)
             return False
-        logger.debug(f"No PAGE_GUARD at {hex(address)}")
+        logger.debug("No PAGE_GUARD at %s", hex(address))
         return True
 
     except Exception as e:
-        logger.error(f"Exception handling guard pages: {e}")
+        logger.error("Exception handling guard pages: %s", e, exc_info=True)
         return False
 
 
@@ -1118,12 +1109,12 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
 
         # Validate size parameter
         if size <= 0:
-            logger.error(f"Invalid size parameter: {size}")
+            logger.error("Invalid size parameter: %s", size)
             return False
 
         # Calculate the full range that needs to be handled
         end_address = address + size
-        logger.debug(f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)")
+        logger.debug("Handling guard pages for range %s-%s (size: %s bytes)", hex(address), hex(end_address), size)
 
         # On Unix, guard pages are typically implemented differently
         # We'll check /proc/self/maps for memory regions
@@ -1150,7 +1141,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                             or (address <= start_addr < end_address)
                         ):
                             perms = parts[1]
-                            logger.info(f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}")
+                            logger.info("Memory region %s-%s overlaps target range, permissions: %s", hex(start_addr), hex(end_addr), perms)
 
                             # Check if it's a guard page (no permissions)
                             if perms == "---p":
@@ -1168,7 +1159,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 aligned_end = (end_address + page_size - 1) & ~(page_size - 1)
                                 aligned_size = aligned_end - aligned_addr
 
-                                logger.debug(f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)")
+                                logger.debug("Aligned region: %s-%s (size: %s bytes)", hex(aligned_addr), hex(aligned_end), aligned_size)
 
                                 # Set read/write permissions
                                 PROT_READ = 0x1
@@ -1181,18 +1172,18 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 )
 
                                 if result == 0:
-                                    logger.info(f"Successfully removed guard page protection for {aligned_size} bytes")
+                                    logger.info("Successfully removed guard page protection for %s bytes", aligned_size)
                                     return True
                                 logger.error("Failed to change guard page permissions")
                                 return False
 
-        except OSError:
-            logger.warning(f"Cannot read {maps_file}")
+        except OSError as e:
+            logger.warning("Cannot read %s: %s", maps_file, e, exc_info=True)
 
         return True
 
     except Exception as e:
-        logger.error(f"Exception handling Unix guard pages: {e}")
+        logger.error("Exception handling Unix guard pages: %s", e, exc_info=True)
         return False
 
 
@@ -1244,7 +1235,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi),
             ):
-                logger.debug(f"VirtualQueryEx returned {result} bytes")
+                logger.debug("VirtualQueryEx returned %s bytes", result)
                 MEM_COMMIT = 0x1000
                 if not (mbi.State & MEM_COMMIT):
                     logger.error("Memory not committed")
@@ -1258,7 +1249,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
         return True
 
     except Exception as e:
-        logger.error(f"Error detecting guard pages: {e}")
+        logger.error("Error detecting guard pages: %s", e, exc_info=True)
         return False
 
 

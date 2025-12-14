@@ -217,7 +217,7 @@ class ArxanDetector:
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)
 
-        self.logger.info(f"Analyzing binary for Arxan protection: {binary_path}")
+        self.logger.info("Analyzing binary for Arxan protection: %s", binary_path)
 
         try:
             with open(binary_path, "rb") as f:
@@ -241,7 +241,10 @@ class ArxanDetector:
             confidence = min(total_score, 1.0)
 
             self.logger.info(
-                f"Arxan detection complete: protected={is_protected}, confidence={confidence:.2%}, version={version.value}",
+                "Arxan detection complete: protected=%s, confidence=%.2f%%, version=%s",
+                is_protected,
+                confidence * 100,
+                version.value,
             )
 
             return ArxanDetectionResult(
@@ -256,7 +259,7 @@ class ArxanDetector:
             )
 
         except Exception as e:
-            self.logger.error(f"Arxan detection failed: {e}")
+            self.logger.error("Arxan detection failed: %s", e, exc_info=True)
             raise
 
     def _check_string_signatures(self, binary_data: bytes, signatures_found: list[str]) -> float:
@@ -268,7 +271,7 @@ class ArxanDetector:
                 sig_str = signature.decode("utf-8", errors="ignore")
                 signatures_found.append(sig_str)
                 found_count += 1
-                self.logger.debug(f"Found Arxan signature: {sig_str}")
+                self.logger.debug("Found Arxan signature: %s", sig_str)
 
         return min(found_count / 5.0, 1.0)
 
@@ -288,7 +291,7 @@ class ArxanDetector:
                             sec_str = section_name.decode("utf-8", errors="ignore")
                             sections.append(sec_str)
                             found_count += 1
-                            self.logger.debug(f"Found Arxan section: {sec_str}")
+                            self.logger.debug("Found Arxan section: %s", sec_str)
                             break
 
                 pe.close()
@@ -302,11 +305,11 @@ class ArxanDetector:
                             if arxan_section in section_name.lower():
                                 sections.append(section.name)
                                 found_count += 1
-                                self.logger.debug(f"Found Arxan section: {section.name}")
+                                self.logger.debug("Found Arxan section: %s", section.name)
                                 break
 
         except Exception as e:
-            self.logger.debug(f"Section analysis error: {e}")
+            self.logger.debug("Section analysis error: %s", e, exc_info=True)
 
         return min(found_count / 2.0, 1.0)
 
@@ -345,7 +348,7 @@ class ArxanDetector:
                             found_count += 1
 
         except Exception as e:
-            self.logger.debug(f"Import analysis error: {e}")
+            self.logger.debug("Import analysis error: %s", e, exc_info=True)
 
         if found_count >= 8:
             return min(suspicious_count / 5.0, 1.0)
@@ -362,7 +365,7 @@ class ArxanDetector:
             for pattern in patterns:
                 if pattern in binary_data:
                     version_scores[version] += 1
-                    self.logger.debug(f"Found {version.value} version signature")
+                    self.logger.debug("Found %s version signature", version.value)
 
         best_version = ArxanVersion.UNKNOWN
         best_score = 0
@@ -593,12 +596,12 @@ def main() -> None:
     detector = ArxanDetector()
     result = detector.detect(args.binary)
 
-    print("\n=== Arxan Detection Results ===")
-    print(f"Protected: {result.is_protected}")
-    print(f"Confidence: {result.confidence:.2%}")
-    print(f"Version: {result.version.value}")
+    logger.info("=== Arxan Detection Results ===")
+    logger.info("Protected: %s", result.is_protected)
+    logger.info("Confidence: %.2f%%", result.confidence * 100)
+    logger.info("Version: %s", result.version.value)
 
-    print("\n=== Protection Features ===")
+    logger.info("=== Protection Features ===")
     features_dict = {
         "Anti-Debugging": result.features.anti_debugging,
         "Anti-Tampering": result.features.anti_tampering,
@@ -614,22 +617,22 @@ def main() -> None:
 
     for feature, enabled in features_dict.items():
         status = "YES" if enabled else "NO"
-        print(f"  {feature}: {status}")
+        logger.info("  %s: %s", feature, status)
 
     if result.signatures_found:
-        print(f"\n=== Signatures Found ({len(result.signatures_found)}) ===")
+        logger.info("=== Signatures Found (%d) ===", len(result.signatures_found))
         for sig in result.signatures_found[:10]:
-            print(f"  - {sig}")
+            logger.info("  - %s", sig)
 
     if result.sections:
-        print(f"\n=== Arxan Sections ({len(result.sections)}) ===")
+        logger.info("=== Arxan Sections (%d) ===", len(result.sections))
         for section in result.sections:
-            print(f"  - {section}")
+            logger.info("  - %s", section)
 
     if result.import_hints:
-        print(f"\n=== Suspicious Imports ({len(result.import_hints)}) ===")
+        logger.info("=== Suspicious Imports (%d) ===", len(result.import_hints))
         for imp in result.import_hints[:10]:
-            print(f"  - {imp}")
+            logger.info("  - %s", imp)
 
 
 if __name__ == "__main__":

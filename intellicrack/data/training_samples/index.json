@@ -1,13 +1,13 @@
 {
-  "84b484fd3636f2ca3e468d2821d97aacde8a143a2724a3ae65f48a33ca2fd258": {
-    "file_hash": "84b484fd3636f2ca3e468d2821d97aacde8a143a2724a3ae65f48a33ca2fd258",
-    "protection_type": "VMProtect",
-    "file_size": 360448,
-    "timestamp": "2025-12-05T20:11:00.151429+00:00",
-    "confidence": 1.0,
-    "source": "manual",
-    "verified": true,
-    "notes": "Test sample",
-    "feature_extraction_version": "1.0.0"
-  }
+    "84b484fd3636f2ca3e468d2821d97aacde8a143a2724a3ae65f48a33ca2fd258": {
+        "file_hash": "84b484fd3636f2ca3e468d2821d97aacde8a143a2724a3ae65f48a33ca2fd258",
+        "protection_type": "VMProtect",
+        "file_size": 360448,
+        "timestamp": "2025-12-05T20:11:00.151429+00:00",
+        "confidence": 1.0,
+        "source": "manual",
+        "verified": true,
+        "notes": "Test sample",
+        "feature_extraction_version": "1.0.0"
+    }
 }

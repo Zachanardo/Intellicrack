@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import math
+import os
 import re
 import socket
 import sys
@@ -33,14 +34,14 @@ from intellicrack.data import PROTOCOL_SIGNATURES
 from intellicrack.utils.protection_utils import calculate_entropy
 
 
-print("[DEBUG protocol_fingerprinter] Module loading started")
-sys.stdout.flush()
+logger = logging.getLogger(__name__)
 
-print("[DEBUG protocol_fingerprinter] About to import calculate_entropy from protection_utils...")
-sys.stdout.flush()
 
-print("[DEBUG protocol_fingerprinter] calculate_entropy imported OK")
-sys.stdout.flush()
+logger.debug("Module loading started")
+
+logger.debug("About to import calculate_entropy from protection_utils...")
+
+logger.debug("calculate_entropy imported OK")
 
 
 class ProtocolFingerprinter:
@@ -57,9 +58,9 @@ class ProtocolFingerprinter:
             config: Configuration dictionary (optional)
 
         """
+        logger.debug("Entering ProtocolFingerprinter.__init__ with config=%s", config is not None)
         self.logger = logging.getLogger(__name__)
 
-        # Default configuration
         self.config = {
             "min_confidence": 0.7,
             "max_fingerprints": 100,
@@ -92,24 +93,25 @@ class ProtocolFingerprinter:
             8224,  # Generic license server
         ]
 
-        # Load known signatures
         self._load_signatures()
+        logger.debug("Exiting ProtocolFingerprinter.__init__: signatures=%d", len(self.signatures))
 
     def _load_signatures(self) -> None:
         """Load known protocol signatures from database."""
+        logger.debug("Entering _load_signatures: path=%s", self.config["signature_db_path"])
         try:
             if os.path.exists(self.config["signature_db_path"]):
                 with open(self.config["signature_db_path"], encoding="utf-8") as f:
                     self.signatures = json.load(f)
 
-                self.logger.info(f"Loaded {len(self.signatures)} protocol signatures")
+                self.logger.info("Loaded %d protocol signatures", len(self.signatures))
             else:
                 self.logger.info("Signature database not found, initializing with built-in signatures")
                 self._initialize_signatures()
                 self._save_signatures()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error loading signatures: %s", e)
+            self.logger.error("Error loading signatures: %s", e, exc_info=True)
             self._initialize_signatures()
 
     def _save_signatures(self) -> None:
@@ -125,7 +127,7 @@ class ProtocolFingerprinter:
             self.logger.info("Saved %d protocol signatures", len(self.signatures))
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving signatures: %s", e)
+            self.logger.error("Error saving signatures: %s", e, exc_info=True)
 
     def _initialize_signatures(self) -> None:
         """Initialize with built-in protocol signatures."""
@@ -251,7 +253,7 @@ class ProtocolFingerprinter:
             return self._process_analysis_results(results, packet_data, port)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing traffic: %s", e)
+            self.logger.error("Error analyzing traffic: %s", e, exc_info=True)
             return None
 
     def _store_traffic_sample(self, packet_data: bytes | bytearray, port: int | None) -> None:
@@ -496,7 +498,7 @@ class ProtocolFingerprinter:
                 pattern_bytes = pattern_bytes.encode("utf-8")
 
             if offset + len(pattern_bytes) <= len(data_bytes):
-                if data_bytes[offset:offset + len(pattern_bytes)] == pattern_bytes:
+                if data_bytes[offset : offset + len(pattern_bytes)] == pattern_bytes:
                     return True
 
         return False
@@ -552,7 +554,7 @@ class ProtocolFingerprinter:
                         sock.close()
 
                 except (TimeoutError, OSError) as e:
-                    self.logger.debug("Port scan error on %s:%d: %s", host, port, e)
+                    self.logger.debug("Port scan error on %s:%d: %s", host, port, e, exc_info=True)
                     continue
 
         self.logger.info("Protocol detection complete: found %d active protocols", len(detected))
@@ -587,7 +589,8 @@ class ProtocolFingerprinter:
             sock.send(probe)
             response = sock.recv(4096)
             return response if response else None
-        except (TimeoutError, OSError):
+        except (TimeoutError, OSError) as e:
+            self.logger.debug("Protocol probe timeout/error on port %d: %s", port, e, exc_info=True)
             return None
 
     def _identify_protocol_from_response(self, response: bytes, port: int) -> dict[str, Any] | None:
@@ -649,7 +652,7 @@ class ProtocolFingerprinter:
             return None
 
         except Exception as e:
-            self.logger.error("Packet fingerprinting failed: %s", e)
+            self.logger.error("Packet fingerprinting failed: %s", e, exc_info=True)
             return None
 
     def _analyze_packet_structure(self, packet_data: bytes | bytearray) -> dict[str, Any]:
@@ -688,7 +691,7 @@ class ProtocolFingerprinter:
                 analysis["protocol_hints"].append("License_Protocol")
 
         except Exception as e:
-            self.logger.debug("Packet structure analysis failed: %s", e)
+            self.logger.debug("Packet structure analysis failed: %s", e, exc_info=True)
 
         return analysis
 
@@ -739,7 +742,7 @@ class ProtocolFingerprinter:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error parsing packet: %s", e)
+            self.logger.error("Error parsing packet: %s", e, exc_info=True)
             return None
 
     def generate_response(self, protocol_id: str, request_packet: bytes | bytearray, response_type: str = "license_ok") -> bytes | None:
@@ -794,7 +797,7 @@ class ProtocolFingerprinter:
             return bytes(response)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating response: %s", e)
+            self.logger.error("Error generating response: %s", e, exc_info=True)
             return None
 
     def _learn_new_signature(self, packet_data: bytes | bytearray, port: int | None = None) -> bool:
@@ -861,7 +864,7 @@ class ProtocolFingerprinter:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error learning new signature: %s", e)
+            self.logger.error("Error learning new signature: %s", e, exc_info=True)
             return False
 
     def _calculate_similarity(self, data1: bytes | bytearray, data2: bytes | bytearray) -> float:
@@ -936,7 +939,7 @@ class ProtocolFingerprinter:
             - fingerprints: Detailed protocol fingerprints
 
         """
-        self.logger.info(f"Analyzing PCAP file: {pcap_path}")
+        self.logger.info("Analyzing PCAP file: %s", pcap_path)
 
         results = {
             "file": pcap_path,
@@ -954,7 +957,7 @@ class ProtocolFingerprinter:
         try:
             # Check if file exists
             if not os.path.exists(pcap_path):
-                self.logger.error(f"PCAP file not found: {pcap_path}")
+                self.logger.error("PCAP file not found: %s", pcap_path)
                 results["error"] = "File not found"
                 return results
 
@@ -1018,7 +1021,7 @@ class ProtocolFingerprinter:
                                             )
 
                                 except Exception as e:
-                                    self.logger.debug(f"Error processing packet payload: {e}")
+                                    self.logger.debug("Error processing packet payload: %s", e, exc_info=True)
 
                 capture.close()
 
@@ -1032,11 +1035,10 @@ class ProtocolFingerprinter:
                 results["summary"]["license_packets"] = license_packets
                 results["summary"]["identified_protocols"] = len(results["protocols"])
 
-                self.logger.info(f"PCAP analysis complete: {packets_analyzed} packets, {len(results['protocols'])} protocols identified")
+                self.logger.info("PCAP analysis complete: %d packets, %d protocols identified", packets_analyzed, len(results["protocols"]))
 
-            except ImportError:
-                # Fallback to basic PCAP parsing
-                self.logger.warning("pyshark not available, using basic PCAP parsing")
+            except ImportError as e:
+                self.logger.warning("pyshark not available, using basic PCAP parsing: %s", e, exc_info=True)
                 results["error"] = "Limited analysis - pyshark not available"
 
                 # Basic PCAP file structure parsing
@@ -1065,8 +1067,7 @@ class ProtocolFingerprinter:
                     results["summary"]["total_packets"] = packet_count
 
         except Exception as e:
-            self.logger.error(f"Error analyzing PCAP file: {e}")
-            self.logger.error(traceback.format_exc())
+            self.logger.error("Error analyzing PCAP file: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1088,7 +1089,7 @@ class ProtocolFingerprinter:
             - protocols: List of likely protocols used
 
         """
-        self.logger.info(f"Analyzing binary for network protocols: {binary_path}")
+        self.logger.info("Analyzing binary for network protocols: %s", binary_path)
 
         results = {
             "binary": binary_path,
@@ -1107,7 +1108,7 @@ class ProtocolFingerprinter:
         try:
             # Check if file exists
             if not os.path.exists(binary_path):
-                self.logger.error(f"Binary file not found: {binary_path}")
+                self.logger.error("Binary file not found: %s", binary_path)
                 results["error"] = "File not found"
                 return results
 
@@ -1217,7 +1218,7 @@ class ProtocolFingerprinter:
             for port_bytes in license_ports_bytes:
                 if port_bytes in binary_data:
                     port_num = int.from_bytes(port_bytes, byteorder="big")
-                    self.logger.debug(f"Found license port number: {port_num}")
+                    self.logger.debug("Found license port number: %d", port_num)
 
             # 5. Calculate summary
             results["summary"]["has_network_code"] = len(results["network_functions"]) > 0
@@ -1235,13 +1236,13 @@ class ProtocolFingerprinter:
             results["summary"]["protocol_confidence"] = min(confidence, 1.0)
 
             self.logger.info(
-                f"Binary analysis complete: {len(results['network_functions'])} network functions, "
-                f"{len(results['protocols'])} protocols identified",
+                "Binary analysis complete: %d network functions, %d protocols identified",
+                len(results["network_functions"]),
+                len(results["protocols"]),
             )
 
         except Exception as e:
-            self.logger.error(f"Error analyzing binary: {e}")
-            self.logger.error(traceback.format_exc())
+            self.logger.error("Error analyzing binary: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1249,5 +1250,4 @@ class ProtocolFingerprinter:
 
 __all__ = ["ProtocolFingerprinter", "calculate_entropy"]
 
-print("[DEBUG protocol_fingerprinter] Module load complete (end of file)")
-sys.stdout.flush()
+logger.debug("Module load complete (end of file)")

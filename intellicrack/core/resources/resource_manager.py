@@ -150,10 +150,10 @@ class ManagedResource:
                 self.cleanup_func()
             self.state = ResourceState.CLEANED
             self.cleaned_at = datetime.now()
-            logger.info(f"Cleaned up {self.resource_type.value}: {self.resource_id}")
+            logger.info("Cleaned up %s: %s", self.resource_type.value, self.resource_id)
         except Exception as e:
             self.state = ResourceState.FAILED
-            logger.error(f"Failed to cleanup {self.resource_type.value} {self.resource_id}: {e}")
+            logger.error("Failed to cleanup %s %s: %s", self.resource_type.value, self.resource_id, e, exc_info=True)
             raise
 
     def __del__(self) -> None:
@@ -212,7 +212,7 @@ class ProcessResource(ManagedResource):
                     self.process.kill()
                     self.process.wait()
             except Exception as e:
-                logger.error(f"Error terminating process {self.resource_id}: {e}")
+                logger.error("Error terminating process %s: %s", self.resource_id, e, exc_info=True)
 
     def update_usage(self) -> None:
         """Update resource usage statistics from process metrics."""
@@ -262,7 +262,7 @@ class VMResource(ManagedResource):
                 timeout=10,
             )
         except Exception as e:
-            logger.warning(f"Failed to shutdown VM {self.vm_name} gracefully: {e}")
+            logger.warning("Failed to shutdown VM %s gracefully: %s", self.vm_name, e, exc_info=True)
 
         # Kill process if still running
         if self.vm_process and self.vm_process.poll() is None:
@@ -332,7 +332,7 @@ class ResourceManager:
                 self._check_resource_limits()
                 self._cleanup_stale_resources()
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.error("Error in cleanup loop: %s", e, exc_info=True)
 
     def _check_resource_limits(self) -> None:
         """Check and enforce resource limits.
@@ -344,7 +344,7 @@ class ResourceManager:
             # Check process limit
             process_ids = self._resources_by_type.get(ResourceType.PROCESS, set())
             if len(process_ids) > self.max_processes:
-                logger.warning(f"Process limit exceeded: {len(process_ids)}/{self.max_processes}")
+                logger.warning("Process limit exceeded: %s/%s", len(process_ids), self.max_processes)
 
             # Check memory usage
             total_memory = 0
@@ -355,7 +355,7 @@ class ResourceManager:
                     total_memory += resource.usage.memory_mb
 
             if total_memory > self.max_memory_mb:
-                logger.warning(f"Memory limit exceeded: {total_memory:.1f}/{self.max_memory_mb} MB")
+                logger.warning("Memory limit exceeded: %.1f/%s MB", total_memory, self.max_memory_mb)
 
     def _cleanup_stale_resources(self) -> None:
         """Clean up stale or dead resources.
@@ -405,7 +405,7 @@ class ResourceManager:
             self._resources_by_type[resource.resource_type].add(resource.resource_id)
             resource.state = ResourceState.ACTIVE
 
-            logger.debug(f"Registered {resource.resource_type.value}: {resource.resource_id}")
+            logger.debug("Registered %s: %s", resource.resource_type.value, resource.resource_id)
 
             return resource.resource_id
 
@@ -432,7 +432,7 @@ class ResourceManager:
                 self._resources_by_type[resource.resource_type].discard(resource_id)
 
             except Exception as e:
-                logger.error(f"Error releasing resource {resource_id}: {e}")
+                logger.error("Error releasing resource %s: %s", resource_id, e, exc_info=True)
 
     def get_resource(self, resource_id: str) -> ManagedResource | None:
         """Get a managed resource by ID.
@@ -519,7 +519,7 @@ class ResourceManager:
             try:
                 shutil.rmtree(temp_dir)
             except Exception as e:
-                logger.error(f"Failed to remove temp directory {temp_dir}: {e}")
+                logger.error("Failed to remove temp directory %s: %s", temp_dir, e, exc_info=True)
 
         resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
 
@@ -536,7 +536,7 @@ class ResourceManager:
 
         """
         with self._lock:
-            logger.info(f"Cleaning up {len(self._resources)} resources")
+            logger.info("Cleaning up %s resources", len(self._resources))
 
             # Copy resource IDs to avoid modification during iteration
             resource_ids = list(self._resources.keys())
@@ -545,7 +545,7 @@ class ResourceManager:
                 try:
                     self.release_resource(resource_id)
                 except Exception as e:
-                    logger.error(f"Error cleaning up resource {resource_id}: {e}")
+                    logger.error("Error cleaning up resource %s: %s", resource_id, e, exc_info=True)
 
     def __enter__(self) -> "ResourceManager":
         """Context manager entry."""
@@ -560,7 +560,7 @@ class ResourceManager:
         """Context manager exit with cleanup."""
         self.cleanup_all()
         if exc_type:
-            logger.error(f"Exception in resource manager context: {exc_type.__name__}: {exc_val}")
+            logger.error("Exception in resource manager context: %s: %s", exc_type.__name__, exc_val)
         return False
 
     def get_resource_usage_stats(self) -> dict[str, Any]:
@@ -619,7 +619,7 @@ class ResourceManager:
         except ImportError:
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
         except Exception as e:
-            logger.warning(f"Failed to get memory usage: {e}")
+            logger.warning("Failed to get memory usage: %s", e, exc_info=True)
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
 
     def _cleanup_resource(self, resource_id: str) -> bool:
@@ -636,7 +636,7 @@ class ResourceManager:
             self.release_resource(resource_id)
             return True
         except Exception as e:
-            logger.error(f"Failed to cleanup resource {resource_id}: {e}")
+            logger.error("Failed to cleanup resource %s: %s", resource_id, e, exc_info=True)
             return False
 
     def force_cleanup_by_type(self, resource_type: ResourceType) -> int:
@@ -656,7 +656,7 @@ class ResourceManager:
                 if self._cleanup_resource(resource_id):
                     cleaned_count += 1
 
-        logger.info(f"Force cleaned {cleaned_count} resources of type {resource_type.value}")
+        logger.info("Force cleaned %s resources of type %s", cleaned_count, resource_type.value)
         return cleaned_count
 
     def force_cleanup_expired(self, max_age_seconds: int = 3600) -> int:
@@ -679,7 +679,7 @@ class ResourceManager:
                 if resource and (current_time - resource.created_at) > max_age_seconds and self._cleanup_resource(resource_id):
                     cleaned_count += 1
 
-        logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
+        logger.info("Force cleaned %s expired resources (older than %ss)", cleaned_count, max_age_seconds)
         return cleaned_count
 
     def set_resource_limits(self, **limits: int) -> None:
@@ -707,9 +707,9 @@ class ResourceManager:
                 terminal_manager = get_terminal_manager()
                 terminal_manager.log_terminal_message(f"Resource limits updated: {limits}")
             except Exception as e:
-                logger.warning(f"Could not log to terminal manager: {e}")
+                logger.warning("Could not log to terminal manager: %s", e, exc_info=True)
 
-        logger.info(f"Updated resource limits: {limits}")
+        logger.info("Updated resource limits: %s", limits)
 
     def get_resources_by_owner(self, owner: str) -> list[ManagedResource]:
         """Get all resources owned by a specific entity.
@@ -737,7 +737,7 @@ class ResourceManager:
         owned_resources = self.get_resources_by_owner(owner)
 
         cleaned_count = sum(bool(self._cleanup_resource(resource.resource_id)) for resource in owned_resources)
-        logger.info(f"Cleaned {cleaned_count} resources owned by {owner}")
+        logger.info("Cleaned %s resources owned by %s", cleaned_count, owner)
         return cleaned_count
 
     def emergency_cleanup(self) -> dict[str, int]:
@@ -825,7 +825,7 @@ class ResourceManager:
                     for warning in health["warnings"]:
                         terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
             except Exception as e:
-                logger.warning(f"Could not report to terminal manager: {e}")
+                logger.warning("Could not report to terminal manager: %s", e, exc_info=True)
 
         return health
 
@@ -908,7 +908,7 @@ class ResourceContext:
                 cleaned_count += 1
                 self.managed_resources.remove(resource_id)
 
-        logger.info(f"ResourceContext cleaned {cleaned_count} resources for owner {self.owner}")
+        logger.info("ResourceContext cleaned %s resources for owner %s", cleaned_count, self.owner)
         return cleaned_count
 
     def get_resource_count(self) -> int:
@@ -1065,10 +1065,10 @@ class FallbackHandler:
                 fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
                 return fallback_func(*args, **kwargs)
             except Exception as e:
-                logger.error(f"Fallback for {tool_name} failed: {e}")
+                logger.error("Fallback for %s failed: %s", tool_name, e, exc_info=True)
                 return None
 
-        logger.warning(f"No fallback available for tool: {tool_name}")
+        logger.warning("No fallback available for tool: %s", tool_name)
         return None
 
     def _strings_fallback(self, binary_path: str, min_length: int = 4) -> list[str]:
@@ -1100,7 +1100,7 @@ class FallbackHandler:
             return list(set(strings))  # Remove duplicates
 
         except Exception as e:
-            logger.error(f"Strings fallback failed: {e}")
+            logger.error("Strings fallback failed: %s", e, exc_info=True)
             return []
 
     def _file_type_fallback(self, file_path: str) -> str:
@@ -1149,7 +1149,7 @@ class FallbackHandler:
             return mime_type or "Unknown file type"
 
         except Exception as e:
-            logger.error(f"File type fallback failed: {e}")
+            logger.error("File type fallback failed: %s", e, exc_info=True)
             return "Unknown file type"
 
     def _objdump_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
@@ -1173,14 +1173,12 @@ class FallbackHandler:
                 pe = pefile.PE(binary_path)
 
                 if "-h" in (options or []):
-                    result.extend(
-                        (
-                            f"File: {binary_path}",
-                            f"Machine: {hex(pe.FILE_HEADER.Machine)}",
-                            f"Number of sections: {pe.FILE_HEADER.NumberOfSections}",
-                            f"Characteristics: {hex(pe.FILE_HEADER.Characteristics)}",
-                        )
-                    )
+                    result.extend((
+                        f"File: {binary_path}",
+                        f"Machine: {hex(pe.FILE_HEADER.Machine)}",
+                        f"Number of sections: {pe.FILE_HEADER.NumberOfSections}",
+                        f"Characteristics: {hex(pe.FILE_HEADER.Characteristics)}",
+                    ))
                 if "-S" in (options or []):
                     # Section headers
                     result.append("\nSections:")
@@ -1206,13 +1204,11 @@ class FallbackHandler:
                     elf = ELFFile(f)
 
                     if "-h" in (options or []):
-                        result.extend(
-                            (
-                                f"File: {binary_path}",
-                                f"Class: {elf.get_machine_arch()}",
-                                f"Type: {elf.header['e_type']}",
-                            )
-                        )
+                        result.extend((
+                            f"File: {binary_path}",
+                            f"Class: {elf.get_machine_arch()}",
+                            f"Type: {elf.header['e_type']}",
+                        ))
                     if "-S" in (options or []):
                         result.append("\nSections:")
                         for section in elf.iter_sections():
@@ -1228,7 +1224,7 @@ class FallbackHandler:
             return "objdump fallback: Install pefile or pyelftools for detailed analysis"
 
         except Exception as e:
-            logger.error(f"objdump fallback failed: {e}")
+            logger.error("objdump fallback failed: %s", e, exc_info=True)
             return f"objdump fallback error: {e}"
 
     def _readelf_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
@@ -1255,16 +1251,14 @@ class FallbackHandler:
                 if "-h" in (options or []):
                     # ELF header
                     header = elf.header
-                    result.extend(
-                        (
-                            "ELF Header:",
-                            f"  Class: {header['e_ident']['EI_CLASS']}",
-                            f"  Data: {header['e_ident']['EI_DATA']}",
-                            f"  Type: {header['e_type']}",
-                            f"  Machine: {header['e_machine']}",
-                            f"  Entry point: {hex(header['e_entry'])}",
-                        )
-                    )
+                    result.extend((
+                        "ELF Header:",
+                        f"  Class: {header['e_ident']['EI_CLASS']}",
+                        f"  Data: {header['e_ident']['EI_DATA']}",
+                        f"  Type: {header['e_type']}",
+                        f"  Machine: {header['e_machine']}",
+                        f"  Entry point: {hex(header['e_entry'])}",
+                    ))
                 if "-S" in (options or []):
                     # Section headers
                     result.append("\nSection Headers:")
@@ -1278,7 +1272,7 @@ class FallbackHandler:
         except ImportError:
             return "readelf fallback: Install pyelftools for ELF analysis"
         except Exception as e:
-            logger.error(f"readelf fallback failed: {e}")
+            logger.error("readelf fallback failed: %s", e, exc_info=True)
             return f"readelf fallback error: {e}"
 
     def _nmap_fallback(self, target: str, ports: str | None = None) -> dict[str, Any]:
@@ -1337,7 +1331,7 @@ class FallbackHandler:
             }
 
         except Exception as e:
-            logger.error(f"nmap fallback failed: {e}")
+            logger.error("nmap fallback failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _netstat_fallback(self) -> list[dict[str, Any]]:
@@ -1363,7 +1357,7 @@ class FallbackHandler:
         except ImportError:
             return [{"error": "psutil not available for netstat fallback"}]
         except Exception as e:
-            logger.error(f"netstat fallback failed: {e}")
+            logger.error("netstat fallback failed: %s", e, exc_info=True)
             return [{"error": str(e)}]
 
     def _qemu_fallback(self, *_args: object, **_kwargs: object) -> dict[str, object]:
@@ -1439,7 +1433,7 @@ class FallbackHandler:
 
         """
         self.fallback_registry[tool_name] = fallback_func
-        logger.info(f"Registered fallback for {tool_name}")
+        logger.info("Registered fallback for %s", tool_name)
 
     def list_available_fallbacks(self) -> dict[str, list[str] | dict[str, list[str]]]:
         """List all available fallbacks.
@@ -1500,7 +1494,7 @@ def execute_with_fallback(
         raise subprocess.CalledProcessError(result.returncode, primary_command, result.stderr)
 
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.warning(f"Primary command failed for {tool_name}: {e}")
+        logger.warning("Primary command failed for %s: %s", tool_name, e, exc_info=True)
 
         # Try fallback
         fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
@@ -1548,7 +1542,7 @@ def validate_external_dependencies() -> dict[str, Any]:
         return validation_result
 
     except ImportError as e:
-        logger.warning(f"External tools configuration not available: {e}")
+        logger.warning("External tools configuration not available: %s", e, exc_info=True)
         return {
             "status": "error",
             "error": "External tools configuration module not found",
@@ -1569,19 +1563,21 @@ def setup_resource_monitoring() -> None:
             health = resource_manager.health_check()
 
             logger.info(
-                f"Resource stats: {stats['total_resources']} total, Memory: {stats['memory_usage'].get('rss_mb', 0)}MB",
+                "Resource stats: %s total, Memory: %sMB",
+                stats['total_resources'],
+                stats['memory_usage'].get('rss_mb', 0),
             )
 
             if health["status"] != "healthy":
-                logger.warning(f"Resource health: {health['status']} - Issues: {health['issues']}")
+                logger.warning("Resource health: %s - Issues: %s", health['status'], health['issues'])
 
             # Log tool validation periodically
             validation = validate_external_dependencies()
             if validation["missing_required_tools"]:
-                logger.warning(f"Missing required tools: {validation['missing_required_tools']}")
+                logger.warning("Missing required tools: %s", validation['missing_required_tools'])
 
         except Exception as e:
-            logger.error(f"Failed to log resource stats: {e}")
+            logger.error("Failed to log resource stats: %s", e, exc_info=True)
 
     # Start monitoring thread (skip during testing)
     import threading
@@ -1592,7 +1588,7 @@ def setup_resource_monitoring() -> None:
                 time.sleep(300)  # Log every 5 minutes
                 log_resource_stats()
             except Exception as e:
-                logger.error(f"Resource monitoring error: {e}")
+                logger.error("Resource monitoring error: %s", e, exc_info=True)
                 time.sleep(60)  # Wait before retrying
 
     if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
@@ -1607,7 +1603,7 @@ def setup_resource_monitoring() -> None:
 try:
     setup_resource_monitoring()
 except Exception as e:
-    logger.warning(f"Failed to setup resource monitoring: {e}")
+    logger.warning("Failed to setup resource monitoring: %s", e, exc_info=True)
 
 
 # Global resource manager instance

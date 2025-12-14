@@ -1566,7 +1566,7 @@ class LicenseCheckRemover:
             self.patch_selector = PatchPointSelector(self.cfg_analyzer, self.disassembler)
 
         except Exception as e:
-            logger.error(f"Failed to initialize engines: {e}")
+            logger.error("Failed to initialize engines: %s", e, exc_info=True)
             raise
 
     def _detect_binary_characteristics(self) -> None:
@@ -1586,13 +1586,13 @@ class LicenseCheckRemover:
             section_name = section.Name.decode("utf-8", errors="ignore").rstrip("\x00")
             if any(packer in section_name.lower() for packer in packer_sections):
                 self.is_packed = True
-                logger.info(f"Detected packed binary: {section_name}")
+                logger.info("Detected packed binary: %s", section_name)
                 break
 
         for section in self.pe.sections:
             if section.get_entropy() > 7.0:
                 self.is_packed = True
-                logger.info(f"High entropy detected in section: {section.Name}")
+                logger.info("High entropy detected in section: %s", section.Name)
 
         if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             anti_debug_imports = [
@@ -1608,7 +1608,7 @@ class LicenseCheckRemover:
                 for imp in entry.imports:
                     if imp.name and any(api in str(imp.name) for api in anti_debug_imports):
                         self.has_antidebug = True
-                        logger.info(f"Anti-debug detected: {imp.name}")
+                        logger.info("Anti-debug detected: %s", imp.name)
 
         vm_signatures = [
             b"\x0f\x3f",
@@ -1690,7 +1690,7 @@ class LicenseCheckRemover:
 
     def analyze(self) -> list[LicenseCheck]:
         """Analyze binary for license checks."""
-        logger.info(f"Analyzing {self.binary_path} for license checks...")
+        logger.info("Analyzing %s for license checks...", self.binary_path)
 
         self.detected_checks = []
 
@@ -1703,7 +1703,7 @@ class LicenseCheckRemover:
 
         self.detected_checks.sort(key=lambda x: x.confidence, reverse=True)
 
-        logger.info(f"Found {len(self.detected_checks)} potential license checks")
+        logger.info("Found %d potential license checks", len(self.detected_checks))
         return self.detected_checks
 
     def _analyze_section(self, section: object) -> None:
@@ -1722,9 +1722,9 @@ class LicenseCheckRemover:
 
         try:
             cfg_blocks = self.cfg_analyzer.build_cfg(instructions)
-            logger.info(f"Built CFG with {len(cfg_blocks)} basic blocks for section {section.Name}")
+            logger.info("Built CFG with %d basic blocks for section %s", len(cfg_blocks), section.Name)
         except Exception as e:
-            logger.warning(f"CFG analysis failed: {e}")
+            logger.warning("CFG analysis failed: %s", e, exc_info=True)
             cfg_blocks = {}
 
         matches = self.pattern_matcher.find_patterns(instructions)
@@ -1758,7 +1758,7 @@ class LicenseCheckRemover:
                     try:
                         patch_points = self.patch_selector.select_optimal_patch_points(check, instructions)
                         check.patch_points = patch_points
-                        logger.info(f"Found {len(patch_points)} optimal patch points for check at 0x{start_addr:08X}")
+                        logger.info("Found %d optimal patch points for check at 0x%08X", len(patch_points), start_addr)
 
                         if patch_points:
                             best_point = patch_points[0]
@@ -1772,7 +1772,7 @@ class LicenseCheckRemover:
                             }
                             check.validated_safe = best_point.risk_assessment in ["low", "medium"]
                     except Exception as e:
-                        logger.warning(f"Patch point selection failed for check at 0x{start_addr:08X}: {e}")
+                        logger.warning("Patch point selection failed for check at 0x%08X: %s", start_addr, e, exc_info=True)
 
                 self.detected_checks.append(check)
 
@@ -2078,7 +2078,7 @@ class LicenseCheckRemover:
             backup_path = f"{self.binary_path}.bak"
             shutil.copy2(self.binary_path, backup_path)
             self.backup_created = True
-            logger.info(f"Created backup: {backup_path}")
+            logger.info("Created backup: %s", backup_path)
 
         patched_count = 0
 
@@ -2093,18 +2093,18 @@ class LicenseCheckRemover:
                     data[offset : offset + patch_size] = check.patched_bytes
                     patched_count += 1
 
-                    logger.info(f"Patched {check.check_type.value} at 0x{check.address:08X}")
+                    logger.info("Patched %s at 0x%08X", check.check_type.value, check.address)
 
             with open(self.binary_path, "wb") as f:
                 f.write(data)
 
             self._update_checksum()
 
-            logger.info(f"Successfully patched {patched_count} license checks")
+            logger.info("Successfully patched %d license checks", patched_count)
             return True
 
         except Exception as e:
-            logger.error(f"Patching failed: {e}")
+            logger.error("Patching failed: %s", e, exc_info=True)
 
             if self.backup_created:
                 backup_path = f"{self.binary_path}.bak"
@@ -2136,7 +2136,7 @@ class LicenseCheckRemover:
 
             logger.info("Updated PE checksum")
         except Exception as e:
-            logger.warning(f"Failed to update checksum: {e}")
+            logger.warning("Failed to update checksum: %s", e, exc_info=True)
 
     def verify_patches(self) -> bool:
         """Verify that patches were applied successfully."""
@@ -2151,7 +2151,7 @@ class LicenseCheckRemover:
                         actual_bytes = f.read(len(check.patched_bytes))
 
                     if actual_bytes != check.patched_bytes:
-                        logger.error(f"Patch verification failed at 0x{check.address:08X}")
+                        logger.error("Patch verification failed at 0x%08X", check.address)
                         return False
 
             pe_verify.close()
@@ -2159,7 +2159,7 @@ class LicenseCheckRemover:
             return True
 
         except Exception as e:
-            logger.error(f"Patch verification failed: {e}")
+            logger.error("Patch verification failed: %s", e, exc_info=True)
             return False
 
     def apply_intelligent_patches(self, checks: list[LicenseCheck] | None = None, use_best_point: bool = True) -> bool:
@@ -2175,7 +2175,7 @@ class LicenseCheckRemover:
             backup_path = f"{self.binary_path}.bak"
             shutil.copy2(self.binary_path, backup_path)
             self.backup_created = True
-            logger.info(f"Created backup: {backup_path}")
+            logger.info("Created backup: %s", backup_path)
 
         patched_count = 0
 
@@ -2185,13 +2185,13 @@ class LicenseCheckRemover:
 
             for check in checks:
                 if not check.patch_points:
-                    logger.warning(f"No patch points available for check at 0x{check.address:08X}, using default patching")
+                    logger.warning("No patch points available for check at 0x%08X, using default patching", check.address)
                     rva = check.address - self.pe.OPTIONAL_HEADER.ImageBase
                     if offset := self._rva_to_offset(rva):
                         patch_size = len(check.patched_bytes)
                         data[offset : offset + patch_size] = check.patched_bytes
                         patched_count += 1
-                        logger.info(f"Patched {check.check_type.value} at 0x{check.address:08X} (default method)")
+                        logger.info("Patched %s at 0x%08X (default method)", check.check_type.value, check.address)
                     continue
 
                 best_point = check.patch_points[0] if use_best_point else check.patch_points[-1]
@@ -2203,8 +2203,12 @@ class LicenseCheckRemover:
                     data[offset : offset + len(patch_bytes)] = patch_bytes
                     patched_count += 1
                     logger.info(
-                        f"Patched {check.check_type.value} at 0x{best_point.address:08X} "
-                        f"using {best_point.patch_type} (safety: {best_point.safety_score:.2f}, risk: {best_point.risk_assessment})",
+                        "Patched %s at 0x%08X using %s (safety: %.2f, risk: %s)",
+                        check.check_type.value,
+                        best_point.address,
+                        best_point.patch_type,
+                        best_point.safety_score,
+                        best_point.risk_assessment,
                     )
 
             with open(self.binary_path, "wb") as f:
@@ -2212,11 +2216,11 @@ class LicenseCheckRemover:
 
             self._update_checksum()
 
-            logger.info(f"Successfully applied {patched_count} intelligent patches")
+            logger.info("Successfully applied %d intelligent patches", patched_count)
             return True
 
         except Exception as e:
-            logger.error(f"Intelligent patching failed: {e}")
+            logger.error("Intelligent patching failed: %s", e, exc_info=True)
 
             if self.backup_created:
                 backup_path = f"{self.binary_path}.bak"
@@ -2348,31 +2352,31 @@ def main() -> None:
 
     checks = [c for c in checks if c.confidence >= args.confidence]
 
-    print(f"\nFound {len(checks)} license checks with confidence >= {args.confidence:.1%}")
+    logger.info("Found %d license checks with confidence >= %.1f%%", len(checks), args.confidence * 100)
 
     if args.report:
-        print(remover.generate_report())
+        logger.info("Report:\n%s", remover.generate_report())
 
     if args.patch and not args.analyze:
         use_intelligent = not args.legacy
 
         if use_intelligent:
-            print("\nApplying intelligent patches with CFG analysis...")
+            logger.info("Applying intelligent patches with CFG analysis...")
             if remover.apply_intelligent_patches(checks):
-                print("OK Intelligent patches applied successfully")
+                logger.info("OK Intelligent patches applied successfully")
             else:
-                print("FAIL Intelligent patching failed")
+                logger.error("FAIL Intelligent patching failed")
         else:
-            print("\nApplying legacy patches...")
+            logger.info("Applying legacy patches...")
             if remover.patch(checks):
-                print("OK Patches applied successfully")
+                logger.info("OK Patches applied successfully")
 
                 if remover.verify_patches():
-                    print("OK Patches verified")
+                    logger.info("OK Patches verified")
                 else:
-                    print("FAIL Patch verification failed")
+                    logger.error("FAIL Patch verification failed")
             else:
-                print("FAIL Patching failed")
+                logger.error("FAIL Patching failed")
 
 
 if __name__ == "__main__":

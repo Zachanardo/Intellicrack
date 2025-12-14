@@ -406,7 +406,9 @@ const CloudLicensingBypass = {
                 spoofResponseData: function (bytesRead) {
                     try {
                         var config = this.parent.parent.config;
-                        if (!config.networkInterception.spoofResponses) { return; }
+                        if (!config.networkInterception.spoofResponses) {
+                            return;
+                        }
 
                         var responseData = this.lpBuffer.readUtf8String(bytesRead);
                         var shouldSpoof = this.shouldSpoofResponse(responseData);
@@ -441,7 +443,9 @@ const CloudLicensingBypass = {
                 },
 
                 shouldSpoofResponse: responseData => {
-                    if (!responseData) { return false; }
+                    if (!responseData) {
+                        return false;
+                    }
 
                     var lowerResponse = responseData.toLowerCase();
                     var licenseIndicators = [
@@ -466,12 +470,18 @@ const CloudLicensingBypass = {
                         var jsonResponse = JSON.parse(originalResponse);
 
                         // Apply license validation spoofing
-                        if (Object.hasOwn(jsonResponse, 'valid')) { jsonResponse.valid = true; }
-                        if (Object.hasOwn(jsonResponse, 'licensed')) { jsonResponse.licensed = true; }
+                        if (Object.hasOwn(jsonResponse, 'valid')) {
+                            jsonResponse.valid = true;
+                        }
+                        if (Object.hasOwn(jsonResponse, 'licensed')) {
+                            jsonResponse.licensed = true;
+                        }
                         if (Object.hasOwn(jsonResponse, 'authorized')) {
                             jsonResponse.authorized = true;
                         }
-                        if (Object.hasOwn(jsonResponse, 'genuine')) { jsonResponse.genuine = true; }
+                        if (Object.hasOwn(jsonResponse, 'genuine')) {
+                            jsonResponse.genuine = true;
+                        }
                         if (Object.hasOwn(jsonResponse, 'status')) {
                             jsonResponse.status = jsonResponse.status.includes('error')
                                 ? 'success'
@@ -483,8 +493,12 @@ const CloudLicensingBypass = {
                                 ? 'active'
                                 : jsonResponse.status;
                         }
-                        if (Object.hasOwn(jsonResponse, 'error')) { jsonResponse.error = undefined; }
-                        if (Object.hasOwn(jsonResponse, 'errors')) { jsonResponse.errors = undefined; }
+                        if (Object.hasOwn(jsonResponse, 'error')) {
+                            jsonResponse.error = undefined;
+                        }
+                        if (Object.hasOwn(jsonResponse, 'errors')) {
+                            jsonResponse.errors = undefined;
+                        }
 
                         // Add positive license information
                         jsonResponse.license_type = jsonResponse.license_type || 'premium';
@@ -624,7 +638,9 @@ const CloudLicensingBypass = {
                 spoofWinINetResponse: function (bytesRead) {
                     try {
                         var config = this.parent.parent.config;
-                        if (!config.networkInterception.spoofResponses) { return; }
+                        if (!config.networkInterception.spoofResponses) {
+                            return;
+                        }
 
                         var responseData = this.lpBuffer.readUtf8String(bytesRead);
                         if (this.shouldSpoofWinINetResponse(responseData)) {
@@ -655,7 +671,9 @@ const CloudLicensingBypass = {
                 },
 
                 shouldSpoofWinINetResponse: responseData => {
-                    if (!responseData) { return false; }
+                    if (!responseData) {
+                        return false;
+                    }
                     var lowerResponse = responseData.toLowerCase();
                     return (
                         lowerResponse.includes('license') ||
@@ -839,7 +857,9 @@ const CloudLicensingBypass = {
                             try {
                                 if (args[i] && !args[i].isNull()) {
                                     var strVal = args[i].readUtf8String(256);
-                                    if (strVal) { argData.push(strVal); }
+                                    if (strVal) {
+                                        argData.push(strVal);
+                                    }
                                 }
                             } catch (_e) {
                                 argData.push(`[ptr:${args[i]}]`);
@@ -979,7 +999,9 @@ const CloudLicensingBypass = {
                 spoofSslResponse: function (bytesRead) {
                     try {
                         var config = this.parent.parent.config;
-                        if (!config.networkInterception.spoofResponses) { return; }
+                        if (!config.networkInterception.spoofResponses) {
+                            return;
+                        }
 
                         var responseData = this.buf.readUtf8String(bytesRead);
                         if (this.shouldSpoofSslResponse(responseData)) {
@@ -1345,8 +1367,7 @@ const CloudLicensingBypass = {
 
                     return (
                         tokenPatterns.some(
-                            pattern =>
-                                (str1?.includes(pattern)) || (str2?.includes(pattern))
+                            pattern => str1?.includes(pattern) || str2?.includes(pattern)
                         ) ||
                         this.looksLikeJWT(str1) ||
                         this.looksLikeJWT(str2)
@@ -1975,7 +1996,9 @@ const CloudLicensingBypass = {
                 },
 
                 isLicenseServerConnection: connInfo => {
-                    if (!connInfo) { return false; }
+                    if (!connInfo) {
+                        return false;
+                    }
 
                     var licensePorts = [80, 443, 8080, 8443, 9443];
                     if (!licensePorts.includes(connInfo.port)) {
@@ -2323,8 +2346,7 @@ const CloudLicensingBypass = {
                     data: {
                         feature: 'Response Spoofing',
                         status: config.networkInterception.spoofResponses,
-                        message:
-                            `✓ Response Spoofing: ${config.networkInterception.spoofResponses}`,
+                        message: `✓ Response Spoofing: ${config.networkInterception.spoofResponses}`,
                     },
                 });
             }

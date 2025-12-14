@@ -22,13 +22,17 @@ These tests validate **REAL ROP capabilities** against **ACTUAL Windows DLLs**:
 ## Test Categories
 
 ### 1. Initialization Tests (`TestROPGeneratorInitialization`)
+
 Validates generator initialization and binary loading:
+
 - Default and custom configuration
 - Binary path validation
 - Windows DLL loading
 
 ### 2. Gadget Discovery Tests (`TestGadgetDiscoveryKernel32`, `TestGadgetDiscoveryNtdll`)
+
 Tests real gadget discovery in Windows DLLs:
+
 - Finds actual ROP gadgets in kernel32.dll and ntdll.dll
 - Validates gadget structure (address, instruction, type)
 - Verifies gadget addresses are valid
@@ -38,19 +42,25 @@ Tests real gadget discovery in Windows DLLs:
 **CRITICAL**: These tests validate that Intellicrack can find real exploitable gadgets in Windows binaries.
 
 ### 3. Gadget Classification Tests (`TestGadgetClassification`)
+
 Tests gadget type classification:
+
 - pop_reg, ret, mov_reg_reg, arith_reg, logic_reg
 - Validates classification matches instruction patterns
 - Tests size field presence
 
 ### 4. Gadget Filtering Tests (`TestGadgetFiltering`)
+
 Tests gadget deduplication and filtering:
+
 - Uniqueness validation
 - Address sorting
 - Count limits
 
 ### 5. Chain Generation Tests (`TestChainGeneration`)
+
 Tests ROP chain construction:
+
 - Generates chains for license-related targets
 - Validates chain structure and gadgets
 - Tests automatic target addition
@@ -59,13 +69,17 @@ Tests ROP chain construction:
 **CRITICAL**: These tests ensure Intellicrack can build working ROP chains to defeat licensing checks.
 
 ### 6. Target Function Management (`TestTargetFunctionManagement`)
+
 Tests target function configuration:
+
 - Adding targets with/without addresses
 - Multiple target handling
 - Default license-related targets
 
 ### 7. Chain Type Tests (`TestChainTypes`)
+
 Tests different chain generation strategies:
+
 - License bypass chains
 - Comparison bypass chains (strcmp, memcmp)
 - Memory manipulation chains
@@ -73,27 +87,35 @@ Tests different chain generation strategies:
 **CRITICAL**: Validates that Intellicrack generates appropriate chains for different bypass scenarios.
 
 ### 8. Chain Validation Tests (`TestChainValidation`)
+
 Tests chain correctness:
+
 - Length validation
 - Metadata presence
 - Gadget composition
 
 ### 9. Result Retrieval Tests (`TestGetResults`, `TestGetStatistics`)
+
 Tests result structure and statistics:
+
 - Results dictionary structure
 - Count accuracy
 - Gadget type statistics
 - Average chain length calculations
 
 ### 10. Analysis Management Tests (`TestClearAnalysis`)
+
 Tests data clearing:
+
 - Gadget clearing
 - Chain clearing
 - Target clearing
 - Configuration preservation
 
 ### 11. Generate Chain Method Tests (`TestGenerateChainMethod`)
+
 Tests the main chain generation API:
+
 - Target name parsing
 - Address target parsing
 - Chain type auto-detection
@@ -102,13 +124,17 @@ Tests the main chain generation API:
 **CRITICAL**: This is the primary API for generating ROP chains - must work flawlessly.
 
 ### 12. Pattern-Based Search Tests (`TestPatternBasedGadgetSearch`)
+
 Tests fallback gadget discovery:
+
 - Pop/ret pattern matching
 - Xor/ret pattern matching
 - Simple ret discovery
 
 ### 13. License Bypass Tests (`TestChainBuildingForLicenseBypass`)
+
 Tests license-specific chain generation:
+
 - License check bypasses
 - Appropriate gadget selection
 - Chain structure validation
@@ -116,73 +142,97 @@ Tests license-specific chain generation:
 **CRITICAL**: Validates core Intellicrack functionality for defeating license checks.
 
 ### 14. Comparison Bypass Tests (`TestChainBuildingForComparisonBypass`)
+
 Tests comparison function bypasses:
+
 - strcmp bypasses
 - memcmp bypasses
 
 **CRITICAL**: Essential for bypassing string-based license validation.
 
 ### 15. Architecture Tests (`TestArchitectureSupport`)
+
 Tests multi-architecture support:
+
 - x86_64 configuration
 - x86 (32-bit) configuration
 - Architecture-specific requirements
 
 ### 16. Multi-DLL Tests (`TestMultipleDLLAnalysis`, `TestUser32Gadgets`)
+
 Tests gadget discovery across different DLLs:
+
 - user32.dll gadgets
 - Comparing gadget counts between DLLs
 - Address space separation
 
 ### 17. Utility Detection Tests (`TestGadgetUtilityDetection`)
+
 Tests gadget purpose classification:
+
 - Stack control detection
 - Zero register detection
 
 ### 18. Complexity Scoring Tests (`TestChainComplexityScoring`)
+
 Tests chain complexity analysis:
+
 - Complexity score calculation
 - Length-complexity correlation
 
 ### 19. Success Probability Tests (`TestSuccessProbabilityEstimation`)
+
 Tests exploit success estimation:
+
 - Probability range validation
 - Chain length consideration
 
 ### 20. Target Parsing Tests (`TestTargetParsing`)
+
 Tests target specification parsing:
+
 - Function name parsing
 - Address parsing (0x format)
 - Library specification (func@lib.dll)
 - Bypass keyword detection
 
 ### 21. Report Generation Tests (`TestReportGeneration`)
+
 Tests HTML report generation:
+
 - Report structure
 - Gadget information inclusion
 - Chain information inclusion
 - File saving
 
 ### 22. Edge Case Tests (`TestEdgeCases`)
+
 Tests error handling:
+
 - Corrupted binaries
 - Very small binaries
 - Empty targets
 - Non-executable files
 
 ### 23. Address Validation Tests (`TestGadgetAddressRanges`)
+
 Tests address validity:
+
 - Hex format validation
 - Address range checking
 
 ### 24. Payload Generation Tests (`TestChainPayloadGeneration`)
+
 Tests chain payload creation:
+
 - Non-empty payloads
 - Address inclusion
 - Proper formatting
 
 ### 25. Real-World Effectiveness Tests (`TestRealWorldEffectiveness`)
+
 Tests practical exploitation capabilities:
+
 - Real gadget usage in chains
 - License mechanism targeting
 - Control flow gadget inclusion
@@ -192,44 +242,54 @@ Tests practical exploitation capabilities:
 ## Test Fixtures
 
 ### `kernel32_generator`
+
 ROP generator configured with kernel32.dll:
+
 ```python
 gen = ROPChainGenerator({"arch": "x86_64", "max_chain_length": 20, "max_gadget_size": 10})
 gen.set_binary(str(KERNEL32))
 ```
 
 ### `ntdll_generator`
+
 ROP generator configured with ntdll.dll:
+
 ```python
 gen = ROPChainGenerator({"arch": "x86_64", "max_chain_length": 20, "max_gadget_size": 10})
 gen.set_binary(str(NTDLL))
 ```
 
 ### `user32_generator`
+
 ROP generator configured with user32.dll.
 
 ### `temp_pe_binary`
+
 Temporary PE binary with known gadget sequences for controlled testing.
 
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 cd /d/Intellicrack
 /d/Intellicrack/.pixi/envs/default/python.exe -m pytest tests/core/analysis/test_rop_generator_production.py -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 pytest tests/core/analysis/test_rop_generator_production.py::TestGadgetDiscoveryKernel32 -v
 ```
 
 ### Run Single Test
+
 ```bash
 pytest tests/core/analysis/test_rop_generator_production.py::TestGadgetDiscoveryKernel32::test_find_gadgets_discovers_gadgets -v
 ```
 
 ### Run with Coverage
+
 ```bash
 pytest tests/core/analysis/test_rop_generator_production.py --cov=intellicrack.core.analysis.rop_generator --cov-report=html
 ```
@@ -247,22 +307,23 @@ pytest tests/core/analysis/test_rop_generator_production.py --cov=intellicrack.c
 The ROP generator implementation has the following characteristics:
 
 1. **Gadget Discovery**: Uses multiple fallback mechanisms:
-   - Capstone disassembly (if available)
-   - objdump fallback
-   - Pattern-based search (byte patterns)
-   - Minimal fallback gadgets
+    - Capstone disassembly (if available)
+    - objdump fallback
+    - Pattern-based search (byte patterns)
+    - Minimal fallback gadgets
 
 2. **Real Binary Analysis**: Code attempts to analyze real Windows DLLs, but may fall back to pattern matching or minimal gadgets if disassembly fails.
 
 3. **Chain Generation**: Builds chains using discovered gadgets with support for:
-   - License bypass chains
-   - Comparison bypass chains
-   - Memory permission chains
-   - Generic call chains
+    - License bypass chains
+    - Comparison bypass chains
+    - Memory permission chains
+    - Generic call chains
 
 ### Test Expectations
 
 Tests are written to validate:
+
 - **Real gadget discovery** in Windows DLLs
 - **Functional chain generation** for license bypass scenarios
 - **Proper error handling** for edge cases
@@ -270,6 +331,7 @@ Tests are written to validate:
 ### Validation Approach
 
 Tests use a **TDD approach** where:
+
 - Tests define the expected behavior
 - Implementation must meet test requirements
 - Tests MUST FAIL if functionality is broken or simulated
@@ -333,6 +395,7 @@ Tests are considered successful when:
 ### Windows DLL Paths
 
 Tests use environment variables to locate Windows DLLs:
+
 ```python
 SYSTEM32 = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32"
 KERNEL32 = SYSTEM32 / "kernel32.dll"
@@ -348,6 +411,7 @@ NTDLL = SYSTEM32 / "ntdll.dll"
 ### Dependencies
 
 Tests require:
+
 - Windows OS (for Windows DLLs)
 - pytest with type checking
 - Capstone (optional, for better disassembly)
@@ -356,6 +420,7 @@ Tests require:
 ### Continuous Integration
 
 Tests are designed for CI/CD environments:
+
 - Deterministic results
 - No external network dependencies
 - Uses standard Windows system DLLs

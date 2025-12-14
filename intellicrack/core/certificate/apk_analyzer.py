@@ -203,12 +203,13 @@ class APKAnalyzer:
         self.extracted_path = self.temp_dir / "extracted"
         self.extracted_path.mkdir(exist_ok=True)
 
-        logger.info(f"Extracting APK to {self.extracted_path}")
+        logger.info("Extracting APK to %s", self.extracted_path)
 
         try:
             with zipfile.ZipFile(self.apk_path, "r") as zf:
                 zf.extractall(self.extracted_path)
         except Exception as e:
+            logger.error("Failed to extract APK: %s", e, exc_info=True)
             self.cleanup()
             raise RuntimeError(f"Failed to extract APK: {e}") from e
 
@@ -257,11 +258,11 @@ class APKAnalyzer:
             if debug_overrides_elem is not None:
                 config.debug_overrides = self._parse_base_config(debug_overrides_elem)
 
-            logger.info(f"Parsed network security config: {len(config.domain_configs)} domain configs")
+            logger.info("Parsed network security config: %s domain configs", len(config.domain_configs))
             return config
 
         except ET.ParseError as e:
-            logger.error(f"Failed to parse network_security_config.xml: {e}")
+            logger.error("Failed to parse network_security_config.xml: %s", e, exc_info=True)
             return NetworkSecurityConfig()
 
     def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
@@ -380,10 +381,10 @@ class APKAnalyzer:
                             )
 
             except Exception as e:
-                logger.debug(f"Error processing {smali_file}: {e}")
+                logger.debug("Error processing %s: %s", smali_file, e, exc_info=True)
                 continue
 
-        logger.info(f"Detected {len(pinning_infos)} OkHttp pinning instances")
+        logger.info("Detected %s OkHttp pinning instances", len(pinning_infos))
         return pinning_infos
 
     def find_hardcoded_certs(self, apk_path: str | None = None) -> list[PinningInfo]:
@@ -421,7 +422,7 @@ class APKAnalyzer:
         if self.decompiled_path:
             pinning_infos.extend(self._find_base64_certs())
 
-        logger.info(f"Found {len(pinning_infos)} hardcoded certificates")
+        logger.info("Found %s hardcoded certificates", len(pinning_infos))
         return pinning_infos
 
     def _decompile_apk(self) -> bool:
@@ -446,16 +447,16 @@ class APKAnalyzer:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
             if result.returncode == 0:
-                logger.info(f"Successfully decompiled APK to {self.decompiled_path}")
+                logger.info("Successfully decompiled APK to %s", self.decompiled_path)
                 return True
-            logger.error(f"apktool failed: {result.stderr}")
+            logger.error("apktool failed: %s", result.stderr)
             return False
 
         except subprocess.TimeoutExpired:
             logger.error("apktool decompilation timeout (300s)")
             return False
         except Exception as e:
-            logger.error(f"Decompilation error: {e}")
+            logger.error("Decompilation error: %s", e, exc_info=True)
             return False
 
     def _extract_certificate_info(self, cert_file: Path) -> PinningInfo | None:
@@ -506,7 +507,7 @@ class APKAnalyzer:
             )
 
         except Exception as e:
-            logger.debug(f"Failed to parse certificate {cert_file}: {e}")
+            logger.debug("Failed to parse certificate %s: %s", cert_file, e, exc_info=True)
             return None
 
     def _find_base64_certs(self) -> list[PinningInfo]:
@@ -562,7 +563,7 @@ class APKAnalyzer:
                             ),
                         )
                     except Exception as e:
-                        logger.debug(f"Failed to parse PEM certificate: {e}")
+                        logger.debug("Failed to parse PEM certificate: %s", e, exc_info=True)
                         continue
 
                 b64_matches = base64_pattern.findall(content)
@@ -594,11 +595,11 @@ class APKAnalyzer:
                                 ),
                             )
                     except Exception as e:
-                        logger.debug(f"Failed to parse DER certificate: {e}")
+                        logger.debug("Failed to parse DER certificate: %s", e, exc_info=True)
                         continue
 
             except Exception as e:
-                logger.debug(f"Error processing {smali_file}: {e}")
+                logger.debug("Error processing %s: %s", smali_file, e, exc_info=True)
                 continue
 
         return pinning_infos
@@ -608,9 +609,9 @@ class APKAnalyzer:
         if self.temp_dir and self.temp_dir.exists():
             try:
                 shutil.rmtree(self.temp_dir)
-                logger.debug(f"Cleaned up temp directory: {self.temp_dir}")
+                logger.debug("Cleaned up temp directory: %s", self.temp_dir)
             except Exception as e:
-                logger.warning(f"Failed to clean up temp directory: {e}")
+                logger.warning("Failed to clean up temp directory: %s", e, exc_info=True)
 
     def __enter__(self) -> "APKAnalyzer":
         """Context manager entry."""

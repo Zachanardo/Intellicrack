@@ -945,9 +945,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "license_valid": current_license.get("status") == "active",
         "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
         "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
-        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
-            tzinfo=UTC
-        )
+        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=UTC)
         > release_datetime,
     }
 
@@ -996,9 +994,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(
-                tzinfo=UTC
-            )
+            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=UTC)
             < release_datetime,
             "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=UTC)
             < release_datetime + timedelta(days=30),
@@ -3118,7 +3114,7 @@ def _generate_attention_data(dims: list[int], data_type: str, total_elements: in
         scale_factor = 0.02
 
     if data_type == "float16":
-        for i in range(total_elements):
+        for _ in range(total_elements):
             weight = random.gauss(0, scale_factor * 0.9)
             data.extend(struct.pack("e", weight))
 

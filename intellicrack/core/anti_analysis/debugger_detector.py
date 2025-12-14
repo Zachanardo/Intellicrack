@@ -436,14 +436,14 @@ class DebuggerDetector(BaseDetector):
                                 p.lower() for p in self.debugger_signatures[current_platform]["processes"]
                             ] and self._verify_debugger_capabilities(proc):
                                 self.debugger_signatures[current_platform]["processes"].append(proc_name)
-                                self.logger.info(f"Discovered new debugger: {proc_name}")
+                                self.logger.info("Discovered new debugger: %s", proc_name)
                             break
 
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
 
         except Exception as e:
-            self.logger.debug(f"Error updating signatures: {e}")
+            self.logger.debug("Error updating signatures: %s", e, exc_info=True)
 
     def _verify_debugger_capabilities(self, process: psutil.Process) -> bool:
         """Verify if a process has debugger capabilities.
@@ -486,7 +486,7 @@ class DebuggerDetector(BaseDetector):
                                 return True
 
                 except Exception as e:
-                    logger.debug(f"Process connection analysis failed: {e}")
+                    logger.debug("Process connection analysis failed: %s", e, exc_info=True)
             else:
                 # Linux: Check for ptrace capability
                 try:
@@ -505,7 +505,7 @@ class DebuggerDetector(BaseDetector):
                                     if cap_value & CAP_SYS_PTRACE:
                                         return True
                 except Exception as e:
-                    logger.debug(f"Ptrace capability check failed: {e}")
+                    logger.debug("Ptrace capability check failed: %s", e, exc_info=True)
 
             if children := process.children():
                 # Check if children have different names (sign of debugging)
@@ -599,11 +599,11 @@ class DebuggerDetector(BaseDetector):
             # Calculate anti-debug effectiveness score
             results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
 
-            self.logger.info(f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})")
+            self.logger.info("Debugger detection complete: %s (confidence: %.2f)", results['is_debugged'], results['confidence'])
             return results
 
         except Exception as e:
-            self.logger.error(f"Debugger detection failed: {e}")
+            self.logger.error("Debugger detection failed: %s", e, exc_info=True)
             return results
 
     # Windows-specific detection methods
@@ -631,7 +631,7 @@ class DebuggerDetector(BaseDetector):
                 return True, 0.9, details
 
         except Exception as e:
-            self.logger.debug(f"IsDebuggerPresent check failed: {e}")
+            self.logger.debug("IsDebuggerPresent check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -662,7 +662,7 @@ class DebuggerDetector(BaseDetector):
                 return True, 0.9, details
 
         except Exception as e:
-            self.logger.debug(f"CheckRemoteDebuggerPresent check failed: {e}")
+            self.logger.debug("CheckRemoteDebuggerPresent check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -713,7 +713,7 @@ class DebuggerDetector(BaseDetector):
             )
 
             if status != 0:
-                self.logger.debug(f"NtQueryInformationProcess failed: {status}")
+                self.logger.debug("NtQueryInformationProcess failed: %s", status)
                 return False, 0.0, details
 
             peb_address = pbi.PebBaseAddress
@@ -771,7 +771,7 @@ class DebuggerDetector(BaseDetector):
             return False, 0.0, details
 
         except Exception as e:
-            self.logger.debug(f"PEB flags check failed: {e}")
+            self.logger.debug("PEB flags check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -837,7 +837,7 @@ class DebuggerDetector(BaseDetector):
             return debug_detected, confidence, details
 
         except Exception as e:
-            self.logger.debug(f"Non-Windows debug check failed: {e}")
+            self.logger.debug("Non-Windows debug check failed: %s", e, exc_info=True)
             return False, 0.0, details
 
     def _check_ntglobalflag(self) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
@@ -887,7 +887,7 @@ class DebuggerDetector(BaseDetector):
             )
 
             if status != 0:
-                self.logger.debug(f"NtQueryInformationProcess failed: {status}")
+                self.logger.debug("NtQueryInformationProcess failed: %s", status)
                 return False, 0.0, details
 
             peb_address = pbi.PebBaseAddress
@@ -946,7 +946,7 @@ class DebuggerDetector(BaseDetector):
             return False, 0.0, details
 
         except Exception as e:
-            self.logger.debug(f"NtGlobalFlag check failed: {e}")
+            self.logger.debug("NtGlobalFlag check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -974,7 +974,7 @@ class DebuggerDetector(BaseDetector):
 
             # Check if heap handle is valid
             if heap and heap != -1:
-                self.logger.debug(f"Process heap handle: 0x{heap:x}")
+                self.logger.debug("Process heap handle: 0x%x", heap)
                 # Try to detect debug heap characteristics
                 # Note: This is a simplified check
                 return heap != 0, 0.0, details
@@ -982,7 +982,7 @@ class DebuggerDetector(BaseDetector):
             return True, 0.0, details  # Assume debugger if heap access fails
 
         except Exception as e:
-            self.logger.debug(f"Heap flags check failed: {e}")
+            self.logger.debug("Heap flags check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1021,7 +1021,7 @@ class DebuggerDetector(BaseDetector):
                 return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Debug port check failed: {e}")
+            self.logger.debug("Debug port check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1049,7 +1049,7 @@ class DebuggerDetector(BaseDetector):
             return self._check_hardware_breakpoints_linux(details)
 
         except Exception as e:
-            self.logger.debug(f"Hardware breakpoint check failed: {e}")
+            self.logger.debug("Hardware breakpoint check failed: %s", e, exc_info=True)
             details["error"] = str(e)
 
         elapsed = time.time() - start_time
@@ -1129,7 +1129,7 @@ class DebuggerDetector(BaseDetector):
                 for i, addr in enumerate(debug_addresses):
                     if addr != 0 and i in breakpoint_enables:
                         active_breakpoints += 1
-                        self.logger.debug(f"Active hardware breakpoint at DR{i}: {hex(addr)}")
+                        self.logger.debug("Active hardware breakpoint at DR%s: %s", i, hex(addr))
 
                 details["breakpoints_found"] = active_breakpoints
                 details["dr7_analysis"] = {
@@ -1154,7 +1154,7 @@ class DebuggerDetector(BaseDetector):
                 details["error"] = "Failed to get thread context"
 
         except Exception as e:
-            self.logger.debug(f"Windows hardware breakpoint check failed: {e}")
+            self.logger.debug("Windows hardware breakpoint check failed: %s", e, exc_info=True)
             details["error"] = str(e)
 
         elapsed = time.time() - start_time
@@ -1281,7 +1281,7 @@ class DebuggerDetector(BaseDetector):
                 pass
 
         except Exception as e:
-            self.logger.debug(f"Linux hardware breakpoint check failed: {e}")
+            self.logger.debug("Linux hardware breakpoint check failed: %s", e, exc_info=True)
             details["error"] = str(e)
 
         elapsed = time.time() - start_time
@@ -1307,7 +1307,7 @@ class DebuggerDetector(BaseDetector):
             return self._scan_int3_linux(details)
 
         except Exception as e:
-            self.logger.debug(f"INT3 scan failed: {e}")
+            self.logger.debug("INT3 scan failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1417,7 +1417,7 @@ class DebuggerDetector(BaseDetector):
             return False, 0.0, details
 
         except Exception as e:
-            self.logger.debug(f"Windows INT3 scan error: {e}")
+            self.logger.debug("Windows INT3 scan error: %s", e, exc_info=True)
             return False, 0.0, details
 
     def _scan_int3_linux(self, details: dict[str, int | list[str] | bool]) -> tuple[bool, float, dict[str, int | list[str] | bool]]:
@@ -1511,7 +1511,7 @@ class DebuggerDetector(BaseDetector):
             return False, 0.0, details
 
         except Exception as e:
-            self.logger.debug(f"Linux INT3 scan error: {e}")
+            self.logger.debug("Linux INT3 scan error: %s", e, exc_info=True)
             return False, 0.0, details
 
     def _check_timing(self) -> tuple[bool, float, dict[str, bool | float | int]]:
@@ -1539,7 +1539,7 @@ class DebuggerDetector(BaseDetector):
 
             details["execution_time"] = execution_time
             details["computation_result"] = result_sum  # Store the computation result
-            self.logger.debug(f"Timing check: {execution_time:.2f}ms, result: {result_sum}")
+            self.logger.debug("Timing check: %.2fms, result: %s", execution_time, result_sum)
 
             # If execution took too long, likely being debugged
             if execution_time > 100:  # Should be < 10ms normally
@@ -1547,7 +1547,7 @@ class DebuggerDetector(BaseDetector):
                 return True, 0.6, details
 
         except Exception as e:
-            self.logger.debug(f"Timing check failed: {e}")
+            self.logger.debug("Timing check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1579,7 +1579,7 @@ class DebuggerDetector(BaseDetector):
                         return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Parent process check failed: {e}")
+            self.logger.debug("Parent process check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1615,7 +1615,7 @@ class DebuggerDetector(BaseDetector):
                 details["privilege_apis_available"] = False
 
         except Exception as e:
-            self.logger.debug(f"Debug privilege check failed: {e}")
+            self.logger.debug("Debug privilege check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1653,7 +1653,7 @@ class DebuggerDetector(BaseDetector):
             # as it could crash the process
 
         except Exception as e:
-            self.logger.debug(f"Exception handling check failed: {e}")
+            self.logger.debug("Exception handling check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1688,7 +1688,7 @@ class DebuggerDetector(BaseDetector):
             libc.ptrace(PTRACE_DETACH, 0, 0, 0)
 
         except Exception as e:
-            self.logger.debug(f"Ptrace check failed: {e}")
+            self.logger.debug("Ptrace check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1716,7 +1716,7 @@ class DebuggerDetector(BaseDetector):
                             return True, 0.9, details
 
         except Exception as e:
-            self.logger.debug(f"Proc status check failed: {e}")
+            self.logger.debug("Proc status check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1747,7 +1747,7 @@ class DebuggerDetector(BaseDetector):
                     return True, 0.8, details
 
         except Exception as e:
-            self.logger.debug(f"Parent process check failed: {e}")
+            self.logger.debug("Parent process check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 
@@ -1776,7 +1776,7 @@ class DebuggerDetector(BaseDetector):
             pass
 
         except Exception as e:
-            self.logger.debug(f"Breakpoint check failed: {e}")
+            self.logger.debug("Breakpoint check failed: %s", e, exc_info=True)
 
         return False, 0.0, details
 

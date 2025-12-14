@@ -393,9 +393,9 @@ class ModelManager:
                 return True, "Checksum verification successful"
             return False, f"Checksum mismatch: expected {expected_checksum}, got {actual_checksum}"
 
-        except OSError as e:
-            logger.error("IO error in model_manager: %s", e)
-            return False, f"Error reading model file: {e!s}"
+        except OSError:
+            logger.error("IO error in model_manager", exc_info=True)
+            return False, "Error reading model file"
 
     def get_model_path(self, model_id: str, repository_name: str) -> str | None:
         """Get the local path for a model.
@@ -445,8 +445,8 @@ class ModelManager:
         try:
             os.remove(model_info.local_path)
             return True
-        except OSError as e:
-            logger.error(f"Failed to remove model file: {e}")
+        except OSError:
+            logger.error("Failed to remove model file", exc_info=True)
             return False
 
     def refresh_repositories(self) -> None:
@@ -514,8 +514,7 @@ class ModelManager:
                     trained = True
 
                 except ImportError:
-                    logger.warning("scikit-learn not available, using simple classifier")
-                    # Fallback to simple implementation
+                    logger.warning("scikit-learn not available, using simple classifier", exc_info=True)
                     self._last_trained_model = {"type": "simple_classifier", "data": training_data}
                     trained = True
 
@@ -538,7 +537,7 @@ class ModelManager:
                     trained = True
 
                 except ImportError:
-                    logger.warning("scikit-learn not available, using simple regression")
+                    logger.warning("scikit-learn not available, using simple regression", exc_info=True)
                     self._last_trained_model = {"type": "simple_regression", "data": training_data}
                     trained = True
 
@@ -602,7 +601,7 @@ class ModelManager:
                         trained = True
 
                     except ImportError:
-                        logger.warning("No deep learning framework available")
+                        logger.warning("No deep learning framework available", exc_info=True)
                         self._last_trained_model = {"type": "simple_nn", "data": training_data}
                         trained = True
 
@@ -617,8 +616,8 @@ class ModelManager:
 
             return trained
 
-        except Exception as e:
-            logger.error(f"Model training failed: {e}")
+        except Exception:
+            logger.error("Model training failed", exc_info=True)
             return False
 
     def save_model(self, model: object, path: str) -> bool:
@@ -660,8 +659,8 @@ class ModelManager:
                 joblib.dump(model, path)
                 logger.info(f"Model saved with joblib to: {path}")
                 saved = True
-            except ImportError as e:
-                logger.debug(f"Joblib not available for model saving: {e}")
+            except ImportError:
+                logger.debug("Joblib not available for model saving", exc_info=True)
 
             if not saved:
                 # Try PyTorch save with thread safety
@@ -677,8 +676,8 @@ class ModelManager:
                             torch.save(model.state_dict(), path)
                         logger.info(f"PyTorch model saved to: {path}")
                         saved = True
-                except ImportError as e:
-                    logger.debug(f"PyTorch not available for model saving: {e}")
+                except ImportError:
+                    logger.debug("PyTorch not available for model saving", exc_info=True)
 
             if not saved:
                 # Try Keras/TensorFlow save
@@ -687,8 +686,8 @@ class ModelManager:
                         model.save(path)
                         logger.info(f"Keras model saved to: {path}")
                         saved = True
-                except Exception as e:
-                    logger.debug(f"Keras/TensorFlow save failed: {e}")
+                except Exception:
+                    logger.debug("Keras/TensorFlow save failed", exc_info=True)
 
             if not saved:
                 # Fallback to pickle
@@ -713,6 +712,6 @@ class ModelManager:
 
             return saved
 
-        except Exception as e:
-            logger.error(f"Model save failed: {e}")
+        except Exception:
+            logger.error("Model save failed", exc_info=True)
             return False

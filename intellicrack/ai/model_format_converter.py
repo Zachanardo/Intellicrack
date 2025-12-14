@@ -116,11 +116,11 @@ class ModelFormatConverter:
             try:
                 self.gpu_info = get_gpu_info()
                 if self.gpu_info:
-                    logger.info(f"GPU available for conversion: {self.gpu_info}")
+                    logger.info("GPU available for conversion: %s", self.gpu_info)
             except Exception as e:
-                logger.debug(f"Could not get GPU info: {e}")
+                logger.debug("Could not get GPU info: %s", e, exc_info=True)
 
-        logger.info(f"Model converter initialized with conversions: {self.supported_conversions}")
+        logger.info("Model converter initialized with conversions: %s", self.supported_conversions)
 
     def _get_supported_conversions(self) -> dict[str, list[str]]:
         """Get list of supported format conversions.
@@ -177,12 +177,12 @@ class ModelFormatConverter:
         # Detect source format
         source_format = self._detect_format(source_path)
         if not source_format:
-            logger.error(f"Could not detect format of {source_path}")
+            logger.error("Could not detect format of %s", source_path)
             return None
 
         # Check if conversion is supported
         if target_format not in self.supported_conversions.get(source_format, []):
-            logger.error(f"Conversion from {source_format} to {target_format} not supported")
+            logger.error("Conversion from %s to %s not supported", source_format, target_format)
             return None
 
         # Generate output path if needed
@@ -197,10 +197,11 @@ class ModelFormatConverter:
                 initial_allocated = memory_allocated()
                 initial_reserved = memory_reserved()
                 logger.info(
-                    f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB",
+                    "GPU memory before conversion - Allocated: %.1fMB, Reserved: %.1fMB",
+                    initial_allocated / (1024**2), initial_reserved / (1024**2),
                 )
             except Exception as e:
-                logger.debug(f"Unable to get GPU memory stats: {e}")
+                logger.debug("Unable to get GPU memory stats: %s", e, exc_info=True)
 
         # Perform conversion
         converter_method = f"_convert_{source_format}_to_{target_format}"
@@ -214,7 +215,7 @@ class ModelFormatConverter:
                         empty_cache()
                         logger.debug("Cleared GPU cache after conversion")
                     except Exception as e:
-                        logger.debug(f"Failed to clear GPU cache: {e}")
+                        logger.debug("Failed to clear GPU cache: %s", e, exc_info=True)
 
                 # Log final GPU memory if available
                 if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
@@ -222,17 +223,18 @@ class ModelFormatConverter:
                         final_allocated = memory_allocated()
                         final_reserved = memory_reserved()
                         logger.info(
-                            f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB",
+                            "GPU memory after conversion - Allocated: %.1fMB, Reserved: %.1fMB",
+                            final_allocated / (1024**2), final_reserved / (1024**2),
                         )
                     except Exception as e:
-                        logger.debug(f"Unable to get final GPU memory stats: {e}")
+                        logger.debug("Unable to get final GPU memory stats: %s", e, exc_info=True)
 
                 return result
             except Exception as e:
-                logger.error(f"Conversion failed: {e}")
+                logger.error("Conversion failed: %s", e, exc_info=True)
                 return None
         else:
-            logger.error(f"Converter method {converter_method} not implemented")
+            logger.error("Converter method %s not implemented", converter_method)
             return None
 
     def _detect_format(self, model_path: Path) -> str | None:
@@ -354,9 +356,9 @@ class ModelFormatConverter:
                 try:
                     model = to_device(model, device)
                     sample_input = to_device(sample_input, device)
-                    logger.info(f"Model and inputs moved to {device} for conversion")
+                    logger.info("Model and inputs moved to %s for conversion", device)
                 except Exception as e:
-                    logger.debug(f"Could not move to GPU, continuing on CPU: {e}")
+                    logger.debug("Could not move to GPU, continuing on CPU: %s", e, exc_info=True)
 
             # Export to ONNX
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -387,11 +389,11 @@ class ModelFormatConverter:
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
 
-            logger.info(f"Successfully converted PyTorch model to ONNX: {output_path}")
+            logger.info("Successfully converted PyTorch model to ONNX: %s", output_path)
             return output_path
 
         except Exception as e:
-            logger.error(f"Failed to convert PyTorch to ONNX: {e}")
+            logger.error("Failed to convert PyTorch to ONNX: %s", e, exc_info=True)
             return None
 
     def _convert_pytorch_to_safetensors(
@@ -470,17 +472,17 @@ class ModelFormatConverter:
                     state_dict = optimized_dict
                     logger.debug("Applied GPU optimizations to state dict before saving")
                 except Exception as e:
-                    logger.debug(f"Could not apply GPU optimizations: {e}")
+                    logger.debug("Could not apply GPU optimizations: %s", e, exc_info=True)
 
             # Save to SafeTensors
             metadata = kwargs.get("metadata", {})
             save_file(state_dict, str(output_path), metadata=metadata)
 
-            logger.info(f"Successfully converted PyTorch model to SafeTensors: {output_path}")
+            logger.info("Successfully converted PyTorch model to SafeTensors: %s", output_path)
             return output_path
 
         except Exception as e:
-            logger.error(f"Failed to convert PyTorch to SafeTensors: {e}")
+            logger.error("Failed to convert PyTorch to SafeTensors: %s", e, exc_info=True)
             return None
 
     def _convert_safetensors_to_pytorch(
@@ -533,11 +535,11 @@ class ModelFormatConverter:
                 save_kwargs["_use_new_zipfile_serialization"] = False
             torch.save(state_dict, str(output_path), **save_kwargs)
 
-            logger.info(f"Successfully converted SafeTensors to PyTorch: {output_path}")
+            logger.info("Successfully converted SafeTensors to PyTorch: %s", output_path)
             return output_path
 
         except Exception as e:
-            logger.error(f"Failed to convert SafeTensors to PyTorch: {e}")
+            logger.error("Failed to convert SafeTensors to PyTorch: %s", e, exc_info=True)
             return None
 
     def _convert_tensorflow_to_onnx(
@@ -601,8 +603,8 @@ class ModelFormatConverter:
 
                 # Log model info
                 if model_proto:
-                    logger.info(f"Successfully converted TensorFlow model to ONNX: {output_path}")
-                    logger.debug(f"ONNX model graph nodes: {len(model_proto.graph.node)}")
+                    logger.info("Successfully converted TensorFlow model to ONNX: %s", output_path)
+                    logger.debug("ONNX model graph nodes: %s", len(model_proto.graph.node))
                 else:
                     logger.warning("Model conversion completed but model_proto is None")
 
@@ -613,7 +615,7 @@ class ModelFormatConverter:
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to convert TensorFlow to ONNX: {e}")
+            logger.error("Failed to convert TensorFlow to ONNX: %s", e, exc_info=True)
             return None
 
     def validate_conversion(
@@ -669,7 +671,7 @@ class ModelFormatConverter:
             # Compare outputs
             for key in original_output:
                 if key not in converted_output:
-                    logger.error(f"Output key '{key}' missing in converted model")
+                    logger.error("Output key '%s' missing in converted model", key)
                     return False
 
                 # Numerical comparison
@@ -686,7 +688,7 @@ class ModelFormatConverter:
             return True
 
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
+            logger.error("Validation failed: %s", e, exc_info=True)
             return False
 
     def _run_inference(
@@ -763,11 +765,11 @@ class ModelFormatConverter:
                 return {k: v.numpy() for k, v in outputs.items()}
 
             else:
-                logger.error(f"Inference not supported for format: {format}")
+                logger.error("Inference not supported for format: %s", format)
                 return None
 
         except Exception as e:
-            logger.error(f"Inference failed: {e}")
+            logger.error("Inference failed: %s", e, exc_info=True)
             return None
 
     def get_model_info(self, model_path: Path) -> dict[str, Any]:
@@ -815,7 +817,7 @@ class ModelFormatConverter:
                 ]
                 info["metadata"]["opset_version"] = model.opset_import[0].version
             except Exception as e:
-                logger.debug(f"Could not get ONNX model metadata: {e}")
+                logger.debug("Could not get ONNX model metadata: %s", e, exc_info=True)
 
         return info
 
@@ -860,11 +862,11 @@ class ModelFormatConverter:
             else:
                 model = AutoModel.from_pretrained(str(model_path))
 
-            logger.info(f"Successfully loaded model from {model_path} as {model_type}")
+            logger.info("Successfully loaded model from %s as %s", model_path, model_type)
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load model: {e}")
+            logger.error("Failed to load model: %s", e, exc_info=True)
             return None
 
     def analyze_model_architecture(self, model_path: str | Path) -> dict[str, Any] | None:
@@ -918,7 +920,7 @@ class ModelFormatConverter:
             return architecture_info
 
         except Exception as e:
-            logger.error(f"Failed to analyze model architecture: {e}")
+            logger.error("Failed to analyze model architecture: %s", e, exc_info=True)
             return None
 
     def convert_model_with_automodel(
@@ -977,14 +979,14 @@ class ModelFormatConverter:
                     dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}),
                 )
 
-                logger.info(f"Successfully converted model to {target_format} using AutoModel")
+                logger.info("Successfully converted model to %s using AutoModel", target_format)
                 return output_path
 
-            logger.error(f"Conversion to {target_format} not supported with AutoModel method")
+            logger.error("Conversion to %s not supported with AutoModel method", target_format)
             return None
 
         except Exception as e:
-            logger.error(f"Failed to convert model with AutoModel: {e}")
+            logger.error("Failed to convert model with AutoModel: %s", e, exc_info=True)
             return None
         finally:
             # Clean up

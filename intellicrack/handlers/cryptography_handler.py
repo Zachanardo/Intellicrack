@@ -992,9 +992,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
         raw_data = data if isinstance(data, bytes) else data.encode()
 
-        def _private_bytes(
-            self: object, encoding: object, key_format: object, encryption: object
-        ) -> bytes:
+        def _private_bytes(self: object, encoding: object, key_format: object, encryption: object) -> bytes:
             logger.debug(
                 "Fallback private_bytes called with: encoding=%s, format=%s, encryption=%s",
                 encoding,
@@ -1009,6 +1007,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
         def _sign(self: object, data_to_sign: bytes, padding: object, algorithm: object) -> bytes:
             import hashlib
+
             return hashlib.sha256(data_to_sign + decoded_key_bytes).digest()
 
         return type(

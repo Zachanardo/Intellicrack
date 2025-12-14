@@ -155,7 +155,7 @@ class VMProtectHandler:
         for version, sigs in signatures.items():
             for sig in sigs:
                 if sig in vm_data:
-                    self.logger.info(f"Detected {version.value}")
+                    self.logger.info("Detected %s", version.value)
                     return version
 
         return ProtectionType.UNKNOWN_VM
@@ -522,8 +522,8 @@ class VMEmulator:
 
             self.uc = Uc(UC_ARCH_X86, UC_MODE_32)
             self._setup_unicorn()
-        except ImportError:
-            self.logger.warning("Unicorn not available, using fallback emulation")
+        except ImportError as e:
+            self.logger.warning("Unicorn not available, using fallback emulation: %s", e, exc_info=True)
 
     def _setup_unicorn(self) -> None:
         """Configure Unicorn emulation engine."""
@@ -536,7 +536,7 @@ class VMEmulator:
             self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
             self.uc.reg_write(x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
         except Exception as e:
-            self.logger.warning(f"Unicorn setup failed: {e}")
+            self.logger.warning("Unicorn setup failed: %s", e, exc_info=True)
 
     def parse_vm_instruction(self, vm_data: bytes, offset: int) -> VMInstruction:
         """Parse VM instruction."""
@@ -594,11 +594,11 @@ class VMEmulator:
                 return self._execute_control_flow_op(instruction)
             if instruction.vm_type == VMInstructionType.REGISTER:
                 return self._execute_register_op(instruction)
-            self.logger.warning(f"Unhandled instruction type: {instruction.vm_type}")
+            self.logger.warning("Unhandled instruction type: %s", instruction.vm_type)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error executing {instruction.mnemonic}: {e}")
+            self.logger.error("Error executing %s: %s", instruction.mnemonic, e, exc_info=True)
             return False
 
     def _execute_stack_op(self, instruction: VMInstruction) -> bool:
@@ -784,7 +784,7 @@ class VMAnalyzer:
         for protection, patterns in self.patterns.items():
             for pattern in patterns:
                 if pattern in binary_data:
-                    self.logger.info(f"Detected {protection.value}")
+                    self.logger.info("Detected %s", protection.value)
                     return protection
 
         # Additional entropy-based detection
@@ -1009,7 +1009,7 @@ class VMAnalyzer:
         if len(section_data) >= 64:
             potential_addresses = []
             for i in range(0, min(len(section_data) - 4, 256), 4):
-                addr = int.from_bytes(section_data[i:i + 4], "little")
+                addr = int.from_bytes(section_data[i : i + 4], "little")
                 if 0x400000 <= addr <= 0x7FFFFFFF:
                     potential_addresses.append(addr)
 
@@ -1039,7 +1039,7 @@ class VMProtectionUnwrapper:
 
     def unwrap_file(self, input_file: str, output_file: str) -> dict[str, Any]:
         """Unwrap VM-protected file."""
-        self.logger.info(f"Starting unwrap of {input_file}")
+        self.logger.info("Starting unwrap of %s", input_file)
 
         start_time = time.time()
 
@@ -1086,12 +1086,12 @@ class VMProtectionUnwrapper:
             }
 
             self.stats["successful_unwraps"] += 1
-            self.logger.info(f"Successfully unwrapped {input_file}")
+            self.logger.info("Successfully unwrapped %s", input_file)
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Error unwrapping {input_file}: {e}")
+            self.logger.error("Error unwrapping %s: %s", input_file, e, exc_info=True)
             self.stats["failed_unwraps"] += 1
             return {"success": False, "error": str(e)}
 
@@ -1130,7 +1130,7 @@ class VMProtectionUnwrapper:
                 unwrapped_sections.append(decrypted)
 
             except Exception as e:
-                self.logger.error(f"Error decrypting section: {e}")
+                self.logger.error("Error decrypting section: %s", e, exc_info=True)
                 unwrapped_sections.append(section_data)  # Keep original
 
         return unwrapped_sections
@@ -1154,8 +1154,7 @@ class VMProtectionUnwrapper:
                 if key and self._validate_key(key, binary_data, entry_point):
                     return key
             except Exception as e:
-                # Log the exception with details for debugging
-                logger.warning("Error extracting key with %s: %s", extractor.__name__, e)
+                self.logger.warning("Error extracting key with %s: %s", extractor.__name__, e, exc_info=True)
                 continue
 
         # Advanced fallback using cryptographic analysis
@@ -1225,7 +1224,7 @@ class VMProtectionUnwrapper:
                         if 5.5 <= entropy <= 7.8:
                             return candidate
         except Exception as e:
-            logger.debug(f"Key material extraction failed: {e}")
+            self.logger.debug("Key material extraction failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_from_tls_callbacks(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
@@ -1243,7 +1242,7 @@ class VMProtectionUnwrapper:
                         if self._is_valid_key_material(candidate):
                             return candidate
         except Exception as e:
-            logger.debug(f"TLS callback key extraction failed: {e}")
+            self.logger.debug("TLS callback key extraction failed: %s", e, exc_info=True)
         return None
 
     def _extract_key_from_resource_section(self, binary_data: bytes, entry_point: int, protection_type: ProtectionType) -> bytes | None:
@@ -1262,7 +1261,7 @@ class VMProtectionUnwrapper:
                         if self._is_valid_key_material(candidate):
                             return candidate
         except Exception as e:
-            logger.debug(f"Resource section key extraction failed: {e}")
+            self.logger.debug("Resource section key extraction failed: %s", e, exc_info=True)
         return None
 
     def _rva_to_offset(self, binary_data: bytes, rva: int) -> int | None:
@@ -1281,7 +1280,7 @@ class VMProtectionUnwrapper:
                 if virtual_addr <= rva < virtual_addr + virtual_size:
                     return raw_offset + (rva - virtual_addr)
         except Exception as e:
-            logger.debug(f"RVA to offset conversion failed: {e}")
+            self.logger.debug("RVA to offset conversion failed: %s", e, exc_info=True)
         return None
 
     def _is_valid_key_material(self, data: bytes) -> bool:
@@ -1334,7 +1333,7 @@ class VMProtectionUnwrapper:
             timestamp = binary_data[pe_offset + 8 : pe_offset + 12]
             characteristics.extend(timestamp)
         except Exception as e:
-            logger.debug(f"PE header analysis failed: {e}")
+            self.logger.debug("PE header analysis failed: %s", e, exc_info=True)
 
         # Protection-specific markers
         protection_markers = {
@@ -1969,7 +1968,7 @@ class VMProtectionUnwrapper:
                 results.append(result)
 
             except Exception as e:
-                self.logger.error(f"Error processing {file_path}: {e}")
+                self.logger.error("Error processing %s: %s", file_path, e, exc_info=True)
                 results.append(
                     {
                         "input_file": str(file_path),
@@ -2002,6 +2001,8 @@ def main() -> None:
     """Demonstrate VM protection unwrapping functionality."""
     import argparse
 
+    main_logger = logging.getLogger(__name__)
+
     parser = argparse.ArgumentParser(description="VM Protection Unwrapper")
     parser.add_argument("input", help="Input file or directory")
     parser.add_argument("output", help="Output file or directory")
@@ -2010,46 +2011,44 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Initialize unwrapper
     unwrapper = VMProtectionUnwrapper()
 
     try:
         if args.batch:
-            print(f"Batch unwrapping from {args.input} to {args.output}")
+            main_logger.info("Batch unwrapping from %s to %s", args.input, args.output)
             results = unwrapper.batch_unwrap(args.input, args.output)
 
-            print("\n=== Batch Results ===")
-            print(f"Total files: {results['total_files']}")
-            print(f"Successful: {results['successful']}")
-            print(f"Failed: {results['failed']}")
+            main_logger.info("=== Batch Results ===")
+            main_logger.info("Total files: %s", results["total_files"])
+            main_logger.info("Successful: %s", results["successful"])
+            main_logger.info("Failed: %s", results["failed"])
 
-            # Show detailed results
             for result in results["results"]:
                 status = "OK" if result.get("success") else "FAIL"
-                print(f"{status} {Path(result['input_file']).name}")
+                main_logger.info("%s %s", status, Path(result["input_file"]).name)
                 if not result.get("success"):
-                    print(f"  Error: {result.get('error', 'Unknown error')}")
+                    main_logger.error("  Error: %s", result.get("error", "Unknown error"))
 
         else:
-            print(f"Unwrapping {args.input} -> {args.output}")
+            main_logger.info("Unwrapping %s -> %s", args.input, args.output)
             result = unwrapper.unwrap_file(args.input, args.output)
 
             if result["success"]:
-                print("OK Unwrapping successful!")
-                print(f"  Protection: {result['protection_type']}")
-                print(f"  Original size: {result['original_size']:,} bytes")
-                print(f"  Unwrapped size: {result['unwrapped_size']:,} bytes")
-                print(f"  Processing time: {result['processing_time']:.2f} seconds")
+                main_logger.info("OK Unwrapping successful!")
+                main_logger.info("  Protection: %s", result["protection_type"])
+                main_logger.info("  Original size: %s bytes", result["original_size"])
+                main_logger.info("  Unwrapped size: %s bytes", result["unwrapped_size"])
+                main_logger.info("  Processing time: %.2f seconds", result["processing_time"])
             else:
-                print(f"FAIL Unwrapping failed: {result.get('error', 'Unknown error')}")
+                main_logger.error("FAIL Unwrapping failed: %s", result.get("error", "Unknown error"))
 
         if args.stats:
             stats = unwrapper.get_statistics()
-            print("\n=== Statistics ===")
-            print(json.dumps(stats, indent=2))
+            main_logger.info("=== Statistics ===")
+            main_logger.info("%s", json.dumps(stats, indent=2))
 
     except Exception as e:
-        print(f"Error: {e}")
+        main_logger.error("Error: %s", e, exc_info=True)
 
 
 if __name__ == "__main__":

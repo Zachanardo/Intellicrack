@@ -608,14 +608,12 @@ class GPUStatusWidget(QWidget):
         caps_text = []
 
         if gpu["vendor"] == "NVIDIA":
-            caps_text.extend(
-                (
-                    "CUDA Support: Yes",
-                    "Tensor Cores: Detecting...",
-                    "Ray Tracing: Detecting...",
-                    "NVENC: Yes",
-                )
-            )
+            caps_text.extend((
+                "CUDA Support: Yes",
+                "Tensor Cores: Detecting...",
+                "Ray Tracing: Detecting...",
+                "NVENC: Yes",
+            ))
         elif gpu["vendor"] == "Intel":
             caps_text.append("Intel Xe Architecture")
             caps_text.append("AV1 Encoding: Yes")
@@ -625,13 +623,11 @@ class GPUStatusWidget(QWidget):
             caps_text.append("ROCm Support: Detecting...")
             caps_text.append("Ray Accelerators: Detecting...")
 
-        caps_text.extend(
-            (
-                "\nCompute Units: Detecting...",
-                "Max Clock: Detecting...",
-                "Memory Bandwidth: Detecting...",
-            )
-        )
+        caps_text.extend((
+            "\nCompute Units: Detecting...",
+            "Max Clock: Detecting...",
+            "Memory Bandwidth: Detecting...",
+        ))
         self.caps_text.setPlainText("\n".join(caps_text))
 
     def clear_display(self) -> None:
@@ -683,4 +679,5 @@ class GPUStatusWidget(QWidget):
             self.start_monitoring()
 
         except Exception as e:
+            logger.error("Failed to refresh GPUs: %s", e, exc_info=True)
             self.handle_error(f"Failed to refresh GPUs: {e!s}")

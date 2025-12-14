@@ -233,7 +233,7 @@ class FridaOperationLogger:
         self.op_logger.log(level, msg)
 
         # Log details as JSON for parsing
-        self.op_logger.debug(f"Details: {json.dumps(details, default=str)}")
+        self.op_logger.debug("Details: %s", json.dumps(details, default=str))
 
     def log_hook(
         self,
@@ -390,7 +390,7 @@ class FridaOperationLogger:
         msg = f"Bypass: {protection_type.value} | Technique: {technique} | Success: {success}"
         self.bypass_logger.log(level, msg)
         if details:
-            self.bypass_logger.debug(f"Details: {json.dumps(details, default=str)}")
+            self.bypass_logger.debug("Details: %s", json.dumps(details, default=str))
 
     def get_statistics(self) -> dict[str, Any]:
         """Get current statistics.
@@ -698,7 +698,7 @@ class ProtectionDetector:
             try:
                 callback(protection_type, details)
             except Exception as e:
-                logger.exception(f"Adaptation callback error: {e}")
+                logger.exception("Adaptation callback error: %s", e)
 
     def get_detected_protections(self) -> dict[str, list[str]]:
         """Get all detected protections with evidence."""
@@ -797,8 +797,7 @@ class HookBatcher:
                     timeout = max(0, deadline - time.time())
                     hook = self.hook_queue.get(timeout=timeout)
                     batch.append(hook)
-                except queue.Empty as e:
-                    self.logger.exception("queue.Empty in frida_manager: %s", e)
+                except queue.Empty:
                     break
 
             if batch:
@@ -2744,7 +2743,8 @@ class FridaManager:
                         (p.name for p in processes if p.pid == process_identifier),
                         f"pid_{process_identifier}",
                     )
-                except Exception:
+                except Exception as e:
+                    logger.debug("Failed to get process name for PID %s: %s", process_identifier, e)
                     process_name = f"pid_{process_identifier}"
             else:
                 session = self.device.attach(process_identifier)
@@ -2782,7 +2782,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
-            logger.exception(f"Failed to attach to process: {e}")
+            logger.exception("Failed to attach to process: %s", e)
             return False
 
     def add_custom_script(self, script_content: str, script_name: str) -> Path:
@@ -2856,7 +2856,7 @@ class FridaManager:
                     )
 
                 except Exception as e:
-                    logger.exception(f"Error reading script {script_file}: {e}")
+                    logger.exception("Error reading script %s: %s", script_file, e)
 
         return scripts
 
@@ -2906,7 +2906,7 @@ class FridaManager:
             # Store script with generated key
             script_key = f"{session_id}:{script_name}"
             self.scripts[script_key] = script
-            logger.debug(f"Stored script with key: {script_key}")
+            logger.debug("Stored script with key: %s", script_key)
 
             # Log operation
             self.logger.log_operation(
@@ -2936,7 +2936,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
-            logger.exception(f"Failed to load script: {e}")
+            logger.exception("Failed to load script: %s", e)
             return False
 
     def load_dynamic_script(
@@ -3013,7 +3013,7 @@ class FridaManager:
             # Store script
             script_key = f"{session_id}:{script_name}"
             self.scripts[script_key] = script
-            logger.info(f"Loaded dynamic script: {script_name}")
+            logger.info("Loaded dynamic script: %s", script_name)
 
             # Log operation
             self.logger.log_operation(
@@ -3045,7 +3045,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
-            logger.exception(f"Failed to load dynamic script: {e}")
+            logger.exception("Failed to load dynamic script: %s", e)
             return False
 
     def _detect_protections_for_session(self, session_id: str) -> list:
@@ -3124,7 +3124,7 @@ class FridaManager:
                 detected = [ProtectionType.ANTI_DEBUG, ProtectionType.LICENSE]
 
         except Exception as e:
-            logger.exception(f"Protection detection failed: {e}")
+            logger.exception("Protection detection failed: %s", e)
             # Default to common protections
             detected = [ProtectionType.ANTI_DEBUG, ProtectionType.LICENSE]
 
@@ -3192,7 +3192,7 @@ class FridaManager:
             analyzer.unload()
 
         except Exception as e:
-            logger.exception(f"Target analysis failed: {e}")
+            logger.exception("Target analysis failed: %s", e)
 
         return target_info
 
@@ -3454,7 +3454,7 @@ class FridaManager:
             try:
                 adaptation_func(details)
             except Exception as e:
-                logger.exception(f"Adaptation failed for {protection_type}: {e}")
+                logger.exception("Adaptation failed for %s: %s", protection_type, e)
 
     # Protection adaptation methods
     def _adapt_anti_debug(self, details: dict[str, Any]) -> None:
@@ -3711,7 +3711,7 @@ class FridaManager:
             self._analyze_memory_dump(data, payload)
 
         except Exception as e:
-            logger.exception(f"Failed to save memory dump: {e}")
+            logger.exception("Failed to save memory dump: %s", e)
 
     def _handle_screenshot_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle screenshot data from Frida scripts."""
@@ -3745,7 +3745,7 @@ class FridaManager:
                 self._analyze_screenshot(data, payload)
 
         except Exception as e:
-            logger.exception(f"Failed to save screenshot: {e}")
+            logger.exception("Failed to save screenshot: %s", e)
 
     def _handle_file_content(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle file content intercepted by Frida scripts."""
@@ -3840,7 +3840,7 @@ class FridaManager:
                 self._analyze_decrypted_data(data, payload)
 
         except Exception as e:
-            logger.exception(f"Failed to save crypto data: {e}")
+            logger.exception("Failed to save crypto data: %s", e)
 
     def _handle_generic_binary_data(self, session_id: str, script_name: str, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Handle generic binary data from Frida scripts."""
@@ -3868,7 +3868,7 @@ class FridaManager:
             with open(data_file, "wb") as f:
                 f.write(data if isinstance(data, bytes) else bytes(data))
         except Exception as e:
-            logger.exception(f"Failed to save binary data: {e}")
+            logger.exception("Failed to save binary data: %s", e)
 
     def _analyze_memory_dump(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze memory dump for interesting patterns."""
@@ -3955,7 +3955,7 @@ class FridaManager:
                             )
 
             except Exception as e:
-                self.logger.error(f"Data analysis failed: {e}")
+                self.logger.error("Data analysis failed: %s", e, exc_info=True)
                 analysis_results["error"] = str(e)
 
         # Log analysis results with data info
@@ -4007,7 +4007,7 @@ class FridaManager:
                 )
 
         except Exception as e:
-            logger.debug(f"Failed to analyze license file: {e}")
+            logger.debug("Failed to analyze license file: %s", e, exc_info=True)
 
     def _analyze_file_write(self, data: bytes | bytearray, file_path: str, payload: dict[str, Any]) -> None:
         """Analyze file write operations for suspicious activity."""
@@ -4054,7 +4054,7 @@ class FridaManager:
                     break
 
         except Exception as e:
-            logger.debug(f"Failed to analyze HTTP traffic: {e}")
+            logger.debug("Failed to analyze HTTP traffic: %s", e, exc_info=True)
 
     def _analyze_license_traffic(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze potential license server communication."""
@@ -4107,7 +4107,7 @@ class FridaManager:
                     )
 
         except Exception as e:
-            logger.debug(f"Failed to analyze decrypted data: {e}")
+            logger.debug("Failed to analyze decrypted data: %s", e, exc_info=True)
 
     def create_selective_instrumentation(self, target_apis: list[str], analysis_requirements: dict[str, Any]) -> str:
         """Create selective instrumentation based on analysis requirements."""
@@ -4353,7 +4353,7 @@ class FridaManager:
                     result = json.load(f)
                     results.append(result)
             except Exception as e:
-                logger.exception(f"Failed to load result file {result_file}: {e}")
+                logger.exception("Failed to load result file %s: %s", result_file, e)
 
         # Sort by timestamp
         results.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
@@ -4369,9 +4369,9 @@ class FridaManager:
         for session_id, session in self.sessions.items():
             try:
                 session.detach()
-                logger.debug(f"Detached session {session_id}")
+                logger.debug("Detached session %s", session_id)
             except Exception as e:
-                logger.exception(f"Failed to detach session {session_id}: {e}")
+                logger.exception("Failed to detach session %s: %s", session_id, e)
 
         # Clear collections
         self.sessions.clear()
@@ -4439,7 +4439,7 @@ class FridaManager:
         action = payload.get("action", "warning")
 
         # Log as warning
-        logger.warning(f"[{target}] {action}: {payload}")
+        logger.warning("[%s] %s: %s", target, action, payload)
 
         self.logger.log_operation(
             f"warning:{target}",
@@ -4462,7 +4462,7 @@ class FridaManager:
         error_details = payload.get("error", "Unknown error")
 
         # Log as error
-        logger.error(f"[{target}] {action}: {error_details}")
+        logger.error("[%s] %s: %s", target, action, error_details)
 
         self.logger.log_operation(
             f"error:{target}",

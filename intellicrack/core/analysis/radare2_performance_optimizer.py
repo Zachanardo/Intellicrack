@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 try:
     import r2pipe
 except ImportError as e:
-    logger.error("Import error in radare2_performance_optimizer: %s", e)
+    logger.error("Import error in radare2_performance_optimizer: %s", e, exc_info=True)
     r2pipe = None
 
 
@@ -258,7 +258,7 @@ class R2PerformanceOptimizer:
             return optimized_config
 
         except Exception as e:
-            self.logger.error(f"Failed to optimize for binary {binary_path}: {e}")
+            self.logger.error(f"Failed to optimize for binary {binary_path}: {e}", exc_info=True)
             # Return safe default configuration
             return self._get_safe_default_config()
 
@@ -310,7 +310,7 @@ class R2PerformanceOptimizer:
                     self.logger.warning(f"Failed to get detailed binary info: {e}")
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze binary characteristics: {e}")
+            self.logger.error(f"Failed to analyze binary characteristics: {e}", exc_info=True)
 
         return characteristics
 
@@ -653,7 +653,7 @@ class R2PerformanceOptimizer:
                 time.sleep(interval)
 
             except Exception as e:
-                self.logger.error(f"Resource monitoring error: {e}")
+                self.logger.error(f"Resource monitoring error: {e}", exc_info=True)
                 time.sleep(interval * 2)
 
     def _trigger_emergency_optimization(self, reason: str) -> None:
@@ -699,7 +699,7 @@ class R2PerformanceOptimizer:
             self.logger.debug("R2 session optimizations applied")
 
         except Exception as e:
-            self.logger.error(f"Failed to optimize r2 session: {e}")
+            self.logger.error(f"Failed to optimize r2 session: {e}", exc_info=True)
 
     def _track_profile_usage(self, profile_name: str, file_size: int) -> None:
         """Track profile usage for optimization insights.
@@ -772,12 +772,10 @@ class R2PerformanceOptimizer:
 
         # Memory recommendations
         if self.performance_metrics["resource_peaks"]["memory"] > 90:
-            recommendations.extend(
-                (
-                    "Consider using memory-conservative strategy for future analyses",
-                    "Reduce parallel workers to decrease memory usage",
-                )
-            )
+            recommendations.extend((
+                "Consider using memory-conservative strategy for future analyses",
+                "Reduce parallel workers to decrease memory usage",
+            ))
         # CPU recommendations
         if self.performance_metrics["resource_peaks"]["cpu"] > 90:
             recommendations.append("Consider reducing analysis depth for better CPU performance")
@@ -834,7 +832,7 @@ class R2PerformanceOptimizer:
                 }
 
             except Exception as e:
-                self.logger.error(f"Benchmark failed for {analysis_type}: {e}")
+                self.logger.error(f"Benchmark failed for {analysis_type}: {e}", exc_info=True)
                 results[analysis_type] = {
                     "duration": float("inf"),
                     "memory_delta": 0,
@@ -867,7 +865,7 @@ class R2PerformanceOptimizer:
             self.logger.info("R2PerformanceOptimizer cleanup completed")
 
         except Exception as e:
-            self.logger.error(f"Cleanup failed: {e}")
+            self.logger.error(f"Cleanup failed: {e}", exc_info=True)
 
 
 def create_performance_optimizer(

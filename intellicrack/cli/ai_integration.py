@@ -155,7 +155,7 @@ class ClaudeAdapter(AIModelAdapter):
             }
 
         except Exception as e:
-            logger.error(f"Error handling tool call: {e}")
+            logger.exception("Error handling tool call: %s", e)
             return {
                 "status": "error",
                 "message": str(e),
@@ -281,6 +281,7 @@ class OpenAIAdapter(AIModelAdapter):
             }
 
         except KeyError as e:
+            logger.exception("Missing required parameter for tool %s: %s", tool_name, e)
             return {
                 "status": "error",
                 "message": f"Missing required parameter: {e}",
@@ -289,9 +290,10 @@ class OpenAIAdapter(AIModelAdapter):
             }
 
         except Exception as e:
+            logger.exception("Tool execution failed for %s: %s", tool_name, e)
             return {
                 "status": "error",
-                "message": f"Tool execution failed: {e!s}",
+                "message": f"Tool execution failed: {e}",
                 "tool": tool_name,
                 "error_type": type(e).__name__,
             }
@@ -317,29 +319,27 @@ class LangChainIntegration:
 
             tools: list[Any] = []
 
-            tools.extend(
-                (
-                    Tool(
-                        name="analyze_binary",
-                        func=self._handle_analyze,
-                        description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
-                    ),
-                    Tool(
-                        name="suggest_patches",
-                        func=self._handle_suggest_patches,
-                        description="Suggest patches for a binary. Input: 'path/to/binary'",
-                    ),
-                    Tool(
-                        name="intellicrack_cli",
-                        func=self._handle_cli_command,
-                        description="Run Intellicrack CLI command. Input: 'description | command args'",
-                    ),
-                )
-            )
+            tools.extend((
+                Tool(
+                    name="analyze_binary",
+                    func=self._handle_analyze,
+                    description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
+                ),
+                Tool(
+                    name="suggest_patches",
+                    func=self._handle_suggest_patches,
+                    description="Suggest patches for a binary. Input: 'path/to/binary'",
+                ),
+                Tool(
+                    name="intellicrack_cli",
+                    func=self._handle_cli_command,
+                    description="Run Intellicrack CLI command. Input: 'description | command args'",
+                ),
+            ))
             return tools
 
         except ImportError:
-            logger.error("LangChain not available")
+            logger.exception("LangChain not available")
             return []
 
     def _handle_analyze(self, input_str: str) -> str:
@@ -475,13 +475,13 @@ def main() -> None:
     }
 
     response = server.handle_request(request)
-    print("Response:", json.dumps(response, indent=2))
+    logger.info("Response: %s", json.dumps(response, indent=2))
 
     # Get tool definitions for Claude
     claude_adapter = server.get_adapter("claude")
     tools = claude_adapter._create_tool_definitions()
-    print("\nClaude Tools:")
-    print(json.dumps(tools, indent=2))
+    logger.info("Claude Tools:")
+    logger.info("%s", json.dumps(tools, indent=2))
 
 
 if __name__ == "__main__":

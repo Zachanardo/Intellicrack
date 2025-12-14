@@ -884,12 +884,10 @@ class PDFReportGenerator:
                 f"    <binary_path>{self._xml_escape(binary_path)}</binary_path>",
             ]
             xml_content.append(f"    <binary_name>{self._xml_escape(os.path.basename(binary_path))}</binary_name>")
-            xml_content.extend(
-                (
-                    f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
-                    "    <intellicrack_version>1.0.0</intellicrack_version>",
-                )
-            )
+            xml_content.extend((
+                f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
+                "    <intellicrack_version>1.0.0</intellicrack_version>",
+            ))
             xml_content.extend(("  </metadata>", "  <analysis_results>"))
             xml_content.extend(self._dict_to_xml(analysis_results, indent="    "))
             xml_content.append("  </analysis_results>")
@@ -941,22 +939,20 @@ class PDFReportGenerator:
                 ],
             ]
 
-            csv_data.extend(
-                (
-                    [
-                        "Metadata",
-                        "Export Timestamp",
-                        datetime.datetime.now().isoformat(),
-                        "When export was generated",
-                    ],
-                    [
-                        "Metadata",
-                        "Intellicrack Version",
-                        "1.0.0",
-                        "Version of Intellicrack used",
-                    ],
-                )
-            )
+            csv_data.extend((
+                [
+                    "Metadata",
+                    "Export Timestamp",
+                    datetime.datetime.now().isoformat(),
+                    "When export was generated",
+                ],
+                [
+                    "Metadata",
+                    "Intellicrack Version",
+                    "1.0.0",
+                    "Version of Intellicrack used",
+                ],
+            ))
             # Flatten analysis results
             self._flatten_dict_for_csv(analysis_results, csv_data, "Analysis")
 
@@ -1180,9 +1176,7 @@ class PDFReportGenerator:
                 "a4": A4,
                 "legal": legal,
             }
-            page_size = page_size_map.get(
-                str(self.report_config.get("page_size", "letter")).lower(), letter
-            )
+            page_size = page_size_map.get(str(self.report_config.get("page_size", "letter")).lower(), letter)
 
             doc = SimpleDocTemplate(
                 output_path,
@@ -1233,18 +1227,16 @@ class PDFReportGenerator:
                 if table_data:
                     table = Table(table_data)
                     table.setStyle(
-                        TableStyle(
-                            [
-                                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                            ]
-                        )
+                        TableStyle([
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ])
                     )
                     content.append(table)
                     content.append(Spacer(1, 0.1 * inch))
@@ -1369,7 +1361,9 @@ def run_report_generation(app: ApplicationInstance) -> None:
 
     # Ask for report format
     report_formats = ["PDF", "HTML"]
-    report_format, ok = QInputDialog.getItem(cast("QWidget | None", app), "Report Format", "Select report format:", report_formats, 0, False)
+    report_format, ok = QInputDialog.getItem(
+        cast("QWidget | None", app), "Report Format", "Select report format:", report_formats, 0, False
+    )
     if not ok:
         app.update_output.emit("[Report] Cancelled")
         return

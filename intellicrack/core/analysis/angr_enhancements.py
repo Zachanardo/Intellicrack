@@ -129,15 +129,15 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
             func_name_lower = str(func.name).lower().encode() if isinstance(func.name, str) else func.name.lower()
             if any(keyword in func_name_lower for keyword in self.license_keywords):
                 self.license_function_addrs.add(func.addr)
-                self.logger.debug(f"Identified license function: {func.name} at {hex(func.addr)}")
+                self.logger.debug("Identified license function: %s at %s", func.name, hex(func.addr))
 
         for string_ref in simgr._project.loader.main_object.sections_map.get(".rdata", []):
             try:
                 data = simgr._project.loader.memory.load(string_ref, 256)
                 if any(keyword in data.lower() for keyword in self.license_keywords):
-                    self.logger.debug(f"Found license-related string at {hex(string_ref)}")
+                    self.logger.debug("Found license-related string at %s", hex(string_ref))
             except Exception as e:
-                self.logger.debug(f"Error loading string data at {hex(string_ref)}: {e}")
+                self.logger.debug("Error loading string data at %s: %s", hex(string_ref), e, exc_info=True)
                 continue
 
     def step(self, simgr: Any, stash: str = "active", **kwargs: Any) -> Any:
@@ -181,9 +181,10 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
 
             if scored_states:
                 self.logger.debug(
-                    f"Prioritized {len(scored_states)} states, "
-                    f"top score: {scored_states[0][0]:.2f}, "
-                    f"lowest score: {scored_states[-1][0]:.2f}",
+                    "Prioritized %s states, top score: %.2f, lowest score: %.2f",
+                    len(scored_states),
+                    scored_states[0][0],
+                    scored_states[-1][0],
                 )
 
         return simgr
@@ -265,7 +266,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
         iterations = self.loop_counters[state_id][current_addr]
         if iterations > self.max_loop_iterations:
             penalty = (iterations - self.max_loop_iterations) * 10.0
-            self.logger.debug(f"Loop detected at {hex(current_addr)}, iteration {iterations}, penalty: {penalty}")
+            self.logger.debug("Loop detected at %s, iteration %s, penalty: %s", hex(current_addr), iterations, penalty)
 
         return penalty
 
@@ -292,7 +293,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
 
             return hashlib.sha256(combined.encode()).hexdigest()[:16]
         except Exception as e:
-            self.logger.debug(f"Error computing state hash: {e}")
+            self.logger.debug("Error computing state hash: %s", e, exc_info=True)
             return hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]
 
 
@@ -331,7 +332,7 @@ class ConstraintOptimizer(ExplorationTechniqueBase):
             if hasattr(state.solver, "_solver"):
                 state.solver._solver.timeout = self.solver_timeout
 
-        self.logger.info(f"Constraint optimizer configured (timeout: {self.solver_timeout}ms)")
+        self.logger.info("Constraint optimizer configured (timeout: %sms)", self.solver_timeout)
 
     def step(self, simgr: Any, stash: str = "active", **kwargs: Any) -> Any:
         """Optimize constraints during exploration.
@@ -390,7 +391,7 @@ class ConstraintOptimizer(ExplorationTechniqueBase):
 
         optimized_count = len(state.solver.constraints)
         if optimized_count < original_count:
-            self.logger.debug(f"Simplified constraints: {original_count} -> {optimized_count}")
+            self.logger.debug("Simplified constraints: %s -> %s", original_count, optimized_count)
 
     @staticmethod
     def _hash_constraints(constraints: Any) -> str:
@@ -456,9 +457,9 @@ class StateMerger(ExplorationTechniqueBase):
                                 if state in simgr.stashes[stash]:
                                     simgr.stashes[stash].remove(state)
                             simgr.stashes[stash].append(merged_state)
-                            self.logger.debug(f"Merged {len(group)} states")
+                            self.logger.debug("Merged %s states", len(group))
                     except Exception as e:
-                        self.logger.debug(f"State merge failed: {e}")
+                        self.logger.debug("State merge failed: %s", e, exc_info=True)
 
         return simgr
 
@@ -505,8 +506,7 @@ class StateMerger(ExplorationTechniqueBase):
                 if hasattr(base_state, "merge"):
                     base_state = base_state.merge(state)[0]
             except Exception as e:
-                self.logger.debug(f"Error merging state: {e}")
-                # Continue with next state if merge fails
+                self.logger.debug("Error merging state: %s", e, exc_info=True)
 
         return base_state
 
@@ -574,15 +574,15 @@ class CryptVerifySignature(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful verification
 
         """
-        self.logger.info(f"CryptVerifySignature called at {hex(self.state.addr)}")
+        self.logger.info("CryptVerifySignature called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(hHash):
             hash_value = self._solver.eval(hHash)
-            self.logger.debug(f"Hash handle: {hex(hash_value)}")
+            self.logger.debug("Hash handle: %s", hex(hash_value))
 
         if not self._solver.symbolic(hPubKey):
             pubkey_value = self._solver.eval(hPubKey)
-            self.logger.debug(f"Public key handle: {hex(pubkey_value)}")
+            self.logger.debug("Public key handle: %s", hex(pubkey_value))
 
         if not self._solver.symbolic(sDescription):
             try:
@@ -596,9 +596,9 @@ class CryptVerifySignature(WindowsLicensingSimProcedure):
                             break
                         if 32 <= char_val <= 126:
                             desc_str += chr(char_val)
-                    self.logger.debug(f"Signature description: {desc_str}")
+                    self.logger.debug("Signature description: %s", desc_str)
             except Exception as e:
-                self.logger.debug(f"Error reading signature description: {e}")
+                self.logger.debug("Error reading signature description: %s", e, exc_info=True)
 
         if self._solver.symbolic(pbSignature):
             self.logger.debug("Signature is symbolic - adding constraint for valid signature")
@@ -627,7 +627,7 @@ class WinVerifyTrust(WindowsLicensingSimProcedure):
             int: 0 (ERROR_SUCCESS) indicating verified trust status
 
         """
-        self.logger.info(f"WinVerifyTrust called at {hex(self.state.addr)}")
+        self.logger.info("WinVerifyTrust called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(pgActionID):
             try:
@@ -636,9 +636,9 @@ class WinVerifyTrust(WindowsLicensingSimProcedure):
                     guid_data = self._memory.load(action_guid_ptr, 16)
                     if not self._solver.symbolic(guid_data):
                         guid_bytes = self._solver.eval(guid_data, cast_to=bytes)
-                        self.logger.debug(f"Trust action GUID: {guid_bytes.hex()}")
+                        self.logger.debug("Trust action GUID: %s", guid_bytes.hex())
             except Exception as e:
-                self.logger.debug(f"Error reading trust action GUID: {e}")
+                self.logger.debug("Error reading trust action GUID: %s", e, exc_info=True)
 
         if self._solver.symbolic(pWinTrustData):
             trust_data = self._memory.load(pWinTrustData, 32)
@@ -677,7 +677,7 @@ class RegQueryValueExW(WindowsLicensingSimProcedure):
             int: 0 (ERROR_SUCCESS) indicating successful registry query
 
         """
-        self.logger.info(f"RegQueryValueExW called at {hex(self.state.addr)}")
+        self.logger.info("RegQueryValueExW called at %s", hex(self.state.addr))
 
         if self._solver.symbolic(lpValueName):
             value_name_ptr = lpValueName
@@ -694,21 +694,21 @@ class RegQueryValueExW(WindowsLicensingSimProcedure):
                 if 32 <= char_val <= 126:
                     value_name += chr(char_val)
 
-            self.logger.debug(f"Registry value name: {value_name}")
+            self.logger.debug("Registry value name: %s", value_name)
 
-            if any(
-                keyword in value_name.lower() for keyword in ["license", "serial", "key", "activation"]
-            ) and not self._solver.symbolic(lpData):
+            if any(keyword in value_name.lower() for keyword in ["license", "serial", "key", "activation"]) and not self._solver.symbolic(
+                lpData
+            ):
                 data_ptr = self._solver.eval(lpData)
                 data_size = 256 if self._solver.symbolic(lpcbData) else self._solver.eval(lpcbData)
 
                 symbolic_license = claripy.BVS(f"license_data_{value_name}", data_size * 8)
                 self._memory.store(data_ptr, symbolic_license)
 
-                self.logger.info(f"Created symbolic license data for {value_name}")
+                self.logger.info("Created symbolic license data for %s", value_name)
 
         except Exception as e:
-            self.logger.debug(f"Error processing registry value name: {e}")
+            self.logger.debug("Error processing registry value name: %s", e, exc_info=True)
 
         return 0
 
@@ -740,11 +740,11 @@ class RegOpenKeyExW(WindowsLicensingSimProcedure):
             int: 0 (ERROR_SUCCESS) indicating successful key open
 
         """
-        self.logger.info(f"RegOpenKeyExW called at {hex(self.state.addr)}")
+        self.logger.info("RegOpenKeyExW called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(ulOptions):
             options_value = self._solver.eval(ulOptions)
-            self.logger.debug(f"Registry open options: {hex(options_value)}")
+            self.logger.debug("Registry open options: %s", hex(options_value))
 
         if not self._solver.symbolic(samDesired):
             desired_access = self._solver.eval(samDesired)
@@ -757,7 +757,7 @@ class RegOpenKeyExW(WindowsLicensingSimProcedure):
                 access_rights.append("CREATE_SUB_KEY")
             if desired_access & 0x00020000:
                 access_rights.extend(("READ", "WRITE"))
-            self.logger.debug(f"Registry access rights: {' | '.join(access_rights) if access_rights else hex(desired_access)}")
+            self.logger.debug("Registry access rights: %s", " | ".join(access_rights) if access_rights else hex(desired_access))
 
         if not self._solver.symbolic(phkResult):
             result_ptr = self._solver.eval(phkResult)
@@ -802,7 +802,7 @@ class GetVolumeInformationW(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful volume information retrieval
 
         """
-        self.logger.info(f"GetVolumeInformationW called at {hex(self.state.addr)}")
+        self.logger.info("GetVolumeInformationW called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(lpVolumeSerialNumber):
             serial_ptr = self._solver.eval(lpVolumeSerialNumber)
@@ -844,7 +844,7 @@ class CreateFileW(WindowsLicensingSimProcedure):
             Any: File handle for opened file
 
         """
-        self.logger.info(f"CreateFileW called at {hex(self.state.addr)}")
+        self.logger.info("CreateFileW called at %s", hex(self.state.addr))
 
         if not hasattr(self.state, "globals") or self._globals is None:
             self._state.globals = {}
@@ -862,12 +862,12 @@ class CreateFileW(WindowsLicensingSimProcedure):
                 share_flags.append("WRITE")
             if share_mode & 0x00000004:
                 share_flags.append("DELETE")
-            self.logger.debug(f"File share mode: {' | '.join(share_flags) if share_flags else 'EXCLUSIVE'}")
+            self.logger.debug("File share mode: %s", " | ".join(share_flags) if share_flags else "EXCLUSIVE")
 
         if not self._solver.symbolic(lpSecurityAttributes):
             sec_attr_ptr = self._solver.eval(lpSecurityAttributes)
             if sec_attr_ptr != 0:
-                self.logger.debug(f"Security attributes provided at {hex(sec_attr_ptr)}")
+                self.logger.debug("Security attributes provided at %s", hex(sec_attr_ptr))
 
         if not self._solver.symbolic(dwFlagsAndAttributes):
             flags_attrs = self._solver.eval(dwFlagsAndAttributes)
@@ -882,12 +882,12 @@ class CreateFileW(WindowsLicensingSimProcedure):
                 flag_list.append("FLAG_OVERLAPPED")
             if flags_attrs & 0x08000000:
                 flag_list.append("FLAG_NO_BUFFERING")
-            self.logger.debug(f"File flags/attributes: {' | '.join(flag_list) if flag_list else hex(flags_attrs)}")
+            self.logger.debug("File flags/attributes: %s", " | ".join(flag_list) if flag_list else hex(flags_attrs))
 
         if not self._solver.symbolic(hTemplateFile):
             template_handle = self._solver.eval(hTemplateFile)
             if template_handle != 0:
-                self.logger.debug(f"Template file handle: {hex(template_handle)}")
+                self.logger.debug("Template file handle: %s", hex(template_handle))
 
         if not self._solver.symbolic(lpFileName):
             filename_ptr = self._solver.eval(lpFileName)
@@ -901,16 +901,16 @@ class CreateFileW(WindowsLicensingSimProcedure):
                     if 32 <= char_val <= 126:
                         filename += chr(char_val)
 
-                self.logger.debug(f"Opening file: {filename}")
+                self.logger.debug("Opening file: %s", filename)
 
                 if any(ext in filename.lower() for ext in [".lic", ".key", ".dat", ".cfg"]):
-                    self.logger.info(f"Detected license file access: {filename}")
+                    self.logger.info("Detected license file access: %s", filename)
                     if not hasattr(self.state, "license_files"):
                         self._state.license_files = {}
                     self._state.license_files[filename] = True
 
             except Exception as e:
-                self.logger.debug(f"Error processing filename: {e}")
+                self.logger.debug("Error processing filename: %s", e, exc_info=True)
 
         handle = self._globals["file_handle_counter"]
         self._globals["file_handle_counter"] += 4
@@ -953,24 +953,20 @@ class ReadFile(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful file read
 
         """
-        self.logger.info(f"ReadFile called at {hex(self.state.addr)}")
+        self.logger.info("ReadFile called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(hFile):
             file_handle = self._solver.eval(hFile)
-            self.logger.debug(f"Reading from file handle: {hex(file_handle)}")
+            self.logger.debug("Reading from file handle: %s", hex(file_handle))
 
-            if (
-                hasattr(self.state, "globals")
-                and "open_handles" in self._globals
-                and file_handle in self._globals["open_handles"]
-            ):
+            if hasattr(self.state, "globals") and "open_handles" in self._globals and file_handle in self._globals["open_handles"]:
                 file_info = self._globals["open_handles"][file_handle]
-                self.logger.debug(f"File info: {file_info.get('filename', 'unknown')}")
+                self.logger.debug("File info: %s", file_info.get("filename", "unknown"))
 
         if not self._solver.symbolic(lpOverlapped):
             overlapped_ptr = self._solver.eval(lpOverlapped)
             if overlapped_ptr != 0:
-                self.logger.debug(f"Overlapped I/O structure at {hex(overlapped_ptr)}")
+                self.logger.debug("Overlapped I/O structure at %s", hex(overlapped_ptr))
 
         if not self._solver.symbolic(lpBuffer) and not self._solver.symbolic(nNumberOfBytesToRead):
             buffer_ptr = self._solver.eval(lpBuffer)
@@ -984,7 +980,7 @@ class ReadFile(WindowsLicensingSimProcedure):
                     bytes_read_ptr = self._solver.eval(lpNumberOfBytesRead)
                     self._memory.store(bytes_read_ptr, claripy.BVV(bytes_to_read, 32), endness="Iend_LE")
 
-                self.logger.info(f"Created symbolic license file content ({bytes_to_read} bytes)")
+                self.logger.info("Created symbolic license file content (%s bytes)", bytes_to_read)
 
         return 1
 
@@ -1016,24 +1012,20 @@ class WriteFile(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful file write
 
         """
-        self.logger.info(f"WriteFile called at {hex(self.state.addr)}")
+        self.logger.info("WriteFile called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(hFile):
             file_handle = self._solver.eval(hFile)
-            self.logger.debug(f"Writing to file handle: {hex(file_handle)}")
+            self.logger.debug("Writing to file handle: %s", hex(file_handle))
 
-            if (
-                hasattr(self.state, "globals")
-                and "open_handles" in self._globals
-                and file_handle in self._globals["open_handles"]
-            ):
+            if hasattr(self.state, "globals") and "open_handles" in self._globals and file_handle in self._globals["open_handles"]:
                 file_info = self._globals["open_handles"][file_handle]
-                self.logger.debug(f"Writing to file: {file_info.get('filename', 'unknown')}")
+                self.logger.debug("Writing to file: %s", file_info.get("filename", "unknown"))
 
         if not self._solver.symbolic(lpOverlapped):
             overlapped_ptr = self._solver.eval(lpOverlapped)
             if overlapped_ptr != 0:
-                self.logger.debug(f"Overlapped I/O structure at {hex(overlapped_ptr)}")
+                self.logger.debug("Overlapped I/O structure at %s", hex(overlapped_ptr))
 
         if not self._solver.symbolic(lpBuffer) and not self._solver.symbolic(nNumberOfBytesToWrite):
             buffer_ptr = self._solver.eval(lpBuffer)
@@ -1043,9 +1035,9 @@ class WriteFile(WindowsLicensingSimProcedure):
                     write_data = self._memory.load(buffer_ptr, bytes_to_write)
                     if not self._solver.symbolic(write_data):
                         data_bytes = self._solver.eval(write_data, cast_to=bytes)
-                        self.logger.debug(f"Writing {bytes_to_write} bytes: {data_bytes[: min(32, len(data_bytes))].hex()}...")
+                        self.logger.debug("Writing %s bytes: %s...", bytes_to_write, data_bytes[: min(32, len(data_bytes))].hex())
                 except Exception as e:
-                    self.logger.debug(f"Error reading write buffer: {e}")
+                    self.logger.debug("Error reading write buffer: %s", e, exc_info=True)
 
         if not self._solver.symbolic(lpNumberOfBytesWritten):
             bytes_written_ptr = self._solver.eval(lpNumberOfBytesWritten)
@@ -1072,7 +1064,7 @@ class GetComputerNameW(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful name retrieval
 
         """
-        self.logger.info(f"GetComputerNameW called at {hex(self.state.addr)}")
+        self.logger.info("GetComputerNameW called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(lpBuffer):
             buffer_ptr = self._solver.eval(lpBuffer)
@@ -1101,7 +1093,7 @@ class GetSystemTime(WindowsLicensingSimProcedure):
             lpSystemTime: Pointer to SYSTEMTIME structure output
 
         """
-        self.logger.info(f"GetSystemTime called at {hex(self.state.addr)}")
+        self.logger.info("GetSystemTime called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(lpSystemTime):
             time_ptr = self._solver.eval(lpSystemTime)
@@ -1131,7 +1123,7 @@ class GetTickCount(WindowsLicensingSimProcedure):
             object: Symbolic bitvector representing system tick count
 
         """
-        self.logger.info(f"GetTickCount called at {hex(self.state.addr)}")
+        self.logger.info("GetTickCount called at %s", hex(self.state.addr))
 
         symbolic_ticks = claripy.BVS(f"tick_count_{hex(self.state.addr)}", 32)
 
@@ -1160,7 +1152,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
             Any: Allocated memory address or symbolic value
 
         """
-        self.logger.info(f"VirtualAlloc called at {hex(self.state.addr)}")
+        self.logger.info("VirtualAlloc called at %s", hex(self.state.addr))
 
         if not hasattr(self.state, "globals") or self._globals is None:
             self._state.globals = {}
@@ -1172,7 +1164,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
         if not self._solver.symbolic(lpAddress):
             requested_addr = self._solver.eval(lpAddress)
             if requested_addr != 0:
-                self.logger.debug(f"Requested specific address: {hex(requested_addr)}")
+                self.logger.debug("Requested specific address: %s", hex(requested_addr))
 
         if not self._solver.symbolic(flAllocationType):
             alloc_type = self._solver.eval(flAllocationType)
@@ -1185,7 +1177,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
                 alloc_flags.append("MEM_RESET")
             if alloc_type & 0x00400000:
                 alloc_flags.append("MEM_TOP_DOWN")
-            self.logger.debug(f"Allocation type: {' | '.join(alloc_flags) if alloc_flags else hex(alloc_type)}")
+            self.logger.debug("Allocation type: %s", " | ".join(alloc_flags) if alloc_flags else hex(alloc_type))
 
         if not self._solver.symbolic(flProtect):
             protect = self._solver.eval(flProtect)
@@ -1202,7 +1194,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
                 protect_flags.append("PAGE_EXECUTE_READ")
             if protect & 0x40:
                 protect_flags.append("PAGE_EXECUTE_READWRITE")
-            self.logger.debug(f"Memory protection: {' | '.join(protect_flags) if protect_flags else hex(protect)}")
+            self.logger.debug("Memory protection: %s", " | ".join(protect_flags) if protect_flags else hex(protect))
 
         if not self._solver.symbolic(dwSize):
             size = self._solver.eval(dwSize)
@@ -1225,7 +1217,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
                 "allocated_at": self.state.addr,
             }
 
-            self.logger.debug(f"Allocated {size} bytes at {hex(addr)}")
+            self.logger.debug("Allocated %s bytes at %s", size, hex(addr))
             return addr
 
         return claripy.BVS(f"alloc_{hex(self.state.addr)}", 32)
@@ -1249,15 +1241,15 @@ class VirtualFree(WindowsLicensingSimProcedure):
             int: 1 (TRUE) indicating successful deallocation
 
         """
-        self.logger.info(f"VirtualFree called at {hex(self.state.addr)}")
+        self.logger.info("VirtualFree called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(lpAddress):
             addr = self._solver.eval(lpAddress)
-            self.logger.debug(f"Freeing memory at {hex(addr)}")
+            self.logger.debug("Freeing memory at %s", hex(addr))
 
             if hasattr(self.state, "globals") and "allocations" in self._globals and addr in self._globals["allocations"]:
                 alloc_info = self._globals["allocations"][addr]
-                self.logger.debug(f"Freeing allocation: size={alloc_info['size']}, allocated_at={hex(alloc_info['allocated_at'])}")
+                self.logger.debug("Freeing allocation: size=%s, allocated_at=%s", alloc_info["size"], hex(alloc_info["allocated_at"]))
                 del self._globals["allocations"][addr]
 
         if not self._solver.symbolic(dwFreeType):
@@ -1267,7 +1259,7 @@ class VirtualFree(WindowsLicensingSimProcedure):
                 free_flags.append("MEM_DECOMMIT")
             if free_type & 0x00008000:
                 free_flags.append("MEM_RELEASE")
-            self.logger.debug(f"Free type: {' | '.join(free_flags) if free_flags else hex(free_type)}")
+            self.logger.debug("Free type: %s", " | ".join(free_flags) if free_flags else hex(free_type))
 
         return 1
 
@@ -1299,15 +1291,15 @@ class NtQueryInformationProcess(WindowsLicensingSimProcedure):
             int: 0 (STATUS_SUCCESS) indicating successful query
 
         """
-        self.logger.info(f"NtQueryInformationProcess called at {hex(self.state.addr)}")
+        self.logger.info("NtQueryInformationProcess called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(ProcessHandle):
             handle = self._solver.eval(ProcessHandle)
-            self.logger.debug(f"Process handle: {hex(handle)}")
+            self.logger.debug("Process handle: %s", hex(handle))
 
         if not self._solver.symbolic(ProcessInformationLength):
             info_length = self._solver.eval(ProcessInformationLength)
-            self.logger.debug(f"Information buffer length: {info_length}")
+            self.logger.debug("Information buffer length: %s", info_length)
 
         if not self._solver.symbolic(ProcessInformation):
             info_ptr = self._solver.eval(ProcessInformation)
@@ -1356,11 +1348,11 @@ class MessageBoxA(WindowsLicensingSimProcedure):
             int: 1 (IDOK) indicating user clicked OK button
 
         """
-        self.logger.info(f"MessageBoxA called at {hex(self.state.addr)}")
+        self.logger.info("MessageBoxA called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(hWnd):
             window_handle = self._solver.eval(hWnd)
-            self.logger.debug(f"Window handle: {hex(window_handle) if window_handle != 0 else 'NULL (Desktop)'}")
+            self.logger.debug("Window handle: %s", hex(window_handle) if window_handle != 0 else "NULL (Desktop)")
 
         if not self._solver.symbolic(uType):
             msg_type = self._solver.eval(uType)
@@ -1379,7 +1371,9 @@ class MessageBoxA(WindowsLicensingSimProcedure):
             icon_types = {0x10: "STOP", 0x20: "QUESTION", 0x30: "EXCLAMATION", 0x40: "INFORMATION"}
 
             self.logger.debug(
-                f"MessageBox type - Buttons: {button_types.get(buttons, f'Unknown({buttons})')}, Icon: {icon_types.get(icon, f'None({hex(icon)})')}"
+                "MessageBox type - Buttons: %s, Icon: %s",
+                button_types.get(buttons, f"Unknown({buttons})"),
+                icon_types.get(icon, f"None({hex(icon)})"),
             )
 
         try:
@@ -1394,7 +1388,7 @@ class MessageBoxA(WindowsLicensingSimProcedure):
                     if 32 <= char_val <= 126:
                         text += chr(char_val)
 
-                self.logger.info(f"MessageBox text: {text}")
+                self.logger.info("MessageBox text: %s", text)
 
                 if any(kw in text.lower() for kw in ["license", "trial", "expire", "invalid"]):
                     if not hasattr(self.state, "license_messages"):
@@ -1412,10 +1406,10 @@ class MessageBoxA(WindowsLicensingSimProcedure):
                             break
                         if 32 <= char_val <= 126:
                             caption += chr(char_val)
-                    self.logger.info(f"MessageBox caption: {caption}")
+                    self.logger.info("MessageBox caption: %s", caption)
 
         except Exception as e:
-            self.logger.debug(f"Error reading message box text: {e}")
+            self.logger.debug("Error reading message box text: %s", e, exc_info=True)
 
         return 1
 
@@ -1438,22 +1432,22 @@ class Socket(WindowsLicensingSimProcedure):
             object: Symbolic bitvector representing socket descriptor
 
         """
-        self.logger.info(f"socket called at {hex(self.state.addr)}")
+        self.logger.info("socket called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(af):
             address_family = self._solver.eval(af)
             af_types = {2: "AF_INET", 23: "AF_INET6", 1: "AF_UNIX"}
-            self.logger.debug(f"Address family: {af_types.get(address_family, f'Unknown({address_family})')}")
+            self.logger.debug("Address family: %s", af_types.get(address_family, f"Unknown({address_family})"))
 
         if not self._solver.symbolic(type):
             sock_type = self._solver.eval(type)
             type_names = {1: "SOCK_STREAM", 2: "SOCK_DGRAM", 3: "SOCK_RAW"}
-            self.logger.debug(f"Socket type: {type_names.get(sock_type, f'Unknown({sock_type})')}")
+            self.logger.debug("Socket type: %s", type_names.get(sock_type, f"Unknown({sock_type})"))
 
         if not self._solver.symbolic(protocol):
             proto = self._solver.eval(protocol)
             proto_names = {0: "IPPROTO_IP", 6: "IPPROTO_TCP", 17: "IPPROTO_UDP"}
-            self.logger.debug(f"Protocol: {proto_names.get(proto, f'Unknown({proto})')}")
+            self.logger.debug("Protocol: %s", proto_names.get(proto, f"Unknown({proto})"))
 
         return claripy.BVS(f"socket_{hex(self.state.addr)}", 32)
 
@@ -1476,11 +1470,11 @@ class Connect(WindowsLicensingSimProcedure):
             int: 0 (SUCCESS) indicating successful connection
 
         """
-        self.logger.info(f"connect called at {hex(self.state.addr)}")
+        self.logger.info("connect called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(s):
             socket_fd = self._solver.eval(s)
-            self.logger.debug(f"Socket descriptor: {socket_fd}")
+            self.logger.debug("Socket descriptor: %s", socket_fd)
 
         if not self._solver.symbolic(name) and not self._solver.symbolic(namelen):
             addr_ptr = self._solver.eval(name)
@@ -1501,11 +1495,11 @@ class Connect(WindowsLicensingSimProcedure):
                             ip_value = self._solver.eval(ip_bytes)
                             ip_addr = f"{(ip_value >> 24) & 0xFF}.{(ip_value >> 16) & 0xFF}.{(ip_value >> 8) & 0xFF}.{ip_value & 0xFF}"
 
-                            self.logger.info(f"Connecting to {ip_addr}:{port_network_order} (AF_INET)")
+                            self.logger.info("Connecting to %s:%s (AF_INET)", ip_addr, port_network_order)
                         elif addr_family == 23:
                             self.logger.info("Connecting to IPv6 address (AF_INET6)")
                 except Exception as e:
-                    self.logger.debug(f"Error reading sockaddr structure: {e}")
+                    self.logger.debug("Error reading sockaddr structure: %s", e, exc_info=True)
 
         return 0
 
@@ -1529,7 +1523,7 @@ class Send(WindowsLicensingSimProcedure):
             object: Number of bytes sent
 
         """
-        self.logger.info(f"send called at {hex(self.state.addr)}")
+        self.logger.info("send called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(len):
             return self._solver.eval(len)
@@ -1555,7 +1549,7 @@ class Recv(WindowsLicensingSimProcedure):
             Any: Number of bytes received
 
         """
-        self.logger.info(f"recv called at {hex(self.state.addr)}")
+        self.logger.info("recv called at %s", hex(self.state.addr))
 
         if not self._solver.symbolic(buf) and not self._solver.symbolic(len):
             buffer_ptr = self._solver.eval(buf)
@@ -1564,7 +1558,7 @@ class Recv(WindowsLicensingSimProcedure):
             if buffer_len > 0 and buffer_len < 10000:
                 symbolic_response = claripy.BVS(f"server_response_{hex(self.state.addr)}", buffer_len * 8)
                 self._memory.store(buffer_ptr, symbolic_response)
-                self.logger.info(f"Created symbolic server response ({buffer_len} bytes)")
+                self.logger.info("Created symbolic server response (%s bytes)", buffer_len)
                 return buffer_len
 
         return 0
@@ -1621,17 +1615,17 @@ def install_license_simprocedures(project: Any) -> int:
             if hasattr(project.loader.main_object, "imports") and func_name in project.loader.main_object.imports:
                 addr = project.loader.main_object.imports[func_name].rebased_addr
                 project.hook(addr, simprocedure_class())
-                logger.debug(f"Hooked {func_name} at {hex(addr)}")
+                logger.debug("Hooked %s at %s", func_name, hex(addr))
                 installed_count += 1
             else:
                 if symbol := project.loader.find_symbol(func_name):
                     project.hook(symbol.rebased_addr, simprocedure_class())
-                    logger.debug(f"Hooked {func_name} at {hex(symbol.rebased_addr)}")
+                    logger.debug("Hooked %s at %s", func_name, hex(symbol.rebased_addr))
                     installed_count += 1
         except Exception as e:
-            logger.debug(f"Could not hook {func_name}: {e}")
+            logger.debug("Could not hook %s: %s", func_name, e, exc_info=True)
 
-    logger.info(f"Installed {installed_count}/{len(simprocedures)} custom simprocedures")
+    logger.info("Installed %s/%s custom simprocedures", installed_count, len(simprocedures))
     return installed_count
 
 
@@ -1682,7 +1676,7 @@ class LicenseValidationDetector:
         results["confidence"] = min(results["confidence"], 1.0)
 
         if results["validation_type"]:
-            self.logger.info(f"Detected {results['validation_type']} validation (confidence: {results['confidence']:.2f})")
+            self.logger.info("Detected %s validation (confidence: %.2f)", results["validation_type"], results["confidence"])
 
         return results
 
@@ -1710,10 +1704,10 @@ class LicenseValidationDetector:
                         if pattern.lower() in concrete_data.lower():
                             matches.append(f"Found at {hex(region_start)}")
                 except Exception as e:
-                    self.logger.warning(f"Error checking pattern at {hex(region_start)}: {e}")
+                    self.logger.warning("Error checking pattern at %s: %s", hex(region_start), e, exc_info=True)
                     continue
         except Exception as e:
-            self.logger.debug(f"Memory pattern search error: {e}")
+            self.logger.debug("Memory pattern search error: %s", e, exc_info=True)
 
         return matches[:5]
 

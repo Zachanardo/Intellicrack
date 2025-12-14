@@ -32,6 +32,7 @@ from typing import Any
 try:
     import binaryninja as bn
     from binaryninja import BinaryView, Function, HighLevelILFunction, MediumLevelILFunction
+
     BINARYNINJA_AVAILABLE = True
 except ImportError:
     BINARYNINJA_AVAILABLE = False
@@ -43,6 +44,7 @@ except ImportError:
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -122,28 +124,35 @@ class BinaryNinjaAnalyzer:
     """Advanced binary analysis using Binary Ninja for license cracking research."""
 
     LICENSE_VALIDATION_KEYWORDS = [
-        "license", "serial", "key", "registration", "activation",
-        "validate", "check", "verify", "authenticate", "trial",
-        "expir", "demo", "unlock", "register", "authorized"
+        "license",
+        "serial",
+        "key",
+        "registration",
+        "activation",
+        "validate",
+        "check",
+        "verify",
+        "authenticate",
+        "trial",
+        "expir",
+        "demo",
+        "unlock",
+        "register",
+        "authorized",
     ]
 
     PROTECTION_API_CALLS = {
-        "anti_debug": [
-            "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
-            "NtQueryInformationProcess", "OutputDebugString"
-        ],
-        "anti_vm": [
-            "GetSystemFirmwareTable", "SetupDiGetDeviceRegistryProperty",
-            "EnumServicesStatus", "DeviceIoControl"
-        ],
+        "anti_debug": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess", "OutputDebugString"],
+        "anti_vm": ["GetSystemFirmwareTable", "SetupDiGetDeviceRegistryProperty", "EnumServicesStatus", "DeviceIoControl"],
         "crypto": [
-            "CryptAcquireContext", "CryptCreateHash", "CryptHashData",
-            "CryptDeriveKey", "BCryptOpenAlgorithmProvider", "BCryptEncrypt"
+            "CryptAcquireContext",
+            "CryptCreateHash",
+            "CryptHashData",
+            "CryptDeriveKey",
+            "BCryptOpenAlgorithmProvider",
+            "BCryptEncrypt",
         ],
-        "network": [
-            "InternetOpen", "InternetConnect", "HttpSendRequest",
-            "WSAStartup", "socket", "connect", "send", "recv"
-        ]
+        "network": ["InternetOpen", "InternetConnect", "HttpSendRequest", "WSAStartup", "socket", "connect", "send", "recv"],
     }
 
     def __init__(self) -> None:
@@ -202,7 +211,7 @@ class BinaryNinjaAnalyzer:
                 symbols={},
                 basic_blocks={},
                 license_validation_candidates=[],
-                protection_indicators={}
+                protection_indicators={},
             )
 
             result.functions = self._analyze_functions()
@@ -221,7 +230,7 @@ class BinaryNinjaAnalyzer:
                 "total_strings": len(result.strings),
                 "total_imports": len(result.imports),
                 "total_exports": len(result.exports),
-                "license_candidates": len(result.license_validation_candidates)
+                "license_candidates": len(result.license_validation_candidates),
             }
 
             return result
@@ -296,8 +305,7 @@ class BinaryNinjaAnalyzer:
                     if hex(string_ref.start)[2:] in instr_text:
                         strings_referenced.append(string_ref.value)
 
-                for imp_name in [sym.short_name for sym in self.bv.symbols.values()
-                                if sym.type == bn.SymbolType.ImportedFunctionSymbol]:
+                for imp_name in [sym.short_name for sym in self.bv.symbols.values() if sym.type == bn.SymbolType.ImportedFunctionSymbol]:
                     if imp_name in instr_text:
                         api_calls.append(imp_name)
 
@@ -306,8 +314,8 @@ class BinaryNinjaAnalyzer:
             address=func.start,
             size=func.total_bytes,
             symbol_type=str(func.symbol.type) if func.symbol else "unknown",
-            can_return=func.can_return.value if hasattr(func.can_return, 'value') else True,
-            has_variable_arguments=func.has_variable_arguments.value if hasattr(func.has_variable_arguments, 'value') else False,
+            can_return=func.can_return.value if hasattr(func.can_return, "value") else True,
+            has_variable_arguments=func.has_variable_arguments.value if hasattr(func.has_variable_arguments, "value") else False,
             calling_convention=func.calling_convention.name if func.calling_convention else "unknown",
             parameter_count=len(func.parameter_vars),
             local_variable_count=len(func.vars),
@@ -324,11 +332,10 @@ class BinaryNinjaAnalyzer:
             hlil_code=hlil_code,
             is_thunk=func.is_thunk,
             is_imported=func.symbol.type == bn.SymbolType.ImportedFunctionSymbol if func.symbol else False,
-            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol
-                          for sym in self.bv.symbols.values()),
+            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol for sym in self.bv.symbols.values()),
             comments=comments,
             strings_referenced=strings_referenced,
-            api_calls=api_calls
+            api_calls=api_calls,
         )
 
     def _calculate_cyclomatic_complexity(self, func: Function) -> int:
@@ -362,7 +369,7 @@ class BinaryNinjaAnalyzer:
 
         for sym in self.bv.symbols.values():
             if sym.type == bn.SymbolType.ImportedFunctionSymbol:
-                lib = sym.namespace if hasattr(sym, 'namespace') and sym.namespace else "unknown"
+                lib = sym.namespace if hasattr(sym, "namespace") and sym.namespace else "unknown"
                 imports.append((lib, sym.short_name, sym.address))
 
         return imports
@@ -394,7 +401,7 @@ class BinaryNinjaAnalyzer:
                 "start": section.start,
                 "end": section.end,
                 "size": section.end - section.start,
-                "type": section.type
+                "type": section.type,
             })
 
         return sections
@@ -440,7 +447,7 @@ class BinaryNinjaAnalyzer:
                     immediate_dominator=immediate_dominator,
                     outgoing_edges=outgoing,
                     incoming_edges=incoming,
-                    has_undetermined_outgoing_edges=bb.has_undetermined_outgoing_edges
+                    has_undetermined_outgoing_edges=bb.has_undetermined_outgoing_edges,
                 )
 
         return blocks
@@ -490,12 +497,7 @@ class BinaryNinjaAnalyzer:
 
     def _detect_protection_mechanisms(self) -> dict[str, list[int]]:
         """Detect anti-debug, anti-VM, and other protection mechanisms."""
-        protections: dict[str, list[int]] = {
-            "anti_debug": [],
-            "anti_vm": [],
-            "crypto": [],
-            "network": []
-        }
+        protections: dict[str, list[int]] = {"anti_debug": [], "anti_vm": [], "crypto": [], "network": []}
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
             return protections
@@ -523,29 +525,29 @@ class BinaryNinjaAnalyzer:
             pe = pefile.PE(str(binary_path))
 
             imports = []
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', errors='ignore')
+                    dll_name = entry.dll.decode("utf-8", errors="ignore")
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = imp.name.decode('utf-8', errors='ignore')
+                            func_name = imp.name.decode("utf-8", errors="ignore")
                             imports.append((dll_name, func_name, imp.address))
 
             exports = []
-            if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                     if exp.name:
-                        name = exp.name.decode('utf-8', errors='ignore')
+                        name = exp.name.decode("utf-8", errors="ignore")
                         exports.append((name, pe.OPTIONAL_HEADER.ImageBase + exp.address))
 
             sections = []
             for section in pe.sections:
                 sections.append({
-                    "name": section.Name.decode('utf-8', errors='ignore').rstrip('\x00'),
+                    "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
                     "start": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress,
                     "end": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + section.Misc_VirtualSize,
                     "size": section.Misc_VirtualSize,
-                    "type": "section"
+                    "type": "section",
                 })
 
             strings = []
@@ -562,8 +564,7 @@ class BinaryNinjaAnalyzer:
                     else:
                         if len(current_string) >= 4:
                             with contextlib.suppress(Exception):
-                                strings.append((current_addr + i - len(current_string),
-                                              current_string.decode('ascii', errors='ignore')))
+                                strings.append((current_addr + i - len(current_string), current_string.decode("ascii", errors="ignore")))
                         current_string = b""
 
             result = BNAnalysisResult(
@@ -581,7 +582,7 @@ class BinaryNinjaAnalyzer:
                 basic_blocks={},
                 license_validation_candidates=[],
                 protection_indicators={},
-                metadata={"analysis_method": "pefile_fallback"}
+                metadata={"analysis_method": "pefile_fallback"},
             )
 
             return result
@@ -621,22 +622,18 @@ class BinaryNinjaAnalyzer:
                 "address": bb.start,
                 "end": bb.end,
                 "instructions": instructions,
-                "has_undetermined_outgoing_edges": bb.has_undetermined_outgoing_edges
+                "has_undetermined_outgoing_edges": bb.has_undetermined_outgoing_edges,
             })
 
             for edge in bb.outgoing_edges:
-                edges.append({
-                    "source": bb.start,
-                    "target": edge.target.start,
-                    "type": str(edge.type)
-                })
+                edges.append({"source": bb.start, "target": edge.target.start, "type": str(edge.type)})
 
         return {
             "function_name": func.name,
             "function_address": function_address,
             "nodes": nodes,
             "edges": edges,
-            "entry_block": func.basic_blocks[0].start if func.basic_blocks else None
+            "entry_block": func.basic_blocks[0].start if func.basic_blocks else None,
         }
 
     def decompile_function(self, function_address: int) -> str:

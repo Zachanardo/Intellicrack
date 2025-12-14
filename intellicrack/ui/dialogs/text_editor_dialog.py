@@ -94,10 +94,40 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter if HAS_PYQT and QSyntaxHighligh
         keyword_format.setFontWeight(QFont.Weight.Bold)
 
         keywords = [
-            "and", "as", "assert", "break", "class", "continue", "def", "del",
-            "elif", "else", "except", "exec", "finally", "for", "from", "global",
-            "if", "import", "in", "is", "lambda", "not", "or", "pass", "print",
-            "raise", "return", "try", "while", "with", "yield", "True", "False", "None",
+            "and",
+            "as",
+            "assert",
+            "break",
+            "class",
+            "continue",
+            "def",
+            "del",
+            "elif",
+            "else",
+            "except",
+            "exec",
+            "finally",
+            "for",
+            "from",
+            "global",
+            "if",
+            "import",
+            "in",
+            "is",
+            "lambda",
+            "not",
+            "or",
+            "pass",
+            "print",
+            "raise",
+            "return",
+            "try",
+            "while",
+            "with",
+            "yield",
+            "True",
+            "False",
+            "None",
         ]
 
         for kw in keywords:
@@ -514,10 +544,20 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
         self.find_prev_action.setShortcut(QKeySequence.StandardKey.FindPrevious)
 
         for action in [
-            self.new_action, self.open_action, self.save_action, self.save_as_action,
-            self.export_action, self.undo_action, self.redo_action, self.cut_action,
-            self.copy_action, self.paste_action, self.select_all_action, self.find_action,
-            self.find_next_action, self.find_prev_action,
+            self.new_action,
+            self.open_action,
+            self.save_action,
+            self.save_as_action,
+            self.export_action,
+            self.undo_action,
+            self.redo_action,
+            self.cut_action,
+            self.copy_action,
+            self.paste_action,
+            self.select_all_action,
+            self.find_action,
+            self.find_next_action,
+            self.find_prev_action,
         ]:
             if action is not None:
                 self.addAction(action)
@@ -534,8 +574,11 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
         self.toolbar = QToolBar()
 
         for action in [
-            self.new_action, self.open_action, self.save_action,
-            self.save_as_action, self.export_action,
+            self.new_action,
+            self.open_action,
+            self.save_action,
+            self.save_as_action,
+            self.export_action,
         ]:
             if action is not None:
                 self.toolbar.addAction(action)
@@ -763,8 +806,13 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
         format_combo = QComboBox()
         format_combo.addItems([
-            "HTML (.html)", "PDF (.pdf)", "Rich Text Format (.rtf)",
-            "Markdown (.md)", "Plain Text (.txt)", "CSV (.csv)", "JSON (.json)",
+            "HTML (.html)",
+            "PDF (.pdf)",
+            "Rich Text Format (.rtf)",
+            "Markdown (.md)",
+            "Plain Text (.txt)",
+            "CSV (.csv)",
+            "JSON (.json)",
         ])
         layout.addWidget(format_combo)
 
@@ -837,7 +885,10 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
         default_name = os.path.splitext(self.file_path or "untitled")[0] + f".{ext}"
         file_path, _ = QFileDialog.getSaveFileName(
-            self, f"Export as {format_type}", default_name, file_filter,
+            self,
+            f"Export as {format_type}",
+            default_name,
+            file_filter,
         )
 
         if not file_path:
@@ -849,13 +900,15 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
             if ext == "html":
                 self._export_to_html(
-                    file_path, content,
+                    file_path,
+                    content,
                     include_highlighting=include_highlighting,
                     include_line_numbers=include_line_numbers,
                 )
             elif ext == "pdf":
                 self._export_to_pdf(
-                    file_path, content,
+                    file_path,
+                    content,
                     include_highlighting=include_highlighting,
                     include_line_numbers=include_line_numbers,
                 )
@@ -929,8 +982,7 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
         elif include_line_numbers:
             lines = content.split("\n")
             formatted_content = "\n".join(
-                f'<span class="line-number">{i + 1:4d}:</span> {self._escape_html(line)}'
-                for i, line in enumerate(lines)
+                f'<span class="line-number">{i + 1:4d}:</span> {self._escape_html(line)}' for i, line in enumerate(lines)
             )
         else:
             formatted_content = self._escape_html(content)
@@ -982,7 +1034,8 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
         except ImportError:
             if HAS_PYQT:
                 QMessageBox.warning(
-                    self, "PDF Export",
+                    self,
+                    "PDF Export",
                     "PDF export requires PyQt6.QtPrintSupport. Saving as text instead.",
                 )
             with open(file_path.replace(".pdf", ".txt"), "w", encoding="utf-8") as f:
@@ -1023,9 +1076,15 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
         if self.file_path:
             ext = os.path.splitext(self.file_path)[1].lower()
             lang_map = {
-                ".py": "python", ".js": "javascript", ".java": "java",
-                ".cpp": "cpp", ".c": "c", ".cs": "csharp",
-                ".html": "html", ".css": "css", ".json": "json",
+                ".py": "python",
+                ".js": "javascript",
+                ".java": "java",
+                ".cpp": "cpp",
+                ".c": "c",
+                ".cs": "csharp",
+                ".html": "html",
+                ".css": "css",
+                ".json": "json",
             }
             lang = lang_map.get(ext, "")
 
@@ -1155,7 +1214,8 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
         if self.is_modified and HAS_PYQT:
             reply = QMessageBox.question(
-                self, "Reload File",
+                self,
+                "Reload File",
                 "The file has been modified. Reload and lose changes?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
@@ -1175,7 +1235,8 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
             return
         if file_path == self.file_path:
             reply = QMessageBox.question(
-                self, "File Changed",
+                self,
+                "File Changed",
                 "The file has been changed externally. Reload?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
@@ -1269,7 +1330,8 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
             return True
 
         reply = QMessageBox.question(
-            self, "Unsaved Changes",
+            self,
+            "Unsaved Changes",
             "The document has been modified. Save changes?",
             QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
         )

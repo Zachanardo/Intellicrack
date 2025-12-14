@@ -41,7 +41,7 @@ intellicrack\handlers\pyelftools_handler.py: Unused function iter_tags
 intellicrack\handlers\pyelftools_handler.py: Unused function num_segments
 
 
-19 findings in intellicrack\handlers\tkinter_handler.py
+18 findings in intellicrack\handlers\tkinter_handler.py
 
 intellicrack\handlers\tkinter_handler.py: Unused function askcolor
 
@@ -74,8 +74,6 @@ intellicrack\handlers\tkinter_handler.py: Unused function winfo_height
 intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqheight
 
 intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqwidth
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_width
 
 intellicrack\handlers\tkinter_handler.py: Unused function winfo_x
 
@@ -119,6 +117,37 @@ intellicrack\scripts\ghidra\anti_analysis_detector.py: Unused function setMessag
 intellicrack\scripts\ghidra\anti_analysis_detector.py: Unused function setProgress
 
 intellicrack\scripts\ghidra\anti_analysis_detector.py: Unused function setScriptArgs
+
+
+14 findings in intellicrack\handlers\matplotlib_handler.py
+
+intellicrack\handlers\matplotlib_handler.py: Unused function add_axes
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_axes
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_axes_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_circle_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_figure_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_funcformatter_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_maxnlocator_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_mpl
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_pdfpages_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_plt
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_polygon_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function get_rectangle_class
+
+intellicrack\handlers\matplotlib_handler.py: Unused function subplots_adjust
+
+intellicrack\handlers\matplotlib_handler.py: Unused function suptitle
 
 
 11 findings in intellicrack\cli\interactive_mode.py
@@ -561,17 +590,6 @@ intellicrack\core\tool_discovery.py: Unused function get_manual_overrides
 intellicrack\core\tool_discovery.py: Unused function is_tool_compatible
 
 
-4 findings in intellicrack\handlers\matplotlib_handler.py
-
-intellicrack\handlers\matplotlib_handler.py: Unused function add_axes
-
-intellicrack\handlers\matplotlib_handler.py: Unused function get_axes
-
-intellicrack\handlers\matplotlib_handler.py: Unused function subplots_adjust
-
-intellicrack\handlers\matplotlib_handler.py: Unused function suptitle
-
-
 4 findings in intellicrack\hexview\hex_commands.py
 
 intellicrack\hexview\hex_commands.py: Unused function get_history_summary
@@ -766,15 +784,6 @@ intellicrack\handlers\frida_handler.py: Unused function disable_child_gating
 intellicrack\handlers\frida_handler.py: Unused function inject_library_blob
 
 intellicrack\handlers\frida_handler.py: Unused function inject_library_file
-
-
-3 findings in intellicrack\handlers\numpy_handler.py
-
-intellicrack\handlers\numpy_handler.py: Unused function ifft
-
-intellicrack\handlers\numpy_handler.py: Unused function inv
-
-intellicrack\handlers\numpy_handler.py: Unused function sum_func
 
 
 3 findings in intellicrack\ui\widgets\drop_zone_widget.py
@@ -1001,6 +1010,13 @@ intellicrack\core\reporting\pdf_generator.py: Unused function isWidgetType
 intellicrack\core\reporting\report_generator.py: Unused function get_format_mime_types
 
 intellicrack\core\reporting\report_generator.py: Unused function get_supported_formats
+
+
+2 findings in intellicrack\handlers\numpy_handler.py
+
+intellicrack\handlers\numpy_handler.py: Unused function ifft
+
+intellicrack\handlers\numpy_handler.py: Unused function inv
 
 
 2 findings in intellicrack\handlers\tensorflow_handler.py

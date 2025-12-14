@@ -140,7 +140,7 @@ class CertificateExtractor:
             )
 
         except Exception as e:
-            logger.error(f"Certificate extraction failed for {file_path}: {e}")
+            logger.error("Certificate extraction failed for %s: %s", file_path, e, exc_info=True)
             return CodeSigningInfo(is_signed=False)
 
     def _has_certificate_table(self) -> bool:
@@ -169,7 +169,7 @@ class CertificateExtractor:
                 return f.read(size)
 
         except Exception as e:
-            logger.error(f"Failed to extract certificate data: {e}")
+            logger.error("Failed to extract certificate data: %s", e, exc_info=True)
             return None
 
     def _parse_certificates(self, cert_data: bytes) -> list[CertificateInfo]:
@@ -196,7 +196,7 @@ class CertificateExtractor:
                 offset += (length + 7) & ~7
 
         except Exception as e:
-            logger.error(f"Certificate parsing failed: {e}")
+            logger.error("Certificate parsing failed: %s", e, exc_info=True)
 
         return certificates
 
@@ -230,12 +230,12 @@ class CertificateExtractor:
                                 certificates.append(cert_info)
 
                 except Exception as e:
-                    logger.debug(f"Failed to parse certificate at offset {cert_pos}: {e}")
+                    logger.debug("Failed to parse certificate at offset %s: %s", cert_pos, e, exc_info=True)
 
                 offset = cert_pos + 1
 
         except Exception as e:
-            logger.error(f"PKCS#7 parsing failed: {e}")
+            logger.error("PKCS#7 parsing failed: %s", e, exc_info=True)
 
         return certificates
 
@@ -327,7 +327,9 @@ class CertificateExtractor:
                 return hashes.Hash(hash_module(), backend=backend)
 
             digest_sha1 = create_legacy_sha1_hash(default_backend())
-            digest_sha1.update(cert_der)  # lgtm[py/weak-sensitive-data-hashing] SHA1 required for X.509 certificate fingerprint compatibility
+            digest_sha1.update(
+                cert_der
+            )  # lgtm[py/weak-sensitive-data-hashing] SHA1 required for X.509 certificate fingerprint compatibility
             crypto_sha1 = digest_sha1.finalize().hex().upper()
 
             # Log warning about SHA1 usage
@@ -365,7 +367,7 @@ class CertificateExtractor:
                     key_usage.append("CRL Sign")
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
+                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
 
             try:
                 # Extended key usage
@@ -379,7 +381,7 @@ class CertificateExtractor:
                         is_code_signing = True
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
+                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
 
             try:
                 # Subject Alternative Names
@@ -388,7 +390,7 @@ class CertificateExtractor:
                     subject_alt_names.append(str(name))
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e)
+                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
 
             return CertificateInfo(
                 subject=subject,
@@ -410,7 +412,7 @@ class CertificateExtractor:
             )
 
         except Exception as e:
-            logger.debug(f"X.509 certificate parsing failed: {e}")
+            logger.debug("X.509 certificate parsing failed: %s", e, exc_info=True)
             return None
 
     def _format_name(self, name: x509.Name) -> str:
@@ -422,21 +424,21 @@ class CertificateExtractor:
             cn = name.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
             parts.append(f"CN={cn}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e)
+            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
 
         # Organization
         try:
             o = name.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value
             parts.append(f"O={o}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e)
+            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
 
         # Country
         try:
             c = name.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value
             parts.append(f"C={c}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e)
+            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
 
         return ", ".join(parts) if parts else str(name)
 
@@ -547,7 +549,7 @@ class CertificateExtractor:
                                     certificates.append(cert)
 
                         except Exception as e:
-                            logger.debug(f"Failed to parse certificate: {e}")
+                            logger.debug("Failed to parse certificate: %s", e, exc_info=True)
 
                         cert_offset = cert_pos + 1
 
@@ -568,13 +570,13 @@ class CertificateExtractor:
                         f.write(pem_bytes)
 
                     exported_files[f"certificate_{i + 1}"] = cert_path
-                    logger.info(f"Exported certificate to: {cert_path}")
+                    logger.info("Exported certificate to: %s", cert_path)
 
                 except Exception as e:
-                    logger.error(f"Failed to export certificate {i + 1}: {e}")
+                    logger.error("Failed to export certificate %s: %s", i + 1, e, exc_info=True)
 
         except Exception as e:
-            logger.error(f"Certificate export failed: {e}")
+            logger.error("Certificate export failed: %s", e, exc_info=True)
 
         return exported_files
 

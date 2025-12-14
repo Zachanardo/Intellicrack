@@ -1505,9 +1505,7 @@ const BinaryPatcherAdvanced = {
             patchESP32: function (device, patchData) {
                 // ESP32-specific patching with real implementation
                 console.log(`[ESP32] Patching device: ${device.id}`);
-                console.log(
-                    `[ESP32] Firmware size: ${patchData ? patchData.length : 0} bytes`
-                );
+                console.log(`[ESP32] Firmware size: ${patchData ? patchData.length : 0} bytes`);
 
                 // ESP32 bootloader commands
                 const ESP_COMMANDS = {
@@ -1550,9 +1548,7 @@ const BinaryPatcherAdvanced = {
                 // Arduino-specific patching with real implementation
                 console.log(`[Arduino] Patching device: ${device.id}`);
                 console.log(`[Arduino] Board type: ${device.board || 'uno'}`);
-                console.log(
-                    `[Arduino] Sketch size: ${patchData ? patchData.length : 0} bytes`
-                );
+                console.log(`[Arduino] Sketch size: ${patchData ? patchData.length : 0} bytes`);
 
                 // Arduino STK500 protocol commands
                 const STK500 = {
@@ -1639,9 +1635,7 @@ const BinaryPatcherAdvanced = {
                 console.log(`[Generic] Patching device: ${device.id}`);
                 console.log(`[Generic] Device type: ${device.type || 'unknown'}`);
                 console.log(`[Generic] Architecture: ${device.arch || Process.arch}`);
-                console.log(
-                    `[Generic] Patch size: ${patchData ? patchData.length : 0} bytes`
-                );
+                console.log(`[Generic] Patch size: ${patchData ? patchData.length : 0} bytes`);
 
                 // Determine patching method
                 const patchMethod = patchData ? patchData.method || 'serial' : 'serial';
@@ -1714,9 +1708,7 @@ const BinaryPatcherAdvanced = {
                     discoveredAt: Date.now(),
                 };
 
-                console.log(
-                    `[SensorNet] Found ${sensors.length} sensors in network: ${networkId}`
-                );
+                console.log(`[SensorNet] Found ${sensors.length} sensors in network: ${networkId}`);
                 return sensors;
             },
 
@@ -1759,9 +1751,7 @@ const BinaryPatcherAdvanced = {
                     // Apply sensor-specific patches
                     if (patchData?.firmware) {
                         console.log('[Sensor] Updating sensor firmware');
-                        console.log(
-                            `[Sensor] Firmware size: ${patchData.firmware.length} bytes`
-                        );
+                        console.log(`[Sensor] Firmware size: ${patchData.firmware.length} bytes`);
 
                         // Store sensor patch
                         this.sensorPatches = this.sensorPatches || [];
@@ -1960,9 +1950,7 @@ const BinaryPatcherAdvanced = {
 
                 const versionOk = currentVer >= requiredVer;
                 if (!versionOk) {
-                    console.error(
-                        `[Version] Version mismatch: ${moduleVersion} < ${minVersion}`
-                    );
+                    console.error(`[Version] Version mismatch: ${moduleVersion} < ${minVersion}`);
                 }
 
                 // Store version check result
@@ -2489,7 +2477,7 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Check patch size for feasibility
-                if (patchData.size > 0&& patchData.size > 100000000) {
+                if (patchData.size > 0 && patchData.size > 100000000) {
                     result.confidence -= 0.1;
                     result.checks.push('Large patch size may cause issues');
                 }
@@ -2538,9 +2526,7 @@ const BinaryPatcherAdvanced = {
             return { success: false, error: 'Suite creation failed' };
         }
 
-        console.log(
-            `[TestPatch] Created suite: ${patchId} with ${suite.tests.length} tests`
-        );
+        console.log(`[TestPatch] Created suite: ${patchId} with ${suite.tests.length} tests`);
         console.log(`[TestPatch] Suite configuration: ${JSON.stringify(suite.config)}`);
 
         // Run the test suite with the created configuration

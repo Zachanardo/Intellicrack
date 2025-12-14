@@ -79,7 +79,7 @@ class AIAssistant:
                 "analysis_timestamp": self._get_timestamp(),
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Code analysis failed: %s", e)
+            logger.error("Code analysis failed: %s", e, exc_info=True)
             return {"status": "error", "error": str(e)}
 
     def _detect_language(self, code: str) -> str:
@@ -397,7 +397,7 @@ class AIAssistant:
             vuln_engine = VulnerabilityEngine()
             return self._analyze_question_with_vulnerability_engine(question, context, vuln_engine)
         except Exception as e:
-            logger.error("Vulnerability engine error: %s", e)
+            logger.error("Vulnerability engine error: %s", e, exc_info=True)
             return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
 
     def _get_binary_analysis_context(self) -> str:
@@ -532,7 +532,7 @@ class CodeAnalyzer:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Binary analysis failed: %s", e)
+            logger.error("Binary analysis failed: %s", e, exc_info=True)
             return {"error": str(e), "file_path": file_path}
 
     def analyze_assembly(self, assembly_code: str) -> dict[str, Any]:
@@ -586,7 +586,7 @@ class CodeAnalyzer:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Assembly analysis failed: %s", e)
+            logger.error("Assembly analysis failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def ask_ai_about_analysis(self, question: str, context: dict[str, Any] | None = None) -> str:
@@ -1146,7 +1146,7 @@ def analyze_with_ai(data: object, analysis_type: str = "general") -> dict[str, A
             "summary": "AI analysis requires specific implementation for this data type",
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("AI analysis failed: %s", e)
+        logger.error("AI analysis failed: %s", e, exc_info=True)
         return {"error": str(e)}
 
 
@@ -1180,7 +1180,7 @@ def get_ai_suggestions(context: str, domain: str = "security") -> list[str]:
         return base_suggestions + domain_suggestions.get(domain, [])
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Getting AI suggestions failed: %s", e)
+        logger.error("Getting AI suggestions failed: %s", e, exc_info=True)
         return [f"Error getting suggestions: {e}"]
 
 
@@ -1211,7 +1211,7 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
         return explanation
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Code explanation failed: %s", e)
+        logger.error("Code explanation failed: %s", e, exc_info=True)
         return f"Error explaining code: {e}"
 
 

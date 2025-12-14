@@ -464,28 +464,22 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         recommendations = []
 
         if results.get("is_encrypted"):
-            recommendations.extend(
-                (
-                    "Use unpacking tools before static analysis",
-                    "Consider dynamic analysis to capture unpacked code",
-                    "Check for custom decryption routines",
-                )
-            )
+            recommendations.extend((
+                "Use unpacking tools before static analysis",
+                "Consider dynamic analysis to capture unpacked code",
+                "Check for custom decryption routines",
+            ))
         if results.get("is_packed"):
-            recommendations.extend(
-                (
-                    "Identify packer type using signature detection",
-                    "Apply appropriate unpacking technique",
-                )
-            )
+            recommendations.extend((
+                "Identify packer type using signature detection",
+                "Apply appropriate unpacking technique",
+            ))
         high_entropy_regions = results.get("high_entropy_regions", [])
         if len(high_entropy_regions) > 20:
-            recommendations.extend(
-                (
-                    "Multiple high-entropy regions suggest layered protection",
-                    "Examine each region individually for crypto/packing",
-                )
-            )
+            recommendations.extend((
+                "Multiple high-entropy regions suggest layered protection",
+                "Examine each region individually for crypto/packing",
+            ))
         return recommendations
 
 

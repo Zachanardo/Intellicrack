@@ -19,11 +19,14 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+
+logger = logging.getLogger(__name__)
 
 # Optional imports for enhanced tutorials
 try:
@@ -360,11 +363,12 @@ class TutorialSystem:
 
     def list_tutorials(self) -> None:
         """Display available tutorials."""
+        logger.debug("Listing %d available tutorials", len(self.tutorials))
         if not self.console:
             self._list_tutorials_basic()
             return
 
-        table = Table(title="📚 Available Tutorials")
+        table = Table(title="Available Tutorials")
         table.add_column("Name", style="cyan")
         table.add_column("Title", style="yellow")
         table.add_column("Difficulty", style="green")
@@ -400,21 +404,21 @@ class TutorialSystem:
 
     def _list_tutorials_basic(self) -> None:
         """List tutorials in basic text format."""
-        print("\nAvailable Tutorials:")
-        print("=" * 50)
+        logger.info("Available Tutorials:")
+        logger.info("=" * 50)
 
         for name, tutorial in self.tutorials.items():
             progress = self.tutorial_progress.get(name, 0)
             total_steps = len(tutorial.steps)
 
-            print(f"\n{name}:")
-            print(f"  Title: {tutorial.title}")
-            print(f"  Difficulty: {tutorial.difficulty}")
-            print(f"  Estimated Time: {tutorial.estimated_time} minutes")
-            print(f"  Progress: {progress}/{total_steps}")
-            print(f"  Description: {tutorial.description}")
+            logger.info("%s:", name)
+            logger.info("  Title: %s", tutorial.title)
+            logger.info("  Difficulty: %s", tutorial.difficulty)
+            logger.info("  Estimated Time: %s minutes", tutorial.estimated_time)
+            logger.info("  Progress: %s/%s", progress, total_steps)
+            logger.info("  Description: %s", tutorial.description)
 
-        print("\nTo start a tutorial, use: tutorial start <name>")
+        logger.info("To start a tutorial, use: tutorial start <name>")
 
     def start_tutorial(self, tutorial_name: str) -> bool:
         """Start a tutorial.
@@ -439,7 +443,7 @@ class TutorialSystem:
                 if self.console:
                     self.console.print(f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}")
                 else:
-                    print(f"Prerequisites not met: {', '.join(missing_prereqs)}")
+                    logger.warning("Prerequisites not met: %s", ", ".join(missing_prereqs))
                 return False
 
         self.current_tutorial = tutorial
@@ -470,13 +474,13 @@ class TutorialSystem:
             )
             self.console.print(intro_panel)
         else:
-            print(f"\n{tutorial.title}")
-            print("=" * len(tutorial.title))
-            print(f"\n{tutorial.description}")
-            print(f"\nDifficulty: {tutorial.difficulty}")
-            print(f"Estimated Time: {tutorial.estimated_time} minutes")
-            print(f"Steps: {len(tutorial.steps)}")
-            print("\nType 'tutorial help' for navigation commands.")
+            logger.info("%s", tutorial.title)
+            logger.info("=" * len(tutorial.title))
+            logger.info("%s", tutorial.description)
+            logger.info("Difficulty: %s", tutorial.difficulty)
+            logger.info("Estimated Time: %s minutes", tutorial.estimated_time)
+            logger.info("Steps: %s", len(tutorial.steps))
+            logger.info("Type 'tutorial help' for navigation commands.")
 
         # Start first step
         self._show_current_step()
@@ -524,21 +528,21 @@ class TutorialSystem:
             nav_text = "[dim]Commands: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'[/dim]"
             self.console.print(nav_text)
         else:
-            print(f"\n--- Step {step_num}/{total_steps}: {step.title} ---")
-            print(f"\n{step.description}")
-            print("\nCommands to try:")
+            logger.info("--- Step %s/%s: %s ---", step_num, total_steps, step.title)
+            logger.info("%s", step.description)
+            logger.info("Commands to try:")
             for cmd in step.commands:
-                print(f"  {cmd}")
+                logger.info("  %s", cmd)
 
             if step.explanation:
-                print(f"\nExplanation: {step.explanation}")
+                logger.info("Explanation: %s", step.explanation)
 
             if step.hints:
-                print("\nHints:")
+                logger.info("Hints:")
                 for hint in step.hints:
-                    print(f"   {hint}")
+                    logger.info("   %s", hint)
 
-            print("\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
+            logger.info("Navigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
 
         # Prompt for command execution
         self._prompt_for_command()
@@ -585,9 +589,9 @@ class TutorialSystem:
                                 self.console.print(f"[yellow] {hint}[/yellow]")
                         else:
                             for hint in step.hints:
-                                print(f" {hint}")
+                                logger.info(" %s", hint)
                     else:
-                        print("No hints available for this step.")
+                        logger.info("No hints available for this step.")
                     continue
                 else:
                     # Try to execute as a tutorial command
@@ -601,14 +605,14 @@ class TutorialSystem:
                             break
                         self.console.print(f"[yellow]{message}[/yellow]")
                     else:
-                        print(message)
+                        logger.info("%s", message)
                         if success:
                             # Auto-advance to next step on success
                             self.next_step()
                             break
 
             except KeyboardInterrupt:
-                print("\nUse 'quit' to exit the tutorial")
+                logger.info("Use 'quit' to exit the tutorial")
                 continue
             except EOFError:
                 self.quit_tutorial()
@@ -689,9 +693,7 @@ class TutorialSystem:
                         "Command executed but validation failed. Check the output and try again.",
                     )
             except Exception as e:
-                # Validation function error - continue anyway
-                if hasattr(self, "debug") and self.debug:
-                    print(f"Debug: Validation function error: {e}")
+                logger.debug("Validation function error: %s", e)
 
         # Check expected output if provided
         if step.expected_output and step.expected_output not in result_output:
@@ -743,7 +745,7 @@ class TutorialSystem:
             if self.console:
                 self.console.print("[red]This step cannot be skipped[/red]")
             else:
-                print("This step cannot be skipped")
+                logger.warning("This step cannot be skipped")
             return False
 
         return self.next_step()
@@ -774,8 +776,8 @@ class TutorialSystem:
             self.console.print(f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]")
             self.console.print("[dim]You can resume later with 'tutorial resume'[/dim]")
         else:
-            print(f"Tutorial '{tutorial_name}' paused at step {self.current_step + 1}")
-            print("You can resume later with 'tutorial resume'")
+            logger.info("Tutorial '%s' paused at step %s", tutorial_name, self.current_step + 1)
+            logger.info("You can resume later with 'tutorial resume'")
 
         self.current_tutorial = None
         self.current_step = 0
@@ -812,9 +814,9 @@ class TutorialSystem:
             self.console.print(completion_panel)
 
         else:
-            print("\n🎉 Tutorial Completed!")
-            print("=" * 30)
-            print(tutorial.completion_message)
+            logger.info("Tutorial Completed!")
+            logger.info("=" * 30)
+            logger.info("%s", tutorial.completion_message)
         # Show next recommendations
         self._show_next_recommendations()
         self.current_tutorial = None
@@ -845,10 +847,10 @@ class TutorialSystem:
                 rec_panel = Panel(rec_text.strip(), title="📖 Next Steps", border_style="blue")
                 self.console.print(rec_panel)
             else:
-                print("\nRecommended next tutorials:")
+                logger.info("Recommended next tutorials:")
                 for rec in recommendations:
                     tutorial = self.tutorials[rec]
-                    print(f"   {rec} - {tutorial.title}")
+                    logger.info("   %s - %s", rec, tutorial.title)
 
     def resume_tutorial(self) -> bool:
         """Resume the most recent tutorial."""
@@ -895,8 +897,8 @@ class TutorialSystem:
 
     def _show_progress_basic(self) -> None:
         """Show progress in basic text format."""
-        print("\nTutorial Progress:")
-        print("=" * 40)
+        logger.info("Tutorial Progress:")
+        logger.info("=" * 40)
 
         for name, tutorial in self.tutorials.items():
             completed_steps = self.tutorial_progress.get(name, 0)
@@ -906,9 +908,9 @@ class TutorialSystem:
             if completed_steps > 0:
                 status = "In Progress" if completed_steps < total_steps else "Completed OK"
 
-            print(f"\n{tutorial.title}")
-            print(f"  Progress: {completed_steps}/{total_steps}")
-            print(f"  Status: {status}")
+            logger.info("%s", tutorial.title)
+            logger.info("  Progress: %s/%s", completed_steps, total_steps)
+            logger.info("  Status: %s", status)
 
     def show_help(self) -> None:
         """Show tutorial system help."""
@@ -937,19 +939,19 @@ class TutorialSystem:
             help_panel = Panel(help_content, title="📚 Tutorial Help", border_style="blue")
             self.console.print(help_panel)
         else:
-            print("\nTutorial System Commands:")
-            print("=" * 30)
-            print("\nGeneral Commands:")
-            print("  tutorial list     - List available tutorials")
-            print("  tutorial start <name> - Start a specific tutorial")
-            print("  tutorial progress - Show completion progress")
-            print("  tutorial resume   - Resume most recent tutorial")
-            print("\nDuring Tutorial:")
-            print("  tutorial next     - Move to next step")
-            print("  tutorial prev     - Go to previous step")
-            print("  tutorial skip     - Skip current step")
-            print("  tutorial quit     - Quit current tutorial")
-            print("  tutorial help     - Show this help")
+            logger.info("Tutorial System Commands:")
+            logger.info("=" * 30)
+            logger.info("General Commands:")
+            logger.info("  tutorial list     - List available tutorials")
+            logger.info("  tutorial start <name> - Start a specific tutorial")
+            logger.info("  tutorial progress - Show completion progress")
+            logger.info("  tutorial resume   - Resume most recent tutorial")
+            logger.info("During Tutorial:")
+            logger.info("  tutorial next     - Move to next step")
+            logger.info("  tutorial prev     - Go to previous step")
+            logger.info("  tutorial skip     - Skip current step")
+            logger.info("  tutorial quit     - Quit current tutorial")
+            logger.info("  tutorial help     - Show this help")
 
     def display_tutorial_cards(self) -> None:
         """Display available tutorials as cards using Columns."""
@@ -1240,12 +1242,12 @@ Start with 'getting_started' if you're new to Intellicrack.""",
         )
         tutorial_system.console.print(welcome)
     else:
-        print("\n" + "=" * 60)
-        print("Welcome to the Intellicrack Interactive Tutorial System!")
-        print("=" * 60)
-        print("\nThis system will guide you through learning Intellicrack's features")
-        print("step by step with hands-on exercises.")
-        print("\nStart with 'getting_started' if you're new to Intellicrack.")
+        logger.info("=" * 60)
+        logger.info("Welcome to the Intellicrack Interactive Tutorial System!")
+        logger.info("=" * 60)
+        logger.info("This system will guide you through learning Intellicrack's features")
+        logger.info("step by step with hands-on exercises.")
+        logger.info("Start with 'getting_started' if you're new to Intellicrack.")
 
     # List available tutorials
     tutorial_system.list_tutorials()
@@ -1264,26 +1266,26 @@ Start with 'getting_started' if you're new to Intellicrack.""",
             parts = command.lower().split()
 
             if parts[0] in ["exit", "quit"]:
-                print("Goodbye!")
+                logger.info("Goodbye!")
                 break
             if parts[0] == "list":
                 tutorial_system.list_tutorials()
             elif parts[0] == "start" and len(parts) > 1:
                 tutorial_name = parts[1]
                 if not tutorial_system.start_tutorial(tutorial_name):
-                    print(f"Tutorial '{tutorial_name}' not found. Use 'list' to see available tutorials.")
+                    logger.warning("Tutorial '%s' not found. Use 'list' to see available tutorials.", tutorial_name)
             elif parts[0] == "resume":
                 if not tutorial_system.resume_tutorial():
-                    print("No tutorial to resume.")
+                    logger.info("No tutorial to resume.")
             elif parts[0] == "progress":
                 tutorial_system.show_progress()
             elif parts[0] == "help":
                 tutorial_system.show_help()
             else:
-                print("Unknown command. Type 'help' for available commands.")
+                logger.warning("Unknown command. Type 'help' for available commands.")
 
         except KeyboardInterrupt:
-            print("\nUse 'exit' to quit the tutorial system.")
+            logger.info("Use 'exit' to quit the tutorial system.")
             continue
         except EOFError:
             break

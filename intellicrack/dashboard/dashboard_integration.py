@@ -731,13 +731,11 @@ class DashboardIntegration:
         for tool_name in ["ghidra", "frida", "radare2", "cross_tool"]:
             if integration := self.tool_integrations.get(tool_name):
                 tool_status = "Running" if tool_name == tool and status == "Running" else "Idle"
-                rows.append(
-                    {
-                        "Tool": tool_name.capitalize(),
-                        "Status": tool_status,
-                        "Enabled": "Yes" if integration.enabled else "No",
-                    }
-                )
+                rows.append({
+                    "Tool": tool_name.capitalize(),
+                    "Status": tool_status,
+                    "Enabled": "Yes" if integration.enabled else "No",
+                })
 
         widget_data = WidgetData(
             timestamp=datetime.now(),

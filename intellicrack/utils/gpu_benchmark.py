@@ -153,11 +153,11 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
                 )
 
     except ImportError as e:
-        logger.error(f"GPU acceleration module not available: {e}")
+        logger.error("GPU acceleration module not available: %s", e, exc_info=True)
         if hasattr(app, "update_output"):
             app.update_output.emit("[GPU] GPU acceleration module not available")
     except Exception as e:
-        logger.error(f"GPU accelerated analysis failed: {e}")
+        logger.error("GPU accelerated analysis failed: %s", e, exc_info=True)
         if hasattr(app, "update_output"):
             app.update_output.emit(f"[GPU] Analysis failed: {e}")
 
@@ -205,7 +205,7 @@ def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, byte
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
 
     except Exception as e:
-        logger.error(f"CuPy benchmark failed: {e}")
+        logger.error("CuPy benchmark failed: %s", e, exc_info=True)
 
 
 def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
@@ -261,7 +261,7 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             framework_results["results_found"] = framework_results.get("results_found", 0) + result_count
 
     except Exception as e:
-        logger.error(f"Numba benchmark failed: {e}")
+        logger.error("Numba benchmark failed: %s", e, exc_info=True)
 
 
 def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
@@ -287,7 +287,7 @@ def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, by
             framework_results["pattern_search"][f"{size_mb}MB"] = search_time
 
     except Exception as e:
-        logger.error(f"PyCUDA benchmark failed: {e}")
+        logger.error("PyCUDA benchmark failed: %s", e, exc_info=True)
 
 
 def _benchmark_cpu_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:

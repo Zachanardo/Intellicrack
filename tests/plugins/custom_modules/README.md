@@ -11,64 +11,64 @@ This directory contains comprehensive production-grade tests for the License Ser
 ### Core Functionality Tested
 
 1. **CryptoManager Tests**
-   - RSA key generation and signing (2048-bit keys)
-   - AES encryption/decryption with CBC mode
-   - License key generation with cryptographic uniqueness
-   - Signature verification and tamper detection
+    - RSA key generation and signing (2048-bit keys)
+    - AES encryption/decryption with CBC mode
+    - License key generation with cryptographic uniqueness
+    - Signature verification and tamper detection
 
 2. **FlexLM Emulator Tests**
-   - TCP server startup on configurable ports
-   - Feature checkout request handling
-   - Vendor daemon communication
-   - Custom RC4-variant encryption for vendor protocol
-   - License granting and denial logic
+    - TCP server startup on configurable ports
+    - Feature checkout request handling
+    - Vendor daemon communication
+    - Custom RC4-variant encryption for vendor protocol
+    - License granting and denial logic
 
 3. **HASP Dongle Emulator Tests**
-   - Dongle memory initialization with proper structure
-   - Feature login/logout with session management
-   - AES-GCM encryption/decryption operations
-   - Memory read/write with access control
-   - Hardware fingerprint binding via HKDF
-   - Device information queries
+    - Dongle memory initialization with proper structure
+    - Feature login/logout with session management
+    - AES-GCM encryption/decryption operations
+    - Memory read/write with access control
+    - Hardware fingerprint binding via HKDF
+    - Device information queries
 
 4. **Microsoft KMS Emulator Tests**
-   - Windows product activation
-   - Office product activation
-   - Activation ID generation
-   - Grace period and expiry date management
+    - Windows product activation
+    - Office product activation
+    - Activation ID generation
+    - Grace period and expiry date management
 
 5. **Adobe Emulator Tests**
-   - Creative Cloud license validation
-   - Device token generation and verification
-   - Subscription license handling
+    - Creative Cloud license validation
+    - Device token generation and verification
+    - Subscription license handling
 
 6. **Database Manager Tests**
-   - SQLAlchemy table creation
-   - License entry creation and validation
-   - Expiry date checking
-   - Operation logging
-   - Activation tracking with hardware fingerprints
+    - SQLAlchemy table creation
+    - License entry creation and validation
+    - Expiry date checking
+    - Operation logging
+    - Activation tracking with hardware fingerprints
 
 7. **Hardware Fingerprint Tests**
-   - Consistent hash generation from hardware components
-   - Real system data collection (CPU, disk, RAM, MAC)
-   - Hardware change detection
+    - Consistent hash generation from hardware components
+    - Real system data collection (CPU, disk, RAM, MAC)
+    - Hardware change detection
 
 8. **Protocol Analyzer Tests**
-   - FlexLM protocol detection
-   - HASP protocol detection
-   - KMS protocol detection
-   - Confidence scoring
+    - FlexLM protocol detection
+    - HASP protocol detection
+    - KMS protocol detection
+    - Confidence scoring
 
 9. **License Server REST API Tests**
-   - FastAPI endpoint testing
-   - License validation endpoint
-   - License activation endpoint
-   - Status endpoint
-   - Protocol-specific endpoints (FlexLM, HASP, KMS, Adobe)
-   - Hardware fingerprint generation endpoint
-   - Traffic analysis endpoint
-   - Proxy interception endpoint
+    - FastAPI endpoint testing
+    - License validation endpoint
+    - License activation endpoint
+    - Status endpoint
+    - Protocol-specific endpoints (FlexLM, HASP, KMS, Adobe)
+    - Hardware fingerprint generation endpoint
+    - Traffic analysis endpoint
+    - Proxy interception endpoint
 
 10. **Edge Cases**
     - Concurrent license validation requests
@@ -105,6 +105,7 @@ The tests require the following dependencies which are listed in `pyproject.toml
 **Issue:** The pytest module in the pixi environment is shadowed by `faker.contrib.pytest`, causing `pytest.mark` and other attributes to be unavailable.
 
 **Evidence:**
+
 ```bash
 $ .pixi\envs\default\python.exe -c "import pytest; print(hasattr(pytest, 'mark'))"
 False
@@ -116,16 +117,19 @@ None  # Should be a real file path
 ## How to Run Tests (Once Environment is Fixed)
 
 ### Run all license server tests:
+
 ```bash
 pixi run pytest tests/plugins/custom_modules/test_license_server_emulator.py -v
 ```
 
 ### Run specific test class:
+
 ```bash
 pixi run pytest tests/plugins/custom_modules/test_license_server_emulator.py::TestCryptoManager -v
 ```
 
 ### Run with coverage:
+
 ```bash
 pixi run pytest tests/plugins/custom_modules/test_license_server_emulator.py --cov=intellicrack.plugins.custom_modules.license_server_emulator --cov-report=term-missing
 ```
@@ -142,39 +146,40 @@ All tests follow the CRITICAL TESTING PRINCIPLES defined in the test-writer agen
 ## What Makes These Tests Production-Grade
 
 1. **Real Cryptographic Operations**
-   - Actual RSA 2048-bit key generation
-   - Real AES-256 encryption with random IVs
-   - Genuine AES-GCM with authentication tags
-   - HKDF session key derivation
-   - Proper signature verification
+    - Actual RSA 2048-bit key generation
+    - Real AES-256 encryption with random IVs
+    - Genuine AES-GCM with authentication tags
+    - HKDF session key derivation
+    - Proper signature verification
 
 2. **Real Network Operations**
-   - Actual TCP socket servers
-   - Real client connections
-   - Protocol request/response handling
-   - Concurrent connection handling
+    - Actual TCP socket servers
+    - Real client connections
+    - Protocol request/response handling
+    - Concurrent connection handling
 
 3. **Real Database Operations**
-   - SQLAlchemy ORM with SQLite
-   - Actual table creation and migration
-   - Real queries and transactions
-   - Relationship handling
+    - SQLAlchemy ORM with SQLite
+    - Actual table creation and migration
+    - Real queries and transactions
+    - Relationship handling
 
 4. **Real System Integration**
-   - Hardware data collection (CPU, disk, network)
-   - OS-specific operations
-   - Multi-threading tests
-   - Performance benchmarks
+    - Hardware data collection (CPU, disk, network)
+    - OS-specific operations
+    - Multi-threading tests
+    - Performance benchmarks
 
 5. **Comprehensive Coverage**
-   - 11 test classes covering all major components
-   - 80+ individual test methods
-   - Edge cases and error conditions
-   - Performance validation
+    - 11 test classes covering all major components
+    - 80+ individual test methods
+    - Edge cases and error conditions
+    - Performance validation
 
 ## Test Validation Strategy
 
 Each test is designed to FAIL when:
+
 - Cryptographic operations are broken
 - Network servers don't start
 - Database operations fail
@@ -183,6 +188,7 @@ Each test is designed to FAIL when:
 - Performance degrades below acceptable levels
 
 Tests PASS only when:
+
 - Real cryptographic signatures verify
 - Network connections succeed
 - Database queries return expected data

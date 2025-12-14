@@ -147,10 +147,10 @@ class CloudLicenseResponseGenerator:
 
             self.hooks_enabled = True
             self.active = True
-            logger.info(f"Network API hooks enabled on ports: {self.target_ports}")
+            logger.info("Network API hooks enabled on ports: %s", self.target_ports)
 
         except Exception as e:
-            logger.error(f"Failed to enable network hooks: {e}")
+            logger.error("Failed to enable network hooks: %s", e, exc_info=True)
 
     def disable_network_api_hooks(self) -> None:
         """Disable network API hooks.
@@ -185,7 +185,7 @@ class CloudLicenseResponseGenerator:
             listener_socket.listen(5)
             listener_socket.settimeout(1.0)
 
-            logger.info(f"Listening on port {port}")
+            logger.info("Listening on port %s", port)
 
             while self.active:
                 try:
@@ -200,12 +200,12 @@ class CloudLicenseResponseGenerator:
                     continue
                 except Exception as e:
                     if self.active:
-                        logger.error(f"Error accepting connection on port {port}: {e}")
+                        logger.error("Error accepting connection on port %s: %s", port, e, exc_info=True)
 
             listener_socket.close()
 
         except Exception as e:
-            logger.error(f"Failed to start listener on port {port}: {e}")
+            logger.error("Failed to start listener on port %s: %s", port, e, exc_info=True)
 
     def _handle_connection(self, client_socket: socket.socket, address: tuple[str, int], port: int) -> None:
         """Handle an incoming connection.
@@ -246,9 +246,12 @@ class CloudLicenseResponseGenerator:
 
                     client_socket.send(response)
 
-                    # Log total processing time
                     total_time = time.time() - connection_start
-                    logger.debug(f"Connection processed in {total_time:.3f}s with {network_delay:.3f}s network delay")
+                    logger.debug(
+                        "Connection processed in %.3fs with %.3fs network delay",
+                        total_time,
+                        network_delay,
+                    )
 
                     # Log generated response
                     self.generated_responses.append(
@@ -260,7 +263,7 @@ class CloudLicenseResponseGenerator:
                     )
 
         except Exception as e:
-            logger.error(f"Error handling connection from {address}: {e}")
+            logger.error("Error handling connection from %s: %s", address, e, exc_info=True)
         finally:
             client_socket.close()
 

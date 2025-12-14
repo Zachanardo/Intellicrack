@@ -257,17 +257,15 @@ class ExportWorker(QThread):
             spaceAfter=30,
         )
 
-        story.extend(
-            (
-                Paragraph("Intellicrack Protection Analysis Report", title_style),
-                Spacer(1, 20),
-                Paragraph(
-                    f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                    styles["Normal"],
-                ),
-                Spacer(1, 20),
-            )
-        )
+        story.extend((
+            Paragraph("Intellicrack Protection Analysis Report", title_style),
+            Spacer(1, 20),
+            Paragraph(
+                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                styles["Normal"],
+            ),
+            Spacer(1, 20),
+        ))
         # File Information
         if "file_info" in results:
             story.append(Paragraph("File Information", styles["Heading2"]))

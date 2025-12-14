@@ -143,13 +143,11 @@ class CertificateChainGenerator:
             key_size=4096,
         )
 
-        subject = issuer = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Security Research"),
-            ]
-        )
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Security Research"),
+        ])
 
         root_cert = (
             x509.CertificateBuilder()
@@ -208,12 +206,10 @@ class CertificateChainGenerator:
             key_size=2048,
         )
 
-        subject = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Intermediate CA"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-            ]
-        )
+        subject = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Intermediate CA"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+        ])
 
         intermediate_cert = (
             x509.CertificateBuilder()
@@ -278,12 +274,10 @@ class CertificateChainGenerator:
             key_size=2048,
         )
 
-        subject = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COMMON_NAME, domain),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-            ]
-        )
+        subject = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, domain),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+        ])
 
         san_entries = [
             x509.DNSName(domain),
@@ -320,12 +314,10 @@ class CertificateChainGenerator:
                 critical=True,
             )
             .add_extension(
-                x509.ExtendedKeyUsage(
-                    [
-                        x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
-                        x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ]
-                ),
+                x509.ExtendedKeyUsage([
+                    x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
+                    x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
+                ]),
                 critical=False,
             )
             .add_extension(

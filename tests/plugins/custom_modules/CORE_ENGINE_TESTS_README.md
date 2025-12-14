@@ -154,6 +154,7 @@ Tests performance characteristics:
 ### NO MOCKS - Real Component Testing
 
 All tests use **real components**:
+
 - Real EventBus with async message passing
 - Real PluginManager discovering actual files
 - Real WorkflowEngine executing real workflows
@@ -164,6 +165,7 @@ All tests use **real components**:
 ### Tests MUST Fail When Code Breaks
 
 Every test is designed to **fail when the implementation is broken**:
+
 - EventBus tests fail if events aren't delivered
 - PluginManager tests fail if discovery doesn't work
 - WorkflowEngine tests fail if execution order is wrong
@@ -173,6 +175,7 @@ Every test is designed to **fail when the implementation is broken**:
 ### Production-Ready Code Only
 
 All test code follows production standards:
+
 - Complete type annotations
 - Proper async/await usage
 - Real file I/O and temp directory management
@@ -240,6 +243,7 @@ async def test_analysis_coordinator_triggers_workflows(self) -> None:
 ### Prerequisites
 
 The core engine requires:
+
 - `jsonschema` package (for configuration validation)
 - `PyQt6` (for GUI integration)
 - `psutil` (for resource monitoring)
@@ -290,6 +294,7 @@ python tests/plugins/custom_modules/run_core_engine_tests.py
 ### Line Coverage Target: 85%+
 
 Tests cover:
+
 - All major component classes
 - All public API methods
 - All async operations
@@ -299,6 +304,7 @@ Tests cover:
 ### Branch Coverage Target: 80%+
 
 Tests cover:
+
 - Success paths (normal operation)
 - Error paths (failure handling)
 - Edge cases (boundary conditions)
@@ -309,6 +315,7 @@ Tests cover:
 ### Each Test Must Prove Real Functionality
 
 ❌ **BAD** (Placeholder test):
+
 ```python
 def test_plugin_loads(self):
     result = manager.load_plugin("test")
@@ -316,6 +323,7 @@ def test_plugin_loads(self):
 ```
 
 ✅ **GOOD** (Real validation):
+
 ```python
 def test_plugin_loads_and_executes(self):
     await manager.load_plugin("test_plugin")
@@ -332,6 +340,7 @@ def test_plugin_loads_and_executes(self):
 ### Dependency Issues
 
 The core engine currently has import issues:
+
 1. `jsonschema` package namespace issue
 2. `PyQt6` not available in test environment
 3. Plugin system dependencies

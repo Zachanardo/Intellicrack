@@ -72,7 +72,7 @@ class AdvancedTaintTracker:
             "tainted_memory": self._get_output_memory(source_instr),
         }
 
-        self.logger.debug(f"Added taint source {taint_id} at {hex(source_instr['address'])}")
+        self.logger.debug("Added taint source %s at %s", taint_id, hex(source_instr["address"]))
         return taint_id
 
     def propagate_taint(self, source: dict[str, Any], sinks: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -374,7 +374,7 @@ class TaintAnalysisEngine:
             for source in source_instructions:
                 # Initialize taint at source
                 taint_id = taint_tracker.add_taint_source(source)
-                self.logger.debug(f"Created taint source {taint_id} at {source}")
+                self.logger.debug("Created taint source %s at %s", taint_id, source)
 
                 # Propagate taint through the program
                 propagation_paths = taint_tracker.propagate_taint(source, sink_instructions)
@@ -423,7 +423,7 @@ class TaintAnalysisEngine:
             }
 
         except Exception as e:
-            self.logger.error("Error in real taint analysis: %s", e)
+            self.logger.error("Error in real taint analysis: %s", e, exc_info=True)
             # Fallback to basic analysis if full analysis fails
             self._perform_basic_analysis()
 
@@ -528,7 +528,7 @@ class TaintAnalysisEngine:
                 for pattern, mnemonic in license_patterns:
                     if data[i : i + len(pattern)] == pattern:
                         # Log the byte that started this pattern match
-                        self.logger.debug(f"Found pattern at offset {offset}, starting byte: 0x{byte:02x}")
+                        self.logger.debug("Found pattern at offset %s, starting byte: 0x%02x", offset, byte)
                         instructions.append(
                             {
                                 "address": base_address + offset,
@@ -544,7 +544,7 @@ class TaintAnalysisEngine:
                     break
 
         except Exception as e:
-            self.logger.error("Error in pattern-based analysis: %s", e)
+            self.logger.error("Error in pattern-based analysis: %s", e, exc_info=True)
 
         return instructions
 
@@ -577,7 +577,7 @@ class TaintAnalysisEngine:
                         target = int(op_str.split("0x")[1].split()[0], 16)
                         successors.append(target)
                 except (ValueError, IndexError) as e:
-                    logger.error("Error in taint_analyzer: %s", e)
+                    logger.error("Error in taint_analyzer: %s", e, exc_info=True)
             elif mnemonic == "call":
                 # Call instructions have the return address as successor
                 if i + 1 < len(instructions):
@@ -1157,14 +1157,14 @@ class TaintAnalysisEngine:
             try:
                 _ = taint_tracker.get_taint_summary()
             except Exception as e:
-                self.logger.debug(f"Error getting taint summary: {e}")
+                self.logger.debug("Error getting taint summary: %s", e, exc_info=True)
 
         # Include sink instruction count in analysis
         sink_count = len(sink_instructions)
-        self.logger.debug(f"Analyzing {sink_count} sink instructions for interprocedural taint")
+        self.logger.debug("Analyzing %s sink instructions for interprocedural taint", sink_count)
 
         call_instructions = [instr for instr in disassembly if instr["mnemonic"].lower() == "call"]
-        self.logger.info(f"Found {len(call_instructions)} function calls for inter-procedural analysis")
+        self.logger.info("Found %s function calls for inter-procedural analysis", len(call_instructions))
 
         # For each taint source, check if it can reach a call
         for source in source_instructions:
@@ -1205,11 +1205,11 @@ class TaintAnalysisEngine:
 
         """
         critical_points = []
-        self.logger.debug(f"Analyzing {len(taint_paths)} taint paths and {len(sink_instructions)} sink instructions")
+        self.logger.debug("Analyzing %s taint paths and %s sink instructions", len(taint_paths), len(sink_instructions))
 
         # Create lookup map for sink instructions for efficient access
         sink_lookup = {instr.get("address", 0): instr for instr in sink_instructions}
-        self.logger.debug(f"Created sink lookup with {len(sink_lookup)} entries")
+        self.logger.debug("Created sink lookup with %s entries", len(sink_lookup))
         validation_addresses = set()
 
         # Analyze each taint path
@@ -1305,7 +1305,7 @@ class TaintAnalysisEngine:
                 if hex_match := re.search(r"0x[0-9a-fA-F]+", op_str):
                     return int(hex_match.group(), 16)
             except ValueError as e:
-                self.logger.error("Value error in taint_analyzer: %s", e)
+                self.logger.error("Value error in taint_analyzer: %s", e, exc_info=True)
 
         # Could implement more sophisticated call target resolution
         return None
@@ -1368,7 +1368,7 @@ class TaintAnalysisEngine:
             - vulnerabilities: Identified security issues
 
         """
-        self.logger.info(f"Starting taint analysis with {len(sources)} sources")
+        self.logger.info("Starting taint analysis with %s sources", len(sources))
 
         # Clear previous analysis
         self.clear_analysis()
@@ -1389,7 +1389,7 @@ class TaintAnalysisEngine:
                         },
                     )
                 except ValueError:
-                    self.logger.warning(f"Invalid address format: {source_spec}")
+                    self.logger.warning("Invalid address format: %s", source_spec)
             elif source_spec.startswith("func:"):
                 # Function-based source
                 func_name = source_spec[5:]
@@ -1534,7 +1534,7 @@ class TaintAnalysisEngine:
             },
         }
 
-        self.logger.info(f"Analysis complete: {len(sinks_reached)} sinks reached, {len(vulnerabilities)} vulnerabilities found")
+        self.logger.info("Analysis complete: %s sinks reached, %s vulnerabilities found", len(sinks_reached), len(vulnerabilities))
 
         return results
 

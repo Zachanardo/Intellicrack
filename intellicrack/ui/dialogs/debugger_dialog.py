@@ -482,9 +482,8 @@ class DebuggerDialog(QDialog):
         if not current_binary:
             import tempfile
 
-            test_temp_file = tempfile.NamedTemporaryFile(suffix=".exe", delete=False)
-            test_binary = test_temp_file.name
-            test_temp_file.close()
+            with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as test_temp_file:
+                test_binary = test_temp_file.name
 
             with open(test_binary, "wb") as f:
                 f.write(b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00")
@@ -594,7 +593,7 @@ class DebuggerDialog(QDialog):
         if msg_type == "paused":
             self.update_ui_state("paused")
             if isinstance(data, dict):
-                self.current_line = cast(int, data.get("line"))
+                self.current_line = cast("int", data.get("line"))
                 self.code_editor.highlight_line(self.current_line)
                 file_name = data.get("file", "unknown")
                 line_num = data.get("line", 0)
@@ -610,11 +609,11 @@ class DebuggerDialog(QDialog):
 
         elif msg_type == "stack":
             if isinstance(data, list):
-                self.update_stack_display(cast(list[dict[str, Any]], data))
+                self.update_stack_display(cast("list[dict[str, Any]]", data))
 
         elif msg_type == "watches":
             if isinstance(data, dict):
-                self.update_watch_display(cast(dict[str, Any], data))
+                self.update_watch_display(cast("dict[str, Any]", data))
 
         elif msg_type == "eval_result":
             if isinstance(data, dict):

@@ -43,7 +43,7 @@ class ProjectManager:
     def __init__(self) -> None:
         """Initialize project manager."""
         self.projects_dir = Path.home() / ".intellicrack" / "projects"
-        logger.debug(f"Projects directory: {self.projects_dir}")
+        logger.debug("Projects directory: %s", self.projects_dir)
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.current_project = None
 
@@ -78,7 +78,7 @@ class ProjectManager:
         with open(project_dir / "project.json", "w") as f:
             json.dump(metadata, f, indent=2)
 
-        logger.info(f"Created project: {name}")
+        logger.info("Created project: %s", name)
         return project_dir
 
     def load_project(self, name: str) -> dict[str, Any]:
@@ -93,7 +93,7 @@ class ProjectManager:
 
         self.current_project = {"name": name, "path": project_dir, "metadata": metadata}
 
-        logger.info(f"Loaded project: {name}")
+        logger.info("Loaded project: %s", name)
         return metadata
 
     def list_projects(self) -> list[dict[str, Any]]:
@@ -136,7 +136,7 @@ class ProjectManager:
         # Delete project
         shutil.rmtree(project_dir)
 
-        logger.info(f"Deleted project: {name} (backup: {backup_path})")
+        logger.info("Deleted project: %s (backup: %s)", name, backup_path)
 
         if self.current_project and self.current_project["name"] == name:
             self.current_project = None
@@ -174,7 +174,7 @@ class ProjectManager:
         with open(project_dir / "project.json", "w") as f:
             json.dump(metadata, f, indent=2)
 
-        logger.info(f"Added {source_file.name} to project {project_name}")
+        logger.info("Added %s to project %s", source_file.name, project_name)
         return file_info
 
     def _calculate_file_hash(self, file_path: str) -> str:
@@ -203,7 +203,7 @@ class ProjectManager:
         # Create archive
         shutil.make_archive(str(output_path.with_suffix("")), "zip", str(project_dir))
 
-        logger.info(f"Exported project to: {output_path}")
+        logger.info("Exported project to: %s", output_path)
         return output_path
 
     def import_project(self, archive_path: str) -> str:
@@ -250,7 +250,7 @@ class ProjectManager:
             # Copy to projects directory
             shutil.copytree(project_json.parent, dest_dir)
 
-        logger.info(f"Imported project: {project_name}")
+        logger.info("Imported project: %s", project_name)
         return project_name
 
 
@@ -303,48 +303,48 @@ def main() -> int:
     try:
         if args.command == "create":
             manager.create_project(args.name, args.description)
-            print(f"Created project: {args.name}")
+            logger.info("Created project: %s", args.name)
 
         elif args.command == "list":
             if projects := manager.list_projects():
-                print("\nAvailable projects:")
+                logger.info("Available projects:")
                 for proj in projects:
-                    print(f"  - {proj['name']}: {proj['description']}")
-                    print(f"    Created: {proj['created']}")
-                    print(f"    Modified: {proj['modified']}")
+                    logger.info("  - %s: %s", proj["name"], proj["description"])
+                    logger.info("    Created: %s", proj["created"])
+                    logger.info("    Modified: %s", proj["modified"])
 
             else:
-                print("No projects found")
+                logger.info("No projects found")
         elif args.command == "load":
             metadata = manager.load_project(args.name)
-            print(f"Loaded project: {metadata['name']}")
-            print(f"Description: {metadata.get('description', 'N/A')}")
-            print(f"Files: {len(metadata.get('files', []))}")
+            logger.info("Loaded project: %s", metadata["name"])
+            logger.info("Description: %s", metadata.get("description", "N/A"))
+            logger.info("Files: %s", len(metadata.get("files", [])))
 
         elif args.command == "delete":
             if not args.force:
                 response = input(f"Delete project '{args.name}'? (y/N): ")
                 if response.lower() != "y":
-                    print("Cancelled")
+                    logger.info("Cancelled")
                     return 0
 
             manager.delete_project(args.name)
-            print(f"Deleted project: {args.name}")
+            logger.info("Deleted project: %s", args.name)
 
         elif args.command == "add":
             file_info = manager.add_file_to_project(args.project, args.file)
-            print(f"Added {file_info['name']} to project {args.project}")
+            logger.info("Added %s to project %s", file_info["name"], args.project)
 
         elif args.command == "export":
             output_path = manager.export_project(args.name, args.output)
-            print(f"Exported to: {output_path}")
+            logger.info("Exported to: %s", output_path)
 
         elif args.command == "import":
             project_name = manager.import_project(args.archive)
-            print(f"Imported project: {project_name}")
+            logger.info("Imported project: %s", project_name)
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error("Error: %s", e, exc_info=True)
         return 1
 
     return 0

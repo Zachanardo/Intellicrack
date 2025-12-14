@@ -379,7 +379,7 @@ class HardwareIDAnalyzer:
 
     def _find_cpuid_patterns(self, data: bytes, base_va: int) -> None:
         """Find CPUID instruction patterns in code section."""
-        cpuid_pattern = rb'\x0f\xa2'
+        cpuid_pattern = rb"\x0f\xa2"
 
         offset = 0
         while (pos := data.find(cpuid_pattern, offset)) != -1:
@@ -409,9 +409,9 @@ class HardwareIDAnalyzer:
     def _find_ioctl_patterns(self, data: bytes, base_va: int) -> None:
         """Find DeviceIoControl patterns for disk serial queries."""
         ioctl_codes = [
-            b'\x00\x14\x2D\x00',
-            b'\x00\x04\x74\x00',
-            b'\x00\x1C\x04\x00',
+            b"\x00\x14\x2d\x00",
+            b"\x00\x04\x74\x00",
+            b"\x00\x1c\x04\x00",
         ]
 
         for ioctl_code in ioctl_codes:
@@ -434,9 +434,9 @@ class HardwareIDAnalyzer:
     def _find_hash_patterns(self, data: bytes, base_va: int) -> None:
         """Find cryptographic hash initialization patterns for HWID fingerprinting."""
         hash_patterns = {
-            b'\x01\x23\x45\x67\x89\xAB\xCD\xEF': "MD5",
-            b'\x67\x45\x23\x01\xEF\xCD\xAB\x89': "SHA1",
-            b'\x6A\x09\xE6\x67\xBB\x67\xAE\x85': "SHA256",
+            b"\x01\x23\x45\x67\x89\xab\xcd\xef": "MD5",
+            b"\x67\x45\x23\x01\xef\xcd\xab\x89": "SHA1",
+            b"\x6a\x09\xe6\x67\xbb\x67\xae\x85": "SHA256",
         }
 
         for pattern, algorithm in hash_patterns.items():
@@ -464,7 +464,7 @@ class HardwareIDAnalyzer:
             if section.Characteristics & 0x20000000:
                 section_data = section.get_data()
 
-                pattern = re.compile(rb'[\x31\x33\xB8].{0,5}\x0f\xa2', re.DOTALL)
+                pattern = re.compile(rb"[\x31\x33\xB8].{0,5}\x0f\xa2", re.DOTALL)
                 for match in pattern.finditer(section_data):
                     offset = section.VirtualAddress + match.start()
 
@@ -599,9 +599,9 @@ class HardwareIDAnalyzer:
                 section_va = section.VirtualAddress
 
                 comparison_patterns = [
-                    rb'\x3B.{1,2}\x75',
-                    rb'\x39.{1,2}\x0F\x85',
-                    rb'\x81.{1,5}\x0F\x85',
+                    rb"\x3B.{1,2}\x75",
+                    rb"\x39.{1,2}\x0F\x85",
+                    rb"\x81.{1,5}\x0F\x85",
                 ]
 
                 for pattern in comparison_patterns:
@@ -686,17 +686,17 @@ class HardwareIDAnalyzer:
         elif entropy > 2.0:
             score += 1
 
-        junk_instructions = [b'\x90', b'\x66\x90', b'\x87\xC0', b'\x87\xDB']
+        junk_instructions = [b"\x90", b"\x66\x90", b"\x87\xc0", b"\x87\xdb"]
         junk_count = sum(code.count(pattern) for pattern in junk_instructions)
         if junk_count > 3:
             score += 2
         elif junk_count > 1:
             score += 1
 
-        if b'\xE8' in code or b'\xFF\x15' in code:
+        if b"\xe8" in code or b"\xff\x15" in code:
             score += 2
 
-        if b'\x0F\x85' in code or b'\x0F\x84' in code:
+        if b"\x0f\x85" in code or b"\x0f\x84" in code:
             score += 1
 
         return min(score, 10)
@@ -704,10 +704,10 @@ class HardwareIDAnalyzer:
     def _contains_crypto_constants(self, data: bytes) -> bool:
         """Check if data contains cryptographic constants."""
         crypto_patterns = [
-            b'\x01\x23\x45\x67',
-            b'\x67\x45\x23\x01',
-            b'\x6A\x09\xE6\x67',
-            b'\x98\xBA\xDC\xFE',
+            b"\x01\x23\x45\x67",
+            b"\x67\x45\x23\x01",
+            b"\x6a\x09\xe6\x67",
+            b"\x98\xba\xdc\xfe",
         ]
 
         return any(pattern in data for pattern in crypto_patterns)

@@ -620,7 +620,7 @@ class DistributedAnalysisManager:
                 time.sleep(self.HEARTBEAT_INTERVAL)
 
             except Exception as e:
-                self.logger.error(f"Heartbeat error: {e}")
+                self.logger.error("Heartbeat error: %s", e, exc_info=True)
 
     def _task_monitor_loop(self) -> None:
         """Monitor task execution and handle timeouts."""
@@ -644,7 +644,7 @@ class DistributedAnalysisManager:
                 time.sleep(self.TASK_CHECK_INTERVAL)
 
             except Exception as e:
-                self.logger.error(f"Task monitor error: {e}")
+                self.logger.error("Task monitor error: %s", e, exc_info=True)
 
     def _task_scheduler_loop(self) -> None:
         """Schedule tasks to available worker nodes."""
@@ -676,7 +676,7 @@ class DistributedAnalysisManager:
                 time.sleep(0.1)
 
             except Exception as e:
-                self.logger.error(f"Task scheduler error: {e}")
+                self.logger.error("Task scheduler error: %s", e, exc_info=True)
                 time.sleep(1.0)
 
     def _get_available_nodes(self) -> list[WorkerNode]:
@@ -839,13 +839,11 @@ class DistributedAnalysisManager:
                     pattern = pattern.encode()
 
                 for match in re.finditer(re.escape(pattern), data):
-                    matches.append(
-                        {
-                            "pattern": pattern.decode() if isinstance(pattern, bytes) else pattern,
-                            "offset": chunk_start + match.start(),
-                            "context": data[max(0, match.start() - 20) : match.end() + 20].hex(),
-                        }
-                    )
+                    matches.append({
+                        "pattern": pattern.decode() if isinstance(pattern, bytes) else pattern,
+                        "offset": chunk_start + match.start(),
+                        "context": data[max(0, match.start() - 20) : match.end() + 20].hex(),
+                    })
 
         return {
             "task_type": "pattern_search",
@@ -880,13 +878,11 @@ class DistributedAnalysisManager:
         for i in range(0, len(data) - window_size + 1, window_size // 2):
             window_data = data[i : i + window_size]
             entropy = calculate_entropy(window_data)
-            windows.append(
-                {
-                    "offset": chunk_start + i,
-                    "entropy": entropy,
-                    "high_entropy": entropy > 7.0,
-                }
-            )
+            windows.append({
+                "offset": chunk_start + i,
+                "entropy": entropy,
+                "high_entropy": entropy > 7.0,
+            })
 
         return {
             "task_type": "entropy_analysis",
@@ -910,16 +906,14 @@ class DistributedAnalysisManager:
                 if section_name and name != section_name:
                     continue
 
-                sections_info.append(
-                    {
-                        "name": name,
-                        "virtual_address": section.VirtualAddress,
-                        "virtual_size": section.Misc_VirtualSize,
-                        "raw_size": section.SizeOfRawData,
-                        "characteristics": section.Characteristics,
-                        "entropy": section.get_entropy(),
-                    }
-                )
+                sections_info.append({
+                    "name": name,
+                    "virtual_address": section.VirtualAddress,
+                    "virtual_size": section.Misc_VirtualSize,
+                    "raw_size": section.SizeOfRawData,
+                    "characteristics": section.Characteristics,
+                    "entropy": section.get_entropy(),
+                })
 
             return {
                 "task_type": "section_analysis",
@@ -930,6 +924,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "pefile not available"}
         except Exception as e:
+            logger.error("Section analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _task_string_extraction(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -951,24 +946,20 @@ class DistributedAnalysisManager:
                     current_string += bytes([byte])
                 else:
                     if len(current_string) >= min_length:
-                        strings.append(
-                            {
-                                "string": current_string.decode("ascii"),
-                                "offset": chunk_start + offset,
-                                "length": len(current_string),
-                            }
-                        )
+                        strings.append({
+                            "string": current_string.decode("ascii"),
+                            "offset": chunk_start + offset,
+                            "length": len(current_string),
+                        })
                     current_string = b""
                     offset = i + 1
 
             if len(current_string) >= min_length:
-                strings.append(
-                    {
-                        "string": current_string.decode("ascii"),
-                        "offset": chunk_start + offset,
-                        "length": len(current_string),
-                    }
-                )
+                strings.append({
+                    "string": current_string.decode("ascii"),
+                    "offset": chunk_start + offset,
+                    "length": len(current_string),
+                })
 
         return {
             "task_type": "string_extraction",
@@ -991,20 +982,16 @@ class DistributedAnalysisManager:
 
                     for imp in entry.imports:
                         func_name = imp.name.decode() if imp.name and isinstance(imp.name, bytes) else str(imp.name)
-                        functions.append(
-                            {
-                                "name": func_name,
-                                "ordinal": imp.ordinal,
-                                "address": imp.address,
-                            }
-                        )
+                        functions.append({
+                            "name": func_name,
+                            "ordinal": imp.ordinal,
+                            "address": imp.address,
+                        })
 
-                    imports.append(
-                        {
-                            "dll": dll_name,
-                            "functions": functions,
-                        }
-                    )
+                    imports.append({
+                        "dll": dll_name,
+                        "functions": functions,
+                    })
 
             return {
                 "task_type": "import_analysis",
@@ -1016,6 +1003,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "pefile not available"}
         except Exception as e:
+            logger.error("Import analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _task_crypto_detection(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1040,13 +1028,11 @@ class DistributedAnalysisManager:
                 for pattern in patterns:
                     offset = data.find(pattern)
                     if offset != -1:
-                        detections.append(
-                            {
-                                "algorithm": algo,
-                                "offset": chunk_start + offset,
-                                "confidence": "high",
-                            }
-                        )
+                        detections.append({
+                            "algorithm": algo,
+                            "offset": chunk_start + offset,
+                            "confidence": "high",
+                        })
 
         return {
             "task_type": "crypto_detection",
@@ -1086,6 +1072,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "r2pipe not available"}
         except Exception as e:
+            logger.error("Radare2 analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _task_angr_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1108,6 +1095,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "angr not available"}
         except Exception as e:
+            logger.error("Angr analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _task_generic_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:

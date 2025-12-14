@@ -11,6 +11,7 @@ Licensed under GNU GPL v3.0
 import ctypes
 import ctypes.wintypes
 import json
+import logging
 import subprocess
 import time
 from collections.abc import Callable
@@ -30,6 +31,9 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 # Win32 API constants
@@ -137,7 +141,7 @@ class AdobeInjectorProcess:
             return self.hwnd is not None
 
         except Exception as e:
-            print(f"Failed to start Adobe Injector: {e}")
+            logger.error("Failed to start Adobe Injector: %s", e, exc_info=True)
             return False
 
     def _find_adobe_injector_window(self, max_attempts: int = 10) -> int | None:
@@ -197,7 +201,7 @@ class AdobeInjectorProcess:
             return True
 
         except Exception as e:
-            print(f"Failed to embed Adobe Injector window: {e}")
+            logger.error("Failed to embed Adobe Injector window: %s", e, exc_info=True)
             return False
 
     def resize_to_parent(self, width: int, height: int) -> None:
@@ -335,6 +339,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
                 self.status_updated.emit("Failed to start Adobe Injector")
 
         except Exception as e:
+            logger.error("Error launching Adobe Injector: %s", e, exc_info=True)
             self.status_updated.emit(f"Error: {e}")
 
     def terminate_injector(self) -> None:

@@ -1,6 +1,5 @@
 ---
-description:
-    Systematically reevaluate the previous response against the original request
+description: Systematically reevaluate the previous response against the original request
     and standards
 ---
 

@@ -101,69 +101,69 @@ intellicrack/core\vulnerability_research\fuzzing_engine.py:1354: [Low] B404:blac
 
 intellicrack/ml\pattern_evolution_tracker.py:27: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
-intellicrack/ml\pattern_evolution_tracker.py:502: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
-
 intellicrack/ml\pattern_evolution_tracker.py:503: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:506: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:504: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:507: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:510: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:508: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:515: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:511: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:516: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:519: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:517: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:552: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:520: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:556: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:553: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:557: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:560: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:558: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:564: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:561: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:565: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:574: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:566: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:577: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:575: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:580: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:578: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:615: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:581: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:619: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:616: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:620: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:623: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:621: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:627: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:624: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:628: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:644: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:629: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:709: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:645: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ml\pattern_evolution_tracker.py:710: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:724: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:711: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:1408: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:725: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:1417: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:1410: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:1418: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:1419: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:1500: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:1420: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ml\pattern_evolution_tracker.py:1506: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ml\pattern_evolution_tracker.py:1504: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+intellicrack/ml\pattern_evolution_tracker.py:1510: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
 21 findings in intellicrack/core\protection_bypass\hardware_id_spoofer.py
@@ -211,45 +211,41 @@ intellicrack/core\protection_bypass\hardware_id_spoofer.py:1125: [Low] B607:star
 intellicrack/core\protection_bypass\hardware_id_spoofer.py:1125: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
-19 findings in intellicrack/core\offline_activation_emulator.py
+17 findings in intellicrack/core\offline_activation_emulator.py
 
 intellicrack/core\offline_activation_emulator.py:13: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\offline_activation_emulator.py:26: [Low] B405:blacklist: Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+intellicrack/core\offline_activation_emulator.py:44: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'offline_token'
 
-intellicrack/core\offline_activation_emulator.py:49: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'offline_token'
+intellicrack/core\offline_activation_emulator.py:49: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token'
 
-intellicrack/core\offline_activation_emulator.py:54: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token'
+intellicrack/core\offline_activation_emulator.py:254: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\offline_activation_emulator.py:259: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\offline_activation_emulator.py:254: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\offline_activation_emulator.py:259: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\offline_activation_emulator.py:279: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\offline_activation_emulator.py:284: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\offline_activation_emulator.py:279: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\offline_activation_emulator.py:284: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\offline_activation_emulator.py:304: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\offline_activation_emulator.py:309: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\offline_activation_emulator.py:304: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\offline_activation_emulator.py:309: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\offline_activation_emulator.py:400: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\offline_activation_emulator.py:405: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\offline_activation_emulator.py:400: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\offline_activation_emulator.py:405: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\offline_activation_emulator.py:424: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\offline_activation_emulator.py:429: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\offline_activation_emulator.py:424: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\offline_activation_emulator.py:429: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\offline_activation_emulator.py:443: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/core\offline_activation_emulator.py:443: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 intellicrack/core\offline_activation_emulator.py:448: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
 intellicrack/core\offline_activation_emulator.py:448: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\offline_activation_emulator.py:453: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/core\offline_activation_emulator.py:453: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\offline_activation_emulator.py:2288: [Medium] B314:blacklist: Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
 
 
 17 findings in intellicrack/ui\widgets\ai_assistant_widget.py
@@ -324,39 +320,35 @@ intellicrack/core\serial_generator.py:829: [Low] B311:blacklist: Standard pseudo
 intellicrack/core\serial_generator.py:830: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
-16 findings in intellicrack/plugins\custom_modules\license_server_emulator.py
+14 findings in intellicrack/core\anti_analysis\vm_detector.py
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:34: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\anti_analysis\vm_detector.py:29: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:38: [Low] B405:blacklist: Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
+intellicrack/core\anti_analysis\vm_detector.py:564: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:1178: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\anti_analysis\vm_detector.py:564: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:1312: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\anti_analysis\vm_detector.py:957: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4277: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\anti_analysis\vm_detector.py:968: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4283: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\anti_analysis\vm_detector.py:1048: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4283: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\anti_analysis\vm_detector.py:1071: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4315: [High] B413:blacklist: The pyCrypto library and its module ARC4 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+intellicrack/core\anti_analysis\vm_detector.py:1071: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4317: [High] B304:blacklist: Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.
+intellicrack/core\anti_analysis\vm_detector.py:1257: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4320: [High] B304:blacklist: Use of insecure cipher Crypto.Cipher.ARC4.new. Replace with a known secure cipher such as AES.
+intellicrack/core\anti_analysis\vm_detector.py:1257: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4724: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\anti_analysis\vm_detector.py:1310: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4726: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\anti_analysis\vm_detector.py:1321: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:4726: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\anti_analysis\vm_detector.py:1746: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/plugins\custom_modules\license_server_emulator.py:5021: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-intellicrack/plugins\custom_modules\license_server_emulator.py:6236: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/plugins\custom_modules\license_server_emulator.py:6236: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\anti_analysis\vm_detector.py:1751: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 14 findings in intellicrack/core\exploitation\keygen_generator.py
@@ -452,54 +444,27 @@ intellicrack/utils\dependency_fallbacks.py:348: [Low] B311:blacklist: Standard p
 
 intellicrack/ai\script_generation_agent.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:530: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:553: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:1603: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:1628: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:1624: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/ai\script_generation_agent.py:1649: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/ai\script_generation_agent.py:1624: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/ai\script_generation_agent.py:1649: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/ai\script_generation_agent.py:1688: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:1752: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:1708: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/ai\script_generation_agent.py:1772: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/ai\script_generation_agent.py:1708: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/ai\script_generation_agent.py:1772: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/ai\script_generation_agent.py:1987: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:2054: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:2037: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:2104: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:2161: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\script_generation_agent.py:2228: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\script_generation_agent.py:2828: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-
-12 findings in intellicrack/core\anti_analysis\vm_detector.py
-
-intellicrack/core\anti_analysis\vm_detector.py:27: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-intellicrack/core\anti_analysis\vm_detector.py:554: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/core\anti_analysis\vm_detector.py:554: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1023: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1045: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/core\anti_analysis\vm_detector.py:1045: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1220: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/core\anti_analysis\vm_detector.py:1220: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1270: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1281: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/core\anti_analysis\vm_detector.py:1688: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/core\anti_analysis\vm_detector.py:1693: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/ai\script_generation_agent.py:2906: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 11 findings in intellicrack/ai\llm_backends.py
@@ -531,92 +496,117 @@ intellicrack/ai\llm_backends.py:1884: [Medium] B615:huggingface_unsafe_download:
 
 intellicrack/core\patching\windows_activator.py:24: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\patching\windows_activator.py:236: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\patching\windows_activator.py:235: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\patching\windows_activator.py:236: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:235: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:355: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\patching\windows_activator.py:354: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\patching\windows_activator.py:355: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:354: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:385: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\patching\windows_activator.py:384: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\patching\windows_activator.py:385: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:384: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:661: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:659: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:848: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:846: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:974: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\patching\windows_activator.py:972: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\patching\windows_activator.py:1127: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-
-10 findings in intellicrack/core\analysis\fingerprint_engine.py
-
-intellicrack/core\analysis\fingerprint_engine.py:337: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-intellicrack/core\analysis\fingerprint_engine.py:338: [High] B324:hashlib: Use of weak SHA1 hash for security. Consider usedforsecurity=False
-
-intellicrack/core\analysis\fingerprint_engine.py:403: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:488: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:659: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:683: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:691: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:786: [Low] B110:try_except_pass: Try, Except, Pass detected.
-
-intellicrack/core\analysis\fingerprint_engine.py:818: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-intellicrack/core\analysis\fingerprint_engine.py:825: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/core\patching\windows_activator.py:1125: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
-10 findings in intellicrack/core\subscription_validation_bypass.py
+11 findings in intellicrack/plugins\custom_modules\license_server_emulator.py
 
-intellicrack/core\subscription_validation_bypass.py:38: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token_based'
+intellicrack/plugins\custom_modules\license_server_emulator.py:34: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\subscription_validation_bypass.py:218: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:1215: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\subscription_validation_bypass.py:917: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:1349: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\subscription_validation_bypass.py:1066: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:4314: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\subscription_validation_bypass.py:1068: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:4320: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\subscription_validation_bypass.py:1193: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:4320: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\subscription_validation_bypass.py:1195: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:4760: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\subscription_validation_bypass.py:1205: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:4762: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\subscription_validation_bypass.py:1209: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'OAuth 2.0 / JWT'
+intellicrack/plugins\custom_modules\license_server_emulator.py:4762: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\subscription_validation_bypass.py:1277: [Low] B112:try_except_continue: Try, Except, Continue detected.
+intellicrack/plugins\custom_modules\license_server_emulator.py:6272: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/plugins\custom_modules\license_server_emulator.py:6272: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+
+10 findings in intellicrack/core\protection_bypass\tpm_bypass.py
+
+intellicrack/core\protection_bypass\tpm_bypass.py:29: [High] B413:blacklist: The pyCrypto library and its module AES are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:30: [High] B413:blacklist: The pyCrypto library and its module SHA256 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:31: [High] B413:blacklist: The pyCrypto library and its module PBKDF2 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:32: [High] B413:blacklist: The pyCrypto library and its module RSA are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:33: [High] B413:blacklist: The pyCrypto library and its module pkcs1_15 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:34: [High] B413:blacklist: The pyCrypto library and its module unpad are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:724: [High] B324:hashlib: Use of weak SHA1 hash for security. Consider usedforsecurity=False
+
+intellicrack/core\protection_bypass\tpm_bypass.py:935: [High] B324:hashlib: Use of weak SHA1 hash for security. Consider usedforsecurity=False
+
+intellicrack/core\protection_bypass\tpm_bypass.py:2156: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\protection_bypass\tpm_bypass.py:2212: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+
+10 findings in intellicrack/plugins\custom_modules\ui_enhancement_module.py
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:1002: [Low] B606:start_process_with_no_shell: Starting a process without a shell.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2981: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2990: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2990: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2992: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2992: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2994: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:2994: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+intellicrack/plugins\custom_modules\ui_enhancement_module.py:3591: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
 
 9 findings in intellicrack/ai\qemu_manager.py
 
 intellicrack/ai\qemu_manager.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\qemu_manager.py:788: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (remote_path).
+intellicrack/ai\qemu_manager.py:63: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory.
 
-intellicrack/ai\qemu_manager.py:2920: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\qemu_manager.py:791: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (remote_path).
 
-intellicrack/ai\qemu_manager.py:3221: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\qemu_manager.py:2923: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\qemu_manager.py:3263: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\qemu_manager.py:3224: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\qemu_manager.py:3275: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ai\qemu_manager.py:3266: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\qemu_manager.py:3466: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (vm_binary_path).
+intellicrack/ai\qemu_manager.py:3278: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ai\qemu_manager.py:3550: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/ai\qemu_manager.py:3469: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (vm_binary_path).
 
-intellicrack/ai\qemu_manager.py:4069: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory.
+intellicrack/ai\qemu_manager.py:3553: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 9 findings in intellicrack/core\anti_analysis\sandbox_detector.py
@@ -661,25 +651,25 @@ intellicrack/core\license_snapshot.py:706: [Low] B607:start_process_with_partial
 intellicrack/core\license_snapshot.py:706: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
-9 findings in intellicrack/plugins\custom_modules\ui_enhancement_module.py
+9 findings in intellicrack/core\tool_discovery.py
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\tool_discovery.py:28: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:940: [Low] B606:start_process_with_no_shell: Starting a process without a shell.
+intellicrack/core\tool_discovery.py:98: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2911: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\tool_discovery.py:151: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2920: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\tool_discovery.py:208: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2920: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\tool_discovery.py:258: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2922: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\tool_discovery.py:309: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2922: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\tool_discovery.py:364: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2924: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\tool_discovery.py:419: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\custom_modules\ui_enhancement_module.py:2924: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\tool_discovery.py:475: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 9 findings in intellicrack/protection\denuvo_ticket_analyzer.py
@@ -722,40 +712,38 @@ intellicrack/core\analysis\behavioral_analysis.py:1514: [Low] B603:subprocess_wi
 intellicrack/core\analysis\behavioral_analysis.py:1562: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
-8 findings in intellicrack/core\protection_bypass\tpm_bypass.py
-
-intellicrack/core\protection_bypass\tpm_bypass.py:21: [High] B413:blacklist: The pyCrypto library and its module AES are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:22: [High] B413:blacklist: The pyCrypto library and its module SHA256 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:23: [High] B413:blacklist: The pyCrypto library and its module PBKDF2 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:24: [High] B413:blacklist: The pyCrypto library and its module RSA are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:25: [High] B413:blacklist: The pyCrypto library and its module pkcs1_15 are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:26: [High] B413:blacklist: The pyCrypto library and its module unpad are no longer actively maintained and have been deprecated. Consider using pyca/cryptography library.
-
-intellicrack/core\protection_bypass\tpm_bypass.py:700: [High] B324:hashlib: Use of weak SHA1 hash for security. Consider usedforsecurity=False
-
-intellicrack/core\protection_bypass\tpm_bypass.py:911: [High] B324:hashlib: Use of weak SHA1 hash for security. Consider usedforsecurity=False
-
-
 7 findings in intellicrack/ai\headless_training_interface.py
 
-intellicrack/ai\headless_training_interface.py:663: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ai\headless_training_interface.py:664: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ai\headless_training_interface.py:713: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ai\headless_training_interface.py:714: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/ai\headless_training_interface.py:720: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
-
-intellicrack/ai\headless_training_interface.py:724: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/ai\headless_training_interface.py:721: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ai\headless_training_interface.py:725: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ai\headless_training_interface.py:726: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/ai\headless_training_interface.py:727: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+intellicrack/ai\headless_training_interface.py:728: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+
+7 findings in intellicrack/core\analysis\fingerprint_engine.py
+
+intellicrack/core\analysis\fingerprint_engine.py:403: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:488: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:659: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:683: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:691: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:786: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\analysis\fingerprint_engine.py:825: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
 
 7 findings in intellicrack/core\process_manipulation.py
@@ -777,53 +765,36 @@ intellicrack/core\process_manipulation.py:3257: [Low] B311:blacklist: Standard p
 
 7 findings in intellicrack/handlers\numpy_handler.py
 
-intellicrack/handlers\numpy_handler.py:1436: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:537: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1442: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:543: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1484: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:585: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1493: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:597: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1524: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:629: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1536: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/handlers\numpy_handler.py:643: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/handlers\numpy_handler.py:1540: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
-
-
-7 findings in intellicrack/ui\traffic_analyzer.py
-
-intellicrack/ui\traffic_analyzer.py:190: [Low] B112:try_except_continue: Try, Except, Continue detected.
-
-intellicrack/ui\traffic_analyzer.py:204: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-intellicrack/ui\traffic_analyzer.py:206: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/ui\traffic_analyzer.py:211: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
-
-intellicrack/ui\traffic_analyzer.py:243: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-intellicrack/ui\traffic_analyzer.py:245: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
-
-intellicrack/ui\traffic_analyzer.py:250: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/handlers\numpy_handler.py:647: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
 7 findings in intellicrack/utils\exploitation\exploitation.py
 
 intellicrack/utils\exploitation\exploitation.py:564: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/utils\exploitation\exploitation.py:2865: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/utils\exploitation\exploitation.py:2872: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/utils\exploitation\exploitation.py:2943: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/utils\exploitation\exploitation.py:2951: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/utils\exploitation\exploitation.py:3033: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/utils\exploitation\exploitation.py:3042: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/utils\exploitation\exploitation.py:3087: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/utils\exploitation\exploitation.py:3097: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/utils\exploitation\exploitation.py:4171: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/utils\exploitation\exploitation.py:4192: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/utils\exploitation\exploitation.py:4184: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/utils\exploitation\exploitation.py:4205: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 6 findings in intellicrack/ai\model_manager_module.py
@@ -832,13 +803,13 @@ intellicrack/ai\model_manager_module.py:141: [Medium] B614:pytorch_load: Use of 
 
 intellicrack/ai\model_manager_module.py:988: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
 
-intellicrack/ai\model_manager_module.py:2187: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
+intellicrack/ai\model_manager_module.py:2189: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
-intellicrack/ai\model_manager_module.py:2886: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
+intellicrack/ai\model_manager_module.py:2889: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
-intellicrack/ai\model_manager_module.py:2894: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
+intellicrack/ai\model_manager_module.py:2897: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
-intellicrack/ai\model_manager_module.py:2905: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
+intellicrack/ai\model_manager_module.py:2908: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
 
 6 findings in intellicrack/core\analysis\cross_tool_orchestrator.py
@@ -890,15 +861,30 @@ intellicrack/core\protection_bypass\dongle_emulator.py:420: [High] B304:blacklis
 
 intellicrack/plugins\custom_modules\cloud_license_interceptor.py:30: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
-intellicrack/plugins\custom_modules\cloud_license_interceptor.py:87: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'bearer_token'
+intellicrack/plugins\custom_modules\cloud_license_interceptor.py:88: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'bearer_token'
 
-intellicrack/plugins\custom_modules\cloud_license_interceptor.py:96: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token_refresh'
+intellicrack/plugins\custom_modules\cloud_license_interceptor.py:97: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token_refresh'
 
-intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1566: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1567: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1615: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1616: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1751: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/plugins\custom_modules\cloud_license_interceptor.py:1752: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+
+6 findings in intellicrack/ui\traffic_analyzer.py
+
+intellicrack/ui\traffic_analyzer.py:205: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+
+intellicrack/ui\traffic_analyzer.py:207: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/ui\traffic_analyzer.py:212: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+intellicrack/ui\traffic_analyzer.py:244: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+
+intellicrack/ui\traffic_analyzer.py:246: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+
+intellicrack/ui\traffic_analyzer.py:251: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 5 findings in intellicrack/ai\enhanced_training_interface.py
@@ -955,28 +941,28 @@ intellicrack/core\protection_bypass\tpm_secure_enclave_bypass.py:1960: [Low] B60
 
 5 findings in intellicrack/ml\license_protection_neural_network.py
 
-intellicrack/ml\license_protection_neural_network.py:197: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
+intellicrack/ml\license_protection_neural_network.py:204: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
-intellicrack/ml\license_protection_neural_network.py:324: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
+intellicrack/ml\license_protection_neural_network.py:331: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
-intellicrack/ml\license_protection_neural_network.py:457: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
+intellicrack/ml\license_protection_neural_network.py:464: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
-intellicrack/ml\license_protection_neural_network.py:1406: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
+intellicrack/ml\license_protection_neural_network.py:1414: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
-intellicrack/ml\license_protection_neural_network.py:1470: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
+intellicrack/ml\license_protection_neural_network.py:1476: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
 
 5 findings in intellicrack/plugins\plugin_system.py
 
-intellicrack/plugins\plugin_system.py:1605: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+intellicrack/plugins\plugin_system.py:1601: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
 
-intellicrack/plugins\plugin_system.py:1908: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+intellicrack/plugins\plugin_system.py:1904: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
 
-intellicrack/plugins\plugin_system.py:2132: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/plugins\plugin_system.py:2127: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/plugins\plugin_system.py:2137: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/plugins\plugin_system.py:2132: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/plugins\plugin_system.py:2146: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/plugins\plugin_system.py:2141: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 5 findings in intellicrack/ui\tabs\adobe_injector_tab.py
@@ -994,15 +980,15 @@ intellicrack/ui\tabs\adobe_injector_tab.py:413: [Low] B603:subprocess_without_sh
 
 5 findings in intellicrack/ui\tabs\analysis_tab.py
 
-intellicrack/ui\tabs\analysis_tab.py:1438: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ui\tabs\analysis_tab.py:1486: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ui\tabs\analysis_tab.py:3896: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/ui\tabs\analysis_tab.py:3989: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
-intellicrack/ui\tabs\analysis_tab.py:4017: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/ui\tabs\analysis_tab.py:4110: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
-intellicrack/ui\tabs\analysis_tab.py:4035: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/ui\tabs\analysis_tab.py:4128: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
-intellicrack/ui\tabs\analysis_tab.py:4051: [Low] B110:try_except_pass: Try, Except, Pass detected.
+intellicrack/ui\tabs\analysis_tab.py:4144: [Low] B110:try_except_pass: Try, Except, Pass detected.
 
 
 4 findings in intellicrack/ai\model_sharding.py
@@ -1044,9 +1030,9 @@ intellicrack/core\certificate\apk_analyzer.py:88: [Low] B404:blacklist: Consider
 
 intellicrack/core\certificate\apk_analyzer.py:91: [Low] B405:blacklist: Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.
 
-intellicrack/core\certificate\apk_analyzer.py:243: [Medium] B314:blacklist: Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+intellicrack/core\certificate\apk_analyzer.py:244: [Medium] B314:blacklist: Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
 
-intellicrack/core\certificate\apk_analyzer.py:446: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\certificate\apk_analyzer.py:447: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 4 findings in intellicrack/core\exploitation\automated_unpacker.py
@@ -1069,6 +1055,17 @@ intellicrack/core\network\protocols\codemeter_parser.py:193: [Low] B311:blacklis
 intellicrack/core\network\protocols\codemeter_parser.py:194: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 intellicrack/core\network\protocols\codemeter_parser.py:195: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+
+4 findings in intellicrack/core\subscription_validation_bypass.py
+
+intellicrack/core\subscription_validation_bypass.py:38: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token_based'
+
+intellicrack/core\subscription_validation_bypass.py:1193: [Low] B110:try_except_pass: Try, Except, Pass detected.
+
+intellicrack/core\subscription_validation_bypass.py:1195: [Low] B112:try_except_continue: Try, Except, Continue detected.
+
+intellicrack/core\subscription_validation_bypass.py:1205: [Low] B112:try_except_continue: Try, Except, Continue detected.
 
 
 4 findings in intellicrack/utils\json_utils.py
@@ -1129,20 +1126,20 @@ intellicrack/core\certificate\hook_obfuscation.py:226: [Low] B311:blacklist: Sta
 
 3 findings in intellicrack/core\hardware_spoofer.py
 
-intellicrack/core\hardware_spoofer.py:8: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\hardware_spoofer.py:10: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\hardware_spoofer.py:321: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\hardware_spoofer.py:363: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\hardware_spoofer.py:321: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\hardware_spoofer.py:363: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 3 findings in intellicrack/core\monitoring\frida_server_manager.py
 
-intellicrack/core\monitoring\frida_server_manager.py:14: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\monitoring\frida_server_manager.py:15: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\monitoring\frida_server_manager.py:241: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\monitoring\frida_server_manager.py:244: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
-intellicrack/core\monitoring\frida_server_manager.py:249: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\monitoring\frida_server_manager.py:252: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 3 findings in intellicrack/core\processing\qemu_emulator.py
@@ -1158,9 +1155,9 @@ intellicrack/core\processing\qemu_emulator.py:2291: [Medium] B108:hardcoded_tmp_
 
 intellicrack/core\protection_bypass\securom_bypass.py:10: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\protection_bypass\securom_bypass.py:974: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/core\protection_bypass\securom_bypass.py:975: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/core\protection_bypass\securom_bypass.py:974: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\protection_bypass\securom_bypass.py:975: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 3 findings in intellicrack/core\vulnerability_research\vulnerability_analyzer.py
@@ -1174,11 +1171,11 @@ intellicrack/core\vulnerability_research\vulnerability_analyzer.py:1739: [Low] B
 
 3 findings in intellicrack/ui\widgets\cpu_status_widget.py
 
-intellicrack/ui\widgets\cpu_status_widget.py:167: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ui\widgets\cpu_status_widget.py:172: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/ui\widgets\cpu_status_widget.py:169: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
+intellicrack/ui\widgets\cpu_status_widget.py:174: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path
 
-intellicrack/ui\widgets\cpu_status_widget.py:169: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/ui\widgets\cpu_status_widget.py:174: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 3 findings in intellicrack/ui\widgets\gpu_status_widget.py
@@ -1208,13 +1205,6 @@ intellicrack/utils\system\file_resolution.py:338: [Low] B404:blacklist: Consider
 intellicrack/utils\system\file_resolution.py:461: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
-2 findings in intellicrack/ai\ai_script_generator.py
-
-intellicrack/ai\ai_script_generator.py:1686: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-intellicrack/ai\ai_script_generator.py:1756: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-
 2 findings in intellicrack/ai\coordination_layer.py
 
 intellicrack/ai\coordination_layer.py:26: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
@@ -1238,9 +1228,9 @@ intellicrack/ai\model_download_manager.py:465: [Medium] B615:huggingface_unsafe_
 
 2 findings in intellicrack/core\adobe_injector_integration.py
 
-intellicrack/core\adobe_injector_integration.py:14: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\adobe_injector_integration.py:15: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\adobe_injector_integration.py:128: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\adobe_injector_integration.py:131: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 2 findings in intellicrack/core\ai_model_manager.py
@@ -1252,9 +1242,9 @@ intellicrack/core\ai_model_manager.py:308: [Medium] B615:huggingface_unsafe_down
 
 2 findings in intellicrack/core\analysis\cfg_explorer.py
 
-intellicrack/core\analysis\cfg_explorer.py:849: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\analysis\cfg_explorer.py:840: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\analysis\cfg_explorer.py:2564: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+intellicrack/core\analysis\cfg_explorer.py:2553: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
 
 
 2 findings in intellicrack/core\analysis\ghidra_output_parser.py
@@ -1287,9 +1277,9 @@ intellicrack/core\certificate\frida_stealth.py:605: [Low] B311:blacklist: Standa
 
 2 findings in intellicrack/core\frida_manager.py
 
-intellicrack/core\frida_manager.py:2557: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/core\frida_manager.py:2556: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
-intellicrack/core\frida_manager.py:2594: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/core\frida_manager.py:2593: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
 2 findings in intellicrack/core\ml\incremental_learner.py
@@ -1329,9 +1319,9 @@ intellicrack/core\protection_bypass\integrity_check_defeat.py:180: [High] B324:h
 
 2 findings in intellicrack/core\protection_bypass\vm_bypass.py
 
-intellicrack/core\protection_bypass\vm_bypass.py:766: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\protection_bypass\vm_bypass.py:761: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
-intellicrack/core\protection_bypass\vm_bypass.py:816: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/core\protection_bypass\vm_bypass.py:811: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 2 findings in intellicrack/core\reporting\pdf_generator.py
@@ -1362,13 +1352,6 @@ intellicrack/handlers\tensorflow_handler.py:950: [Low] B311:blacklist: Standard 
 intellicrack/handlers\tensorflow_handler.py:1350: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
-2 findings in intellicrack/plugins\custom_modules\hardware_dongle_emulator.py
-
-intellicrack/plugins\custom_modules\hardware_dongle_emulator.py:406: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
-
-intellicrack/plugins\custom_modules\hardware_dongle_emulator.py:698: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
-
-
 2 findings in intellicrack/ui\tabs\base_tab.py
 
 intellicrack/ui\tabs\base_tab.py:215: [Low] B110:try_except_pass: Try, Except, Pass detected.
@@ -1390,16 +1373,18 @@ intellicrack/utils\core\internal_helpers.py:25: [Low] B404:blacklist: Consider p
 intellicrack/utils\core\internal_helpers.py:2545: [Medium] B614:pytorch_load: Use of unsafe PyTorch load
 
 
+2 findings in intellicrack/utils\runtime\runner_functions.py
+
+intellicrack/utils\runtime\runner_functions.py:26: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+
+intellicrack/utils\runtime\runner_functions.py:2234: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input.
+
+
 2 findings in intellicrack/utils\system\system_utils.py
 
 intellicrack/utils\system\system_utils.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 intellicrack/utils\system\system_utils.py:213: [High] B602:subprocess_popen_with_shell_equals_true: subprocess call with shell=True identified, security issue.
-
-
-1 findings in intellicrack/ai\learning_engine.py
-
-intellicrack/ai\learning_engine.py:710: [High] B324:hashlib: Use of weak MD5 hash for security. Consider usedforsecurity=False
 
 
 1 findings in intellicrack/ai\llm_fallback_chains.py
@@ -1444,7 +1429,7 @@ intellicrack/cli\ai_wrapper.py:27: [Low] B404:blacklist: Consider possible secur
 
 1 findings in intellicrack/cli\cli.py
 
-intellicrack/cli\cli.py:2702: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+intellicrack/cli\cli.py:2706: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
 
 
 1 findings in intellicrack/cli\progress_manager.py
@@ -1454,12 +1439,12 @@ intellicrack/cli\progress_manager.py:26: [Low] B404:blacklist: Consider possible
 
 1 findings in intellicrack/cli\terminal_dashboard.py
 
-intellicrack/cli\terminal_dashboard.py:565: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/cli\terminal_dashboard.py:566: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 1 findings in intellicrack/cli\tutorial_system.py
 
-intellicrack/cli\tutorial_system.py:666: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/cli\tutorial_system.py:670: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 1 findings in intellicrack/core\analysis\firmware_analyzer.py
@@ -1479,7 +1464,7 @@ intellicrack/core\analysis\memory_forensics_engine.py:15: [Low] B404:blacklist: 
 
 1 findings in intellicrack/core\analysis\radare2_bypass_generator.py
 
-intellicrack/core\analysis\radare2_bypass_generator.py:2611: [Medium] B608:hardcoded_sql_expressions: Possible SQL injection vector through string-based query construction.
+intellicrack/core\analysis\radare2_bypass_generator.py:2581: [Medium] B608:hardcoded_sql_expressions: Possible SQL injection vector through string-based query construction.
 
 
 1 findings in intellicrack/core\analysis\radare2_json_standardizer.py
@@ -1494,7 +1479,7 @@ intellicrack/core\analysis\radare2_scripting.py:23: [Low] B404:blacklist: Consid
 
 1 findings in intellicrack/core\analysis\symbolic_executor.py
 
-intellicrack/core\analysis\symbolic_executor.py:677: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/core\analysis\symbolic_executor.py:676: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
 1 findings in intellicrack/core\anti_analysis\base_detector.py
@@ -1547,16 +1532,6 @@ intellicrack/core\security_utils.py:25: [Low] B404:blacklist: Consider possible 
 intellicrack/core\startup_checks.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
-1 findings in intellicrack/core\tool_discovery.py
-
-intellicrack/core\tool_discovery.py:28: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-
-1 findings in intellicrack/core\trial_reset_engine.py
-
-intellicrack/core\trial_reset_engine.py:922: [Medium] B608:hardcoded_sql_expressions: Possible SQL injection vector through string-based query construction.
-
-
 1 findings in intellicrack/core\vulnerability_research\binary_differ.py
 
 intellicrack/core\vulnerability_research\binary_differ.py:24: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
@@ -1594,12 +1569,17 @@ intellicrack/hexview\file_handler.py:298: [Low] B311:blacklist: Standard pseudo-
 
 1 findings in intellicrack/models\model_manager.py
 
-intellicrack/models\model_manager.py:640: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
+intellicrack/models\model_manager.py:639: [Low] B403:blacklist: Consider possible security implications associated with pickle module.
 
 
 1 findings in intellicrack/plugins\custom_modules\anti_anti_debug_suite.py
 
-intellicrack/plugins\custom_modules\anti_anti_debug_suite.py:1592: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+intellicrack/plugins\custom_modules\anti_anti_debug_suite.py:1594: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+
+
+1 findings in intellicrack/plugins\custom_modules\hardware_dongle_emulator.py
+
+intellicrack/plugins\custom_modules\hardware_dongle_emulator.py:700: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes.
 
 
 1 findings in intellicrack/plugins\custom_modules\intellicrack_core_engine.py
@@ -1624,7 +1604,7 @@ intellicrack/protection\intellicrack_protection_advanced.py:26: [Low] B404:black
 
 1 findings in intellicrack/ui\tabs\exploitation_tab.py
 
-intellicrack/ui\tabs\exploitation_tab.py:956: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
+intellicrack/ui\tabs\exploitation_tab.py:960: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 1 findings in intellicrack/ui\widgets\memory_dumper.py
@@ -1680,11 +1660,6 @@ intellicrack/utils\report_generator.py:35: [Low] B405:blacklist: Using xml.etree
 1 findings in intellicrack/utils\runtime\additional_runners.py
 
 intellicrack/utils\runtime\additional_runners.py:27: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
-
-
-1 findings in intellicrack/utils\runtime\runner_functions.py
-
-intellicrack/utils\runtime\runner_functions.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module.
 
 
 1 findings in intellicrack/utils\system\process_common.py

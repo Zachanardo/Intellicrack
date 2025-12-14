@@ -297,7 +297,9 @@ const BlockchainLicenseBypass = {
         try {
             // Find the actual function address
             const funcAddr = this.findNearestFunction(address);
-            if (!funcAddr) { return; }
+            if (!funcAddr) {
+                return;
+            }
 
             Interceptor.attach(funcAddr, {
                 onEnter: function (args) {
@@ -732,7 +734,9 @@ const BlockchainLicenseBypass = {
 
     // Check if call data is license-related
     isLicenseCallData: data => {
-        if (!data) { return false; }
+        if (!data) {
+            return false;
+        }
 
         // Check function signature (first 4 bytes)
         const sig = data.substring(0, 10);
@@ -750,7 +754,9 @@ const BlockchainLicenseBypass = {
 
     // Check if RPC call is license-related
     isLicenseRPCCall: function (rpc) {
-        if (!rpc.params || !rpc.params[0]) { return false; }
+        if (!rpc.params || !rpc.params[0]) {
+            return false;
+        }
 
         const params = rpc.params[0];
 
@@ -865,7 +871,9 @@ const BlockchainLicenseBypass = {
 
     // Check if bytes are function prologue
     isFunctionPrologue: bytes => {
-        if (!bytes || bytes.length < 4) { return false; }
+        if (!bytes || bytes.length < 4) {
+            return false;
+        }
 
         // x86/x64 prologues
         const prologues = [
@@ -927,8 +935,8 @@ const BlockchainLicenseBypass = {
 
     // Print statistics
     printStats: function () {
-      let recentBypasses = [];
-      if (this.state.bypassed_calls.length > 0) {
+        let recentBypasses = [];
+        if (this.state.bypassed_calls.length > 0) {
             recentBypasses = this.state.bypassed_calls.slice(-5).map(call => ({
                 method: call.method,
                 timestamp: call.timestamp,
@@ -983,21 +991,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook CRYSTALS-Kyber key exchange verification
-          const kyberPatterns = [
-            'kyber_kem_keypair',
-            'kyber_kem_enc',
-            'kyber_kem_dec',
-            'pqcrystals_kyber',
-            'ML_KEM_keypair',
-            'ML_KEM_encaps',
-            'ML_KEM_decaps',
-          ];
+            const kyberPatterns = [
+                'kyber_kem_keypair',
+                'kyber_kem_enc',
+                'kyber_kem_dec',
+                'pqcrystals_kyber',
+                'ML_KEM_keypair',
+                'ML_KEM_encaps',
+                'ML_KEM_decaps',
+            ];
 
-          kyberPatterns.forEach(pattern => {
+            kyberPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1016,20 +1024,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook CRYSTALS-Dilithium signature verification
-          const dilithiumPatterns = [
-            'dilithium_sign',
-            'dilithium_verify',
-            'pqcrystals_dilithium',
-            'ML_DSA_sign',
-            'ML_DSA_verify',
-            'dilithium_keypair',
-          ];
+            const dilithiumPatterns = [
+                'dilithium_sign',
+                'dilithium_verify',
+                'pqcrystals_dilithium',
+                'ML_DSA_sign',
+                'ML_DSA_verify',
+                'dilithium_keypair',
+            ];
 
-          dilithiumPatterns.forEach(pattern => {
+            dilithiumPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1047,13 +1055,13 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Falcon signature scheme
-          const falconPatterns = ['falcon_sign', 'falcon_verify', 'falcon_keygen', 'FALCON_sign'];
+            const falconPatterns = ['falcon_sign', 'falcon_verify', 'falcon_keygen', 'FALCON_sign'];
 
-          falconPatterns.forEach(pattern => {
+            falconPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1071,13 +1079,13 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook NTRU lattice-based cryptography
-          const ntruPatterns = ['ntru_encrypt', 'ntru_decrypt', 'ntru_keygen', 'NTRU_encrypt'];
+            const ntruPatterns = ['ntru_encrypt', 'ntru_decrypt', 'ntru_keygen', 'NTRU_encrypt'];
 
-          ntruPatterns.forEach(pattern => {
+            ntruPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1120,21 +1128,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Arbitrum transaction validation
-          const arbitrumPatterns = [
-            'ArbSys',
-            'ArbRetryableTx',
-            'ArbGasInfo',
-            'NodeInterface',
-            'arbitrum_validate',
-            'arb_chainId',
-            'arbBlockHash',
-          ];
+            const arbitrumPatterns = [
+                'ArbSys',
+                'ArbRetryableTx',
+                'ArbGasInfo',
+                'NodeInterface',
+                'arbitrum_validate',
+                'arb_chainId',
+                'arbBlockHash',
+            ];
 
-          arbitrumPatterns.forEach(pattern => {
+            arbitrumPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1152,20 +1160,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Optimism fraud proof validation
-          const optimismPatterns = [
-            'OVM_StateManager',
-            'OVM_ExecutionManager',
-            'OVM_FraudVerifier',
-            'optimism_validate',
-            'op_chainId',
-            'bedrock_validate',
-          ];
+            const optimismPatterns = [
+                'OVM_StateManager',
+                'OVM_ExecutionManager',
+                'OVM_FraudVerifier',
+                'optimism_validate',
+                'op_chainId',
+                'bedrock_validate',
+            ];
 
-          optimismPatterns.forEach(pattern => {
+            optimismPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1183,20 +1191,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Polygon zkEVM validation
-          const polygonZkevmPatterns = [
-            'polygonZkEVM',
-            'zkEVM_verify',
-            'polygon_zk_validate',
-            'hermez_validate',
-            'zkevm_bridge',
-            'polygon_bridge_validate',
-          ];
+            const polygonZkevmPatterns = [
+                'polygonZkEVM',
+                'zkEVM_verify',
+                'polygon_zk_validate',
+                'hermez_validate',
+                'zkevm_bridge',
+                'polygon_bridge_validate',
+            ];
 
-          polygonZkevmPatterns.forEach(pattern => {
+            polygonZkevmPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1214,20 +1222,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook StarkNet Cairo program validation
-          const starknetPatterns = [
-            'cairo_run',
-            'stark_verify',
-            'starknet_validate',
-            'cairo_proof_verify',
-            'StarknetCore',
-            'starknet_commitment',
-          ];
+            const starknetPatterns = [
+                'cairo_run',
+                'stark_verify',
+                'starknet_validate',
+                'cairo_proof_verify',
+                'StarknetCore',
+                'starknet_commitment',
+            ];
 
-          starknetPatterns.forEach(pattern => {
+            starknetPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1270,21 +1278,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook zkSNARKs verification
-          const zkSnarksPatterns = [
-            'groth16_verify',
-            'plonk_verify',
-            'snark_verify',
-            'circom_verify',
-            'zokrates_verify',
-            'arkworks_verify',
-            'bellman_verify',
-          ];
+            const zkSnarksPatterns = [
+                'groth16_verify',
+                'plonk_verify',
+                'snark_verify',
+                'circom_verify',
+                'zokrates_verify',
+                'arkworks_verify',
+                'bellman_verify',
+            ];
 
-          zkSnarksPatterns.forEach(pattern => {
+            zkSnarksPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1302,20 +1310,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook zkSTARKs verification
-          const zkStarksPatterns = [
-            'stark_verify',
-            'fri_verify',
-            'winterfell_verify',
-            'starkware_verify',
-            'cairo_verify_proof',
-            'stone_verify',
-          ];
+            const zkStarksPatterns = [
+                'stark_verify',
+                'fri_verify',
+                'winterfell_verify',
+                'starkware_verify',
+                'cairo_verify_proof',
+                'stone_verify',
+            ];
 
-          zkStarksPatterns.forEach(pattern => {
+            zkStarksPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1333,19 +1341,19 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Bulletproofs verification
-          const bulletproofsPatterns = [
-            'bulletproof_verify',
-            'range_proof_verify',
-            'dalek_bulletproofs',
-            'monero_bulletproof',
-            'confidential_transaction_verify',
-          ];
+            const bulletproofsPatterns = [
+                'bulletproof_verify',
+                'range_proof_verify',
+                'dalek_bulletproofs',
+                'monero_bulletproof',
+                'confidential_transaction_verify',
+            ];
 
-          bulletproofsPatterns.forEach(pattern => {
+            bulletproofsPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1363,19 +1371,19 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook PLONK universal setup verification
-          const plonkPatterns = [
-            'plonk_setup_verify',
-            'universal_setup_verify',
-            'aztec_plonk',
-            'turbo_plonk_verify',
-            'plookup_verify',
-          ];
+            const plonkPatterns = [
+                'plonk_setup_verify',
+                'universal_setup_verify',
+                'aztec_plonk',
+                'turbo_plonk_verify',
+                'plookup_verify',
+            ];
 
-          plonkPatterns.forEach(pattern => {
+            plonkPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1418,21 +1426,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Chainlink CCIP validation
-          const chainlinkCcipPatterns = [
-            'CCIPReceiver',
-            'CCIPRouter',
-            'TokenPool',
-            'ARM',
-            'chainlink_ccip_validate',
-            'ccip_message_verify',
-            'arm_verify',
-          ];
+            const chainlinkCcipPatterns = [
+                'CCIPReceiver',
+                'CCIPRouter',
+                'TokenPool',
+                'ARM',
+                'chainlink_ccip_validate',
+                'ccip_message_verify',
+                'arm_verify',
+            ];
 
-          chainlinkCcipPatterns.forEach(pattern => {
+            chainlinkCcipPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1450,21 +1458,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook LayerZero endpoint validation
-          const layerZeroPatterns = [
-            'LayerZeroEndpoint',
-            'UltraLightNodeV2',
-            'RelayerV2',
-            'Oracle',
-            'lz_validate',
-            'layerzero_proof_verify',
-            'remote_call_verify',
-          ];
+            const layerZeroPatterns = [
+                'LayerZeroEndpoint',
+                'UltraLightNodeV2',
+                'RelayerV2',
+                'Oracle',
+                'lz_validate',
+                'layerzero_proof_verify',
+                'remote_call_verify',
+            ];
 
-          layerZeroPatterns.forEach(pattern => {
+            layerZeroPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1482,21 +1490,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Wormhole guardian validation
-          const wormholePatterns = [
-            'WormholeCore',
-            'GuardianSet',
-            'WormholeRelayer',
-            'TokenBridge',
-            'wormhole_validate',
-            'guardian_verify',
-            'vaa_verify',
-          ];
+            const wormholePatterns = [
+                'WormholeCore',
+                'GuardianSet',
+                'WormholeRelayer',
+                'TokenBridge',
+                'wormhole_validate',
+                'guardian_verify',
+                'vaa_verify',
+            ];
 
-          wormholePatterns.forEach(pattern => {
+            wormholePatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1514,21 +1522,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Multichain (formerly Anyswap) validation
-          const multichainPatterns = [
-            'MultichainV7Router',
-            'AnyswapV6Router',
-            'SwapoutToken',
-            'SwapinToken',
-            'multichain_validate',
-            'anyswap_verify',
-            'cross_chain_verify',
-          ];
+            const multichainPatterns = [
+                'MultichainV7Router',
+                'AnyswapV6Router',
+                'SwapoutToken',
+                'SwapinToken',
+                'multichain_validate',
+                'anyswap_verify',
+                'cross_chain_verify',
+            ];
 
-          multichainPatterns.forEach(pattern => {
+            multichainPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1571,21 +1579,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Diamond Pattern (ERC-2535) validation
-          const diamondPatterns = [
-            'DiamondCutFacet',
-            'DiamondLoupeFacet',
-            'OwnershipFacet',
-            'IDiamondCut',
-            'diamond_cut_validate',
-            'facet_validation',
-            'selector_validation',
-          ];
+            const diamondPatterns = [
+                'DiamondCutFacet',
+                'DiamondLoupeFacet',
+                'OwnershipFacet',
+                'IDiamondCut',
+                'diamond_cut_validate',
+                'facet_validation',
+                'selector_validation',
+            ];
 
-          diamondPatterns.forEach(pattern => {
+            diamondPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1603,21 +1611,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Proxy Upgrade Pattern (ERC-1967) validation
-          const proxyPatterns = [
-            'ERC1967Proxy',
-            'TransparentUpgradeableProxy',
-            'UUPSUpgradeable',
-            'BeaconProxy',
-            'proxy_upgrade_validate',
-            'implementation_verify',
-            'admin_verify',
-          ];
+            const proxyPatterns = [
+                'ERC1967Proxy',
+                'TransparentUpgradeableProxy',
+                'UUPSUpgradeable',
+                'BeaconProxy',
+                'proxy_upgrade_validate',
+                'implementation_verify',
+                'admin_verify',
+            ];
 
-          proxyPatterns.forEach(pattern => {
+            proxyPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1635,20 +1643,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Minimal Proxy Pattern (ERC-1167) validation
-          const minimalProxyPatterns = [
-            'Clones',
-            'ClonesUpgradeable',
-            'minimal_proxy_validate',
-            'clone_factory_verify',
-            'create2_clone',
-            'deterministic_clone',
-          ];
+            const minimalProxyPatterns = [
+                'Clones',
+                'ClonesUpgradeable',
+                'minimal_proxy_validate',
+                'clone_factory_verify',
+                'create2_clone',
+                'deterministic_clone',
+            ];
 
-          minimalProxyPatterns.forEach(pattern => {
+            minimalProxyPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1666,21 +1674,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Access Control patterns (OpenZeppelin)
-          const accessControlPatterns = [
-            'AccessControl',
-            'AccessControlEnumerable',
-            'Ownable2Step',
-            'MultisigWallet',
-            'role_validation',
-            'permission_check',
-            'multisig_verify',
-          ];
+            const accessControlPatterns = [
+                'AccessControl',
+                'AccessControlEnumerable',
+                'Ownable2Step',
+                'MultisigWallet',
+                'role_validation',
+                'permission_check',
+                'multisig_verify',
+            ];
 
-          accessControlPatterns.forEach(pattern => {
+            accessControlPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1723,21 +1731,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook W3C DID standards validation
-          const didPatterns = [
-            'DID_resolve',
-            'DID_verify',
-            'verifiable_credential',
-            'did_jwt_verify',
-            'did_document_validate',
-            'w3c_did_verify',
-            'credential_verify',
-          ];
+            const didPatterns = [
+                'DID_resolve',
+                'DID_verify',
+                'verifiable_credential',
+                'did_jwt_verify',
+                'did_document_validate',
+                'w3c_did_verify',
+                'credential_verify',
+            ];
 
-          didPatterns.forEach(pattern => {
+            didPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1755,21 +1763,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook ENS (Ethereum Name Service) domain validation
-          const ensPatterns = [
-            'ENSRegistry',
-            'BaseRegistrar',
-            'PublicResolver',
-            'ReverseRegistrar',
-            'ens_resolve',
-            'domain_validation',
-            'reverse_lookup',
-          ];
+            const ensPatterns = [
+                'ENSRegistry',
+                'BaseRegistrar',
+                'PublicResolver',
+                'ReverseRegistrar',
+                'ens_resolve',
+                'domain_validation',
+                'reverse_lookup',
+            ];
 
-          ensPatterns.forEach(pattern => {
+            ensPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1787,20 +1795,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Verifiable Credentials (VC) validation
-          const vcPatterns = [
-            'verifiable_credential_verify',
-            'vc_jwt_verify',
-            'credential_schema_validate',
-            'presentation_verify',
-            'holder_verify',
-            'issuer_verify',
-          ];
+            const vcPatterns = [
+                'verifiable_credential_verify',
+                'vc_jwt_verify',
+                'credential_schema_validate',
+                'presentation_verify',
+                'holder_verify',
+                'issuer_verify',
+            ];
 
-          vcPatterns.forEach(pattern => {
+            vcPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1818,20 +1826,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Self-Sovereign Identity (SSI) validation
-          const ssiPatterns = [
-            'ssi_verify',
-            'self_sovereign_identity',
-            'identity_wallet_verify',
-            'sovereignty_proof',
-            'identity_claim_verify',
-            'sovereign_validation',
-          ];
+            const ssiPatterns = [
+                'ssi_verify',
+                'self_sovereign_identity',
+                'identity_wallet_verify',
+                'sovereignty_proof',
+                'identity_claim_verify',
+                'sovereign_validation',
+            ];
 
-          ssiPatterns.forEach(pattern => {
+            ssiPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1874,21 +1882,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Proof of Stake validation
-          const posPatterns = [
-            'pos_validate',
-            'stake_verification',
-            'validator_verify',
-            'casper_verify',
-            'eth2_beacon_verify',
-            'attestation_verify',
-            'finality_verify',
-          ];
+            const posPatterns = [
+                'pos_validate',
+                'stake_verification',
+                'validator_verify',
+                'casper_verify',
+                'eth2_beacon_verify',
+                'attestation_verify',
+                'finality_verify',
+            ];
 
-          posPatterns.forEach(pattern => {
+            posPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1906,21 +1914,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Delegated Proof of Stake validation
-          const dposPatterns = [
-            'dpos_validate',
-            'delegate_verify',
-            'witness_verify',
-            'producer_verify',
-            'voting_verify',
-            'delegation_verify',
-            'governance_verify',
-          ];
+            const dposPatterns = [
+                'dpos_validate',
+                'delegate_verify',
+                'witness_verify',
+                'producer_verify',
+                'voting_verify',
+                'delegation_verify',
+                'governance_verify',
+            ];
 
-          dposPatterns.forEach(pattern => {
+            dposPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1938,21 +1946,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Proof of History validation
-          const pohPatterns = [
-            'poh_verify',
-            'proof_of_history',
-            'vdf_verify',
-            'sequential_hash_verify',
-            'solana_poh_verify',
-            'tower_consensus',
-            'fork_choice_verify',
-          ];
+            const pohPatterns = [
+                'poh_verify',
+                'proof_of_history',
+                'vdf_verify',
+                'sequential_hash_verify',
+                'solana_poh_verify',
+                'tower_consensus',
+                'fork_choice_verify',
+            ];
 
-          pohPatterns.forEach(pattern => {
+            pohPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -1970,21 +1978,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Tendermint consensus validation
-          const tendermintPatterns = [
-            'tendermint_verify',
-            'pbft_verify',
-            'byzantine_consensus',
-            'propose_verify',
-            'prevote_verify',
-            'precommit_verify',
-            'cosmos_consensus',
-          ];
+            const tendermintPatterns = [
+                'tendermint_verify',
+                'pbft_verify',
+                'byzantine_consensus',
+                'propose_verify',
+                'prevote_verify',
+                'precommit_verify',
+                'cosmos_consensus',
+            ];
 
-          tendermintPatterns.forEach(pattern => {
+            tendermintPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2027,21 +2035,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Flashbots protection validation
-          const flashbotsPatterns = [
-            'flashbots_validate',
-            'mev_boost_verify',
-            'builder_verify',
-            'relay_verify',
-            'private_mempool_validate',
-            'bundle_validation',
-            'searcher_verify',
-          ];
+            const flashbotsPatterns = [
+                'flashbots_validate',
+                'mev_boost_verify',
+                'builder_verify',
+                'relay_verify',
+                'private_mempool_validate',
+                'bundle_validation',
+                'searcher_verify',
+            ];
 
-          flashbotsPatterns.forEach(pattern => {
+            flashbotsPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2059,20 +2067,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook MEV-Boost validation
-          const mevBoostPatterns = [
-            'mev_boost_validate',
-            'proposer_builder_separation',
-            'pbs_verify',
-            'block_builder_verify',
-            'auction_verify',
-            'commitment_verify',
-          ];
+            const mevBoostPatterns = [
+                'mev_boost_validate',
+                'proposer_builder_separation',
+                'pbs_verify',
+                'block_builder_verify',
+                'auction_verify',
+                'commitment_verify',
+            ];
 
-          mevBoostPatterns.forEach(pattern => {
+            mevBoostPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2090,20 +2098,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Private Mempool validation
-          const privateMempoolPatterns = [
-            'private_mempool_verify',
-            'dark_pool_validate',
-            'order_flow_verify',
-            'front_running_protection',
-            'sandwich_protection',
-            'arbitrage_protection',
-          ];
+            const privateMempoolPatterns = [
+                'private_mempool_verify',
+                'dark_pool_validate',
+                'order_flow_verify',
+                'front_running_protection',
+                'sandwich_protection',
+                'arbitrage_protection',
+            ];
 
-          privateMempoolPatterns.forEach(pattern => {
+            privateMempoolPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2121,20 +2129,20 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Bundle validation
-          const bundlePatterns = [
-            'bundle_validate',
-            'transaction_bundle_verify',
-            'atomic_bundle_verify',
-            'bundle_integrity_check',
-            'bundle_gas_verify',
-            'bundle_priority_verify',
-          ];
+            const bundlePatterns = [
+                'bundle_validate',
+                'transaction_bundle_verify',
+                'atomic_bundle_verify',
+                'bundle_integrity_check',
+                'bundle_gas_verify',
+                'bundle_priority_verify',
+            ];
 
-          bundlePatterns.forEach(pattern => {
+            bundlePatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2177,21 +2185,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook ERC-4337 Account Abstraction validation
-          const erc4337Patterns = [
-            'EntryPoint',
-            'UserOperation',
-            'UserOperationStruct',
-            'AccountFactory',
-            'account_abstraction_verify',
-            'user_op_verify',
-            'paymaster_verify',
-          ];
+            const erc4337Patterns = [
+                'EntryPoint',
+                'UserOperation',
+                'UserOperationStruct',
+                'AccountFactory',
+                'account_abstraction_verify',
+                'user_op_verify',
+                'paymaster_verify',
+            ];
 
-          erc4337Patterns.forEach(pattern => {
+            erc4337Patterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2209,21 +2217,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Smart Contract Wallet validation
-          const smartWalletPatterns = [
-            'SmartWallet',
-            'GnosisSafe',
-            'ArgentWallet',
-            'CounterfactualWallet',
-            'smart_wallet_verify',
-            'multisig_wallet_verify',
-            'guardian_verify',
-          ];
+            const smartWalletPatterns = [
+                'SmartWallet',
+                'GnosisSafe',
+                'ArgentWallet',
+                'CounterfactualWallet',
+                'smart_wallet_verify',
+                'multisig_wallet_verify',
+                'guardian_verify',
+            ];
 
-          smartWalletPatterns.forEach(pattern => {
+            smartWalletPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2241,21 +2249,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Meta-Transaction validation
-          const metaTransactionPatterns = [
-            'meta_transaction_verify',
-            'relayer_verify',
-            'biconomy_verify',
-            'gasless_verify',
-            'permit_verify',
-            'eip712_signature_verify',
-            'sponsored_transaction_verify',
-          ];
+            const metaTransactionPatterns = [
+                'meta_transaction_verify',
+                'relayer_verify',
+                'biconomy_verify',
+                'gasless_verify',
+                'permit_verify',
+                'eip712_signature_verify',
+                'sponsored_transaction_verify',
+            ];
 
-          metaTransactionPatterns.forEach(pattern => {
+            metaTransactionPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2273,21 +2281,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Paymaster validation
-          const paymasterPatterns = [
-            'Paymaster',
-            'VerifyingPaymaster',
-            'TokenPaymaster',
-            'SponsoringPaymaster',
-            'paymaster_verify',
-            'gas_sponsorship_verify',
-            'payment_validation',
-          ];
+            const paymasterPatterns = [
+                'Paymaster',
+                'VerifyingPaymaster',
+                'TokenPaymaster',
+                'SponsoringPaymaster',
+                'paymaster_verify',
+                'gas_sponsorship_verify',
+                'payment_validation',
+            ];
 
-          paymasterPatterns.forEach(pattern => {
+            paymasterPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2330,21 +2338,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook IPFS content verification
-          const ipfsPatterns = [
-            'ipfs_verify',
-            'content_hash_verify',
-            'ipfs_pin_verify',
-            'cid_verify',
-            'multihash_verify',
-            'dag_verify',
-            'content_addressing_verify',
-          ];
+            const ipfsPatterns = [
+                'ipfs_verify',
+                'content_hash_verify',
+                'ipfs_pin_verify',
+                'cid_verify',
+                'multihash_verify',
+                'dag_verify',
+                'content_addressing_verify',
+            ];
 
-          ipfsPatterns.forEach(pattern => {
+            ipfsPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2362,21 +2370,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Arweave permanent storage validation
-          const arweavePatterns = [
-            'arweave_verify',
-            'permaweb_verify',
-            'ar_hash_verify',
-            'weave_verify',
-            'blockweave_verify',
-            'permanent_storage_verify',
-            'poa_verify',
-          ];
+            const arweavePatterns = [
+                'arweave_verify',
+                'permaweb_verify',
+                'ar_hash_verify',
+                'weave_verify',
+                'blockweave_verify',
+                'permanent_storage_verify',
+                'poa_verify',
+            ];
 
-          arweavePatterns.forEach(pattern => {
+            arweavePatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2394,21 +2402,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Filecoin storage validation
-          const filecoinPatterns = [
-            'filecoin_verify',
-            'fil_storage_verify',
-            'sector_verify',
-            'deal_verify',
-            'proof_of_spacetime',
-            'post_verify',
-            'winning_post_verify',
-          ];
+            const filecoinPatterns = [
+                'filecoin_verify',
+                'fil_storage_verify',
+                'sector_verify',
+                'deal_verify',
+                'proof_of_spacetime',
+                'post_verify',
+                'winning_post_verify',
+            ];
 
-          filecoinPatterns.forEach(pattern => {
+            filecoinPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({
@@ -2426,21 +2434,21 @@ const BlockchainLicenseBypass = {
             });
 
             // Hook Swarm distributed storage validation
-          const swarmPatterns = [
-            'swarm_verify',
-            'bzz_verify',
-            'chunk_verify',
-            'postage_stamp_verify',
-            'redistribution_verify',
-            'erasure_coding_verify',
-            'kademlia_verify',
-          ];
+            const swarmPatterns = [
+                'swarm_verify',
+                'bzz_verify',
+                'chunk_verify',
+                'postage_stamp_verify',
+                'redistribution_verify',
+                'erasure_coding_verify',
+                'kademlia_verify',
+            ];
 
-          swarmPatterns.forEach(pattern => {
+            swarmPatterns.forEach(pattern => {
                 Memory.scanSync(Process.enumerateRanges('r-x'), `utf8:${pattern}`).forEach(
                     match => {
-                      const funcAddr = this.findNearestFunction(match.address);
-                      if (funcAddr) {
+                        const funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
                             Interceptor.attach(funcAddr, {
                                 onLeave: retval => {
                                     send({

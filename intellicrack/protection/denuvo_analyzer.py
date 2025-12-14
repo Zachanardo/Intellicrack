@@ -410,15 +410,13 @@ class DenuvoAnalyzer:
                 entropy = self._calculate_entropy(content)
 
                 if entropy > 7.2:
-                    encrypted_sections.append(
-                        {
-                            "name": section.name,
-                            "virtual_address": section.virtual_address,
-                            "size": section.size,
-                            "entropy": entropy,
-                            "characteristics": section.characteristics,
-                        }
-                    )
+                    encrypted_sections.append({
+                        "name": section.name,
+                        "virtual_address": section.virtual_address,
+                        "size": section.size,
+                        "entropy": entropy,
+                        "characteristics": section.characteristics,
+                    })
 
             return encrypted_sections
 
@@ -809,45 +807,35 @@ class DenuvoAnalyzer:
 
         if version:
             if version.major >= 7:
-                recommendations.extend(
-                    (
-                        "Denuvo 7.x+ detected - Consider VM devirtualization approach",
-                        "Use Scylla Hide or similar anti-anti-debugging tools",
-                    )
-                )
+                recommendations.extend((
+                    "Denuvo 7.x+ detected - Consider VM devirtualization approach",
+                    "Use Scylla Hide or similar anti-anti-debugging tools",
+                ))
             elif version.major >= 5:
-                recommendations.extend(
-                    (
-                        "Denuvo 5.x/6.x detected - Focus on trigger point analysis",
-                        "Monitor activation server communication for offline bypass",
-                    )
-                )
+                recommendations.extend((
+                    "Denuvo 5.x/6.x detected - Focus on trigger point analysis",
+                    "Monitor activation server communication for offline bypass",
+                ))
             else:
                 recommendations.append(
                     "Denuvo 4.x detected - Older version, more susceptible to patching",
                 )
 
         if triggers:
-            recommendations.extend(
-                (
-                    f"Found {len(triggers)} activation triggers - NOP or bypass recommended",
-                    "Use Frida or similar hooking framework to intercept triggers",
-                )
-            )
+            recommendations.extend((
+                f"Found {len(triggers)} activation triggers - NOP or bypass recommended",
+                "Use Frida or similar hooking framework to intercept triggers",
+            ))
         if integrity_checks:
-            recommendations.extend(
-                (
-                    f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions",
-                    "Consider memory dumping after integrity checks complete",
-                )
-            )
+            recommendations.extend((
+                f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions",
+                "Consider memory dumping after integrity checks complete",
+            ))
         if timing_checks:
-            recommendations.extend(
-                (
-                    f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs",
-                    "Use ScyllaHide RDTSC feature or manual timing manipulation",
-                )
-            )
+            recommendations.extend((
+                f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs",
+                "Use ScyllaHide RDTSC feature or manual timing manipulation",
+            ))
         if vm_regions:
             recommendations.append(
                 f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",

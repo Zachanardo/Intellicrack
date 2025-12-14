@@ -27,6 +27,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate raw network packet parsing extracts license traffic correctly.
 
 #### Tests:
+
 - `test_parse_raw_packet_extracts_flexlm_traffic` - Extracts FlexLM FEATURE/VENDOR_STRING packets
 - `test_parse_raw_packet_extracts_hasp_traffic` - Extracts HASP/Sentinel dongle verification packets
 - `test_parse_raw_packet_extracts_adobe_activation` - Extracts Adobe LCSAP activation requests
@@ -47,6 +48,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate license protocol identification from traffic patterns.
 
 #### Tests:
+
 - `test_analyze_packet_detects_flexlm_protocol` - Identifies FlexLM from FEATURE/VENDOR_STRING/SIGN patterns
 - `test_analyze_packet_detects_hasp_protocol` - Identifies HASP from sentinel/Aladdin patterns
 - `test_analyze_packet_detects_adobe_protocol` - Identifies Adobe from LCSAP/activation patterns
@@ -65,6 +67,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate engine initializes with correct configuration.
 
 #### Tests:
+
 - `test_engine_initialization_with_interface` - Initializes with specific network interface
 - `test_engine_initialization_without_interface` - Falls back to default interface from config
 - `test_engine_has_license_patterns_configured` - License pattern database loaded correctly
@@ -79,6 +82,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate start/stop and runtime control.
 
 #### Tests:
+
 - `test_start_interception_initializes_capture` - Capture/analysis threads start correctly
 - `test_start_interception_with_custom_ports` - Custom port monitoring configured
 - `test_start_interception_handles_already_running` - Idempotent start operation
@@ -93,6 +97,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate analysis callback registration and invocation.
 
 #### Tests:
+
 - `test_add_analysis_callback_registers_callback` - Callback registration works
 - `test_remove_analysis_callback_unregisters_callback` - Callback removal works
 - `test_analysis_loop_handles_callback_exceptions` - Exception handling in callbacks
@@ -104,6 +109,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate runtime statistics and connection tracking.
 
 #### Tests:
+
 - `test_get_statistics_returns_complete_stats` - Complete statistics dictionary returned
 - `test_get_statistics_calculates_uptime` - Uptime calculated from start time
 - `test_get_statistics_handles_no_start_time` - Handles missing start time gracefully
@@ -116,6 +122,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate transparent proxy setup.
 
 #### Tests:
+
 - `test_setup_transparent_proxy_configures_mapping` - Proxy mappings configured
 - `test_set_dns_redirection_configures_mapping` - DNS redirections configured
 
@@ -126,6 +133,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate dataclass initialization.
 
 #### Tests:
+
 - `test_intercepted_packet_dataclass_initialization` - InterceptedPacket fields correct
 - `test_intercepted_packet_post_init_creates_default_flags` - Default TCP flags initialized
 - `test_analyzed_traffic_dataclass_stores_analysis_results` - AnalyzedTraffic stores results
@@ -137,6 +145,7 @@ This test suite validates real network traffic interception capabilities for lic
 **Purpose:** Validate concurrent operation and multi-protocol detection.
 
 #### Tests:
+
 - `test_multi_protocol_detection_in_single_session` - Multiple protocols detected in one session
 - `test_concurrent_packet_queuing_thread_safety` - Thread-safe packet queuing
 
@@ -145,6 +154,7 @@ This test suite validates real network traffic interception capabilities for lic
 ## Real Network Packet Fixtures
 
 ### FlexLM Packet Structure
+
 ```python
 IP: 192.168.1.100:45678 -> 192.168.1.50:27000
 TCP Flags: ACK
@@ -154,6 +164,7 @@ Payload: "FEATURE MATLAB 1.0 permanent 1 SIGN=0123456789ABCDEF
 ```
 
 ### HASP/Sentinel Packet Structure
+
 ```python
 IP: 10.0.0.50:12345 -> 10.0.0.100:1947
 TCP Flags: ACK
@@ -162,6 +173,7 @@ Payload: "HASP_LICENSE_REQUEST sentinel=enabled Aladdin
 ```
 
 ### Adobe Activation Packet Structure
+
 ```python
 IP: 172.16.0.10:54321 -> 172.16.0.20:443
 TCP Flags: ACK
@@ -171,6 +183,7 @@ Payload: "POST /lcsap/request HTTP/1.1
 ```
 
 ### CodeMeter Packet Structure
+
 ```python
 IP: 192.168.10.5:33333 -> 192.168.10.10:443
 TCP Flags: ACK
@@ -181,6 +194,7 @@ Payload: 0x434D4554 (magic) + 0x100A (command) +
 ## License Protocol Pattern Detection
 
 ### FlexLM Patterns Tested
+
 - `VENDOR_STRING` - Vendor identification
 - `FEATURE` - Feature checkout request
 - `INCREMENT` - License increment command
@@ -191,17 +205,20 @@ Payload: 0x434D4554 (magic) + 0x100A (command) +
 **Detection Logic:** Requires multiple patterns for high confidence (≥70%). Single patterns give 30% confidence boost from port detection.
 
 ### HASP/Sentinel Patterns Tested
+
 - `HASP` / `hasp` - Protocol identifier
 - `SENTINEL` / `sentinel` - Sentinel dongle
 - `Aladdin` - Hardware vendor
 
 ### Adobe Patterns Tested
+
 - `adobe` / `ADOBE` - Vendor identifier
 - `lcsap` / `LCSAP` - License Communication Secure Application Protocol
 - `activation` - Activation request
 - `serial` - Serial number
 
 ### Generic License Patterns Tested
+
 - `license` / `LICENSE` - License keyword
 - `activation` / `ACTIVATION` - Activation keyword
 - `checkout` / `CHECKOUT` - License checkout
@@ -212,10 +229,12 @@ Payload: 0x434D4554 (magic) + 0x100A (command) +
 ### Functions Tested (100% of public API)
 
 **Initialization:**
+
 - `__init__()` - Engine initialization with interface binding
 - `_initialize_capture_backend()` - Backend selection (Scapy/socket)
 
 **Packet Capture:**
+
 - `start_interception()` - Start capture threads
 - `stop_interception()` - Stop capture threads
 - `_capture_loop()` - Main capture loop
@@ -226,18 +245,22 @@ Payload: 0x434D4554 (magic) + 0x100A (command) +
 - `_queue_packet()` - Thread-safe packet queueing
 
 **Packet Analysis:**
+
 - `_analysis_loop()` - Main analysis loop
 - `_analyze_packet()` - Protocol detection and pattern matching
 
 **Callback System:**
+
 - `add_analysis_callback()` - Register analysis callback
 - `remove_analysis_callback()` - Unregister callback
 
 **Configuration:**
+
 - `set_dns_redirection()` - Configure DNS redirection
 - `setup_transparent_proxy()` - Configure transparent proxy
 
 **Statistics:**
+
 - `get_statistics()` - Retrieve runtime statistics
 - `get_active_connections()` - Get active connection list
 
@@ -257,16 +280,19 @@ Payload: 0x434D4554 (magic) + 0x100A (command) +
 ## Performance Characteristics
 
 ### Thread Safety
+
 - **Packet Queue:** Protected by `queue_lock` - tested with 5 concurrent threads
 - **Active Connections:** Protected by `connection_lock` - safe concurrent access
 - **Statistics Updates:** Atomic increment operations - thread-safe
 
 ### Memory Management
+
 - **Queue Size Limit:** 10,000 packets maximum - oldest packets dropped
 - **Connection Tracking:** Active connections pruned (implementation detail)
 - **Pattern Matching:** In-memory pattern database - constant memory
 
 ### Detection Performance
+
 - **FlexLM High Confidence:** 6 pattern matches = 70%+ confidence
 - **HASP Detection:** 3 pattern matches = 50%+ confidence
 - **Port-Based Baseline:** 30% confidence boost for known ports
@@ -290,35 +316,45 @@ Test Duration: ~17.65 seconds
 ## Critical Validation Points
 
 ### 1. Real Packet Parsing
+
 ✅ **Parser extracts correct IP addresses, ports, TCP flags, and payload data from binary packets**
+
 - Source/Dest IPs parsed via `socket.inet_ntoa()`
 - Source/Dest ports extracted from TCP header
 - TCP flags (SYN/ACK/FIN/RST) correctly identified
 - Payload extracted after IP+TCP headers
 
 ### 2. License Protocol Detection
+
 ✅ **Analyzer identifies FlexLM, HASP, Adobe, CodeMeter protocols from payload patterns**
+
 - FlexLM: Requires FEATURE + VENDOR_STRING + additional patterns for 70%+ confidence
 - HASP: Sentinel + Aladdin + HASP patterns detected
 - Adobe: LCSAP + activation + serial patterns detected
 - CodeMeter: Magic bytes (0x434D4554) + protocol commands detected
 
 ### 3. Traffic Filtering
+
 ✅ **Non-license traffic filtered correctly**
+
 - Packets to non-license ports (9999) filtered out
 - Non-TCP protocols (UDP, ICMP) filtered out
 - Generic HTTP traffic to non-license servers rejected (< 20% confidence)
 - Empty payloads (SYN-only packets) return None from analyzer
 
 ### 4. Thread Safety
+
 ✅ **Concurrent packet queuing works safely**
+
 - 5 threads queuing 100 packets each = 500 total packets captured
 - No race conditions in packet queue
 - No data corruption in statistics
 - Thread-safe connection tracking
 
 ### 5. Callback System
+
 ✅ **Analysis callbacks receive detected license traffic**
+
 - Callbacks invoked with `AnalyzedTraffic` objects
 - FlexLM packets trigger callbacks with protocol_type="flexlm"
 - Exceptions in callbacks don't crash analysis loop
@@ -327,17 +363,20 @@ Test Duration: ~17.65 seconds
 ## Test Quality Metrics
 
 ### Test Independence
+
 - ✅ Each test creates its own engine instance
 - ✅ No shared state between tests
 - ✅ Tests can run in any order (pytest-randomly verified)
 
 ### Assertion Strength
+
 - ✅ Tests verify specific protocol types (not just "is not None")
 - ✅ Confidence thresholds validated (≥0.5 for strong matches)
 - ✅ Pattern matches explicitly checked
 - ✅ Statistical counters verified
 
 ### Real-World Scenarios
+
 - ✅ Multi-protocol detection in single session
 - ✅ Concurrent packet processing
 - ✅ Malformed packet handling

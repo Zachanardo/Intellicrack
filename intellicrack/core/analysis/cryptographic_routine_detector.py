@@ -109,542 +109,536 @@ class CryptographicRoutineDetector:
     - Algorithm fingerprinting based on operation patterns
     """
 
-    AES_SBOX = bytes(
-        [
-            0x63,
-            0x7C,
-            0x77,
-            0x7B,
-            0xF2,
-            0x6B,
-            0x6F,
-            0xC5,
-            0x30,
-            0x01,
-            0x67,
-            0x2B,
-            0xFE,
-            0xD7,
-            0xAB,
-            0x76,
-            0xCA,
-            0x82,
-            0xC9,
-            0x7D,
-            0xFA,
-            0x59,
-            0x47,
-            0xF0,
-            0xAD,
-            0xD4,
-            0xA2,
-            0xAF,
-            0x9C,
-            0xA4,
-            0x72,
-            0xC0,
-            0xB7,
-            0xFD,
-            0x93,
-            0x26,
-            0x36,
-            0x3F,
-            0xF7,
-            0xCC,
-            0x34,
-            0xA5,
-            0xE5,
-            0xF1,
-            0x71,
-            0xD8,
-            0x31,
-            0x15,
-            0x04,
-            0xC7,
-            0x23,
-            0xC3,
-            0x18,
-            0x96,
-            0x05,
-            0x9A,
-            0x07,
-            0x12,
-            0x80,
-            0xE2,
-            0xEB,
-            0x27,
-            0xB2,
-            0x75,
-            0x09,
-            0x83,
-            0x2C,
-            0x1A,
-            0x1B,
-            0x6E,
-            0x5A,
-            0xA0,
-            0x52,
-            0x3B,
-            0xD6,
-            0xB3,
-            0x29,
-            0xE3,
-            0x2F,
-            0x84,
-            0x53,
-            0xD1,
-            0x00,
-            0xED,
-            0x20,
-            0xFC,
-            0xB1,
-            0x5B,
-            0x6A,
-            0xCB,
-            0xBE,
-            0x39,
-            0x4A,
-            0x4C,
-            0x58,
-            0xCF,
-            0xD0,
-            0xEF,
-            0xAA,
-            0xFB,
-            0x43,
-            0x4D,
-            0x33,
-            0x85,
-            0x45,
-            0xF9,
-            0x02,
-            0x7F,
-            0x50,
-            0x3C,
-            0x9F,
-            0xA8,
-            0x51,
-            0xA3,
-            0x40,
-            0x8F,
-            0x92,
-            0x9D,
-            0x38,
-            0xF5,
-            0xBC,
-            0xB6,
-            0xDA,
-            0x21,
-            0x10,
-            0xFF,
-            0xF3,
-            0xD2,
-            0xCD,
-            0x0C,
-            0x13,
-            0xEC,
-            0x5F,
-            0x97,
-            0x44,
-            0x17,
-            0xC4,
-            0xA7,
-            0x7E,
-            0x3D,
-            0x64,
-            0x5D,
-            0x19,
-            0x73,
-            0x60,
-            0x81,
-            0x4F,
-            0xDC,
-            0x22,
-            0x2A,
-            0x90,
-            0x88,
-            0x46,
-            0xEE,
-            0xB8,
-            0x14,
-            0xDE,
-            0x5E,
-            0x0B,
-            0xDB,
-            0xE0,
-            0x32,
-            0x3A,
-            0x0A,
-            0x49,
-            0x06,
-            0x24,
-            0x5C,
-            0xC2,
-            0xD3,
-            0xAC,
-            0x62,
-            0x91,
-            0x95,
-            0xE4,
-            0x79,
-            0xE7,
-            0xC8,
-            0x37,
-            0x6D,
-            0x8D,
-            0xD5,
-            0x4E,
-            0xA9,
-            0x6C,
-            0x56,
-            0xF4,
-            0xEA,
-            0x65,
-            0x7A,
-            0xAE,
-            0x08,
-            0xBA,
-            0x78,
-            0x25,
-            0x2E,
-            0x1C,
-            0xA6,
-            0xB4,
-            0xC6,
-            0xE8,
-            0xDD,
-            0x74,
-            0x1F,
-            0x4B,
-            0xBD,
-            0x8B,
-            0x8A,
-            0x70,
-            0x3E,
-            0xB5,
-            0x66,
-            0x48,
-            0x03,
-            0xF6,
-            0x0E,
-            0x61,
-            0x35,
-            0x57,
-            0xB9,
-            0x86,
-            0xC1,
-            0x1D,
-            0x9E,
-            0xE1,
-            0xF8,
-            0x98,
-            0x11,
-            0x69,
-            0xD9,
-            0x8E,
-            0x94,
-            0x9B,
-            0x1E,
-            0x87,
-            0xE9,
-            0xCE,
-            0x55,
-            0x28,
-            0xDF,
-            0x8C,
-            0xA1,
-            0x89,
-            0x0D,
-            0xBF,
-            0xE6,
-            0x42,
-            0x68,
-            0x41,
-            0x99,
-            0x2D,
-            0x0F,
-            0xB0,
-            0x54,
-            0xBB,
-            0x16,
-        ]
-    )
+    AES_SBOX = bytes([
+        0x63,
+        0x7C,
+        0x77,
+        0x7B,
+        0xF2,
+        0x6B,
+        0x6F,
+        0xC5,
+        0x30,
+        0x01,
+        0x67,
+        0x2B,
+        0xFE,
+        0xD7,
+        0xAB,
+        0x76,
+        0xCA,
+        0x82,
+        0xC9,
+        0x7D,
+        0xFA,
+        0x59,
+        0x47,
+        0xF0,
+        0xAD,
+        0xD4,
+        0xA2,
+        0xAF,
+        0x9C,
+        0xA4,
+        0x72,
+        0xC0,
+        0xB7,
+        0xFD,
+        0x93,
+        0x26,
+        0x36,
+        0x3F,
+        0xF7,
+        0xCC,
+        0x34,
+        0xA5,
+        0xE5,
+        0xF1,
+        0x71,
+        0xD8,
+        0x31,
+        0x15,
+        0x04,
+        0xC7,
+        0x23,
+        0xC3,
+        0x18,
+        0x96,
+        0x05,
+        0x9A,
+        0x07,
+        0x12,
+        0x80,
+        0xE2,
+        0xEB,
+        0x27,
+        0xB2,
+        0x75,
+        0x09,
+        0x83,
+        0x2C,
+        0x1A,
+        0x1B,
+        0x6E,
+        0x5A,
+        0xA0,
+        0x52,
+        0x3B,
+        0xD6,
+        0xB3,
+        0x29,
+        0xE3,
+        0x2F,
+        0x84,
+        0x53,
+        0xD1,
+        0x00,
+        0xED,
+        0x20,
+        0xFC,
+        0xB1,
+        0x5B,
+        0x6A,
+        0xCB,
+        0xBE,
+        0x39,
+        0x4A,
+        0x4C,
+        0x58,
+        0xCF,
+        0xD0,
+        0xEF,
+        0xAA,
+        0xFB,
+        0x43,
+        0x4D,
+        0x33,
+        0x85,
+        0x45,
+        0xF9,
+        0x02,
+        0x7F,
+        0x50,
+        0x3C,
+        0x9F,
+        0xA8,
+        0x51,
+        0xA3,
+        0x40,
+        0x8F,
+        0x92,
+        0x9D,
+        0x38,
+        0xF5,
+        0xBC,
+        0xB6,
+        0xDA,
+        0x21,
+        0x10,
+        0xFF,
+        0xF3,
+        0xD2,
+        0xCD,
+        0x0C,
+        0x13,
+        0xEC,
+        0x5F,
+        0x97,
+        0x44,
+        0x17,
+        0xC4,
+        0xA7,
+        0x7E,
+        0x3D,
+        0x64,
+        0x5D,
+        0x19,
+        0x73,
+        0x60,
+        0x81,
+        0x4F,
+        0xDC,
+        0x22,
+        0x2A,
+        0x90,
+        0x88,
+        0x46,
+        0xEE,
+        0xB8,
+        0x14,
+        0xDE,
+        0x5E,
+        0x0B,
+        0xDB,
+        0xE0,
+        0x32,
+        0x3A,
+        0x0A,
+        0x49,
+        0x06,
+        0x24,
+        0x5C,
+        0xC2,
+        0xD3,
+        0xAC,
+        0x62,
+        0x91,
+        0x95,
+        0xE4,
+        0x79,
+        0xE7,
+        0xC8,
+        0x37,
+        0x6D,
+        0x8D,
+        0xD5,
+        0x4E,
+        0xA9,
+        0x6C,
+        0x56,
+        0xF4,
+        0xEA,
+        0x65,
+        0x7A,
+        0xAE,
+        0x08,
+        0xBA,
+        0x78,
+        0x25,
+        0x2E,
+        0x1C,
+        0xA6,
+        0xB4,
+        0xC6,
+        0xE8,
+        0xDD,
+        0x74,
+        0x1F,
+        0x4B,
+        0xBD,
+        0x8B,
+        0x8A,
+        0x70,
+        0x3E,
+        0xB5,
+        0x66,
+        0x48,
+        0x03,
+        0xF6,
+        0x0E,
+        0x61,
+        0x35,
+        0x57,
+        0xB9,
+        0x86,
+        0xC1,
+        0x1D,
+        0x9E,
+        0xE1,
+        0xF8,
+        0x98,
+        0x11,
+        0x69,
+        0xD9,
+        0x8E,
+        0x94,
+        0x9B,
+        0x1E,
+        0x87,
+        0xE9,
+        0xCE,
+        0x55,
+        0x28,
+        0xDF,
+        0x8C,
+        0xA1,
+        0x89,
+        0x0D,
+        0xBF,
+        0xE6,
+        0x42,
+        0x68,
+        0x41,
+        0x99,
+        0x2D,
+        0x0F,
+        0xB0,
+        0x54,
+        0xBB,
+        0x16,
+    ])
 
-    AES_INV_SBOX = bytes(
-        [
-            0x52,
-            0x09,
-            0x6A,
-            0xD5,
-            0x30,
-            0x36,
-            0xA5,
-            0x38,
-            0xBF,
-            0x40,
-            0xA3,
-            0x9E,
-            0x81,
-            0xF3,
-            0xD7,
-            0xFB,
-            0x7C,
-            0xE3,
-            0x39,
-            0x82,
-            0x9B,
-            0x2F,
-            0xFF,
-            0x87,
-            0x34,
-            0x8E,
-            0x43,
-            0x44,
-            0xC4,
-            0xDE,
-            0xE9,
-            0xCB,
-            0x54,
-            0x7B,
-            0x94,
-            0x32,
-            0xA6,
-            0xC2,
-            0x23,
-            0x3D,
-            0xEE,
-            0x4C,
-            0x95,
-            0x0B,
-            0x42,
-            0xFA,
-            0xC3,
-            0x4E,
-            0x08,
-            0x2E,
-            0xA1,
-            0x66,
-            0x28,
-            0xD9,
-            0x24,
-            0xB2,
-            0x76,
-            0x5B,
-            0xA2,
-            0x49,
-            0x6D,
-            0x8B,
-            0xD1,
-            0x25,
-            0x72,
-            0xF8,
-            0xF6,
-            0x64,
-            0x86,
-            0x68,
-            0x98,
-            0x16,
-            0xD4,
-            0xA4,
-            0x5C,
-            0xCC,
-            0x5D,
-            0x65,
-            0xB6,
-            0x92,
-            0x6C,
-            0x70,
-            0x48,
-            0x50,
-            0xFD,
-            0xED,
-            0xB9,
-            0xDA,
-            0x5E,
-            0x15,
-            0x46,
-            0x57,
-            0xA7,
-            0x8D,
-            0x9D,
-            0x84,
-            0x90,
-            0xD8,
-            0xAB,
-            0x00,
-            0x8C,
-            0xBC,
-            0xD3,
-            0x0A,
-            0xF7,
-            0xE4,
-            0x58,
-            0x05,
-            0xB8,
-            0xB3,
-            0x45,
-            0x06,
-            0xD0,
-            0x2C,
-            0x1E,
-            0x8F,
-            0xCA,
-            0x3F,
-            0x0F,
-            0x02,
-            0xC1,
-            0xAF,
-            0xBD,
-            0x03,
-            0x01,
-            0x13,
-            0x8A,
-            0x6B,
-            0x3A,
-            0x91,
-            0x11,
-            0x41,
-            0x4F,
-            0x67,
-            0xDC,
-            0xEA,
-            0x97,
-            0xF2,
-            0xCF,
-            0xCE,
-            0xF0,
-            0xB4,
-            0xE6,
-            0x73,
-            0x96,
-            0xAC,
-            0x74,
-            0x22,
-            0xE7,
-            0xAD,
-            0x35,
-            0x85,
-            0xE2,
-            0xF9,
-            0x37,
-            0xE8,
-            0x1C,
-            0x75,
-            0xDF,
-            0x6E,
-            0x47,
-            0xF1,
-            0x1A,
-            0x71,
-            0x1D,
-            0x29,
-            0xC5,
-            0x89,
-            0x6F,
-            0xB7,
-            0x62,
-            0x0E,
-            0xAA,
-            0x18,
-            0xBE,
-            0x1B,
-            0xFC,
-            0x56,
-            0x3E,
-            0x4B,
-            0xC6,
-            0xD2,
-            0x79,
-            0x20,
-            0x9A,
-            0xDB,
-            0xC0,
-            0xFE,
-            0x78,
-            0xCD,
-            0x5A,
-            0xF4,
-            0x1F,
-            0xDD,
-            0xA8,
-            0x33,
-            0x88,
-            0x07,
-            0xC7,
-            0x31,
-            0xB1,
-            0x12,
-            0x10,
-            0x59,
-            0x27,
-            0x80,
-            0xEC,
-            0x5F,
-            0x60,
-            0x51,
-            0x7F,
-            0xA9,
-            0x19,
-            0xB5,
-            0x4A,
-            0x0D,
-            0x2D,
-            0xE5,
-            0x7A,
-            0x9F,
-            0x93,
-            0xC9,
-            0x9C,
-            0xEF,
-            0xA0,
-            0xE0,
-            0x3B,
-            0x4D,
-            0xAE,
-            0x2A,
-            0xF5,
-            0xB0,
-            0xC8,
-            0xEB,
-            0xBB,
-            0x3C,
-            0x83,
-            0x53,
-            0x99,
-            0x61,
-            0x17,
-            0x2B,
-            0x04,
-            0x7E,
-            0xBA,
-            0x77,
-            0xD6,
-            0x26,
-            0xE1,
-            0x69,
-            0x14,
-            0x63,
-            0x55,
-            0x21,
-            0x0C,
-            0x7D,
-        ]
-    )
+    AES_INV_SBOX = bytes([
+        0x52,
+        0x09,
+        0x6A,
+        0xD5,
+        0x30,
+        0x36,
+        0xA5,
+        0x38,
+        0xBF,
+        0x40,
+        0xA3,
+        0x9E,
+        0x81,
+        0xF3,
+        0xD7,
+        0xFB,
+        0x7C,
+        0xE3,
+        0x39,
+        0x82,
+        0x9B,
+        0x2F,
+        0xFF,
+        0x87,
+        0x34,
+        0x8E,
+        0x43,
+        0x44,
+        0xC4,
+        0xDE,
+        0xE9,
+        0xCB,
+        0x54,
+        0x7B,
+        0x94,
+        0x32,
+        0xA6,
+        0xC2,
+        0x23,
+        0x3D,
+        0xEE,
+        0x4C,
+        0x95,
+        0x0B,
+        0x42,
+        0xFA,
+        0xC3,
+        0x4E,
+        0x08,
+        0x2E,
+        0xA1,
+        0x66,
+        0x28,
+        0xD9,
+        0x24,
+        0xB2,
+        0x76,
+        0x5B,
+        0xA2,
+        0x49,
+        0x6D,
+        0x8B,
+        0xD1,
+        0x25,
+        0x72,
+        0xF8,
+        0xF6,
+        0x64,
+        0x86,
+        0x68,
+        0x98,
+        0x16,
+        0xD4,
+        0xA4,
+        0x5C,
+        0xCC,
+        0x5D,
+        0x65,
+        0xB6,
+        0x92,
+        0x6C,
+        0x70,
+        0x48,
+        0x50,
+        0xFD,
+        0xED,
+        0xB9,
+        0xDA,
+        0x5E,
+        0x15,
+        0x46,
+        0x57,
+        0xA7,
+        0x8D,
+        0x9D,
+        0x84,
+        0x90,
+        0xD8,
+        0xAB,
+        0x00,
+        0x8C,
+        0xBC,
+        0xD3,
+        0x0A,
+        0xF7,
+        0xE4,
+        0x58,
+        0x05,
+        0xB8,
+        0xB3,
+        0x45,
+        0x06,
+        0xD0,
+        0x2C,
+        0x1E,
+        0x8F,
+        0xCA,
+        0x3F,
+        0x0F,
+        0x02,
+        0xC1,
+        0xAF,
+        0xBD,
+        0x03,
+        0x01,
+        0x13,
+        0x8A,
+        0x6B,
+        0x3A,
+        0x91,
+        0x11,
+        0x41,
+        0x4F,
+        0x67,
+        0xDC,
+        0xEA,
+        0x97,
+        0xF2,
+        0xCF,
+        0xCE,
+        0xF0,
+        0xB4,
+        0xE6,
+        0x73,
+        0x96,
+        0xAC,
+        0x74,
+        0x22,
+        0xE7,
+        0xAD,
+        0x35,
+        0x85,
+        0xE2,
+        0xF9,
+        0x37,
+        0xE8,
+        0x1C,
+        0x75,
+        0xDF,
+        0x6E,
+        0x47,
+        0xF1,
+        0x1A,
+        0x71,
+        0x1D,
+        0x29,
+        0xC5,
+        0x89,
+        0x6F,
+        0xB7,
+        0x62,
+        0x0E,
+        0xAA,
+        0x18,
+        0xBE,
+        0x1B,
+        0xFC,
+        0x56,
+        0x3E,
+        0x4B,
+        0xC6,
+        0xD2,
+        0x79,
+        0x20,
+        0x9A,
+        0xDB,
+        0xC0,
+        0xFE,
+        0x78,
+        0xCD,
+        0x5A,
+        0xF4,
+        0x1F,
+        0xDD,
+        0xA8,
+        0x33,
+        0x88,
+        0x07,
+        0xC7,
+        0x31,
+        0xB1,
+        0x12,
+        0x10,
+        0x59,
+        0x27,
+        0x80,
+        0xEC,
+        0x5F,
+        0x60,
+        0x51,
+        0x7F,
+        0xA9,
+        0x19,
+        0xB5,
+        0x4A,
+        0x0D,
+        0x2D,
+        0xE5,
+        0x7A,
+        0x9F,
+        0x93,
+        0xC9,
+        0x9C,
+        0xEF,
+        0xA0,
+        0xE0,
+        0x3B,
+        0x4D,
+        0xAE,
+        0x2A,
+        0xF5,
+        0xB0,
+        0xC8,
+        0xEB,
+        0xBB,
+        0x3C,
+        0x83,
+        0x53,
+        0x99,
+        0x61,
+        0x17,
+        0x2B,
+        0x04,
+        0x7E,
+        0xBA,
+        0x77,
+        0xD6,
+        0x26,
+        0xE1,
+        0x69,
+        0x14,
+        0x63,
+        0x55,
+        0x21,
+        0x0C,
+        0x7D,
+    ])
 
-    AES_RCON = bytes(
-        [
-            0x01,
-            0x02,
-            0x04,
-            0x08,
-            0x10,
-            0x20,
-            0x40,
-            0x80,
-            0x1B,
-            0x36,
-        ]
-    )
+    AES_RCON = bytes([
+        0x01,
+        0x02,
+        0x04,
+        0x08,
+        0x10,
+        0x20,
+        0x40,
+        0x80,
+        0x1B,
+        0x36,
+    ])
 
     DES_SBOXES = [
         [
@@ -697,42 +691,40 @@ class CryptographicRoutineDetector:
         ],
     ]
 
-    BLOWFISH_PI_SUBKEYS = bytes(
-        [
-            0x24,
-            0x3F,
-            0x6A,
-            0x88,
-            0x85,
-            0xA3,
-            0x08,
-            0xD3,
-            0x13,
-            0x19,
-            0x8A,
-            0x2E,
-            0x03,
-            0x70,
-            0x73,
-            0x44,
-            0xA4,
-            0x09,
-            0x38,
-            0x22,
-            0x29,
-            0x9F,
-            0x31,
-            0xD0,
-            0x08,
-            0x2E,
-            0xFA,
-            0x98,
-            0xEC,
-            0x4E,
-            0x6C,
-            0x89,
-        ]
-    )
+    BLOWFISH_PI_SUBKEYS = bytes([
+        0x24,
+        0x3F,
+        0x6A,
+        0x88,
+        0x85,
+        0xA3,
+        0x08,
+        0xD3,
+        0x13,
+        0x19,
+        0x8A,
+        0x2E,
+        0x03,
+        0x70,
+        0x73,
+        0x44,
+        0xA4,
+        0x09,
+        0x38,
+        0x22,
+        0x29,
+        0x9F,
+        0x31,
+        0xD0,
+        0x08,
+        0x2E,
+        0xFA,
+        0x98,
+        0xEC,
+        0x4E,
+        0x6C,
+        0x89,
+    ])
 
     TWOFISH_Q_TABLES = [
         [0xA9, 0x67, 0xB3, 0xE8, 0x04, 0xFD, 0xA3, 0x76],
@@ -816,7 +808,7 @@ class CryptographicRoutineDetector:
         self.constant_cache = {}
         self.data_flow_cache = {}
 
-        logger.info(f"Starting cryptographic routine detection on {len(data)} bytes")
+        logger.info("Starting cryptographic routine detection on %d bytes", len(data))
 
         self._detect_crypto_constants(data, base_addr)
 
@@ -848,7 +840,7 @@ class CryptographicRoutineDetector:
 
         self._fingerprint_algorithms()
 
-        logger.info(f"Detection complete: found {len(self.detections)} cryptographic routines")
+        logger.info("Detection complete: found %d cryptographic routines", len(self.detections))
 
         return self.detections
 
@@ -879,7 +871,7 @@ class CryptographicRoutineDetector:
                 )
                 self.constant_cache[const_bytes] = crypto_const
 
-                logger.debug(f"Found {const_name} constant at 0x{base_addr + idx:08x}")
+                logger.debug("Found %s constant at 0x%08x", const_name, base_addr + idx)
                 idx += len(const_bytes)
 
         for i in range(len(self.SHA256_K)):
@@ -945,7 +937,7 @@ class CryptographicRoutineDetector:
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
-                logger.debug(f"AES forward S-box detected at 0x{base_addr + i:08x} (confidence: {fwd_confidence:.2%})")
+                logger.debug("AES forward S-box detected at 0x%08x (confidence: %.2f%%)", base_addr + i, fwd_confidence * 100)
 
             inv_confidence = self._calculate_sbox_confidence(data[i : i + 256], self.AES_INV_SBOX)
             if inv_confidence > 0.85:
@@ -965,7 +957,7 @@ class CryptographicRoutineDetector:
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
-                logger.debug(f"AES inverse S-box detected at 0x{base_addr + i:08x} (confidence: {inv_confidence:.2%})")
+                logger.debug("AES inverse S-box detected at 0x%08x (confidence: %.2f%%)", base_addr + i, inv_confidence * 100)
 
     def _detect_des_sboxes(self, data: bytes, base_addr: int) -> None:
         """Detect DES S-boxes with support for various packing formats."""
@@ -997,7 +989,7 @@ class CryptographicRoutineDetector:
                     },
                 )
                 self.detections.append(detection)
-                logger.debug(f"DES S-boxes detected at 0x{base_addr + i:08x} ({sbox_matches}/8 S-boxes)")
+                logger.debug("DES S-boxes detected at 0x%08x (%d/8 S-boxes)", base_addr + i, sbox_matches)
 
     def _detect_blowfish_constants(self, data: bytes, base_addr: int) -> None:
         """Detect Blowfish Pi-based subkey initialization."""
@@ -1012,7 +1004,7 @@ class CryptographicRoutineDetector:
                 details={"constant_type": "pi_subkeys"},
             )
             self.detections.append(detection)
-            logger.debug(f"Blowfish Pi subkeys detected at 0x{base_addr + idx:08x}")
+            logger.debug("Blowfish Pi subkeys detected at 0x%08x", base_addr + idx)
 
         for i in range(len(data) - 1024):
             if self._detect_blowfish_sbox_pattern(data[i : i + 1024]):
@@ -1025,7 +1017,7 @@ class CryptographicRoutineDetector:
                     details={"sbox_structure": "4x256"},
                 )
                 self.detections.append(detection)
-                logger.debug(f"Blowfish S-boxes detected at 0x{base_addr + i:08x}")
+                logger.debug("Blowfish S-boxes detected at 0x%08x", base_addr + i)
                 break
 
     def _detect_twofish_constants(self, data: bytes, base_addr: int) -> None:
@@ -1043,7 +1035,7 @@ class CryptographicRoutineDetector:
                     details={"table_index": table_idx},
                 )
                 self.detections.append(detection)
-                logger.debug(f"Twofish Q{table_idx} table detected at 0x{base_addr + idx:08x}")
+                logger.debug("Twofish Q%d table detected at 0x%08x", table_idx, base_addr + idx)
 
     def _detect_hash_constants(self, data: bytes, base_addr: int) -> None:
         """Detect hash algorithm initialization vectors and constants."""
@@ -1076,7 +1068,7 @@ class CryptographicRoutineDetector:
                 },
             )
             self.detections.append(detection)
-            logger.debug(f"SHA-256 constants detected ({sha256_k_count}/{len(self.SHA256_K)} found, {endianness} endian)")
+            logger.debug("SHA-256 constants detected (%d/%d found, %s endian)", sha256_k_count, len(self.SHA256_K), endianness)
 
         sha1_h_count_be = 0
         sha1_h_count_le = 0
@@ -1107,7 +1099,7 @@ class CryptographicRoutineDetector:
                 },
             )
             self.detections.append(detection)
-            logger.debug(f"SHA-1 constants detected ({sha1_h_count}/{len(self.SHA1_H)} found, {endianness} endian)")
+            logger.debug("SHA-1 constants detected (%d/%d found, %s endian)", sha1_h_count, len(self.SHA1_H), endianness)
 
         md5_t_count = 0
         for i in range(len(self.MD5_T)):
@@ -1126,7 +1118,7 @@ class CryptographicRoutineDetector:
                 details={"constants_found": md5_t_count},
             )
             self.detections.append(detection)
-            logger.debug(f"MD5 constants detected ({md5_t_count} found)")
+            logger.debug("MD5 constants detected (%d found)", md5_t_count)
 
     def _detect_rc4_init(self, data: bytes, base_addr: int) -> None:
         """Detect RC4 initialization pattern with KSA detection."""
@@ -1145,7 +1137,7 @@ class CryptographicRoutineDetector:
                     },
                 )
                 self.detections.append(detection)
-                logger.debug(f"RC4 state array detected at 0x{base_addr + i:08x}")
+                logger.debug("RC4 state array detected at 0x%08x", base_addr + i)
 
     def _detect_rsa_montgomery(self, data: bytes, base_addr: int) -> None:
         """Detect RSA Montgomery multiplication patterns and public exponents."""
@@ -1173,7 +1165,7 @@ class CryptographicRoutineDetector:
                         details={"exponent": exponent},
                     )
                     self.detections.append(detection)
-                    logger.debug(f"RSA exponent {exponent} detected at 0x{base_addr + i:08x}")
+                    logger.debug("RSA exponent %d detected at 0x%08x", exponent, base_addr + i)
 
         for i in range(0, len(data) - 512, 256):
             if self._detect_montgomery_mul_code(data[i : i + 512]):
@@ -1201,7 +1193,7 @@ class CryptographicRoutineDetector:
                     details={"curve": curve_name, "field_size": len(prime) * 8},
                 )
                 self.detections.append(detection)
-                logger.debug(f"ECC {curve_name} field prime detected at 0x{base_addr + idx:08x}")
+                logger.debug("ECC %s field prime detected at 0x%08x", curve_name, base_addr + idx)
 
         self._detect_ecc_point_ops(data, base_addr)
 
@@ -1218,7 +1210,7 @@ class CryptographicRoutineDetector:
                 details={"constant": self.CHACHA20_CONSTANT.decode("ascii")},
             )
             self.detections.append(detection)
-            logger.debug(f"ChaCha20 constant detected at 0x{base_addr + idx:08x}")
+            logger.debug("ChaCha20 constant detected at 0x%08x", base_addr + idx)
 
             if self._detect_chacha20_quarter_round(data, idx):
                 detection.confidence = 1.0
@@ -1252,7 +1244,7 @@ class CryptographicRoutineDetector:
                     details={"instruction": instruction, "hardware": True},
                 )
                 self.detections.append(detection)
-                logger.debug(f"AES-NI {instruction} detected at 0x{base_addr + idx:08x}")
+                logger.debug("AES-NI %s detected at 0x%08x", instruction, base_addr + idx)
                 idx += len(opcode)
 
     def _detect_sha_instructions(self, data: bytes, base_addr: int) -> None:
@@ -1282,7 +1274,7 @@ class CryptographicRoutineDetector:
                     details={"instruction": instruction, "hardware": True},
                 )
                 self.detections.append(detection)
-                logger.debug(f"SHA {instruction} detected at 0x{base_addr + idx:08x}")
+                logger.debug("SHA %s detected at 0x%08x", instruction, base_addr + idx)
                 idx += len(opcode)
 
     def _detect_custom_crypto(self, data: bytes, base_addr: int) -> None:
@@ -1306,7 +1298,7 @@ class CryptographicRoutineDetector:
                     },
                 )
                 self.detections.append(detection)
-                logger.debug(f"Custom crypto table detected at 0x{base_addr + i:08x} (entropy: {entropy:.2f})")
+                logger.debug("Custom crypto table detected at 0x%08x (entropy: %.2f)", base_addr + i, entropy)
 
         self._detect_xor_crypto(data, base_addr)
         self._detect_lfsr_cipher(data, base_addr)
@@ -1346,9 +1338,9 @@ class CryptographicRoutineDetector:
                         },
                     )
                     self.detections.append(detection)
-                    logger.debug(f"Feistel network detected at 0x{base_addr + i:08x}")
+                    logger.debug("Feistel network detected at 0x%08x", base_addr + i)
         except (TypeError, ValueError, AttributeError) as e:
-            logger.debug(f"Error in Feistel detection: {e}")
+            logger.debug("Error in Feistel detection: %s", e, exc_info=True)
 
     def _detect_substitution_permutation(self, data: bytes, base_addr: int) -> None:
         """Detect substitution-permutation network patterns."""
@@ -1363,7 +1355,7 @@ class CryptographicRoutineDetector:
                     details={"structure": "substitution_permutation"},
                 )
                 self.detections.append(detection)
-                logger.debug(f"SP-network detected at 0x{base_addr + i:08x}")
+                logger.debug("SP-network detected at 0x%08x", base_addr + i)
 
     def _detect_ecc_point_ops(self, data: bytes, base_addr: int) -> None:
         """Detect ECC point addition and doubling operations."""
@@ -1403,9 +1395,9 @@ class CryptographicRoutineDetector:
                             },
                         )
                         self.detections.append(detection)
-                        logger.debug(f"ECC point operations detected at 0x{base_addr + i:08x}")
+                        logger.debug("ECC point operations detected at 0x%08x", base_addr + i)
         except (TypeError, ValueError, AttributeError) as e:
-            logger.debug(f"Error in ECC detection: {e}")
+            logger.debug("Error in ECC detection: %s", e, exc_info=True)
 
     def _detect_xor_crypto(self, data: bytes, base_addr: int) -> None:
         """Detect XOR-based encryption patterns."""
@@ -1437,9 +1429,9 @@ class CryptographicRoutineDetector:
                         },
                     )
                     self.detections.append(detection)
-                    logger.debug(f"XOR cipher detected at 0x{base_addr + i:08x}")
+                    logger.debug("XOR cipher detected at 0x%08x", base_addr + i)
         except (TypeError, ValueError, AttributeError) as e:
-            logger.debug(f"Error in XOR detection: {e}")
+            logger.debug("Error in XOR detection: %s", e, exc_info=True)
 
     def _detect_lfsr_cipher(self, data: bytes, base_addr: int) -> None:
         """Detect Linear Feedback Shift Register based ciphers."""
@@ -1475,9 +1467,9 @@ class CryptographicRoutineDetector:
                             },
                         )
                         self.detections.append(detection)
-                        logger.debug(f"LFSR cipher detected at 0x{base_addr + i:08x}")
+                        logger.debug("LFSR cipher detected at 0x%08x", base_addr + i)
         except (TypeError, ValueError, AttributeError) as e:
-            logger.debug(f"Error in LFSR detection: {e}")
+            logger.debug("Error in LFSR detection: %s", e, exc_info=True)
 
     def _perform_data_flow_analysis(self, data: bytes, base_addr: int) -> None:
         """Perform data flow analysis on detected crypto routines to track value propagation."""
@@ -1538,7 +1530,7 @@ class CryptographicRoutineDetector:
                 flow_nodes.append(node)
 
         except (CsError, ValueError, AttributeError) as e:
-            logger.debug(f"Error in data flow analysis: {e}")
+            logger.debug("Error in data flow analysis: %s", e, exc_info=True)
 
         return flow_nodes
 
@@ -1621,7 +1613,7 @@ class CryptographicRoutineDetector:
             r2.quit()
             logger.info("Enhanced detections with radare2 analysis")
         except Exception as e:
-            logger.warning(f"Could not enhance with radare2: {e}")
+            logger.warning("Could not enhance with radare2: %s", e, exc_info=True)
 
     def _check_sbox_pattern(self, data: bytes, reference: bytes) -> bool:
         """Check if data matches an S-box pattern."""
@@ -1791,7 +1783,7 @@ class CryptographicRoutineDetector:
                 shift_ratio = shift_count / total_ops
                 return 0.3 <= mov_ratio <= 0.6 and 0.1 <= shift_ratio <= 0.4
         except (TypeError, ValueError, AttributeError) as e:
-            logger.debug(f"Error detecting Montgomery multiplication: {e}")
+            logger.debug("Error detecting Montgomery multiplication: %s", e, exc_info=True)
 
         return False
 
@@ -1947,7 +1939,7 @@ def main() -> None:
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python cryptographic_routine_detector.py <binary_file> [--use-radare2]")
+        logger.error("Usage: python cryptographic_routine_detector.py <binary_file> [--use-radare2]")
         sys.exit(1)
 
     binary_path = sys.argv[1]
@@ -1958,55 +1950,51 @@ def main() -> None:
     with open(binary_path, "rb") as f:
         data = f.read()
 
-    print(f"Analyzing binary: {binary_path}")
-    print(f"Size: {len(data)} bytes")
-    print(f"Using radare2: {use_radare2}")
-    print()
+    logger.info("Analyzing binary: %s", binary_path)
+    logger.info("Size: %d bytes", len(data))
+    logger.info("Using radare2: %s", use_radare2)
 
     detections = detector.detect_all(data, use_radare2=use_radare2, binary_path=binary_path if use_radare2 else None)
 
-    print(f"Found {len(detections)} cryptographic implementations:\n")
+    logger.info("Found %d cryptographic implementations:", len(detections))
     for detection in detections:
-        print(f"  [{detection.algorithm.name}] at 0x{detection.offset:08x}")
-        print(f"    Variant: {detection.variant}")
-        print(f"    Confidence: {detection.confidence:.2%}")
+        logger.info("  [%s] at 0x%08x", detection.algorithm.name, detection.offset)
+        logger.info("    Variant: %s", detection.variant)
+        logger.info("    Confidence: %.2f%%", detection.confidence * 100)
         if detection.key_size:
-            print(f"    Key Size: {detection.key_size} bits")
+            logger.info("    Key Size: %d bits", detection.key_size)
         if detection.mode:
-            print(f"    Mode: {detection.mode}")
+            logger.info("    Mode: %s", detection.mode)
         if detection.constants:
-            print(f"    Constants: {len(detection.constants)} found")
+            logger.info("    Constants: %d found", len(detection.constants))
         if detection.data_flows:
-            print(f"    Data Flow Nodes: {len(detection.data_flows)}")
+            logger.info("    Data Flow Nodes: %d", len(detection.data_flows))
         if detection.details:
-            print(f"    Details: {detection.details}")
-        print()
+            logger.info("    Details: %s", detection.details)
 
     analysis = detector.analyze_crypto_usage(detections)
-    print("=" * 60)
-    print("Analysis Summary:")
-    print(f"  Total Detections: {analysis['total_detections']}")
-    print(f"  Unique Algorithms: {analysis['unique_algorithms']}")
-    print(f"  Hardware Accelerated: {analysis['hardware_accelerated']}")
-    print(f"  Custom Crypto: {analysis['custom_crypto']}")
-    print(f"  Obfuscated Crypto: {analysis['obfuscated_crypto']}")
-    print(f"  Protection Likelihood: {analysis['protection_likelihood']:.1%}")
+    logger.info("=" * 60)
+    logger.info("Analysis Summary:")
+    logger.info("  Total Detections: %d", analysis["total_detections"])
+    logger.info("  Unique Algorithms: %d", analysis["unique_algorithms"])
+    logger.info("  Hardware Accelerated: %s", analysis["hardware_accelerated"])
+    logger.info("  Custom Crypto: %s", analysis["custom_crypto"])
+    logger.info("  Obfuscated Crypto: %s", analysis["obfuscated_crypto"])
+    logger.info("  Protection Likelihood: %.1f%%", analysis["protection_likelihood"] * 100)
     if analysis["key_sizes"]:
-        print(f"  Key Sizes: {sorted(analysis['key_sizes'])}")
-    print()
+        logger.info("  Key Sizes: %s", sorted(analysis["key_sizes"]))
 
-    print("Algorithms Detected:")
+    logger.info("Algorithms Detected:")
     for algo_name, algo_info in analysis["algorithms"].items():
-        print(f"  {algo_name}:")
-        print(f"    Count: {algo_info['count']}")
-        print(f"    Variants: {', '.join(algo_info['variants'])}")
-        print(f"    Confidence: {algo_info['confidence']:.2%}")
-    print()
+        logger.info("  %s:", algo_name)
+        logger.info("    Count: %d", algo_info["count"])
+        logger.info("    Variants: %s", ", ".join(algo_info["variants"]))
+        logger.info("    Confidence: %.2f%%", algo_info["confidence"] * 100)
 
     yara_output = binary_path.replace(".", "_") + "_crypto.yar"
     with open(yara_output, "w") as f:
         f.write(detector.export_yara_rules(detections))
-    print(f"YARA rules exported to: {yara_output}")
+    logger.info("YARA rules exported to: %s", yara_output)
 
 
 if __name__ == "__main__":

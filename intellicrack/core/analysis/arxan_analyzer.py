@@ -243,7 +243,7 @@ class ArxanAnalyzer:
         if not binary_path.exists():
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
-        self.logger.info(f"Starting Arxan analysis: {binary_path}")
+        self.logger.info("Starting Arxan analysis: %s", binary_path)
 
         detection_result = self.detector.detect(binary_path)
 
@@ -301,7 +301,7 @@ class ArxanAnalyzer:
                     )
                     tamper_checks.append(tamper_check)
 
-                    self.logger.debug(f"Found {check_type} tamper check at 0x{pos:x}")
+                    self.logger.debug("Found %s tamper check at 0x%x", check_type, pos)
 
                     offset = pos + 1
 
@@ -318,8 +318,8 @@ class ArxanAnalyzer:
 
                 pe.close()
 
-            except Exception as e:
-                self.logger.debug(f"PE section analysis error: {e}")
+            except Exception:
+                self.logger.debug("PE section analysis error", exc_info=True)
 
         return tamper_checks
 
@@ -395,8 +395,8 @@ class ArxanAnalyzer:
 
                 pe.close()
 
-        except Exception as e:
-            self.logger.debug(f"Control flow analysis error: {e}")
+        except Exception:
+            self.logger.debug("Control flow analysis error", exc_info=True)
 
         total_instructions = len(binary_data) // 4
         obfuscated_instructions = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
@@ -459,7 +459,7 @@ class ArxanAnalyzer:
                     )
                     rasp_mechanisms.append(rasp)
 
-                    self.logger.debug(f"Found RASP mechanism: {mechanism_type} at 0x{pos:x}")
+                    self.logger.debug("Found RASP mechanism: %s at 0x%x", mechanism_type, pos)
 
                     offset = pos + 1
 
@@ -534,7 +534,7 @@ class ArxanAnalyzer:
 
                     license_routines.append(routine)
 
-                    self.logger.debug(f"Found license routine: {validation_type} at 0x{pos:x}")
+                    self.logger.debug("Found license routine: %s at 0x%x", validation_type, pos)
 
                     offset = pos + 1
 
@@ -574,8 +574,8 @@ class ArxanAnalyzer:
                     string_val = context.decode("utf-8", errors="ignore")
                     if string_val.strip():
                         found_strings.append((pos, string_val.strip()))
-                except Exception as e:
-                    self.logger.debug(f"Error decoding string at position {pos}: {e}")
+                except Exception:
+                    self.logger.debug("Error decoding string at position %d", pos, exc_info=True)
 
                 offset = pos + 1
 
@@ -632,8 +632,8 @@ class ArxanAnalyzer:
 
                 pe.close()
 
-        except Exception as e:
-            self.logger.debug(f"Integrity check analysis error: {e}")
+        except Exception:
+            self.logger.debug("Integrity check analysis error", exc_info=True)
 
         return integrity_checks
 
@@ -690,6 +690,8 @@ def main() -> None:
     import argparse
     import json
 
+    main_logger = logging.getLogger(__name__)
+
     parser = argparse.ArgumentParser(description="Arxan TransformIT Analyzer")
     parser.add_argument("binary", help="Binary file to analyze")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -720,33 +722,33 @@ def main() -> None:
                 "density": result.control_flow.obfuscation_density,
             },
         }
-        print(json.dumps(output, indent=2))
+        main_logger.info("%s", json.dumps(output, indent=2))
     else:
-        print("\n=== Arxan Analysis Results ===")
-        print(f"\nTamper Checks: {len(result.tamper_checks)}")
+        main_logger.info("=== Arxan Analysis Results ===")
+        main_logger.info("Tamper Checks: %d", len(result.tamper_checks))
         for check in result.tamper_checks[:5]:
-            print(f"  - 0x{check.address:x}: {check.algorithm} ({check.bypass_complexity})")
+            main_logger.info("  - 0x%x: %s (%s)", check.address, check.algorithm, check.bypass_complexity)
 
-        print("\nControl Flow Obfuscation:")
-        print(f"  Opaque Predicates: {len(result.control_flow.opaque_predicates)}")
-        print(f"  Indirect Jumps: {len(result.control_flow.indirect_jumps)}")
-        print(f"  Flow Flattening: {result.control_flow.control_flow_flattening}")
-        print(f"  Obfuscation Density: {result.control_flow.obfuscation_density:.2%}")
+        main_logger.info("Control Flow Obfuscation:")
+        main_logger.info("  Opaque Predicates: %d", len(result.control_flow.opaque_predicates))
+        main_logger.info("  Indirect Jumps: %d", len(result.control_flow.indirect_jumps))
+        main_logger.info("  Flow Flattening: %s", result.control_flow.control_flow_flattening)
+        main_logger.info("  Obfuscation Density: %.2f%%", result.control_flow.obfuscation_density * 100)
 
-        print(f"\nRASP Mechanisms: {len(result.rasp_mechanisms)}")
+        main_logger.info("RASP Mechanisms: %d", len(result.rasp_mechanisms))
         for rasp in result.rasp_mechanisms[:5]:
-            print(f"  - {rasp.mechanism_type}: {rasp.detection_method} ({rasp.severity})")
+            main_logger.info("  - %s: %s (%s)", rasp.mechanism_type, rasp.detection_method, rasp.severity)
 
-        print(f"\nLicense Validation Routines: {len(result.license_routines)}")
+        main_logger.info("License Validation Routines: %d", len(result.license_routines))
         for routine in result.license_routines[:5]:
-            print(f"  - 0x{routine.address:x}: {routine.algorithm} ({routine.validation_type})")
+            main_logger.info("  - 0x%x: %s (%s)", routine.address, routine.algorithm, routine.validation_type)
 
-        print(f"\nIntegrity Checks: {len(result.integrity_checks)}")
+        main_logger.info("Integrity Checks: %d", len(result.integrity_checks))
         for check in result.integrity_checks[:5]:
-            print(f"  - 0x{check.address:x}: {check.hash_algorithm} ({check.bypass_strategy})")
+            main_logger.info("  - 0x%x: %s (%s)", check.address, check.hash_algorithm, check.bypass_strategy)
 
-        print(f"\nEncrypted String Regions: {len(result.encrypted_strings)}")
-        print(f"White-Box Crypto Tables: {len(result.white_box_crypto_tables)}")
+        main_logger.info("Encrypted String Regions: %d", len(result.encrypted_strings))
+        main_logger.info("White-Box Crypto Tables: %d", len(result.white_box_crypto_tables))
 
 
 if __name__ == "__main__":

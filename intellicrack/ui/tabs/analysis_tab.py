@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     from intellicrack.core.monitoring.monitor_event import MonitorEvent
 
@@ -1056,7 +1057,7 @@ class AnalysisTab(BaseTab):
                 return
 
         profile = self.analysis_profile_combo.currentText()
-        self.log_activity(f"Starting {profile} on {os.path.basename(self.current_file_path or "")}")
+        self.log_activity(f"Starting {profile} on {os.path.basename(self.current_file_path or '')}")
 
         # Update UI state
         self.run_analysis_btn.setEnabled(False)
@@ -1113,6 +1114,189 @@ class AnalysisTab(BaseTab):
             # Analysis will complete through callbacks
             self.analysis_started.emit(profile.lower())
 
+    def _run_static_analysis(self, task: object | None = None) -> dict[str, object]:
+        """Run the static analysis task."""
+        try:
+            binary_path = self.current_file_path if self.current_file_path else ""
+            results: dict[str, object] = {
+                "binary": binary_path,
+                "file_name": os.path.basename(binary_path) if binary_path else "",
+            }
+
+            if self.disassembly_cb.isChecked():
+                results["disassembly"] = {"functions": 42, "imports": 156, "exports": 3}
+
+            if self.string_analysis_cb.isChecked():
+                results["strings"] = {
+                    "total": 523,
+                    "suspicious": ["license_key", "trial_expired", "activation_code"],
+                }
+
+            if self.imports_analysis_cb.isChecked():
+                results["imports"] = {
+                    "total": 156,
+                    "dlls": ["kernel32.dll", "user32.dll", "advapi32.dll"],
+                }
+
+            if self.entropy_analysis_cb.isChecked():
+                results["entropy"] = {"overall": 7.2, "high_entropy_sections": 3}
+
+            if self.signature_analysis_cb.isChecked():
+                results["signatures"] = ["UPX", "VMProtect"]
+
+            if self.crypto_key_extraction_cb.isChecked():
+                # Extract cryptographic keys using LicenseValidationBypass
+                self.log_activity("Extracting cryptographic keys...")
+                try:
+                    extracted_keys = self.license_validation_bypass.extract_all_keys(binary_path) if binary_path else {}
+
+                    # Process extracted keys
+                    key_results: dict[str, int | list[dict[str, Any]]] = {
+                        "total_keys_found": 0,
+                        "rsa_keys": [],
+                        "ecc_keys": [],
+                        "symmetric_keys": [],
+                        "certificates": [],
+                    }
+
+                    for key_type, keys in extracted_keys.items():
+                        if key_type == "rsa" and keys:
+                            key_results["rsa_keys"] = [
+                                {
+                                    "address": hex(key.address),
+                                    "modulus_bits": key.modulus.bit_length() if key.modulus else 0,
+                                    "exponent": key.exponent,
+                                    "confidence": key.confidence,
+                                    "context": key.context,
+                                }
+                                for key in keys
+                            ]
+                            total = key_results.get("total_keys_found", 0)
+                            key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
+
+                        elif key_type == "ecc" and keys:
+                            key_results["ecc_keys"] = [
+                                {
+                                    "address": hex(key.address),
+                                    "curve": key.curve,
+                                    "confidence": key.confidence,
+                                    "context": key.context,
+                                }
+                                for key in keys
+                            ]
+                            total = key_results.get("total_keys_found", 0)
+                            key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
+
+                        elif key_type == "symmetric" and keys:
+                            key_results["symmetric_keys"] = [
+                                {
+                                    "address": hex(key.address),
+                                    "type": key.key_type.value,
+                                    "key_size": len(key.key_data) * 8,
+                                    "confidence": key.confidence,
+                                }
+                                for key in keys
+                            ]
+                            total = key_results.get("total_keys_found", 0)
+                            key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
+
+                    # Extract certificates
+                    try:
+                        certs = self.license_validation_bypass.extract_certificates(binary_path) if binary_path else []
+                        if certs:
+                            key_results["certificates"] = [
+                                {
+                                    "subject": cert.subject.rfc4514_string(),
+                                    "issuer": cert.issuer.rfc4514_string(),
+                                    "serial_number": str(cert.serial_number),
+                                    "not_valid_after": cert.not_valid_after_utc.isoformat(),
+                                }
+                                for cert in certs
+                            ]
+                            cert_total = key_results.get("total_keys_found", 0)
+                            key_results["total_keys_found"] = (cert_total if isinstance(cert_total, int) else 0) + len(certs)
+                    except Exception as cert_error:
+                        self.log_activity(f"Certificate extraction error: {cert_error!s}")
+
+                    results["crypto_keys"] = key_results
+                    self.log_activity(f"Found {key_results['total_keys_found']} cryptographic keys/certificates")
+
+                except Exception as key_error:
+                    self.log_activity(f"Key extraction error: {key_error!s}")
+                    results["crypto_keys"] = {"error": str(key_error)}
+
+            if self.subscription_bypass_cb.isChecked():
+                # Detect and analyze subscription validation bypass opportunities
+                self.log_activity("Analyzing subscription validation mechanisms...")
+                try:
+                    # Initialize the bypass system
+                    from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
+
+                    sub_bypass = SubscriptionValidationBypass()
+
+                    # Detect subscription type
+                    product_name = os.path.splitext(os.path.basename(self.current_file_path or ""))[0]
+                    sub_type = sub_bypass.detect_subscription_type(product_name) if product_name else None
+
+                    bypass_results: dict[str, Any] = {
+                        "detected_type": sub_type.value if sub_type else "unknown",
+                        "bypass_methods": [],
+                    }
+
+                    # Analyze available bypass methods
+                    if sub_type:
+                        if sub_type.value == "cloud_based":
+                            bypass_results["bypass_methods"].append(
+                                {
+                                    "method": "Local Server Emulation",
+                                    "description": "Start local license server to intercept cloud requests",
+                                    "confidence": 0.85,
+                                },
+                            )
+                            bypass_results["bypass_methods"].append(
+                                {
+                                    "method": "Host Redirection",
+                                    "description": "Redirect cloud validation calls to local server",
+                                    "confidence": 0.75,
+                                },
+                            )
+                        elif sub_type.value == "local_validation":
+                            bypass_results["bypass_methods"].append(
+                                {
+                                    "method": "Memory Patching",
+                                    "description": "Patch validation logic in memory",
+                                    "confidence": 0.9,
+                                },
+                            )
+                            bypass_results["bypass_methods"].append(
+                                {
+                                    "method": "File Modification",
+                                    "description": "Modify license files on disk",
+                                    "confidence": 0.7,
+                                },
+                            )
+                        elif sub_type.value == "hardware_locked":
+                            bypass_results["bypass_methods"].append(
+                                {
+                                    "method": "Dongle Emulation",
+                                    "description": "Emulate hardware dongle functionality",
+                                    "confidence": 0.6,
+                                },
+                            )
+
+                    results["subscription_bypass"] = bypass_results
+                    self.log_activity(f"Detected subscription type: {bypass_results['detected_type']}")
+
+                except Exception as sub_error:
+                    self.log_activity(f"Subscription analysis error: {sub_error!s}")
+                    results["subscription_bypass"] = {"error": str(sub_error)}
+
+            return results
+
+        except Exception as e:
+            self.log_activity(f"Static analysis failed: {e!s}")
+            return {"error": str(e)}
+
     def start_static_analysis(self) -> None:
         """Start static analysis with selected options."""
         self.log_activity("Starting static analysis...")
@@ -1120,324 +1304,14 @@ class AnalysisTab(BaseTab):
 
         # This would integrate with the actual analysis modules
         if self.task_manager and self.app_context:
-
-            def run_static_analysis(task: object | None = None) -> dict[str, object]:
-                try:
-                    binary_path = self.current_file_path if self.current_file_path else ""
-                    results: dict[str, object] = {
-                        "binary": binary_path,
-                        "file_name": os.path.basename(binary_path) if binary_path else "",
-                    }
-
-                    if self.disassembly_cb.isChecked():
-                        results["disassembly"] = {"functions": 42, "imports": 156, "exports": 3}
-
-                    if self.string_analysis_cb.isChecked():
-                        results["strings"] = {
-                            "total": 523,
-                            "suspicious": ["license_key", "trial_expired", "activation_code"],
-                        }
-
-                    if self.imports_analysis_cb.isChecked():
-                        results["imports"] = {
-                            "total": 156,
-                            "dlls": ["kernel32.dll", "user32.dll", "advapi32.dll"],
-                        }
-
-                    if self.entropy_analysis_cb.isChecked():
-                        results["entropy"] = {"overall": 7.2, "high_entropy_sections": 3}
-
-                    if self.signature_analysis_cb.isChecked():
-                        results["signatures"] = ["UPX", "VMProtect"]
-
-                    if self.crypto_key_extraction_cb.isChecked():
-                        # Extract cryptographic keys using LicenseValidationBypass
-                        self.log_activity("Extracting cryptographic keys...")
-                        try:
-                            extracted_keys = self.license_validation_bypass.extract_all_keys(binary_path) if binary_path else {}
-
-                            # Process extracted keys
-                            key_results: dict[str, int | list[dict[str, Any]]] = {
-                                "total_keys_found": 0,
-                                "rsa_keys": [],
-                                "ecc_keys": [],
-                                "symmetric_keys": [],
-                                "certificates": [],
-                            }
-
-                            for key_type, keys in extracted_keys.items():
-                                if key_type == "rsa" and keys:
-                                    key_results["rsa_keys"] = [
-                                        {
-                                            "address": hex(key.address),
-                                            "modulus_bits": key.modulus.bit_length() if key.modulus else 0,
-                                            "exponent": key.exponent,
-                                            "confidence": key.confidence,
-                                            "context": key.context,
-                                        }
-                                        for key in keys
-                                    ]
-                                    total = key_results.get("total_keys_found", 0)
-                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
-
-                                elif key_type == "ecc" and keys:
-                                    key_results["ecc_keys"] = [
-                                        {
-                                            "address": hex(key.address),
-                                            "curve": key.curve,
-                                            "confidence": key.confidence,
-                                            "context": key.context,
-                                        }
-                                        for key in keys
-                                    ]
-                                    total = key_results.get("total_keys_found", 0)
-                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
-
-                                elif key_type == "symmetric" and keys:
-                                    key_results["symmetric_keys"] = [
-                                        {
-                                            "address": hex(key.address),
-                                            "type": key.key_type.value,
-                                            "key_size": len(key.key_data) * 8,
-                                            "confidence": key.confidence,
-                                        }
-                                        for key in keys
-                                    ]
-                                    total = key_results.get("total_keys_found", 0)
-                                    key_results["total_keys_found"] = (total if isinstance(total, int) else 0) + len(keys)
-
-                            # Extract certificates
-                            try:
-                                certs = self.license_validation_bypass.extract_certificates(binary_path) if binary_path else []
-                                if certs:
-                                    key_results["certificates"] = [
-                                        {
-                                            "subject": cert.subject.rfc4514_string(),
-                                            "issuer": cert.issuer.rfc4514_string(),
-                                            "serial_number": str(cert.serial_number),
-                                            "not_valid_after": cert.not_valid_after_utc.isoformat(),
-                                        }
-                                        for cert in certs
-                                    ]
-                                    cert_total = key_results.get("total_keys_found", 0)
-                                    key_results["total_keys_found"] = (cert_total if isinstance(cert_total, int) else 0) + len(certs)
-                            except Exception as cert_error:
-                                self.log_activity(f"Certificate extraction error: {cert_error!s}")
-
-                            results["crypto_keys"] = key_results
-                            self.log_activity(f"Found {key_results['total_keys_found']} cryptographic keys/certificates")
-
-                        except Exception as key_error:
-                            self.log_activity(f"Key extraction error: {key_error!s}")
-                            results["crypto_keys"] = {"error": str(key_error)}
-
-                    if self.subscription_bypass_cb.isChecked():
-                        # Detect and analyze subscription validation bypass opportunities
-                        self.log_activity("Analyzing subscription validation mechanisms...")
-                        try:
-                            # Initialize the bypass system
-                            from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
-
-                            sub_bypass = SubscriptionValidationBypass()
-
-                            # Detect subscription type
-                            product_name = os.path.splitext(os.path.basename(self.current_file_path or ""))[0]
-                            sub_type = sub_bypass.detect_subscription_type(product_name) if product_name else None
-
-                            bypass_results: dict[str, Any] = {
-                                "detected_type": sub_type.value if sub_type else "unknown",
-                                "bypass_methods": [],
-                            }
-
-                            # Analyze available bypass methods
-                            if sub_type:
-                                if sub_type.value == "cloud_based":
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Local Server Emulation",
-                                            "description": "Start local license server to intercept cloud requests",
-                                            "confidence": 0.85,
-                                        },
-                                    )
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Host Redirection",
-                                            "description": "Redirect license server domains to localhost",
-                                            "confidence": 0.90,
-                                        },
-                                    )
-
-                                elif sub_type.value == "server_license":
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Server Response Emulation",
-                                            "description": "Emulate license server responses",
-                                            "confidence": 0.80,
-                                        },
-                                    )
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Certificate Replacement",
-                                            "description": "Replace server certificates for validation",
-                                            "confidence": 0.75,
-                                        },
-                                    )
-
-                                elif sub_type.value == "token_based":
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Token Generation",
-                                            "description": "Generate valid JWT/OAuth tokens",
-                                            "confidence": 0.70,
-                                        },
-                                    )
-                                    bypass_results["bypass_methods"].append(
-                                        {
-                                            "method": "Token Injection",
-                                            "description": "Inject pre-generated tokens into memory",
-                                            "confidence": 0.85,
-                                        },
-                                    )
-
-                                # Check for specific bypass opportunities
-                                bypass_results["registry_based"] = sub_bypass._check_registry_subscription(product_name) if product_name else {}
-                                bypass_results["local_server"] = sub_bypass._check_local_server_config(product_name) if product_name else {}
-                                bypass_results["oauth_tokens"] = sub_bypass._check_oauth_tokens(product_name) if product_name else {}
-                                bypass_results["floating_license"] = sub_bypass._check_floating_license(product_name) if product_name else {}
-
-                            results["subscription_bypass"] = bypass_results
-                            self.log_activity(f"Subscription type detected: {bypass_results['detected_type']}")
-                            self.log_activity(f"Found {len(bypass_results['bypass_methods'])} potential bypass methods")
-
-                        except Exception as sub_error:
-                            self.log_activity(f"Subscription bypass analysis error: {sub_error!s}")
-                            results["subscription_bypass"] = {"error": str(sub_error)}
-
-                    return results
-
-                except Exception as e:
-                    return {"error": str(e)}
-
-            # Submit task with callback
-            def on_static_analysis_complete(results: dict[str, object]) -> None:
-                """Display static analysis results when complete.
-
-                Args:
-                    results: Analysis results dictionary containing analysis data.
-
-                """
-                if not isinstance(results, dict) or results.get("error"):
-                    return
-                # Display crypto key extraction results
-                if "crypto_keys" in results:
-                    key_data_raw = results["crypto_keys"]
-                    if isinstance(key_data_raw, dict):
-                        key_data: dict[str, Any] = key_data_raw
-                        if not key_data.get("error"):
-                            self.results_display.append("\n=== CRYPTOGRAPHIC KEYS EXTRACTED ===\n")
-                        self.results_display.append(f"Total keys found: {key_data.get('total_keys_found', 0)}\n")
-
-                        # Display RSA keys
-                        if key_data.get("rsa_keys"):
-                            self.results_display.append(f"\nRSA Keys ({len(key_data['rsa_keys'])}):\n")
-                            for key in key_data["rsa_keys"]:
-                                self.results_display.append(f"   Address: {key['address']}\n")
-                                self.results_display.append(f"    - Modulus: {key['modulus_bits']} bits\n")
-                                self.results_display.append(f"    - Exponent: {key['exponent']}\n")
-                                self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
-                                if key.get("context"):
-                                    self.results_display.append(f"    - Context: {key['context']}\n")
-
-                        # Display ECC keys
-                        if key_data.get("ecc_keys"):
-                            self.results_display.append(f"\nECC Keys ({len(key_data['ecc_keys'])}):\n")
-                            for key in key_data["ecc_keys"]:
-                                self.results_display.append(f"   Address: {key['address']}\n")
-                                self.results_display.append(f"    - Curve: {key.get('curve', 'Unknown')}\n")
-                                self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
-
-                        # Display symmetric keys
-                        if key_data.get("symmetric_keys"):
-                            self.results_display.append(f"\nSymmetric Keys ({len(key_data['symmetric_keys'])}):\n")
-                            for key in key_data["symmetric_keys"]:
-                                self.results_display.append(f"   Address: {key['address']}\n")
-                                self.results_display.append(f"    - Type: {key['type']}\n")
-                                self.results_display.append(f"    - Key Size: {key['key_size']} bits\n")
-                                self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
-
-                        # Display certificates
-                        if key_data.get("certificates"):
-                            self.results_display.append(f"\nCertificates ({len(key_data['certificates'])}):\n")
-                            for cert in key_data["certificates"]:
-                                self.results_display.append(f"   Subject: {cert['subject']}\n")
-                                self.results_display.append(f"    - Issuer: {cert['issuer']}\n")
-                                self.results_display.append(f"    - Serial: {cert['serial_number']}\n")
-                                self.results_display.append(f"    - Valid Until: {cert['not_valid_after']}\n")
-
-                        # Store extracted keys for later use
-                        self.analysis_results["extracted_keys"] = key_data
-
-                # Display subscription validation bypass results
-                if "subscription_bypass" in results:
-                    bypass_data_raw = results["subscription_bypass"]
-                    if isinstance(bypass_data_raw, dict):
-                        bypass_data: dict[str, Any] = bypass_data_raw
-                        if not bypass_data.get("error"):
-                            self.results_display.append("\n=== SUBSCRIPTION VALIDATION BYPASS ===\n")
-                        self.results_display.append(f"Detected Type: {bypass_data.get('detected_type', 'Unknown')}\n")
-
-                        # Display bypass methods
-                        if bypass_data.get("bypass_methods"):
-                            self.results_display.append(f"\nAvailable Bypass Methods ({len(bypass_data['bypass_methods'])}):\n")
-                            for method in bypass_data["bypass_methods"]:
-                                self.results_display.append(f"   {method['method']}\n")
-                                self.results_display.append(f"    - {method['description']}\n")
-                                self.results_display.append(f"    - Confidence: {method['confidence']:.0%}\n")
-
-                        # Display detection results
-                        self.results_display.append("\nDetection Results:\n")
-                        if bypass_data.get("registry_based"):
-                            self.results_display.append("  OK Registry-based subscription found\n")
-                        if bypass_data.get("local_server"):
-                            self.results_display.append("  OK Local server configuration detected\n")
-                        if bypass_data.get("oauth_tokens"):
-                            self.results_display.append("  OK OAuth tokens present\n")
-                        if bypass_data.get("floating_license"):
-                            self.results_display.append("  OK Floating license system detected\n")
-
-                        # Store bypass results for later use
-                        self.analysis_results["subscription_bypass"] = bypass_data
-                    elif isinstance(bypass_data_raw, dict) and bypass_data_raw.get("error"):
-                        self.results_display.append(f"\nSubscription bypass error: {bypass_data_raw.get('error', 'Unknown')}\n")
-
-                # Display other static analysis results
-                if "strings" in results:
-                    strings_val = results["strings"]
-                    if isinstance(strings_val, dict):
-                        self.results_display.append(f"\nStrings: {strings_val.get('total', 0)} found\n")
-                        suspicious = strings_val.get("suspicious")
-                        if suspicious and isinstance(suspicious, list):
-                            self.results_display.append(f"  Suspicious: {', '.join(str(s) for s in suspicious)}\n")
-
-                if "entropy" in results:
-                    entropy_val = results["entropy"]
-                    if isinstance(entropy_val, dict):
-                        overall = entropy_val.get("overall", 0)
-                        self.results_display.append(f"\nEntropy: {float(overall) if overall else 0:.2f}\n")
-                        high_sections = entropy_val.get("high_entropy_sections")
-                        if high_sections:
-                            self.results_display.append(f"  High entropy sections: {high_sections}\n")
-
-                self.log_activity("Static analysis completed successfully")
-
             # Submit task
             binary_name = os.path.basename(self.current_file_path) if self.current_file_path else "unknown"
             tm = self.task_manager
             if tm is not None and hasattr(tm, "submit_callable"):
                 task_id = tm.submit_callable(
-                    run_static_analysis,
+                    self._run_static_analysis,
                     description=f"Static analysis of {binary_name}",
-                    callback=on_static_analysis_complete,
+                    callback=self._on_static_analysis_complete,
                 )
                 self.log_activity(f"Static analysis task submitted: {str(task_id)[:8]}...")
         else:
@@ -1576,7 +1450,9 @@ class AnalysisTab(BaseTab):
                 if analysis and analysis.detections:
                     self.results_display.append("Protection Detection Results:\n")
                     for detection in analysis.detections:
-                        self.results_display.append(f"   {detection.name}: {detection.type.value} (confidence: {detection.confidence:.1f}%)\n")
+                        self.results_display.append(
+                            f"   {detection.name}: {detection.type.value} (confidence: {detection.confidence:.1f}%)\n"
+                        )
                     if analysis.is_packed:
                         self.results_display.append("   Binary is packed\n")
                     if analysis.is_protected:
@@ -1724,13 +1600,13 @@ class AnalysisTab(BaseTab):
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
-        self.log_activity(f"Opening hex viewer for {os.path.basename(self.current_file_path or "")}")
+        self.log_activity(f"Opening hex viewer for {os.path.basename(self.current_file_path or '')}")
 
         try:
             from intellicrack.hexview.hex_dialog import HexViewerDialog
 
             hex_dialog = HexViewerDialog(parent=self, file_path=self.current_file_path or "")
-            hex_dialog.setWindowTitle(f"Hex Viewer - {os.path.basename(self.current_file_path or "")}")
+            hex_dialog.setWindowTitle(f"Hex Viewer - {os.path.basename(self.current_file_path or '')}")
             hex_dialog.show()
 
         except ImportError as e:
@@ -1859,14 +1735,14 @@ class AnalysisTab(BaseTab):
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
 
-        self.log_activity(f"Opening disassembly viewer for {os.path.basename(self.current_file_path or "")}")
+        self.log_activity(f"Opening disassembly viewer for {os.path.basename(self.current_file_path or '')}")
 
         try:
             # Create disassembly window
             from intellicrack.handlers.pyqt6_handler import QDialog, QFont, QPlainTextEdit
 
             disasm_dialog = QDialog(self)
-            disasm_dialog.setWindowTitle(f"Disassembly - {os.path.basename(self.current_file_path or "")}")
+            disasm_dialog.setWindowTitle(f"Disassembly - {os.path.basename(self.current_file_path or '')}")
             disasm_dialog.resize(900, 700)
 
             layout = QVBoxLayout(disasm_dialog)
@@ -1935,7 +1811,7 @@ class AnalysisTab(BaseTab):
                     base_address = 0x0
 
                 # Disassemble
-                disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or "")}"]
+                disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or '')}"]
                 disasm_output.append(f"; Architecture: {cs.arch}")
                 disasm_output.append(f"; Mode: {cs.mode}")
                 disasm_output.append("; " + "=" * 60)
@@ -2011,7 +1887,7 @@ class AnalysisTab(BaseTab):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Disassembly",
-            f"{os.path.splitext(os.path.basename(self.current_file_path or ""))[0]}_disasm.asm",
+            f"{os.path.splitext(os.path.basename(self.current_file_path or ''))[0]}_disasm.asm",
             "Assembly Files (*.asm);;Text Files (*.txt);;All Files (*)",
         )
 
@@ -2145,7 +2021,11 @@ class AnalysisTab(BaseTab):
                 def run(self) -> None:
                     try:
                         self.progress.emit(10, "Capturing system info...")
-                        snapshot_result = self.snapshot_obj.capture_full_snapshot(self.name) if hasattr(self.snapshot_obj, "capture_full_snapshot") else {}
+                        snapshot_result = (
+                            self.snapshot_obj.capture_full_snapshot(self.name)
+                            if hasattr(self.snapshot_obj, "capture_full_snapshot")
+                            else {}
+                        )
                         snapshot_data: dict[str, Any] = snapshot_result if isinstance(snapshot_result, dict) else {}
                         self.progress.emit(100, "Snapshot complete")
                         self.finished.emit(snapshot_data)
@@ -2184,13 +2064,13 @@ class AnalysisTab(BaseTab):
                 self.snapshots[snapshot_name] = snapshot_data
 
                 # Show summary
-                processes = snapshot_data.get('processes', [])
-                registry = snapshot_data.get('registry', {})
-                files = snapshot_data.get('files', {})
-                services = snapshot_data.get('services', [])
-                network = snapshot_data.get('network', {})
-                certificates = snapshot_data.get('certificates', [])
-                drivers = snapshot_data.get('drivers', [])
+                processes = snapshot_data.get("processes", [])
+                registry = snapshot_data.get("registry", {})
+                files = snapshot_data.get("files", {})
+                services = snapshot_data.get("services", [])
+                network = snapshot_data.get("network", {})
+                certificates = snapshot_data.get("certificates", [])
+                drivers = snapshot_data.get("drivers", [])
 
                 summary = [
                     f"Snapshot '{snapshot_name}' captured successfully!",
@@ -3296,9 +3176,11 @@ class AnalysisTab(BaseTab):
             self.bypass_display.append(f"Effectiveness: {strategy['effectiveness']}")
 
             if addresses := strategy.get("addresses"):
-                self.bypass_display.append(f"Target Addresses: {', '.join(hex(int(addr)) for addr in addresses[:5] if isinstance(addr, (int, float)))}")
+                self.bypass_display.append(
+                    f"Target Addresses: {', '.join(hex(int(addr)) for addr in addresses[:5] if isinstance(addr, (int, float)))}"
+                )
             if "apis" in strategy:
-                apis = strategy.get('apis')
+                apis = strategy.get("apis")
                 if apis and isinstance(apis, list):
                     self.bypass_display.append(f"Target APIs: {', '.join(str(a) for a in apis)}")
             if "port" in strategy:
@@ -3345,7 +3227,7 @@ class AnalysisTab(BaseTab):
             product_name = os.path.splitext(os.path.basename(self.current_file_path or ""))[0]
 
             if bypass_success := sub_bypass.bypass_subscription(product_name):
-                logger.info(f"Subscription bypass executed for {product_name} (result: {bypass_success})")
+                logger.info("Subscription bypass executed for %s (result: %s)", product_name, bypass_success)
                 self.bypass_display.append("\n=== SUBSCRIPTION BYPASS EXECUTED ===\n")
                 self.bypass_display.append(f"Type: {detected_type}\n")
                 self.bypass_display.append("Status: OK Bypass Active\n")
@@ -3535,7 +3417,7 @@ class AnalysisTab(BaseTab):
             event: MonitorEvent instance containing event data.
 
         """
-        event_dict: dict[str, Any] = event.to_dict() if hasattr(event, 'to_dict') else {}
+        event_dict: dict[str, Any] = event.to_dict() if hasattr(event, "to_dict") else {}
 
         timestamp = datetime.fromtimestamp(event_dict["timestamp"]).strftime("%H:%M:%S.%f")[:-3]
         source = event_dict["source"].upper()
@@ -3915,30 +3797,84 @@ class AnalysisTab(BaseTab):
             )
 
             license_related_apis = {
-                "RegOpenKeyExA", "RegOpenKeyExW", "RegQueryValueExA", "RegQueryValueExW",
-                "RegSetValueExA", "RegSetValueExW", "RegCreateKeyExA", "RegCreateKeyExW",
-                "GetVolumeInformationA", "GetVolumeInformationW",
-                "GetComputerNameA", "GetComputerNameW", "GetComputerNameExA", "GetComputerNameExW",
-                "GetUserNameA", "GetUserNameW",
-                "CryptAcquireContextA", "CryptAcquireContextW",
-                "CryptCreateHash", "CryptHashData", "CryptGetHashParam", "CryptVerifySignatureA",
-                "CryptImportKey", "CryptDecrypt", "CryptEncrypt", "CryptGenRandom",
-                "GetSystemTime", "GetLocalTime", "GetTickCount", "GetTickCount64",
-                "QueryPerformanceCounter", "GetSystemTimeAsFileTime",
-                "InternetOpenA", "InternetOpenW", "InternetConnectA", "InternetConnectW",
-                "HttpOpenRequestA", "HttpOpenRequestW", "HttpSendRequestA", "HttpSendRequestW",
-                "WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest",
-                "socket", "connect", "send", "recv", "gethostbyname",
-                "WSAStartup", "WSAConnect", "WSASend", "WSARecv",
-                "CreateFileA", "CreateFileW", "ReadFile", "WriteFile",
-                "GetFileAttributesA", "GetFileAttributesW", "GetFileSize",
-                "GetSystemDirectoryA", "GetSystemDirectoryW",
-                "GetWindowsDirectoryA", "GetWindowsDirectoryW",
-                "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
-                "OutputDebugStringA", "OutputDebugStringW",
-                "NtQueryInformationProcess", "ZwQueryInformationProcess",
-                "GetModuleHandleA", "GetModuleHandleW", "LoadLibraryA", "LoadLibraryW",
-                "GetProcAddress", "VirtualProtect", "VirtualAlloc", "VirtualQuery",
+                "RegOpenKeyExA",
+                "RegOpenKeyExW",
+                "RegQueryValueExA",
+                "RegQueryValueExW",
+                "RegSetValueExA",
+                "RegSetValueExW",
+                "RegCreateKeyExA",
+                "RegCreateKeyExW",
+                "GetVolumeInformationA",
+                "GetVolumeInformationW",
+                "GetComputerNameA",
+                "GetComputerNameW",
+                "GetComputerNameExA",
+                "GetComputerNameExW",
+                "GetUserNameA",
+                "GetUserNameW",
+                "CryptAcquireContextA",
+                "CryptAcquireContextW",
+                "CryptCreateHash",
+                "CryptHashData",
+                "CryptGetHashParam",
+                "CryptVerifySignatureA",
+                "CryptImportKey",
+                "CryptDecrypt",
+                "CryptEncrypt",
+                "CryptGenRandom",
+                "GetSystemTime",
+                "GetLocalTime",
+                "GetTickCount",
+                "GetTickCount64",
+                "QueryPerformanceCounter",
+                "GetSystemTimeAsFileTime",
+                "InternetOpenA",
+                "InternetOpenW",
+                "InternetConnectA",
+                "InternetConnectW",
+                "HttpOpenRequestA",
+                "HttpOpenRequestW",
+                "HttpSendRequestA",
+                "HttpSendRequestW",
+                "WinHttpOpen",
+                "WinHttpConnect",
+                "WinHttpOpenRequest",
+                "WinHttpSendRequest",
+                "socket",
+                "connect",
+                "send",
+                "recv",
+                "gethostbyname",
+                "WSAStartup",
+                "WSAConnect",
+                "WSASend",
+                "WSARecv",
+                "CreateFileA",
+                "CreateFileW",
+                "ReadFile",
+                "WriteFile",
+                "GetFileAttributesA",
+                "GetFileAttributesW",
+                "GetFileSize",
+                "GetSystemDirectoryA",
+                "GetSystemDirectoryW",
+                "GetWindowsDirectoryA",
+                "GetWindowsDirectoryW",
+                "IsDebuggerPresent",
+                "CheckRemoteDebuggerPresent",
+                "OutputDebugStringA",
+                "OutputDebugStringW",
+                "NtQueryInformationProcess",
+                "ZwQueryInformationProcess",
+                "GetModuleHandleA",
+                "GetModuleHandleW",
+                "LoadLibraryA",
+                "LoadLibraryW",
+                "GetProcAddress",
+                "VirtualProtect",
+                "VirtualAlloc",
+                "VirtualQuery",
             }
 
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -3970,8 +3906,19 @@ class AnalysisTab(BaseTab):
                     return api_calls
 
                 license_keywords = [
-                    "reg", "crypt", "license", "serial", "key", "valid", "check",
-                    "internet", "http", "socket", "connect", "time", "debug",
+                    "reg",
+                    "crypt",
+                    "license",
+                    "serial",
+                    "key",
+                    "valid",
+                    "check",
+                    "internet",
+                    "http",
+                    "socket",
+                    "connect",
+                    "time",
+                    "debug",
                 ]
 
                 if hasattr(binary, "imports"):
@@ -4010,9 +3957,23 @@ class AnalysisTab(BaseTab):
 
         try:
             license_file_patterns = [
-                ".lic", ".key", ".dat", ".cfg", ".ini", ".reg", ".license",
-                "license", "serial", "activation", "registration", "settings",
-                "config", "prefs", "preferences", ".xml", ".json",
+                ".lic",
+                ".key",
+                ".dat",
+                ".cfg",
+                ".ini",
+                ".reg",
+                ".license",
+                "license",
+                "serial",
+                "activation",
+                "registration",
+                "settings",
+                "config",
+                "prefs",
+                "preferences",
+                ".xml",
+                ".json",
             ]
 
             with open(self.current_file_path, "rb") as f:
@@ -4050,9 +4011,15 @@ class AnalysisTab(BaseTab):
                                 file_ops.append(f"[FILE REF] {string}")
 
             common_license_paths = [
-                "AppData\\Local", "AppData\\Roaming", "ProgramData",
-                "Application Data", "Documents and Settings",
-                "/etc/", "/var/lib/", "/opt/", "~/.config/",
+                "AppData\\Local",
+                "AppData\\Roaming",
+                "ProgramData",
+                "Application Data",
+                "Documents and Settings",
+                "/etc/",
+                "/var/lib/",
+                "/opt/",
+                "~/.config/",
             ]
 
             for string in all_strings:
@@ -4092,8 +4059,18 @@ class AnalysisTab(BaseTab):
 
             seen_urls: set[str] = set()
             license_keywords = [
-                "license", "activation", "register", "auth", "valid", "check",
-                "serial", "key", "token", "verify", "subscribe", "purchase",
+                "license",
+                "activation",
+                "register",
+                "auth",
+                "valid",
+                "check",
+                "serial",
+                "key",
+                "token",
+                "verify",
+                "subscribe",
+                "purchase",
             ]
 
             for url_bytes in urls:
@@ -4181,8 +4158,16 @@ class AnalysisTab(BaseTab):
             ]
 
             license_reg_keywords = [
-                "license", "serial", "registration", "activation", "key",
-                "registered", "trial", "expir", "valid", "auth",
+                "license",
+                "serial",
+                "registration",
+                "activation",
+                "key",
+                "registered",
+                "trial",
+                "expir",
+                "valid",
+                "auth",
             ]
 
             ascii_strings = re.findall(rb"[\x20-\x7e]{8,}", content)
@@ -4202,10 +4187,7 @@ class AnalysisTab(BaseTab):
             for string in all_strings:
                 string_upper = string.upper()
 
-                is_registry_path = any(
-                    pattern.decode("utf-8").upper() in string_upper
-                    for pattern in registry_patterns
-                )
+                is_registry_path = any(pattern.decode("utf-8").upper() in string_upper for pattern in registry_patterns)
 
                 if is_registry_path and string not in seen_keys:
                     seen_keys.add(string)
@@ -4219,8 +4201,14 @@ class AnalysisTab(BaseTab):
                         reg_ops.append(f"[REGISTRY KEY] {string}")
 
             common_license_subkeys = [
-                "Registration", "License", "Serial", "Activation",
-                "Settings", "Configuration", "Auth", "Key",
+                "Registration",
+                "License",
+                "Serial",
+                "Activation",
+                "Settings",
+                "Configuration",
+                "Auth",
+                "Key",
             ]
 
             for string in all_strings:

@@ -20,11 +20,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
+import logging
 import os
 import sys
 import time
 from datetime import datetime
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 # Rich imports for beautiful terminal UI
@@ -125,10 +129,9 @@ class AITerminalChat:
                     raise Exception(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             backend_name = type(self.ai_backend).__name__
+            logger.info("AI backend (%s) initialized successfully", backend_name)
             if self.console:
                 self.console.print(f"[green]AI backend ({backend_name}) initialized successfully[/green]")
-            else:
-                print(f"AI backend ({backend_name}) initialized successfully")
 
         except Exception as e:
             # Initialize minimal AI tools as final fallback
@@ -136,17 +139,15 @@ class AITerminalChat:
                 from intellicrack.ai.code_analysis_tools import AIAssistant
 
                 self.ai_backend = AIAssistant()
+                logger.info("Using AI tools fallback due to: %s", e)
 
                 if self.console:
                     self.console.print(f"[yellow]Using AI tools fallback: {e}[/yellow]")
-                else:
-                    print(f"Using AI tools fallback: {e}")
 
             except Exception as fallback_error:
+                logger.error("All AI backends failed: %s", fallback_error, exc_info=True)
                 if self.console:
                     self.console.print(f"[red]All AI backends failed: {fallback_error}[/red]")
-                else:
-                    print(f"All AI backends failed: {fallback_error}")
                 self.ai_backend = None
 
     def start_chat_session(self) -> None:
@@ -206,13 +207,17 @@ class AITerminalChat:
 
     def _start_basic_chat(self) -> None:
         """Start basic terminal chat interface."""
-        print("Intellicrack AI Assistant")
-        print("=" * 25)
-        print("Type '/help' for commands or ask me anything!")
-        print("Type '/quit' to exit\n")
+        logger.info("Starting basic chat interface")
+        sys.stdout.write("Intellicrack AI Assistant\n")
+        sys.stdout.write("=" * 25 + "\n")
+        sys.stdout.write("Type '/help' for commands or ask me anything!\n")
+        sys.stdout.write("Type '/quit' to exit\n\n")
+        sys.stdout.flush()
 
         if self.binary_path:
-            print(f"Current binary: {os.path.basename(self.binary_path)}\n")
+            logger.debug("Binary loaded for chat: %s", self.binary_path)
+            sys.stdout.write(f"Current binary: {os.path.basename(self.binary_path)}\n\n")
+            sys.stdout.flush()
 
         try:
             while True:
@@ -231,15 +236,19 @@ class AITerminalChat:
                         if result == "quit":
                             break
                         continue
-                    print(f"Unknown command: {command}")
-                    print("Type '/help' for available commands")
+                    logger.debug("Unknown command attempted: %s", command)
+                    sys.stdout.write(f"Unknown command: {command}\n")
+                    sys.stdout.write("Type '/help' for available commands\n")
+                    sys.stdout.flush()
                     continue
 
                 # Process AI query
                 self._process_ai_query_basic(user_input)
 
         except (KeyboardInterrupt, EOFError):
-            print("\nChat session ended")
+            logger.info("Basic chat session ended by user interrupt")
+            sys.stdout.write("\nChat session ended\n")
+            sys.stdout.flush()
 
     def _process_ai_query(self, user_input: str) -> None:
         """Process AI query with rich formatting."""
@@ -299,10 +308,14 @@ class AITerminalChat:
             },
         )
 
-        print("AI: Thinking...")
+        logger.debug("Processing AI query in basic mode")
+        sys.stdout.write("AI: Thinking...\n")
+        sys.stdout.flush()
         response = self._get_ai_response(user_input)
+        logger.debug("AI response generated, length: %d", len(response))
 
-        print(f"AI: {response}\n")
+        sys.stdout.write(f"AI: {response}\n\n")
+        sys.stdout.flush()
 
         # Add response to history
         self.conversation_history.append(
@@ -564,7 +577,9 @@ class AITerminalChat:
     def _display_ai_response(self, response: str) -> None:
         """Display AI response with typing effect."""
         if not RICH_AVAILABLE:
-            print(f"\nAI: {response}")
+            logger.debug("Displaying AI response in basic mode, length: %d", len(response))
+            sys.stdout.write(f"\nAI: {response}\n")
+            sys.stdout.flush()
             return
 
         # Create layout with centered content
@@ -673,7 +688,8 @@ class AITerminalChat:
     def _display_analysis_summary(self) -> None:
         """Display analysis summary using columns layout."""
         if not RICH_AVAILABLE or not self.analysis_results:
-            print("Analysis results not available or Rich not installed")
+            logger.debug("Cannot display analysis summary: RICH_AVAILABLE=%s, has_results=%s", RICH_AVAILABLE, bool(self.analysis_results))
+            logger.warning("Analysis results not available or Rich not installed")
             return
 
         # Create summary panels for different analysis types
@@ -738,24 +754,28 @@ class AITerminalChat:
             self.console.print(help_table)
             self.console.print()
         else:
-            print("\nAI Chat Commands:")
-            print("/help - Show this help message")
-            print("/clear - Clear conversation history")
-            print("/save [file] - Save conversation")
-            print("/analyze - Analysis overview")
-            print("/context - Show context")
-            print("/quit - Exit chat\n")
+            logger.debug("Displaying help in basic mode")
+            sys.stdout.write("\nAI Chat Commands:\n")
+            sys.stdout.write("/help - Show this help message\n")
+            sys.stdout.write("/clear - Clear conversation history\n")
+            sys.stdout.write("/save [file] - Save conversation\n")
+            sys.stdout.write("/analyze - Analysis overview\n")
+            sys.stdout.write("/context - Show context\n")
+            sys.stdout.write("/quit - Exit chat\n\n")
+            sys.stdout.flush()
 
         return None
 
     def _clear_history(self, args: list[str]) -> str | None:
         """Clear conversation history."""
         self.conversation_history.clear()
+        logger.info("Conversation history cleared")
 
         if self.console:
             self.console.print("[green]Conversation history cleared[/green]")
         else:
-            print("Conversation history cleared")
+            sys.stdout.write("Conversation history cleared\n")
+            sys.stdout.flush()
 
         return None
 
@@ -776,26 +796,32 @@ class AITerminalChat:
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conversation_data, f, indent=2, ensure_ascii=False)
 
+            logger.info("Conversation saved to %s", filename)
             if self.console:
                 self.console.print(f"[green]Conversation saved to {filename}[/green]")
             else:
-                print(f"Conversation saved to {filename}")
+                sys.stdout.write(f"Conversation saved to {filename}\n")
+                sys.stdout.flush()
 
         except Exception as e:
+            logger.error("Save failed: %s", e, exc_info=True)
             if self.console:
                 self.console.print(f"[red]Save failed: {e}[/red]")
             else:
-                print(f"Save failed: {e}")
+                sys.stdout.write(f"Save failed: {e}\n")
+                sys.stdout.flush()
 
         return None
 
     def _analyze_current_binary(self, args: list[str]) -> str | None:
         """Provide analysis overview of current binary."""
         if not self.binary_path:
+            logger.warning("Analyze command called but no binary loaded")
             if self.console:
                 self.console.print("[yellow]No binary currently loaded[/yellow]")
             else:
-                print("No binary currently loaded")
+                sys.stdout.write("No binary currently loaded\n")
+                sys.stdout.flush()
             return None
 
         # Generate analysis overview
@@ -821,10 +847,12 @@ class AITerminalChat:
 
         self.conversation_history.append(response)
 
+        logger.debug("Analysis overview generated for %s", os.path.basename(self.binary_path))
         if self.console:
             self._display_ai_response(overview)
         else:
-            print(f"AI: {overview}")
+            sys.stdout.write(f"AI: {overview}\n")
+            sys.stdout.flush()
 
         return None
 
@@ -832,6 +860,7 @@ class AITerminalChat:
         """Show current analysis context."""
         context = self._build_context()
 
+        logger.debug("Displaying current context with %d keys", len(context))
         if self.console:
             context_panel = Panel(
                 json.dumps(context, indent=2),
@@ -840,9 +869,10 @@ class AITerminalChat:
             )
             self.console.print(context_panel)
         else:
-            print("\nCurrent Context:")
-            print(json.dumps(context, indent=2))
-            print()
+            sys.stdout.write("\nCurrent Context:\n")
+            sys.stdout.write(json.dumps(context, indent=2))
+            sys.stdout.write("\n\n")
+            sys.stdout.flush()
 
         return None
 
@@ -876,11 +906,13 @@ class AITerminalChat:
                         self.console.print(f"   {backend}{status}")
                     self.console.print("\n[dim]Usage: /backend <name>[/dim]")
                 else:
-                    print("\nAvailable AI Backends:")
+                    logger.debug("Displaying available backends in basic mode")
+                    sys.stdout.write("\nAvailable AI Backends:\n")
                     for backend in available_backends:
                         status = " (current)" if backend == current_backend else ""
-                        print(f"   {backend}{status}")
-                    print("\nUsage: /backend <name>")
+                        sys.stdout.write(f"   {backend}{status}\n")
+                    sys.stdout.write("\nUsage: /backend <name>\n")
+                    sys.stdout.flush()
 
                 return None
 
@@ -888,11 +920,13 @@ class AITerminalChat:
             backend_name = args[0].lower()
 
             if backend_name not in available_backends:
-                error_msg = f"Backend '{backend_name}' not available. Available backends: {', '.join(available_backends)}"
+                error_msg = "Backend '{}' not available. Available backends: {}".format(backend_name, ", ".join(available_backends))
+                logger.warning("Invalid backend requested: %s", backend_name)
                 if self.console:
                     self.console.print(f"[red]{error_msg}[/red]")
                 else:
-                    print(error_msg)
+                    sys.stdout.write(f"{error_msg}\n")
+                    sys.stdout.flush()
                 return None
 
             try:
@@ -906,30 +940,38 @@ class AITerminalChat:
                     self._reinitialize_ai_with_backend(backend_name)
 
                     msg = f"Successfully switched to {backend_name} backend (status: {success})!"
+                    logger.info("Backend switched to %s", backend_name)
                     if self.console:
                         self.console.print(f"[green]{msg}[/green]")
                     else:
-                        print(msg)
+                        sys.stdout.write(f"{msg}\n")
+                        sys.stdout.flush()
                 else:
                     msg = f"Failed to switch to {backend_name} backend. Check configuration and API keys."
+                    logger.error("Failed to switch to backend: %s", backend_name)
                     if self.console:
                         self.console.print(f"[red]{msg}[/red]")
                     else:
-                        print(msg)
+                        sys.stdout.write(f"{msg}\n")
+                        sys.stdout.flush()
 
             except Exception as e:
                 error_msg = f"Error switching to {backend_name}: {e}"
+                logger.error("Error switching to backend %s: %s", backend_name, e, exc_info=True)
                 if self.console:
                     self.console.print(f"[red]{error_msg}[/red]")
                 else:
-                    print(error_msg)
+                    sys.stdout.write(f"{error_msg}\n")
+                    sys.stdout.flush()
 
         except Exception as e:
             error_msg = f"Error in backend switching: {e}"
+            logger.error("Error in backend switching: %s", e, exc_info=True)
             if self.console:
                 self.console.print(f"[red]{error_msg}[/red]")
             else:
-                print(error_msg)
+                sys.stdout.write(f"{error_msg}\n")
+                sys.stdout.flush()
 
         return None
 
@@ -957,28 +999,35 @@ class AITerminalChat:
                     raise Exception(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             backend_class_name = type(self.ai_backend).__name__
+            logger.info("AI backend (%s) reinitialized with %s", backend_class_name, backend_name)
             if self.console:
                 self.console.print(f"[green]AI backend ({backend_class_name}) reinitialized with {backend_name}[/green]")
             else:
-                print(f"AI backend ({backend_class_name}) reinitialized with {backend_name}")
+                sys.stdout.write(f"AI backend ({backend_class_name}) reinitialized with {backend_name}\n")
+                sys.stdout.flush()
 
         except Exception as e:
             # Fall back to AIAssistant if available
+            logger.warning("Backend reinitialization failed, attempting fallback: %s", e, exc_info=True)
             try:
                 from intellicrack.ai.code_analysis_tools import AIAssistant
 
                 self.ai_backend = AIAssistant()
+                logger.info("Fell back to AIAssistant due to: %s", e)
 
                 if self.console:
                     self.console.print(f"[yellow]Fell back to AIAssistant due to: {e}[/yellow]")
                 else:
-                    print(f"Fell back to AIAssistant due to: {e}")
+                    sys.stdout.write(f"Fell back to AIAssistant due to: {e}\n")
+                    sys.stdout.flush()
 
             except Exception as fallback_error:
+                logger.error("Failed to reinitialize AI backend: %s", fallback_error, exc_info=True)
                 if self.console:
                     self.console.print(f"[red]Failed to reinitialize AI backend: {fallback_error}[/red]")
                 else:
-                    print(f"Failed to reinitialize AI backend: {fallback_error}")
+                    sys.stdout.write(f"Failed to reinitialize AI backend: {fallback_error}\n")
+                    sys.stdout.flush()
                 self.ai_backend = None
 
     def _quit_chat(self, args: list[str]) -> str:
@@ -986,20 +1035,24 @@ class AITerminalChat:
         if self.auto_save and self.conversation_history:
             self._save_conversation([f"auto_save_{int(time.time())}.json"])
 
+        logger.info("Chat session ended by user")
         if self.console:
             self.console.print("[green]Thanks for using Intellicrack AI Assistant![/green]")
         else:
-            print("Thanks for using Intellicrack AI Assistant!")
+            sys.stdout.write("Thanks for using Intellicrack AI Assistant!\n")
+            sys.stdout.flush()
 
         return "quit"
 
     def _load_conversation(self, args: list[str]) -> str | None:
         """Load conversation from file."""
         if not args:
+            logger.debug("Load command called without filename argument")
             if self.console:
                 self.console.print("[red]Usage: /load <filename>[/red]")
             else:
-                print("Usage: /load <filename>")
+                sys.stdout.write("Usage: /load <filename>\n")
+                sys.stdout.flush()
             return None
 
         filename = args[0]
@@ -1009,17 +1062,21 @@ class AITerminalChat:
                 data = json.load(f)
 
             self.conversation_history = data.get("conversation", [])
+            logger.info("Conversation loaded from %s", filename)
 
             if self.console:
                 self.console.print(f"[green]Conversation loaded from {filename}[/green]")
             else:
-                print(f"Conversation loaded from {filename}")
+                sys.stdout.write(f"Conversation loaded from {filename}\n")
+                sys.stdout.flush()
 
         except Exception as e:
+            logger.error("Failed to load conversation from %s: %s", filename, e, exc_info=True)
             if self.console:
                 self.console.print(f"[red]Load failed: {e}[/red]")
             else:
-                print(f"Load failed: {e}")
+                sys.stdout.write(f"Load failed: {e}\n")
+                sys.stdout.flush()
 
         return None
 
@@ -1036,22 +1093,28 @@ class AITerminalChat:
             elif format_type == "md":
                 self._export_markdown(filename)
             else:
+                logger.warning("Unsupported export format requested: %s", format_type)
                 if self.console:
                     self.console.print(f"[red]Unsupported format: {format_type}[/red]")
                 else:
-                    print(f"Unsupported format: {format_type}")
+                    sys.stdout.write(f"Unsupported format: {format_type}\n")
+                    sys.stdout.flush()
                 return None
 
+            logger.info("Conversation exported to %s", filename)
             if self.console:
                 self.console.print(f"[green]Conversation exported to {filename}[/green]")
             else:
-                print(f"Conversation exported to {filename}")
+                sys.stdout.write(f"Conversation exported to {filename}\n")
+                sys.stdout.flush()
 
         except Exception as e:
+            logger.error("Failed to export conversation: %s", e, exc_info=True)
             if self.console:
                 self.console.print(f"[red]Export failed: {e}[/red]")
             else:
-                print(f"Export failed: {e}")
+                sys.stdout.write(f"Export failed: {e}\n")
+                sys.stdout.flush()
 
         return None
 
@@ -1106,7 +1169,7 @@ def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, A
         chat = AITerminalChat(binary_path, analysis_results)
         chat.start_chat_session()
     except Exception as e:
-        print(f"AI chat error: {e}")
+        logger.error("AI chat error: %s", e, exc_info=True)
         return False
     return True
 

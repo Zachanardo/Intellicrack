@@ -135,7 +135,7 @@ class ParallelProcessingManager:
         }
 
         self.tasks.append(task)
-        self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
+        self.logger.info("Added task: %s (ID: %s)", task_type, task["id"])
         return task["id"]
 
     def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
@@ -163,7 +163,12 @@ class ParallelProcessingManager:
         # Calculate number of chunks
         num_chunks = (file_size + self.chunk_size - 1) // self.chunk_size
 
-        self.logger.info(f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024 * 1024)}MB each")
+        self.logger.info(
+            "Processing %s in %s chunks of %sMB each",
+            self.binary_path,
+            num_chunks,
+            self.chunk_size // (1024 * 1024),
+        )
         self.logger.info("Using multiprocessing backend for processing")
 
         return self._process_with_multiprocessing(process_func, num_chunks)
@@ -198,7 +203,7 @@ class ParallelProcessingManager:
                     chunk_data = f.read(self.chunk_size)
                 return process_func(chunk_data, offset)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in parallel_processing_manager: %s", e)
+                logger.error("Error in parallel_processing_manager: %s", e, exc_info=True)
                 return {"error": str(e), "offset": offset, "chunk_idx": chunk_idx}
 
         # Create pool
@@ -208,7 +213,12 @@ class ParallelProcessingManager:
             for i, result in enumerate(pool.imap_unordered(read_and_process_chunk, range(num_chunks))):
                 results.append(result)
                 if (i + 1) % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(f"Progress: {i + 1}/{num_chunks} chunks processed ({(i + 1) / num_chunks * 100:.1f}%)")
+                    self.logger.info(
+                        "Progress: %s/%s chunks processed (%.1f%%)",
+                        i + 1,
+                        num_chunks,
+                        (i + 1) / num_chunks * 100,
+                    )
 
         return results
 
@@ -275,7 +285,7 @@ class ParallelProcessingManager:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error starting processing: %s", e)
+            self.logger.error("Error starting processing: %s", e, exc_info=True)
             self.stop_processing()
             return False
 
@@ -314,7 +324,7 @@ class ParallelProcessingManager:
 
                 # Process task
                 start_time = time.time()
-                logger.info(f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})")
+                logger.info("Worker %s processing task: %s (ID: %s)", worker_id, task["type"], task["id"])
 
                 try:
                     # Process task based on type
@@ -341,7 +351,7 @@ class ParallelProcessingManager:
                     result_queue.put((worker_id, task, result))
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Error processing task {task['id']}: {e}")
+                    logger.error("Error processing task %s: %s", task["id"], e, exc_info=True)
                     processing_time = time.time() - start_time
                     error_result = {
                         "error": str(e),
@@ -354,7 +364,7 @@ class ParallelProcessingManager:
                     result_queue.put((worker_id, task, error_result))
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Worker %s error: %s", worker_id, e)
+            logger.error("Worker %s error: %s", worker_id, e, exc_info=True)
 
     def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
         """Process a pattern-finding task."""
@@ -388,9 +398,9 @@ class ParallelProcessingManager:
                         },
                     )
             except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("Error processing pattern %s: %s", pattern, e)
+                logger.warning("Error processing pattern %s: %s", pattern, e, exc_info=True)
 
-        logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
+        logger.info("Found %s pattern matches in chunk at offset %s", len(matches), chunk_start)
         return {"matches": matches, "patterns_found": len(matches)}
 
     def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
@@ -516,7 +526,13 @@ class ParallelProcessingManager:
             entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
             strings = total_strings
 
-            logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
+            logger.info(
+                "Analyzed section %s: size=%s, entropy=%.2f, strings=%s",
+                section_name,
+                len(section_data),
+                entropy,
+                len(strings),
+            )
 
             return {
                 "section_name": section_name,
@@ -537,7 +553,7 @@ class ParallelProcessingManager:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error analyzing section %s: %s", section_name, e)
+            logger.error("Error analyzing section %s: %s", section_name, e, exc_info=True)
             return {"error": str(e), "section_name": section_name}
 
     def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
@@ -568,7 +584,7 @@ class ParallelProcessingManager:
                         target_address = sym.rebased_addr
                         break
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error resolving function address: {e!s}")
+                logger.error("Error resolving function address: %s", e, exc_info=True)
 
             if target_address is None:
                 return {"error": f"Could not resolve address for function {target_function}"}
@@ -644,12 +660,12 @@ class ParallelProcessingManager:
                 "vulnerabilities": vulnerabilities,
             }
 
-            logger.info(f"Symbolic execution completed: {result['paths_explored']} paths explored")
+            logger.info("Symbolic execution completed: %s paths explored", result["paths_explored"])
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during symbolic execution: {e!s}"
-            logger.error(error_msg)
+            logger.error("Symbolic execution error: %s", e, exc_info=True)
             return {
                 "error": error_msg,
                 "target_function": target_function,
@@ -739,7 +755,7 @@ class ParallelProcessingManager:
 
                 # Log progress
                 total_tasks = self.results["tasks_completed"] + self.results["tasks_failed"]
-                self.logger.info(f"Progress: {total_tasks}/{len(self.tasks)} tasks processed")
+                self.logger.info("Progress: %s/%s tasks processed", total_tasks, len(self.tasks))
 
                 # Decrement tasks remaining
                 tasks_remaining -= 1
@@ -754,7 +770,7 @@ class ParallelProcessingManager:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error collecting results: %s", e)
+            self.logger.error("Error collecting results: %s", e, exc_info=True)
             return False
 
     def stop_processing(self) -> bool:
@@ -799,7 +815,7 @@ class ParallelProcessingManager:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error stopping processing: %s", e)
+            self.logger.error("Error stopping processing: %s", e, exc_info=True)
             return False
 
     def get_results(self) -> dict[str, Any]:
@@ -1003,7 +1019,7 @@ class ParallelProcessingManager:
             self.logger.info("Report saved to %s", filename)
             return filename
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving report: %s", e)
+            self.logger.error("Error saving report: %s", e, exc_info=True)
             return None
 
     def cleanup(self) -> None:

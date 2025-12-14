@@ -461,10 +461,10 @@ class NativeICPLibrary:
                     if lib_file.exists():
                         self.lib = ctypes.CDLL(str(lib_file))
                         self._setup_functions()
-                        logger.info(f"Loaded native ICP library from {lib_file}")
+                        logger.info("Loaded native ICP library from %s", lib_file)
                         return
                 except Exception as e:
-                    logger.debug(f"Failed to load {lib_file}: {e}")
+                    logger.debug("Failed to load %s: %s", lib_file, e, exc_info=True)
 
         # Fallback to Python module if available
         if _icp_module:
@@ -517,7 +517,7 @@ class NativeICPLibrary:
             self.functions["init"]()
 
         except AttributeError as e:
-            logger.warning(f"Some native functions not available: {e}")
+            logger.warning("Some native functions not available: %s", e, exc_info=True)
 
     def scan_file_native(self, file_path: str, flags: int = 0) -> str:
         """Scan file using native library call.
@@ -683,7 +683,7 @@ class ResultCache:
 
             if cursor.rowcount > 0:
                 self.cache_stats["evictions"] += cursor.rowcount
-                logger.info(f"Evicted {cursor.rowcount} old cache entries")
+                logger.info("Evicted %s old cache entries", cursor.rowcount)
 
     def get_file_hash(self, file_path: str) -> str:
         """Calculate file hash for cache key.
@@ -764,7 +764,7 @@ class ResultCache:
             return None
 
         except Exception as e:
-            logger.debug(f"Cache get error: {e}")
+            logger.debug("Cache get error: %s", e, exc_info=True)
             return None
 
     def put(self, file_path: str, scan_mode: str, result: dict[str, Any]) -> None:
@@ -813,7 +813,7 @@ class ResultCache:
                 )
 
         except Exception as e:
-            logger.debug(f"Cache put error: {e}")
+            logger.debug("Cache put error: %s", e, exc_info=True)
 
     def invalidate(self, file_path: str) -> None:
         """Invalidate cache entries for a file.
@@ -833,7 +833,7 @@ class ResultCache:
                 conn.execute("DELETE FROM cache WHERE file_path = ?", (file_path,))
 
         except Exception as e:
-            logger.debug(f"Cache invalidate error: {e}")
+            logger.debug("Cache invalidate error: %s", e, exc_info=True)
 
     def get_stats(self) -> dict[str, Any]:
         """Get cache statistics.
@@ -924,7 +924,7 @@ class ParallelScanner:
                     progress_callback(completed, total_files, file_path)
 
             except Exception as e:
-                logger.error(f"Parallel scan error for {file_path}: {e}")
+                logger.error("Parallel scan error for %s: %s", file_path, e, exc_info=True)
                 results[file_path] = ICPScanResult(file_path=file_path, error=str(e))
 
         return results
@@ -966,7 +966,7 @@ class ParallelScanner:
                     return scan_result
 
             except Exception as e:
-                logger.error(f"Native scan error: {e}")
+                logger.error("Native scan error: %s", e, exc_info=True)
                 raise
 
         result = await loop.run_in_executor(self.executor, do_scan)
@@ -1078,7 +1078,7 @@ class ICPBackend:
         # Use pre-imported module as fallback
         if not self.native_lib.lib and _icp_module:
             self.icp_module = _icp_module
-            logger.info(f"ICP Backend initialized with Python module v{ICP_VERSION}")
+            logger.info("ICP Backend initialized with Python module v%s", ICP_VERSION)
         elif self.native_lib.lib:
             self.icp_module = self.native_lib
             logger.info("ICP Backend initialized with native library")
@@ -1174,7 +1174,7 @@ class ICPBackend:
         if self.cache:
             cached_result = self.cache.get(file_path, scan_mode.value)
             if cached_result:
-                logger.debug(f"Cache hit for {file_path} with mode {scan_mode.value}")
+                logger.debug("Cache hit for %s with mode %s", file_path, scan_mode.value)
                 # Convert cached dict back to ICPScanResult
                 return ICPScanResult.from_json(file_path, cached_result)
 
@@ -1223,7 +1223,7 @@ class ICPBackend:
                 last_error = result.error if result else "Unknown error"
 
             except TimeoutError:
-                logger.error(f"Analysis timed out after {self.default_scan_timeout} seconds for {file_path}")
+                logger.error("Analysis timed out after %s seconds for %s", self.default_scan_timeout, file_path, exc_info=True)
                 result = ICPScanResult(
                     file_path=str(file_path),
                     error=f"Analysis timed out after {self.default_scan_timeout} seconds",
@@ -1232,7 +1232,7 @@ class ICPBackend:
             except Exception as e:
                 retry_count += 1
                 last_error = str(e)
-                logger.warning(f"Scan attempt {retry_count} failed: {e}")
+                logger.warning("Scan attempt %s failed: %s", retry_count, e, exc_info=True)
 
                 if retry_count < self.max_retries:
                     # Exponential backoff
@@ -1242,7 +1242,7 @@ class ICPBackend:
         if retry_count >= self.max_retries:
             self.error_count += 1
             self.last_error = str(last_error) if last_error else None
-            logger.error(f"Analysis failed after {self.max_retries} retries: {last_error}")
+            logger.error("Analysis failed after %s retries: %s", self.max_retries, last_error)
             return ICPScanResult(
                 file_path=str(file_path),
                 error=f"Analysis failed after {self.max_retries} retries: {last_error}",
@@ -1258,7 +1258,7 @@ class ICPBackend:
                     supplemental_data = await self._run_supplemental_analysis(str(file_path))
                     scan_result.supplemental_data = supplemental_data
                 except Exception as e:
-                    logger.warning(f"Supplemental analysis failed: {e}")
+                    logger.warning("Supplemental analysis failed: %s", e, exc_info=True)
 
             # Add entropy information if requested
             if show_entropy and os.path.exists(file_path):
@@ -1293,7 +1293,7 @@ class ICPBackend:
                         scan_result.supplemental_data["entropy"] = entropy_result[0]
                         scan_result.supplemental_data["entropy_high"] = entropy_result[1]
                 except Exception as e:
-                    logger.debug(f"Could not calculate entropy: {e}")
+                    logger.debug("Could not calculate entropy: %s", e, exc_info=True)
 
             # Add file info if requested
             if show_info and os.path.exists(file_path):
@@ -1308,13 +1308,13 @@ class ICPBackend:
                         "permissions": oct(stat_info.st_mode),
                     }
                 except Exception as e:
-                    logger.debug(f"Could not get file info: {e}")
+                    logger.debug("Could not get file info: %s", e, exc_info=True)
 
-            logger.info(f"Analysis complete: {len(scan_result.all_detections)} detections found")
+            logger.info("Analysis complete: %s detections found", len(scan_result.all_detections))
             return scan_result
 
         except Exception as e:
-            logger.error(f"ICP analysis error: {e}")
+            logger.error("ICP analysis error: %s", e, exc_info=True)
             return ICPScanResult(
                 file_path=str(file_path),
                 error=str(e),
@@ -1355,7 +1355,7 @@ class ICPBackend:
                         supplemental = await self._run_supplemental_analysis(file_path)
                         result.supplemental_data = supplemental
                     except Exception as e:
-                        logger.warning(f"Failed to add supplemental data for {file_path}: {e}")
+                        logger.warning("Failed to add supplemental data for %s: %s", file_path, e, exc_info=True)
 
         return results
 
@@ -1392,7 +1392,7 @@ class ICPBackend:
                         return ICPScanResult.from_icp_text(str(file_path), result_text)
 
             except Exception as e:
-                logger.error(f"Native scan error: {e}")
+                logger.error("Native scan error: %s", e, exc_info=True)
                 return ICPScanResult(file_path=str(file_path), error=str(e))
 
         result = await loop.run_in_executor(None, native_scan)
@@ -1577,7 +1577,7 @@ class ICPBackend:
                 return f"ICP Engine {version}"
             return "ICP Engine (version unknown)"
         except Exception as e:
-            logger.error(f"Failed to get engine version: {e}")
+            logger.error("Failed to get engine version: %s", e, exc_info=True)
             return "Unknown"
 
     def get_available_scan_modes(self) -> list[str]:
@@ -1662,7 +1662,7 @@ class ICPBackend:
             lines = result.strip().split("\n")
             return lines[0] if lines else "Unknown"
         except Exception as e:
-            logger.error(f"Error getting file type: {e}")
+            logger.error("Error getting file type: %s", e, exc_info=True)
             return "Unknown"
 
     def get_file_entropy(self, file_path: str) -> float:
@@ -1701,7 +1701,7 @@ class ICPBackend:
 
                 return entropy
         except Exception as e:
-            logger.error(f"Error calculating entropy: {e}")
+            logger.error("Error calculating entropy: %s", e, exc_info=True)
             return 0.0
 
     def extract_strings(self, file_path: str, min_length: int = 4) -> list[dict[str, Any]]:
@@ -1761,7 +1761,7 @@ class ICPBackend:
 
             return strings
         except Exception as e:
-            logger.error(f"Error extracting strings: {e}")
+            logger.error("Error extracting strings: %s", e, exc_info=True)
             return []
 
     def get_file_sections(self, file_path: str) -> list[dict[str, Any]]:
@@ -1804,7 +1804,7 @@ class ICPBackend:
                     }
                     sections.append(section_info)
             except Exception as e:
-                logger.debug("Error parsing PE sections: %s", e)
+                logger.debug("Error parsing PE sections: %s", e, exc_info=True)
 
             # Fallback to basic file analysis
             if not sections:
@@ -1823,7 +1823,7 @@ class ICPBackend:
 
             return sections
         except Exception as e:
-            logger.error(f"Error getting file sections: {e}")
+            logger.error("Error getting file sections: %s", e, exc_info=True)
             return []
 
     def detect_packers(self, file_path: str) -> list[str]:
@@ -1856,7 +1856,7 @@ class ICPBackend:
 
             return packers
         except Exception as e:
-            logger.error(f"Error detecting packers: {e}")
+            logger.error("Error detecting packers: %s", e, exc_info=True)
             return []
 
     def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> ICPScanResult:
@@ -1961,7 +1961,7 @@ class ICPBackend:
                             scan_result.file_infos.append(file_info)
 
         except Exception as e:
-            logger.error(f"Error merging supplemental detections: {e}")
+            logger.error("Error merging supplemental detections: %s", e, exc_info=True)
 
     def merge_analysis_engines_data(
         self,
@@ -2014,7 +2014,7 @@ class ICPBackend:
             return base_analysis
 
         except Exception as e:
-            logger.error(f"Error merging analysis engines data: {e}")
+            logger.error("Error merging analysis engines data: %s", e, exc_info=True)
             return {
                 "file_path": file_path,
                 "error": str(e),
@@ -2079,7 +2079,7 @@ class ICPBackend:
             }
 
         except Exception as e:
-            logger.error(f"Error calculating threat score: {e}")
+            logger.error("Error calculating threat score: %s", e, exc_info=True)
             return {
                 "score": 0.0,
                 "level": "unknown",
@@ -2138,7 +2138,7 @@ class ICPBackend:
                 for indicator in memory_data.get("security_indicators", [])
             )
         except Exception as e:
-            logger.error(f"Error extracting security indicators: {e}")
+            logger.error("Error extracting security indicators: %s", e, exc_info=True)
 
         return indicators
 
@@ -2209,7 +2209,7 @@ class ICPBackend:
                 )
 
         except Exception as e:
-            logger.error(f"Error generating bypass recommendations: {e}")
+            logger.error("Error generating bypass recommendations: %s", e, exc_info=True)
 
         return recommendations
 
@@ -2280,7 +2280,7 @@ class ICPBackend:
 
             return analysis
         except Exception as e:
-            logger.error(f"Error in detailed analysis: {e}")
+            logger.error("Error in detailed analysis: %s", e, exc_info=True)
             return {
                 "file_path": file_path,
                 "error": str(e),
@@ -2322,9 +2322,9 @@ class ICPBackend:
                                 supplemental_data["engines_used"].append("yara")
                                 supplemental_data["analysis_summary"]["yara_available"] = True
                 except Exception as e:
-                    logger.debug(f"YARA analysis failed: {e}")
+                    logger.debug("YARA analysis failed: %s", e, exc_info=True)
         except Exception as e:
-            logger.debug(f"YARA engine unavailable: {e}")
+            logger.debug("YARA engine unavailable: %s", e, exc_info=True)
 
         # Lazy import and run Binwalk firmware analysis
         try:
@@ -2353,9 +2353,9 @@ class ICPBackend:
                                 supplemental_data["engines_used"].append("binwalk")
                                 supplemental_data["analysis_summary"]["binwalk_available"] = True
                 except Exception as e:
-                    logger.debug(f"Binwalk analysis failed: {e}")
+                    logger.debug("Binwalk analysis failed: %s", e, exc_info=True)
         except Exception as e:
-            logger.debug(f"Binwalk engine unavailable: {e}")
+            logger.debug("Binwalk engine unavailable: %s", e, exc_info=True)
 
         # Lazy import and run Volatility3 analysis for memory dumps
         try:
@@ -2397,9 +2397,9 @@ class ICPBackend:
                         logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
                         supplemental_data["analysis_summary"]["volatility_available"] = True
                 except Exception as e:
-                    logger.debug(f"Volatility3 analysis failed: {e}")
+                    logger.debug("Volatility3 analysis failed: %s", e, exc_info=True)
         except Exception as e:
-            logger.debug(f"Volatility3 engine unavailable: {e}")
+            logger.debug("Volatility3 engine unavailable: %s", e, exc_info=True)
 
         # Add summary information
         supplemental_data["analysis_summary"]["engines_run"] = len(supplemental_data["engines_used"])
@@ -2409,7 +2409,7 @@ class ICPBackend:
             + int(supplemental_data["analysis_summary"]["volatility_available"])
         )
 
-        logger.info(f"Supplemental analysis complete: {supplemental_data['engines_used']}")
+        logger.info("Supplemental analysis complete: %s", supplemental_data['engines_used'])
         return supplemental_data
 
     def get_supplemental_engines_status(self) -> dict[str, Any]:

@@ -80,7 +80,16 @@ class XlsxWorkbookProxy:
         Args:
             workbook: The actual xlsxwriter Workbook instance
 
+        Raises:
+            TypeError: If workbook doesn't have required xlsxwriter methods
+
         """
+        if not hasattr(workbook, "add_worksheet"):
+            raise TypeError("Invalid workbook: missing add_worksheet method")
+        if not hasattr(workbook, "add_format"):
+            raise TypeError("Invalid workbook: missing add_format method")
+        if not hasattr(workbook, "close"):
+            raise TypeError("Invalid workbook: missing close method")
         self._workbook = workbook
 
     def add_worksheet(self, name: str = "") -> object:
@@ -93,11 +102,7 @@ class XlsxWorkbookProxy:
             The worksheet object
 
         """
-        return getattr(
-            self._workbook,
-            "add_worksheet",
-            lambda n="": logger.debug("Mock add_worksheet called with name: %s", n),
-        )(name)
+        return self._workbook.add_worksheet(name)
 
     def add_format(self, properties: dict[str, Any] | None = None) -> object:
         """Add a format to the workbook.
@@ -111,15 +116,11 @@ class XlsxWorkbookProxy:
         """
         if properties is None:
             properties = {}
-        return getattr(
-            self._workbook,
-            "add_format",
-            lambda p: logger.debug("Mock add_format called with props: %s", p),
-        )(properties)
+        return self._workbook.add_format(properties)
 
     def close(self) -> None:
         """Close the workbook."""
-        getattr(self._workbook, "close", lambda: None)()
+        self._workbook.close()
 
 
 class AdvancedExporter:
@@ -171,7 +172,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            print(f"JSON export failed: {e}")
+            logger.error("JSON export failed: %s", e, exc_info=True)
             return False
 
     def export_executive_summary(self, output_path: str, format_type: str = "markdown") -> bool:
@@ -194,10 +195,10 @@ class AdvancedExporter:
                 return self._export_html_summary(output_path, summary_data)
             if format_type.lower() == "txt":
                 return self._export_text_summary(output_path, summary_data)
-            print(f"Unsupported format: {format_type}")
+            logger.warning("Unsupported format: %s", format_type)
             return False
         except Exception as e:
-            print(f"Executive summary export failed: {e}")
+            logger.error("Executive summary export failed: %s", e, exc_info=True)
             return False
 
     def export_vulnerability_report(self, output_path: str) -> bool:
@@ -233,7 +234,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            print(f"Vulnerability report export failed: {e}")
+            logger.error("Vulnerability report export failed: %s", e, exc_info=True)
             return False
 
     def export_csv_data(self, output_path: str, data_type: str = "all") -> bool:
@@ -256,10 +257,10 @@ class AdvancedExporter:
                 return self._export_imports_csv(output_path)
             if data_type == "all":
                 return self._export_comprehensive_csv(output_path)
-            print(f"Unsupported CSV data type: {data_type}")
+            logger.warning("Unsupported CSV data type: %s", data_type)
             return False
         except Exception as e:
-            print(f"CSV export failed: {e}")
+            logger.error("CSV export failed: %s", e, exc_info=True)
             return False
 
     def export_xml_report(self, output_path: str) -> bool:
@@ -297,7 +298,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            print(f"XML export failed: {e}")
+            logger.error("XML export failed: %s", e, exc_info=True)
             return False
 
     def export_html_report(self, output_path: str) -> bool:
@@ -311,7 +312,7 @@ class AdvancedExporter:
 
         """
         if not JINJA2_AVAILABLE:
-            print("HTML report generation not available. Install Jinja2: pip install Jinja2")
+            logger.warning("HTML report generation not available. Install Jinja2: pip install Jinja2")
             return False
 
         try:
@@ -378,7 +379,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            print(f"HTML export failed: {e}")
+            logger.error("HTML export failed: %s", e, exc_info=True)
             return False
 
     def export_yaml_config(self, output_path: str) -> bool:
@@ -392,7 +393,7 @@ class AdvancedExporter:
 
         """
         if not YAML_AVAILABLE:
-            print("YAML export not available. Install PyYAML: pip install PyYAML")
+            logger.warning("YAML export not available. Install PyYAML: pip install PyYAML")
             return False
 
         try:
@@ -408,7 +409,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            print(f"YAML export failed: {e}")
+            logger.error("YAML export failed: %s", e, exc_info=True)
             return False
 
     def export_excel_workbook(self, output_path: str) -> bool:
@@ -422,7 +423,7 @@ class AdvancedExporter:
 
         """
         if not XLSX_AVAILABLE:
-            print("Excel export not available. Install xlsxwriter: pip install xlsxwriter")
+            logger.warning("Excel export not available. Install xlsxwriter: pip install xlsxwriter")
             return False
 
         try:
@@ -458,7 +459,7 @@ class AdvancedExporter:
             workbook.close()
             return True
         except Exception as e:
-            print(f"Excel export failed: {e}")
+            logger.error("Excel export failed: %s", e, exc_info=True)
             return False
 
     def _generate_summary(self) -> dict[str, Any]:
@@ -520,12 +521,10 @@ class AdvancedExporter:
         # Check for vulnerabilities
         vuln_data = self.analysis_results.get("vulnerabilities", {})
         if isinstance(vuln_data, dict) and vuln_data.get("vulnerabilities"):
-            recommendations.extend(
-                (
-                    "Address identified vulnerabilities before deployment",
-                    "Implement input validation and bounds checking",
-                )
-            )
+            recommendations.extend((
+                "Address identified vulnerabilities before deployment",
+                "Implement input validation and bounds checking",
+            ))
         # Check for protections
         prot_data = self.analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
@@ -836,8 +835,7 @@ KEY FINDINGS
                         middle_data = f.read(128)
                         samples["middle_hex"] = middle_data.hex()
         except Exception as e:
-            # File access errors during sampling are expected and non-critical
-            logger.debug(f"Failed to read file samples: {e}")
+            logger.debug("Failed to read file samples: %s", e, exc_info=True)
 
         return samples
 
@@ -948,7 +946,7 @@ KEY FINDINGS
 
             return True
         except Exception as e:
-            print(f"Strings CSV export failed: {e}")
+            logger.error("Strings CSV export failed: %s", e, exc_info=True)
             return False
 
     def _export_imports_csv(self, output_path: str) -> bool:
@@ -979,7 +977,7 @@ KEY FINDINGS
 
             return True
         except Exception as e:
-            print(f"Imports CSV export failed: {e}")
+            logger.error("Imports CSV export failed: %s", e, exc_info=True)
             return False
 
     def _export_comprehensive_csv(self, output_path: str) -> bool:
@@ -1015,7 +1013,7 @@ KEY FINDINGS
 
             return success
         except Exception as e:
-            print(f"Comprehensive CSV export failed: {e}")
+            logger.error("Comprehensive CSV export failed: %s", e, exc_info=True)
             return False
 
     def _generate_analysis_config(self) -> dict[str, Any]:
@@ -1224,7 +1222,7 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            print(f"Failed to create summary sheet: {e}")
+            logger.error("Failed to create summary sheet: %s", e, exc_info=True)
             return None
 
     def _create_vulnerabilities_sheet(
@@ -1275,7 +1273,7 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            print(f"Failed to create vulnerabilities sheet: {e}")
+            logger.error("Failed to create vulnerabilities sheet: %s", e, exc_info=True)
             return None
 
     def _create_strings_sheet(
@@ -1325,7 +1323,7 @@ KEY FINDINGS
                     worksheet.write(row, 4, len(str(string_item)))
             return worksheet
         except Exception as e:
-            print(f"Failed to create strings sheet: {e}")
+            logger.error("Failed to create strings sheet: %s", e, exc_info=True)
             return None
 
     def _create_imports_sheet(
@@ -1383,7 +1381,7 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            print(f"Failed to create imports sheet: {e}")
+            logger.error("Failed to create imports sheet: %s", e, exc_info=True)
             return None
 
     def _create_statistics_sheet(
@@ -1439,7 +1437,7 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            print(f"Failed to create statistics sheet: {e}")
+            logger.error("Failed to create statistics sheet: %s", e, exc_info=True)
             return None
 
 
@@ -1500,6 +1498,6 @@ def export_analysis_results(
         return exporter.export_yaml_config(output_path)
     if format_type == "xlsx":
         return exporter.export_excel_workbook(output_path)
-    print(f"Unsupported format: {format_type}")
-    print(f"Available formats: {', '.join(get_available_formats())}")
+    logger.error("Unsupported format: %s", format_type)
+    logger.info("Available formats: %s", ", ".join(get_available_formats()))
     return False

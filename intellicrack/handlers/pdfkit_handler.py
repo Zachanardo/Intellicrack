@@ -626,16 +626,14 @@ except ImportError as e:
                 text: Text string to draw.
 
             """
-            self.current_page.append(
-                {
-                    "type": "text",
-                    "x": x,
-                    "y": y,
-                    "text": text,
-                    "font": self.font_name,
-                    "size": self.font_size,
-                }
-            )
+            self.current_page.append({
+                "type": "text",
+                "x": x,
+                "y": y,
+                "text": text,
+                "font": self.font_name,
+                "size": self.font_size,
+            })
 
         def drawCentredString(self, x: int, y: int, text: str) -> None:
             """Draw centered string.
@@ -695,17 +693,15 @@ except ImportError as e:
                 fill: Whether to fill the rectangle (1 for yes, 0 for no).
 
             """
-            self.current_page.append(
-                {
-                    "type": "rect",
-                    "x": x,
-                    "y": y,
-                    "width": width,
-                    "height": height,
-                    "stroke": stroke,
-                    "fill": fill,
-                }
-            )
+            self.current_page.append({
+                "type": "rect",
+                "x": x,
+                "y": y,
+                "width": width,
+                "height": height,
+                "stroke": stroke,
+                "fill": fill,
+            })
 
         def circle(self, x: int, y: int, radius: int, stroke: int = 1, fill: int = 0) -> None:
             """Draw circle.

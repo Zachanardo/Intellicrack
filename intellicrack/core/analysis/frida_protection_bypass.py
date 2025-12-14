@@ -76,10 +76,10 @@ class FridaProtectionBypasser:
                 logger.error("No process name or PID provided")
                 return False
 
-            logger.info(f"Attached to process: {self.process_name or self.pid}")
+            logger.info("Attached to process: %s", self.process_name or self.pid)
             return True
         except Exception as e:
-            logger.error(f"Failed to attach: {e}")
+            logger.error("Failed to attach: %s", e, exc_info=True)
             return False
 
     def detect_anti_debug(self) -> list[ProtectionInfo]:
@@ -296,7 +296,7 @@ class FridaProtectionBypasser:
             time.sleep(2)  # Wait for detections
             script.unload()
         except Exception as e:
-            logger.error(f"Anti-debug detection failed: {e}")
+            logger.error("Anti-debug detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -462,7 +462,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error(f"Certificate pinning detection failed: {e}")
+            logger.error("Certificate pinning detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -647,7 +647,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error(f"Integrity check detection failed: {e}")
+            logger.error("Integrity check detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -857,7 +857,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error(f"VM detection failed: {e}")
+            logger.error("VM detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -1034,7 +1034,7 @@ class FridaProtectionBypasser:
             script.unload()
 
         except Exception as e:
-            logger.error(f"Packer detection failed: {e}")
+            logger.error("Packer detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -1429,18 +1429,18 @@ class FridaProtectionBypasser:
 
             def on_message(message: object, data: object) -> None:
                 if message["type"] == "send":
-                    logger.info(f"Bypass result: {message['payload']}")
+                    logger.info("Bypass result: %s", message["payload"])
                 elif message["type"] == "error":
-                    logger.error(f"Bypass error: {message}")
+                    logger.error("Bypass error: %s", message, exc_info=True)
 
             self.script.on("message", on_message)
             self.script.load()
 
-            logger.info(f"Applied {len(all_scripts)} protection bypasses")
+            logger.info("Applied %s protection bypasses", len(all_scripts))
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply bypasses: {e}")
+            logger.error("Failed to apply bypasses: %s", e, exc_info=True)
             return False
 
     def detect_all_protections(self) -> list[ProtectionInfo]:
@@ -1460,15 +1460,15 @@ class FridaProtectionBypasser:
 
         for name, method in detection_methods:
             try:
-                logger.info(f"Detecting {name}...")
+                logger.info("Detecting %s...", name)
                 detections = method()
                 all_detections.extend(detections)
-                logger.info(f"Found {len(detections)} {name} protections")
+                logger.info("Found %s %s protections", len(detections), name)
             except Exception as e:
-                logger.error(f"Failed to detect {name}: {e}")
+                logger.error("Failed to detect %s: %s", name, e, exc_info=True)
 
         self.detected_protections = all_detections
-        logger.info(f"Total protections detected: {len(all_detections)}")
+        logger.info("Total protections detected: %s", len(all_detections))
 
         return all_detections
 
@@ -1557,7 +1557,7 @@ def main() -> None:
     if args.report:
         with open(args.report, "w") as f:
             f.write(report)
-        logger.info(f"Report saved to {args.report}")
+        logger.info("Report saved to %s", args.report)
 
     # Apply bypasses if requested
     if args.apply and protections:

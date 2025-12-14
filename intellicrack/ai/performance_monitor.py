@@ -162,7 +162,7 @@ class PerformanceMonitor:
                 time.sleep(interval)
 
             except Exception as e:
-                logger.error(f"Error in system monitoring: {e}")
+                logger.error("Error in system monitoring: %s", e, exc_info=True)
                 time.sleep(interval)
 
     def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int) -> None:
@@ -177,10 +177,10 @@ class PerformanceMonitor:
             thresholds = self.thresholds.get(metric_name, {})
 
             if value > thresholds.get("critical", float("inf")):
-                logger.critical(f"Critical {metric_name}: {value}")
+                logger.critical("Critical %s: %s", metric_name, value)
                 self._trigger_optimization(metric_name, "critical", value)
             elif value > thresholds.get("warning", float("inf")):
-                logger.warning(f"High {metric_name}: {value}")
+                logger.warning("High %s: %s", metric_name, value)
                 self._trigger_optimization(metric_name, "warning", value)
 
     def _trigger_optimization(self, metric_name: str, level: str, value: float) -> None:
@@ -194,7 +194,7 @@ class PerformanceMonitor:
             try:
                 rule(metric_name, level, value)
             except Exception as e:
-                logger.error(f"Error in optimization rule: {e}")
+                logger.error("Error in optimization rule: %s", e, exc_info=True)
 
     def record_metric(
         self,
@@ -418,7 +418,7 @@ class PerformanceMonitor:
             }
 
         except Exception as e:
-            logger.error(f"Error assessing system health: {e}")
+            logger.error("Error assessing system health: %s", e, exc_info=True)
             return {"score": 0, "status": "unknown", "error": str(e)}
 
     def add_optimization_rule(self, rule: Callable[[str, str, float], None]) -> None:
@@ -461,10 +461,10 @@ class PerformanceMonitor:
 
             with open(file_path, "w") as f:
                 json.dump(summary, f, indent=2, default=str)
-            logger.info(f"Metrics exported to {file_path}")
+            logger.info("Metrics exported to %s", file_path)
 
         except Exception as e:
-            logger.error(f"Failed to export metrics: {e}")
+            logger.error("Failed to export metrics: %s", e, exc_info=True)
 
     def optimize_cache(self) -> None:
         """Optimize performance cache."""
@@ -475,7 +475,7 @@ class PerformanceMonitor:
             del self.performance_cache[key]
 
         if expired_keys:
-            logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
+            logger.debug("Cleaned %s expired cache entries", len(expired_keys))
 
     def get_cached_result(self, cache_key: str) -> dict[str, Any] | None:
         """Retrieve a cached performance result if still valid.
@@ -517,11 +517,11 @@ class PerformanceMonitor:
         """Log final performance metrics before exit."""
         try:
             current_stats = self.get_metrics_summary()
-            logger.info(f"Final performance metrics: {current_stats}")
+            logger.info("Final performance metrics: %s", current_stats)
             if hasattr(self, "optimization_rules") and self.optimization_rules:
-                logger.info(f"Active optimization rules: {len(self.optimization_rules)}")
+                logger.info("Active optimization rules: %s", len(self.optimization_rules))
         except Exception as e:
-            logger.debug(f"Could not log final metrics: {e}")
+            logger.debug("Could not log final metrics: %s", e, exc_info=True)
 
     def __enter__(self) -> "PerformanceMonitor":
         """Start background monitoring on context entry.
@@ -551,11 +551,10 @@ class PerformanceMonitor:
 
         """
         if exc_type:
-            logger.error(f"Performance monitor exiting due to {exc_type.__name__}: {exc_val}")
-            # Log performance data before exit for debugging
+            logger.error("Performance monitor exiting due to %s: %s", exc_type.__name__, exc_val, exc_info=True)
             self._log_final_metrics()
             if exc_tb:
-                logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                logger.debug("Exception traceback from %s:%s", exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
         self.stop_monitoring()
         return False  # Don't suppress exceptions
 
@@ -632,7 +631,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0) -> Generator[None, None, N
         memory_increase = (end_memory - start_memory) / 1024 / 1024
 
         if memory_increase > threshold_mb:
-            logger.warning(f"High memory usage: {memory_increase:.2f}MB increase")
+            logger.warning("High memory usage: %.2fMB increase", memory_increase)
 
         get_performance_monitor().record_metric(
             "memory.operation_increase",

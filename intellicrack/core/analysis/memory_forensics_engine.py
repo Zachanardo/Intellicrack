@@ -220,7 +220,7 @@ class MemoryForensicsEngine:
             logger.info("Volatility3 framework initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize Volatility3: {e}")
+            logger.error("Failed to initialize Volatility3: %s", e, exc_info=True)
             global VOLATILITY3_AVAILABLE
             VOLATILITY3_AVAILABLE = False
 
@@ -259,7 +259,7 @@ class MemoryForensicsEngine:
             # Track analyzed dumps to prevent duplicate processing
             abs_path = os.path.abspath(dump_path)
             if abs_path in self.analyzed_dumps:
-                logger.debug(f"Memory dump already analyzed: {abs_path}")
+                logger.debug("Memory dump already analyzed: %s", abs_path)
             self.analyzed_dumps.add(abs_path)
 
             # Detect profile if auto-detect
@@ -302,11 +302,11 @@ class MemoryForensicsEngine:
 
             result.analysis_time = time.time() - start_time
 
-            logger.info(f"Memory analysis complete: {result.artifacts_found}")
+            logger.info("Memory analysis complete: %s", result.artifacts_found)
             return result
 
         except Exception as e:
-            logger.error(f"Memory forensics analysis failed: {e}")
+            logger.error("Memory forensics analysis failed: %s", e, exc_info=True)
             return MemoryAnalysisResult(
                 dump_path=dump_path,
                 error=str(e),
@@ -334,7 +334,7 @@ class MemoryForensicsEngine:
                     )
                     if file_result.returncode == 0:
                         result.analysis_profile = file_result.stdout.strip()
-                        logger.debug(f"File command output: {file_result.stdout}")
+                        logger.debug("File command output: %s", file_result.stdout)
                 else:
                     logger.warning("'file' command not found in PATH")
             except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -381,19 +381,19 @@ class MemoryForensicsEngine:
                         if signature == 0x45474150:  # 'PAGE' in little-endian
                             # Parse Windows dump header
                             dump_type = struct.unpack("<I", header_data[0xF88:0xF8C])[0] if len(header_data) > 0xF8C else 0
-                            logger.info(f"Windows crash dump detected, type: {dump_type}")
+                            logger.info("Windows crash dump detected, type: %s", dump_type)
 
                     # Look for common Windows signatures
                     if b"PAGEFILEDATA" in header_data or b"HIBERFIL" in header_data:
                         # Check for Windows version indicators
                         if b"Windows 11" in header_data or b"22H2" in header_data:
-                            logger.info(f"Detected Windows 11 from dump file: {dump_path}")
+                            logger.info("Detected Windows 11 from dump file: %s", dump_path)
                             return AnalysisProfile.WINDOWS_11.value
                         if b"Windows 10" in header_data or b"2004" in header_data or b"21H1" in header_data:
-                            logger.info(f"Detected Windows 10 from dump file: {dump_path}")
+                            logger.info("Detected Windows 10 from dump file: %s", dump_path)
                             return AnalysisProfile.WINDOWS_10.value
                         if b"Windows 7" in header_data:
-                            logger.info(f"Detected Windows 7 from dump file: {dump_path}")
+                            logger.info("Detected Windows 7 from dump file: %s", dump_path)
                             return AnalysisProfile.WINDOWS_7.value
 
                     # Look for Linux signatures
@@ -404,8 +404,8 @@ class MemoryForensicsEngine:
                             if elf_magic == b"\x7fELF":
                                 # Parse ELF header
                                 e_machine = struct.unpack("<H", header_data[18:20])[0] if len(header_data) > 20 else 0
-                                logger.info(f"ELF binary detected in dump, machine type: {e_machine}")
-                        logger.info(f"Detected Linux from dump file: {dump_path}")
+                                logger.info("ELF binary detected in dump, machine type: %s", e_machine)
+                        logger.info("Detected Linux from dump file: %s", dump_path)
                         return AnalysisProfile.LINUX_GENERIC.value
 
                     # Look for macOS signatures
@@ -420,8 +420,8 @@ class MemoryForensicsEngine:
                                 0xCFFAEDFE,
                             ]:  # Mach-O magic numbers
                                 cpu_type = struct.unpack("<I", header_data[4:8])[0] if len(header_data) >= 8 else 0
-                                logger.info(f"Mach-O binary detected in dump, CPU type: {cpu_type}")
-                        logger.info(f"Detected macOS from dump file: {dump_path}")
+                                logger.info("Mach-O binary detected in dump, CPU type: %s", cpu_type)
+                        logger.info("Detected macOS from dump file: %s", dump_path)
                         return AnalysisProfile.MAC_OSX.value
 
             # Use Volatility3 banners plugin to detect profile
@@ -442,11 +442,11 @@ class MemoryForensicsEngine:
                     return AnalysisProfile.MAC_OSX.value
 
             # Default to Windows 10 if detection fails
-            logger.debug(f"Profile detection inconclusive for {dump_path}, defaulting to Windows 10")
+            logger.debug("Profile detection inconclusive for %s, defaulting to Windows 10", dump_path)
             return AnalysisProfile.WINDOWS_10.value
 
         except Exception as e:
-            logger.debug(f"Profile detection failed for {dump_path}: {e}")
+            logger.debug("Profile detection failed for %s: %s", dump_path, e, exc_info=True)
             return AnalysisProfile.WINDOWS_10.value
 
     def _configure_volatility(self, dump_path: str, profile: str) -> None:
@@ -466,7 +466,7 @@ class MemoryForensicsEngine:
             automagic.run(self.automagics, self.vol_context, self.vol_config, "plugins")
 
         except Exception as e:
-            logger.error(f"Failed to configure Volatility3: {e}")
+            logger.error("Failed to configure Volatility3: %s", e, exc_info=True)
             raise
 
     def _run_volatility_plugin(self, plugin_name: str, plugin_config: dict[str, Any]) -> list[Any]:
@@ -475,7 +475,7 @@ class MemoryForensicsEngine:
             # Get plugin class using plugins framework
             available_plugins = plugins.list_plugins()
             if plugin_name not in [p.__name__ for p in available_plugins]:
-                logger.warning(f"Plugin {plugin_name} not available")
+                logger.warning("Plugin %s not available", plugin_name)
                 return []
 
             plugin_class = getattr(volatility3.framework.plugins, plugin_name.split(".", maxsplit=1)[0])
@@ -507,7 +507,7 @@ class MemoryForensicsEngine:
                 unsatisfied_requirements.append(f"Automagic failed: {e}")
 
             if unsatisfied_requirements:
-                logger.warning(f"Plugin requirements not satisfied: {unsatisfied_requirements}")
+                logger.warning("Plugin requirements not satisfied: %s", unsatisfied_requirements)
                 return []
 
             plugin_instance = plugin_class(
@@ -530,7 +530,7 @@ class MemoryForensicsEngine:
                         config_key = f"plugins.{plugin_name}.{key}"
                         self.vol_config[config_key] = value
                     else:
-                        logger.warning(f"Invalid config type for {key}: expected {type(expected_type)}, got {type(value)}")
+                        logger.warning("Invalid config type for %s: expected %s, got %s", key, type(expected_type), type(value))
                 else:
                     # Accept unknown configuration keys
                     valid_config[key] = value
@@ -551,21 +551,21 @@ class MemoryForensicsEngine:
                         formatted_result = renderer.render(result)
                         formatted_output.append(formatted_result)
                     except Exception as render_error:
-                        logger.debug(f"Failed to render result: {render_error}")
+                        logger.debug("Failed to render result: %s", render_error, exc_info=True)
                         formatted_output.append(str(result))
 
-                logger.info(f"Plugin {plugin_name} executed successfully with {len(results)} results")
+                logger.info("Plugin %s executed successfully with %s results", plugin_name, len(results))
                 if formatted_output:
-                    logger.debug(f"Formatted output sample: {formatted_output[0][:200]}...")
+                    logger.debug("Formatted output sample: %s...", formatted_output[0][:200])
 
                 return results
 
             except Exception as run_error:
-                logger.error(f"Plugin execution failed: {run_error}")
+                logger.error("Plugin execution failed: %s", run_error, exc_info=True)
                 return []
 
         except Exception as e:
-            logger.error(f"Failed to run plugin {plugin_name}: {e}")
+            logger.error("Failed to run plugin %s: %s", plugin_name, e, exc_info=True)
             return []
 
     def _analyze_processes(self) -> list[MemoryProcess]:
@@ -600,7 +600,7 @@ class MemoryForensicsEngine:
             self._detect_hidden_processes(processes)
 
         except Exception as e:
-            logger.error(f"Process analysis failed: {e}")
+            logger.error("Process analysis failed: %s", e, exc_info=True)
 
         return processes
 
@@ -624,7 +624,7 @@ class MemoryForensicsEngine:
                 modules.append(module)
 
         except Exception as e:
-            logger.error(f"Module analysis failed: {e}")
+            logger.error("Module analysis failed: %s", e, exc_info=True)
 
         return modules
 
@@ -651,7 +651,7 @@ class MemoryForensicsEngine:
                 connections.append(connection)
 
         except Exception as e:
-            logger.error(f"Network analysis failed: {e}")
+            logger.error("Network analysis failed: %s", e, exc_info=True)
 
         return connections
 
@@ -673,7 +673,7 @@ class MemoryForensicsEngine:
                 registry_artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Registry analysis failed: {e}")
+            logger.error("Registry analysis failed: %s", e, exc_info=True)
 
         return registry_artifacts
 
@@ -697,7 +697,7 @@ class MemoryForensicsEngine:
                     file_handles.append(handle)
 
         except Exception as e:
-            logger.error(f"File handle analysis failed: {e}")
+            logger.error("File handle analysis failed: %s", e, exc_info=True)
 
         return file_handles
 
@@ -722,7 +722,7 @@ class MemoryForensicsEngine:
                     strings.append(string_obj)
 
         except Exception as e:
-            logger.error(f"String extraction failed: {e}")
+            logger.error("String extraction failed: %s", e, exc_info=True)
 
         return strings
 
@@ -758,7 +758,7 @@ class MemoryForensicsEngine:
                     strings.append(current_string)
 
         except Exception as e:
-            logger.error(f"Fallback string extraction failed: {e}")
+            logger.error("Fallback string extraction failed: %s", e, exc_info=True)
 
         return strings
 
@@ -809,7 +809,7 @@ class MemoryForensicsEngine:
 
             except Exception as e:
                 # Continue analysis if path checking fails
-                logger.debug(f"Error checking process path: {e}")
+                logger.debug("Error checking process path: %s", e, exc_info=True)
             if process.ppid == 0 and process.name.lower() != "system":
                 indicators.append("Suspicious parent process ID")
 
@@ -833,7 +833,7 @@ class MemoryForensicsEngine:
                     process.is_hidden = True
 
         except Exception as e:
-            logger.error(f"Hidden process detection failed: {e}")
+            logger.error("Hidden process detection failed: %s", e, exc_info=True)
 
     def _is_module_suspicious(self, module_data: object) -> bool:
         """Check if a module appears suspicious.
@@ -875,7 +875,7 @@ class MemoryForensicsEngine:
 
             # Check if module name contains suspicious keywords
             if any(sus_name in module_name for sus_name in suspicious_module_names):
-                logger.warning(f"Suspicious module name detected: {module_name}")
+                logger.warning("Suspicious module name detected: %s", module_name)
                 return True
 
             # Check for DLL masquerading (common system DLL names with slight variations)
@@ -888,7 +888,7 @@ class MemoryForensicsEngine:
 
             for legitimate_dll, variants in masquerading_patterns.items():
                 if module_name in variants:
-                    logger.warning(f"Potential DLL masquerading detected: {module_name} (imitating {legitimate_dll})")
+                    logger.warning("Potential DLL masquerading detected: %s (imitating %s)", module_name, legitimate_dll)
                     return True
 
             # Check for unsigned modules in system directories
@@ -967,7 +967,7 @@ class MemoryForensicsEngine:
                 )
 
         except Exception as e:
-            logger.error(f"Security issue detection failed: {e}")
+            logger.error("Security issue detection failed: %s", e, exc_info=True)
 
         return findings
 
@@ -1015,7 +1015,7 @@ class MemoryForensicsEngine:
             }
 
         except Exception as e:
-            logger.error(f"Process memory analysis failed: {e}")
+            logger.error("Process memory analysis failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _analyze_live_process_windows(self, process_id: int) -> dict[str, Any]:
@@ -1056,7 +1056,7 @@ class MemoryForensicsEngine:
                         },
                     )
                 except Exception as e:
-                    logger.debug(f"Failed to get module info for {hex(module)}: {e}")
+                    logger.debug("Failed to get module info for %s: %s", hex(module), e, exc_info=True)
                     continue
 
             # Memory regions analysis
@@ -1186,13 +1186,13 @@ class MemoryForensicsEngine:
                         },
                     )
             except (ImportError, AttributeError) as e:
-                logger.debug(f"psutil not available for network connections: {e}")
+                logger.debug("psutil not available for network connections: %s", e, exc_info=True)
             except psutil.NoSuchProcess:
-                logger.debug(f"Process {process_id} no longer exists")
+                logger.debug("Process %s no longer exists", process_id)
             except psutil.AccessDenied:
-                logger.debug(f"Access denied to process {process_id} network connections")
+                logger.debug("Access denied to process %s network connections", process_id)
             except Exception as e:
-                logger.debug(f"Failed to get network connections for process {process_id}: {e}")
+                logger.debug("Failed to get network connections for process %s: %s", process_id, e, exc_info=True)
 
             # Close handle
             win32api.CloseHandle(h_process)
@@ -1311,10 +1311,10 @@ class MemoryForensicsEngine:
                                     )
                         except OSError as e:
                             region_info["read_error"] = True
-                            logger.debug(f"Failed to read memory region {hex(start)}-{hex(end)}: {e}")
+                            logger.debug("Failed to read memory region %s-%s: %s", hex(start), hex(end), e, exc_info=True)
                         except ValueError as e:
                             region_info["read_error"] = True
-                            logger.debug(f"Invalid memory region values: {e}")
+                            logger.debug("Invalid memory region values: %s", e, exc_info=True)
 
                         memory_regions.append(region_info)
 
@@ -1327,9 +1327,9 @@ class MemoryForensicsEngine:
                             key, value = line.split(":", 1)
                             status_info[key.strip()] = value.strip()
             except OSError as e:
-                logger.debug(f"Failed to read process status for PID {process_id}: {e}")
+                logger.debug("Failed to read process status for PID %s: %s", process_id, e, exc_info=True)
             except ValueError as e:
-                logger.debug(f"Error parsing process status line: {e}")
+                logger.debug("Error parsing process status line: %s", e, exc_info=True)
 
             # Get network connections
             connections = []
@@ -1362,15 +1362,15 @@ class MemoryForensicsEngine:
                                                     )
                                             except OSError as e:
                                                 # File descriptor might have closed
-                                                logger.debug(f"Failed to read fd {fd}: {e}")
+                                                logger.debug("Failed to read fd %s: %s", fd, e, exc_info=True)
                                                 continue
                                             except Exception as e:
-                                                logger.debug(f"Error processing fd {fd}: {e}")
+                                                logger.debug("Error processing fd %s: %s", fd, e, exc_info=True)
                                                 continue
             except OSError as e:
-                logger.debug(f"Failed to read network connections from /proc/net: {e}")
+                logger.debug("Failed to read network connections from /proc/net: %s", e, exc_info=True)
             except Exception as e:
-                logger.debug(f"Error parsing network connections: {e}")
+                logger.debug("Error parsing network connections: %s", e, exc_info=True)
 
             # Look for injected code
             injected_regions = []
@@ -1438,10 +1438,10 @@ class MemoryForensicsEngine:
             port_num = int(port, 16)
             return f"{host_ip}:{port_num}"
         except ValueError as e:
-            logger.debug(f"Invalid address format '{addr_str}': {e}")
+            logger.debug("Invalid address format '%s': %s", addr_str, e, exc_info=True)
             return addr_str
         except AttributeError as e:
-            logger.debug(f"Error parsing address '{addr_str}': {e}")
+            logger.debug("Error parsing address '%s': %s", addr_str, e, exc_info=True)
             return addr_str
 
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> list[str]:
@@ -1474,7 +1474,7 @@ class MemoryForensicsEngine:
             return strings
 
         except Exception as e:
-            logger.error(f"String extraction failed: {e}")
+            logger.error("String extraction failed: %s", e, exc_info=True)
             return []
 
     def generate_icp_supplemental_data(self, analysis_result: MemoryAnalysisResult) -> dict[str, Any]:
@@ -1654,7 +1654,7 @@ def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
         try:
             _memory_forensics_engine = MemoryForensicsEngine()
         except Exception as e:
-            logger.error(f"Failed to initialize memory forensics engine: {e}")
+            logger.error("Failed to initialize memory forensics engine: %s", e, exc_info=True)
             return None
     return _memory_forensics_engine
 

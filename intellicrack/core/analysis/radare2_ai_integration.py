@@ -43,42 +43,30 @@ try:
 
     # Try to get specific sklearn components
     try:
-        import sys
-
-        print("[DEBUG radare2_ai_integration] Importing joblib...")
-        sys.stdout.flush()
+        logger.debug("Importing joblib...")
         import joblib
 
-        print("[DEBUG radare2_ai_integration] joblib imported OK")
-        sys.stdout.flush()
+        logger.debug("joblib imported OK")
 
-        print("[DEBUG radare2_ai_integration] Importing DBSCAN...")
-        sys.stdout.flush()
+        logger.debug("Importing DBSCAN...")
         from sklearn.cluster import DBSCAN
 
-        print("[DEBUG radare2_ai_integration] DBSCAN imported OK")
-        sys.stdout.flush()
+        logger.debug("DBSCAN imported OK")
 
-        print("[DEBUG radare2_ai_integration] Importing IsolationForest, RandomForestClassifier...")
-        sys.stdout.flush()
+        logger.debug("Importing IsolationForest, RandomForestClassifier...")
         from sklearn.ensemble import IsolationForest, RandomForestClassifier
 
-        print("[DEBUG radare2_ai_integration] sklearn.ensemble imported OK")
-        sys.stdout.flush()
+        logger.debug("sklearn.ensemble imported OK")
 
-        print("[DEBUG radare2_ai_integration] Importing TfidfVectorizer...")
-        sys.stdout.flush()
+        logger.debug("Importing TfidfVectorizer...")
         from sklearn.feature_extraction.text import TfidfVectorizer
 
-        print("[DEBUG radare2_ai_integration] TfidfVectorizer imported OK")
-        sys.stdout.flush()
+        logger.debug("TfidfVectorizer imported OK")
 
-        print("[DEBUG radare2_ai_integration] Importing StandardScaler...")
-        sys.stdout.flush()
+        logger.debug("Importing StandardScaler...")
         from sklearn.preprocessing import StandardScaler
 
-        print("[DEBUG radare2_ai_integration] StandardScaler imported OK")
-        sys.stdout.flush()
+        logger.debug("StandardScaler imported OK")
 
         SKLEARN_AVAILABLE = True
     except ImportError:
@@ -92,7 +80,7 @@ try:
         SKLEARN_AVAILABLE = False
 
 except Exception as e:
-    logger.error("Exception in radare2_ai_integration: %s", e)
+    logger.error("Exception in radare2_ai_integration: %s", e, exc_info=True)
     # Complete fallback
     np = None
     DBSCAN = None
@@ -184,7 +172,7 @@ class R2AIEngine:
 
         except Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"AI analysis failed: {e}")
+            self.logger.error("AI analysis failed: %s", e, exc_info=True)
 
         return result
 
@@ -226,7 +214,7 @@ class R2AIEngine:
                 features["entropy_features"] = self._extract_entropy_features(r2)
 
         except R2Exception as e:
-            self.logger.error(f"Feature extraction failed: {e}")
+            self.logger.error("Feature extraction failed: %s", e, exc_info=True)
 
         return features
 
@@ -336,7 +324,7 @@ class R2AIEngine:
                         max_depth = max(max_depth, len(blocks))
 
                 except R2Exception as e:
-                    logger.error("R2Exception in radare2_ai_integration: %s", e)
+                    logger.error("R2Exception in radare2_ai_integration: %s", e, exc_info=True)
                     continue
 
         return {
@@ -382,7 +370,7 @@ class R2AIEngine:
             }
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_ai_integration: %s", e)
+            logger.error("R2Exception in radare2_ai_integration: %s", e, exc_info=True)
             return {
                 "text_section_entropy": 0.0,
                 "data_section_entropy": 0.0,
@@ -717,12 +705,11 @@ class R2AIEngine:
             X = np.array(all_samples, dtype=np.float32)
             y = np.array(all_labels, dtype=np.int32)
 
-            self.logger.info(f"Generated license training data: {len(X)} samples with real features")
+            self.logger.info("Generated license training data: %d samples with real features", len(X))
             return X, y
 
         except Exception as e:
-            self.logger.error(f"Error generating real license training data: {e}")
-            # Fallback to pattern-based approach on error
+            self.logger.error("Error generating real license training data: %s", e, exc_info=True)
             return self._generate_pattern_based_license_data()
 
     def _get_real_license_patterns(self) -> dict[str, list[str]]:
@@ -926,11 +913,11 @@ class R2AIEngine:
             X = np.array(vuln_samples, dtype=np.float32)
             y = np.array(vuln_labels, dtype=np.int32)
 
-            self.logger.info(f"Generated vulnerability training data: {len(X)} samples from real CVE patterns")
+            self.logger.info("Generated vulnerability training data: %d samples from real CVE patterns", len(X))
             return X, y
 
         except Exception as e:
-            self.logger.error(f"Error generating real vulnerability training data: {e}")
+            self.logger.error("Error generating real vulnerability training data: %s", e, exc_info=True)
             return self._generate_cve_based_vulnerability_data()
 
     def _get_real_vulnerability_classes(self) -> dict[str, dict[str, Any]]:

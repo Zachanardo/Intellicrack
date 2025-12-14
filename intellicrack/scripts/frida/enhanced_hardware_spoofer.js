@@ -438,10 +438,10 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookSmbiosAccess: function () {
-      const self = this;
+        const self = this;
 
-      const getRawSMBIOSTable = Module.findExportByName('kernel32.dll', 'GetSystemFirmwareTable');
-      if (getRawSMBIOSTable) {
+        const getRawSMBIOSTable = Module.findExportByName('kernel32.dll', 'GetSystemFirmwareTable');
+        if (getRawSMBIOSTable) {
             Interceptor.attach(getRawSMBIOSTable, {
                 onEnter: function (args) {
                     this.signature = args[0].toInt32();
@@ -450,8 +450,8 @@ const EnhancedHardwareSpoofer = {
                     this.bufferSize = args[3].toInt32();
                 },
                 onLeave: function (retval) {
-                  const returnedSize = retval.toInt32();
-                  if (returnedSize > 0 && this.buffer && !this.buffer.isNull()) {
+                    const returnedSize = retval.toInt32();
+                    if (returnedSize > 0 && this.buffer && !this.buffer.isNull()) {
                         self.stats.smbiosHooks++;
                         self.stats.totalBypasses++;
 
@@ -474,11 +474,11 @@ const EnhancedHardwareSpoofer = {
             });
         }
 
-      const enumSystemFirmwareTables = Module.findExportByName(
-        'kernel32.dll',
-        'EnumSystemFirmwareTables'
-      );
-      if (enumSystemFirmwareTables) {
+        const enumSystemFirmwareTables = Module.findExportByName(
+            'kernel32.dll',
+            'EnumSystemFirmwareTables'
+        );
+        if (enumSystemFirmwareTables) {
             Interceptor.attach(enumSystemFirmwareTables, {
                 onEnter: function (args) {
                     this.signature = args[0].toInt32();
@@ -511,12 +511,12 @@ const EnhancedHardwareSpoofer = {
         }
 
         try {
-          let offset = 8;
-          while (offset < size - 4) {
-              const type = buffer.add(offset).readU8();
-              const length = buffer.add(offset + 1).readU8();
+            let offset = 8;
+            while (offset < size - 4) {
+                const type = buffer.add(offset).readU8();
+                const length = buffer.add(offset + 1).readU8();
 
-              if (length < 4) {
+                if (length < 4) {
                     break;
                 }
 
@@ -592,16 +592,16 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookDiskSerial: function () {
-      const self = this;
+        const self = this;
 
-      const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
-      if (createFileW) {
+        const createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
+        if (createFileW) {
             Interceptor.attach(createFileW, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
                         try {
-                          const path = args[0].readUtf16String();
-                          if (
+                            const path = args[0].readUtf16String();
+                            if (
                                 path &&
                                 (path.indexOf('\\\\.\\PhysicalDrive') !== -1 ||
                                     path.indexOf('\\\\.\\SCSI') !== -1 ||
@@ -636,10 +636,10 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookNetworkAdapter: function () {
-      const self = this;
+        const self = this;
 
-      const getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
-      if (getAdaptersInfo) {
+        const getAdaptersInfo = Module.findExportByName('iphlpapi.dll', 'GetAdaptersInfo');
+        if (getAdaptersInfo) {
             Interceptor.attach(getAdaptersInfo, {
                 onEnter: function (args) {
                     this.adapterInfo = args[0];
@@ -651,8 +651,8 @@ const EnhancedHardwareSpoofer = {
                         self.stats.totalBypasses++;
 
                         try {
-                          const macBytes = self.config.spoofedValues.macAddress.split(':');
-                          for (let i = 0; i < 6 && i < macBytes.length; i++) {
+                            const macBytes = self.config.spoofedValues.macAddress.split(':');
+                            for (let i = 0; i < 6 && i < macBytes.length; i++) {
                                 this.adapterInfo.add(404 + i).writeU8(parseInt(macBytes[i], 16));
                             }
                         } catch (_e) {}
@@ -669,8 +669,11 @@ const EnhancedHardwareSpoofer = {
             });
         }
 
-      const getAdaptersAddresses = Module.findExportByName('iphlpapi.dll', 'GetAdaptersAddresses');
-      if (getAdaptersAddresses) {
+        const getAdaptersAddresses = Module.findExportByName(
+            'iphlpapi.dll',
+            'GetAdaptersAddresses'
+        );
+        if (getAdaptersAddresses) {
             Interceptor.attach(getAdaptersAddresses, {
                 onEnter: function (args) {
                     this.addresses = args[3];
@@ -697,10 +700,10 @@ const EnhancedHardwareSpoofer = {
     },
 
     hookDeviceIoControl: function () {
-      const self = this;
+        const self = this;
 
-      const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
-      if (deviceIoControl) {
+        const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
+        if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
                 onEnter: function (args) {
                     this.hDevice = args[0];
@@ -708,12 +711,12 @@ const EnhancedHardwareSpoofer = {
                     this.outBuffer = args[4];
                     this.outBufferSize = args[5].toInt32();
 
-                  const IOCTL_STORAGE_QUERY_PROPERTY = 0x2d1400;
-                  const IOCTL_DISK_GET_DRIVE_GEOMETRY = 0x70000;
-                  const IOCTL_SCSI_MINIPORT_IDENTIFY = 0x1b0501;
-                  const SMART_RCV_DRIVE_DATA = 0x7c088;
+                    const IOCTL_STORAGE_QUERY_PROPERTY = 0x2d1400;
+                    const IOCTL_DISK_GET_DRIVE_GEOMETRY = 0x70000;
+                    const IOCTL_SCSI_MINIPORT_IDENTIFY = 0x1b0501;
+                    const SMART_RCV_DRIVE_DATA = 0x7c088;
 
-                  if (
+                    if (
                         this.ioControlCode === IOCTL_STORAGE_QUERY_PROPERTY ||
                         this.ioControlCode === IOCTL_DISK_GET_DRIVE_GEOMETRY ||
                         this.ioControlCode === IOCTL_SCSI_MINIPORT_IDENTIFY ||
@@ -730,9 +733,9 @@ const EnhancedHardwareSpoofer = {
 
                         if (this.outBuffer && !this.outBuffer.isNull() && this.outBufferSize > 0) {
                             try {
-                              const serialBytes = [];
-                              const serial = self.config.spoofedValues.diskSerial;
-                              for (let i = 0; i < serial.length && i < 20; i++) {
+                                const serialBytes = [];
+                                const serial = self.config.spoofedValues.diskSerial;
+                                for (let i = 0; i < serial.length && i < 20; i++) {
                                     serialBytes.push(serial.charCodeAt(i));
                                 }
                             } catch (_e) {}
@@ -785,9 +788,9 @@ const EnhancedHardwareSpoofer = {
     },
 
     generateRandomSerial: (prefix, length) => {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let result = prefix || '';
-      for (let i = 0; i < (length || 12); i++) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = prefix || '';
+        for (let i = 0; i < (length || 12); i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;
@@ -810,8 +813,8 @@ const EnhancedHardwareSpoofer = {
             this.generateRandomSerial('', 12) +
             '}';
 
-      const macParts = [];
-      for (let i = 0; i < 6; i++) {
+        const macParts = [];
+        for (let i = 0; i < 6; i++) {
             macParts.push(
                 Math.floor(Math.random() * 256)
                     .toString(16)

@@ -39,6 +39,9 @@ from intellicrack.utils.report_generator import ReportGenerator
 from intellicrack.utils.system.os_detection import detect_file_type
 
 
+logger = logging.getLogger(__name__)
+
+
 class AnalysisCLI:
     """Command-line interface for binary analysis."""
 
@@ -77,7 +80,7 @@ class AnalysisCLI:
 
     def analyze_binary(self, file_path: str, options: dict[str, Any]) -> dict[str, Any]:
         """Perform comprehensive binary analysis."""
-        self.logger.info(f"Starting analysis of: {file_path}")
+        self.logger.info("Starting analysis of: %s", file_path)
 
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -100,7 +103,7 @@ class AnalysisCLI:
         metadata = results["metadata"]
         if isinstance(metadata, dict):
             metadata["file_type"] = file_type
-        self.logger.info(f"Detected file type: {file_type}")
+        self.logger.info("Detected file type: %s", file_type)
 
         # Binary analysis
         if options.get("binary_analysis", True):
@@ -114,7 +117,7 @@ class AnalysisCLI:
                 if isinstance(metadata, dict):
                     metadata["binary_analysis"] = binary_results
             except Exception as e:
-                self.logger.error(f"Binary analysis failed: {e}")
+                self.logger.error("Binary analysis failed: %s", e, exc_info=True)
                 findings = results["findings"]
                 if isinstance(findings, list):
                     findings.append(
@@ -146,7 +149,7 @@ class AnalysisCLI:
                                     },
                                 )
             except Exception as e:
-                self.logger.error(f"Protection analysis failed: {e}")
+                self.logger.error("Protection analysis failed: %s", e, exc_info=True)
 
         # Vulnerability scanning
         if options.get("vulnerability_scan", True):
@@ -164,7 +167,7 @@ class AnalysisCLI:
                                 f"Address {v['type']} vulnerability: {v.get('recommendation', 'Apply security patch')}",
                             )
             except Exception as e:
-                self.logger.error(f"Vulnerability scanning failed: {e}")
+                self.logger.error("Vulnerability scanning failed: %s", e, exc_info=True)
 
         # PE-specific analysis
         if file_type == "PE" and options.get("pe_analysis", True):
@@ -190,7 +193,7 @@ class AnalysisCLI:
                                 },
                             )
             except Exception as e:
-                self.logger.error(f"PE analysis failed: {e}")
+                self.logger.error("PE analysis failed: %s", e, exc_info=True)
 
         # ELF-specific analysis
         if file_type == "ELF" and options.get("elf_analysis", True):
@@ -210,7 +213,7 @@ class AnalysisCLI:
                             if isinstance(recommendations, list):
                                 recommendations.append(f"Enable {feature} for improved security")
             except Exception as e:
-                self.logger.error(f"ELF analysis failed: {e}")
+                self.logger.error("ELF analysis failed: %s", e, exc_info=True)
 
         # String extraction
         if options.get("extract_strings", True):
@@ -234,7 +237,7 @@ class AnalysisCLI:
                             },
                         )
             except Exception as e:
-                self.logger.error(f"String extraction failed: {e}")
+                self.logger.error("String extraction failed: %s", e, exc_info=True)
 
         self.logger.info("Analysis complete")
         return results
@@ -370,11 +373,11 @@ class AnalysisCLI:
 
     def generate_report(self, results: dict[str, Any], format: str, output_file: str | None = None) -> str:
         """Generate analysis report."""
-        self.logger.info(f"Generating {format} report...")
+        self.logger.info("Generating %s report...", format)
 
         report_path = self.report_generator.generate_report(results, format=format, output_file=output_file)
 
-        self.logger.info(f"Report saved to: {report_path}")
+        self.logger.info("Report saved to: %s", report_path)
         return report_path
 
     def run_batch_analysis(self, file_list: list[str], options: dict[str, Any]) -> list[dict[str, Any]]:
@@ -383,11 +386,11 @@ class AnalysisCLI:
 
         for file_path in file_list:
             try:
-                self.logger.info(f"Analyzing {file_path} ({len(results) + 1}/{len(file_list)})")
+                self.logger.info("Analyzing %s (%d/%d)", file_path, len(results) + 1, len(file_list))
                 result = self.analyze_binary(file_path, options)
                 results.append(result)
             except Exception as e:
-                self.logger.error(f"Failed to analyze {file_path}: {e}")
+                self.logger.error("Failed to analyze %s: %s", file_path, e, exc_info=True)
                 results.append(
                     {
                         "target_file": file_path,
@@ -474,7 +477,7 @@ def main() -> None:
             target_dir = Path(args.target)
 
             if not target_dir.exists():
-                print(f"Error: Directory not found: {args.target}", file=sys.stderr)
+                logger.error("Directory not found: %s", args.target)
                 sys.exit(1)
 
             # Collect files
@@ -486,16 +489,16 @@ def main() -> None:
                     file_list.extend(str(f) for f in target_dir.glob(f"*{ext}"))
 
             if not file_list:
-                print(f"No files found with extensions: {args.extensions}", file=sys.stderr)
+                logger.error("No files found with extensions: %s", args.extensions)
                 sys.exit(1)
 
-            print(f"Found {len(file_list)} files to analyze")
+            logger.info("Found %d files to analyze", len(file_list))
 
             # Run batch analysis
             results = cli.run_batch_analysis(file_list, options)
 
             if args.json_output:
-                print(json.dumps(results, indent=2))
+                logger.info("%s", json.dumps(results, indent=2))
             else:
                 # Generate batch report
                 for i, result in enumerate(results):
@@ -503,33 +506,29 @@ def main() -> None:
                         output_file = f"report_{i + 1}_{Path(result['target_file']).stem}.{args.format}"
                         cli.generate_report(result, args.format, output_file)
 
-                print(f"Analysis complete. {len(results)} files processed.")
+                logger.info("Analysis complete. %d files processed.", len(results))
 
         else:
             # Single file mode
             if not os.path.exists(args.target):
-                print(f"Error: File not found: {args.target}", file=sys.stderr)
+                logger.error("File not found: %s", args.target)
                 sys.exit(1)
 
             # Run analysis
             result = cli.analyze_binary(args.target, options)
 
             if args.json_output:
-                print(json.dumps(result, indent=2))
+                logger.info("%s", json.dumps(result, indent=2))
             else:
                 # Generate report
                 report_path = cli.generate_report(result, args.format, args.output)
-                print(f"Analysis complete. Report saved to: {report_path}")
+                logger.info("Analysis complete. Report saved to: %s", report_path)
 
     except KeyboardInterrupt:
-        print("\nAnalysis interrupted by user", file=sys.stderr)
+        logger.warning("Analysis interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        if args.verbose:
-            import traceback
-
-            traceback.print_exc()
+        logger.error("Error: %s", e, exc_info=True)
         sys.exit(1)
 
 

@@ -13,49 +13,49 @@ Comprehensive production-grade test suite for `intellicrack/utils/runtime/runner
 ### Core Runner Functions Tested
 
 1. **Network Functions**
-   - `run_network_license_server()` - Network license server emulation
-   - `run_ssl_tls_interceptor()` - SSL/TLS traffic interception
-   - `run_protocol_fingerprinter()` - Protocol identification
-   - `run_cloud_license_hooker()` - Cloud license response hooking
-   - `run_visual_network_traffic_analyzer()` - Traffic visualization
+    - `run_network_license_server()` - Network license server emulation
+    - `run_ssl_tls_interceptor()` - SSL/TLS traffic interception
+    - `run_protocol_fingerprinter()` - Protocol identification
+    - `run_cloud_license_hooker()` - Cloud license response hooking
+    - `run_visual_network_traffic_analyzer()` - Traffic visualization
 
 2. **Analysis Functions**
-   - `run_cfg_explorer()` - Control flow graph analysis
-   - `run_concolic_execution()` - Concolic execution engine
-   - `run_enhanced_protection_scan()` - Protection detection
-   - `run_multi_format_analysis()` - Multi-format binary analysis
-   - `run_symbolic_execution()` - Symbolic execution analysis
-   - `run_taint_analysis()` - Taint tracking for license data
-   - `run_memory_analysis()` - Memory layout and security analysis
-   - `run_network_analysis()` - Network behavior analysis
-   - `run_deep_license_analysis()` - Comprehensive license analysis
+    - `run_cfg_explorer()` - Control flow graph analysis
+    - `run_concolic_execution()` - Concolic execution engine
+    - `run_enhanced_protection_scan()` - Protection detection
+    - `run_multi_format_analysis()` - Multi-format binary analysis
+    - `run_symbolic_execution()` - Symbolic execution analysis
+    - `run_taint_analysis()` - Taint tracking for license data
+    - `run_memory_analysis()` - Memory layout and security analysis
+    - `run_network_analysis()` - Network behavior analysis
+    - `run_deep_license_analysis()` - Comprehensive license analysis
 
 3. **Processing Functions**
-   - `run_distributed_processing()` - Parallel processing
-   - `run_gpu_accelerated_analysis()` - GPU acceleration
-   - `run_memory_optimized_analysis()` - Large binary handling
-   - `run_incremental_analysis()` - Cached analysis
+    - `run_distributed_processing()` - Parallel processing
+    - `run_gpu_accelerated_analysis()` - GPU acceleration
+    - `run_memory_optimized_analysis()` - Large binary handling
+    - `run_incremental_analysis()` - Cached analysis
 
 4. **Patching Functions**
-   - `run_ai_guided_patching()` - AI-assisted patching
-   - `run_autonomous_patching()` - Fully autonomous patching workflow
-   - `run_selected_patching()` - Targeted patch application
+    - `run_ai_guided_patching()` - AI-assisted patching
+    - `run_autonomous_patching()` - Fully autonomous patching workflow
+    - `run_selected_patching()` - Targeted patch application
 
 5. **Tool Integration Functions**
-   - `run_advanced_ghidra_analysis()` - Ghidra headless analysis
-   - `run_ghidra_analysis_gui()` - Ghidra GUI integration
-   - `run_ghidra_plugin_from_file()` - Custom Ghidra scripts
-   - `run_radare2_analysis()` - Radare2 analysis
-   - `run_frida_analysis()` - Frida dynamic instrumentation
-   - `run_frida_script()` - Custom Frida scripts
-   - `run_qemu_analysis()` - QEMU emulation
-   - `run_qiling_emulation()` - Qiling framework
+    - `run_advanced_ghidra_analysis()` - Ghidra headless analysis
+    - `run_ghidra_analysis_gui()` - Ghidra GUI integration
+    - `run_ghidra_plugin_from_file()` - Custom Ghidra scripts
+    - `run_radare2_analysis()` - Radare2 analysis
+    - `run_frida_analysis()` - Frida dynamic instrumentation
+    - `run_frida_script()` - Custom Frida scripts
+    - `run_qemu_analysis()` - QEMU emulation
+    - `run_qiling_emulation()` - Qiling framework
 
 6. **Utility Functions**
-   - `get_resource_path()` - Resource path resolution
-   - `process_ghidra_analysis_results()` - Results processing
-   - `run_selected_analysis()` - Analysis dispatcher
-   - `run_comprehensive_analysis()` - Full analysis suite
+    - `get_resource_path()` - Resource path resolution
+    - `process_ghidra_analysis_results()` - Results processing
+    - `run_selected_analysis()` - Analysis dispatcher
+    - `run_comprehensive_analysis()` - Full analysis suite
 
 ### Internal Helper Functions Tested
 
@@ -74,6 +74,7 @@ Comprehensive production-grade test suite for `intellicrack/utils/runtime/runner
 ### Functional Tests - Real Capability Validation
 
 #### Binary Analysis Tests
+
 ```python
 def test_run_multi_format_analysis_with_pe_binary(sample_pe_binary):
     """Validates PE binary analysis works on real binaries."""
@@ -82,6 +83,7 @@ def test_run_multi_format_analysis_with_pe_binary(sample_pe_binary):
 ```
 
 #### Autonomous Patching Tests
+
 ```python
 def test_run_autonomous_patching_with_sample_binary(sample_pe_binary):
     """Validates full autonomous patching workflow."""
@@ -95,6 +97,7 @@ def test_run_autonomous_patching_with_sample_binary(sample_pe_binary):
 ```
 
 #### Binary Patching Operations
+
 ```python
 def test_patch_operation_jump_instruction(sample_pe_binary):
     """Validates real jump instruction patching."""
@@ -111,6 +114,7 @@ def test_patch_operation_jump_instruction(sample_pe_binary):
 ### Edge Case Tests - Real-World Complexity
 
 #### Error Handling
+
 ```python
 def test_run_deep_license_analysis_with_nonexistent_binary():
     """Validates error handling for missing files."""
@@ -120,6 +124,7 @@ def test_run_deep_license_analysis_with_nonexistent_binary():
 ```
 
 #### Invalid Input Handling
+
 ```python
 def test_run_selected_analysis_unknown_type():
     """Validates unknown analysis type handling."""
@@ -131,6 +136,7 @@ def test_run_selected_analysis_unknown_type():
 ### Integration Tests - Complete Workflows
 
 #### Full Autonomous Patching Workflow
+
 ```python
 def test_full_autonomous_patching_workflow(sample_pe_binary):
     """Validates complete autonomous patching workflow."""
@@ -146,6 +152,7 @@ def test_full_autonomous_patching_workflow(sample_pe_binary):
 ```
 
 #### Sequential Analysis Execution
+
 ```python
 def test_multiple_analysis_types_sequential(sample_pe_binary):
     """Validates multiple analysis types execute correctly."""
@@ -172,11 +179,13 @@ def test_autonomous_patching_completes_within_timeout(sample_pe_binary):
 ## Test Fixtures
 
 ### Binary Fixtures
+
 - `sample_pe_binary` - Minimal Windows PE executable with license strings
 - `sample_elf_binary` - Minimal Linux ELF executable with license strings
 - `mock_app_instance` - Mock application with signals and state
 
 ### Binary Format Detection
+
 ```python
 @pytest.fixture
 def sample_pe_binary(tmp_path):
@@ -234,21 +243,25 @@ Tests validate real binary format detection:
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 pixi run pytest tests/utils/runtime/test_runner_functions.py -v
 ```
 
 ### Run Specific Test Class
+
 ```bash
 pixi run pytest tests/utils/runtime/test_runner_functions.py::TestRunAutonomousPatching -v
 ```
 
 ### Run With Coverage
+
 ```bash
 pixi run pytest tests/utils/runtime/test_runner_functions.py --cov=intellicrack.utils.runtime.runner_functions --cov-report=html
 ```
 
 ### Run Performance Tests Only
+
 ```bash
 pixi run pytest tests/utils/runtime/test_runner_functions.py::TestPerformanceRequirements -v
 ```
@@ -273,6 +286,7 @@ All tests have been validated for:
 ## Test Quality Assurance
 
 ### No Mocks For:
+
 - Binary file operations
 - Subprocess execution
 - Timeout enforcement
@@ -280,6 +294,7 @@ All tests have been validated for:
 - Actual binary patching
 
 ### Mocks Only For:
+
 - Application UI signals (Qt signals)
 - Network service endpoints (when unavailable)
 - External tool availability (Ghidra, Radare2, Frida)

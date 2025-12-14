@@ -64,14 +64,14 @@ class GPUAutoLoader:
         for method in methods:
             try:
                 if method():
-                    logger.info(f"OK GPU configured: {self.gpu_type}")
-                    logger.info(f"  Device: {self._device_string}")
+                    logger.info("OK GPU configured: %s", self.gpu_type)
+                    logger.info("  Device: %s", self._device_string)
                     if self.gpu_info:
                         for key, value in self.gpu_info.items():
-                            logger.info(f"  {key}: {value}")
+                            logger.info("  %s: %s", key, value)
                     return True
             except Exception as e:
-                logger.debug(f"Method {method.__name__} failed: {e}")
+                logger.debug("Method %s failed: %s", method.__name__, e, exc_info=True)
                 # If Intel XPU fails with pybind11 error, automatically skip it in future runs
                 if method.__name__ == "_try_intel_xpu" and "pybind11" in str(e).lower():
                     logger.warning("Intel XPU failed with pybind11 GIL error, will skip Intel XPU")
@@ -124,23 +124,22 @@ class GPUAutoLoader:
                                     f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
                                 )
                             except Exception as e:
-                                logger.debug(f"Failed to get XPU device info: {e}")
+                                logger.debug("Failed to get XPU device info: %s", e, exc_info=True)
                     except Exception as e:
-                        logger.debug(f"Failed to get XPU detailed info: {e}")
+                        logger.debug("Failed to get XPU detailed info: %s", e, exc_info=True)
                         self.gpu_info = {"backend": "Intel Extension for PyTorch (Limited Info)"}
 
                     return True
                 logger.debug("XPU not available or torch.xpu not present")
             except Exception as e:
-                logger.debug(f"XPU availability check failed: {e}")
-                # If XPU check fails due to GIL issues, fall back to CPU with warning
-                logger.warning(f"Intel XPU initialization failed due to GIL/pybind11 issues: {e}")
+                logger.debug("XPU availability check failed: %s", e, exc_info=True)
+                logger.warning("Intel XPU initialization failed due to GIL/pybind11 issues: %s", e)
                 return False
 
             return False
 
         except Exception as e:
-            logger.debug(f"Intel XPU initialization failed: {e}")
+            logger.debug("Intel XPU initialization failed: %s", e, exc_info=True)
             return False
 
     def _try_nvidia_cuda(self) -> bool:
@@ -181,7 +180,7 @@ class GPUAutoLoader:
             return False
 
         except Exception as e:
-            logger.debug(f"NVIDIA CUDA initialization failed: {e}")
+            logger.debug("NVIDIA CUDA initialization failed: %s", e, exc_info=True)
             return False
 
     def _try_amd_rocm(self) -> bool:
@@ -224,7 +223,7 @@ class GPUAutoLoader:
             return False
 
         except Exception as e:
-            logger.debug(f"AMD ROCm initialization failed: {e}")
+            logger.debug("AMD ROCm initialization failed: %s", e, exc_info=True)
             return False
 
     def _try_directml(self) -> bool:
@@ -252,7 +251,7 @@ class GPUAutoLoader:
             return True
 
         except Exception as e:
-            logger.debug(f"DirectML initialization failed: {e}")
+            logger.debug("DirectML initialization failed: %s", e, exc_info=True)
             return False
 
     def _try_cpu_fallback(self) -> bool:
@@ -280,7 +279,7 @@ class GPUAutoLoader:
             return True
 
         except Exception as e:
-            logger.error(f"Even CPU initialization failed: {e}")
+            logger.error("Even CPU initialization failed: %s", e, exc_info=True)
             return False
 
     def get_device(self) -> object | None:
@@ -308,7 +307,7 @@ class GPUAutoLoader:
             try:
                 return self._torch.compile(model)
             except Exception as e:
-                logger.debug(f"Model compilation not available: {e}")
+                logger.debug("Model compilation not available: %s", e, exc_info=True)
                 return model
         return model
 
@@ -341,7 +340,7 @@ class GPUAutoLoader:
                         else "N/A",
                     }
         except Exception as e:
-            logger.debug(f"Failed to get memory info: {e}")
+            logger.debug("Failed to get memory info: %s", e, exc_info=True)
 
         return {}
 
@@ -360,7 +359,7 @@ class GPUAutoLoader:
                 if hasattr(self._torch.hip, "synchronize"):
                     self._torch.hip.synchronize()
         except Exception as e:
-            logger.debug(f"Synchronization failed: {e}")
+            logger.debug("Synchronization failed: %s", e, exc_info=True)
 
 
 # Global instance
@@ -462,7 +461,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
                 if result.returncode == 0:
                     frameworks["rocm_version"] = result.stdout.strip()
             except Exception as e:
-                logger.debug(f"Failed to get ROCm version: {e}")
+                logger.debug("Failed to get ROCm version: %s", e, exc_info=True)
     except (ImportError, AttributeError):
         pass
 
@@ -505,7 +504,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
                     device_name = torch_directml.device_name(i)
                     frameworks["gpu_devices"].append({"type": "DirectML", "index": i, "name": device_name})
             except Exception as e:
-                logger.debug(f"Failed to enumerate DirectML devices: {e}")
+                logger.debug("Failed to enumerate DirectML devices: %s", e, exc_info=True)
         except ImportError:
             pass
 
@@ -521,7 +520,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
             for i in range(torch.xpu.device_count()):
                 frameworks["gpu_devices"].append({"type": "Intel XPU", "index": i, "name": torch.xpu.get_device_name(i)})
     except Exception as e:
-        logger.debug(f"XPU device detection failed: {e}")
+        logger.debug("XPU device detection failed: %s", e, exc_info=True)
 
     # Check for Vulkan compute
     try:
@@ -544,7 +543,7 @@ def detect_gpu_frameworks() -> dict[str, object]:
             frameworks["vulkan"] = True
             frameworks["available_frameworks"].append("Vulkan")
     except Exception as e:
-        logger.debug(f"Failed to check Vulkan availability: {e}")
+        logger.debug("Failed to check Vulkan availability: %s", e, exc_info=True)
 
     # Check for Metal (macOS)
     if sys.platform == "darwin":

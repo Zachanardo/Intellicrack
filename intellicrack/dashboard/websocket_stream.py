@@ -166,13 +166,11 @@ class WebSocketEventStream:
 
         # Send initial connection confirmation
         await websocket.send(
-            json.dumps(
-                {
-                    "type": "connection_established",
-                    "client_id": client_id,
-                    "timestamp": client_info["connected_at"],
-                }
-            ),
+            json.dumps({
+                "type": "connection_established",
+                "client_id": client_id,
+                "timestamp": client_info["connected_at"],
+            }),
         )
 
         # Send welcome message

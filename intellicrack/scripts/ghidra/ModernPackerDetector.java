@@ -3252,7 +3252,7 @@ public class ModernPackerDetector extends GhidraScript {
           try {
             Object[] destOperands = instr.getOpObjects(0);
             if (destOperands.length > 0 && destOperands[0] instanceof Address destAddr) {
-                MemoryBlock block = currentProgram.getMemory().getBlock(destAddr);
+              MemoryBlock block = currentProgram.getMemory().getBlock(destAddr);
               if (block != null && block.isExecute() && block.isWrite()) {
                 return true;
               }
@@ -3382,19 +3382,21 @@ public class ModernPackerDetector extends GhidraScript {
     return result.toString().trim();
   }
 
-    // Inner classes
-    private record PackerSignature(String name, byte[] signature, List<String> sectionNames, List<String> importNames,
-                                   PECharacteristics characteristics) {
-    }
+  // Inner classes
+  private record PackerSignature(
+      String name,
+      byte[] signature,
+      List<String> sectionNames,
+      List<String> importNames,
+      PECharacteristics characteristics) {}
 
-    private record PECharacteristics(boolean hasAntiDebug, boolean hasAntiVM, boolean hasCompression) {
-    }
+  private record PECharacteristics(
+      boolean hasAntiDebug, boolean hasAntiVM, boolean hasCompression) {}
 
-    private record PackerDetection(String packerName, String reason, double confidence, String details) {
-    }
+  private record PackerDetection(
+      String packerName, String reason, double confidence, String details) {}
 
-    private record PEAnomaly(String description, String severity) {
-    }
+  private record PEAnomaly(String description, String severity) {}
 
   /** Comprehensive analysis utilizing all imported components for complete functionality */
   private void analyzeWithUnusedImports() {

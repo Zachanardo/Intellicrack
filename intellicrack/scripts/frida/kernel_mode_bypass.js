@@ -150,8 +150,8 @@ const KernelModeBypass = {
     },
 
     hookNtQuerySystemInformation: function () {
-      const ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
-      if (ntQuerySystemInfo) {
+        const ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
+        if (ntQuerySystemInfo) {
             Interceptor.attach(ntQuerySystemInfo, {
                 onEnter: function (args) {
                     this.systemInformationClass = args[0].toInt32();
@@ -185,16 +185,16 @@ const KernelModeBypass = {
 
                 checkSsdtQuery: infoClass => {
                     // System information classes related to SSDT
-                  const ssdtClasses = {
-                    11: 'SystemModuleInformation', // Can reveal hooked modules
-                    16: 'SystemHandleInformation', // Handle table access
-                    44: 'SystemExtendedHandleInformation', // Extended handles
-                    47: 'SystemObjectInformation', // Object manager info
-                    64: 'SystemExtendedServiceTableInformation', // SSDT info
-                    78: 'SystemServiceDescriptorTableInformation', // Direct SSDT
-                  };
+                    const ssdtClasses = {
+                        11: 'SystemModuleInformation', // Can reveal hooked modules
+                        16: 'SystemHandleInformation', // Handle table access
+                        44: 'SystemExtendedHandleInformation', // Extended handles
+                        47: 'SystemObjectInformation', // Object manager info
+                        64: 'SystemExtendedServiceTableInformation', // SSDT info
+                        78: 'SystemServiceDescriptorTableInformation', // Direct SSDT
+                    };
 
-                  return Object.hasOwn(ssdtClasses, infoClass);
+                    return Object.hasOwn(ssdtClasses, infoClass);
                 },
 
                 spoofSsdtInformation: function () {
@@ -236,29 +236,29 @@ const KernelModeBypass = {
                 spoofModuleInformation: function () {
                     // Hide suspicious kernel modules
                     if (this.systemInformationLength >= 8) {
-                      const moduleInfo = this.systemInformation;
-                      const config = this.parent.parent.config;
+                        const moduleInfo = this.systemInformation;
+                        const config = this.parent.parent.config;
 
-                      // Parse SYSTEM_MODULE_INFORMATION structure
-                      const numberOfModules = moduleInfo.readU32();
-                      const modules = moduleInfo.add(4);
+                        // Parse SYSTEM_MODULE_INFORMATION structure
+                        const numberOfModules = moduleInfo.readU32();
+                        const modules = moduleInfo.add(4);
 
-                      let filteredCount = 0;
-                      const moduleSize = 284; // sizeof(SYSTEM_MODULE)
+                        let filteredCount = 0;
+                        const moduleSize = 284; // sizeof(SYSTEM_MODULE)
 
                         for (let i = 0; i < numberOfModules && i < 100; i++) {
-                          const currentModule = modules.add(i * moduleSize);
-                          const _imageBase = currentModule.add(8).readPointer(); // ImageBase
-                          const _imageSize = currentModule.add(16).readU32(); // ImageSize
-                          const fullPathName = currentModule.add(24); // FullPathName[256]
+                            const currentModule = modules.add(i * moduleSize);
+                            const _imageBase = currentModule.add(8).readPointer(); // ImageBase
+                            const _imageSize = currentModule.add(16).readU32(); // ImageSize
+                            const fullPathName = currentModule.add(24); // FullPathName[256]
 
                             try {
-                              const moduleName = fullPathName.readAnsiString().toLowerCase();
-                              const isProtectionDriver = config.protectionDrivers.some(driver =>
-                                moduleName.includes(driver)
-                              );
+                                const moduleName = fullPathName.readAnsiString().toLowerCase();
+                                const isProtectionDriver = config.protectionDrivers.some(driver =>
+                                    moduleName.includes(driver)
+                                );
 
-                              if (isProtectionDriver) {
+                                if (isProtectionDriver) {
                                     send({
                                         type: 'bypass',
                                         target: 'kernel_mode_bypass',
@@ -271,8 +271,8 @@ const KernelModeBypass = {
 
                                 // Copy legitimate module to new position
                                 if (filteredCount !== i) {
-                                  const destModule = modules.add(filteredCount * moduleSize);
-                                  Memory.copy(destModule, currentModule, moduleSize);
+                                    const destModule = modules.add(filteredCount * moduleSize);
+                                    Memory.copy(destModule, currentModule, moduleSize);
                                 }
 
                                 filteredCount++;
@@ -298,9 +298,9 @@ const KernelModeBypass = {
                 spoofHandleInformation: function () {
                     // Filter out suspicious handles
                     if (this.systemInformationLength >= 8) {
-                      const handleInfo = this.systemInformation;
+                        const handleInfo = this.systemInformation;
 
-                      if (this.systemInformationClass === 16) {
+                        if (this.systemInformationClass === 16) {
                             // SYSTEM_HANDLE_INFORMATION
                             var numberOfHandles = handleInfo.readU32();
                             var handles = handleInfo.add(4);
@@ -317,21 +317,21 @@ const KernelModeBypass = {
                 },
 
                 filterSuspiciousHandles: function (handles, count, handleSize) {
-                  let filteredCount = 0;
+                    let filteredCount = 0;
 
-                  for (let i = 0; i < count && i < 1000; i++) {
-                      const currentHandle = handles.add(i * handleSize);
-                      const _processId = currentHandle.readU16(); // ProcessId
-                      const objectType = currentHandle.add(2).readU8(); // ObjectType
-                      const _handleValue = currentHandle.add(4).readU16(); // Handle
+                    for (let i = 0; i < count && i < 1000; i++) {
+                        const currentHandle = handles.add(i * handleSize);
+                        const _processId = currentHandle.readU16(); // ProcessId
+                        const objectType = currentHandle.add(2).readU8(); // ObjectType
+                        const _handleValue = currentHandle.add(4).readU16(); // Handle
 
                         // Filter out debug object handles (type 30) and other suspicious objects
-                      const suspiciousTypes = [30, 31, 32]; // Debug objects, etc.
+                        const suspiciousTypes = [30, 31, 32]; // Debug objects, etc.
 
                         if (!suspiciousTypes.includes(objectType)) {
                             if (filteredCount !== i) {
-                              const destHandle = handles.add(filteredCount * handleSize);
-                              Memory.copy(destHandle, currentHandle, handleSize);
+                                const destHandle = handles.add(filteredCount * handleSize);
+                                Memory.copy(destHandle, currentHandle, handleSize);
                             }
                             filteredCount++;
                         } else {
@@ -357,11 +357,11 @@ const KernelModeBypass = {
                     });
 
                     if (this.systemInformationLength >= 16) {
-                      const ssdtInfo = this.systemInformation;
+                        const ssdtInfo = this.systemInformation;
 
-                      // Create fake clean SSDT structure
-                      const fakeTableBase = 0x80000000; // Fake kernel address
-                      const fakeServiceLimit = 401; // Standard number of services
+                        // Create fake clean SSDT structure
+                        const fakeTableBase = 0x80000000; // Fake kernel address
+                        const fakeServiceLimit = 401; // Standard number of services
 
                         ssdtInfo.writePointer(ptr(fakeTableBase)); // ServiceTable
                         ssdtInfo.add(8).writeU32(0); // CounterTable (optional)
@@ -383,8 +383,8 @@ const KernelModeBypass = {
 
     hookZwQuerySystemInformation: function () {
         // Hook the Zw variant for kernel-mode callers
-      const zwQuerySystemInfo = Module.findExportByName('ntdll.dll', 'ZwQuerySystemInformation');
-      if (zwQuerySystemInfo) {
+        const zwQuerySystemInfo = Module.findExportByName('ntdll.dll', 'ZwQuerySystemInformation');
+        if (zwQuerySystemInfo) {
             // Similar implementation to NtQuerySystemInformation
             // This ensures both user-mode and kernel-mode queries are handled
 
@@ -429,17 +429,17 @@ const KernelModeBypass = {
         });
 
         // Hook LoadLibrary to detect driver loading
-      const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
-      if (loadLibrary) {
+        const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
+        if (loadLibrary) {
             Interceptor.attach(loadLibrary, {
                 onEnter: args => {
                     if (args[0] && !args[0].isNull()) {
-                      const libraryName = args[0].readUtf16String().toLowerCase();
+                        const libraryName = args[0].readUtf16String().toLowerCase();
 
-                      // Check for suspicious driver/library names
-                      const suspiciousLibs = ['ntoskrnl', 'hal.dll', 'driver', 'sys'];
+                        // Check for suspicious driver/library names
+                        const suspiciousLibs = ['ntoskrnl', 'hal.dll', 'driver', 'sys'];
 
-                      if (suspiciousLibs.some(lib => libraryName.includes(lib))) {
+                        if (suspiciousLibs.some(lib => libraryName.includes(lib))) {
                             send({
                                 type: 'detection',
                                 target: 'kernel_mode_bypass',
@@ -479,20 +479,20 @@ const KernelModeBypass = {
         });
 
         // Hook functions that might be used to execute direct syscalls
-      const ntAllocateVirtualMemory = Module.findExportByName(
-        'ntdll.dll',
-        'NtAllocateVirtualMemory'
-      );
-      if (ntAllocateVirtualMemory) {
+        const ntAllocateVirtualMemory = Module.findExportByName(
+            'ntdll.dll',
+            'NtAllocateVirtualMemory'
+        );
+        if (ntAllocateVirtualMemory) {
             Interceptor.attach(ntAllocateVirtualMemory, {
                 onEnter: function (args) {
-                  const _processHandle = args[0];
-                  const _baseAddress = args[1];
-                  const _regionSize = args[3];
-                  const _allocationType = args[4].toInt32();
-                  const protect = args[5].toInt32();
+                    const _processHandle = args[0];
+                    const _baseAddress = args[1];
+                    const _regionSize = args[3];
+                    const _allocationType = args[4].toInt32();
+                    const protect = args[5].toInt32();
 
-                  // Check for executable memory allocation (potential syscall stub)
+                    // Check for executable memory allocation (potential syscall stub)
                     if (protect && 0x40) {
                         // PAGE_EXECUTE_READWRITE
                         send({
@@ -532,8 +532,8 @@ const KernelModeBypass = {
         // Shadow SSDT is used for Win32k.sys functions (GUI subsystem)
         // Protection software may hook this table as well
 
-      const win32k = Module.findBaseAddress('win32k.sys');
-      if (win32k) {
+        const win32k = Module.findBaseAddress('win32k.sys');
+        if (win32k) {
             send({
                 type: 'info',
                 target: 'kernel_mode_bypass',
@@ -582,14 +582,14 @@ const KernelModeBypass = {
         });
 
         // Hook CreateFile for device access
-      const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
-      if (createFile) {
+        const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
+        if (createFile) {
             Interceptor.attach(createFile, {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
-                      const fileName = args[0].readUtf16String();
+                        const fileName = args[0].readUtf16String();
 
-                      // Check for device object access
+                        // Check for device object access
                         if (fileName.startsWith('\\\\.\\') || fileName.startsWith('\\Device\\')) {
                             this.isDeviceAccess = true;
                             this.deviceName = fileName;
@@ -628,8 +628,8 @@ const KernelModeBypass = {
                             });
                         } else if (retval.toInt32() !== -1) {
                             // Valid handle returned - track it
-                          const config = this.parent.parent.config;
-                          config.driverComm.deviceNames.push(this.deviceName);
+                            const config = this.parent.parent.config;
+                            config.driverComm.deviceNames.push(this.deviceName);
                             send({
                                 type: 'info',
                                 target: 'kernel_mode_bypass',
@@ -641,20 +641,20 @@ const KernelModeBypass = {
                 },
 
                 isProtectionDevice: deviceName => {
-                  const protectionDevices = [
-                    '\\Device\\VBoxDrv',
-                    '\\Device\\VBoxUSBMon',
-                    '\\Device\\VMwareUser',
-                    '\\Device\\vmci',
-                    '\\Device\\Sentinel',
-                    '\\Device\\HASP',
-                    '\\Device\\Wibu',
-                    '\\Device\\CmStick',
-                    '\\Device\\Dinkey',
-                    '\\Device\\Feitian',
-                  ];
+                    const protectionDevices = [
+                        '\\Device\\VBoxDrv',
+                        '\\Device\\VBoxUSBMon',
+                        '\\Device\\VMwareUser',
+                        '\\Device\\vmci',
+                        '\\Device\\Sentinel',
+                        '\\Device\\HASP',
+                        '\\Device\\Wibu',
+                        '\\Device\\CmStick',
+                        '\\Device\\Dinkey',
+                        '\\Device\\Feitian',
+                    ];
 
-                  return protectionDevices.some(dev =>
+                    return protectionDevices.some(dev =>
                         deviceName.toLowerCase().includes(dev.toLowerCase())
                     );
                 },
@@ -664,17 +664,17 @@ const KernelModeBypass = {
         }
 
         // Hook NtCreateFile for more direct device access
-      const ntCreateFile = Module.findExportByName('ntdll.dll', 'NtCreateFile');
-      if (ntCreateFile) {
+        const ntCreateFile = Module.findExportByName('ntdll.dll', 'NtCreateFile');
+        if (ntCreateFile) {
             Interceptor.attach(ntCreateFile, {
                 onEnter: args => {
-                  const objectAttributes = args[2];
-                  if (objectAttributes && !objectAttributes.isNull()) {
-                      const objectName = objectAttributes.add(8).readPointer(); // ObjectName
+                    const objectAttributes = args[2];
+                    if (objectAttributes && !objectAttributes.isNull()) {
+                        const objectName = objectAttributes.add(8).readPointer(); // ObjectName
                         if (objectName && !objectName.isNull()) {
                             try {
-                              const unicodeString = objectName.readUtf16String();
-                              if (unicodeString?.includes('\\Device\\')) {
+                                const unicodeString = objectName.readUtf16String();
+                                if (unicodeString?.includes('\\Device\\')) {
                                     send({
                                         type: 'detection',
                                         target: 'kernel_mode_bypass',
@@ -703,8 +703,8 @@ const KernelModeBypass = {
         });
 
         // Hook service control manager for driver operations
-      const openSCManager = Module.findExportByName('advapi32.dll', 'OpenSCManagerW');
-      if (openSCManager) {
+        const openSCManager = Module.findExportByName('advapi32.dll', 'OpenSCManagerW');
+        if (openSCManager) {
             Interceptor.attach(openSCManager, {
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0) {
@@ -723,15 +723,15 @@ const KernelModeBypass = {
         }
 
         // Hook driver loading
-      const createService = Module.findExportByName('advapi32.dll', 'CreateServiceW');
-      if (createService) {
+        const createService = Module.findExportByName('advapi32.dll', 'CreateServiceW');
+        if (createService) {
             Interceptor.attach(createService, {
                 onEnter: function (args) {
-                  const serviceType = args[2].toInt32();
-                  const _startType = args[3].toInt32();
-                  const binaryPathName = args[5];
+                    const serviceType = args[2].toInt32();
+                    const _startType = args[3].toInt32();
+                    const binaryPathName = args[5];
 
-                  // Check for kernel driver service creation
+                    // Check for kernel driver service creation
                     if (serviceType === 1) {
                         // SERVICE_KERNEL_DRIVER
                         send({
@@ -741,8 +741,8 @@ const KernelModeBypass = {
                         });
 
                         if (binaryPathName && !binaryPathName.isNull()) {
-                          const driverPath = binaryPathName.readUtf16String();
-                          send({
+                            const driverPath = binaryPathName.readUtf16String();
+                            send({
                                 type: 'info',
                                 target: 'kernel_mode_bypass',
                                 action: 'driver_path_detected',
@@ -770,8 +770,8 @@ const KernelModeBypass = {
                 },
 
                 isProtectionDriverPath: function (path) {
-                  const config = this.parent.parent.config;
-                  return config.protectionDrivers.some(driver =>
+                    const config = this.parent.parent.config;
+                    return config.protectionDrivers.some(driver =>
                         path.toLowerCase().includes(driver)
                     );
                 },
@@ -790,8 +790,8 @@ const KernelModeBypass = {
         });
 
         // Hook DeviceIoControl for IRP interception
-      const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
-      if (deviceIoControl) {
+        const deviceIoControl = Module.findExportByName('kernel32.dll', 'DeviceIoControl');
+        if (deviceIoControl) {
             Interceptor.attach(deviceIoControl, {
                 onEnter: function (args) {
                     this.hDevice = args[0];
@@ -827,22 +827,22 @@ const KernelModeBypass = {
 
                 isProtectionIoctl: ioctl => {
                     // Common protection driver IOCTL codes
-                  const protectionIoctls = [
-                    0x222000,
-                    0x222004,
-                    0x222008, // Generic protection codes
-                    0x226000,
-                    0x226004,
-                    0x226008, // Hardware dongle codes
-                    0x230000,
-                    0x230004,
-                    0x230008, // License verification codes
-                    0x240000,
-                    0x240004,
-                    0x240008, // Anti-debug codes
-                  ];
+                    const protectionIoctls = [
+                        0x222000,
+                        0x222004,
+                        0x222008, // Generic protection codes
+                        0x226000,
+                        0x226004,
+                        0x226008, // Hardware dongle codes
+                        0x230000,
+                        0x230004,
+                        0x230008, // License verification codes
+                        0x240000,
+                        0x240004,
+                        0x240008, // Anti-debug codes
+                    ];
 
-                  return (
+                    return (
                         protectionIoctls.includes(ioctl) || (ioctl >= 0x220000 && ioctl <= 0x250000)
                     ); // Range check
                 },
@@ -861,8 +861,8 @@ const KernelModeBypass = {
         });
 
         // Hook service enumeration to hide protection drivers
-      const enumServicesStatus = Module.findExportByName('advapi32.dll', 'EnumServicesStatusW');
-      if (enumServicesStatus) {
+        const enumServicesStatus = Module.findExportByName('advapi32.dll', 'EnumServicesStatusW');
+        if (enumServicesStatus) {
             Interceptor.attach(enumServicesStatus, {
                 onLeave: retval => {
                     if (retval.toInt32() !== 0) {
@@ -902,8 +902,8 @@ const KernelModeBypass = {
 
     hookKdDebuggerEnabled: function () {
         // Hook checks for KdDebuggerEnabled
-      const ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
-      if (ntQuerySystemInfo) {
+        const ntQuerySystemInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
+        if (ntQuerySystemInfo) {
             // This is already hooked above, but we add kernel debug specific logic
             send({
                 type: 'info',
@@ -926,8 +926,11 @@ const KernelModeBypass = {
         });
 
         // Hook NtQueryInformationProcess for debug flags
-      const ntQueryInfoProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
-      if (ntQueryInfoProcess) {
+        const ntQueryInfoProcess = Module.findExportByName(
+            'ntdll.dll',
+            'NtQueryInformationProcess'
+        );
+        if (ntQueryInfoProcess) {
             Interceptor.attach(ntQueryInfoProcess, {
                 onEnter: function (args) {
                     this.processHandle = args[0];
@@ -981,28 +984,28 @@ const KernelModeBypass = {
         });
 
         // Hook privilege adjustment
-      const adjustTokenPrivileges = Module.findExportByName(
-        'advapi32.dll',
-        'AdjustTokenPrivileges'
-      );
-      if (adjustTokenPrivileges) {
+        const adjustTokenPrivileges = Module.findExportByName(
+            'advapi32.dll',
+            'AdjustTokenPrivileges'
+        );
+        if (adjustTokenPrivileges) {
             Interceptor.attach(adjustTokenPrivileges, {
                 onEnter: function (args) {
-                  const _tokenHandle = args[0];
-                  const _disableAllPrivileges = args[1].toInt32();
-                  const newState = args[2];
+                    const _tokenHandle = args[0];
+                    const _disableAllPrivileges = args[1].toInt32();
+                    const newState = args[2];
 
-                  if (newState && !newState.isNull()) {
-                      const privilegeCount = newState.readU32();
-                      const privileges = newState.add(4);
+                    if (newState && !newState.isNull()) {
+                        const privilegeCount = newState.readU32();
+                        const privileges = newState.add(4);
 
-                      for (let i = 0; i < privilegeCount && i < 10; i++) {
-                          const luid = privileges.add(i * 12); // LUID_AND_ATTRIBUTES size
-                          const luidLow = luid.readU32();
-                          const luidHigh = luid.add(4).readU32();
-                          const _attributes = luid.add(8).readU32();
+                        for (let i = 0; i < privilegeCount && i < 10; i++) {
+                            const luid = privileges.add(i * 12); // LUID_AND_ATTRIBUTES size
+                            const luidLow = luid.readU32();
+                            const luidHigh = luid.add(4).readU32();
+                            const _attributes = luid.add(8).readU32();
 
-                          // Check for SeDebugPrivilege (LUID {20, 0})
+                            // Check for SeDebugPrivilege (LUID {20, 0})
                             if (luidLow === 20 && luidHigh === 0) {
                                 send({
                                     type: 'detection',
@@ -1042,12 +1045,12 @@ const KernelModeBypass = {
         });
 
         // Hook NtSystemDebugControl
-      const ntSystemDebugControl = Module.findExportByName('ntdll.dll', 'NtSystemDebugControl');
-      if (ntSystemDebugControl) {
+        const ntSystemDebugControl = Module.findExportByName('ntdll.dll', 'NtSystemDebugControl');
+        if (ntSystemDebugControl) {
             Interceptor.attach(ntSystemDebugControl, {
                 onEnter: function (args) {
-                  const command = args[0].toInt32();
-                  send({
+                    const command = args[0].toInt32();
+                    send({
                         type: 'info',
                         target: 'kernel_mode_bypass',
                         action: 'system_debug_control_called',
@@ -1089,11 +1092,11 @@ const KernelModeBypass = {
 
     hookHardwareFeatures: function () {
         // Hook processor feature detection
-      const isProcessorFeature = Module.findExportByName(
-        'kernel32.dll',
-        'IsProcessorFeaturePresent'
-      );
-      if (isProcessorFeature) {
+        const isProcessorFeature = Module.findExportByName(
+            'kernel32.dll',
+            'IsProcessorFeaturePresent'
+        );
+        if (isProcessorFeature) {
             Interceptor.attach(isProcessorFeature, {
                 onEnter: function (args) {
                     this.feature = args[0].toInt32();
@@ -1101,14 +1104,14 @@ const KernelModeBypass = {
 
                 onLeave: function (retval) {
                     // Always report hardware features as present to avoid detection
-                  const criticalFeatures = [
-                    10, // PF_NX_ENABLED
-                    12, // PF_DEP_ENABLED
-                    20, // PF_VIRT_FIRMWARE_ENABLED
-                    23, // PF_SECOND_LEVEL_ADDRESS_TRANSLATION
-                  ];
+                    const criticalFeatures = [
+                        10, // PF_NX_ENABLED
+                        12, // PF_DEP_ENABLED
+                        20, // PF_VIRT_FIRMWARE_ENABLED
+                        23, // PF_SECOND_LEVEL_ADDRESS_TRANSLATION
+                    ];
 
-                  if (criticalFeatures.includes(this.feature)) {
+                    if (criticalFeatures.includes(this.feature)) {
                         retval.replace(1); // TRUE
                         send({
                             type: 'bypass',
@@ -1164,21 +1167,21 @@ const KernelModeBypass = {
     },
 
     hookProtectedMemoryAllocation: function () {
-      const ntAllocateVirtualMemory = Module.findExportByName(
-        'ntdll.dll',
-        'NtAllocateVirtualMemory'
-      );
-      if (ntAllocateVirtualMemory) {
+        const ntAllocateVirtualMemory = Module.findExportByName(
+            'ntdll.dll',
+            'NtAllocateVirtualMemory'
+        );
+        if (ntAllocateVirtualMemory) {
             Interceptor.attach(ntAllocateVirtualMemory, {
                 onEnter: function (args) {
-                  const _processHandle = args[0];
-                  const _baseAddress = args[1];
-                  const _zeroBits = args[2];
-                  const _regionSize = args[3];
-                  const allocationType = args[4].toInt32();
-                  const protect = args[5].toInt32();
+                    const _processHandle = args[0];
+                    const _baseAddress = args[1];
+                    const _zeroBits = args[2];
+                    const _regionSize = args[3];
+                    const allocationType = args[4].toInt32();
+                    const protect = args[5].toInt32();
 
-                  // Monitor for suspicious memory allocations
+                    // Monitor for suspicious memory allocations
                     if (protect && 0x40) {
                         // PAGE_EXECUTE_READWRITE
                         send({
@@ -1227,18 +1230,18 @@ const KernelModeBypass = {
         });
 
         // Hook functions used for memory integrity verification
-      const ntReadVirtualMemory = Module.findExportByName('ntdll.dll', 'NtReadVirtualMemory');
-      if (ntReadVirtualMemory) {
+        const ntReadVirtualMemory = Module.findExportByName('ntdll.dll', 'NtReadVirtualMemory');
+        if (ntReadVirtualMemory) {
             Interceptor.attach(ntReadVirtualMemory, {
                 onEnter: function (args) {
-                  const _processHandle = args[0];
-                  const baseAddress = args[1];
-                  const _buffer = args[2];
-                  const _bufferSize = args[3].toInt32();
+                    const _processHandle = args[0];
+                    const baseAddress = args[1];
+                    const _buffer = args[2];
+                    const _bufferSize = args[3].toInt32();
 
-                  // Monitor reads to critical system areas
-                  const address = baseAddress.toInt32();
-                  if (address >= 0x80000000) {
+                    // Monitor reads to critical system areas
+                    const address = baseAddress.toInt32();
+                    if (address >= 0x80000000) {
                         // Kernel space
                         send({
                             type: 'detection',
@@ -1267,17 +1270,20 @@ const KernelModeBypass = {
     },
 
     hookPageProtection: function () {
-      const ntProtectVirtualMemory = Module.findExportByName('ntdll.dll', 'NtProtectVirtualMemory');
-      if (ntProtectVirtualMemory) {
+        const ntProtectVirtualMemory = Module.findExportByName(
+            'ntdll.dll',
+            'NtProtectVirtualMemory'
+        );
+        if (ntProtectVirtualMemory) {
             Interceptor.attach(ntProtectVirtualMemory, {
                 onEnter: args => {
-                  const _processHandle = args[0];
-                  const _baseAddress = args[1];
-                  const _regionSize = args[2];
-                  const newProtect = args[3].toInt32();
-                  const _oldProtect = args[4];
+                    const _processHandle = args[0];
+                    const _baseAddress = args[1];
+                    const _regionSize = args[2];
+                    const newProtect = args[3].toInt32();
+                    const _oldProtect = args[4];
 
-                  send({
+                    send({
                         type: 'info',
                         target: 'kernel_mode_bypass',
                         action: 'page_protection_change',
@@ -1320,13 +1326,13 @@ const KernelModeBypass = {
     },
 
     hookVersionInformation: function () {
-      const rtlGetVersion = Module.findExportByName('ntdll.dll', 'RtlGetVersion');
-      if (rtlGetVersion) {
+        const rtlGetVersion = Module.findExportByName('ntdll.dll', 'RtlGetVersion');
+        if (rtlGetVersion) {
             Interceptor.attach(rtlGetVersion, {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
-                      const versionInfo = this.context.rcx;
-                      if (versionInfo && !versionInfo.isNull()) {
+                        const versionInfo = this.context.rcx;
+                        if (versionInfo && !versionInfo.isNull()) {
                             // Spoof to Windows 10 to avoid version-based detection
                             versionInfo.add(4).writeU32(10); // dwMajorVersion
                             versionInfo.add(8).writeU32(0); // dwMinorVersion
@@ -1349,15 +1355,15 @@ const KernelModeBypass = {
 
     hookSystemTime: function () {
         // Hook time queries that might be used for time bomb detection
-      const ntQuerySystemTime = Module.findExportByName('ntdll.dll', 'NtQuerySystemTime');
-      if (ntQuerySystemTime) {
+        const ntQuerySystemTime = Module.findExportByName('ntdll.dll', 'NtQuerySystemTime');
+        if (ntQuerySystemTime) {
             Interceptor.attach(ntQuerySystemTime, {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
-                      const systemTime = this.context.rcx;
-                      if (systemTime && !systemTime.isNull()) {
+                        const systemTime = this.context.rcx;
+                        if (systemTime && !systemTime.isNull()) {
                             // Set to a safe date: January 1, 2020
-                          const safeTime = 132232704000000000; // Windows FILETIME for 2020-01-01
+                            const safeTime = 132232704000000000; // Windows FILETIME for 2020-01-01
                             systemTime.writeU64(safeTime);
 
                             send({
@@ -1376,20 +1382,20 @@ const KernelModeBypass = {
     },
 
     hookPerformanceCounters: function () {
-      const ntQueryPerformanceCounter = Module.findExportByName(
-        'ntdll.dll',
-        'NtQueryPerformanceCounter'
-      );
-      if (ntQueryPerformanceCounter) {
-          const baseCounter = Date.now() * 10000; // Convert to 100ns units
+        const ntQueryPerformanceCounter = Module.findExportByName(
+            'ntdll.dll',
+            'NtQueryPerformanceCounter'
+        );
+        if (ntQueryPerformanceCounter) {
+            const baseCounter = Date.now() * 10000; // Convert to 100ns units
 
             Interceptor.attach(ntQueryPerformanceCounter, {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
-                      const counter = this.context.rcx;
-                      if (counter && !counter.isNull()) {
-                          const currentCounter = baseCounter + (Date.now() % 1000000) * 10000;
-                          counter.writeU64(currentCounter);
+                        const counter = this.context.rcx;
+                        if (counter && !counter.isNull()) {
+                            const currentCounter = baseCounter + (Date.now() % 1000000) * 10000;
+                            counter.writeU64(currentCounter);
 
                             send({
                                 type: 'bypass',
@@ -1422,16 +1428,16 @@ const KernelModeBypass = {
     },
 
     hookTokenManipulation: function () {
-      const ntSetInformationToken = Module.findExportByName('ntdll.dll', 'NtSetInformationToken');
-      if (ntSetInformationToken) {
+        const ntSetInformationToken = Module.findExportByName('ntdll.dll', 'NtSetInformationToken');
+        if (ntSetInformationToken) {
             Interceptor.attach(ntSetInformationToken, {
                 onEnter: args => {
-                  const _tokenHandle = args[0];
-                  const tokenInformationClass = args[1].toInt32();
-                  const _tokenInformation = args[2];
-                  const _tokenInformationLength = args[3].toInt32();
+                    const _tokenHandle = args[0];
+                    const tokenInformationClass = args[1].toInt32();
+                    const _tokenInformation = args[2];
+                    const _tokenInformationLength = args[3].toInt32();
 
-                  send({
+                    send({
                         type: 'detection',
                         target: 'kernel_mode_bypass',
                         action: 'token_manipulation_detected',
@@ -1454,11 +1460,11 @@ const KernelModeBypass = {
     },
 
     hookImpersonation: function () {
-      const ntImpersonateAnonymousToken = Module.findExportByName(
-        'ntdll.dll',
-        'NtImpersonateAnonymousToken'
-      );
-      if (ntImpersonateAnonymousToken) {
+        const ntImpersonateAnonymousToken = Module.findExportByName(
+            'ntdll.dll',
+            'NtImpersonateAnonymousToken'
+        );
+        if (ntImpersonateAnonymousToken) {
             Interceptor.attach(ntImpersonateAnonymousToken, {
                 onEnter: _args => {
                     send({
@@ -1493,20 +1499,20 @@ const KernelModeBypass = {
     },
 
     hookObjectDirectory: function () {
-      const ntOpenDirectoryObject = Module.findExportByName('ntdll.dll', 'NtOpenDirectoryObject');
-      if (ntOpenDirectoryObject) {
+        const ntOpenDirectoryObject = Module.findExportByName('ntdll.dll', 'NtOpenDirectoryObject');
+        if (ntOpenDirectoryObject) {
             Interceptor.attach(ntOpenDirectoryObject, {
                 onEnter: function (args) {
-                  const _directoryHandle = args[0];
-                  const _desiredAccess = args[1].toInt32();
-                  const objectAttributes = args[2];
+                    const _directoryHandle = args[0];
+                    const _desiredAccess = args[1].toInt32();
+                    const objectAttributes = args[2];
 
-                  if (objectAttributes && !objectAttributes.isNull()) {
-                      const objectName = objectAttributes.add(8).readPointer();
-                      if (objectName && !objectName.isNull()) {
+                    if (objectAttributes && !objectAttributes.isNull()) {
+                        const objectName = objectAttributes.add(8).readPointer();
+                        if (objectName && !objectName.isNull()) {
                             try {
-                              const dirName = objectName.readUtf16String();
-                              send({
+                                const dirName = objectName.readUtf16String();
+                                send({
                                     type: 'info',
                                     target: 'kernel_mode_bypass',
                                     action: 'object_directory_access',
@@ -1547,11 +1553,11 @@ const KernelModeBypass = {
     },
 
     hookSymbolicLinks: function () {
-      const ntCreateSymbolicLinkObject = Module.findExportByName(
-        'ntdll.dll',
-        'NtCreateSymbolicLinkObject'
-      );
-      if (ntCreateSymbolicLinkObject) {
+        const ntCreateSymbolicLinkObject = Module.findExportByName(
+            'ntdll.dll',
+            'NtCreateSymbolicLinkObject'
+        );
+        if (ntCreateSymbolicLinkObject) {
             Interceptor.attach(ntCreateSymbolicLinkObject, {
                 onEnter: _args => {
                     send({
@@ -1568,19 +1574,19 @@ const KernelModeBypass = {
     },
 
     hookSectionObjects: function () {
-      const ntCreateSection = Module.findExportByName('ntdll.dll', 'NtCreateSection');
-      if (ntCreateSection) {
+        const ntCreateSection = Module.findExportByName('ntdll.dll', 'NtCreateSection');
+        if (ntCreateSection) {
             Interceptor.attach(ntCreateSection, {
                 onEnter: function (args) {
-                  const _sectionHandle = args[0];
-                  const _desiredAccess = args[1].toInt32();
-                  const _objectAttributes = args[2];
-                  const _maximumSize = args[3];
-                  const sectionPageProtection = args[4].toInt32();
-                  const allocationAttributes = args[5].toInt32();
-                  const _fileHandle = args[6];
+                    const _sectionHandle = args[0];
+                    const _desiredAccess = args[1].toInt32();
+                    const _objectAttributes = args[2];
+                    const _maximumSize = args[3];
+                    const sectionPageProtection = args[4].toInt32();
+                    const allocationAttributes = args[5].toInt32();
+                    const _fileHandle = args[6];
 
-                  // Monitor for executable section creation
+                    // Monitor for executable section creation
                     if (sectionPageProtection && 0x20) {
                         // PAGE_EXECUTE
                         send({
@@ -1639,17 +1645,17 @@ const KernelModeBypass = {
                 separator: '=====================================',
             });
 
-          const categories = {
-            'SSDT Protection': 0,
-            'Driver Communication': 0,
-            'Kernel Debug Detection': 0,
-            'Memory Protection': 0,
-            'System Information': 0,
-            'Privilege Escalation': 0,
-            'Object Access': 0,
-          };
+            const categories = {
+                'SSDT Protection': 0,
+                'Driver Communication': 0,
+                'Kernel Debug Detection': 0,
+                'Memory Protection': 0,
+                'System Information': 0,
+                'Privilege Escalation': 0,
+                'Object Access': 0,
+            };
 
-          for (let hook in this.hooksInstalled) {
+            for (let hook in this.hooksInstalled) {
                 if (hook.includes('Ssdt') || hook.includes('SSDT') || hook.includes('Syscall')) {
                     categories['SSDT Protection']++;
                 } else if (
@@ -1741,10 +1747,14 @@ const KernelModeBypass = {
         };
 
         const ntoskrnl = Process.getModuleByName('ntoskrnl.exe');
-        if (!ntoskrnl) { return; }
+        if (!ntoskrnl) {
+            return;
+        }
 
         const kprcb = this.locateKPRCB();
-        if (!kprcb) { return; }
+        if (!kprcb) {
+            return;
+        }
 
         const pgTimer = kprcb.add(0x1f80);
         const originalTimer = pgTimer.readPointer();
@@ -1832,14 +1842,18 @@ const KernelModeBypass = {
 
         vulnerableDrivers.forEach(driver => {
             const device = this.openDevice(`\\\\.\\${driver.name.split('.')[0]}`);
-            if (!device) { return; }
+            if (!device) {
+                return;
+            }
 
             const exploitBuffer = Memory.alloc(0x1000);
             exploitBuffer.writeU32(0x41414141);
             exploitBuffer.add(4).writeU32(driver.ioctl);
 
             const kernelBase = this.getKernelBase();
-            if (!kernelBase) { return; }
+            if (!kernelBase) {
+                return;
+            }
 
             const ropChain = this.buildROPChain(kernelBase);
             exploitBuffer.add(0x100).writeByteArray(ropChain);
@@ -1874,7 +1888,9 @@ const KernelModeBypass = {
 
     initializeHypervisorLevelEvasion: function () {
         const hvciStatus = this.checkHVCIStatus();
-        if (!hvciStatus.enabled) { return; }
+        if (!hvciStatus.enabled) {
+            return;
+        }
 
         const _cpuidInterceptor = {
             leaf: 0x40000000,
@@ -1940,7 +1956,9 @@ const KernelModeBypass = {
         const _pages = this.lockMDLPages(mdl);
 
         const physicalMemory = this.openPhysicalMemory();
-        if (!physicalMemory) { return; }
+        if (!physicalMemory) {
+            return;
+        }
 
         const dmaEngine = {
             device: null,
@@ -1954,7 +1972,9 @@ const KernelModeBypass = {
                 }
             },
             read: function (physAddr, size) {
-                if (!this.bar) { return null; }
+                if (!this.bar) {
+                    return null;
+                }
                 this.bar.writeU64(physAddr);
                 this.bar.add(8).writeU32(size);
                 this.bar.add(12).writeU32(0x01);
@@ -1964,7 +1984,9 @@ const KernelModeBypass = {
                 return this.bar.add(0x1000).readByteArray(size);
             },
             write: function (physAddr, data) {
-                if (!this.bar) { return false; }
+                if (!this.bar) {
+                    return false;
+                }
                 this.bar.writeU64(physAddr);
                 this.bar.add(8).writeU32(data.length);
                 this.bar.add(0x1000).writeByteArray(data);
@@ -2017,10 +2039,14 @@ const KernelModeBypass = {
 
         callbackTypes.forEach(type => {
             const routine = DebugSymbol.fromName(type);
-            if (!routine) { return; }
+            if (!routine) {
+                return;
+            }
 
             const arrayPtr = this.findCallbackArray(routine.address);
-            if (!arrayPtr) { return; }
+            if (!arrayPtr) {
+                return;
+            }
 
             const numCallbacks = arrayPtr.readU32();
             const callbacks = [];
@@ -2092,7 +2118,9 @@ const KernelModeBypass = {
         if (eprocessListHead) {
             const hideProcess = pid => {
                 const process = this.findProcessByPid(pid);
-                if (!process) { return; }
+                if (!process) {
+                    return;
+                }
 
                 const flink = process.add(0x2e8).readPointer();
                 const blink = process.add(0x2f0).readPointer();
@@ -2156,7 +2184,9 @@ const KernelModeBypass = {
 
         fileSystemCallbacks.forEach(callbackName => {
             const callback = DebugSymbol.fromName(callbackName);
-            if (!callback) { return; }
+            if (!callback) {
+                return;
+            }
 
             const original = callback.address.readPointer();
 
@@ -2301,7 +2331,9 @@ const KernelModeBypass = {
 
         codeIntegrityFunctions.forEach(funcName => {
             const func = DebugSymbol.fromName(funcName);
-            if (!func) { return; }
+            if (!func) {
+                return;
+            }
 
             Interceptor.replace(
                 func.address,
@@ -2325,7 +2357,9 @@ const KernelModeBypass = {
 
     initializeKernelCFIBypass: function () {
         const cfgBitmap = this.locateCFGBitmap();
-        if (!cfgBitmap) { return; }
+        if (!cfgBitmap) {
+            return;
+        }
 
         const bitmapSize = this.getCFGBitmapSize();
         Memory.protect(cfgBitmap, bitmapSize, 'rw-');
@@ -2370,7 +2404,9 @@ const KernelModeBypass = {
 
     setupAdvancedKernelStealth: function () {
         const kernelBase = this.getKernelBase();
-        if (!kernelBase) { return; }
+        if (!kernelBase) {
+            return;
+        }
 
         const peHeader = kernelBase.add(kernelBase.add(0x3c).readU32());
         const timestamp = peHeader.add(8).readU32();
@@ -2392,7 +2428,9 @@ const KernelModeBypass = {
 
         kernelAPIs.forEach(api => {
             const func = Module.findExportByName('ntoskrnl.exe', api);
-            if (!func) { return; }
+            if (!func) {
+                return;
+            }
 
             const original = Memory.alloc(0x20);
             Memory.copy(original, func, 0x20);

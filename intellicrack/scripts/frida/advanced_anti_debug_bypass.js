@@ -135,7 +135,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtQueryInformationProcessAdvanced: function () {
-        if (!this.config.kernelHooks.ntQueryInformationProcess) { return; }
+        if (!this.config.kernelHooks.ntQueryInformationProcess) {
+            return;
+        }
 
         const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
         if (ntQueryInfo) {
@@ -210,7 +212,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtSetInformationThreadAdvanced: function () {
-        if (!this.config.kernelHooks.ntSetInformationThread) { return; }
+        if (!this.config.kernelHooks.ntSetInformationThread) {
+            return;
+        }
 
         const ntSetInfoThread = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
         if (ntSetInfoThread) {
@@ -245,7 +249,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtQuerySystemInformationAdvanced: function () {
-        if (!this.config.kernelHooks.ntQuerySystemInformation) { return; }
+        if (!this.config.kernelHooks.ntQuerySystemInformation) {
+            return;
+        }
 
         const ntQuerySysInfo = Module.findExportByName('ntdll.dll', 'NtQuerySystemInformation');
         if (ntQuerySysInfo) {
@@ -287,7 +293,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtCloseAntiDebug: function () {
-        if (!this.config.kernelHooks.ntClose) { return; }
+        if (!this.config.kernelHooks.ntClose) {
+            return;
+        }
 
         const ntClose = Module.findExportByName('ntdll.dll', 'NtClose');
         if (ntClose) {
@@ -317,7 +325,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookNtYieldExecution: function () {
-        if (!this.config.kernelHooks.ntYieldExecution) { return; }
+        if (!this.config.kernelHooks.ntYieldExecution) {
+            return;
+        }
 
         const ntYield = Module.findExportByName('ntdll.dll', 'NtYieldExecution');
         if (ntYield) {
@@ -342,7 +352,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookRdtsc: function () {
-        if (!this.config.timingNeutralization.rdtscEmulation) { return; }
+        if (!this.config.timingNeutralization.rdtscEmulation) {
+            return;
+        }
 
         try {
             const rdtscPattern = '0F 31';
@@ -362,9 +374,7 @@ const advancedAntiDebugBypass = {
                         writer.flush();
                     });
                     patchCount++;
-                } catch (_e) {
-
-                }
+                } catch (_e) {}
             });
 
             if (patchCount > 0) {
@@ -387,7 +397,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookRdtscp: function () {
-        if (!this.config.timingNeutralization.rdtscpEmulation) { return; }
+        if (!this.config.timingNeutralization.rdtscpEmulation) {
+            return;
+        }
 
         try {
             const rdtscpPattern = '0F 01 F9';
@@ -407,9 +419,7 @@ const advancedAntiDebugBypass = {
                         writer.flush();
                     });
                     patchCount++;
-                } catch (_e) {
-
-                }
+                } catch (_e) {}
             });
 
             if (patchCount > 0) {
@@ -432,7 +442,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookQueryPerformanceCounter: function () {
-        if (!this.config.timingNeutralization.qpcNormalization) { return; }
+        if (!this.config.timingNeutralization.qpcNormalization) {
+            return;
+        }
 
         const qpc = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
         if (qpc) {
@@ -461,7 +473,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookGetTickCount: function () {
-        if (!this.config.timingNeutralization.qpcNormalization) { return; }
+        if (!this.config.timingNeutralization.qpcNormalization) {
+            return;
+        }
 
         const gtc = Module.findExportByName('kernel32.dll', 'GetTickCount');
         if (gtc) {
@@ -509,7 +523,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookSleepFunctions: function () {
-        if (!this.config.timingNeutralization.sleepAcceleration) { return; }
+        if (!this.config.timingNeutralization.sleepAcceleration) {
+            return;
+        }
 
         const sleep = Module.findExportByName('kernel32.dll', 'Sleep');
         if (sleep) {
@@ -525,7 +541,6 @@ const advancedAntiDebugBypass = {
                             original: dwMilliseconds,
                             accelerated: accelerated,
                         });
-
                     },
                     'void',
                     ['uint32']
@@ -548,7 +563,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookCpuid: function () {
-        if (!this.config.hypervisorDetection.spoofCpuid) { return; }
+        if (!this.config.hypervisorDetection.spoofCpuid) {
+            return;
+        }
 
         try {
             const cpuidPattern = '0F A2';
@@ -579,9 +596,7 @@ const advancedAntiDebugBypass = {
                         },
                     });
                     patchCount++;
-                } catch (_e) {
-
-                }
+                } catch (_e) {}
             });
 
             if (patchCount > 0) {
@@ -604,7 +619,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookVmxInstructions: function () {
-        if (!this.config.hypervisorDetection.hideVmxInstructions) { return; }
+        if (!this.config.hypervisorDetection.hideVmxInstructions) {
+            return;
+        }
 
         send({
             type: 'info',
@@ -627,7 +644,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookInlineHookDetection: function () {
-        if (!this.config.scyllaHideResistant.inlineHookDetection) { return; }
+        if (!this.config.scyllaHideResistant.inlineHookDetection) {
+            return;
+        }
 
         send({
             type: 'info',
@@ -639,7 +658,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookProcessHollowing: function () {
-        if (!this.config.scyllaHideResistant.processHollowing) { return; }
+        if (!this.config.scyllaHideResistant.processHollowing) {
+            return;
+        }
 
         const ntUnmapViewOfSection = Module.findExportByName('ntdll.dll', 'NtUnmapViewOfSection');
         if (ntUnmapViewOfSection) {
@@ -771,7 +792,9 @@ const advancedAntiDebugBypass = {
     },
 
     manipulatePebDeep: function () {
-        if (!this.config.scyllaHideResistant.deepPebManipulation) { return; }
+        if (!this.config.scyllaHideResistant.deepPebManipulation) {
+            return;
+        }
 
         send({
             type: 'info',
@@ -821,7 +844,9 @@ const advancedAntiDebugBypass = {
     },
 
     hookTlsCallbacks: function () {
-        if (!this.config.scyllaHideResistant.tlsCallbackProtection) { return; }
+        if (!this.config.scyllaHideResistant.tlsCallbackProtection) {
+            return;
+        }
 
         send({
             type: 'info',

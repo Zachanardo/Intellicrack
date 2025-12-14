@@ -393,12 +393,8 @@ class OptimizationManager:
 
             logger.debug(f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
 
-            memory_load_data: list[dict[str, str]] = [
-                {f"key_{i}": f"value_{i}" * 100} for i in range(1000)
-            ]
-            load_data_size = sum(
-                len(str(k)) + len(str(v)) for d in memory_load_data for k, v in d.items()
-            )
+            memory_load_data: list[dict[str, str]] = [{f"key_{i}": f"value_{i}" * 100} for i in range(1000)]
+            load_data_size = sum(len(str(k)) + len(str(v)) for d in memory_load_data for k, v in d.items())
 
             before_memory = process.memory_info().rss
             before_objects = len(gc.get_objects())

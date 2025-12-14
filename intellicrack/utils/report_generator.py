@@ -243,13 +243,11 @@ class ReportGenerator:
             textColor=colors.HexColor("#333333"),
             spaceAfter=30,
         )
-        story.extend(
-            (
-                Paragraph("Binary Analysis Report", title_style),
-                Spacer(1, 12),
-                Paragraph("File Information", styles["Heading2"]),
-            )
-        )
+        story.extend((
+            Paragraph("Binary Analysis Report", title_style),
+            Spacer(1, 12),
+            Paragraph("File Information", styles["Heading2"]),
+        ))
         file_data = [
             ["Target File:", result.target_file],
             ["File Hash:", result.file_hash],
@@ -406,14 +404,12 @@ class ReportGenerator:
             writer.writerow(["Vulnerabilities"])
             writer.writerow(["Type", "Severity", "Description", "Location"])
             for v in result.vulnerabilities:
-                writer.writerow(
-                    [
-                        v.get("type", "Unknown"),
-                        v.get("severity", "Unknown"),
-                        v.get("description", ""),
-                        v.get("location", ""),
-                    ]
-                )
+                writer.writerow([
+                    v.get("type", "Unknown"),
+                    v.get("severity", "Unknown"),
+                    v.get("description", ""),
+                    v.get("location", ""),
+                ])
             writer.writerow([])
 
             # Write protections

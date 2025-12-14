@@ -103,11 +103,11 @@ class Radare2AdvancedPatcher:
             elif arch == "ppc":
                 self.architecture = Architecture.PPC
 
-            logger.info(f"Opened {self.binary_path}: {self.architecture.value} {self.bits}-bit {self.endianness}")
+            logger.info("Opened %s: %s %s-bit %s", self.binary_path, self.architecture.value, self.bits, self.endianness)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to open binary: {e}")
+            logger.error("Failed to open binary: %s", e, exc_info=True)
             return False
 
     def generate_nop_sled(self, address: int, size: int) -> PatchInfo:
@@ -132,7 +132,7 @@ class Radare2AdvancedPatcher:
         self._write_bytes(address, nop_bytes)
         self.patches.append(patch)
 
-        logger.info(f"Generated NOP sled: {size} bytes at {hex(address)}")
+        logger.info("Generated NOP sled: %s bytes at %s", size, hex(address))
         return patch
 
     def _get_nop_instruction(self) -> bytes:
@@ -177,7 +177,7 @@ class Radare2AdvancedPatcher:
         self._write_bytes(table_address, new_table)
         self.patches.append(patch)
 
-        logger.info(f"Modified jump table at {hex(table_address)}")
+        logger.info("Modified jump table at %s", hex(table_address))
         return patch
 
     def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None) -> PatchInfo:
@@ -206,7 +206,7 @@ class Radare2AdvancedPatcher:
         self._write_bytes(func_address, prologue_bytes)
         self.patches.append(patch)
 
-        logger.info(f"Patched function prologue at {hex(func_address)}")
+        logger.info("Patched function prologue at %s", hex(func_address))
         return patch
 
     def _generate_standard_prologue(self, skip_bytes: int) -> bytes:
@@ -273,7 +273,7 @@ class Radare2AdvancedPatcher:
         self._write_bytes(epilogue_address, epilogue_bytes)
         self.patches.append(patch)
 
-        logger.info(f"Patched function epilogue at {hex(epilogue_address)}")
+        logger.info("Patched function epilogue at %s", hex(epilogue_address))
         return patch
 
     def _find_epilogue(self, func_address: int, func_size: int) -> int:
@@ -382,7 +382,7 @@ class Radare2AdvancedPatcher:
             self._write_bytes(address, inverted_bytes)
             self.patches.append(patch)
 
-            logger.info(f"Inverted conditional jump at {hex(address)}: {mnemonic} -> {inverted_mnemonic}")
+            logger.info("Inverted conditional jump at %s: %s -> %s", hex(address), mnemonic, inverted_mnemonic)
             return patch
 
         raise ValueError(f"Cannot invert non-conditional jump: {mnemonic}")
@@ -503,7 +503,7 @@ class Radare2AdvancedPatcher:
             )
 
             self.patches.append(patch)
-            logger.info(f"Modified return value for function at {hex(func_address)} to {hex(return_value)}")
+            logger.info("Modified return value for function at %s to %s", hex(func_address), hex(return_value))
             return patch
 
         raise ValueError(f"No return instructions found in function at {hex(func_address)}")
@@ -765,7 +765,7 @@ class Radare2AdvancedPatcher:
         self._write_bytes(call_address, new_bytes)
         self.patches.append(patch)
 
-        logger.info(f"Redirected call at {hex(call_address)} to {hex(new_target)}")
+        logger.info("Redirected call at %s to %s", hex(call_address), hex(new_target))
         return patch
 
     def create_function_hook(self, func_address: int, hook_code: bytes, preserve_original: bool = True) -> PatchInfo:
@@ -1052,7 +1052,7 @@ class Radare2AdvancedPatcher:
             self._write_bytes(func_address, complete_hook)
             self.patches.append(patch)
 
-        logger.info(f"Created function hook at {hex(func_address)}")
+        logger.info("Created function hook at %s", hex(func_address))
         return patch
 
     def _create_trampoline(self, original_address: int, hook_size: int) -> int:
@@ -1092,7 +1092,7 @@ class Radare2AdvancedPatcher:
                         zero_count += 1
 
                         if zero_count >= size:
-                            logger.info(f"Found code cave at {hex(cave_start)} with {zero_count} bytes")
+                            logger.info("Found code cave at %s with %s bytes", hex(cave_start), zero_count)
                             return cave_start
                     else:
                         zero_count = 0
@@ -1113,7 +1113,7 @@ class Radare2AdvancedPatcher:
                     patch = self.generate_nop_sled(imp["plt"], 3)
                     self._write_bytes(imp["plt"], patch_bytes)
                     patches_applied.append(patch)
-                    logger.info(f"Defeated IsDebuggerPresent at {hex(imp['plt'])}")
+                    logger.info("Defeated IsDebuggerPresent at %s", hex(imp["plt"]))
 
             # Find and patch inline checks
             peb_checks = self.r2.cmd("/x 64a13000000000")  # mov eax, fs:[0x30]
@@ -1126,7 +1126,7 @@ class Radare2AdvancedPatcher:
                         # Patch to always return 0
                         patch = self.generate_nop_sled(addr, 16)
                         patches_applied.append(patch)
-                        logger.info(f"Defeated PEB.BeingDebugged check at {hex(addr)}")
+                        logger.info("Defeated PEB.BeingDebugged check at %s", hex(addr))
 
             # Patch NtQueryInformationProcess
             nt_query = self.r2.cmd("/x b8ea000000")  # mov eax, 0xEA (NtQueryInformationProcess)
@@ -1159,20 +1159,20 @@ class Radare2AdvancedPatcher:
         """Apply a single patch."""
         try:
             self._write_bytes(patch.address, patch.patched_bytes)
-            logger.info(f"Applied patch: {patch.description}")
+            logger.info("Applied patch: %s", patch.description)
             return True
         except Exception as e:
-            logger.error(f"Failed to apply patch at {hex(patch.address)}: {e}")
+            logger.error("Failed to apply patch at %s: %s", hex(patch.address), e, exc_info=True)
             return False
 
     def revert_patch(self, patch: PatchInfo) -> bool:
         """Revert a single patch."""
         try:
             self._write_bytes(patch.address, patch.original_bytes)
-            logger.info(f"Reverted patch: {patch.description}")
+            logger.info("Reverted patch: %s", patch.description)
             return True
         except Exception as e:
-            logger.error(f"Failed to revert patch at {hex(patch.address)}: {e}")
+            logger.error("Failed to revert patch at %s: %s", hex(patch.address), e, exc_info=True)
             return False
 
     def _read_binary_content(self) -> bytes:
@@ -1208,11 +1208,11 @@ class Radare2AdvancedPatcher:
                     indent=2,
                 )
 
-            logger.info(f"Saved {len(self.patches)} patches to {output_file}")
+            logger.info("Saved %s patches to %s", len(self.patches), output_file)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to save patches: {e}")
+            logger.error("Failed to save patches: %s", e, exc_info=True)
             return False
 
     def load_patches(self, patch_file: str) -> bool:
@@ -1240,11 +1240,11 @@ class Radare2AdvancedPatcher:
                 self.patches.append(patch)
                 self.apply_patch(patch)
 
-            logger.info(f"Loaded and applied {len(self.patches)} patches")
+            logger.info("Loaded and applied %s patches", len(self.patches))
             return True
 
         except Exception as e:
-            logger.error(f"Failed to load patches: {e}")
+            logger.error("Failed to load patches: %s", e, exc_info=True)
             return False
 
     def generate_patch_script(self, script_type: str = "python") -> str:
@@ -1416,7 +1416,7 @@ def main() -> None:
 
         if args.antidebug:
             patches = patcher.defeat_anti_debugging()
-            logger.info(f"Applied {len(patches)} anti-debugging defeat patches")
+            logger.info("Applied %s anti-debugging defeat patches", len(patches))
 
         if args.load:
             patcher.load_patches(args.load)
@@ -1429,9 +1429,9 @@ def main() -> None:
             output_file = f"patch.{args.generate}"
             with open(output_file, "w") as f:
                 f.write(script)
-            logger.info(f"Generated patch script: {output_file}")
+            logger.info("Generated patch script: %s", output_file)
 
-        logger.info(f"Total patches applied: {len(patcher.patches)}")
+        logger.info("Total patches applied: %s", len(patcher.patches))
 
     finally:
         patcher.close()

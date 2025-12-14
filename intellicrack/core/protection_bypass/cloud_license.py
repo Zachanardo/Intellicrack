@@ -72,6 +72,7 @@ MITMPROXY_AVAILABLE = False
 
 try:
     import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     pass
@@ -192,15 +193,13 @@ class TLSInterceptor:
                 backend=self.backend,
             )
 
-            subject = issuer = x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack Research"),
-                    x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack CA"),
-                ]
-            )
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack Research"),
+                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack CA"),
+            ])
 
             self.ca_cert = (
                 x509.CertificateBuilder()
@@ -258,15 +257,13 @@ class TLSInterceptor:
             backend=self.backend,
         )
 
-        subject = x509.Name(
-            [
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname),
-                x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-            ]
-        )
+        subject = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ])
 
         cert = (
             x509.CertificateBuilder()
@@ -277,12 +274,10 @@ class TLSInterceptor:
             .not_valid_before(datetime.utcnow())
             .not_valid_after(datetime.utcnow() + timedelta(days=365))
             .add_extension(
-                x509.SubjectAlternativeName(
-                    [
-                        x509.DNSName(hostname),
-                        x509.DNSName(f"*.{hostname}"),
-                    ]
-                ),
+                x509.SubjectAlternativeName([
+                    x509.DNSName(hostname),
+                    x509.DNSName(f"*.{hostname}"),
+                ]),
                 critical=False,
             )
             .add_extension(
@@ -304,12 +299,10 @@ class TLSInterceptor:
                 critical=True,
             )
             .add_extension(
-                x509.ExtendedKeyUsage(
-                    [
-                        x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
-                        x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
-                    ]
-                ),
+                x509.ExtendedKeyUsage([
+                    x509.oid.ExtendedKeyUsageOID.SERVER_AUTH,
+                    x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH,
+                ]),
                 critical=False,
             )
             .sign(self.ca_key, hashes.SHA256(), backend=self.backend)
@@ -371,10 +364,10 @@ class ProtocolStateMachine:
 
         """
         if new_state in self.transitions.get(self.state, []):
-            logger.debug(f"State transition: {self.state} -> {new_state}")
+            logger.debug("State transition: %s -> %s", self.state, new_state)
             self.state = new_state
             return True
-        logger.warning(f"Invalid state transition: {self.state} -> {new_state}")
+        logger.warning("Invalid state transition: %s -> %s", self.state, new_state)
         return False
 
     def store_token(self, token_type: str, token: str) -> None:
@@ -958,10 +951,10 @@ class MITMProxyAddon:
         method = flow.request.method
         headers = dict(flow.request.headers)
 
-        logger.debug(f"Intercepted request: {method} {url}")
+        logger.debug("Intercepted request: %s %s", method, url)
 
         if should_block := self._check_block_rules(url, method, headers):
-            logger.info(f"Blocking request to {url} (rule match: {should_block})")
+            logger.info("Blocking request to %s (rule match: %s)", url, should_block)
             flow.response = http.Response.make(
                 403,
                 b"Blocked by Intellicrack",
@@ -971,14 +964,12 @@ class MITMProxyAddon:
 
         self._apply_request_modifications(flow)
 
-        self.intercepted_requests.append(
-            {
-                "url": url,
-                "method": method,
-                "timestamp": time.time(),
-                "headers": headers,
-            }
-        )
+        self.intercepted_requests.append({
+            "url": url,
+            "method": method,
+            "timestamp": time.time(),
+            "headers": headers,
+        })
 
     def response(self, flow: "http.HTTPFlow") -> None:
         """Handle intercepted HTTP response.
@@ -990,7 +981,7 @@ class MITMProxyAddon:
         url = flow.request.pretty_url
 
         if should_modify := self._check_modify_rules(url):
-            logger.info(f"Modifying response for {url} (rule match: {should_modify})")
+            logger.info("Modifying response for %s (rule match: %s)", url, should_modify)
             self._synthesize_response(flow)
 
     def _check_block_rules(self, url: str, method: str, headers: dict[str, Any]) -> bool:
@@ -1046,7 +1037,7 @@ class MITMProxyAddon:
                     body = re.sub(pattern, replacement, body)
                 flow.request.text = body
             except Exception as e:
-                logger.debug(f"Failed to modify request body: {e}")
+                logger.debug("Failed to modify request body: %s", e, exc_info=True)
 
     def _synthesize_response(self, flow: http.HTTPFlow) -> None:
         """Synthesize license validation response.
@@ -1088,7 +1079,8 @@ class MITMProxyAddon:
             if isinstance(result, dict):
                 return result
             return {}
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to parse request JSON: %s", e, exc_info=True)
             return {}
 
 
@@ -1190,7 +1182,7 @@ class CloudLicenseProtocolHandler:
         try:
             master.run()
         except Exception as e:
-            logger.error(f"MITM proxy error: {e}")
+            logger.error("MITM proxy error: %s", e, exc_info=True)
             self.running = False
 
     def stop_interception(self) -> dict[str, Any]:

@@ -26,14 +26,12 @@ if TYPE_CHECKING:
 def _import_crypto() -> tuple[bool, Any, Any, Any, Any, Any, Any]:
     """Import cryptography modules safely."""
     try:
-        from Crypto.Cipher import AES
-        from Crypto.Hash import SHA256
-        from Crypto.Protocol.KDF import PBKDF2
-        from Crypto.PublicKey import RSA
-        from Crypto.Signature import pkcs1_15
-        from Crypto.Util.Padding import unpad
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding, rsa
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-        return True, AES, SHA256, PBKDF2, RSA, pkcs1_15, unpad
+        return True, Cipher, hashes.SHA256, PBKDF2HMAC, rsa, padding.PKCS1v15, padding
     except ImportError:
         return False, None, None, None, None, None, None
 
@@ -808,7 +806,7 @@ class TPMBypassEngine:
 
                 return bytes(response)
             except Exception as e:
-                self.logger.debug(f"TPM device communication failed: {e}")
+                self.logger.debug("TPM device communication failed: %s", e, exc_info=True)
 
         return self.process_virtualized_command(command)
 
@@ -1018,7 +1016,7 @@ class TPMBypassEngine:
                         self.tpm_version = "1.2"
                         return "1.2"
             except Exception as e:
-                self.logger.debug(f"TPM device detection failed: {e}")
+                self.logger.debug("TPM device detection failed: %s", e, exc_info=True)
 
         if self.memory_map:
             tpm_id_mem = self.read_physical_memory(self.memory_map.get("tpm_did_vid", 0xFED40F00), 8)
@@ -1249,7 +1247,7 @@ class TPMBypassEngine:
         """
         with self.command_lock:
             self.command_hooks[command_code] = hook_function
-            self.logger.info(f"Installed hook for TPM command 0x{command_code:08x}")
+            self.logger.info("Installed hook for TPM command 0x%08x", command_code)
             return True
 
     def hook_tbs_submit_command(self) -> bool:
@@ -1308,7 +1306,7 @@ class TPMBypassEngine:
             return True
 
         except (OSError, AttributeError) as e:
-            self.logger.error(f"Failed to hook TBS: {e}")
+            self.logger.error("Failed to hook TBS: %s", e, exc_info=True)
             return False
 
     def unseal_tpm_key(
@@ -1345,7 +1343,7 @@ class TPMBypassEngine:
             return self._unseal_generic_blob(sealed_blob, auth_value)
 
         except Exception as e:
-            self.logger.error(f"Key unsealing failed: {e}")
+            self.logger.error("Key unsealing failed: %s", e, exc_info=True)
             return None
 
     def _unseal_tpm2_private_blob(self, blob: bytes, auth: bytes, pcr_policy: dict[int, bytes] | None) -> bytes | None:
@@ -1391,18 +1389,20 @@ class TPMBypassEngine:
 
         try:
             if _AES is not None:
-                cipher = _AES.new(key_material[:32], _AES.MODE_CBC, iv)
-                decrypted = cipher.decrypt(ciphertext)
+                cipher = _AES(algorithms.AES(key_material[:32]), modes.CBC(iv))
+                decryptor = cipher.decryptor()
+                decrypted = decryptor.update(ciphertext) + decryptor.finalize()
 
                 if len(decrypted) > 0:
                     try:
                         if _unpad is not None:
-                            return bytes(_unpad(decrypted, _AES.block_size))
+                            unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
+                            return unpadder.update(decrypted) + unpadder.finalize()
                     except ValueError:
                         pass
                     return bytes(decrypted)
         except Exception as e:
-            self.logger.debug(f"Private blob unsealing failed: {e}")
+            self.logger.debug("Private blob unsealing failed: %s", e, exc_info=True)
 
         return None
 
@@ -1427,7 +1427,8 @@ class TPMBypassEngine:
 
         try:
             if _PBKDF2 is not None and _AES is not None:
-                kdf_output: bytes = _PBKDF2(seed.decode("latin-1"), b"IDENTITY", dkLen=48, count=1)
+                kdf = _PBKDF2(algorithm=hashes.SHA1(), length=48, salt=b"IDENTITY", iterations=1)
+                kdf_output = kdf.derive(seed)
 
                 aes_key = kdf_output[:32]
 
@@ -1435,19 +1436,21 @@ class TPMBypassEngine:
                     iv = encrypted_credential[:16]
                     ciphertext = encrypted_credential[16:]
 
-                    cipher = _AES.new(aes_key, _AES.MODE_CBC, iv)
-                    decrypted = cipher.decrypt(ciphertext)
+                    cipher = _AES(algorithms.AES(aes_key), modes.CBC(iv))
+                    decryptor = cipher.decryptor()
+                    decrypted = decryptor.update(ciphertext) + decryptor.finalize()
 
                     if len(decrypted) > 0:
                         try:
                             if _unpad is not None:
-                                return bytes(_unpad(decrypted, _AES.block_size))
+                                unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
+                                return unpadder.update(decrypted) + unpadder.finalize()
                         except ValueError:
                             pass
                         return bytes(decrypted)
 
         except Exception as e:
-            self.logger.debug(f"Credential unsealing failed: {e}")
+            self.logger.debug("Credential unsealing failed: %s", e, exc_info=True)
 
         return None
 
@@ -1468,24 +1471,26 @@ class TPMBypassEngine:
             if len(key_material) < 32:
                 key_material = hashlib.sha256(key_material).digest()
 
-            for mode_val in [_AES.MODE_CBC, _AES.MODE_ECB]:
+            for mode_class in [modes.CBC, modes.ECB]:
                 try:
-                    if mode_val == _AES.MODE_CBC:
+                    if mode_class == modes.CBC:
                         if len(blob) < 16:
                             continue
                         iv = blob[:16]
                         ciphertext = blob[16:]
-                        cipher = _AES.new(key_material[:32], mode_val, iv)
+                        cipher = _AES(algorithms.AES(key_material[:32]), mode_class(iv))
                     else:
                         ciphertext = blob
-                        cipher = _AES.new(key_material[:32], mode_val)
+                        cipher = _AES(algorithms.AES(key_material[:32]), mode_class())
 
-                    decrypted: bytes = cipher.decrypt(ciphertext)
+                    decryptor = cipher.decryptor()
+                    decrypted = decryptor.update(ciphertext) + decryptor.finalize()
 
                     if len(decrypted) > 0:
                         try:
                             if _unpad is not None:
-                                unpadded = _unpad(decrypted, _AES.block_size)
+                                unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
+                                unpadded = unpadder.update(decrypted) + unpadder.finalize()
                                 if self._looks_like_valid_key(bytes(unpadded)):
                                     return bytes(unpadded)
                         except ValueError:
@@ -1493,7 +1498,7 @@ class TPMBypassEngine:
                                 return bytes(decrypted)
 
                 except Exception as e:
-                    self.logger.debug(f"Generic unsealing attempt failed: {e}")
+                    self.logger.debug("Generic unsealing attempt failed: %s", e, exc_info=True)
                     continue
 
         return None
@@ -1546,7 +1551,7 @@ class TPMBypassEngine:
             if cmd_pcr == pcr_num:
                 if block:
                     response = struct.pack(">HII", 0x8001, 10, 0)
-                    self.logger.info(f"Blocked PCR{pcr_num} extend operation")
+                    self.logger.info("Blocked PCR%s extend operation", pcr_num)
                     return response
                 modified_command = command[:14]
                 modified_command += struct.pack(">H", len(extend_value))
@@ -1555,7 +1560,7 @@ class TPMBypassEngine:
                 size_field = struct.pack(">I", len(modified_command))
                 modified_command = modified_command[:2] + size_field + modified_command[6:]
 
-                self.logger.info(f"Modified PCR{pcr_num} extend value")
+                self.logger.info("Modified PCR%s extend value", pcr_num)
                 return modified_command
 
             return None
@@ -1571,20 +1576,18 @@ class TPMBypassEngine:
             attestation_data = quote_info + pcr_digest + nonce
 
             if _SHA256 is not None:
-                message_hash = _SHA256.new(attestation_data)
-
                 if 0x81010001 in self.attestation_keys:
                     rsa_key = self.attestation_keys[0x81010001]
                 elif _RSA is not None:
-                    rsa_key = _RSA.generate(2048)
+                    rsa_key = _RSA.generate_private_key(public_exponent=65537, key_size=2048)
                     self.attestation_keys[0x81010001] = rsa_key
                 else:
                     return os.urandom(256)
 
                 if _pkcs1_15 is not None:
-                    return bytes(_pkcs1_15.new(rsa_key).sign(message_hash))
+                    return rsa_key.sign(attestation_data, _pkcs1_15(), _SHA256())
         except Exception as e:
-            self.logger.error(f"Signature forging failed: {e}")
+            self.logger.error("Signature forging failed: %s", e, exc_info=True)
         return os.urandom(256)
 
     def extract_pcr_policy(self, policy_digest: bytes) -> dict[int, bytes] | None:
@@ -1604,7 +1607,7 @@ class TPMBypassEngine:
                     pcr_policy[pcr_num] = pcr_value
 
         except Exception as e:
-            self.logger.debug(f"PCR policy extraction failed: {e}")
+            self.logger.debug("PCR policy extraction failed: %s", e, exc_info=True)
 
         if pcr_policy:
             return pcr_policy
@@ -1640,12 +1643,12 @@ class TPMBypassEngine:
             for indicator in tpm_indicators:
                 if indicator in data:
                     detections += 1
-                    self.logger.info(f"Found TPM indicator: {indicator.decode('latin-1', errors='ignore')}")
+                    self.logger.info("Found TPM indicator: %s", indicator.decode("latin-1", errors="ignore"))
 
             return detections >= 2
 
         except Exception as e:
-            self.logger.error(f"TPM detection failed: {e}")
+            self.logger.error("TPM detection failed: %s", e, exc_info=True)
             return False
 
     def analyze_tpm_protection(self, binary_path: str) -> dict[str, Any]:
@@ -1738,7 +1741,7 @@ class TPMBypassEngine:
             return analysis
 
         except Exception as e:
-            self.logger.error(f"TPM analysis failed: {e}")
+            self.logger.error("TPM analysis failed: %s", e, exc_info=True)
             return analysis
 
     def bypass_tpm_protection(self, binary_path: str, output_path: str | None = None) -> bool:
@@ -1746,7 +1749,7 @@ class TPMBypassEngine:
         try:
             binary_path_obj = Path(binary_path)
             if not binary_path_obj.exists():
-                self.logger.error(f"Binary not found: {binary_path}")
+                self.logger.error("Binary not found: %s", binary_path)
                 return False
 
             if output_path is None:
@@ -1791,13 +1794,13 @@ class TPMBypassEngine:
             with open(output_path_obj, "wb") as f:
                 f.write(data)
 
-            self.logger.info(f"Applied {patches_applied} patches to {binary_path}")
-            self.logger.info(f"Patched binary saved to {output_path_obj}")
+            self.logger.info("Applied %s patches to %s", patches_applied, binary_path)
+            self.logger.info("Patched binary saved to %s", output_path_obj)
 
             return patches_applied > 0
 
         except Exception as e:
-            self.logger.error(f"TPM bypass patching failed: {e}")
+            self.logger.error("TPM bypass patching failed: %s", e, exc_info=True)
             return False
 
     def get_bypass_capabilities(self) -> dict[str, Any]:
@@ -1917,14 +1920,14 @@ class TPMBypassEngine:
 
             if os.path.exists(target_binary):
                 self.frida_pid = self.frida_device.spawn([target_binary])
-                self.logger.info(f"Spawned process: {target_binary} (PID: {self.frida_pid})")
+                self.logger.info("Spawned process: %s (PID: %s)", target_binary, self.frida_pid)
             else:
                 try:
                     self.frida_pid = int(target_binary)
-                    self.logger.info(f"Attaching to PID: {self.frida_pid}")
+                    self.logger.info("Attaching to PID: %s", self.frida_pid)
                 except ValueError:
                     self.frida_pid = self.frida_device.get_process(target_binary).pid
-                    self.logger.info(f"Attaching to process: {target_binary} (PID: {self.frida_pid})")
+                    self.logger.info("Attaching to process: %s (PID: %s)", target_binary, self.frida_pid)
 
             self.frida_session = self.frida_device.attach(self.frida_pid)
             self.frida_message_callback = message_callback
@@ -1932,7 +1935,7 @@ class TPMBypassEngine:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to attach Frida to target: {e}")
+            self.logger.error("Failed to attach Frida to target: %s", e, exc_info=True)
             return False
 
     def inject_tpm_command_interceptor(self) -> bool:
@@ -1945,7 +1948,7 @@ class TPMBypassEngine:
             script_path = Path(__file__).parent.parent.parent / "scripts" / "frida" / "tpm_command_interceptor.js"
 
             if not script_path.exists():
-                self.logger.error(f"TPM command interceptor script not found: {script_path}")
+                self.logger.error("TPM command interceptor script not found: %s", script_path)
                 return False
 
             with open(script_path, encoding="utf-8") as f:
@@ -1956,12 +1959,12 @@ class TPMBypassEngine:
             def on_message(message: dict[str, Any], data: Any) -> None:
                 if message.get("type") == "send":
                     payload = message.get("payload", "")
-                    self.logger.info(f"[Frida] {payload}")
+                    self.logger.info("[Frida] %s", payload)
 
                     if self.frida_message_callback:
                         self.frida_message_callback(message, data)
                 elif message.get("type") == "error":
-                    self.logger.error(f"[Frida Error] {message.get('stack', 'Unknown error')}")
+                    self.logger.error("[Frida Error] %s", message.get("stack", "Unknown error"))
 
             self.frida_script.on("message", on_message)
             self.frida_script.load()
@@ -1973,7 +1976,7 @@ class TPMBypassEngine:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to inject command interceptor: {e}")
+            self.logger.error("Failed to inject command interceptor: %s", e, exc_info=True)
             return False
 
     def inject_pcr_manipulator(self, pcr_config: dict[int, bytes] | None = None) -> bool:
@@ -1986,7 +1989,7 @@ class TPMBypassEngine:
             script_path = Path(__file__).parent.parent.parent / "scripts" / "frida" / "tpm_pcr_manipulator.js"
 
             if not script_path.exists():
-                self.logger.error(f"PCR manipulator script not found: {script_path}")
+                self.logger.error("PCR manipulator script not found: %s", script_path)
                 return False
 
             with open(script_path, encoding="utf-8") as f:
@@ -1997,12 +2000,12 @@ class TPMBypassEngine:
             def on_message(message: dict[str, Any], data: Any) -> None:
                 if message.get("type") == "send":
                     payload = message.get("payload", "")
-                    self.logger.info(f"[Frida PCR] {payload}")
+                    self.logger.info("[Frida PCR] %s", payload)
 
                     if self.frida_message_callback:
                         self.frida_message_callback(message, data)
                 elif message.get("type") == "error":
-                    self.logger.error(f"[Frida PCR Error] {message.get('stack', 'Unknown error')}")
+                    self.logger.error("[Frida PCR Error] %s", message.get("stack", "Unknown error"))
 
             self.frida_script.on("message", on_message)
             self.frida_script.load()
@@ -2011,7 +2014,7 @@ class TPMBypassEngine:
                 for pcr_index, pcr_value in pcr_config.items():
                     hex_value = pcr_value.hex()
                     result = self.frida_script.exports_sync.set_spoofed_pcr(pcr_index, hex_value)
-                    self.logger.info(f"Set spoofed PCR{pcr_index}: {result}")
+                    self.logger.info("Set spoofed PCR%s: %s", pcr_index, result)
 
             if self.frida_pid and self.frida_device is not None and hasattr(self.frida_device, "resume"):
                 self.frida_device.resume(self.frida_pid)
@@ -2020,7 +2023,7 @@ class TPMBypassEngine:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to inject PCR manipulator: {e}")
+            self.logger.error("Failed to inject PCR manipulator: %s", e, exc_info=True)
             return False
 
     def spoof_pcr_runtime(self, pcr_index: int, pcr_value: bytes) -> bool:
@@ -2038,14 +2041,14 @@ class TPMBypassEngine:
             result = self.frida_script.exports_sync.set_spoofed_pcr(pcr_index, hex_value)
 
             if result.get("status") == "success":
-                self.logger.info(f"Successfully spoofed PCR{pcr_index}")
+                self.logger.info("Successfully spoofed PCR%s", pcr_index)
                 self.pcr_banks[TPM2Algorithm.SHA256].pcr_values[pcr_index] = pcr_value
                 return True
-            self.logger.error(f"Failed to spoof PCR{pcr_index}: {result.get('message')}")
+            self.logger.error("Failed to spoof PCR%s: %s", pcr_index, result.get("message"))
             return False
 
         except Exception as e:
-            self.logger.error(f"Runtime PCR spoofing failed: {e}")
+            self.logger.error("Runtime PCR spoofing failed: %s", e, exc_info=True)
             return False
 
     def block_pcr_extend_runtime(self, pcr_index: int) -> bool:
@@ -2058,13 +2061,13 @@ class TPMBypassEngine:
             result = self.frida_script.exports_sync.block_pcr(pcr_index)
 
             if result.get("status") == "success":
-                self.logger.info(f"Successfully blocked PCR{pcr_index} extend operations")
+                self.logger.info("Successfully blocked PCR%s extend operations", pcr_index)
                 return True
-            self.logger.error(f"Failed to block PCR{pcr_index}")
+            self.logger.error("Failed to block PCR%s", pcr_index)
             return False
 
         except Exception as e:
-            self.logger.error(f"Runtime PCR blocking failed: {e}")
+            self.logger.error("Runtime PCR blocking failed: %s", e, exc_info=True)
             return False
 
     def bypass_secure_boot_runtime(self) -> bool:
@@ -2086,7 +2089,7 @@ class TPMBypassEngine:
             return False
 
         except Exception as e:
-            self.logger.error(f"Secure Boot bypass failed: {e}")
+            self.logger.error("Secure Boot bypass failed: %s", e, exc_info=True)
             return False
 
     def bypass_measured_boot_runtime(self) -> bool:
@@ -2109,7 +2112,7 @@ class TPMBypassEngine:
             return False
 
         except Exception as e:
-            self.logger.error(f"Measured boot bypass failed: {e}")
+            self.logger.error("Measured boot bypass failed: %s", e, exc_info=True)
             return False
 
     def get_intercepted_commands_frida(self) -> list[dict[str, Any]]:
@@ -2123,7 +2126,7 @@ class TPMBypassEngine:
             return list(commands) if commands else []
 
         except Exception as e:
-            self.logger.error(f"Failed to get intercepted commands: {e}")
+            self.logger.error("Failed to get intercepted commands: %s", e, exc_info=True)
             return []
 
     def get_pcr_operations_frida(self) -> list[dict[str, Any]]:
@@ -2137,7 +2140,7 @@ class TPMBypassEngine:
             return list(operations) if operations else []
 
         except Exception as e:
-            self.logger.error(f"Failed to get PCR operations: {e}")
+            self.logger.error("Failed to get PCR operations: %s", e, exc_info=True)
             return []
 
     def detach_frida(self) -> None:
@@ -2161,7 +2164,7 @@ class TPMBypassEngine:
             self.frida_pid = None
 
         except Exception as e:
-            self.logger.error(f"Error detaching Frida: {e}")
+            self.logger.error("Error detaching Frida: %s", e, exc_info=True)
 
     def runtime_unseal_bypass(self, target_binary: str, sealed_blob: bytes, pcr_policy: dict[int, bytes] | None = None) -> bytes | None:
         """Perform runtime unsealing bypass using Frida injection."""
@@ -2191,7 +2194,7 @@ class TPMBypassEngine:
             return unsealed_key
 
         except Exception as e:
-            self.logger.error(f"Runtime unseal bypass failed: {e}")
+            self.logger.error("Runtime unseal bypass failed: %s", e, exc_info=True)
             return None
         finally:
             self.detach_frida()
@@ -2317,6 +2320,7 @@ class TPMBypassEngine:
             errors.append(f"PCR manipulation failed: {e}")
 
         try:
+
             def intercept_unseal(command: bytes) -> bytes | None:
                 if len(command) >= 10:
                     self.logger.info("Intercepted TPM Unseal command - returning success")
@@ -2330,6 +2334,7 @@ class TPMBypassEngine:
             errors.append(f"Command interception setup failed: {e}")
 
         try:
+
             def intercept_quote(command: bytes) -> bytes | None:
                 if len(command) >= 10:
                     nonce = command[10:42] if len(command) > 41 else os.urandom(32)

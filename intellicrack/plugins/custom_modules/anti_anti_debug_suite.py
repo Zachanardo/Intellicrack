@@ -34,6 +34,9 @@ from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.utils.logger import log_all_methods
 
 
+logger = logging.getLogger(__name__)
+
+
 """
 Anti-Anti-Debug Suite
 
@@ -146,7 +149,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook IsDebuggerPresent: {e}")
+            self.logger.exception("Failed to hook IsDebuggerPresent: %s", e)
             return False
 
     def hook_check_remote_debugger_present(self) -> bool:
@@ -192,7 +195,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook CheckRemoteDebuggerPresent: {e}")
+            self.logger.exception("Failed to hook CheckRemoteDebuggerPresent: %s", e)
             return False
 
     def hook_nt_query_information_process(self) -> bool:
@@ -235,7 +238,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtQueryInformationProcess: {e}")
+            self.logger.exception("Failed to hook NtQueryInformationProcess: %s", e)
             return False
 
     def hook_nt_set_information_thread(self) -> bool:
@@ -284,7 +287,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtSetInformationThread: {e}")
+            self.logger.exception("Failed to hook NtSetInformationThread: %s", e)
             return False
 
     def hook_output_debug_string(self) -> bool:
@@ -323,7 +326,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook OutputDebugStringA: {e}")
+            self.logger.exception("Failed to hook OutputDebugStringA: %s", e)
             return False
 
     def hook_nt_close(self) -> bool:
@@ -363,7 +366,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtClose: {e}")
+            self.logger.exception("Failed to hook NtClose: %s", e)
             return False
 
     def hook_close_handle(self) -> bool:
@@ -403,7 +406,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook CloseHandle: {e}")
+            self.logger.exception("Failed to hook CloseHandle: %s", e)
             return False
 
     def hook_get_last_error(self) -> bool:
@@ -443,7 +446,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook GetLastError: {e}")
+            self.logger.exception("Failed to hook GetLastError: %s", e)
             return False
 
     def hook_set_last_error(self) -> bool:
@@ -483,7 +486,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook SetLastError: {e}")
+            self.logger.exception("Failed to hook SetLastError: %s", e)
             return False
 
     def hook_nt_query_object(self) -> bool:
@@ -523,7 +526,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtQueryObject: {e}")
+            self.logger.exception("Failed to hook NtQueryObject: %s", e)
             return False
 
     def hook_nt_query_system_information(self) -> bool:
@@ -563,7 +566,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtQuerySystemInformation: {e}")
+            self.logger.exception("Failed to hook NtQuerySystemInformation: %s", e)
             return False
 
     def hook_find_window(self) -> bool:
@@ -603,7 +606,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook FindWindow: {e}")
+            self.logger.exception("Failed to hook FindWindow: %s", e)
             return False
 
     def hook_enum_windows(self) -> bool:
@@ -643,7 +646,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook EnumWindows: {e}")
+            self.logger.exception("Failed to hook EnumWindows: %s", e)
             return False
 
     def hook_get_foreground_window(self) -> bool:
@@ -684,7 +687,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook GetForegroundWindow: {e}")
+            self.logger.exception("Failed to hook GetForegroundWindow: %s", e)
             return False
 
     def hook_nt_yield_execution(self) -> bool:
@@ -724,7 +727,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook NtYieldExecution: {e}")
+            self.logger.exception("Failed to hook NtYieldExecution: %s", e)
             return False
 
     def hook_switch_to_thread(self) -> bool:
@@ -764,7 +767,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook SwitchToThread: {e}")
+            self.logger.exception("Failed to hook SwitchToThread: %s", e)
             return False
 
     def install_all_hooks(self) -> list[str]:
@@ -828,7 +831,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to restore hooks: {e}")
+            self.logger.exception("Failed to restore hooks: %s", e)
             return False
 
 
@@ -879,7 +882,7 @@ class PEBManipulator:
                 return pbi.PebBaseAddress
 
         except Exception as e:
-            self.logger.exception(f"Failed to get PEB address: {e}")
+            self.logger.exception("Failed to get PEB address: %s", e)
 
         return None
 
@@ -923,7 +926,7 @@ class PEBManipulator:
                 return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to patch BeingDebugged flag: {e}")
+            self.logger.exception("Failed to patch BeingDebugged flag: %s", e)
 
         return False
 
@@ -970,7 +973,7 @@ class PEBManipulator:
                 return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to patch NtGlobalFlag: {e}")
+            self.logger.exception("Failed to patch NtGlobalFlag: %s", e)
 
         return False
 
@@ -1006,17 +1009,17 @@ class PEBManipulator:
                 if heap_modified:
                     # Write back modified flags
                     ctypes.c_uint32.from_address(heap_addr).value = heap_flags
-                    self.logger.info(f"Heap flags patched: 0x{original_flags:08x} -> 0x{heap_flags:08x}")
+                    self.logger.info("Heap flags patched: 0x%08x -> 0x%08x", original_flags, heap_flags)
                     return True
                 self.logger.info("No debug heap flags found to patch")
                 return False
 
             except Exception as heap_error:
-                self.logger.exception(f"Failed to access heap at 0x{heap_addr:08x}: {heap_error}")
+                self.logger.exception("Failed to access heap at 0x%08x: %s", heap_addr, heap_error)
                 return False
 
         except Exception as e:
-            self.logger.exception(f"Failed to patch heap flags: {e}")
+            self.logger.exception("Failed to patch heap flags: %s", e)
 
         return False
 
@@ -1100,7 +1103,7 @@ class ThreadContextHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook GetThreadContext: {e}")
+            self.logger.exception("Failed to hook GetThreadContext: %s", e)
             return False
 
     def hook_set_thread_context(self) -> bool:
@@ -1154,7 +1157,7 @@ class ThreadContextHooker:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook SetThreadContext: {e}")
+            self.logger.exception("Failed to hook SetThreadContext: %s", e)
             return False
 
 
@@ -1206,7 +1209,7 @@ class HardwareDebugProtector:
                 return context
 
         except Exception as e:
-            self.logger.exception(f"Failed to get thread context: {e}")
+            self.logger.exception("Failed to get thread context: %s", e)
 
         return None
 
@@ -1241,7 +1244,7 @@ class HardwareDebugProtector:
                 return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to clear debug registers: {e}")
+            self.logger.exception("Failed to clear debug registers: %s", e)
 
         return False
 
@@ -1258,7 +1261,7 @@ class HardwareDebugProtector:
                     "Dr7": context.Dr7,
                 }
         except Exception as e:
-            self.logger.exception(f"Failed to monitor debug registers: {e}")
+            self.logger.exception("Failed to monitor debug registers: %s", e)
 
         return {}
 
@@ -1286,7 +1289,7 @@ class HardwareDebugProtector:
                 return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to restore debug registers: {e}")
+            self.logger.exception("Failed to restore debug registers: %s", e)
 
         return False
 
@@ -1302,16 +1305,10 @@ class HardwareDebugProtector:
             bool: True if hook was installed successfully, False otherwise.
         """
         try:
-            nt_get_context_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("ntdll.dll"),
-                b"NtGetContextThread"
-            )
+            nt_get_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtGetContextThread")
 
             if not nt_get_context_addr:
-                get_context_addr = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleW("kernel32.dll"),
-                    b"GetThreadContext"
-                )
+                get_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
                 if not get_context_addr:
                     self.logger.error("Failed to locate GetThreadContext/NtGetContextThread")
                     return False
@@ -1322,6 +1319,7 @@ class HardwareDebugProtector:
                 target_name = "NtGetContextThread"
 
             import sys
+
             is_64bit = sys.maxsize > 2**32
 
             if is_64bit:
@@ -1329,12 +1327,7 @@ class HardwareDebugProtector:
             else:
                 self._dr_offsets = [0x04, 0x08, 0x0C, 0x10, 0x14, 0x18]
 
-            hook_mem = self.kernel32.VirtualAlloc(
-                None,
-                4096,
-                0x3000,
-                0x40
-            )
+            hook_mem = self.kernel32.VirtualAlloc(None, 4096, 0x3000, 0x40)
 
             if not hook_mem:
                 self.logger.error("Failed to allocate memory for hook")
@@ -1343,11 +1336,11 @@ class HardwareDebugProtector:
             self._get_context_hook_mem = hook_mem
             self._get_context_original = target_addr
 
-            self.logger.info(f"Hooked {target_name} to hide hardware breakpoints")
+            self.logger.info("Hooked %s to hide hardware breakpoints", target_name)
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook GetThreadContext: {e}")
+            self.logger.exception("Failed to hook GetThreadContext: %s", e)
             return False
 
     def hook_set_thread_context(self) -> bool:
@@ -1362,16 +1355,10 @@ class HardwareDebugProtector:
             bool: True if hook was installed successfully, False otherwise.
         """
         try:
-            nt_set_context_addr = self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("ntdll.dll"),
-                b"NtSetContextThread"
-            )
+            nt_set_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtSetContextThread")
 
             if not nt_set_context_addr:
-                set_context_addr = self.kernel32.GetProcAddress(
-                    self.kernel32.GetModuleHandleW("kernel32.dll"),
-                    b"SetThreadContext"
-                )
+                set_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
                 if not set_context_addr:
                     self.logger.error("Failed to locate SetThreadContext/NtSetContextThread")
                     return False
@@ -1390,12 +1377,7 @@ class HardwareDebugProtector:
             else:
                 dr_offsets = [0x04, 0x08, 0x0C, 0x10, 0x14, 0x18]
 
-            hook_mem = self.kernel32.VirtualAlloc(
-                None,
-                4096,
-                0x3000,
-                0x40
-            )
+            hook_mem = self.kernel32.VirtualAlloc(None, 4096, 0x3000, 0x40)
 
             if not hook_mem:
                 self.logger.error("Failed to allocate memory for SetThreadContext hook")
@@ -1405,11 +1387,11 @@ class HardwareDebugProtector:
             self._set_context_original = target_addr
             self._set_context_dr_offsets = dr_offsets
 
-            self.logger.info(f"Hooked {target_name} to prevent hardware breakpoints")
+            self.logger.info("Hooked %s to prevent hardware breakpoints", target_name)
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to hook SetThreadContext: {e}")
+            self.logger.exception("Failed to hook SetThreadContext: %s", e)
             return False
 
 
@@ -1445,7 +1427,7 @@ class TimingNormalizer:
         end = time.perf_counter()
         self.baseline_times["QueryPerformanceCounter"] = (end - start) / 1000
 
-        self.logger.info(f"Baseline times: {self.baseline_times}")
+        self.logger.info("Baseline times: %s", self.baseline_times)
 
     def normalize_get_tick_count(self) -> bool:
         """Normalize GetTickCount to prevent timing detection."""
@@ -1491,7 +1473,7 @@ class TimingNormalizer:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to normalize GetTickCount: {e}")
+            self.logger.exception("Failed to normalize GetTickCount: %s", e)
             return False
 
     def normalize_rdtsc(self) -> bool:
@@ -1529,11 +1511,11 @@ class TimingNormalizer:
                     ctypes.byref(old_protect),
                 )
 
-            self.logger.info(f"RDTSC normalization applied to {len(rdtsc_locations)} locations")
+            self.logger.info("RDTSC normalization applied to %s locations", len(rdtsc_locations))
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to normalize RDTSC: {e}")
+            self.logger.exception("Failed to normalize RDTSC: %s", e)
             return False
 
     def _find_rdtsc_instructions(self) -> list[int]:
@@ -1581,7 +1563,7 @@ class TimingNormalizer:
                     offset = pos + 2
 
         except Exception as e:
-            self.logger.exception(f"Error finding RDTSC instructions: {e}")
+            self.logger.exception("Error finding RDTSC instructions: %s", e)
 
         return rdtsc_locations
 
@@ -1679,7 +1661,7 @@ class MemoryPatcher:
                         offset = pos + 1
 
         except Exception as e:
-            self.logger.exception(f"Error finding patterns: {e}")
+            self.logger.exception("Error finding patterns: %s", e)
 
         return found_patterns
 
@@ -1725,7 +1707,7 @@ class MemoryPatcher:
                 return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to patch memory at 0x{address:08X}: {e}")
+            self.logger.exception("Failed to patch memory at 0x%08X: %s", address, e)
 
         return False
 
@@ -1823,29 +1805,29 @@ class ExceptionHandler:
         self.exception_count += 1
 
         try:
-            self.logger.debug(f"Exception caught #{self.exception_count}: {exception_info}")
+            self.logger.debug("Exception caught #%s: %s", self.exception_count, exception_info)
 
             if exception_info:
                 exception_str = str(exception_info).lower()
 
                 if "debug" in exception_str or "breakpoint" in exception_str:
-                    self.logger.info(f"Anti-debug exception detected: {exception_info}")
+                    self.logger.info("Anti-debug exception detected: %s", exception_info)
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "single_step" in exception_str or "trap" in exception_str:
-                    self.logger.info(f"Single-step/trap exception: {exception_info}")
+                    self.logger.info("Single-step/trap exception: %s", exception_info)
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
 
                 if "access_violation" in exception_str:
-                    self.logger.warning(f"Access violation detected: {exception_info}")
+                    self.logger.warning("Access violation detected: %s", exception_info)
                     return 1  # EXCEPTION_EXECUTE_HANDLER
 
-                self.logger.debug(f"Standard exception handling for: {exception_info}")
+                self.logger.debug("Standard exception handling for: %s", exception_info)
 
             return 1  # EXCEPTION_EXECUTE_HANDLER
 
         except Exception as e:
-            self.logger.exception(f"Error in exception handler for {exception_info}: {e}")
+            self.logger.exception("Error in exception handler for %s: %s", exception_info, e)
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
@@ -1895,7 +1877,7 @@ class ExceptionHandler:
             return False
 
         except Exception as e:
-            self.logger.exception(f"Failed to install exception handler: {e}")
+            self.logger.exception("Failed to install exception handler: %s", e)
             return False
 
     def remove_exception_handler(self) -> bool:
@@ -1907,7 +1889,7 @@ class ExceptionHandler:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to remove exception handler: {e}")
+            self.logger.exception("Failed to remove exception handler: %s", e)
             return False
 
     def mask_debug_exceptions(self) -> bool:
@@ -2059,7 +2041,7 @@ class EnvironmentSanitizer:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Failed to restore environment: {e}")
+            self.logger.exception("Failed to restore environment: %s", e)
             return False
 
 
@@ -2100,10 +2082,10 @@ class TargetAnalyzer:
                 if characteristics & 0x0200:  # IMAGE_FILE_DEBUG_STRIPPED
                     techniques.append(AntiDebugTechnique.ADVANCED_EVASION)
 
-                self.logger.info(f"PE analysis found {len(techniques)} indicators")
+                self.logger.info("PE analysis found %s indicators", len(techniques))
 
         except Exception as e:
-            self.logger.exception(f"PE analysis failed: {e}")
+            self.logger.exception("PE analysis failed: %s", e)
 
         return techniques
 
@@ -2131,7 +2113,7 @@ class TargetAnalyzer:
                         techniques.append(AntiDebugTechnique.API_HOOKS)
                         break
         except Exception as e:
-            self.logger.exception(f"Import analysis failed: {e}")
+            self.logger.exception("Import analysis failed: %s", e)
 
         return techniques
 
@@ -2140,15 +2122,13 @@ class TargetAnalyzer:
         techniques = []
 
         try:
-            techniques.extend(
-                (
-                    AntiDebugTechnique.PEB_FLAGS,
-                    AntiDebugTechnique.HARDWARE_BREAKPOINTS,
-                    AntiDebugTechnique.EXCEPTION_HANDLING,
-                )
-            )
+            techniques.extend((
+                AntiDebugTechnique.PEB_FLAGS,
+                AntiDebugTechnique.HARDWARE_BREAKPOINTS,
+                AntiDebugTechnique.EXCEPTION_HANDLING,
+            ))
         except Exception as e:
-            self.logger.error(f"Runtime analysis failed: {e}")
+            self.logger.error("Runtime analysis failed: %s", e, exc_info=True)
 
         return techniques
 
@@ -2180,7 +2160,7 @@ class TargetAnalyzer:
             return False
 
         except Exception as e:
-            self.logger.error(f"VM detection failed: {e}")
+            self.logger.error("VM detection failed: %s", e, exc_info=True)
             return False
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
@@ -2236,10 +2216,10 @@ class TargetAnalyzer:
                         technique_bypass_map[technique],
                     )
 
-            self.logger.info(f"Target analysis complete: {analysis_results['risk_level']} risk")
+            self.logger.info("Target analysis complete: %s risk", analysis_results["risk_level"])
 
         except Exception as e:
-            self.logger.error(f"Target analysis failed: {e}")
+            self.logger.error("Target analysis failed: %s", e, exc_info=True)
 
         return analysis_results
 
@@ -2375,7 +2355,7 @@ class AntiAntiDebugSuite:
             operation.result = BypassResult.FAILED
             operation.error = str(e)
             operation.details = f"Exception during bypass: {e}"
-            self.logger.error(f"Bypass failed for {technique.value}: {e}")
+            self.logger.error("Bypass failed for %s: %s", technique.value, e, exc_info=True)
 
         self.bypass_history.append(operation)
         return operation
@@ -2401,7 +2381,7 @@ class AntiAntiDebugSuite:
 
             # Log result
             status = "OK" if operation.result == BypassResult.SUCCESS else "FAIL"
-            self.logger.info(f"{status} {technique.value}: {operation.details}")
+            self.logger.info("%s %s: %s", status, technique.value, operation.details)
 
         return operations
 
@@ -2481,15 +2461,15 @@ class AntiAntiDebugSuite:
             with open(output_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
-            self.logger.info(f"Report exported to {output_file}")
+            self.logger.info("Report exported to %s", output_file)
 
         except Exception as e:
-            self.logger.error(f"Failed to export report: {e}")
+            self.logger.error("Failed to export report: %s", e, exc_info=True)
 
     def run_interactive_mode(self) -> None:
         """Run interactive bypass mode."""
-        print("=== Anti-Anti-Debug Suite Interactive Mode ===")
-        print("Commands: analyze, bypass, monitor, remove, report, quit")
+        self.logger.info("=== Anti-Anti-Debug Suite Interactive Mode ===")
+        self.logger.info("Commands: analyze, bypass, monitor, remove, report, quit")
 
         while True:
             try:
@@ -2502,17 +2482,17 @@ class AntiAntiDebugSuite:
                     file_path = input("Target file path (optional): ").strip() or None
 
                     analysis = self.analyze_target(file_path)
-                    print("\nTarget Analysis:")
-                    print(f"  Risk Level: {analysis['risk_level']}")
-                    print(f"  Techniques Detected: {len(analysis['techniques_detected'])}")
+                    self.logger.info("Target Analysis:")
+                    self.logger.info("  Risk Level: %s", analysis["risk_level"])
+                    self.logger.info("  Techniques Detected: %s", len(analysis["techniques_detected"]))
                     for technique in analysis["techniques_detected"]:
-                        print(f"    - {technique.value}")
-                    print(f"  VM Environment: {analysis['vm_environment']}")
+                        self.logger.info("    - %s", technique.value)
+                    self.logger.info("  VM Environment: %s", analysis["vm_environment"])
 
                 elif command == "bypass":
-                    print("\nBypass Options:")
-                    print("1. Selective (based on analysis)")
-                    print("2. All bypasses")
+                    self.logger.info("Bypass Options:")
+                    self.logger.info("1. Selective (based on analysis)")
+                    self.logger.info("2. All bypasses")
 
                     choice = input("Choice (1-2): ").strip()
 
@@ -2522,35 +2502,35 @@ class AntiAntiDebugSuite:
                     elif choice == "2":
                         operations = self.apply_all_bypasses()
                     else:
-                        print("Invalid choice")
+                        self.logger.warning("Invalid choice")
                         continue
 
-                    print("\nBypass Results:")
+                    self.logger.info("Bypass Results:")
                     for op in operations:
                         status = "OK" if op.result == BypassResult.SUCCESS else "FAIL"
-                        print(f"  {status} {op.technique.value}: {op.details}")
+                        self.logger.info("  %s %s: %s", status, op.technique.value, op.details)
 
                 elif command == "monitor":
                     status = self.monitor_bypasses()
-                    print("\nBypass Status:")
-                    print(f"  Active Bypasses: {status['bypass_count']}")
+                    self.logger.info("Bypass Status:")
+                    self.logger.info("  Active Bypasses: %s", status["bypass_count"])
                     for bypass in status["active_bypasses"]:
-                        print(f"    - {bypass.value}")
-                    print(f"  Uptime: {status['uptime_seconds']:.1f} seconds")
-                    print(f"  Statistics: {status['statistics']}")
+                        self.logger.info("    - %s", bypass.value)
+                    self.logger.info("  Uptime: %.1f seconds", status["uptime_seconds"])
+                    self.logger.info("  Statistics: %s", status["statistics"])
 
                 elif command == "remove":
                     results = self.remove_bypasses()
-                    print("\nRemoval Results:")
+                    self.logger.info("Removal Results:")
                     for result in results:
-                        print(f"  {result}")
+                        self.logger.info("  %s", result)
 
                 elif command == "report":
                     report = self.get_report()
-                    print("\nBypass Report:")
-                    print(f"  Success Rate: {report['summary']['success_rate']:.1f}%")
-                    print(f"  Total Attempts: {report['summary']['total_bypasses_attempted']}")
-                    print(f"  Currently Active: {report['summary']['currently_active']}")
+                    self.logger.info("Bypass Report:")
+                    self.logger.info("  Success Rate: %.1f%%", report["summary"]["success_rate"])
+                    self.logger.info("  Total Attempts: %s", report["summary"]["total_bypasses_attempted"])
+                    self.logger.info("  Currently Active: %s", report["summary"]["currently_active"])
 
                     export = input("Export to file? (y/n): ").strip().lower()
                     if export == "y":
@@ -2558,24 +2538,24 @@ class AntiAntiDebugSuite:
                             self.export_report(filename)
 
                 elif command == "help":
-                    print("\nAvailable commands:")
-                    print("  analyze  - Analyze target for anti-debug techniques")
-                    print("  bypass   - Apply bypass techniques")
-                    print("  monitor  - Monitor bypass status")
-                    print("  remove   - Remove all active bypasses")
-                    print("  report   - Generate and export report")
-                    print("  quit     - Exit interactive mode")
+                    self.logger.info("Available commands:")
+                    self.logger.info("  analyze  - Analyze target for anti-debug techniques")
+                    self.logger.info("  bypass   - Apply bypass techniques")
+                    self.logger.info("  monitor  - Monitor bypass status")
+                    self.logger.info("  remove   - Remove all active bypasses")
+                    self.logger.info("  report   - Generate and export report")
+                    self.logger.info("  quit     - Exit interactive mode")
 
                 else:
-                    print("Unknown command. Type 'help' for available commands.")
+                    self.logger.warning("Unknown command. Type 'help' for available commands.")
 
             except KeyboardInterrupt:
-                print("\nExiting...")
+                self.logger.info("Exiting...")
                 break
             except Exception as e:
-                print(f"Error: {e}")
+                self.logger.error("Error: %s", e, exc_info=True)
 
-        print("Interactive mode ended.")
+        self.logger.info("Interactive mode ended.")
 
 
 def main() -> None:
@@ -2608,53 +2588,53 @@ def main() -> None:
             suite.run_interactive_mode()
 
         elif args.analyze:
-            print(f"Analyzing {args.analyze}...")
+            logger.info("Analyzing %s...", args.analyze)
             analysis = suite.analyze_target(args.analyze)
 
-            print("\nAnalysis Results:")
-            print(f"  Risk Level: {analysis['risk_level']}")
-            print(f"  Techniques Detected: {', '.join(t.value for t in analysis['techniques_detected'])}")
-            print(f"  VM Environment: {analysis['vm_environment']}")
-            print(f"  Recommended Bypasses: {', '.join(analysis['recommended_bypasses'])}")
+            logger.info("Analysis Results:")
+            logger.info("  Risk Level: %s", analysis["risk_level"])
+            logger.info("  Techniques Detected: %s", ", ".join(t.value for t in analysis["techniques_detected"]))
+            logger.info("  VM Environment: %s", analysis["vm_environment"])
+            logger.info("  Recommended Bypasses: %s", ", ".join(analysis["recommended_bypasses"]))
 
         elif args.bypass:
             if args.bypass == "selective":
-                print("Applying selective bypasses...")
+                logger.info("Applying selective bypasses...")
                 analysis = suite.analyze_target()
                 operations = suite.apply_selective_bypasses(analysis)
             else:
-                print("Applying all bypasses...")
+                logger.info("Applying all bypasses...")
                 operations = suite.apply_all_bypasses()
 
-            print("\nBypass Results:")
+            logger.info("Bypass Results:")
             for op in operations:
                 status = "OK" if op.result == BypassResult.SUCCESS else "FAIL"
-                print(f"  {status} {op.technique.value}")
+                logger.info("  %s %s", status, op.technique.value)
                 if op.details:
-                    print(f"    {op.details}")
+                    logger.info("    %s", op.details)
 
         elif args.monitor:
             status = suite.monitor_bypasses()
-            print(f"Active Bypasses: {status['bypass_count']}")
+            logger.info("Active Bypasses: %s", status["bypass_count"])
             for bypass in status["active_bypasses"]:
-                print(f"  - {bypass.value}")
+                logger.info("  - %s", bypass.value)
 
         elif args.remove:
-            print("Removing all bypasses...")
+            logger.info("Removing all bypasses...")
             results = suite.remove_bypasses()
             for result in results:
-                print(f"  {result}")
+                logger.info("  %s", result)
 
         elif args.report:
-            print(f"Exporting report to {args.report}...")
+            logger.info("Exporting report to %s...", args.report)
             suite.export_report(args.report)
-            print("Report exported successfully.")
+            logger.info("Report exported successfully.")
 
         else:
-            print("No action specified. Use --help for options.")
+            logger.info("No action specified. Use --help for options.")
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error("Error: %s", e, exc_info=True)
         if args.verbose:
             import traceback
 

@@ -266,9 +266,9 @@ Process.enumerateModules().forEach(module => {{{{
             try:
                 with open(f"{tempfile.gettempdir()}/qemu_test_data.json") as f:
                     detailed_data = json.load(f)
-                    logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
-            except Exception as e:
-                logger.warning(f"Failed to load execution data: {e}")
+                    logger.info("Loaded execution data: %d API calls captured", len(detailed_data.get("api_calls", [])))
+            except Exception:
+                logger.warning("Failed to load execution data", exc_info=True)
                 detailed_data = {}
 
             return {

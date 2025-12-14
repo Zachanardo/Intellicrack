@@ -339,14 +339,12 @@ class VirtualizationDetector:
         if vm_indicators["fetch"] >= 2 and vm_indicators["dispatch"] >= 2 and total_score >= 6:
             self.dispatch_loop = loop_address
             self.vm_detected = True
-            self.vm_candidates.append(
-                {
-                    "address": loop_address,
-                    "score": total_score,
-                    "indicators": vm_indicators.copy(),
-                    "instruction_count": len(loop_body),
-                }
-            )
+            self.vm_candidates.append({
+                "address": loop_address,
+                "score": total_score,
+                "indicators": vm_indicators.copy(),
+                "instruction_count": len(loop_body),
+            })
 
             self.logger.info(
                 f"VM dispatch loop detected at 0x{loop_address:x} (score: {total_score}, indicators: {vm_indicators})",

@@ -139,16 +139,14 @@ def generate_always_succeed_x86() -> bytes:
         Machine code bytes for 'MOV EAX, 1; RET' (6 bytes).
 
     """
-    return bytes(
-        [
-            0xB8,
-            0x01,
-            0x00,
-            0x00,
-            0x00,
-            0xC3,
-        ]
-    )
+    return bytes([
+        0xB8,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0xC3,
+    ])
 
 
 def generate_always_succeed_x64() -> bytes:
@@ -161,18 +159,16 @@ def generate_always_succeed_x64() -> bytes:
         Machine code bytes for 'MOV RAX, 1; RET' (8 bytes).
 
     """
-    return bytes(
-        [
-            0x48,
-            0xC7,
-            0xC0,
-            0x01,
-            0x00,
-            0x00,
-            0x00,
-            0xC3,
-        ]
-    )
+    return bytes([
+        0x48,
+        0xC7,
+        0xC0,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0xC3,
+    ])
 
 
 def generate_always_succeed_arm32() -> bytes:
@@ -185,18 +181,16 @@ def generate_always_succeed_arm32() -> bytes:
         Machine code bytes for 'MOV R0, #1; BX LR' (8 bytes).
 
     """
-    return bytes(
-        [
-            0x01,
-            0x00,
-            0xA0,
-            0xE3,
-            0x1E,
-            0xFF,
-            0x2F,
-            0xE1,
-        ]
-    )
+    return bytes([
+        0x01,
+        0x00,
+        0xA0,
+        0xE3,
+        0x1E,
+        0xFF,
+        0x2F,
+        0xE1,
+    ])
 
 
 def generate_always_succeed_arm64() -> bytes:
@@ -209,18 +203,16 @@ def generate_always_succeed_arm64() -> bytes:
         Machine code bytes for 'MOV X0, #1; RET' (8 bytes).
 
     """
-    return bytes(
-        [
-            0x20,
-            0x00,
-            0x80,
-            0xD2,
-            0xC0,
-            0x03,
-            0x5F,
-            0xD6,
-        ]
-    )
+    return bytes([
+        0x20,
+        0x00,
+        0x80,
+        0xD2,
+        0xC0,
+        0x03,
+        0x5F,
+        0xD6,
+    ])
 
 
 def generate_conditional_invert_x86(original_bytes: bytes) -> bytes:
@@ -384,19 +376,15 @@ def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
         return bytes([0xE9]) + offset_bytes
     hook_bytes = hook_addr.to_bytes(8, byteorder="little")
     return (
-        bytes(
-            [
-                0x48,
-                0xB8,
-            ]
-        )
+        bytes([
+            0x48,
+            0xB8,
+        ])
         + hook_bytes
-        + bytes(
-            [
-                0xFF,
-                0xE0,
-            ]
-        )
+        + bytes([
+            0xFF,
+            0xE0,
+        ])
     )
 
 
@@ -452,19 +440,15 @@ def wrap_patch_fastcall(patch: bytes) -> bytes:
         Wrapped patch with RCX and RDX register preservation.
 
     """
-    push_regs = bytes(
-        [
-            0x51,
-            0x52,
-        ]
-    )
+    push_regs = bytes([
+        0x51,
+        0x52,
+    ])
 
-    pop_regs = bytes(
-        [
-            0x5A,
-            0x59,
-        ]
-    )
+    pop_regs = bytes([
+        0x5A,
+        0x59,
+    ])
 
     return push_regs + patch + pop_regs
 
@@ -483,27 +467,23 @@ def wrap_patch_x64_convention(patch: bytes) -> bytes:
         Wrapped patch with RCX, RDX, R8, R9 register preservation.
 
     """
-    push_regs = bytes(
-        [
-            0x51,
-            0x52,
-            0x41,
-            0x50,
-            0x41,
-            0x51,
-        ]
-    )
+    push_regs = bytes([
+        0x51,
+        0x52,
+        0x41,
+        0x50,
+        0x41,
+        0x51,
+    ])
 
-    pop_regs = bytes(
-        [
-            0x41,
-            0x59,
-            0x41,
-            0x58,
-            0x5A,
-            0x59,
-        ]
-    )
+    pop_regs = bytes([
+        0x41,
+        0x59,
+        0x41,
+        0x58,
+        0x5A,
+        0x59,
+    ])
 
     return push_regs + patch + pop_regs
 
@@ -544,34 +524,32 @@ def generate_register_save_x64() -> bytes:
         Series of PUSH instruction bytes for all x64 registers (32 bytes).
 
     """
-    return bytes(
-        [
-            0x50,
-            0x51,
-            0x52,
-            0x53,
-            0x54,
-            0x55,
-            0x56,
-            0x57,
-            0x41,
-            0x50,
-            0x41,
-            0x51,
-            0x41,
-            0x52,
-            0x41,
-            0x53,
-            0x41,
-            0x54,
-            0x41,
-            0x55,
-            0x41,
-            0x56,
-            0x41,
-            0x57,
-        ]
-    )
+    return bytes([
+        0x50,
+        0x51,
+        0x52,
+        0x53,
+        0x54,
+        0x55,
+        0x56,
+        0x57,
+        0x41,
+        0x50,
+        0x41,
+        0x51,
+        0x41,
+        0x52,
+        0x41,
+        0x53,
+        0x41,
+        0x54,
+        0x41,
+        0x55,
+        0x41,
+        0x56,
+        0x41,
+        0x57,
+    ])
 
 
 def generate_register_restore_x64() -> bytes:
@@ -584,34 +562,32 @@ def generate_register_restore_x64() -> bytes:
         Series of POP instruction bytes for all x64 registers (32 bytes).
 
     """
-    return bytes(
-        [
-            0x41,
-            0x5F,
-            0x41,
-            0x5E,
-            0x41,
-            0x5D,
-            0x41,
-            0x5C,
-            0x41,
-            0x5B,
-            0x41,
-            0x5A,
-            0x41,
-            0x59,
-            0x41,
-            0x58,
-            0x5F,
-            0x5E,
-            0x5D,
-            0x5C,
-            0x5B,
-            0x5A,
-            0x59,
-            0x58,
-        ]
-    )
+    return bytes([
+        0x41,
+        0x5F,
+        0x41,
+        0x5E,
+        0x41,
+        0x5D,
+        0x41,
+        0x5C,
+        0x41,
+        0x5B,
+        0x41,
+        0x5A,
+        0x41,
+        0x59,
+        0x41,
+        0x58,
+        0x5F,
+        0x5E,
+        0x5D,
+        0x5C,
+        0x5B,
+        0x5A,
+        0x59,
+        0x58,
+    ])
 
 
 def validate_patch_size(patch: bytes, max_size: int) -> bool:

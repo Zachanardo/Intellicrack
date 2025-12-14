@@ -661,27 +661,23 @@ class HexViewerWidget(QWidget):
         # 8-bit values
         if available >= 1:
             byte_val = self.file_data[offset]
-            interpretations.extend(
+            interpretations.extend((
+                ("UInt8", str(byte_val)),
+                ("Int8", str(struct.unpack("b", bytes([byte_val]))[0])),
                 (
-                    ("UInt8", str(byte_val)),
-                    ("Int8", str(struct.unpack("b", bytes([byte_val]))[0])),
-                    (
-                        "Char",
-                        repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A",
-                    ),
-                )
-            )
+                    "Char",
+                    repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A",
+                ),
+            ))
         # 16-bit values
         if available >= 2:
             data = self.file_data[offset : offset + 2]
-            interpretations.extend(
-                (
-                    ("UInt16 LE", str(struct.unpack("<H", data)[0])),
-                    ("UInt16 BE", str(struct.unpack(">H", data)[0])),
-                    ("Int16 LE", str(struct.unpack("<h", data)[0])),
-                    ("Int16 BE", str(struct.unpack(">h", data)[0])),
-                )
-            )
+            interpretations.extend((
+                ("UInt16 LE", str(struct.unpack("<H", data)[0])),
+                ("UInt16 BE", str(struct.unpack(">H", data)[0])),
+                ("Int16 LE", str(struct.unpack("<h", data)[0])),
+                ("Int16 BE", str(struct.unpack(">h", data)[0])),
+            ))
         # 32-bit values
         if available >= 4:
             data = self.file_data[offset : offset + 4]

@@ -3254,7 +3254,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       CodeUnit codeUnit = codeUnitIter.next();
 
       if (codeUnit instanceof Instruction inst) {
-          String mnemonic = inst.getMnemonicString().toLowerCase();
+        String mnemonic = inst.getMnemonicString().toLowerCase();
 
         // Check for license validation instruction patterns
         if (isLicenseValidationInstruction(inst)) {
@@ -3275,7 +3275,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           Object[] opObjects = inst.getOpObjects(i);
           for (Object obj : opObjects) {
             if (obj instanceof Data data) {
-                if (data.hasStringValue()) {
+              if (data.hasStringValue()) {
                 String stringValue = data.getDefaultValueRepresentation();
                 if (isLicenseRelatedString(stringValue)) {
                   licenseRelatedCodeUnits++;
@@ -3285,7 +3285,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           }
         }
       } else if (codeUnit instanceof Data data) {
-          if (data.hasStringValue()) {
+        if (data.hasStringValue()) {
           String stringValue = data.getDefaultValueRepresentation();
           if (isLicenseRelatedString(stringValue)) {
             licenseRelatedCodeUnits++;
@@ -3440,7 +3440,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       if (dataType instanceof Structure structure) {
 
-          // Analyze structure for license-related fields
+        // Analyze structure for license-related fields
         if (isLicenseRelatedStructure(structure)) {
           licenseStructures++;
           structurePatterns.merge("LicenseStructure", 1, Integer::sum);
@@ -3460,7 +3460,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
             // Check for nested license structures
             if (componentType instanceof Structure nestedStruct) {
-                if (isLicenseRelatedStructure(nestedStruct)) {
+              if (isLicenseRelatedStructure(nestedStruct)) {
                 structurePatterns.merge("NestedLicenseStructure", 1, Integer::sum);
               }
             }
@@ -3468,7 +3468,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         }
       } else if (dataType instanceof Enum enumType) {
 
-          // Analyze enum for license-related values
+        // Analyze enum for license-related values
         if (isLicenseRelatedEnum(enumType)) {
           licenseEnums++;
           structurePatterns.merge("LicenseEnum", 1, Integer::sum);
@@ -3880,7 +3880,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       Object[] objects = inst.getOpObjects(i);
       for (Object obj : objects) {
         if (obj instanceof Register reg) {
-            try {
+          try {
             RegisterValue regValue =
                 currentProgram.getProgramContext().getRegisterValue(reg, inst.getAddress());
             if (regValue != null && regValue.hasValue()) {

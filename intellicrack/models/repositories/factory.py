@@ -119,8 +119,8 @@ class RepositoryFactory:
             # Generic case
             return repo_class(**config)
 
-        except Exception as e:
-            logger.error(f"Failed to create repository of type {repo_type}: {e!s}")
+        except Exception:
+            logger.error("Failed to create repository of type %s", repo_type, exc_info=True)
             return None
 
     @classmethod

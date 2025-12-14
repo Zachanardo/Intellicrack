@@ -153,7 +153,7 @@ class BinaryAnalyzer:
             "msi",
             "com",  # Other formats
         ]
-        self.logger.info(f"BinaryAnalyzer initialized with {len(self.supported_formats)} supported formats.")
+        self.logger.info("BinaryAnalyzer initialized with %s supported formats.", len(self.supported_formats))
 
     def analyze(self, file_path: str | Path, analysis_options: dict[str, Any] | None = None) -> dict[str, Any]:
         """Analyze a binary file comprehensively.
@@ -166,18 +166,18 @@ class BinaryAnalyzer:
             Comprehensive analysis results
 
         """
-        self.logger.info(f"Starting comprehensive analysis for {file_path}")
-        self.logger.debug(f"Analysis options: {analysis_options}")
+        self.logger.info("Starting comprehensive analysis for %s", file_path)
+        self.logger.debug("Analysis options: %s", analysis_options)
         file_path = Path(file_path)
 
         if not file_path.exists():
-            self.logger.error(f"File not found: {file_path}")
+            self.logger.error("File not found: %s", file_path)
             return {"error": f"File not found: {file_path}"}
 
         # Check cache
         file_key = self._get_file_cache_key(file_path)
         if file_key in self.analysis_cache:
-            self.logger.info(f"Returning cached analysis for {file_path}")
+            self.logger.info("Returning cached analysis for %s", file_path)
             return self.analysis_cache[file_key]
 
         # Start timing
@@ -215,7 +215,7 @@ class BinaryAnalyzer:
 
             self.logger.info("Step 2: Detecting file type.")
             self._detect_file_type(file_path, results)
-            self.logger.info(f"Detected file type: {results['file_type'].get('description', 'Unknown')}")
+            self.logger.info("Detected file type: %s", results['file_type'].get('description', 'Unknown'))
             self.logger.info("Step 2: Completed.")
 
             self.logger.info("Step 3: Calculating file hashes.")
@@ -231,7 +231,9 @@ class BinaryAnalyzer:
                 self.logger.info("Step 5: Extracting strings.")
                 self._extract_strings(file_path, results, analysis_options)
                 self.logger.info(
-                    f"Found {results['strings'].get('total_count', 0)} strings, {len(results['strings'].get('interesting', []))} of which are interesting."
+                    "Found %s strings, %s of which are interesting.",
+                    results['strings'].get('total_count', 0),
+                    len(results['strings'].get('interesting', []))
                 )
                 self.logger.info("Step 5: Completed.")
 
@@ -239,36 +241,36 @@ class BinaryAnalyzer:
             if analysis_options is None or analysis_options.get("entropy_analysis", True):
                 self.logger.info("Step 6: Analyzing entropy.")
                 self._analyze_entropy(file_path, results)
-                self.logger.info(f"Overall file entropy: {results['entropy'].get('overall', 0.0):.4f}")
+                self.logger.info("Overall file entropy: %.4f", results['entropy'].get('overall', 0.0))
                 self.logger.info("Step 6: Completed.")
 
             # Protection analysis
             if analysis_options is None or analysis_options.get("protection_analysis", True):
                 self.logger.info("Step 7: Analyzing for protections.")
                 self._analyze_protections(file_path, results)
-                self.logger.info(f"Found {len(results['protection_info'].get('detected', []))} protection(s).")
+                self.logger.info("Found %s protection(s).", len(results['protection_info'].get('detected', [])))
                 self.logger.info("Step 7: Completed.")
 
             # Generate recommendations
             self.logger.info("Step 8: Generating recommendations.")
             self._generate_recommendations(results)
-            self.logger.info(f"Generated {len(results['recommendations'])} recommendation(s).")
+            self.logger.info("Generated %s recommendation(s).", len(results['recommendations']))
             self.logger.info("Step 8: Completed.")
 
-            self.logger.info(f"Analysis for {file_path} completed successfully.")
+            self.logger.info("Analysis for %s completed successfully.", file_path)
 
         except Exception as e:
-            self.logger.exception(f"A critical error occurred during analysis for {file_path}: {e}")
+            self.logger.exception("A critical error occurred during analysis for %s: %s", file_path, e, exc_info=True)
             results["errors"].append(f"Analysis failed: {e!s}")
 
         # Record timing
         duration = time.time() - start_time
         results["analysis_duration"] = duration
-        self.logger.info(f"Total analysis duration: {duration:.2f} seconds.")
+        self.logger.info("Total analysis duration: %.2f seconds.", duration)
 
         # Cache results
         self.analysis_cache[file_key] = results
-        self.logger.debug(f"Analysis results for {file_path} cached.")
+        self.logger.debug("Analysis results for %s cached.", file_path)
 
         return results
 
@@ -279,10 +281,10 @@ class BinaryAnalyzer:
 
     def _analyze_basic_info(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Analyze basic file information."""
-        self.logger.debug(f"Extracting basic file metadata for {file_path}")
+        self.logger.debug("Extracting basic file metadata for %s", file_path)
         try:
             stat_info = file_path.stat()
-            self.logger.debug(f"File stat info: {stat_info}")
+            self.logger.debug("File stat info: %s", stat_info)
 
             results["basic_info"] = {
                 "file_size": stat_info.st_size,
@@ -293,20 +295,20 @@ class BinaryAnalyzer:
                 "is_executable": os.access(file_path, os.X_OK),
                 "mime_type": mimetypes.guess_type(str(file_path))[0] or "application/octet-stream",
             }
-            self.logger.debug(f"Extracted basic info: {results['basic_info']}")
+            self.logger.debug("Extracted basic info: %s", results['basic_info'])
 
         except Exception as e:
-            self.logger.exception(f"Failed to extract basic file info for {file_path}: {e}")
+            self.logger.exception("Failed to extract basic file info for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"Basic info analysis failed: {e!s}")
 
     def _detect_file_type(self, file_path: Path, results: dict[str, Any]) -> None:
         """Detect file type using multiple methods."""
-        self.logger.debug(f"Detecting file type for {file_path} using magic bytes and extension.")
+        self.logger.debug("Detecting file type for %s using magic bytes and extension.", file_path)
         try:
             # Magic byte detection
             with open(file_path, "rb") as f:
                 magic_bytes = f.read(16)
-            self.logger.debug(f"Magic bytes: {magic_bytes.hex()}")
+            self.logger.debug("Magic bytes: %s", magic_bytes.hex())
 
             file_type_info = {
                 "magic_bytes": magic_bytes.hex(),
@@ -350,16 +352,16 @@ class BinaryAnalyzer:
                 file_type_info["format"] = "Unknown"
                 file_type_info["description"] = "Unknown binary format"
 
-            self.logger.debug(f"Detected format: {file_type_info['format']} ({file_type_info['description']})")
+            self.logger.debug("Detected format: %s (%s)", file_type_info['format'], file_type_info['description'])
             results["file_type"] = file_type_info
 
         except Exception as e:
-            self.logger.exception(f"File type detection failed for {file_path}: {e}")
+            self.logger.exception("File type detection failed for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"File type detection failed: {e!s}")
 
     def _calculate_hashes(self, file_path: Path, results: dict[str, Any]) -> None:
         """Calculate various hash values for the file."""
-        self.logger.debug(f"Calculating hashes (sha256, sha512, sha3_256, blake2b) for {file_path}")
+        self.logger.debug("Calculating hashes (sha256, sha512, sha3_256, blake2b) for %s", file_path)
         try:
             hash_algos = {
                 "sha256": hashlib.sha256(),
@@ -367,7 +369,7 @@ class BinaryAnalyzer:
                 "sha3_256": hashlib.sha3_256(),
                 "blake2b": hashlib.blake2b(),
             }
-            self.logger.debug(f"Using hash algorithms: {list(hash_algos.keys())}")
+            self.logger.debug("Using hash algorithms: %s", list(hash_algos.keys()))
 
             with open(file_path, "rb") as f:
                 while chunk := f.read(8192):
@@ -375,15 +377,15 @@ class BinaryAnalyzer:
                         hasher.update(chunk)
 
             results["file_hashes"] = {name: hasher.hexdigest() for name, hasher in hash_algos.items()}
-            self.logger.debug(f"Calculated hashes: {results['file_hashes']}")
+            self.logger.debug("Calculated hashes: %s", results['file_hashes'])
 
         except Exception as e:
-            self.logger.exception(f"Hash calculation failed for {file_path}: {e}")
+            self.logger.exception("Hash calculation failed for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"Hash calculation failed: {e!s}")
 
     def _analyze_format_specific(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Perform format-specific analysis."""
-        self.logger.debug(f"Performing format-specific analysis for {file_path}")
+        self.logger.debug("Performing format-specific analysis for %s", file_path)
         try:
             if not self.multi_format_analyzer:
                 self.logger.warning("Multi-format analyzer not available, skipping format-specific analysis.")
@@ -392,46 +394,46 @@ class BinaryAnalyzer:
 
             # Use multi-format analyzer
             detected_format = results.get("file_type", {}).get("format", "Unknown")
-            self.logger.debug(f"Calling multi-format analyzer for detected format: {detected_format}")
+            self.logger.debug("Calling multi-format analyzer for detected format: %s", detected_format)
             format_results = self.multi_format_analyzer.analyze(file_path)
 
             if "error" not in format_results:
                 results["format_analysis"] = format_results
-                self.logger.debug(f"Format analysis results: {format_results}")
+                self.logger.debug("Format analysis results: %s", format_results)
 
                 # Extract specific information
                 if "sections" in format_results:
                     results["sections"] = format_results["sections"]
-                    self.logger.debug(f"Extracted {len(results['sections'])} sections.")
+                    self.logger.debug("Extracted %s sections.", len(results['sections']))
 
                 if "imports" in format_results:
                     results["imports"] = format_results["imports"]
-                    self.logger.debug(f"Extracted {len(results['imports'])} import entries.")
+                    self.logger.debug("Extracted %s import entries.", len(results['imports']))
 
                 if "exports" in format_results:
                     results["exports"] = format_results["exports"]
-                    self.logger.debug(f"Extracted {len(results['exports'])} export entries.")
+                    self.logger.debug("Extracted %s export entries.", len(results['exports']))
             else:
-                self.logger.error(f"Format analysis failed: {format_results['error']}")
+                self.logger.error("Format analysis failed: %s", format_results['error'])
                 results["warnings"].append(f"Format analysis failed: {format_results['error']}")
 
         except Exception as e:
-            self.logger.exception(f"An unexpected error occurred during format-specific analysis for {file_path}: {e}")
+            self.logger.exception("An unexpected error occurred during format-specific analysis for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"Format-specific analysis failed: {e!s}")
 
     def _extract_strings(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
         """Extract printable strings from the binary."""
-        self.logger.debug(f"Extracting strings from {file_path}")
+        self.logger.debug("Extracting strings from %s", file_path)
         try:
             min_length = 4
             if options and "string_min_length" in options:
                 min_length = options["string_min_length"]
-            self.logger.debug(f"Minimum string length: {min_length}")
+            self.logger.debug("Minimum string length: %s", min_length)
 
             max_strings = 1000
             if options and "max_strings" in options:
                 max_strings = options["max_strings"]
-            self.logger.debug(f"Maximum number of strings to extract: {max_strings}")
+            self.logger.debug("Maximum number of strings to extract: %s", max_strings)
 
             strings = []
 
@@ -456,7 +458,7 @@ class BinaryAnalyzer:
             if len(current) >= min_length and len(strings) < max_strings:
                 strings.append("".join(current))
                 ascii_strings_count += 1
-            self.logger.debug(f"Extracted {ascii_strings_count} ASCII strings.")
+            self.logger.debug("Extracted %s ASCII strings.", ascii_strings_count)
 
             # Extract Unicode strings (simplified)
             if len(strings) < max_strings:
@@ -477,9 +479,9 @@ class BinaryAnalyzer:
                 if len(current) >= min_length and len(strings) < max_strings:
                     strings.append("".join(current))
                     unicode_strings_count += 1
-                self.logger.debug(f"Extracted {unicode_strings_count} Unicode strings.")
+                self.logger.debug("Extracted %s Unicode strings.", unicode_strings_count)
 
-            self.logger.info(f"Extracted {len(strings)} strings.")
+            self.logger.info("Extracted %s strings.", len(strings))
 
             # Analyze strings for interesting patterns
             self.logger.debug("Analyzing strings for interesting patterns.")
@@ -532,7 +534,7 @@ class BinaryAnalyzer:
                             },
                         )
                         break
-            self.logger.info(f"Found {len(interesting_strings)} interesting strings.")
+            self.logger.info("Found %s interesting strings.", len(interesting_strings))
 
             results["strings"] = {
                 "total_count": len(strings),
@@ -546,7 +548,7 @@ class BinaryAnalyzer:
             }
 
         except Exception as e:
-            self.logger.exception(f"String extraction failed for {file_path}: {e}")
+            self.logger.exception("String extraction failed for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"String extraction failed: {e!s}")
 
     def _categorize_string_pattern(self, pattern: str) -> str:
@@ -587,7 +589,7 @@ class BinaryAnalyzer:
 
     def _analyze_entropy(self, file_path: Path, results: dict[str, Any]) -> None:
         """Analyze entropy of file sections."""
-        self.logger.debug(f"Analyzing entropy for {file_path}")
+        self.logger.debug("Analyzing entropy for %s", file_path)
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -595,7 +597,7 @@ class BinaryAnalyzer:
             # Overall file entropy
             self.logger.debug("Calculating overall file entropy.")
             overall_entropy = calculate_entropy(data)
-            self.logger.info(f"Overall file entropy: {overall_entropy:.4f}")
+            self.logger.info("Overall file entropy: %.4f", overall_entropy)
 
             entropy_info = {
                 "overall": overall_entropy,
@@ -606,7 +608,7 @@ class BinaryAnalyzer:
                     "interpretation": self._interpret_entropy(overall_entropy),
                 },
             }
-            self.logger.debug(f"Entropy interpretation: {entropy_info['analysis']['interpretation']}")
+            self.logger.debug("Entropy interpretation: %s", entropy_info['analysis']['interpretation'])
 
             # Section-wise entropy analysis
             if results.get("sections"):
@@ -619,8 +621,8 @@ class BinaryAnalyzer:
                         "entropy": section.get("entropy", 0.0) if "entropy" in section else None,
                     }
                     entropy_info["sections"].append(section_entropy)
-                self.logger.info(f"Analyzed entropy for {len(results['sections'])} sections.")
-                self.logger.debug(f"Entropy analysis completed for {len(results['sections'])} sections.")
+                self.logger.info("Analyzed entropy for %s sections.", len(results['sections']))
+                self.logger.debug("Entropy analysis completed for %s sections.", len(results['sections']))
             else:
                 # Analyze file in chunks if no sections available
                 self.logger.debug("No sections found, analyzing entropy of file chunks.")
@@ -639,13 +641,13 @@ class BinaryAnalyzer:
                             },
                         )
                         chunks_analyzed += 1
-                self.logger.info(f"Analyzed entropy for {chunks_analyzed} chunks.")
-                self.logger.debug(f"Entropy analysis completed for {chunks_analyzed} chunks.")
+                self.logger.info("Analyzed entropy for %s chunks.", chunks_analyzed)
+                self.logger.debug("Entropy analysis completed for %s chunks.", chunks_analyzed)
 
             results["entropy"] = entropy_info
 
         except Exception as e:
-            self.logger.exception(f"Entropy analysis failed for {file_path}: {e}")
+            self.logger.exception("Entropy analysis failed for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"Entropy analysis failed: {e!s}")
 
     def _interpret_entropy(self, entropy: float) -> str:
@@ -664,13 +666,13 @@ class BinaryAnalyzer:
 
     def _analyze_protections(self, file_path: Path, results: dict[str, Any]) -> None:
         """Analyze protection mechanisms."""
-        self.logger.debug(f"Analyzing protection mechanisms for {file_path}")
+        self.logger.debug("Analyzing protection mechanisms for %s", file_path)
         try:
             protections = {"detected": [], "indicators": [], "analysis": {}}
 
             # Check for common protection indicators
             file_type = results.get("file_type", {}).get("format", "Unknown")
-            self.logger.debug(f"Analyzing protections for file type: {file_type}")
+            self.logger.debug("Analyzing protections for file type: %s", file_type)
 
             if file_type == "PE":
                 self.logger.debug("Performing PE-specific protection checks.")
@@ -684,13 +686,15 @@ class BinaryAnalyzer:
             self._check_generic_protections(file_path, results, protections)
 
             results["protection_info"] = protections
-            self.logger.info(f"Found {len(protections['detected'])} detected protections and {len(protections['indicators'])} indicators.")
+            self.logger.info("Found %s detected protections and %s indicators.", len(protections['detected']), len(protections['indicators']))
             self.logger.debug(
-                f"Protection analysis completed. Detected: {protections['detected']}, Indicators: {protections['indicators']}"
+                "Protection analysis completed. Detected: %s, Indicators: %s",
+                protections['detected'],
+                protections['indicators']
             )
 
         except Exception as e:
-            self.logger.exception(f"Protection analysis failed for {file_path}: {e}")
+            self.logger.exception("Protection analysis failed for %s: %s", file_path, e, exc_info=True)
             results["warnings"].append(f"Protection analysis failed: {e!s}")
 
     def _check_pe_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
@@ -804,7 +808,7 @@ class BinaryAnalyzer:
         )
 
         results["recommendations"] = recommendations
-        self.logger.debug(f"Generated {len(recommendations)} recommendations.")
+        self.logger.debug("Generated %s recommendations.", len(recommendations))
 
     def create_binary_info(self, file_path: str | Path) -> object | None:
         """Create BinaryInfo object from file analysis.
@@ -854,7 +858,7 @@ class BinaryAnalyzer:
             )
 
         except Exception as e:
-            self.logger.exception(f"Failed to create BinaryInfo: {e}")
+            self.logger.exception("Failed to create BinaryInfo: %s", e, exc_info=True)
             return None
 
     def get_supported_formats(self) -> list[str]:

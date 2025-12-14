@@ -202,9 +202,9 @@ class YaraScanner:
         for category, rule_source in builtin_rules.items():
             try:
                 self.compiled_rules[category] = yara.compile(source=rule_source)
-                logger.info(f"Loaded built-in rules for {category.value}")
+                logger.info("Loaded built-in rules for %s", category.value)
             except Exception as e:
-                logger.error(f"Failed to compile {category.value} rules: {e}")
+                logger.error("Failed to compile %s rules: %s", category.value, e, exc_info=True)
 
     def _create_packer_rules(self) -> str:
         """Create YARA rules for packer detection."""
@@ -868,9 +868,9 @@ rule Delphi_Compiler {
             try:
                 rules = yara.compile(filepath=str(rule_file))
                 self.custom_rules[rule_file.stem] = rules
-                logger.info(f"Loaded custom rule: {rule_file.stem}")
+                logger.info("Loaded custom rule: %s", rule_file.stem)
             except Exception as e:
-                logger.error(f"Failed to load rule {rule_file}: {e}")
+                logger.error("Failed to load rule %s: %s", rule_file, e, exc_info=True)
 
     def scan_file(self, file_path: Path, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
         """Scan a file with YARA rules.
@@ -909,7 +909,7 @@ rule Delphi_Compiler {
                     matches.append(yara_match)
 
             except Exception as e:
-                logger.error(f"Failed to scan with {category.value} rules: {e}")
+                logger.error("Failed to scan with %s rules: %s", category.value, e, exc_info=True)
 
         # Scan with custom rules
         for rule_name, rules in self.custom_rules.items():
@@ -929,7 +929,7 @@ rule Delphi_Compiler {
                     matches.append(yara_match)
 
             except Exception as e:
-                logger.error(f"Failed to scan with custom rule {rule_name}: {e}")
+                logger.error("Failed to scan with custom rule %s: %s", rule_name, e, exc_info=True)
 
         return matches
 
@@ -970,7 +970,7 @@ rule Delphi_Compiler {
                     matches.append(yara_match)
 
             except Exception as e:
-                logger.error(f"Failed to scan process {pid} with {category.value} rules: {e}")
+                logger.error("Failed to scan process %s with %s rules: %s", pid, category.value, e, exc_info=True)
 
         return matches
 
@@ -1096,7 +1096,7 @@ rule Delphi_Compiler {
                         })
 
         except Exception as e:
-            logger.error(f"Failed to perform signature-based detection: {e}")
+            logger.error("Failed to perform signature-based detection: %s", e, exc_info=True)
 
         return detections
 
@@ -1126,11 +1126,11 @@ rule Delphi_Compiler {
             # Store compiled rule
             self.custom_rules[rule_name] = rules
 
-            logger.info(f"Created custom rule: {rule_name}")
+            logger.info("Created custom rule: %s", rule_name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to create custom rule: {e}")
+            logger.error("Failed to create custom rule: %s", e, exc_info=True)
             return False
 
     def compile_rules(self, incremental: bool = False, timeout: int = 30) -> bool:
@@ -1157,7 +1157,7 @@ rule Delphi_Compiler {
                     yara.compile(source=content)
                     valid_rules.append(content)
                 except Exception as e:
-                    logger.warning(f"Rule '{name}' failed validation: {e}")
+                    logger.warning("Rule '%s' failed validation: %s", name, e, exc_info=True)
                     failed_rules.append(name)
                     if not incremental:
                         raise
@@ -1178,23 +1178,23 @@ rule Delphi_Compiler {
                 self.compiled_rules = yara.compile(source=all_rules)
 
             compile_time = time.time() - start_time
-            logger.info(f"Compiled {len(valid_rules)} rules in {compile_time:.2f}s")
+            logger.info("Compiled %d rules in %.2fs", len(valid_rules), compile_time)
 
             # Remove failed rules from builtin_rules if incremental
             if incremental and failed_rules:
                 for name in failed_rules:
                     del self.builtin_rules[name]
-                logger.info(f"Removed {len(failed_rules)} invalid rules")
+                logger.info("Removed %d invalid rules", len(failed_rules))
 
             # Cache the hash
             self._rules_hash = rules_hash
             return True
 
         except yara.TimeoutError:
-            logger.error(f"Rule compilation timeout after {timeout}s")
+            logger.error("Rule compilation timeout after %ds", timeout, exc_info=True)
             return False
         except Exception as e:
-            logger.error(f"Failed to compile rules: {e}")
+            logger.error("Failed to compile rules: %s", e, exc_info=True)
             return False
 
     def add_rule(
@@ -1213,7 +1213,7 @@ rule Delphi_Compiler {
 
             # Check for duplicate
             if safe_name in self.builtin_rules:
-                logger.warning(f"Rule '{safe_name}' already exists, updating...")
+                logger.warning("Rule '%s' already exists, updating...", safe_name)
 
             # Validate rule syntax if requested
             if validate_syntax:
@@ -1222,10 +1222,10 @@ rule Delphi_Compiler {
                     # Test the rule on empty data to ensure it doesn't crash
                     test_compiled.match(data=b"test")
                 except yara.SyntaxError as e:
-                    logger.error(f"Rule syntax error: {e}")
+                    logger.error("Rule syntax error: %s", e, exc_info=True)
                     return False
                 except Exception as e:
-                    logger.error(f"Rule validation error: {e}")
+                    logger.error("Rule validation error: %s", e, exc_info=True)
                     return False
 
             # Add metadata to rule if not present
@@ -1249,13 +1249,13 @@ rule Delphi_Compiler {
             return self.compile_rules(incremental=True)
 
         except Exception as e:
-            logger.error(f"Failed to add rule {rule_name}: {e}")
+            logger.error("Failed to add rule %s: %s", rule_name, e, exc_info=True)
             return False
 
     def remove_rule(self, rule_name: str, check_dependencies: bool = True) -> bool:
         """Remove a YARA rule with dependency checking."""
         if rule_name not in self.builtin_rules:
-            logger.warning(f"Rule '{rule_name}' not found")
+            logger.warning("Rule '%s' not found", rule_name)
             return False
 
         try:
@@ -1263,7 +1263,7 @@ rule Delphi_Compiler {
             if check_dependencies:
                 for name, content in self.builtin_rules.items():
                     if name != rule_name and rule_name in content:
-                        logger.warning(f"Rule '{name}' may depend on '{rule_name}'")
+                        logger.warning("Rule '%s' may depend on '%s'", name, rule_name)
                         # Continue anyway but log the warning
 
             # Remove rule and its category
@@ -1275,7 +1275,7 @@ rule Delphi_Compiler {
             return self.compile_rules()
 
         except Exception as e:
-            logger.error(f"Failed to remove rule {rule_name}: {e}")
+            logger.error("Failed to remove rule %s: %s", rule_name, e, exc_info=True)
             return False
 
     def scan_process(
@@ -1296,7 +1296,7 @@ rule Delphi_Compiler {
         try:
             # Verify process exists
             if not psutil.pid_exists(pid):
-                logger.error(f"Process {pid} does not exist")
+                logger.error("Process %s does not exist", pid)
                 return matches
 
             # Get process info
@@ -1304,7 +1304,7 @@ rule Delphi_Compiler {
                 process = psutil.Process(pid)
                 process_name = process.name()
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                logger.error(f"Cannot access process {pid}: {e}")
+                logger.error("Cannot access process %s: %s", pid, e, exc_info=True)
                 return matches
 
             # Open process with required permissions
@@ -1314,7 +1314,7 @@ rule Delphi_Compiler {
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
             if process_handle := kernel32.OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, False, pid):
                 # Enhanced scanning with handle
-                logger.info(f"Enhanced scanning of process {pid} with handle")
+                logger.info("Enhanced scanning of process %s with handle", pid)
 
                 class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                     _fields_ = [
@@ -1366,7 +1366,7 @@ rule Delphi_Compiler {
 
             else:
                 # Try using YARA's built-in process scanning
-                logger.info(f"Using YARA built-in scanning for process {pid}")
+                logger.info("Using YARA built-in scanning for process %s", pid)
                 try:
                     # Filter rules by category
                     compiled = (
@@ -1392,16 +1392,16 @@ rule Delphi_Compiler {
                         )
 
                 except Exception as e:
-                    logger.error(f"YARA process scan failed: {e}")
+                    logger.error("YARA process scan failed: %s", e, exc_info=True)
             # Store matches
             with self._match_lock:
                 self._matches.extend(matches)
 
-            logger.info(f"Found {len(matches)} matches in process {pid}")
+            logger.info("Found %d matches in process %s", len(matches), pid)
             return matches
 
         except Exception as e:
-            logger.error(f"Process scanning error: {e}")
+            logger.error("Process scanning error: %s", e, exc_info=True)
             return matches
 
     def generate_rule(
@@ -1436,7 +1436,7 @@ rule Delphi_Compiler {
                     rule_content += f"        ${var_name} = {s}\n"
                     string_vars.append(f"${var_name}")
                 except re.error as e:
-                    logger.warning(f"Invalid regex pattern: {s} - {e}")
+                    logger.warning("Invalid regex pattern: %s - %s", s, e)
                     continue
 
             elif s.startswith("{") and s.endswith("}"):
@@ -1553,7 +1553,7 @@ rule Delphi_Compiler {
                 for match in yara_matches
             )
         except Exception as e:
-            logger.error(f"Memory region scan error: {e}")
+            logger.error("Memory region scan error: %s", e, exc_info=True)
 
         return matches
 
@@ -1597,7 +1597,7 @@ rule Delphi_Compiler {
         with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
-        logger.info(f"Exported detections to {output_path}")
+        logger.info("Exported detections to %s", output_path)
 
     def scan_process_with_analyzer(
         self,
@@ -1708,7 +1708,7 @@ rule Delphi_Compiler {
                                 matches.append(yara_match)
 
                         except Exception as e:
-                            logger.error(f"Failed to scan region with {category.value} rules: {e}")
+                            logger.error("Failed to scan region with %s rules: %s", category.value, e, exc_info=True)
 
                     # Cache results if enabled
                     if use_cache:
@@ -1726,7 +1726,7 @@ rule Delphi_Compiler {
                         )
 
                 except Exception as e:
-                    logger.error(f"Failed to scan region at 0x{region['base_address']:X}: {e}")
+                    logger.error("Failed to scan region at 0x%X: %s", region["base_address"], e, exc_info=True)
                     scanned_regions += 1
 
             # Also scan with custom rules
@@ -1752,16 +1752,16 @@ rule Delphi_Compiler {
                             matches.append(yara_match)
 
                     except Exception as e:
-                        logger.error(f"Failed to scan with custom rule {rule_name}: {e}")
+                        logger.error("Failed to scan with custom rule %s: %s", rule_name, e, exc_info=True)
 
             if progress_callback:
                 progress_callback(total_regions, total_regions, f"Scan complete - found {len(matches)} matches")
 
-            logger.info(f"YARA scan complete: {len(matches)} matches in {scanned_regions} regions")
+            logger.info("YARA scan complete: %d matches in %d regions", len(matches), scanned_regions)
             return matches
 
         except Exception as e:
-            logger.error(f"Process scanning error: {e}")
+            logger.error("Process scanning error: %s", e, exc_info=True)
             return matches
 
     def _is_dll_region(self, license_analyzer: object, region: dict[str, Any]) -> bool:
@@ -1779,7 +1779,7 @@ rule Delphi_Compiler {
                         return True
 
         except Exception as e:
-            logger.debug(f"Module region comparison failed: {e}")
+            logger.debug("Module region comparison failed: %s", e)
 
         return False
 
@@ -1791,7 +1791,7 @@ rule Delphi_Compiler {
                 return True
 
         except Exception as e:
-            logger.debug(f"Heap region analysis failed: {e}")
+            logger.debug("Heap region analysis failed: %s", e)
 
         return False
 
@@ -1833,7 +1833,7 @@ rule Delphi_Compiler {
 
             analyzer = LicenseAnalyzer()
             if not analyzer.attach_to_process(pid):
-                logger.error(f"Failed to attach to process {pid}")
+                logger.error("Failed to attach to process %s", pid)
                 return matches
 
             memory_regions = analyzer.enumerate_memory_regions()
@@ -1872,7 +1872,7 @@ rule Delphi_Compiler {
                             region_matches.append(yara_match)
 
                 except Exception as e:
-                    logger.error(f"Error scanning region: {e}")
+                    logger.error("Error scanning region: %s", e, exc_info=True)
 
                 return region_matches
 
@@ -1890,14 +1890,14 @@ rule Delphi_Compiler {
                         region_matches = future.result(timeout=30)
                         matches.extend(region_matches)
                     except Exception as e:
-                        logger.error(f"Scanning failed for region 0x{region['base_address']:X}: {e}")
+                        logger.error("Scanning failed for region 0x%X: %s", region["base_address"], e, exc_info=True)
 
             analyzer.detach_from_process()
-            logger.info(f"Concurrent scan found {len(matches)} matches")
+            logger.info("Concurrent scan found %d matches", len(matches))
             return matches
 
         except Exception as e:
-            logger.error(f"Concurrent scanning error: {e}")
+            logger.error("Concurrent scanning error: %s", e, exc_info=True)
             return matches
 
     def add_memory_filter(
@@ -2002,7 +2002,7 @@ rule Delphi_Compiler {
         self._cache_ttl = ttl_seconds
         self._cache_timestamps = {}
 
-        logger.info(f"Match caching enabled: max_size={max_cache_size}, ttl={ttl_seconds}s")
+        logger.info("Match caching enabled: max_size=%d, ttl=%ds", max_cache_size, ttl_seconds)
 
     def clear_match_cache(self) -> None:
         """Clear the match result cache."""
@@ -2041,7 +2041,7 @@ rule Delphi_Compiler {
             return True
 
         except Exception as e:
-            logger.error(f"Failed to optimize rules: {e}")
+            logger.error("Failed to optimize rules: %s", e, exc_info=True)
             return False
 
     def _get_rule_source(self, category: RuleCategory) -> str | None:
@@ -2437,7 +2437,7 @@ rule Delphi_Compiler {
             pe.close()
 
         except Exception as e:
-            logger.error(f"Failed to extract PE metadata: {e}")
+            logger.error("Failed to extract PE metadata: %s", e, exc_info=True)
 
         return metadata
 
@@ -2597,7 +2597,7 @@ rule Delphi_Compiler {
         is_valid, error = self.validate_rule_syntax(rule)
 
         if not is_valid:
-            logger.error(f"Generated rule has syntax error: {error}")
+            logger.error("Generated rule has syntax error: %s", error)
             # Return simplified version
             return f"""rule {safe_name} {{
     meta:
@@ -3055,7 +3055,7 @@ extern "C" {{
             if backup:
                 backup_path = target_file.with_suffix(f"{target_file.suffix}.bak")
                 shutil.copy2(target_file, backup_path)
-                logger.info(f"Created backup: {backup_path}")
+                logger.info("Created backup: %s", backup_path)
 
             # Apply patch based on type
             if patch_data["type"] in ["string_replace", "conditional_jump", "instruction_patch"]:
@@ -3069,16 +3069,16 @@ extern "C" {{
                     f.write(patch_data["nop_bytes"])
 
             else:
-                logger.warning(f"Patch type {patch_data['type']} requires additional implementation")
+                logger.warning("Patch type %s requires additional implementation", patch_data["type"])
                 return False
 
             self.patch_statistics["successful_patches"] += 1
-            logger.info(f"Successfully applied patch at offset 0x{patch_data['offset']:X}")
+            logger.info("Successfully applied patch at offset 0x%X", patch_data["offset"])
             return True
 
         except Exception as e:
             self.patch_statistics["failed_patches"] += 1
-            logger.error(f"Failed to apply patch: {e}")
+            logger.error("Failed to apply patch: %s", e, exc_info=True)
             return False
 
     def rollback_patch(self, target_file: Path) -> bool:
@@ -3104,7 +3104,7 @@ extern "C" {{
             logger.info("Patch rolled back successfully")
             return True
         except Exception as e:
-            logger.error(f"Failed to rollback patch: {e}")
+            logger.error("Failed to rollback patch: %s", e, exc_info=True)
             return False
 
     def track_patch_effectiveness(self, patch_id: str, success: bool, notes: str = "") -> None:
@@ -3222,10 +3222,10 @@ extern "C" {{
                     breakpoints.append(bp_data)
                     self.breakpoint_mapping[bp_id] = match
 
-                    logger.info(f"Set breakpoint at 0x{match.offset:X} for {match.rule_name}")
+                    logger.info("Set breakpoint at 0x%X for %s", match.offset, match.rule_name)
 
             except Exception as e:
-                logger.error(f"Failed to set breakpoint for {match.rule_name}: {e}")
+                logger.error("Failed to set breakpoint for %s: %s", match.rule_name, e, exc_info=True)
 
         return breakpoints
 
@@ -3358,10 +3358,10 @@ extern "C" {{
                     log_memory_access=True,
                 )
 
-                logger.info(f"Enabled tracing at 0x{match.offset:X} for {match.rule_name}")
+                logger.info("Enabled tracing at 0x%X for %s", match.offset, match.rule_name)
 
             except Exception as e:
-                logger.error(f"Failed to enable tracing for {match.rule_name}: {e}")
+                logger.error("Failed to enable tracing for %s: %s", match.rule_name, e, exc_info=True)
 
     def log_match_execution(self, match: YaraMatch, context: dict[str, Any]) -> None:
         """Log execution context when YARA match location is reached.
@@ -3392,12 +3392,12 @@ extern "C" {{
                 # Rotate log by removing oldest entries (keep last 75% of max size)
                 keep_count = int(self._execution_log_max_size * 0.75)
                 self._execution_log = self._execution_log[-keep_count:]
-                logger.debug(f"Execution log rotated, kept {keep_count} most recent entries")
+                logger.debug("Execution log rotated, kept %d most recent entries", keep_count)
 
             self._execution_log.append(log_entry)
 
         # Also write to debug log
-        logger.debug(f"Match execution: {json.dumps(log_entry, indent=2)}")
+        logger.debug("Match execution: %s", json.dumps(log_entry, indent=2))
 
     def set_match_triggered_action(self, rule_name: str, action_callback: Callable[[YaraMatch, dict[str, Any]], object]) -> None:
         """Set a callback to execute when specific rule matches are hit.
@@ -3411,7 +3411,7 @@ extern "C" {{
             self._match_actions = {}
 
         self._match_actions[rule_name] = action_callback
-        logger.info(f"Registered action for rule: {rule_name}")
+        logger.info("Registered action for rule: %s", rule_name)
 
     def trigger_match_action(self, match: YaraMatch, context: dict[str, Any]) -> object | None:
         """Trigger registered action for a match.
@@ -3431,10 +3431,10 @@ extern "C" {{
             try:
                 callback = self._match_actions[match.rule_name]
                 result = callback(match, context)
-                logger.info(f"Executed action for {match.rule_name}")
+                logger.info("Executed action for %s", match.rule_name)
                 return result
             except Exception as e:
-                logger.error(f"Failed to execute action for {match.rule_name}: {e}")
+                logger.error("Failed to execute action for %s: %s", match.rule_name, e, exc_info=True)
                 return None
 
         return None
@@ -3646,4 +3646,4 @@ extern "C" {{
         with open(output_path, "w") as f:
             json.dump(config, f, indent=2)
 
-        logger.info(f"Exported {len(breakpoints)} breakpoints to {output_path}")
+        logger.info("Exported %d breakpoints to %s", len(breakpoints), output_path)

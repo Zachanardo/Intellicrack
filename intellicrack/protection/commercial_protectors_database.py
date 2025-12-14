@@ -1256,13 +1256,11 @@ class CommercialProtectorsDatabase:
 
         for pattern, description in crypto_patterns.items():
             if pattern in file_data:
-                layers.append(
-                    {
-                        "type": "crypto-signature",
-                        "algorithm": pattern.decode(),
-                        "description": description,
-                    }
-                )
+                layers.append({
+                    "type": "crypto-signature",
+                    "algorithm": pattern.decode(),
+                    "description": description,
+                })
 
         # Check for compression signatures
         compression_sigs = {
@@ -1276,13 +1274,11 @@ class CommercialProtectorsDatabase:
 
         for sig, description in compression_sigs.items():
             if sig in file_data[:1024]:
-                layers.append(
-                    {
-                        "type": "compression",
-                        "format": description,
-                        "offset": hex(file_data.find(sig)),
-                    }
-                )
+                layers.append({
+                    "type": "compression",
+                    "format": description,
+                    "offset": hex(file_data.find(sig)),
+                })
 
         return layers
 

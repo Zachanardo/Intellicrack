@@ -94,7 +94,7 @@ class ConfirmationManager:
         """Request user confirmation for an action."""
         # Auto-approve low-risk actions if enabled
         if self.auto_approve_low_risk and action.risk_level == "low":
-            logger.info(f"Auto-approving low-risk action: {action.description}")
+            logger.info("Auto-approving low-risk action: %s", action.description)
             return True
 
         # Display action details
@@ -293,7 +293,7 @@ class IntellicrackAIInterface:
 
         # Execute the command
         try:
-            logger.info(f"Executing: {' '.join(action.command)}")
+            logger.info("Executing: %s", " ".join(action.command))
 
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 action.command,
@@ -320,12 +320,14 @@ class IntellicrackAIInterface:
             }
 
         except subprocess.TimeoutExpired:
+            logger.error("Command timed out: %s", " ".join(action.command), exc_info=True)
             return {
                 "status": "error",
                 "message": "Command timed out",
                 "action": action,
             }
         except Exception as e:
+            logger.error("Command execution failed: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "message": str(e),
@@ -818,7 +820,7 @@ console.log("[*] Hardware/Time spoofing script active");
 
     def _generate_comprehensive_ghidra_script(self, binary_name: str) -> str:
         """Generate comprehensive Ghidra analysis script."""
-        return f'''//@category Intellicrack
+        return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Comprehensive Analysis
 //@author Intellicrack AI
 //@description Comprehensive binary analysis for {binary_name}
@@ -952,11 +954,11 @@ public class {binary_name}_Analysis extends GhidraScript {{
         println("  Found " + count + " suspicious imports");
     }}
 }}
-'''
+"""
 
     def _generate_licensing_ghidra_script(self, binary_name: str) -> str:
         """Generate Ghidra script focused on licensing analysis."""
-        return f'''//@category Intellicrack
+        return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Licensing Analysis
 //@author Intellicrack AI
 //@description Deep licensing analysis for {binary_name}
@@ -1011,11 +1013,11 @@ public class {binary_name}_LicenseAnalysis extends GhidraScript {{
         println("=== Licensing Analysis Complete ===");
     }}
 }}
-'''
+"""
 
     def _generate_crypto_ghidra_script(self, binary_name: str) -> str:
         """Generate Ghidra script focused on cryptographic analysis."""
-        return f'''//@category Intellicrack
+        return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Crypto Analysis
 //@author Intellicrack AI
 //@description Cryptographic routine analysis for {binary_name}
@@ -1091,11 +1093,11 @@ public class {binary_name}_CryptoAnalysis extends GhidraScript {{
         println("=== Crypto Analysis Complete ===");
     }}
 }}
-'''
+"""
 
     def _generate_strings_ghidra_script(self, binary_name: str) -> str:
         """Generate Ghidra script for string analysis."""
-        return f'''//@category Intellicrack
+        return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.String Analysis
 //@author Intellicrack AI
 //@description Interesting string analysis for {binary_name}
@@ -1155,7 +1157,7 @@ public class {binary_name}_StringAnalysis extends GhidraScript {{
         println("=== String Analysis Complete ===");
     }}
 }}
-'''
+"""
 
 
 # Tool definitions for AI models (Claude Code style)
@@ -1228,23 +1230,23 @@ def main() -> None:
     manager = ConfirmationManager(auto_approve_low_risk=False)
     ai_interface = IntellicrackAIInterface(manager)
 
-    print("Intellicrack AI Interface Initialized")
-    print("This interface provides safe AI control with confirmation safeguards")
-    print("-" * 80)
+    logger.info("Intellicrack AI Interface Initialized")
+    logger.info("This interface provides safe AI control with confirmation safeguards")
+    logger.info("-" * 80)
 
     # Example: Analyze a binary
     result = ai_interface.analyze_binary(
         "example.exe",
         analyses=["comprehensive", "protections"],
     )
-    print(f"Analysis result: {result['status']}")
+    logger.info("Analysis result: %s", result["status"])
 
     # Show session summary
     summary = ai_interface.get_session_summary()
-    print("\nSession Summary:")
-    print(f"  Total actions: {summary['total_actions']}")
-    print(f"  Approved: {summary['approved_actions']}")
-    print(f"  Declined: {summary['declined_actions']}")
+    logger.info("Session Summary:")
+    logger.info("  Total actions: %s", summary["total_actions"])
+    logger.info("  Approved: %s", summary["approved_actions"])
+    logger.info("  Declined: %s", summary["declined_actions"])
 
 
 # Alias for easier importing

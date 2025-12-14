@@ -32,19 +32,6 @@ from typing import Any
 from ...utils.logger import get_logger
 
 
-print("[DEBUG commercial_license_analyzer] Starting imports...")
-sys.stdout.flush()
-
-print("[DEBUG commercial_license_analyzer] Importing get_logger...")
-sys.stdout.flush()
-
-print("[DEBUG commercial_license_analyzer] get_logger imported OK")
-sys.stdout.flush()
-
-print("[DEBUG commercial_license_analyzer] Using lazy imports to avoid circular dependencies")
-sys.stdout.flush()
-
-
 def _get_protocol_fingerprinter() -> type:
     """Lazy import ProtocolFingerprinter to avoid circular import.
 
@@ -81,11 +68,7 @@ def _get_dongle_emulator() -> type:
     return HardwareDongleEmulator
 
 
-print("[DEBUG commercial_license_analyzer] Getting logger...")
-sys.stdout.flush()
 logger = get_logger(__name__)
-print("[DEBUG commercial_license_analyzer] logger obtained OK")
-sys.stdout.flush()
 
 
 class CommercialLicenseAnalyzer:
@@ -172,21 +155,21 @@ class CommercialLicenseAnalyzer:
         }
 
         if not self.binary_path or not Path(self.binary_path).exists():
-            logger.warning(f"Binary path invalid: {self.binary_path}")
+            logger.warning("Binary path invalid: %s", self.binary_path)
             return results
 
         if flexlm_detected := self._detect_flexlm():
-            logger.debug(f"FlexLM detected: {flexlm_detected}")
+            logger.debug("FlexLM detected: %s", flexlm_detected)
             results["detected_systems"].append("FlexLM")
             results["bypass_strategies"]["flexlm"] = self._generate_flexlm_bypass()
 
         if hasp_detected := self._detect_hasp():
-            logger.debug(f"HASP detected: {hasp_detected}")
+            logger.debug("HASP detected: %s", hasp_detected)
             results["detected_systems"].append("HASP")
             results["bypass_strategies"]["hasp"] = self._generate_hasp_bypass()
 
         if codemeter_detected := self._detect_codemeter():
-            logger.debug(f"CodeMeter detected: {codemeter_detected}")
+            logger.debug("CodeMeter detected: %s", codemeter_detected)
             results["detected_systems"].append("CodeMeter")
             results["bypass_strategies"]["codemeter"] = self._generate_codemeter_bypass()
 
@@ -242,17 +225,17 @@ class CommercialLicenseAnalyzer:
             # Check for FlexLM indicators
             for indicator in flexlm_indicators:
                 if indicator in binary_data:
-                    logger.info(f"FlexLM indicator found: {indicator}")
+                    logger.info("FlexLM indicator found: %s", indicator)
                     return True
 
             # Check for FlexLM API calls
             for api in flexlm_apis:
                 if api in binary_data:
-                    logger.info(f"FlexLM API found: {api}")
+                    logger.info("FlexLM API found: %s", api)
                     return True
 
         except Exception as e:
-            logger.error(f"Error detecting FlexLM: {e}")
+            logger.error("Error detecting FlexLM: %s", e, exc_info=True)
 
         return False
 
@@ -291,17 +274,17 @@ class CommercialLicenseAnalyzer:
             # Check for HASP indicators
             for indicator in hasp_indicators:
                 if indicator in binary_data:
-                    logger.info(f"HASP indicator found: {indicator}")
+                    logger.info("HASP indicator found: %s", indicator)
                     return True
 
             # Check for HASP DLLs
             for dll in hasp_dlls:
                 if dll in binary_data:
-                    logger.info(f"HASP DLL reference found: {dll}")
+                    logger.info("HASP DLL reference found: %s", dll)
                     return True
 
         except Exception as e:
-            logger.error(f"Error detecting HASP: {e}")
+            logger.error("Error detecting HASP: %s", e, exc_info=True)
 
         return False
 
@@ -341,17 +324,17 @@ class CommercialLicenseAnalyzer:
             # Check for CodeMeter indicators
             for indicator in codemeter_indicators:
                 if indicator in binary_data:
-                    logger.info(f"CodeMeter indicator found: {indicator}")
+                    logger.info("CodeMeter indicator found: %s", indicator)
                     return True
 
             # Check for CodeMeter APIs
             for api in codemeter_apis:
                 if api in binary_data:
-                    logger.info(f"CodeMeter API found: {api}")
+                    logger.info("CodeMeter API found: %s", api)
                     return True
 
         except Exception as e:
-            logger.error(f"Error detecting CodeMeter: {e}")
+            logger.error("Error detecting CodeMeter: %s", e, exc_info=True)
 
         return False
 
@@ -1600,21 +1583,17 @@ console.log('[HASP] Patched at {patch["offset"]}');
         # Return success with version-specific info
         info_value = 0x07000000 if "7" in version or "6" not in version else 0x06000000
         if self._detect_architecture() == "x64":
-            return bytes(
-                [
-                    0x48,
-                    0xB8,
-                    *list(struct.pack("<Q", info_value)),
-                    0xC3,  # ret - mov rax,info_value
-                ]
-            )
-        return bytes(
-            [
+            return bytes([
+                0x48,
                 0xB8,
-                *list(struct.pack("<I", info_value)),
-                0xC3,  # ret - mov eax,info_value
-            ]
-        )
+                *list(struct.pack("<Q", info_value)),
+                0xC3,  # ret - mov rax,info_value
+            ])
+        return bytes([
+            0xB8,
+            *list(struct.pack("<I", info_value)),
+            0xC3,  # ret - mov eax,info_value
+        ])
 
     def _detect_cm_crypto_mode(self, binary_data: bytes, offset: int) -> str:
         """Detect CodeMeter crypto mode."""

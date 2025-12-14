@@ -989,7 +989,7 @@ class PyTorchLLMBackend(LLMBackend):
                 if GPU_AUTOLOADER_AVAILABLE:
                     device_str = get_device()
                     gpu_info = get_gpu_info()
-                    logger.info("Using %s device: %s", gpu_info.get('gpu_type', 'unknown'), device_str)
+                    logger.info("Using %s device: %s", gpu_info.get("gpu_type", "unknown"), device_str)
                 elif torch.cuda.is_available():
                     device_str = "cuda"
                     logger.info("Using CUDA device for PyTorch model")
@@ -1498,7 +1498,7 @@ class SafetensorsBackend(LLMBackend):
                 device_str = get_device()
                 gpu_info = get_gpu_info()
                 self.device = torch.device(device_str)
-                logger.info("Using %s device for Safetensors model: %s", gpu_info.get('gpu_type', 'unknown'), device_str)
+                logger.info("Using %s device for Safetensors model: %s", gpu_info.get("gpu_type", "unknown"), device_str)
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for Safetensors model")
@@ -1677,7 +1677,7 @@ class GPTQBackend(LLMBackend):
                     logger.error("GPTQ models require GPU")
                     return False
                 self.device = torch.device(device_str)
-                logger.info("Using %s device for GPTQ model: %s", gpu_info.get('gpu_type', 'unknown'), device_str)
+                logger.info("Using %s device for GPTQ model: %s", gpu_info.get("gpu_type", "unknown"), device_str)
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for GPTQ model")
@@ -1821,7 +1821,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                 device_str = get_device()
                 gpu_info = get_gpu_info()
                 self.device = torch.device(device_str)
-                logger.info("Using %s device for Hugging Face model: %s", gpu_info.get('gpu_type', 'unknown'), device_str)
+                logger.info("Using %s device for Hugging Face model: %s", gpu_info.get("gpu_type", "unknown"), device_str)
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for Hugging Face model")
@@ -1903,8 +1903,7 @@ class HuggingFaceLocalBackend(LLMBackend):
             return True
 
         except ImportError:
-            logger.exception("Required libraries not installed")
-            logger.exception("Install with: pip install transformers accelerate")
+            logger.exception("Required libraries not installed. Install with: pip install transformers accelerate")
             return False
         except Exception:
             logger.exception("Failed to initialize Hugging Face backend")

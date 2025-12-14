@@ -817,7 +817,9 @@ class HexViewerWidget(QAbstractScrollArea):
 
             # Draw the address text with clear margins
             addr_text_rect = addr_rect.adjusted(5, 0, -5, 0)
-            painter.drawText(addr_text_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter | Qt.TextFlag.TextDontClip, f"{offset:08X}")
+            painter.drawText(
+                addr_text_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter | Qt.TextFlag.TextDontClip, f"{offset:08X}"
+            )
 
             # Draw separator with better visibility
             painter.setPen(QPen(Qt.GlobalColor.darkGray, 1, Qt.PenStyle.SolidLine))

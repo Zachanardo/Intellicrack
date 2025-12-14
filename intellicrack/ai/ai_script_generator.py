@@ -1878,9 +1878,7 @@ DateSpoofer.spoofAllDateSources();
             bypassed = execution_results.get("bypassed", False)
 
             if not success or errors or error_message:
-                refined_content, error_improvements = self._fix_script_errors(
-                    refined_content, errors, error_message, script_type
-                )
+                refined_content, error_improvements = self._fix_script_errors(refined_content, errors, error_message, script_type)
                 improvements.extend(error_improvements)
 
             if hooks_triggered == 0 and script_type == ScriptType.FRIDA:
@@ -1888,16 +1886,12 @@ DateSpoofer.spoofAllDateSources();
                 improvements.extend(hook_improvements)
 
             if not bypassed:
-                refined_content, bypass_improvements = self._strengthen_bypass_logic(
-                    refined_content, analysis_data, script_type
-                )
+                refined_content, bypass_improvements = self._strengthen_bypass_logic(refined_content, analysis_data, script_type)
                 improvements.extend(bypass_improvements)
 
             protection_evasion = execution_results.get("protection_detection", {})
             if protection_evasion.get("detected", False):
-                refined_content, evasion_improvements = self._add_evasion_techniques(
-                    refined_content, protection_evasion, script_type
-                )
+                refined_content, evasion_improvements = self._add_evasion_techniques(refined_content, protection_evasion, script_type)
                 improvements.extend(evasion_improvements)
 
             iteration_count = (original_metadata.iterations + 1) if original_metadata else 1
@@ -2038,9 +2032,7 @@ DateSpoofer.spoofAllDateSources();
             return "Medium"
         return "Easy"
 
-    def _calculate_success_probability(
-        self, protection_types: list[ProtectionType], analysis_data: dict[str, Any]
-    ) -> float:
+    def _calculate_success_probability(self, protection_types: list[ProtectionType], analysis_data: dict[str, Any]) -> float:
         """Calculate estimated success probability."""
         base_probability = 0.7
 
@@ -2214,7 +2206,7 @@ antiDebugBypass.init();
         """Generate Ghidra analysis and patching script."""
         protections_str = ", ".join(pt.value for pt in protection_types)
 
-        script = f'''// Ghidra script for: {Path(binary_path).name}
+        script = f"""// Ghidra script for: {Path(binary_path).name}
 // Generated: {datetime.now(tz=UTC).isoformat()}
 // Target protections: {protections_str}
 // @category Intellicrack.Analysis
@@ -2320,14 +2312,14 @@ public class IntellicrackAnalysis extends GhidraScript {{
         }}
     }}
 }}
-'''
+"""
         return script
 
     def _extract_hooks_from_script(self, script_content: str) -> list[dict[str, Any]]:
         """Extract hook information from Frida script."""
         hooks: list[dict[str, Any]] = []
 
-        interceptor_pattern = r'Interceptor\.attach\s*\(\s*([^,]+)'
+        interceptor_pattern = r"Interceptor\.attach\s*\(\s*([^,]+)"
         matches = re.findall(interceptor_pattern, script_content)
         for match in matches:
             hooks.append({
@@ -2336,7 +2328,7 @@ public class IntellicrackAnalysis extends GhidraScript {{
                 "mode": "attach",
             })
 
-        replace_pattern = r'Interceptor\.replace\s*\(\s*([^,]+)'
+        replace_pattern = r"Interceptor\.replace\s*\(\s*([^,]+)"
         matches = re.findall(replace_pattern, script_content)
         for match in matches:
             hooks.append({
@@ -2351,7 +2343,7 @@ public class IntellicrackAnalysis extends GhidraScript {{
         """Extract patch information from Ghidra script."""
         patches: list[dict[str, Any]] = []
 
-        patch_pattern = r'\[PATCH\]\s*([^\n]+)'
+        patch_pattern = r"\[PATCH\]\s*([^\n]+)"
         matches = re.findall(patch_pattern, script_content)
         for match in matches:
             patches.append({
@@ -2367,7 +2359,7 @@ public class IntellicrackAnalysis extends GhidraScript {{
             return f"""/**
  * Intellicrack AI-Generated Script
  * Script ID: {script.metadata.script_id}
- * Type: {script.metadata.script_type.value if script.metadata.script_type else 'unknown'}
+ * Type: {script.metadata.script_type.value if script.metadata.script_type else "unknown"}
  * Target: {script.metadata.target_binary}
  * Generated: {script.metadata.creation_time}
  * Success Probability: {script.metadata.success_probability:.1%}

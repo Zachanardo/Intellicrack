@@ -162,7 +162,7 @@ class FileTreeWidget(QTreeWidget):
                     except (ImportError, AttributeError):
                         pass
         except PermissionError as e:
-            logger.error("Permission error in ai_coding_assistant_dialog: %s", e)
+            logger.error("Permission error in ai_coding_assistant_dialog: %s", e, exc_info=True)
             # Skip directories we can't read
 
     def refresh_tree(self) -> None:
@@ -207,14 +207,14 @@ class FileTreeWidget(QTreeWidget):
 
     def on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item click."""
-        logger.debug(f"Item clicked in column {column}")
+        logger.debug("Item clicked in column %s", column)
         path = item.data(0, Qt.UserRole)
         if path and Path(path).is_file():
             self.file_selected.emit(path)
 
     def on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item double click."""
-        logger.debug(f"Item double-clicked in column {column}")
+        logger.debug("Item double-clicked in column %s", column)
         path = item.data(0, Qt.UserRole)
         if path and Path(path).is_file():
             self.file_selected.emit(path)
@@ -257,10 +257,10 @@ class CodeEditor(QPlainTextEdit):
             # Set syntax highlighting based on file extension
             self.set_syntax_highlighting(file_path)
 
-            logger.info(f"Loaded file: {file_path}")
+            logger.info("Loaded file: %s", file_path)
 
         except Exception as e:
-            logger.error(f"Failed to load file {file_path}: {e}")
+            logger.error("Failed to load file %s: %s", file_path, e, exc_info=True)
             QMessageBox.warning(self, "Error", f"Failed to load file:\n{e}")
 
     def save_file(self, file_path: str = None) -> bool | None:
@@ -277,11 +277,11 @@ class CodeEditor(QPlainTextEdit):
 
             self.current_file = file_path
             self.is_modified = False
-            logger.info(f"Saved file: {file_path}")
+            logger.info("Saved file: %s", file_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to save file {file_path}: {e}")
+            logger.error("Failed to save file %s: %s", file_path, e, exc_info=True)
             QMessageBox.warning(self, "Error", f"Failed to save file:\n{e}")
             return False
 
@@ -471,7 +471,7 @@ class ChatWidget(QWidget):
 
             if discovered_models:
                 total_discovered = sum(len(models) for models in discovered_models.values())
-                logger.info(f"ChatWidget API discovery: Found {total_discovered} models from {len(discovered_models)} providers")
+                logger.info("ChatWidget API discovery: Found %s models from %s providers", total_discovered, len(discovered_models))
 
                 for provider_name, models in sorted(discovered_models.items()):
                     if models:
@@ -499,17 +499,19 @@ class ChatWidget(QWidget):
 
             configured_count = len(configured_models) if configured_models else 0
             discovered_count = len(self.available_models) - configured_count
-            logger.info(f"ChatWidget loaded {configured_count} configured + {discovered_count} discovered = {total_models} total models")
+            logger.info(
+                "ChatWidget loaded %s configured + %s discovered = %s total models", configured_count, discovered_count, total_models
+            )
 
         except ImportError as e:
-            logger.error(f"ChatWidget failed to import model discovery modules: {e}")
+            logger.error("ChatWidget failed to import model discovery modules: %s", e, exc_info=True)
             self.available_models = []
             self.model_combo.clear()
             self.model_combo.addItem("Discovery module unavailable")
             self.model_combo.setEnabled(False)
             self._show_error_message("Model discovery module not available")
         except Exception as e:
-            logger.error(f"ChatWidget failed to discover AI models: {e}")
+            logger.error("ChatWidget failed to discover AI models: %s", e, exc_info=True)
             self.available_models = []
             self.model_combo.clear()
             self.model_combo.addItem("Error discovering models")
@@ -527,7 +529,7 @@ class ChatWidget(QWidget):
 
             logger.info("ChatWidget: Model refresh completed successfully")
         except Exception as e:
-            logger.error(f"ChatWidget: Failed to refresh models: {e}")
+            logger.error("ChatWidget: Failed to refresh models: %s", e, exc_info=True)
         finally:
             self.refresh_models_btn.setEnabled(True)
             self.refresh_models_btn.setText("🔄")
@@ -595,7 +597,7 @@ class AICodingAssistantWidget(QWidget):
             self.ai_tools = AIAssistant()
             logger.info("AI tools initialized successfully")
         except Exception as e:
-            logger.warning(f"Failed to initialize AI tools: {e}")
+            logger.warning("Failed to initialize AI tools: %s", e, exc_info=True)
             self.ai_tools = None
             self.llm_enabled = False
 
@@ -837,12 +839,12 @@ class AICodingAssistantWidget(QWidget):
                 self.license_context.setPlainText(
                     f"License-protected binary: {Path(file_path).name}\nPath: {file_path}\nAnalysis: Ready for license protection research",
                 )
-                logger.info(f"Selected binary for license analysis: {file_path}")
+                logger.info("Selected binary for license analysis: %s", file_path)
             else:
                 # Source file selected - open in editor
                 self.open_file_in_research_editor(file_path)
         except Exception as e:
-            logger.error(f"Error handling file selection: {e}")
+            logger.error("Error handling file selection: %s", e, exc_info=True)
 
     def create_new_research_file(self) -> None:
         """Create a new license research file."""
@@ -863,9 +865,9 @@ class AICodingAssistantWidget(QWidget):
                 if hasattr(self, "file_tree"):
                     self.file_tree.refresh_tree()
                 self.open_file_in_research_editor(file_path)
-                logger.info(f"Created new research file: {file_path}")
+                logger.info("Created new research file: %s", file_path)
         except Exception as e:
-            logger.error(f"Error creating research file: {e}")
+            logger.error("Error creating research file: %s", e, exc_info=True)
 
     def get_research_file_template(self, file_ext: str) -> str:
         """Get template content for license research files."""
@@ -1609,9 +1611,9 @@ def validate_license_key(key: str) -> bool:
                     f"Target Binary: {Path(file_path).name}\nPath: {file_path}\nStatus: Ready for license protection analysis",
                 )
                 self.current_target_binary = file_path
-                logger.info(f"Loaded target binary: {file_path}")
+                logger.info("Loaded target binary: %s", file_path)
         except Exception as e:
-            logger.error(f"Error loading target binary: {e}")
+            logger.error("Error loading target binary: %s", e, exc_info=True)
 
     def open_file_in_research_editor(self, file_path: str) -> None:
         """Open a file in the research editor tabs."""
@@ -1631,18 +1633,18 @@ def validate_license_key(key: str) -> bool:
                 file_name = Path(file_path).name
                 tab_index = self.editor_tabs.addTab(editor, file_name)
                 self.editor_tabs.setCurrentIndex(tab_index)
-                logger.info(f"Opened file in research editor: {file_path}")
+                logger.info("Opened file in research editor: %s", file_path)
         except Exception as e:
-            logger.error(f"Error opening file in research editor: {e}")
+            logger.error("Error opening file in research editor: %s", e, exc_info=True)
 
     def close_research_tab(self, index: int) -> None:
         """Close a research editor tab."""
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs.count() > index:
                 self.editor_tabs.removeTab(index)
-                logger.info(f"Closed research tab at index: {index}")
+                logger.info("Closed research tab at index: %s", index)
         except Exception as e:
-            logger.error(f"Error closing research tab: {e}")
+            logger.error("Error closing research tab: %s", e, exc_info=True)
 
     def execute_license_bypass_script(self) -> None:
         """Execute the current license bypass script."""
@@ -1684,7 +1686,7 @@ def validate_license_key(key: str) -> bool:
                 self._execute_python_bypass_script(script_content, "temp_bypass.py")
 
         except Exception as e:
-            logger.error(f"Error executing license bypass script: {e}")
+            logger.error("Error executing license bypass script: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"Script execution failed: {e}")
 
@@ -1958,7 +1960,7 @@ def validate_license_key(key: str) -> bool:
 
                     except Exception as e:
                         self.protection_info["error"] = str(e)
-                        analyzer_logger.error(f"Analysis error: {e}")
+                        analyzer_logger.error("Analysis error: %s", e, exc_info=True)
 
                     return self.protection_info
 
@@ -1986,7 +1988,7 @@ def validate_license_key(key: str) -> bool:
             self.license_analysis_results = results
 
         except Exception as e:
-            logger.error(f"Error analyzing license protection: {e}")
+            logger.error("Error analyzing license protection: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Analysis failed: {e}")
 
@@ -2243,7 +2245,7 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("AI", "OK Keygen template generated in memory")
 
         except Exception as e:
-            logger.error(f"Error generating keygen template: {e}")
+            logger.error("Error generating keygen template: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR Template generation failed: {e}")
 
@@ -2694,7 +2696,7 @@ console.log("[+] All HWID hooks installed");
                 self.chat_widget.add_message("AI", "OK HWID spoofing code generated")
 
         except Exception as e:
-            logger.error(f"Error generating HWID spoof: {e}")
+            logger.error("Error generating HWID spoof: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR HWID spoofing generation failed: {e}")
 
@@ -3130,14 +3132,14 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("System", " Comprehensive patch reporting")
 
         except Exception as e:
-            logger.error(f"Error opening patch assistant: {e}")
+            logger.error("Error opening patch assistant: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Patch assistant failed: {e}")
 
     def handle_license_ai_message(self, message: str) -> None:
         """Handle AI messages specifically for license research."""
         try:
-            logger.info(f"Processing license research AI message: {message}")
+            logger.info("Processing license research AI message: %s", message)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("User", message)
 
@@ -3188,13 +3190,13 @@ This research is for strengthening software protection mechanisms."""
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
-                logger.error(f"AI processing failed: {ai_error}")
+                logger.error("AI processing failed: %s", ai_error, exc_info=True)
                 fallback_response = self._generate_license_research_fallback(message)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", fallback_response)
 
         except Exception as e:
-            logger.error(f"Error handling license AI message: {e}")
+            logger.error("Error handling license AI message: %s", e, exc_info=True)
             error_response = f"ERROR License research query failed: {e}\nPlease try again or check your AI configuration."
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
@@ -3208,7 +3210,7 @@ This research is for strengthening software protection mechanisms."""
             formatted += "WARNING️  Note: Use this information responsibly in controlled research environments only."
             return formatted
         except Exception as e:
-            logger.error(f"Failed to format license research response: {e}")
+            logger.error("Failed to format license research response: %s", e, exc_info=True)
             return f"License Research Response:\n{response}"
 
     def _generate_license_research_fallback(self, message: str) -> str:
@@ -3281,7 +3283,7 @@ For specific technical guidance, please:
 WARNING️  All research should be conducted on your own software in controlled environments."""
 
         except Exception as e:
-            logger.error(f"Failed to generate license research fallback: {e}")
+            logger.error("Failed to generate license research fallback: %s", e, exc_info=True)
             return f"License research query received but AI is unavailable. Please check your configuration.\nQuery: {message}"
 
     def generate_bypass(self) -> str:
@@ -3291,24 +3293,24 @@ WARNING️  All research should be conducted on your own software in controlled 
             Generated bypass script as a string.
         """
         bypass_code: list[str] = []
-        bypass_code.append('#!/usr/bin/env python3')
+        bypass_code.append("#!/usr/bin/env python3")
         bypass_code.append('"""')
-        bypass_code.append('License Protection Bypass Script')
-        bypass_code.append('Generated by Intellicrack AI Coding Assistant')
-        bypass_code.append('')
-        bypass_code.append('Purpose: Security research for strengthening license protection mechanisms')
+        bypass_code.append("License Protection Bypass Script")
+        bypass_code.append("Generated by Intellicrack AI Coding Assistant")
+        bypass_code.append("")
+        bypass_code.append("Purpose: Security research for strengthening license protection mechanisms")
         bypass_code.append('"""')
-        bypass_code.append('')
-        bypass_code.append('import os')
-        bypass_code.append('import sys')
-        bypass_code.append('import ctypes')
-        bypass_code.append('import struct')
-        bypass_code.append('import logging')
-        bypass_code.append('from typing import Any, Dict, Optional')
-        bypass_code.append('')
-        bypass_code.append('logging.basicConfig(level=logging.INFO)')
-        bypass_code.append('logger = logging.getLogger(__name__)')
-        bypass_code.append('')
+        bypass_code.append("")
+        bypass_code.append("import os")
+        bypass_code.append("import sys")
+        bypass_code.append("import ctypes")
+        bypass_code.append("import struct")
+        bypass_code.append("import logging")
+        bypass_code.append("from typing import Any, Dict, Optional")
+        bypass_code.append("")
+        bypass_code.append("logging.basicConfig(level=logging.INFO)")
+        bypass_code.append("logger = logging.getLogger(__name__)")
+        bypass_code.append("")
 
         target_binary = getattr(self, "current_target_binary", None)
         target_name = os.path.basename(target_binary) if target_binary else "target_application"
@@ -3341,15 +3343,15 @@ WARNING️  All research should be conducted on your own software in controlled 
                             detected_protection_type = "CodeMeter"
 
         if "registry" in bypass_type.lower():
-            bypass_code.append('# Registry-based license bypass')
-            bypass_code.append(f'# Detected protection type: {detected_protection_type}')
-            bypass_code.append('import winreg')
-            bypass_code.append('')
-            bypass_code.append('def patch_registry_license() -> bool:')
+            bypass_code.append("# Registry-based license bypass")
+            bypass_code.append(f"# Detected protection type: {detected_protection_type}")
+            bypass_code.append("import winreg")
+            bypass_code.append("")
+            bypass_code.append("def patch_registry_license() -> bool:")
             bypass_code.append('    """Patch registry entries for license validation."""')
-            bypass_code.append('    try:')
-            bypass_code.append(f'        # Target: {target_name}')
-            bypass_code.append('        license_keys = [')
+            bypass_code.append("    try:")
+            bypass_code.append(f"        # Target: {target_name}")
+            bypass_code.append("        license_keys = [")
 
             if detected_registry_keys:
                 for reg_key in detected_registry_keys[:5]:
@@ -3366,52 +3368,57 @@ WARNING️  All research should be conducted on your own software in controlled 
                 bypass_code.append(f'            (winreg.HKEY_CURRENT_USER, r"Software\\\\{target_name}"),')
                 bypass_code.append(f'            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\\\\{target_name}"),')
 
-            bypass_code.append('        ]')
-            bypass_code.append('')
-            bypass_code.append('        for root, path in license_keys:')
-            bypass_code.append('            try:')
-            bypass_code.append('                key = winreg.CreateKey(root, path)')
+            bypass_code.append("        ]")
+            bypass_code.append("")
+            bypass_code.append("        for root, path in license_keys:")
+            bypass_code.append("            try:")
+            bypass_code.append("                key = winreg.CreateKey(root, path)")
             bypass_code.append('                winreg.SetValueEx(key, "Licensed", 0, winreg.REG_DWORD, 1)')
             bypass_code.append('                winreg.SetValueEx(key, "LicenseKey", 0, winreg.REG_SZ, "RESEARCH-0000-0000-0000")')
             bypass_code.append('                winreg.SetValueEx(key, "ExpiryDate", 0, winreg.REG_SZ, "2099-12-31")')
             bypass_code.append('                winreg.SetValueEx(key, "LicenseType", 0, winreg.REG_SZ, "Enterprise")')
-            bypass_code.append('                winreg.CloseKey(key)')
+            bypass_code.append("                winreg.CloseKey(key)")
             bypass_code.append('                logger.info(f"Patched registry: {path}")')
-            bypass_code.append('            except WindowsError as e:')
+            bypass_code.append("            except WindowsError as e:")
             bypass_code.append('                logger.warning(f"Failed to patch {path}: {e}")')
-            bypass_code.append('        return True')
-            bypass_code.append('    except Exception as e:')
+            bypass_code.append("        return True")
+            bypass_code.append("    except Exception as e:")
             bypass_code.append('        logger.error(f"Registry patch failed: {e}")')
-            bypass_code.append('        return False')
-            bypass_code.append('')
+            bypass_code.append("        return False")
+            bypass_code.append("")
 
         elif "api" in bypass_type.lower() or "hook" in bypass_type.lower():
-            bypass_code.append('# API hooking license bypass using Frida')
-            bypass_code.append(f'# Detected protection type: {detected_protection_type}')
-            bypass_code.append('')
-            bypass_code.append('try:')
-            bypass_code.append('    import frida')
-            bypass_code.append('except ImportError:')
+            bypass_code.append("# API hooking license bypass using Frida")
+            bypass_code.append(f"# Detected protection type: {detected_protection_type}")
+            bypass_code.append("")
+            bypass_code.append("try:")
+            bypass_code.append("    import frida")
+            bypass_code.append("except ImportError:")
             bypass_code.append('    logger.error("Frida not installed. Run: pip install frida-tools")')
-            bypass_code.append('    frida = None')
-            bypass_code.append('')
+            bypass_code.append("    frida = None")
+            bypass_code.append("")
             bypass_code.append('FRIDA_SCRIPT = """')
-            bypass_code.append('// License validation bypass hooks')
-            bypass_code.append('')
-            bypass_code.append('// Hook common license validation functions')
+            bypass_code.append("// License validation bypass hooks")
+            bypass_code.append("")
+            bypass_code.append("// Hook common license validation functions")
 
             hook_functions: list[str] = [
-                "ValidateLicense", "CheckLicense", "VerifyLicense",
-                "IsLicensed", "IsRegistered", "CheckActivation"
+                "ValidateLicense",
+                "CheckLicense",
+                "VerifyLicense",
+                "IsLicensed",
+                "IsRegistered",
+                "CheckActivation",
             ]
 
             if detected_api_calls:
                 license_related_apis = [
-                    api for api in detected_api_calls
-                    if any(kw in api.lower() for kw in [
-                        "license", "register", "activate", "trial", "serial",
-                        "validate", "verify", "check", "auth", "key"
-                    ])
+                    api
+                    for api in detected_api_calls
+                    if any(
+                        kw in api.lower()
+                        for kw in ["license", "register", "activate", "trial", "serial", "validate", "verify", "check", "auth", "key"]
+                    )
                 ]
                 hook_functions.extend(license_related_apis[:10])
                 hook_functions = list(dict.fromkeys(hook_functions))
@@ -3425,100 +3432,100 @@ WARNING️  All research should be conducted on your own software in controlled 
 
             hook_functions = list(dict.fromkeys(hook_functions))
 
-            bypass_code.append('var licenseHooks = [')
+            bypass_code.append("var licenseHooks = [")
             for i in range(0, len(hook_functions), 3):
-                chunk = hook_functions[i:i + 3]
-                line = '    ' + ', '.join(f'"{fn}"' for fn in chunk)
+                chunk = hook_functions[i : i + 3]
+                line = "    " + ", ".join(f'"{fn}"' for fn in chunk)
                 if i + 3 < len(hook_functions):
-                    line += ','
+                    line += ","
                 bypass_code.append(line)
-            bypass_code.append('];')
-            bypass_code.append('')
-            bypass_code.append('licenseHooks.forEach(function(funcName) {')
-            bypass_code.append('    var addr = Module.findExportByName(null, funcName);')
-            bypass_code.append('    if (addr) {')
-            bypass_code.append('        Interceptor.attach(addr, {')
-            bypass_code.append('            onLeave: function(retval) {')
+            bypass_code.append("];")
+            bypass_code.append("")
+            bypass_code.append("licenseHooks.forEach(function(funcName) {")
+            bypass_code.append("    var addr = Module.findExportByName(null, funcName);")
+            bypass_code.append("    if (addr) {")
+            bypass_code.append("        Interceptor.attach(addr, {")
+            bypass_code.append("            onLeave: function(retval) {")
             bypass_code.append('                console.log("[+] " + funcName + " returning true");')
-            bypass_code.append('                retval.replace(1);')
-            bypass_code.append('            }')
-            bypass_code.append('        });')
-            bypass_code.append('    }')
-            bypass_code.append('});')
-            bypass_code.append('')
-            bypass_code.append('// Hook registry access for license keys')
+            bypass_code.append("                retval.replace(1);")
+            bypass_code.append("            }")
+            bypass_code.append("        });")
+            bypass_code.append("    }")
+            bypass_code.append("});")
+            bypass_code.append("")
+            bypass_code.append("// Hook registry access for license keys")
             bypass_code.append('var regOpenKey = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");')
-            bypass_code.append('if (regOpenKey) {')
-            bypass_code.append('    Interceptor.attach(regOpenKey, {')
-            bypass_code.append('        onEnter: function(args) {')
-            bypass_code.append('            var keyName = args[1].readUtf16String();')
+            bypass_code.append("if (regOpenKey) {")
+            bypass_code.append("    Interceptor.attach(regOpenKey, {")
+            bypass_code.append("        onEnter: function(args) {")
+            bypass_code.append("            var keyName = args[1].readUtf16String();")
             bypass_code.append('            if (keyName && keyName.toLowerCase().indexOf("license") !== -1) {')
             bypass_code.append('                console.log("[*] Registry access: " + keyName);')
-            bypass_code.append('            }')
-            bypass_code.append('        }')
-            bypass_code.append('    });')
-            bypass_code.append('}')
-            bypass_code.append('')
+            bypass_code.append("            }")
+            bypass_code.append("        }")
+            bypass_code.append("    });")
+            bypass_code.append("}")
+            bypass_code.append("")
 
             if license_strings:
-                bypass_code.append('// Hook string comparisons for detected license strings')
-                bypass_code.append('var targetStrings = [')
+                bypass_code.append("// Hook string comparisons for detected license strings")
+                bypass_code.append("var targetStrings = [")
                 for lic_str in license_strings[:8]:
                     safe_str = lic_str.replace('"', '\\"').replace("'", "\\'")[:64]
                     bypass_code.append(f'    "{safe_str}",')
-                bypass_code.append('];')
-                bypass_code.append('')
+                bypass_code.append("];")
+                bypass_code.append("")
                 bypass_code.append('var strcmpW = Module.findExportByName("msvcrt.dll", "wcscmp");')
-                bypass_code.append('if (strcmpW) {')
-                bypass_code.append('    Interceptor.attach(strcmpW, {')
-                bypass_code.append('        onEnter: function(args) {')
-                bypass_code.append('            try {')
-                bypass_code.append('                var s1 = args[0].readUtf16String();')
-                bypass_code.append('                var s2 = args[1].readUtf16String();')
-                bypass_code.append('                for (var i = 0; i < targetStrings.length; i++) {')
-                bypass_code.append('                    if ((s1 && s1.indexOf(targetStrings[i]) !== -1) ||')
-                bypass_code.append('                        (s2 && s2.indexOf(targetStrings[i]) !== -1)) {')
+                bypass_code.append("if (strcmpW) {")
+                bypass_code.append("    Interceptor.attach(strcmpW, {")
+                bypass_code.append("        onEnter: function(args) {")
+                bypass_code.append("            try {")
+                bypass_code.append("                var s1 = args[0].readUtf16String();")
+                bypass_code.append("                var s2 = args[1].readUtf16String();")
+                bypass_code.append("                for (var i = 0; i < targetStrings.length; i++) {")
+                bypass_code.append("                    if ((s1 && s1.indexOf(targetStrings[i]) !== -1) ||")
+                bypass_code.append("                        (s2 && s2.indexOf(targetStrings[i]) !== -1)) {")
                 bypass_code.append('                        console.log("[LICENSE] String compare: " + s1 + " vs " + s2);')
-                bypass_code.append('                        this.forceMatch = true;')
-                bypass_code.append('                    }')
-                bypass_code.append('                }')
-                bypass_code.append('            } catch(e) {}')
-                bypass_code.append('        },')
-                bypass_code.append('        onLeave: function(retval) {')
-                bypass_code.append('            if (this.forceMatch) {')
+                bypass_code.append("                        this.forceMatch = true;")
+                bypass_code.append("                    }")
+                bypass_code.append("                }")
+                bypass_code.append("            } catch(e) {}")
+                bypass_code.append("        },")
+                bypass_code.append("        onLeave: function(retval) {")
+                bypass_code.append("            if (this.forceMatch) {")
                 bypass_code.append('                console.log("[+] Forcing license string match");')
-                bypass_code.append('                retval.replace(0);')
-                bypass_code.append('            }')
-                bypass_code.append('        }')
-                bypass_code.append('    });')
-                bypass_code.append('}')
+                bypass_code.append("                retval.replace(0);")
+                bypass_code.append("            }")
+                bypass_code.append("        }")
+                bypass_code.append("    });")
+                bypass_code.append("}")
 
             bypass_code.append('"""')
-            bypass_code.append('')
+            bypass_code.append("")
             bypass_code.append(f'def hook_license_apis(target: str = "{target_name}") -> bool:')
             bypass_code.append('    """Hook and bypass license validation APIs using Frida."""')
-            bypass_code.append('    if not frida:')
+            bypass_code.append("    if not frida:")
             bypass_code.append('        logger.error("Frida not available")')
-            bypass_code.append('        return False')
-            bypass_code.append('')
-            bypass_code.append('    try:')
-            bypass_code.append('        session = frida.attach(target)')
-            bypass_code.append('        script = session.create_script(FRIDA_SCRIPT)')
-            bypass_code.append('        script.load()')
+            bypass_code.append("        return False")
+            bypass_code.append("")
+            bypass_code.append("    try:")
+            bypass_code.append("        session = frida.attach(target)")
+            bypass_code.append("        script = session.create_script(FRIDA_SCRIPT)")
+            bypass_code.append("        script.load()")
             bypass_code.append('        logger.info("License hooks installed successfully")')
-            bypass_code.append('        return True')
-            bypass_code.append('    except Exception as e:')
+            bypass_code.append("        return True")
+            bypass_code.append("    except Exception as e:")
             bypass_code.append('        logger.error(f"Hook installation failed: {e}")')
-            bypass_code.append('        return False')
-            bypass_code.append('')
+            bypass_code.append("        return False")
+            bypass_code.append("")
 
         elif "time" in bypass_type.lower() or "trial" in bypass_type.lower():
-            bypass_code.append('# Time-based protection bypass')
-            bypass_code.append('')
-            bypass_code.append('from ctypes import wintypes')
-            bypass_code.append('')
-            bypass_code.append('class SYSTEMTIME(ctypes.Structure):')
-            bypass_code.append('    _fields_ = [')
+            bypass_code.append("# Time-based protection bypass")
+            bypass_code.append("")
+            bypass_code.append("from ctypes import wintypes")
+            bypass_code.append("")
+            bypass_code.append("class SYSTEMTIME(ctypes.Structure):")
+            bypass_code.append("    _fields_ = [")
             bypass_code.append('        ("wYear", wintypes.WORD),')
             bypass_code.append('        ("wMonth", wintypes.WORD),')
             bypass_code.append('        ("wDayOfWeek", wintypes.WORD),')
@@ -3527,54 +3534,54 @@ WARNING️  All research should be conducted on your own software in controlled 
             bypass_code.append('        ("wMinute", wintypes.WORD),')
             bypass_code.append('        ("wSecond", wintypes.WORD),')
             bypass_code.append('        ("wMilliseconds", wintypes.WORD),')
-            bypass_code.append('    ]')
-            bypass_code.append('')
-            bypass_code.append('def bypass_time_checks() -> bool:')
+            bypass_code.append("    ]")
+            bypass_code.append("")
+            bypass_code.append("def bypass_time_checks() -> bool:")
             bypass_code.append('    """Bypass time-based license expiration checks."""')
-            bypass_code.append('    try:')
-            bypass_code.append('        # Use Frida to hook time functions')
+            bypass_code.append("    try:")
+            bypass_code.append("        # Use Frida to hook time functions")
             bypass_code.append('        hook_script = """')
             bypass_code.append('        var GetSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");')
-            bypass_code.append('        if (GetSystemTime) {')
-            bypass_code.append('            Interceptor.attach(GetSystemTime, {')
-            bypass_code.append('                onLeave: function(retval) {')
-            bypass_code.append('                    var st = this.context.rcx;')
-            bypass_code.append('                    if (st) {')
-            bypass_code.append('                        Memory.writeU16(st, 2020);  // Year')
-            bypass_code.append('                        Memory.writeU16(st.add(2), 1);  // Month')
-            bypass_code.append('                        Memory.writeU16(st.add(6), 1);  // Day')
-            bypass_code.append('                    }')
-            bypass_code.append('                }')
-            bypass_code.append('            });')
-            bypass_code.append('        }')
+            bypass_code.append("        if (GetSystemTime) {")
+            bypass_code.append("            Interceptor.attach(GetSystemTime, {")
+            bypass_code.append("                onLeave: function(retval) {")
+            bypass_code.append("                    var st = this.context.rcx;")
+            bypass_code.append("                    if (st) {")
+            bypass_code.append("                        Memory.writeU16(st, 2020);  // Year")
+            bypass_code.append("                        Memory.writeU16(st.add(2), 1);  // Month")
+            bypass_code.append("                        Memory.writeU16(st.add(6), 1);  // Day")
+            bypass_code.append("                    }")
+            bypass_code.append("                }")
+            bypass_code.append("            });")
+            bypass_code.append("        }")
             bypass_code.append('        """')
             bypass_code.append('        logger.info("Time-based bypass configured")')
-            bypass_code.append('        return True')
-            bypass_code.append('    except Exception as e:')
+            bypass_code.append("        return True")
+            bypass_code.append("    except Exception as e:")
             bypass_code.append('        logger.error(f"Time bypass failed: {e}")')
-            bypass_code.append('        return False')
-            bypass_code.append('')
+            bypass_code.append("        return False")
+            bypass_code.append("")
 
         else:
-            bypass_code.append('# Generic license bypass')
-            bypass_code.append('')
-            bypass_code.append('def generic_bypass() -> Dict[str, Any]:')
+            bypass_code.append("# Generic license bypass")
+            bypass_code.append("")
+            bypass_code.append("def generic_bypass() -> Dict[str, Any]:")
             bypass_code.append('    """Generic license bypass for research purposes."""')
-            bypass_code.append('    result = {')
+            bypass_code.append("    result = {")
             bypass_code.append('        "status": "initialized",')
             bypass_code.append('        "methods_available": [')
             bypass_code.append('            "registry_patch",')
             bypass_code.append('            "api_hook",')
             bypass_code.append('            "time_bypass",')
             bypass_code.append('            "binary_patch"')
-            bypass_code.append('        ],')
+            bypass_code.append("        ],")
             bypass_code.append(f'        "target": "{target_name}",')
-            bypass_code.append('    }')
+            bypass_code.append("    }")
             bypass_code.append('    logger.info(f"Bypass initialized: {result}")')
-            bypass_code.append('    return result')
-            bypass_code.append('')
+            bypass_code.append("    return result")
+            bypass_code.append("")
 
-        bypass_code.append('')
+        bypass_code.append("")
         bypass_code.append('if __name__ == "__main__":')
         bypass_code.append('    logger.info("License Protection Bypass - Security Research Tool")')
         bypass_code.append(f'    logger.info("Target: {target_name}")')
@@ -3582,17 +3589,17 @@ WARNING️  All research should be conducted on your own software in controlled 
         bypass_code.append('    logger.info("")')
 
         if "registry" in bypass_type.lower():
-            bypass_code.append('    patch_registry_license()')
+            bypass_code.append("    patch_registry_license()")
         elif "api" in bypass_type.lower() or "hook" in bypass_type.lower():
-            bypass_code.append('    hook_license_apis()')
+            bypass_code.append("    hook_license_apis()")
         elif "time" in bypass_type.lower() or "trial" in bypass_type.lower():
-            bypass_code.append('    bypass_time_checks()')
+            bypass_code.append("    bypass_time_checks()")
         else:
-            bypass_code.append('    generic_bypass()')
+            bypass_code.append("    generic_bypass()")
 
         bypass_code.append('    logger.info("Bypass research complete")')
 
-        return '\n'.join(bypass_code)
+        return "\n".join(bypass_code)
 
     def ai_generate_license_bypass(self) -> None:
         """Generate license bypass code using AI."""
@@ -3610,7 +3617,7 @@ WARNING️  All research should be conducted on your own software in controlled 
             if hasattr(self, "bypass_type_combo") and self.bypass_type_combo.currentText():
                 bypass_type = self.bypass_type_combo.currentText()
 
-            logger.info(f"Generating {bypass_type} using AI...")
+            logger.info("Generating %s using AI...", bypass_type)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f" Generating {bypass_type} code for license protection research...")
 
@@ -3682,7 +3689,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
 
                         self.chat_widget.add_message("AI", success_msg)
 
-                    logger.info(f"AI-generated {bypass_type} bypass created successfully")
+                    logger.info("AI-generated %s bypass created successfully", bypass_type)
 
                 else:
                     # AI response was insufficient, fall back to standard generation
@@ -3700,7 +3707,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         self._create_editor_tab(filename, standard_bypass)
 
             except Exception as ai_error:
-                logger.error(f"AI bypass generation failed: {ai_error}")
+                logger.error("AI bypass generation failed: %s", ai_error, exc_info=True)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
                         "AI",
@@ -3714,7 +3721,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         filename = f"fallback_{bypass_type.lower().replace(' ', '_')}_bypass.py"
                         self._create_editor_tab(filename, standard_bypass)
                 except Exception as fallback_error:
-                    logger.error(f"Fallback bypass generation also failed: {fallback_error}")
+                    logger.error("Fallback bypass generation also failed: %s", fallback_error, exc_info=True)
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
                             "AI",
@@ -3722,7 +3729,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         )
 
         except Exception as e:
-            logger.error(f"Error generating AI license bypass: {e}")
+            logger.error("Error generating AI license bypass: %s", e, exc_info=True)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR License bypass generation failed: {e}")
 
@@ -3781,7 +3788,7 @@ if __name__ == "__main__":
 
             return header + "\n\n" + ai_response.strip() + "\n\n" + footer
         except Exception as e:
-            logger.error(f"Failed to enhance AI bypass response: {e}")
+            logger.error("Failed to enhance AI bypass response: %s", e, exc_info=True)
             # Return original response with minimal enhancement
             return f'''"""
 AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
@@ -3806,17 +3813,17 @@ WARNING️  Use for authorized security research only WARNING️
                 tab_index = self.editor_tabs.addTab(new_tab, filename)
                 self.editor_tabs.setCurrentIndex(tab_index)
 
-                logger.info(f"Created new editor tab: {filename}")
+                logger.info("Created new editor tab: %s", filename)
             else:
                 logger.warning("Editor tabs not available, content not displayed")
 
         except Exception as e:
-            logger.error(f"Failed to create editor tab {filename}: {e}")
+            logger.error("Failed to create editor tab %s: %s", filename, e, exc_info=True)
 
     def send_quick_license_message(self, message: str) -> None:
         """Send a quick license research message to AI."""
         try:
-            logger.info(f"Sending quick license message: {message}")
+            logger.info("Sending quick license message: %s", message)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("User", message)
 
@@ -3887,7 +3894,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
-                logger.error(f"AI quick processing failed: {ai_error}")
+                logger.error("AI quick processing failed: %s", ai_error, exc_info=True)
                 fallback_response = self._generate_quick_license_fallback(message)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
@@ -3896,7 +3903,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                     )
 
         except Exception as e:
-            logger.error(f"Error sending quick license message: {e}")
+            logger.error("Error sending quick license message: %s", e, exc_info=True)
             error_response = f"ERROR Quick license query failed: {e}"
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
@@ -3923,7 +3930,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return "general_license_research"
 
         except Exception as e:
-            logger.error(f"Failed to classify query: {e}")
+            logger.error("Failed to classify query: %s", e, exc_info=True)
             return "general_license_research"
 
     def _format_quick_license_response(self, response: str, original_query: str) -> str:
@@ -3938,7 +3945,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return formatted
 
         except Exception as e:
-            logger.error(f"Failed to format quick response: {e}")
+            logger.error("Failed to format quick response: %s", e, exc_info=True)
             return f"Quick Response:\n{response}"
 
     def _generate_quick_license_fallback(self, message: str) -> str:
@@ -4035,7 +4042,7 @@ For specific guidance:
             return response
 
         except Exception as e:
-            logger.error(f"Failed to generate quick fallback: {e}")
+            logger.error("Failed to generate quick fallback: %s", e, exc_info=True)
             return f"Quick license research query received: {message}\n\nAI is currently unavailable. Please check your configuration for enhanced responses."
 
 
@@ -4416,7 +4423,7 @@ class AICodingAssistantDialog(QDialog):
             self.ai_status_label.setText("AI Ready")
 
         except Exception as e:
-            logger.error(f"AI processing error: {e}")
+            logger.error("AI processing error: %s", e, exc_info=True)
             self.chat_widget.add_message("AI", f"Error: {e}")
             self.ai_status_label.setText("AI Error")
 
@@ -4478,7 +4485,7 @@ class AICodingAssistantDialog(QDialog):
             return response
 
         except Exception as e:
-            logger.error(f"Error processing AI request: {e}")
+            logger.error("Error processing AI request: %s", e, exc_info=True)
             # Fallback to basic responses if AI fails
             if "explain" in message.lower():
                 return "Please select some code to explain."
@@ -4586,10 +4593,10 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
+            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def run_javascript_script(self, file_path: str) -> None:
@@ -4607,13 +4614,13 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
         except FileNotFoundError as e:
-            logger.error("File not found in ai_coding_assistant_dialog: %s", e)
+            logger.error("File not found in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
+            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def format_current_code(self) -> None:
@@ -4659,10 +4666,10 @@ def example_function():
                 Path(temp_file_path).unlink()
 
         except FileNotFoundError as e:
-            logger.error("File not found in ai_coding_assistant_dialog: %s", e)
+            logger.error("File not found in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
 
     def analyze_current_code(self) -> None:
@@ -4713,7 +4720,7 @@ def example_function():
             self.ai_status_label.setText("AI Ready")
 
         except Exception as e:
-            logger.error(f"Code analysis error: {e}")
+            logger.error("Code analysis error: %s", e, exc_info=True)
             self.chat_widget.add_message("AI", f"Error during code analysis: {e!s}")
             self.ai_status_label.setText("AI Error")
 
@@ -4766,7 +4773,7 @@ def example_function():
         # For now, just log the security issues
         # In a full implementation, this would highlight the relevant lines in the editor
         for issue in security_issues:
-            logger.warning(f"Security issue detected: {issue}")
+            logger.warning("Security issue detected: %s", issue)
 
         # Show a warning dialog if there are critical security issues
         if any("critical" in issue.lower() or "vulnerability" in issue.lower() for issue in security_issues):

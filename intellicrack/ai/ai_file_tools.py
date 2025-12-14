@@ -85,13 +85,13 @@ class _ConsoleApprovalDialog:
 
     def exec(self) -> int:
         """Display console approval prompt and return user choice."""
-        print("\n" + "=" * 70)
-        print(f"AI FILE {self.operation_type.upper()} REQUEST")
-        print("=" * 70)
-        print(self.details)
-        print("\n" + "-" * 70)
-        print("WARNING: Only approve if you trust the AI's analysis purpose.")
-        print("-" * 70)
+        logger.info("\n%s", "=" * 70)
+        logger.info("AI FILE %s REQUEST", self.operation_type.upper())
+        logger.info("=" * 70)
+        logger.info("%s", self.details)
+        logger.info("\n%s", "-" * 70)
+        logger.info("WARNING: Only approve if you trust the AI's analysis purpose.")
+        logger.info("-" * 70)
 
         while True:
             try:
@@ -103,9 +103,9 @@ class _ConsoleApprovalDialog:
                     self.approved = False
                     return 0
                 else:
-                    print("Invalid input. Please enter 'y' or 'n'.")
+                    logger.warning("Invalid input. Please enter 'y' or 'n'.")
             except (KeyboardInterrupt, EOFError):
-                print("\nOperation cancelled by user.")
+                logger.info("Operation cancelled by user.")
                 self.approved = False
                 return 0
 

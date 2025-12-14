@@ -262,7 +262,7 @@ class LoggingManager:
                 with open(config) as f:
                     self.config = yaml.safe_load(f)
             except Exception as e:
-                self.logger.exception(f"Failed to load YAML config: {e}, using default config")
+                self.logger.exception("Failed to load YAML config: %s, using default config", e)
                 self.config = {}
 
         # Setup root logger
@@ -359,7 +359,8 @@ class LoggingManager:
         """Log an event with structured data."""
         logger = self.get_logger("events")
         logger.info(
-            f"Event: {event.event_type}",
+            "Event: %s",
+            event.event_type,
             extra={
                 "event_data": event.to_dict(),
                 "component": "event_system",
@@ -370,7 +371,10 @@ class LoggingManager:
         """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
-            f"Plugin {plugin_name}: {operation} -> {status}",
+            "Plugin %s: %s -> %s",
+            plugin_name,
+            operation,
+            status,
             extra={
                 "plugin_name": plugin_name,
                 "operation": operation,
@@ -391,7 +395,10 @@ class LoggingManager:
         """Log workflow step execution."""
         logger = self.get_logger("workflows")
         logger.info(
-            f"Workflow {workflow_id} Step {step_id}: {status}",
+            "Workflow %s Step %s: %s",
+            workflow_id,
+            step_id,
+            status,
             extra={
                 "workflow_id": workflow_id,
                 "step_id": step_id,
@@ -604,8 +611,7 @@ class ConfigurationManager:
                     self.logger.exception("Watcher error: %s", e)
 
         except (json.JSONDecodeError, ValidationError) as e:
-            print(f"Configuration error: {e}")
-            # Fall back to default config
+            self.logger.error("Configuration error: %s", e, exc_info=True)
             self.config = self._get_default_config()
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -823,7 +829,7 @@ class GhidraPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.exception(f"Ghidra plugin initialization failed: {e}")
+                self.logger.exception("Ghidra plugin initialization failed: %s", e)
             return False
 
     async def activate(self) -> bool:
@@ -882,7 +888,7 @@ class GhidraPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Ghidra operation failed: {e}")
+                self.logger.exception("Ghidra operation failed: %s", e)
 
             self.emit_event(
                 "operation_failed",
@@ -918,7 +924,7 @@ class GhidraPlugin(AbstractPlugin):
 
         # Use inspect to validate parameters
         current_function = inspect.currentframe().f_code.co_name
-        self.logger.debug(f"Executing {current_function} with operation: {operation}")
+        self.logger.debug("Executing %s with operation: %s", current_function, operation)
 
         # Use queue for managing concurrent operations
         operation_queue = queue.Queue()
@@ -983,13 +989,13 @@ class GhidraPlugin(AbstractPlugin):
                 except Exception as term_error:
                     # Use traceback for detailed error logging
                     error_trace = traceback.format_exc()
-                    self.logger.exception(f"Process termination failed: {term_error}\n{error_trace}")
+                    self.logger.exception("Process termination failed: %s\n%s", term_error, error_trace)
                     process.kill()
             raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
             # Use traceback for comprehensive error reporting
             error_trace = traceback.format_exc()
-            self.logger.exception(f"Ghidra execution error: {e}\n{error_trace}")
+            self.logger.exception("Ghidra execution error: %s\n%s", e, error_trace)
             raise
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
@@ -1089,7 +1095,7 @@ class FridaPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.exception(f"Frida plugin initialization failed: {e}")
+                self.logger.exception("Frida plugin initialization failed: %s", e)
             return False
 
     async def activate(self) -> bool:
@@ -1133,7 +1139,7 @@ class FridaPlugin(AbstractPlugin):
 
             # Check Frida version and capabilities
             frida_version = frida.__version__
-            self.logger.debug(f"Using Frida version: {frida_version}")
+            self.logger.debug("Using Frida version: %s", frida_version)
 
             if operation not in self.get_supported_operations():
                 raise ValueError(f"Unsupported operation: {operation}")
@@ -1166,7 +1172,7 @@ class FridaPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Frida operation failed: {e}")
+                self.logger.exception("Frida operation failed: %s", e)
 
             self.emit_event(
                 "operation_failed",
@@ -1216,7 +1222,7 @@ class FridaPlugin(AbstractPlugin):
     def _on_message(self, message: object, data: object) -> None:
         """Handle Frida script messages."""
         if self.logger:
-            self.logger.debug(f"Frida message: {message}")
+            self.logger.debug("Frida message: %s", message)
 
         # Emit event for message
         self.emit_event(
@@ -1396,7 +1402,7 @@ class PythonPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.exception(f"Python plugin initialization failed: {e}")
+                self.logger.exception("Python plugin initialization failed: %s", e)
             return False
 
     async def activate(self) -> bool:
@@ -1417,7 +1423,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Python plugin activation failed: {e}")
+                self.logger.exception("Python plugin activation failed: %s", e)
             return False
 
     async def deactivate(self) -> bool:
@@ -1435,7 +1441,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Python plugin deactivation failed: {e}")
+                self.logger.exception("Python plugin deactivation failed: %s", e)
             return False
 
     async def cleanup(self) -> bool:
@@ -1454,7 +1460,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Python plugin cleanup failed: {e}")
+                self.logger.exception("Python plugin cleanup failed: %s", e)
             return False
 
     def get_supported_operations(self) -> list[str]:
@@ -1520,7 +1526,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.exception(f"Python plugin operation failed: {e}")
+                self.logger.exception("Python plugin operation failed: %s", e)
 
             self.emit_event(
                 "operation_failed",
@@ -1595,7 +1601,7 @@ class EventBus:
         self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
 
         if self.logger:
-            self.logger.debug(f"New subscriber for event type: {event_type}")
+            self.logger.debug("New subscriber for event type: %s", event_type)
 
     def unsubscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]) -> None:
         """Unsubscribe from events."""
@@ -1608,7 +1614,7 @@ class EventBus:
             self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
 
             if self.logger:
-                self.logger.debug(f"Unsubscribed from event type: {event_type}")
+                self.logger.debug("Unsubscribed from event type: %s", event_type)
 
     async def emit(self, event: Event) -> None:
         """Emit an event."""
@@ -1618,7 +1624,7 @@ class EventBus:
                 age = (datetime.now(UTC) - event.timestamp).total_seconds()
                 if age > event.ttl:
                     if self.logger:
-                        self.logger.warning(f"Event {event.event_id} expired (TTL: {event.ttl}s)")
+                        self.logger.warning("Event %s expired (TTL: %ss)", event.event_id, event.ttl)
                     return
 
             # Add to queue
@@ -1626,11 +1632,11 @@ class EventBus:
             self.stats["queue_size"] = self.event_queue.qsize()
 
             if self.logger:
-                self.logger.debug(f"Event emitted: {event.event_type} from {event.source}")
+                self.logger.debug("Event emitted: %s from %s", event.event_type, event.source)
 
         except asyncio.QueueFull:
             if self.logger:
-                self.logger.error(f"Event queue full, dropping event: {event.event_type}")
+                self.logger.error("Event queue full, dropping event: %s", event.event_type, exc_info=True)
 
     async def _process_events(self) -> None:
         """Process events from queue."""
@@ -1655,7 +1661,7 @@ class EventBus:
             except Exception as e:
                 self.stats["events_failed"] += 1
                 if self.logger:
-                    self.logger.exception(f"Event processing error: {e}")
+                    self.logger.exception("Event processing error: %s", e)
 
     async def _handle_event(self, event: Event) -> None:
         """Handle individual event."""
@@ -1686,7 +1692,7 @@ class EventBus:
                         tasks.append(asyncio.create_task(self._run_sync_handler(handler, event)))
                 except Exception as e:
                     if self.logger:
-                        self.logger.exception(f"Error creating task for handler: {e}")
+                        self.logger.exception("Error creating task for handler: %s", e)
 
             # Wait for all handlers to complete with timeout using timedelta
             if tasks:
@@ -1727,7 +1733,7 @@ class EventBus:
                         )
                 except TimeoutError:
                     if self.logger:
-                        self.logger.warning(f"Handler execution timed out after {handler_timeout}")
+                        self.logger.warning("Handler execution timed out after %s", handler_timeout)
                     # Cancel remaining tasks
                     for task in tasks:
                         task.cancel()
@@ -1798,17 +1804,17 @@ class PluginManager:
         for directory in self.discovery_paths:
             dir_path = Path(directory)
             if not dir_path.exists():
-                self.logger.exception(f"Plugin directory not found: {directory}")
+                self.logger.warning("Plugin directory not found: %s", directory)
                 continue
 
-            self.logger.info(f"Discovering plugins in: {directory}")
+            self.logger.info("Discovering plugins in: %s", directory)
             # Discover different plugin types
             discovered.extend(await self._discover_ghidra_scripts(dir_path))
             discovered.extend(await self._discover_frida_scripts(dir_path))
             discovered.extend(await self._discover_python_modules(dir_path))
 
         self.stats["discovered"] = len(discovered)
-        self.logger.info(f"Discovered {len(discovered)} plugins")
+        self.logger.info("Discovered %d plugins", len(discovered))
 
         return discovered
 
@@ -1825,10 +1831,10 @@ class PluginManager:
                     self.plugin_metadata[plugin_name] = metadata
                     scripts.append(plugin_name)
 
-                    self.logger.debug(f"Discovered Ghidra script: {script_file}")
+                    self.logger.debug("Discovered Ghidra script: %s", script_file)
 
             except Exception as e:
-                self.logger.exception(f"Error discovering Ghidra script {script_file}: {e}")
+                self.logger.exception("Error discovering Ghidra script %s: %s", script_file, e)
 
         return scripts
 
@@ -1845,10 +1851,10 @@ class PluginManager:
                     self.plugin_metadata[plugin_name] = metadata
                     scripts.append(plugin_name)
 
-                    self.logger.debug(f"Discovered Frida script: {script_file}")
+                    self.logger.debug("Discovered Frida script: %s", script_file)
 
             except Exception as e:
-                self.logger.exception(f"Error discovering Frida script {script_file}: {e}")
+                self.logger.exception("Error discovering Frida script %s: %s", script_file, e)
 
         return scripts
 
@@ -1869,10 +1875,10 @@ class PluginManager:
                     self.plugin_metadata[plugin_name] = metadata
                     modules.append(plugin_name)
 
-                    self.logger.debug(f"Discovered Python module: {module_file}")
+                    self.logger.debug("Discovered Python module: %s", module_file)
 
             except Exception as e:
-                self.logger.exception(f"Error discovering Python module {module_file}: {e}")
+                self.logger.exception("Error discovering Python module %s: %s", module_file, e)
 
         return modules
 
@@ -1917,7 +1923,7 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.exception(f"Error extracting Ghidra metadata from {script_file}: {e}")
+            self.logger.exception("Error extracting Ghidra metadata from %s: %s", script_file, e)
             return None
 
     async def _extract_frida_metadata(self, script_file: Path) -> PluginMetadata | None:
@@ -1963,7 +1969,7 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.exception(f"Error extracting Frida metadata from {script_file}: {e}")
+            self.logger.exception("Error extracting Frida metadata from %s: %s", script_file, e)
             return None
 
     async def _extract_python_metadata(self, module_file: Path) -> PluginMetadata | None:
@@ -2016,24 +2022,24 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.exception(f"Error extracting Python metadata from {module_file}: {e}")
+            self.logger.exception("Error extracting Python metadata from %s: %s", module_file, e)
             return None
 
     async def load_plugin(self, plugin_name: str) -> bool:
         """Load a specific plugin."""
         try:
             if plugin_name in self.plugins:
-                self.logger.debug(f"Plugin {plugin_name} already loaded")
+                self.logger.debug("Plugin %s already loaded", plugin_name)
                 return True
 
             # Check if plugin is disabled
             if plugin_name in self.disabled_plugins:
-                self.logger.info(f"Plugin {plugin_name} is disabled")
+                self.logger.info("Plugin %s is disabled", plugin_name)
                 return False
 
             # Get metadata
             if plugin_name not in self.plugin_metadata:
-                self.logger.error(f"No metadata found for plugin: {plugin_name}")
+                self.logger.error("No metadata found for plugin: %s", plugin_name)
                 return False
 
             metadata = self.plugin_metadata[plugin_name]
@@ -2050,14 +2056,14 @@ class PluginManager:
             # Initialize plugin
             plugin_config = self.config.get("plugin_configs", {}).get(plugin_name, {})
             if not await plugin.initialize(plugin_config):
-                self.logger.error(f"Plugin {plugin_name} initialization failed")
+                self.logger.error("Plugin %s initialization failed", plugin_name)
                 return False
 
             # Store plugin
             self.plugins[plugin_name] = plugin
             self.stats["loaded"] += 1
 
-            self.logger.info(f"Plugin {plugin_name} loaded successfully")
+            self.logger.info("Plugin %s loaded successfully", plugin_name)
 
             # Emit event
             await self.event_bus.emit(
@@ -2072,7 +2078,7 @@ class PluginManager:
 
         except Exception as e:
             self.stats["failed"] += 1
-            self.logger.exception(f"Failed to load plugin {plugin_name}: {e}")
+            self.logger.exception("Failed to load plugin %s: %s", plugin_name, e)
             return False
 
     async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
@@ -2097,7 +2103,7 @@ class PluginManager:
                     break
 
             if not plugin_file:
-                self.logger.error(f"Plugin file not found for: {plugin_name}")
+                self.logger.error("Plugin file not found for: %s", plugin_name)
                 return None
 
             # Create appropriate plugin instance
@@ -2107,11 +2113,11 @@ class PluginManager:
                 return FridaPlugin(plugin_name, str(plugin_file), metadata.version)
             if metadata.component_type == ComponentType.CUSTOM_MODULE:
                 return PythonPlugin(plugin_name, str(plugin_file), metadata.version)
-            self.logger.error(f"Unsupported plugin type: {metadata.component_type}")
+            self.logger.error("Unsupported plugin type: %s", metadata.component_type)
             return None
 
         except Exception as e:
-            self.logger.exception(f"Error creating plugin instance for {plugin_name}: {e}")
+            self.logger.exception("Error creating plugin instance for %s: %s", plugin_name, e)
             return None
 
     async def load_all_plugins(self) -> int:
@@ -2128,7 +2134,7 @@ class PluginManager:
             if await self.load_plugin(plugin_name):
                 loaded_count += 1
 
-        self.logger.info(f"Loaded {loaded_count} plugins")
+        self.logger.info("Loaded %d plugins", loaded_count)
         return loaded_count
 
     def _calculate_load_order(self) -> list[str]:
@@ -2141,7 +2147,7 @@ class PluginManager:
         def visit(plugin_name: str) -> None:
             if plugin_name in temp_visited:
                 # Circular dependency detected
-                self.logger.exception(f"Circular dependency detected involving: {plugin_name}")
+                self.logger.warning("Circular dependency detected involving: %s", plugin_name)
                 return
 
             if plugin_name in visited:
@@ -2169,7 +2175,7 @@ class PluginManager:
     async def activate_plugin(self, plugin_name: str) -> bool:
         """Activate a loaded plugin."""
         if plugin_name not in self.plugins:
-            self.logger.error(f"Plugin {plugin_name} not loaded")
+            self.logger.error("Plugin %s not loaded", plugin_name)
             return False
 
         plugin = self.plugins[plugin_name]
@@ -2177,7 +2183,7 @@ class PluginManager:
         try:
             if await plugin.activate():
                 self.stats["active"] += 1
-                self.logger.info(f"Plugin {plugin_name} activated")
+                self.logger.info("Plugin %s activated", plugin_name)
 
                 # Emit event
                 await self.event_bus.emit(
@@ -2189,17 +2195,17 @@ class PluginManager:
                 )
 
                 return True
-            self.logger.exception(f"Plugin {plugin_name} activation failed")
+            self.logger.warning("Plugin %s activation failed", plugin_name)
             return False
 
         except Exception as e:
-            self.logger.exception(f"Error activating plugin {plugin_name}: {e}")
+            self.logger.exception("Error activating plugin %s: %s", plugin_name, e)
             return False
 
     async def deactivate_plugin(self, plugin_name: str) -> bool:
         """Deactivate an active plugin."""
         if plugin_name not in self.plugins:
-            self.logger.error(f"Plugin {plugin_name} not loaded")
+            self.logger.error("Plugin %s not loaded", plugin_name)
             return False
 
         plugin = self.plugins[plugin_name]
@@ -2209,7 +2215,7 @@ class PluginManager:
                 if plugin.status == PluginStatus.READY:
                     self.stats["active"] = max(0, self.stats["active"] - 1)
 
-                self.logger.info(f"Plugin {plugin_name} deactivated")
+                self.logger.info("Plugin %s deactivated", plugin_name)
 
                 # Emit event
                 await self.event_bus.emit(
@@ -2221,11 +2227,11 @@ class PluginManager:
                 )
 
                 return True
-            self.logger.exception(f"Plugin {plugin_name} deactivation failed")
+            self.logger.warning("Plugin %s deactivation failed", plugin_name)
             return False
 
         except Exception as e:
-            self.logger.exception(f"Error deactivating plugin {plugin_name}: {e}")
+            self.logger.exception("Error deactivating plugin %s: %s", plugin_name, e)
             return False
 
     async def unload_plugin(self, plugin_name: str) -> bool:
@@ -2246,7 +2252,7 @@ class PluginManager:
             del self.plugins[plugin_name]
             self.stats["loaded"] = max(0, self.stats["loaded"] - 1)
 
-            self.logger.info(f"Plugin {plugin_name} unloaded")
+            self.logger.info("Plugin %s unloaded", plugin_name)
 
             # Emit event
             await self.event_bus.emit(
@@ -2260,7 +2266,7 @@ class PluginManager:
             return True
 
         except Exception as e:
-            self.logger.exception(f"Error unloading plugin {plugin_name}: {e}")
+            self.logger.exception("Error unloading plugin %s: %s", plugin_name, e)
             return False
 
     def get_plugin(self, plugin_name: str) -> AbstractPlugin | None:
@@ -2418,7 +2424,7 @@ class WorkflowEngine:
     def register_workflow(self, workflow: WorkflowDefinition) -> None:
         """Register a workflow definition."""
         self.workflows[workflow.workflow_id] = workflow
-        self.logger.info(f"Registered workflow: {workflow.name}")
+        self.logger.info("Registered workflow: %s", workflow.name)
 
     async def execute_workflow(self, workflow_id: str, parameters: dict[str, Any]) -> str:
         """Execute a workflow."""
@@ -2458,7 +2464,7 @@ class WorkflowEngine:
         # Remove task from set when it's done
         task.add_done_callback(self._execution_tasks.discard)
 
-        self.logger.info(f"Started workflow execution: {workflow.name} (ID: {execution_id})")
+        self.logger.info("Started workflow execution: %s (ID: %s)", workflow.name, execution_id)
 
         return execution_id
 
@@ -2492,7 +2498,7 @@ class WorkflowEngine:
             context["end_time"] = datetime.now(UTC)
             context["progress"] = 1.0
 
-            self.logger.info(f"Workflow completed: {execution_id}")
+            self.logger.info("Workflow completed: %s", execution_id)
 
             # Emit completion event
             await self.event_bus.emit(
@@ -2512,7 +2518,7 @@ class WorkflowEngine:
             context["end_time"] = datetime.utcnow()
             context["errors"].append(str(e))
 
-            self.logger.exception(f"Workflow failed: {execution_id} - {e}")
+            self.logger.exception("Workflow failed: %s - %s", execution_id, e)
 
             # Emit failure event
             await self.event_bus.emit(
@@ -2541,7 +2547,7 @@ class WorkflowEngine:
         for i, step in enumerate(workflow.steps):
             # Check if step should be executed (condition)
             if step.condition and not self._evaluate_condition(step.condition, context):
-                self.logger.info(f"Skipping step {step.step_id} - condition not met")
+                self.logger.info("Skipping step %s - condition not met", step.step_id)
                 continue
 
             # Check dependencies
@@ -2582,10 +2588,10 @@ class WorkflowEngine:
         dependency_graph = self._build_dependency_graph(workflow.steps)
 
         # Log dependency analysis
-        self.logger.info(f"Built dependency graph with {len(dependency_graph)} nodes")
+        self.logger.info("Built dependency graph with %d nodes", len(dependency_graph))
         for step_id, deps in dependency_graph.items():
             if deps:
-                self.logger.debug(f"Step {step_id} depends on: {deps}")
+                self.logger.debug("Step %s depends on: %s", step_id, deps)
 
         # Execute in dependency order with parallelization
         executed_steps = set()
@@ -2629,7 +2635,7 @@ class WorkflowEngine:
                         raise
 
         # Log completion of all tasks
-        self.logger.info(f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}")
+        self.logger.info("Parallel workflow execution completed. Total tasks executed: %d", len(tasks))
 
         # Clean up any remaining tasks
         for task in tasks:
@@ -2654,7 +2660,7 @@ class WorkflowEngine:
             }
 
             # Log evaluation context for debugging
-            self.logger.debug(f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}")
+            self.logger.debug("Evaluating condition '%s' with context: %s", condition, list(eval_context.keys()))
 
             # Simple condition evaluation (could be enhanced with proper parser)
             # For now, support basic property checks
@@ -2669,7 +2675,7 @@ class WorkflowEngine:
             return False
 
         except Exception as e:
-            self.logger.exception(f"Error evaluating condition '{condition}': {e}")
+            self.logger.exception("Error evaluating condition '%s': %s", condition, e)
             return False
 
     async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]) -> None:
@@ -2697,7 +2703,7 @@ class WorkflowEngine:
 
             # Log performance
             duration = (datetime.utcnow() - start_time).total_seconds()
-            self.logger.info(f"Step {step.step_id} completed in {duration:.2f}s")
+            self.logger.info("Step %s completed in %.2fs", step.step_id, duration)
 
         except TimeoutError as timeout_error:
             error_msg = f"Step {step.step_id} timed out"
@@ -2707,7 +2713,7 @@ class WorkflowEngine:
                 raise Exception(error_msg) from timeout_error
 
             step.retry_count += 1
-            self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+            self.logger.warning("Retrying step %s (attempt %d)", step.step_id, step.retry_count)
             await self._execute_step(step, context)
         except Exception as e:
             error_msg = f"Step {step.step_id} failed: {e}"
@@ -2716,7 +2722,7 @@ class WorkflowEngine:
             if step.retry_count >= step.max_retries:
                 raise Exception(error_msg) from e
             step.retry_count += 1
-            self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+            self.logger.warning("Retrying step %s (attempt %d)", step.step_id, step.retry_count)
             await self._execute_step(step, context)
 
     def get_workflow_status(self, execution_id: str) -> dict[str, Any] | None:
@@ -2761,7 +2767,7 @@ class WorkflowEngine:
             context["status"] = WorkflowStatus.CANCELLED
             context["end_time"] = datetime.now(UTC)
 
-            self.logger.info(f"Workflow cancelled: {execution_id}")
+            self.logger.info("Workflow cancelled: %s", execution_id)
             return True
 
         return False
@@ -2893,7 +2899,7 @@ class AnalysisCoordinator:
         # Queue for processing
         await self.analysis_queue.put(analysis_context)
 
-        self.logger.info(f"Queued analysis: {analysis_id} for {binary_path}")
+        self.logger.info("Queued analysis: %s for %s", analysis_id, binary_path)
 
         return analysis_id
 
@@ -2913,7 +2919,7 @@ class AnalysisCoordinator:
                 # Continue processing
                 continue
             except Exception as e:
-                self.logger.exception(f"Error in coordination loop: {e}")
+                self.logger.exception("Error in coordination loop: %s", e)
 
     async def _start_analysis(self, analysis_context: dict[str, Any]) -> None:
         """Start individual analysis."""
@@ -2950,13 +2956,13 @@ class AnalysisCoordinator:
                 ),
             )
 
-            self.logger.info(f"Started analysis: {analysis_id}")
+            self.logger.info("Started analysis: %s", analysis_id)
 
         except Exception as e:
             analysis_context["status"] = "failed"
             analysis_context["error"] = str(e)
 
-            self.logger.exception(f"Failed to start analysis {analysis_id}: {e}")
+            self.logger.exception("Failed to start analysis %s: %s", analysis_id, e)
 
             # Emit failure event
             await self.event_bus.emit(
@@ -3006,7 +3012,7 @@ class AnalysisCoordinator:
             return info
 
         except Exception as e:
-            self.logger.exception(f"Error extracting file info: {e}")
+            self.logger.exception("Error extracting file info: %s", e)
             return {"name": Path(file_path).name, "error": str(e)}
 
     def _detect_file_type(self, file_path: str) -> str:
@@ -3056,7 +3062,7 @@ class AnalysisCoordinator:
                 )
 
         except Exception as e:
-            self.logger.exception(f"Error handling analysis request: {e}")
+            self.logger.exception("Error handling analysis request: %s", e)
 
     async def _handle_workflow_completed(self, event: Event) -> None:
         """Handle workflow completion."""
@@ -3084,7 +3090,7 @@ class AnalysisCoordinator:
                     ),
                 )
 
-                self.logger.info(f"Analysis completed: {analysis_id}")
+                self.logger.info("Analysis completed: %s", analysis_id)
                 break
 
     async def _handle_workflow_failed(self, event: Event) -> None:
@@ -3111,7 +3117,7 @@ class AnalysisCoordinator:
                     ),
                 )
 
-                self.logger.exception(f"Analysis failed: {analysis_id} - {error}")
+                self.logger.error("Analysis failed: %s - %s", analysis_id, error)
                 break
 
     def get_analysis_status(self, analysis_id: str) -> dict[str, Any] | None:
@@ -3230,7 +3236,7 @@ class ResourceManager:
                 await asyncio.sleep(5)  # Monitor every 5 seconds
 
             except Exception as e:
-                self.logger.exception(f"Error in resource monitoring: {e}")
+                self.logger.exception("Error in resource monitoring: %s", e)
                 await asyncio.sleep(10)
 
     async def _update_resource_stats(self) -> None:
@@ -3253,7 +3259,7 @@ class ResourceManager:
             self.resource_stats["active_threads"] = current_process.num_threads()
 
         except Exception as e:
-            self.logger.exception(f"Error updating resource stats: {e}")
+            self.logger.exception("Error updating resource stats: %s", e)
 
     async def _check_resource_limits(self) -> None:
         """Check resource limits and warn if exceeded."""
@@ -3261,10 +3267,10 @@ class ResourceManager:
         memory_usage = self.resource_stats["memory_usage"]
 
         if cpu_usage > self.max_cpu_usage:
-            self.logger.exception(f"High CPU usage: {cpu_usage:.1f}%")
+            self.logger.warning("High CPU usage: %.1f%%", cpu_usage)
 
         if memory_usage > self.max_memory_usage:
-            self.logger.exception(f"High memory usage: {memory_usage:.1f}%")
+            self.logger.warning("High memory usage: %.1f%%", memory_usage)
 
     async def _auto_cleanup(self) -> None:
         """Automatic cleanup of resources."""
@@ -3289,7 +3295,7 @@ class ResourceManager:
                 self.logger.info("Performed garbage collection due to high memory usage")
 
         except Exception as e:
-            self.logger.exception(f"Error in auto cleanup: {e}")
+            self.logger.exception("Error in auto cleanup: %s", e)
 
     async def execute_in_process(self, func: Callable, *args: object, **kwargs: object) -> object:
         """Execute function in process pool."""
@@ -3326,12 +3332,12 @@ class ResourceManager:
                 except psutil.NoSuchProcess as e:
                     self.logger.exception("Plugin operation error: %s", e)
 
-            self.logger.debug(f"Started external process: {' '.join(cmd)} (PID: {process.pid})")
+            self.logger.debug("Started external process: %s (PID: %s)", " ".join(cmd), process.pid)
 
             return process
 
         except Exception as e:
-            self.logger.exception(f"Error starting external process: {e}")
+            self.logger.exception("Error starting external process: %s", e)
             raise
 
     async def kill_process(self, pid: int, force: bool = False) -> None:
@@ -3352,13 +3358,13 @@ class ResourceManager:
                 process.kill()
 
             del self.tracked_processes[pid]
-            self.logger.info(f"Killed process: {pid}")
+            self.logger.info("Killed process: %d", pid)
 
         except psutil.NoSuchProcess:
             if pid in self.tracked_processes:
                 del self.tracked_processes[pid]
         except Exception as e:
-            self.logger.exception(f"Error killing process {pid}: {e}")
+            self.logger.exception("Error killing process %d: %s", pid, e)
 
     async def _cleanup_processes(self) -> None:
         """Cleanup all tracked processes."""
@@ -3452,7 +3458,7 @@ class IntellicrackcoreEngine:
 
             # Load and activate plugins
             loaded_plugins = await self.plugin_manager.load_all_plugins()
-            self.logger.info(f"Loaded {loaded_plugins} plugins")
+            self.logger.info("Loaded %d plugins", loaded_plugins)
 
             # Activate critical plugins
             await self._activate_core_plugins()
@@ -3477,7 +3483,7 @@ class IntellicrackcoreEngine:
             self.logger.info("Intellicrack Core Engine started successfully")
 
         except Exception as e:
-            self.logger.exception(f"Failed to start engine: {e}")
+            self.logger.exception("Failed to start engine: %s", e)
             await self.stop()
             raise
 
@@ -3503,7 +3509,7 @@ class IntellicrackcoreEngine:
             self.logger.info("Intellicrack Core Engine stopped")
 
         except Exception as e:
-            self.logger.exception(f"Error stopping engine: {e}")
+            self.logger.exception("Error stopping engine: %s", e)
 
     async def _activate_core_plugins(self) -> None:
         """Activate core plugins required for operation."""
@@ -3663,7 +3669,7 @@ class IntellicrackcoreEngine:
             }
 
         except Exception as e:
-            self.logger.exception(f"API request failed: {method} - {e}")
+            self.logger.exception("API request failed: %s - %s", method, e)
 
             return {
                 "success": False,
@@ -3702,7 +3708,7 @@ class IntellicrackcoreEngine:
 
     def _generate_license_bypass_frida(self, target_name: str) -> str:
         """Generate license bypass Frida script."""
-        return f'''// Frida License Bypass Script for {target_name}
+        return f"""// Frida License Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -3782,11 +3788,11 @@ log('info', `Starting license bypass for {target_name}`);
 hookLicenseValidation();
 hookCommonAPIs();
 log('info', 'License bypass hooks installed');
-'''
+"""
 
     def _generate_anti_debug_frida(self, target_name: str) -> str:
         """Generate anti-debug bypass Frida script."""
-        return f'''// Frida Anti-Debug Bypass Script for {target_name}
+        return f"""// Frida Anti-Debug Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -3848,11 +3854,11 @@ bypassCheckRemoteDebuggerPresent();
 bypassNtQueryInformationProcess();
 bypassPEB();
 console.log('[*] Anti-debug bypass complete');
-'''
+"""
 
     def _generate_memory_patch_frida(self, target_name: str) -> str:
         """Generate memory patching Frida script."""
-        return f'''// Frida Memory Patch Script for {target_name}
+        return f"""// Frida Memory Patch Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -3902,11 +3908,11 @@ function listPatches() {{
 console.log('[*] Starting memory patcher for {target_name}');
 patchLicenseChecks();
 listPatches();
-'''
+"""
 
     def _generate_api_hook_frida(self, target_name: str) -> str:
         """Generate API hooking Frida script."""
-        return f'''// Frida API Hook Script for {target_name}
+        return f"""// Frida API Hook Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -3961,11 +3967,11 @@ hookAPI('ws2_32.dll', 'connect', {{
 
 console.log(`[*] Monitoring {target_name}`);
 console.log(`[*] Hooked ${{hookedAPIs.length}} APIs`);
-'''
+"""
 
     def _generate_trial_bypass_frida(self, target_name: str) -> str:
         """Generate trial/time limitation bypass Frida script."""
-        return f'''// Frida Trial Bypass Script for {target_name}
+        return f"""// Frida Trial Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -4029,11 +4035,11 @@ console.log('[*] Starting trial bypass for {target_name}');
 hookTimeAPIs();
 hookTrialRegistry();
 console.log('[*] Trial bypass hooks installed');
-'''
+"""
 
     def _generate_registration_bypass_frida(self, target_name: str) -> str:
         """Generate registration bypass Frida script."""
-        return f'''// Frida Registration Bypass Script for {target_name}
+        return f"""// Frida Registration Bypass Script for {target_name}
 // Generated by Intellicrack Core Engine
 
 'use strict';
@@ -4101,11 +4107,11 @@ findAndPatchRegistrationCheck();
 hookRegistrationFunctions();
 hookMessageBoxes();
 console.log('[*] Registration bypass active');
-'''
+"""
 
     def _generate_generic_frida(self, target_name: str, script_type: str) -> str:
         """Generate generic Frida script template."""
-        return f'''// Frida Script for {target_name}
+        return f"""// Frida Script for {target_name}
 // Type: {script_type}
 // Generated by Intellicrack Core Engine
 
@@ -4124,7 +4130,7 @@ const imports = targetModule.enumerateImports();
 console.log(`[*] Imports: ${{imports.length}}`);
 
 console.log('[*] Ready for {script_type} operations');
-'''
+"""
 
     def generate_ghidra_script(self, target: str, script_type: str) -> str:
         """Generate a Ghidra analysis script for license protection analysis.
@@ -4158,7 +4164,7 @@ console.log('[*] Ready for {script_type} operations');
 
     def _generate_license_analysis_ghidra(self, target_name: str) -> str:
         """Generate license analysis Ghidra script."""
-        return f'''// Ghidra License Analysis Script for {target_name}
+        return f"""// Ghidra License Analysis Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.LicenseAnalysis
 
@@ -4254,11 +4260,11 @@ public class LicenseAnalyzer extends GhidraScript {{
         println("[*] Crypto constant scan complete");
     }}
 }}
-'''
+"""
 
     def _generate_crypto_detection_ghidra(self, target_name: str) -> str:
         """Generate crypto detection Ghidra script."""
-        return f'''// Ghidra Crypto Detection Script for {target_name}
+        return f"""// Ghidra Crypto Detection Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.CryptoAnalysis
 
@@ -4321,11 +4327,11 @@ public class CryptoDetector extends GhidraScript {{
         }}
     }}
 }}
-'''
+"""
 
     def _generate_string_extraction_ghidra(self, target_name: str) -> str:
         """Generate string extraction Ghidra script."""
-        return f'''// Ghidra String Extraction Script for {target_name}
+        return f"""// Ghidra String Extraction Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.StringAnalysis
 
@@ -4385,11 +4391,11 @@ public class StringExtractor extends GhidraScript {{
         // HKEY patterns
     }}
 }}
-'''
+"""
 
     def _generate_function_analysis_ghidra(self, target_name: str) -> str:
         """Generate function analysis Ghidra script."""
-        return f'''// Ghidra Function Analysis Script for {target_name}
+        return f"""// Ghidra Function Analysis Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.FunctionAnalysis
 
@@ -4452,11 +4458,11 @@ public class FunctionAnalyzer extends GhidraScript {{
         println("[*] Building call graph...");
     }}
 }}
-'''
+"""
 
     def _generate_protection_scan_ghidra(self, target_name: str) -> str:
         """Generate protection scan Ghidra script."""
-        return f'''// Ghidra Protection Scanner Script for {target_name}
+        return f"""// Ghidra Protection Scanner Script for {target_name}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.ProtectionDetection
 
@@ -4521,11 +4527,11 @@ public class ProtectionScanner extends GhidraScript {{
         // Detection implementation
     }}
 }}
-'''
+"""
 
     def _generate_generic_ghidra(self, target_name: str, script_type: str) -> str:
         """Generate generic Ghidra script template."""
-        return f'''// Ghidra Analysis Script for {target_name}
+        return f"""// Ghidra Analysis Script for {target_name}
 // Type: {script_type}
 // Generated by Intellicrack Core Engine
 // @category Intellicrack.Analysis
@@ -4554,7 +4560,7 @@ public class GenericAnalyzer extends GhidraScript {{
         println("[*] {script_type} analysis complete");
     }}
 }}
-'''
+"""
 
     def generate_r2_script(self, target: str, script_type: str) -> str:
         """Generate a Radare2 analysis script for binary analysis.
@@ -4588,7 +4594,7 @@ public class GenericAnalyzer extends GhidraScript {{
 
     def _generate_license_scan_r2(self, target_name: str) -> str:
         """Generate license scanning R2 script."""
-        return f'''# Radare2 License Scan Script for {target_name}
+        return f"""# Radare2 License Scan Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Starting license analysis for {target_name}"
@@ -4623,11 +4629,11 @@ pdf @ sym.main | grep -i je
 pdf @ sym.main | grep -i jne
 
 echo "[*] License scan complete"
-'''
+"""
 
     def _generate_function_analysis_r2(self, target_name: str) -> str:
         """Generate function analysis R2 script."""
-        return f'''# Radare2 Function Analysis Script for {target_name}
+        return f"""# Radare2 Function Analysis Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Analyzing functions in {target_name}"
@@ -4654,11 +4660,11 @@ s entry0
 pdf
 
 echo "[*] Function analysis complete"
-'''
+"""
 
     def _generate_patch_generation_r2(self, target_name: str) -> str:
         """Generate patch generation R2 script."""
-        return f'''# Radare2 Patch Generation Script for {target_name}
+        return f"""# Radare2 Patch Generation Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Analyzing {target_name} for patching opportunities"
@@ -4691,11 +4697,11 @@ echo "# wa jmp 0x<target> @ 0x<address>"
 echo "# wx 9090 @ 0x<address>"
 
 echo "[*] Patch analysis complete"
-'''
+"""
 
     def _generate_string_search_r2(self, target_name: str) -> str:
         """Generate string search R2 script."""
-        return f'''# Radare2 String Search Script for {target_name}
+        return f"""# Radare2 String Search Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Extracting strings from {target_name}"
@@ -4730,11 +4736,11 @@ iz~SOFTWARE
 iz~CurrentVersion
 
 echo "[*] String search complete"
-'''
+"""
 
     def _generate_crypto_scan_r2(self, target_name: str) -> str:
         """Generate crypto scanning R2 script."""
-        return f'''# Radare2 Crypto Scan Script for {target_name}
+        return f"""# Radare2 Crypto Scan Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Scanning for cryptographic patterns in {target_name}"
@@ -4765,11 +4771,11 @@ afl~encrypt
 afl~decrypt
 
 echo "[*] Crypto scan complete"
-'''
+"""
 
     def _generate_generic_r2(self, target_name: str, script_type: str) -> str:
         """Generate generic R2 script template."""
-        return f'''# Radare2 {script_type} Script for {target_name}
+        return f"""# Radare2 {script_type} Script for {target_name}
 # Generated by Intellicrack Core Engine
 
 echo "[*] Running {script_type} analysis on {target_name}"
@@ -4799,7 +4805,7 @@ echo "[*] Functions:"
 afl | head -20
 
 echo "[*] {script_type} analysis complete"
-'''
+"""
 
 
 def main() -> None:

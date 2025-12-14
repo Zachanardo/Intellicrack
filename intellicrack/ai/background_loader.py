@@ -40,14 +40,18 @@ logger = logging.getLogger(__name__)
 class ConsoleProgressCallback(ProgressCallback):
     """Console-based progress callback for debugging."""
 
+    def __init__(self) -> None:
+        """Initialize the console progress callback."""
+        self._logger = logging.getLogger(f"{__name__}.ConsoleProgressCallback")
+
     def on_progress(self, progress: LoadingProgress) -> None:
-        """Print progress to console."""
-        print(f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}")
+        """Log progress to console."""
+        self._logger.info("[%s] %s: %.1f%% - %s", progress.model_id, progress.state.value, progress.progress * 100, progress.message)
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
-        """Print completion status."""
+        """Log completion status."""
         status = "SUCCESS" if success else f"FAILED: {error}"
-        print(f"[{model_id}] Loading completed: {status}")
+        self._logger.info("[%s] Loading completed: %s", model_id, status)
 
 
 class QueuedProgressCallback(ProgressCallback):
@@ -78,8 +82,7 @@ class QueuedProgressCallback(ProgressCallback):
             while True:
                 updates.append(self.progress_queue.get_nowait())
         except queue.Empty:
-            # Queue is empty - all updates retrieved successfully
-            logger.debug(f"Retrieved {len(updates)} progress updates from queue")
+            logger.debug("Retrieved %d progress updates from queue", len(updates))
         return updates
 
     def get_completion_updates(self) -> list[tuple[str, bool, str | None]]:
@@ -202,7 +205,7 @@ class BackgroundModelLoader:
                 thread = threading.Thread(target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True)
                 thread.start()
                 self.worker_threads.append(thread)
-            logger.info(f"Background model loader started with {max_concurrent_loads} workers")
+            logger.info("Background model loader started with %d workers", max_concurrent_loads)
         else:
             logger.info("Skipping background model loader worker threads (testing mode)")
 
@@ -226,7 +229,7 @@ class BackgroundModelLoader:
             # Add to priority queue (negative priority for max-heap behavior)
             self.task_queue.put((-priority, time.time(), task))
 
-            logger.info(f"Submitted loading task for {model_id} (priority: {priority})")
+            logger.info("Submitted loading task for %s (priority: %d)", model_id, priority)
             return task
 
     def cancel_task(self, model_id: str) -> bool:
@@ -293,7 +296,7 @@ class BackgroundModelLoader:
     def _worker_thread(self) -> None:
         """Worker thread for loading models."""
         thread_name = threading.current_thread().name
-        logger.info(f"Model loader worker {thread_name} started")
+        logger.info("Model loader worker %s started", thread_name)
 
         while not self.shutdown_event.is_set():
             try:
@@ -322,7 +325,7 @@ class BackgroundModelLoader:
                     self.completed_tasks[task.model_id] = task
 
             except Exception as e:
-                logger.error(f"Error in worker thread {thread_name}: {e}")
+                logger.error("Error in worker thread %s: %s", thread_name, e, exc_info=True)
 
     def _load_model(self, task: LoadingTask) -> None:
         """Load a model with progress tracking."""
@@ -362,16 +365,16 @@ class BackgroundModelLoader:
             if success:
                 task.update_progress(1.0, "Model loaded successfully", LoadingState.COMPLETED)
                 task.mark_completed(True, backend)
-                logger.info(f"Successfully loaded model {task.model_id}")
+                logger.info("Successfully loaded model %s", task.model_id)
             else:
                 task.mark_completed(False, error="Backend initialization failed")
-                logger.error(f"Failed to initialize backend for {task.model_id}")
+                logger.error("Failed to initialize backend for %s", task.model_id)
 
         except Exception as e:
             if not task.cancelled:
                 error_msg = str(e)
                 task.mark_completed(False, error=error_msg)
-                logger.error(f"Error loading model {task.model_id}: {e}")
+                logger.error("Error loading model %s: %s", task.model_id, e, exc_info=True)
 
     def shutdown(self) -> None:
         """Shutdown the background loader."""
@@ -432,14 +435,14 @@ class IntegratedBackgroundLoader:
                     try:
                         callback.on_progress(progress)
                     except Exception as e:
-                        logger.warning(f"Error in progress callback: {e}")
+                        logger.warning("Error in progress callback: %s", e, exc_info=True)
 
             def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
                 for callback in self.callbacks:
                     try:
                         callback.on_completed(model_id, success, error)
                     except Exception as e:
-                        logger.warning(f"Error in completion callback: {e}")
+                        logger.warning("Error in completion callback: %s", e, exc_info=True)
 
         multi_callback = MultiCallback(self.progress_callbacks)
 
@@ -516,8 +519,7 @@ def load_model_with_progress(
     """Load a model with progress."""
     loader = get_background_loader()
     if loader is None:
-        # Background loader unavailable - create synchronous task fallback
-        logger.info(f"Background loader not initialized for {model_id}, using synchronous fallback")
+        logger.info("Background loader not initialized for %s, using synchronous fallback", model_id)
         task = LoadingTask(model_id, backend_class, config, priority, callback)
         task.mark_completed(True, None, "Completed synchronously without background loader")
         return task
@@ -527,30 +529,27 @@ def load_model_with_progress(
     return loader.load_model_in_background(model_id, backend_class, config, priority)
 
 
-# Example usage and testing
 if __name__ == "__main__":
     import os
     import sys
 
-    # Add project root to path
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+    logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+    _main_logger = logging.getLogger(__name__)
 
     from intellicrack.ai.llm_backends import LLMConfig, LLMProvider, OpenAIBackend
 
-    # Example usage
-    print("Testing Background Model Loading")
-    print("=" * 40)
+    _main_logger.info("Testing Background Model Loading")
+    _main_logger.info("=" * 40)
 
-    # Create a console callback for testing
     console_callback = ConsoleProgressCallback()
 
-    # Create some test configurations
     configs = [
         LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5-turbo", api_key="test1"),
         LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test2"),
     ]
 
-    # Start background loading
     loader = BackgroundModelLoader(max_concurrent_loads=2)
 
     for i, config in enumerate(configs):
@@ -562,20 +561,16 @@ if __name__ == "__main__":
             callback=console_callback,
         )
 
-    # Monitor progress
-    print("\nMonitoring progress...")
-    time.sleep(2)  # Let it run for a bit
+    _main_logger.info("Monitoring progress...")
+    time.sleep(2)
 
-    # Show statistics
     stats = loader.get_loading_statistics()
-    print(f"\nStatistics: {stats}")
+    _main_logger.info("Statistics: %s", stats)
 
-    # Show all tasks
     all_tasks = loader.get_all_tasks()
-    print("\nAll tasks:")
+    _main_logger.info("All tasks:")
     for model_id, task in all_tasks.items():
-        print(f"  {model_id}: {task.state.value} ({task.progress:.1%})")
+        _main_logger.info("  %s: %s (%.1f%%)", model_id, task.state.value, task.progress * 100)
 
-    # Shutdown
     loader.shutdown()
-    print("\nShutdown complete")
+    _main_logger.info("Shutdown complete")

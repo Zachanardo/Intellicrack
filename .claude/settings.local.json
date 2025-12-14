@@ -1,80 +1,76 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "permissions": {
-    "allow": [
-      "mcp__sequential-thinking__sequentialthinking",
-      "mcp__brave-search__brave_web_search",
-      "Bash(cargo search:*)",
-      "Bash(pixi run ruff check --select ANN,D:*)",
-      "Bash(pixi run mypy --strict:*)",
-      "Bash(pixi run ruff check:*)",
-      "mcp__serena__find_symbol",
-      "mcp__serena__find_referencing_symbols",
-      "mcp__serena__get_symbols_overview",
-      "mcp__serena__initial_instructions",
-      "mcp__serena__check_onboarding_performed",
-      "mcp__serena__think_about_collected_information",
-      "mcp__serena__think_about_task_adherence",
-      "mcp__serena__think_about_whether_you_are_done",
-      "mcp__serena__read_memory",
-      "mcp__serena__search_for_pattern",
-      "mcp__serena__find_file",
-      "mcp__serena__list_memories"
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "permissions": {
+        "allow": [
+            "mcp__sequential-thinking__sequentialthinking",
+            "mcp__brave-search__brave_web_search",
+            "Bash(cargo search:*)",
+            "Bash(pixi run ruff check --select ANN,D:*)",
+            "Bash(pixi run mypy --strict:*)",
+            "Bash(pixi run ruff check:*)",
+            "mcp__serena__find_symbol",
+            "mcp__serena__find_referencing_symbols",
+            "mcp__serena__get_symbols_overview",
+            "mcp__serena__initial_instructions",
+            "mcp__serena__check_onboarding_performed",
+            "mcp__serena__think_about_collected_information",
+            "mcp__serena__think_about_task_adherence",
+            "mcp__serena__think_about_whether_you_are_done",
+            "mcp__serena__read_memory",
+            "mcp__serena__search_for_pattern",
+            "mcp__serena__find_file",
+            "mcp__serena__list_memories"
+        ],
+        "deny": [],
+        "ask": []
+    },
+    "enableAllProjectMcpServers": false,
+    "enabledMcpjsonServers": [
+        "serena",
+        "brave-search",
+        "memory",
+        "sequential-thinking",
+        "context7",
+        "e2b",
+        "MCPControl"
     ],
-    "deny": [],
-    "ask": []
-  },
-  "enableAllProjectMcpServers": false,
-  "enabledMcpjsonServers": [
-    "serena",
-    "brave-search",
-    "memory",
-    "sequential-thinking",
-    "context7",
-    "e2b",
-    "MCPControl"
-  ],
-  "disabledMcpjsonServers": [
-    "github",
-    "puppeteer",
-    "zen"
-  ],
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node D:/Intellicrack/.claude/hooks/post-tool-use.cjs"
-          }
+    "disabledMcpjsonServers": ["github", "puppeteer", "zen"],
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/post-tool-use.cjs"
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/sessionstart.js"
+                    }
+                ]
+            }
+        ],
+        "UserPromptSubmit": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/principles.js"
+                    }
+                ]
+            }
         ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node D:/Intellicrack/.claude/hooks/sessionstart.js"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node D:/Intellicrack/.claude/hooks/principles.js"
-          }
-        ]
-      }
-    ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "node D:/Intellicrack/.claude/statusline.cjs"
-  },
-  "outputStyle": "Intellicrack-Developer"
+    },
+    "statusLine": {
+        "type": "command",
+        "command": "node D:/Intellicrack/.claude/statusline.cjs"
+    },
+    "outputStyle": "Intellicrack-Developer"
 }

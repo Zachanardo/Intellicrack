@@ -21,8 +21,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import contextlib
 import curses
+import logging
 import os
 import sys
+
+
+logger = logging.getLogger(__name__)
 
 
 try:
@@ -836,19 +840,19 @@ def launch_hex_viewer(filepath: str) -> bool:
         viewer = TerminalHexViewer(filepath)
         curses.wrapper(viewer.run)
     except Exception as e:
-        print(f"Error launching hex viewer: {e}")
+        logger.error("Error launching hex viewer: %s", e, exc_info=True)
         return False
     return True
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: hex_viewer_cli.py <file>")
+        logger.error("Usage: hex_viewer_cli.py <file>")
         sys.exit(1)
 
     filepath = sys.argv[1]
     if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
+        logger.error("File not found: %s", filepath)
         sys.exit(1)
 
     launch_hex_viewer(filepath)

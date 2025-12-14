@@ -7,6 +7,7 @@ This document shows expected output when tests are executed successfully.
 ## Fast UI Component Tests (No AI Required)
 
 ### Command
+
 ```bash
 export QT_QPA_PLATFORM=offscreen
 export SKIP_AI_TESTS=1
@@ -16,6 +17,7 @@ pixi run python -m pytest tests/ui/dialogs/test_ai_coding_assistant_dialog.py \
 ```
 
 ### Expected Output
+
 ```
 ========================== test session starts ==========================
 platform win32 -- Python 3.12.x, pytest-9.0.1, pluggy-1.5.0
@@ -90,6 +92,7 @@ tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestProtectionAnalysisConte
 ## AI Code Generation Tests (Requires API Keys)
 
 ### Command
+
 ```bash
 export OPENAI_API_KEY="sk-..."
 export QT_QPA_PLATFORM=offscreen
@@ -98,6 +101,7 @@ pixi run python -m pytest tests/ui/dialogs/test_ai_coding_assistant_dialog.py::T
 ```
 
 ### Expected Output (Success)
+
 ```
 ========================== test session starts ==========================
 platform win32 -- Python 3.12.x, pytest-9.0.1, pluggy-1.5.0
@@ -114,6 +118,7 @@ tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestRealAICodeGeneration::t
 ```
 
 ### Expected Output (Skipped - No API Keys)
+
 ```
 ========================== test session starts ==========================
 platform win32 -- Python 3.12.x, pytest-9.0.1, pluggy-1.5.0
@@ -131,6 +136,7 @@ tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestRealAICodeGeneration::t
 ## Code Execution Validation Tests (Critical)
 
 ### Command
+
 ```bash
 export QT_QPA_PLATFORM=offscreen
 pixi run python -m pytest tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestCodeExecutionValidation \
@@ -138,6 +144,7 @@ pixi run python -m pytest tests/ui/dialogs/test_ai_coding_assistant_dialog.py::T
 ```
 
 ### Expected Output
+
 ```
 ========================== test session starts ==========================
 platform win32 -- Python 3.12.x, pytest-9.0.1, pluggy-1.5.0
@@ -152,6 +159,7 @@ tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestCodeExecutionValidation
 ```
 
 ### Detailed Keygen Test Output
+
 ```
 tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestCodeExecutionValidation::test_execute_keygen_generates_valid_output
 
@@ -181,6 +189,7 @@ PASSED [100%]
 ## Full Test Suite with Coverage
 
 ### Command
+
 ```bash
 export QT_QPA_PLATFORM=offscreen
 export SKIP_AI_TESTS=1
@@ -192,6 +201,7 @@ pixi run python -m pytest tests/ui/dialogs/test_ai_coding_assistant_dialog.py \
 ```
 
 ### Expected Coverage Output
+
 ```
 ========================== test session starts ==========================
 platform win32 -- Python 3.12.x, pytest-9.0.1, pluggy-1.5.0
@@ -292,6 +302,7 @@ AssertionError: File selection signal was not emitted
 ## Performance Test Output
 
 ### Large File Loading
+
 ```
 tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestPerformance::test_large_file_loading_performance
 
@@ -310,6 +321,7 @@ PASSED
 ```
 
 ### Tab Switching Performance
+
 ```
 tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestPerformance::test_multiple_tab_switching_performance
 
@@ -331,6 +343,7 @@ PASSED
 ## Integration Workflow Test Output
 
 ### Complete Keygen Generation Workflow
+
 ```
 tests/ui/dialogs/test_ai_coding_assistant_dialog.py::TestIntegrationWorkflows::test_complete_keygen_generation_workflow
 
@@ -367,6 +380,7 @@ PASSED [100%] in 4.56s
 ## Summary Statistics
 
 ### All Tests (No AI)
+
 - **Total Tests:** 48
 - **Passed:** 48
 - **Skipped:** 4 (AI tests)
@@ -375,6 +389,7 @@ PASSED [100%] in 4.56s
 - **Coverage:** 85%+
 
 ### With AI Tests
+
 - **Total Tests:** 52
 - **Passed:** 52
 - **Skipped:** 0
@@ -385,6 +400,7 @@ PASSED [100%] in 4.56s
 ---
 
 **Note:** Actual test output may vary based on:
+
 - AI model responses (non-deterministic)
 - API latency and availability
 - System performance

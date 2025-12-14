@@ -1407,9 +1407,15 @@ const AdvancedMemoryDumper = {
                 layout.totalSize += range.size;
 
                 // Classify regions
-                if (range.protection.includes('x')) { layout.executableRegions++; }
-                if (range.protection.includes('w')) { layout.writableRegions++; }
-                if (range.protection.includes('r')) { layout.readableRegions++; }
+                if (range.protection.includes('x')) {
+                    layout.executableRegions++;
+                }
+                if (range.protection.includes('w')) {
+                    layout.writableRegions++;
+                }
+                if (range.protection.includes('r')) {
+                    layout.readableRegions++;
+                }
 
                 // Categorize by type
                 switch (rangeInfo.type) {
@@ -1803,7 +1809,9 @@ const AdvancedMemoryDumper = {
         try {
             const appDomains = [];
             const clrBase = this.findCLRBase();
-            if (!clrBase) { return appDomains; }
+            if (!clrBase) {
+                return appDomains;
+            }
 
             // Search for AppDomain structures in CLR memory
             const ranges = Process.enumerateRanges('rw-');
@@ -1910,7 +1918,9 @@ const AdvancedMemoryDumper = {
             for (const moduleName of jvmModuleNames) {
                 try {
                     jvmModule = Process.getModuleByName(moduleName);
-                    if (jvmModule) { break; }
+                    if (jvmModule) {
+                        break;
+                    }
                 } catch (_e) {}
             }
 
@@ -2186,7 +2196,9 @@ const AdvancedMemoryDumper = {
             for (const moduleName of nodeModuleNames) {
                 try {
                     nodeModule = Process.getModuleByName(moduleName);
-                    if (nodeModule) { break; }
+                    if (nodeModule) {
+                        break;
+                    }
                 } catch (_e) {}
             }
 
@@ -2200,7 +2212,9 @@ const AdvancedMemoryDumper = {
                             const versionStr = versionFunc();
                             if (versionStr) {
                                 const version = Memory.readUtf8String(versionStr);
-                                if (version) { return `Node.js ${version}`; }
+                                if (version) {
+                                    return `Node.js ${version}`;
+                                }
                             }
                         } catch (_e) {
                             // Continue to next method
@@ -2760,15 +2774,20 @@ const AdvancedMemoryDumper = {
             for (let i = 0; i < bytes.length - 8; i += 4) {
                 if (this.isManagedObjectHeader(bytes, i)) {
                     const age = this.estimateObjectAge(bytes, i);
-                    if (age < 100) { youngObjects++; }
-                    else { oldObjects++; }
+                    if (age < 100) {
+                        youngObjects++;
+                    } else {
+                        oldObjects++;
+                    }
                 }
             }
 
-            if (youngObjects > oldObjects * 2) { return 0; // Gen 0
-}
-            if (youngObjects > oldObjects) { return 1; // Gen 1
-}
+            if (youngObjects > oldObjects * 2) {
+                return 0; // Gen 0
+            }
+            if (youngObjects > oldObjects) {
+                return 1; // Gen 1
+            }
             return 2; // Gen 2
         } catch (_error) {
             return -1;
@@ -2815,7 +2834,9 @@ const AdvancedMemoryDumper = {
 
             for (let i = 0; i < bytes.length; i++) {
                 if (bytes[i] === 0 && bytes[i + 1] === 0) {
-                    if (!inFreeBlock) { inFreeBlock = true; }
+                    if (!inFreeBlock) {
+                        inFreeBlock = true;
+                    }
                     freeBytes++;
                 } else {
                     inFreeBlock = false;
@@ -2931,7 +2952,9 @@ const AdvancedMemoryDumper = {
                     break;
                 }
             }
-            if (match) { return true; }
+            if (match) {
+                return true;
+            }
         }
 
         return false;
@@ -4479,7 +4502,9 @@ const AdvancedMemoryDumper = {
                                 break;
                             }
                         }
-                        if (!repeatingPattern) { break; }
+                        if (!repeatingPattern) {
+                            break;
+                        }
                     }
                     if (repeatingPattern) {
                         return true;
@@ -5532,9 +5557,13 @@ const AdvancedMemoryDumper = {
         },
 
         arraysEqual: (a, b) => {
-            if (a.length !== b.length) { return false; }
+            if (a.length !== b.length) {
+                return false;
+            }
             for (let i = 0; i < a.length; i++) {
-                if (a[i] !== b[i]) { return false; }
+                if (a[i] !== b[i]) {
+                    return false;
+                }
             }
             return true;
         },
@@ -5657,7 +5686,9 @@ const AdvancedMemoryDumper = {
         },
 
         analyzeChangeFrequency: history => {
-            if (history.length < 5) { return { isIncreasing: false, rate: 0 }; }
+            if (history.length < 5) {
+                return { isIncreasing: false, rate: 0 };
+            }
 
             const recentChanges = history
                 .slice(-5)
@@ -5674,7 +5705,9 @@ const AdvancedMemoryDumper = {
 
         detectPeriodicPatterns: function (history) {
             const patterns = [];
-            if (history.length < 10) { return patterns; }
+            if (history.length < 10) {
+                return patterns;
+            }
 
             // Simple periodic pattern detection
             for (let period = 2; period <= Math.min(history.length / 2, 10); period++) {
@@ -5688,7 +5721,9 @@ const AdvancedMemoryDumper = {
 
         detectBurstPatterns: history => {
             const patterns = [];
-            if (history.length < 5) { return patterns; }
+            if (history.length < 5) {
+                return patterns;
+            }
 
             const averageChanges =
                 history.reduce((sum, entry) => sum + entry.changeCount, 0) / history.length;
@@ -5717,7 +5752,9 @@ const AdvancedMemoryDumper = {
 
                 if (pos2 < history.length) {
                     const similarity = this.calculateSimilarity(history[pos1], history[pos2]);
-                    if (similarity > 0.7) { matches++; }
+                    if (similarity > 0.7) {
+                        matches++;
+                    }
                 }
             }
 
@@ -5963,7 +6000,7 @@ const AdvancedMemoryDumper = {
         try {
             const allocationEvent = {
                 address: address,
-                size: allocInfo.size > 0|| allocInfo.length > 0,
+                size: allocInfo.size > 0 || allocInfo.length > 0,
                 type: allocInfo.type || 'mmap',
                 protection: allocInfo.protect || allocInfo.prot,
                 timestamp: allocInfo.timestamp,
@@ -6793,9 +6830,7 @@ const AdvancedMemoryDumper = {
             }
 
             // Reduce trust for RWX allocations
-            if (
-                source.events?.some(e => e.type === 'allocation' && e.protection === 'rwx')
-            ) {
+            if (source.events?.some(e => e.type === 'allocation' && e.protection === 'rwx')) {
                 trustScore -= 0.3;
             }
 
@@ -6958,7 +6993,9 @@ const AdvancedMemoryDumper = {
             // Follow causal links up to depth limit
             while (chain.length < 20) {
                 const nextEvent = this.findCausallyRelatedEvent(currentEvent, allEvents, visited);
-                if (!nextEvent) { break; }
+                if (!nextEvent) {
+                    break;
+                }
 
                 chain.push(nextEvent);
                 visited.add(`${nextEvent.address}:${nextEvent.timestamp}`);
@@ -6981,15 +7018,21 @@ const AdvancedMemoryDumper = {
 
             for (const candidateEvent of allEvents) {
                 const candidateKey = `${candidateEvent.address}:${candidateEvent.timestamp}`;
-                if (visited.has(candidateKey)) { continue; }
+                if (visited.has(candidateKey)) {
+                    continue;
+                }
 
                 // Check temporal proximity
                 const timeDiff = Math.abs(candidateEvent.timestamp - event.timestamp);
-                if (timeDiff > timeWindow) { continue; }
+                if (timeDiff > timeWindow) {
+                    continue;
+                }
 
                 // Check spatial proximity
                 const addressDiff = Math.abs(candidateEvent.address - event.address);
-                if (addressDiff > addressWindow) { continue; }
+                if (addressDiff > addressWindow) {
+                    continue;
+                }
 
                 // Check for causal indicators
                 if (this.hasCausalIndicators(event, candidateEvent)) {
@@ -7024,11 +7067,11 @@ const AdvancedMemoryDumper = {
             }
 
             // Same caller suggests causality
-            return !!(event1.callerInfo &&
-              event2.callerInfo &&
-              event1.callerInfo.module === event2.callerInfo.module);
-
-
+            return !!(
+                event1.callerInfo &&
+                event2.callerInfo &&
+                event1.callerInfo.module === event2.callerInfo.module
+            );
         } catch (_error) {
             return false;
         }
@@ -7307,24 +7350,32 @@ const AdvancedMemoryDumper = {
     isTaintSource: event => {
         try {
             // Network input
-            if (event.source === 'network_input') { return true; }
+            if (event.source === 'network_input') {
+                return true;
+            }
 
             // File input
-            if (event.source === 'file_input') { return true; }
+            if (event.source === 'file_input') {
+                return true;
+            }
 
             // User input
-            if (event.source === 'user_input') { return true; }
+            if (event.source === 'user_input') {
+                return true;
+            }
 
             // External API calls
-            if (event.type === 'api_call' && event.external) { return true; }
+            if (event.type === 'api_call' && event.external) {
+                return true;
+            }
 
             // Registry reads
-            if (event.source === 'registry_read') { return true; }
+            if (event.source === 'registry_read') {
+                return true;
+            }
 
             // Environment variable reads
             return event.source === 'env_read';
-
-
         } catch (_error) {
             return false;
         }
@@ -7336,21 +7387,31 @@ const AdvancedMemoryDumper = {
     isTaintSink: event => {
         try {
             // Network output
-            if (event.target === 'network_output') { return true; }
+            if (event.target === 'network_output') {
+                return true;
+            }
 
             // File output
-            if (event.target === 'file_output') { return true; }
+            if (event.target === 'file_output') {
+                return true;
+            }
 
             // Process creation
-            if (event.type === 'process_create') { return true; }
+            if (event.type === 'process_create') {
+                return true;
+            }
 
             // Registry writes
-            if (event.target === 'registry_write') { return true; }
+            if (event.target === 'registry_write') {
+                return true;
+            }
 
             // Executable memory allocation
-            return !!(event.type === 'allocation' && event.protection && event.protection.includes('x'));
-
-
+            return !!(
+                event.type === 'allocation' &&
+                event.protection &&
+                event.protection.includes('x')
+            );
         } catch (_error) {
             return false;
         }
@@ -7374,7 +7435,9 @@ const AdvancedMemoryDumper = {
 
             while (processQueue.length > 0 && propagation.depth < 10) {
                 const currentAddress = processQueue.shift();
-                if (visited.has(currentAddress)) { continue; }
+                if (visited.has(currentAddress)) {
+                    continue;
+                }
                 visited.add(currentAddress);
 
                 // Find operations that read from this address
@@ -7504,13 +7567,17 @@ const AdvancedMemoryDumper = {
      */
     calculateAccessFrequency: events => {
         try {
-            if (events.length < 2) { return 0; }
+            if (events.length < 2) {
+                return 0;
+            }
 
             const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
             const timeSpan =
                 sortedEvents[sortedEvents.length - 1].timestamp - sortedEvents[0].timestamp;
 
-            if (timeSpan <= 0) { return 0; }
+            if (timeSpan <= 0) {
+                return 0;
+            }
 
             return events.length / (timeSpan / 1000); // Events per second
         } catch (_error) {
@@ -7523,7 +7590,9 @@ const AdvancedMemoryDumper = {
      */
     detectSequentialPattern: events => {
         try {
-            if (events.length < 3) { return false; }
+            if (events.length < 3) {
+                return false;
+            }
 
             const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
             let sequentialCount = 0;
@@ -7550,7 +7619,9 @@ const AdvancedMemoryDumper = {
      */
     detectRepetitivePattern: events => {
         try {
-            if (events.length < 4) { return false; }
+            if (events.length < 4) {
+                return false;
+            }
 
             const addressCounts = new Map();
             for (const event of events) {
@@ -7560,7 +7631,9 @@ const AdvancedMemoryDumper = {
 
             // Check if any address is accessed multiple times
             for (const count of addressCounts.values()) {
-                if (count >= 3) { return true; }
+                if (count >= 3) {
+                    return true;
+                }
             }
 
             return false;
@@ -7572,7 +7645,6 @@ const AdvancedMemoryDumper = {
     /**
      * Analyze allocation patterns in heap
      */
-
 
     /**
      * Analyze allocation pattern
@@ -7699,7 +7771,9 @@ const AdvancedMemoryDumper = {
      */
     calculateCausalityConfidence: function (causalChain) {
         try {
-            if (causalChain.length < 2) { return 0; }
+            if (causalChain.length < 2) {
+                return 0;
+            }
 
             let confidence = 1.0;
 
@@ -7735,10 +7809,14 @@ const AdvancedMemoryDumper = {
             let similarity = 0;
 
             // Same thread
-            if (event1.threadId === event2.threadId) { similarity += 0.4; }
+            if (event1.threadId === event2.threadId) {
+                similarity += 0.4;
+            }
 
             // Same process
-            if (event1.processId === event2.processId) { similarity += 0.3; }
+            if (event1.processId === event2.processId) {
+                similarity += 0.3;
+            }
 
             // Same module
             if (
@@ -8056,7 +8134,9 @@ const AdvancedMemoryDumper = {
 
             // Temporal proximity increases confidence
             const timeDiff = Math.abs(origin.timestamp - readEvent.timestamp);
-            if (timeDiff < 1000) { confidence += 0.1; }
+            if (timeDiff < 1000) {
+                confidence += 0.1;
+            }
 
             return Math.min(1, confidence);
         } catch (_error) {
@@ -8069,12 +8149,24 @@ const AdvancedMemoryDumper = {
      */
     classifyTaintSource: event => {
         try {
-            if (event.source === 'network_input') { return 'network'; }
-            if (event.source === 'file_input') { return 'file'; }
-            if (event.source === 'user_input') { return 'user'; }
-            if (event.source === 'registry_read') { return 'registry'; }
-            if (event.source === 'env_read') { return 'environment'; }
-            if (event.external) { return 'external_api'; }
+            if (event.source === 'network_input') {
+                return 'network';
+            }
+            if (event.source === 'file_input') {
+                return 'file';
+            }
+            if (event.source === 'user_input') {
+                return 'user';
+            }
+            if (event.source === 'registry_read') {
+                return 'registry';
+            }
+            if (event.source === 'env_read') {
+                return 'environment';
+            }
+            if (event.external) {
+                return 'external_api';
+            }
             return 'unknown';
         } catch (_error) {
             return 'unknown';
@@ -8089,15 +8181,25 @@ const AdvancedMemoryDumper = {
             let level = 0.5; // Base taint level
 
             // Network sources are high taint
-            if (event.source === 'network_input') { level = 0.9; }
+            if (event.source === 'network_input') {
+                level = 0.9;
+            }
             // File sources are medium-high taint
-            else if (event.source === 'file_input') { level = 0.7; }
+            else if (event.source === 'file_input') {
+                level = 0.7;
+            }
             // User input is medium taint
-            else if (event.source === 'user_input') { level = 0.6; }
+            else if (event.source === 'user_input') {
+                level = 0.6;
+            }
             // Registry/environment is low-medium taint
-            else if (event.source === 'registry_read' || event.source === 'env_read') { level = 0.4; }
+            else if (event.source === 'registry_read' || event.source === 'env_read') {
+                level = 0.4;
+            }
             // Internal sources are low taint
-            else { level = 0.2; }
+            else {
+                level = 0.2;
+            }
 
             return level;
         } catch (_error) {
@@ -8110,10 +8212,18 @@ const AdvancedMemoryDumper = {
      */
     classifyTaintSink: event => {
         try {
-            if (event.target === 'network_output') { return 'network'; }
-            if (event.target === 'file_output') { return 'file'; }
-            if (event.type === 'process_create') { return 'process'; }
-            if (event.target === 'registry_write') { return 'registry'; }
+            if (event.target === 'network_output') {
+                return 'network';
+            }
+            if (event.target === 'file_output') {
+                return 'file';
+            }
+            if (event.type === 'process_create') {
+                return 'process';
+            }
+            if (event.target === 'registry_write') {
+                return 'registry';
+            }
             if (event.type === 'allocation' && event.protection && event.protection.includes('x')) {
                 return 'executable';
             }
@@ -8192,14 +8302,21 @@ const AdvancedMemoryDumper = {
 
             // Address proximity
             const addrDiff = Math.abs(taintedRegion.address - sinkEvent.address);
-            if (addrDiff === 0) { confidence += 0.3; }
-            else if (addrDiff < 16) { confidence += 0.2; }
-            else if (addrDiff < 256) { confidence += 0.1; }
+            if (addrDiff === 0) {
+                confidence += 0.3;
+            } else if (addrDiff < 16) {
+                confidence += 0.2;
+            } else if (addrDiff < 256) {
+                confidence += 0.1;
+            }
 
             // Temporal proximity
             const timeDiff = Math.abs(taintedRegion.timestamp - sinkEvent.timestamp);
-            if (timeDiff < 1000) { confidence += 0.2; }
-            else if (timeDiff < 10000) { confidence += 0.1; }
+            if (timeDiff < 1000) {
+                confidence += 0.2;
+            } else if (timeDiff < 10000) {
+                confidence += 0.1;
+            }
 
             return Math.min(1, confidence);
         } catch (_error) {
@@ -8254,9 +8371,13 @@ const AdvancedMemoryDumper = {
 
             const criticalityScore = sourceLevel * sinkSensitivity;
 
-            if (criticalityScore > 0.7) { return 'high'; }
-            else if (criticalityScore > 0.4) { return 'medium'; }
-            else { return 'low'; }
+            if (criticalityScore > 0.7) {
+                return 'high';
+            } else if (criticalityScore > 0.4) {
+                return 'medium';
+            } else {
+                return 'low';
+            }
         } catch (_error) {
             return 'unknown';
         }
@@ -8386,9 +8507,15 @@ const AdvancedMemoryDumper = {
     detectMemoryPattern: event => {
         try {
             if (event.size > 0) {
-                if (event.size % 8 === 0) { return 'aligned_8'; }
-                if (event.size % 4 === 0) { return 'aligned_4'; }
-                if (event.size % 2 === 0) { return 'aligned_2'; }
+                if (event.size % 8 === 0) {
+                    return 'aligned_8';
+                }
+                if (event.size % 4 === 0) {
+                    return 'aligned_4';
+                }
+                if (event.size % 2 === 0) {
+                    return 'aligned_2';
+                }
             }
             return 'unaligned';
         } catch (_error) {
@@ -8414,7 +8541,7 @@ const AdvancedMemoryDumper = {
                 // Compress memory data with optimal algorithm selection
                 compress: function (data, _options = {}) {
                     try {
-                        const inputSize = data.byteLength > 0|| data.length > 0;
+                        const inputSize = data.byteLength > 0 || data.length > 0;
                         let bestCompression = null;
                         const _bestRatio = 0;
 
@@ -8597,11 +8724,15 @@ const AdvancedMemoryDumper = {
                 // Process task queue
                 processQueue: function () {
                     try {
-                        if (this.taskQueue.length === 0) { return; }
+                        if (this.taskQueue.length === 0) {
+                            return;
+                        }
 
                         // Find available worker
                         const availableWorker = this.workers.find(w => !w.busy);
-                        if (!availableWorker) { return; }
+                        if (!availableWorker) {
+                            return;
+                        }
 
                         const taskWrapper = this.taskQueue.shift();
                         this.executeTask(availableWorker, taskWrapper);
@@ -8800,7 +8931,9 @@ const AdvancedMemoryDumper = {
                 flush: function (streamId) {
                     try {
                         const stream = this.streams.get(streamId);
-                        if (!stream || stream.position === 0) { return false; }
+                        if (!stream || stream.position === 0) {
+                            return false;
+                        }
 
                         // Prepare data for flushing
                         const dataToFlush = stream.view.subarray(0, stream.position);
@@ -8832,7 +8965,9 @@ const AdvancedMemoryDumper = {
                 compressBuffer: function (streamId) {
                     try {
                         const stream = this.streams.get(streamId);
-                        if (!stream || stream.compressed) { return false; }
+                        if (!stream || stream.compressed) {
+                            return false;
+                        }
 
                         // Use real compression via the compression engine
                         const originalSize = stream.position;
@@ -9031,7 +9166,9 @@ const AdvancedMemoryDumper = {
 
                         // Assign regions to available extractors
                         for (const [_extractorId, extractor] of this.extractors) {
-                            if (regionIndex >= regions.length) { break; }
+                            if (regionIndex >= regions.length) {
+                                break;
+                            }
 
                             const region = regions[regionIndex++];
                             const promise = this.assignRegionToExtractor(extractor, region);
@@ -9602,7 +9739,9 @@ const AdvancedMemoryDumper = {
 
                                 // Search for matches in dictionary
                                 for (const pos of positions) {
-                                    if (i - pos > windowSize) { continue; }
+                                    if (i - pos > windowSize) {
+                                        continue;
+                                    }
 
                                     let matchLength = 0;
                                     while (
@@ -9636,7 +9775,9 @@ const AdvancedMemoryDumper = {
                                 }
 
                                 // Update dictionary
-                                if (positions.length > 32) { positions.shift(); }
+                                if (positions.length > 32) {
+                                    positions.shift();
+                                }
                                 positions.push(i - bestLength || i - 1);
                                 dictionary.set(key, positions);
                             } else {
@@ -9823,7 +9964,9 @@ const AdvancedMemoryDumper = {
                                 while (compressedPos < compressed.length) {
                                     const byte = compressed[compressedPos++];
                                     length |= (byte & 0x7f) << shift;
-                                    if ((byte & 0x80) === 0) { break; }
+                                    if ((byte & 0x80) === 0) {
+                                        break;
+                                    }
                                     shift += 7;
                                 }
 
@@ -9833,7 +9976,9 @@ const AdvancedMemoryDumper = {
                                 while (compressedPos < compressed.length) {
                                     const byte = compressed[compressedPos++];
                                     distance |= (byte & 0x7f) << shift;
-                                    if ((byte & 0x80) === 0) { break; }
+                                    if ((byte & 0x80) === 0) {
+                                        break;
+                                    }
                                     shift += 7;
                                 }
 
@@ -10062,7 +10207,7 @@ const AdvancedMemoryDumper = {
 
             for (const fragment of fragments) {
                 const fragmentAddress = parseInt(fragment.address, 16);
-                const fragmentSize = fragment.size > 0|| fragment.data.length > 0;
+                const fragmentSize = fragment.size > 0 || fragment.data.length > 0;
 
                 if (!currentRegion) {
                     // Start new region
@@ -12982,7 +13127,9 @@ const AdvancedMemoryDumper = {
                                         (sum, m) => sum + m.size,
                                         0
                                     );
-                                    if (totalSize >= 1024 * 1024) { break; }
+                                    if (totalSize >= 1024 * 1024) {
+                                        break;
+                                    }
                                 } catch (_e) {}
                             }
 
@@ -13065,7 +13212,9 @@ const AdvancedMemoryDumper = {
                                     );
                                     view.set(dataView.subarray(0, copySize), offset);
                                     offset += copySize;
-                                    if (offset >= combined.byteLength) { break; }
+                                    if (offset >= combined.byteLength) {
+                                        break;
+                                    }
                                 }
 
                                 return combined;

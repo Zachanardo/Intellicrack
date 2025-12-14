@@ -11,304 +11,304 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 requires-python = ">=3.12,<3.13"
 keywords = [
-  "binary-analysis",
-  "reverse-engineering",
-  "security",
-  "vulnerability-detection",
-  "malware-analysis",
-  "ai-security",
-  "exploit-development",
+    "binary-analysis",
+    "reverse-engineering",
+    "security",
+    "vulnerability-detection",
+    "malware-analysis",
+    "ai-security",
+    "exploit-development",
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
-  "Intended Audience :: Developers",
-  "Intended Audience :: Science/Research",
-  "Intended Audience :: Information Technology",
-  "Topic :: Security",
-  "Topic :: Software Development :: Disassemblers",
-  "Topic :: Software Development :: Debuggers",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.12",
-  "Operating System :: OS Independent",
-  "Environment :: Console",
-  "Environment :: X11 Applications :: Qt",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Software Development :: Disassemblers",
+    "Topic :: Software Development :: Debuggers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Environment :: X11 Applications :: Qt",
 ]
 dependencies = [
-  # Core ML/AI
-  "accelerate",
-  "anthropic",
-  "openai>=2.9.0,<3",
-  "torch",
-  "torchvision",
-  "torchaudio",
-  "transformers>=4.57.3,<5",
-  "huggingface-hub",
-  "safetensors",
-  "peft",
-  # "auto-gptq>=0.7.0", # Requires NVIDIA CUDA - not compatible with Intel GPU
-  "bitsandbytes",
+    # Core ML/AI
+    "accelerate",
+    "anthropic",
+    "openai>=2.9.0,<3",
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "transformers>=4.57.3,<5",
+    "huggingface-hub",
+    "safetensors",
+    "peft",
+    # "auto-gptq>=0.7.0", # Requires NVIDIA CUDA - not compatible with Intel GPU
+    "bitsandbytes",
 
-  # Binary Analysis
-  "angr>=9.2.186,<10",
-  "claripy>=9.2.186,<10",
-  "capstone",
-  "keystone-engine>=0.9.2,<0.10",
-  "binwalk3>=3.1.3,<4",
-  "python-magic>=0.4.27,<0.5",
+    # Binary Analysis
+    "angr>=9.2.186,<10",
+    "claripy>=9.2.186,<10",
+    "capstone",
+    "keystone-engine>=0.9.2,<0.10",
+    "binwalk3>=3.1.3,<4",
+    "python-magic>=0.4.27,<0.5",
 
-  "volatility3>=2.26.2,<3",
-  "yara-python>=4.5.4,<5",
-  "ppdeep",
-  "py-tlsh==4.7.2",
-  "lief>=0.17.1,<0.18",
-  "pefile>=2024.8.26,<2025",
-  "pyelftools>=0.32,<0.33",
-  "z3-solver",
-  "r2pipe>=1.9.6,<2",
-  "frida>=17.5.1",
-  "frida-tools>=14.5.0",
-  # Emulation & Analysis
-  "qiling>=1.4.6,<2",
-  "unicorn>=2.1.4,<3",
-  "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
+    "volatility3>=2.26.2,<3",
+    "yara-python>=4.5.4,<5",
+    "ppdeep",
+    "py-tlsh==4.7.2",
+    "lief>=0.17.1,<0.18",
+    "pefile>=2024.8.26,<2025",
+    "pyelftools>=0.32,<0.33",
+    "z3-solver",
+    "r2pipe>=1.9.6,<2",
+    "frida>=17.5.1",
+    "frida-tools>=14.5.0",
+    # Emulation & Analysis
+    "qiling>=1.4.6,<2",
+    "unicorn>=2.1.4,<3",
+    "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
 
-  # Security & Network
-  # "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
-  "scapy>=2.6.1,<3",
-  "cryptography",
-  "paramiko>=4.0.0,<5",
-  "pyshark>=0.6,<0.7",
-  "dpkt>=1.9.8,<2",
-  "pycryptodome>=3.23.0,<4",
-  "pyopenssl",
+    # Security & Network
+    # "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
+    "scapy>=2.6.1,<3",
+    "cryptography",
+    "paramiko>=4.0.0,<5",
+    "pyshark>=0.6,<0.7",
+    "dpkt>=1.9.8,<2",
+    "pycryptodome>=3.23.0,<4",
+    "pyopenssl",
 
-  # Web & HTTP
-  "aiohttp>=3.13.2,<4",
-  "requests>=2.32.5,<3",
-  "urllib3>=2.6.0,<3",
-  "defusedxml>=0.7.1,<0.8",
-  "xmltodict",
-  "boto3",
-  "azure-storage-blob>=12.27.1,<13",
-  "fastapi>=0.121.3,<0.122",
-  "httpie>=3.2.4,<4",
+    # Web & HTTP
+    "aiohttp>=3.13.2,<4",
+    "requests>=2.32.5,<3",
+    "urllib3>=2.6.0,<3",
+    "defusedxml>=0.7.1,<0.8",
+    "xmltodict",
+    "boto3",
+    "azure-storage-blob>=12.27.1,<13",
+    "fastapi>=0.121.3,<0.122",
+    "httpie>=3.2.4,<4",
 
-  "dpctl",
-  "pyopencl>=2025.2.7,<2026",
-  "tensorflow>=2.20.0,<3",
-  "numba==0.62.1",
-  "tf2onnx",
-  "openvino==2025.3.0",
-  # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
-  # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
-  # "pynvml>=11.5.0,<12", # NVIDIA GPU monitoring - not compatible with Intel XPU
-  # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
+    "dpctl",
+    "pyopencl>=2025.2.7,<2026",
+    "tensorflow>=2.20.0,<3",
+    "numba==0.62.1",
+    "tf2onnx",
+    "openvino==2025.3.0",
+    # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
+    # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
+    # "pynvml>=11.5.0,<12", # NVIDIA GPU monitoring - not compatible with Intel XPU
+    # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
 
-  # Database & Storage
-  "pymongo>=4.15.5,<5",
-  "psycopg2-binary>=2.9.11,<3",
+    # Database & Storage
+    "pymongo>=4.15.5,<5",
+    "psycopg2-binary>=2.9.11,<3",
 
-  # GUI & Visualization
-  "matplotlib>=3.10.7,<4",
-  "pyqt6>=6.10.1,<7",
-  "pyqt6-sip>=13.10.3,<14",
-  "pyqtgraph",
-  "pillow>=12.0.0,<13",
-  "cairocffi>=1.7.1,<2",
-  "graphviz>=0.21,<0.22",
+    # GUI & Visualization
+    "matplotlib>=3.10.7,<4",
+    "pyqt6>=6.10.1,<7",
+    "pyqt6-sip>=13.10.3,<14",
+    "pyqtgraph",
+    "pillow>=12.0.0,<13",
+    "cairocffi>=1.7.1,<2",
+    "graphviz>=0.21,<0.22",
 
-  # System & Hardware
-  "psutil>=7.1.1,<8",
-  "GPUtil==1.4.0",
-  "py-cpuinfo>=9.0.0,<10",
-  "pynput>=1.8.1,<2",
-  "pyusb>=1.3.1,<2",
-  "watchdog>=6.0.0,<7",
-  "wmi>=1.5.1,<2",
-  "pyzmq",
-  # "xattr>=1.0.0,<2", # Unix file attributes - not needed on Windows
+    # System & Hardware
+    "psutil>=7.1.1,<8",
+    "GPUtil==1.4.0",
+    "py-cpuinfo>=9.0.0,<10",
+    "pynput>=1.8.1,<2",
+    "pyusb>=1.3.1,<2",
+    "watchdog>=6.0.0,<7",
+    "wmi>=1.5.1,<2",
+    "pyzmq",
+    # "xattr>=1.0.0,<2", # Unix file attributes - not needed on Windows
 
-  # Web & Document Processing
-  "flask>=3.1.2,<4",
-  "flask-cors>=6.0.1,<7",
-  "jinja2>=3.1.6,<4",
-  "pdfkit>=1.0.0,<2",
-  "reportlab>=4.4.5,<5",
-  "weasyprint>=66.0,<67",
-  "tinycss2>=1.5.1,<2",
-  "xlsxwriter>=3.2.9,<4",
+    # Web & Document Processing
+    "flask>=3.1.2,<4",
+    "flask-cors>=6.0.1,<7",
+    "jinja2>=3.1.6,<4",
+    "pdfkit>=1.0.0,<2",
+    "reportlab>=4.4.5,<5",
+    "weasyprint>=66.0,<67",
+    "tinycss2>=1.5.1,<2",
+    "xlsxwriter>=3.2.9,<4",
 
-  "fsspec>=2025.12.0,<2026",
-  "aiobotocore>=2.26.0,<3",
+    "fsspec>=2025.12.0,<2026",
+    "aiobotocore>=2.26.0,<3",
 
-  # Data Science
-  "pandas>=2.3.3,<3",
-  "scikit-learn>=1.7.2,<2",
-  "scipy>=1.16.3,<2",
-  "onnx>=1.20.0,<2",
-  "numpy",
-  "seaborn>=0.13.2,<0.14",
-  "onnxruntime>=1.23.2,<2",
-  "joblib>=1.5.2,<2",
-  "networkx>=3.6,<4",
-  "plotly",
-  "pyarrow==22.0.0",
+    # Data Science
+    "pandas>=2.3.3,<3",
+    "scikit-learn>=1.7.2,<2",
+    "scipy>=1.16.3,<2",
+    "onnx>=1.20.0,<2",
+    "numpy",
+    "seaborn>=0.13.2,<0.14",
+    "onnxruntime>=1.23.2,<2",
+    "joblib>=1.5.2,<2",
+    "networkx>=3.6,<4",
+    "plotly",
+    "pyarrow==22.0.0",
 
-  # Data Validation & APIs
-  "pydantic>=2.12.5,<3",
-  "pydantic-core>=2.41.5,<3",
-  "jsonschema>=4.25.1,<5",
-  "pyjwt>=2.10.1,<3",
-  "pyyaml",
-  "sqlalchemy>=2.0.44,<3",
-  "uvicorn>=0.38.0,<0.39",
+    # Data Validation & APIs
+    "pydantic>=2.12.5,<3",
+    "pydantic-core>=2.41.5,<3",
+    "jsonschema>=4.25.1,<5",
+    "pyjwt>=2.10.1,<3",
+    "pyyaml",
+    "sqlalchemy>=2.0.44,<3",
+    "uvicorn>=0.38.0,<0.39",
 
-  # Core Utilities
-  "macholib>=1.16.4,<2",
-  "nltk>=3.9.2,<4",
-  "regex>=2025.11.3,<2026",
-  "rich>=14.2.0,<15",
-  "tqdm>=4.67.1,<5",
-  "cffi>=2.0.0,<3",
+    # Core Utilities
+    "macholib>=1.16.4,<2",
+    "nltk>=3.9.2,<4",
+    "regex>=2025.11.3,<2026",
+    "rich>=14.2.0,<15",
+    "tqdm>=4.67.1,<5",
+    "cffi>=2.0.0,<3",
 
-  "jiter>=0.12.0,<0.13",
-  "importlib-metadata>=8.7.0,<9",
-  "importlib-resources==6.5.2",
-  "idna>=3.11,<4",
-  "keyring>=25.7.0,<26",
-  "jmespath>=1.0.1,<2",
-  "hyperframe>=6.1.0,<7",
-  "ply>=3.11,<4",
-  "narwhals>=2.13.0,<3",
-  "matplotlib-inline>=0.2.1,<0.3",
-  "pycairo>=1.29.0,<2",
-  "xyzservices>=2025.11.0,<2026",
-  "google-auth>=2.43.0,<3",
-  "markdown-it-py>=4.0.0,<5",
-  "ml-dtypes>=0.5.4,<0.6",
-  "protobuf>=6.33.2,<7",
-  "tensorboard>=2.20.0,<3",
+    "jiter>=0.12.0,<0.13",
+    "importlib-metadata>=8.7.0,<9",
+    "importlib-resources==6.5.2",
+    "idna>=3.11,<4",
+    "keyring>=25.7.0,<26",
+    "jmespath>=1.0.1,<2",
+    "hyperframe>=6.1.0,<7",
+    "ply>=3.11,<4",
+    "narwhals>=2.13.0,<3",
+    "matplotlib-inline>=0.2.1,<0.3",
+    "pycairo>=1.29.0,<2",
+    "xyzservices>=2025.11.0,<2026",
+    "google-auth>=2.43.0,<3",
+    "markdown-it-py>=4.0.0,<5",
+    "ml-dtypes>=0.5.4,<0.6",
+    "protobuf>=6.33.2,<7",
+    "tensorboard>=2.20.0,<3",
 
-  # Task Management
-  "click",
-  "click-didyoumean==0.3.1",
-  "click-plugins==1.1.1.2",
-  "click-repl==0.3.0",
-  "python-dotenv>=1.2.1,<2",
+    # Task Management
+    "click",
+    "click-didyoumean==0.3.1",
+    "click-plugins==1.1.1.2",
+    "click-repl==0.3.0",
+    "python-dotenv>=1.2.1,<2",
 
-  # Distributed Computing & Task Queue
-  "celery==5.5.3",
-  "dask==2025.11.0",
-  "distributed==2025.11.0",
+    # Distributed Computing & Task Queue
+    "celery==5.5.3",
+    "dask==2025.11.0",
+    "distributed==2025.11.0",
 
-  # Additional Core Dependencies
-  "pwntools",
-  "ropgadget>=7.7,<8",
-  "archinfo>=9.2.186,<10",
-  "cle>=9.2.186,<10",
-  "pyvex>=9.2.186,<10",
-  "ailment>=9.2.158,<10",
-  "mulpyplexer>=0.9,<0.10",
-  "ghidra-bridge>=1.0.0,<2",
-  "jfx-bridge>=1.0.0,<2",
-  "libarchive-c>=5.3,<6",
-  "kaitaistruct",
-  "itanium-demangler>=1.1,<2",
-  "nampa>=0.1.1,<0.2",
-  "pydivert>=2.1.0,<3",
-  "pywin32>=311,<312",
-  "pywin32-ctypes>=0.2.3,<0.3",
-  "windows-curses>=2.4.1,<3",
-  "python-registry>=1.3.1,<2",
-  "pymem>=1.14.0,<2",
-  "attrs>=25.4.0,<26",
-  "beautifulsoup4>=4.14.3,<5",
-  "bokeh>=3.8.1,<4",
-  "charset-normalizer>=3.4.4,<4",
-  "colorama",
-  "decorator>=5.2.1,<6",
-  "distro>=1.9.0,<2",
-  "dnspython>=2.8.0,<3",
-  "exceptiongroup",
-  "filelock",
-  "fonttools>=4.61.1,<5",
-  "frozenlist>=1.8.0,<2",
-  "gitdb>=4.0.12,<5",
-  "gitpython>=3.1.45,<4",
-  "greenlet>=3.3.0,<4",
-  "h11>=0.16.0,<0.17",
-  "h2>=4.3.0,<5",
-  "httpcore>=1.0.9,<2",
-  "httptools>=0.7.1,<0.8",
-  "httpx>=0.28.1,<0.29",
-  "humanfriendly>=10.0,<11",
-  "ipython>=9.8.0,<10",
-  "isort>=7.0.0,<8",
-  "itsdangerous>=2.2.0,<3",
-  "kiwisolver>=1.4.9,<2",
-  "lxml>=6.0.2,<7",
-  "lz4>=4.4.5,<5",
-  "brotli>=1.2.0,<2",
-  "markdown>=3.10,<4",
-  "markupsafe>=3.0.3,<4",
-  "more-itertools>=10.8.0,<11",
-  "msgpack",
-  "multidict>=6.7.0,<7",
-  "netifaces>=0.11.0,<0.12",
-  "oauthlib>=3.3.1,<4",
-  "packaging",
-  "pathspec>=0.12.1,<0.13",
-  "platformdirs>=4.5.1,<5",
-  "pluggy",
-  "prometheus-client>=0.23.1,<0.24",
-  "prompt-toolkit>=3.0.52,<4",
-  "pyasn1>=0.6.1,<0.7",
-  "pyasn1-modules>=0.4.2,<0.5",
-  "pycodestyle>=2.14.0,<3",
-  "pydantic-settings>=2.12.0,<3",
-  "pyparsing>=3.2.5,<4",
-  "python-dateutil>=2.9.0.post0,<3",
-  "python-levenshtein>=0.27.3,<0.28",
-  "python-multipart>=0.0.20,<0.0.21",
-  "pytz>=2025.2,<2026",
-  "referencing>=0.37.0,<0.38",
-  "requests-oauthlib>=2.0.0,<3",
-  "rsa>=4.9.1,<5",
-  "six>=1.17.0,<2",
-  "sniffio>=1.3.1,<2",
-  "sortedcontainers>=2.4.0,<3",
-  "soupsieve>=2.8,<3",
-  "starlette>=0.50.0,<0.51",
-  "anyio>=4.11.0,<5",
-  "sympy>=1.14.0,<2",
-  "termcolor>=3.2.0,<4",
-  "threadpoolctl>=3.6.0,<4",
-  "tomlkit>=0.13.3,<0.14",
-  "tornado>=6.5.2,<7",
-  "traitlets>=5.14.3,<6",
-  "typing-extensions>=4.14.1",
-  "tzdata>=2025.2,<2026",
-  "wcwidth",
-  "websockets",
-  "werkzeug>=3.1.4,<4",
-  "wrapt",
-  "yarl>=1.22.0,<2",
-  "zipp>=3.23.0,<4",
-  "zope-event>=6.1,<7",
-  "zope-interface>=8.1.1,<9",
+    # Additional Core Dependencies
+    "pwntools",
+    "ropgadget>=7.7,<8",
+    "archinfo>=9.2.186,<10",
+    "cle>=9.2.186,<10",
+    "pyvex>=9.2.186,<10",
+    "ailment>=9.2.158,<10",
+    "mulpyplexer>=0.9,<0.10",
+    "ghidra-bridge>=1.0.0,<2",
+    "jfx-bridge>=1.0.0,<2",
+    "libarchive-c>=5.3,<6",
+    "kaitaistruct",
+    "itanium-demangler>=1.1,<2",
+    "nampa>=0.1.1,<0.2",
+    "pydivert>=2.1.0,<3",
+    "pywin32>=311,<312",
+    "pywin32-ctypes>=0.2.3,<0.3",
+    "windows-curses>=2.4.1,<3",
+    "python-registry>=1.3.1,<2",
+    "pymem>=1.14.0,<2",
+    "attrs>=25.4.0,<26",
+    "beautifulsoup4>=4.14.3,<5",
+    "bokeh>=3.8.1,<4",
+    "charset-normalizer>=3.4.4,<4",
+    "colorama",
+    "decorator>=5.2.1,<6",
+    "distro>=1.9.0,<2",
+    "dnspython>=2.8.0,<3",
+    "exceptiongroup",
+    "filelock",
+    "fonttools>=4.61.1,<5",
+    "frozenlist>=1.8.0,<2",
+    "gitdb>=4.0.12,<5",
+    "gitpython>=3.1.45,<4",
+    "greenlet>=3.3.0,<4",
+    "h11>=0.16.0,<0.17",
+    "h2>=4.3.0,<5",
+    "httpcore>=1.0.9,<2",
+    "httptools>=0.7.1,<0.8",
+    "httpx>=0.28.1,<0.29",
+    "humanfriendly>=10.0,<11",
+    "ipython>=9.8.0,<10",
+    "isort>=7.0.0,<8",
+    "itsdangerous>=2.2.0,<3",
+    "kiwisolver>=1.4.9,<2",
+    "lxml>=6.0.2,<7",
+    "lz4>=4.4.5,<5",
+    "brotli>=1.2.0,<2",
+    "markdown>=3.10,<4",
+    "markupsafe>=3.0.3,<4",
+    "more-itertools>=10.8.0,<11",
+    "msgpack",
+    "multidict>=6.7.0,<7",
+    "netifaces>=0.11.0,<0.12",
+    "oauthlib>=3.3.1,<4",
+    "packaging",
+    "pathspec>=0.12.1,<0.13",
+    "platformdirs>=4.5.1,<5",
+    "pluggy",
+    "prometheus-client>=0.23.1,<0.24",
+    "prompt-toolkit>=3.0.52,<4",
+    "pyasn1>=0.6.1,<0.7",
+    "pyasn1-modules>=0.4.2,<0.5",
+    "pycodestyle>=2.14.0,<3",
+    "pydantic-settings>=2.12.0,<3",
+    "pyparsing>=3.2.5,<4",
+    "python-dateutil>=2.9.0.post0,<3",
+    "python-levenshtein>=0.27.3,<0.28",
+    "python-multipart>=0.0.20,<0.0.21",
+    "pytz>=2025.2,<2026",
+    "referencing>=0.37.0,<0.38",
+    "requests-oauthlib>=2.0.0,<3",
+    "rsa>=4.9.1,<5",
+    "six>=1.17.0,<2",
+    "sniffio>=1.3.1,<2",
+    "sortedcontainers>=2.4.0,<3",
+    "soupsieve>=2.8,<3",
+    "starlette>=0.50.0,<0.51",
+    "anyio>=4.11.0,<5",
+    "sympy>=1.14.0,<2",
+    "termcolor>=3.2.0,<4",
+    "threadpoolctl>=3.6.0,<4",
+    "tomlkit>=0.13.3,<0.14",
+    "tornado>=6.5.2,<7",
+    "traitlets>=5.14.3,<6",
+    "typing-extensions>=4.14.1",
+    "tzdata>=2025.2,<2026",
+    "wcwidth",
+    "websockets",
+    "werkzeug>=3.1.4,<4",
+    "wrapt",
+    "yarl>=1.22.0,<2",
+    "zipp>=3.23.0,<4",
+    "zope-event>=6.1,<7",
+    "zope-interface>=8.1.1,<9",
 
-  # Local AI/LLM support
-  "llama-cpp-python>=0.3.16,<0.4",
-  "langchain",
-  "langchain-core",
-  "langchain-community",
-  "langgraph>=1.0.4,<2",
-  "langsmith>=0.4.56,<1",
+    # Local AI/LLM support
+    "llama-cpp-python>=0.3.16,<0.4",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "langgraph>=1.0.4,<2",
+    "langsmith>=0.4.56,<1",
 
-  # Monitoring & Logging
-  "loguru",
-  "sentry-sdk>=2.47.0,<3",
-  "structlog>=25.5.0,<26",
+    # Monitoring & Logging
+    "loguru",
+    "sentry-sdk>=2.47.0,<3",
+    "structlog>=25.5.0,<26",
 ]
 
 [project.urls]
@@ -329,106 +329,106 @@ intellicrack-gui = "intellicrack.ui.main_app:launch"
 # Tool configurations
 [tool.setuptools]
 packages = [
-  "intellicrack",
-  "intellicrack.ai",
-  "intellicrack.analysis",
-  "intellicrack.analysis.handlers",
-  "intellicrack.cli",
-  "intellicrack.core",
-  "intellicrack.core.analysis",
-  "intellicrack.core.anti_analysis",
-  "intellicrack.core.execution",
-  "intellicrack.core.exploitation",
-  "intellicrack.core.logging",
-  "intellicrack.core.network",
-  "intellicrack.core.network.protocols",
-  "intellicrack.core.patching",
-  "intellicrack.core.processing",
-  "intellicrack.core.protection_bypass",
-  "intellicrack.core.reporting",
-  "intellicrack.core.resources",
-  "intellicrack.core.security",
-  "intellicrack.core.shared",
-  "intellicrack.core.vulnerability_research",
-  "intellicrack.core.vulnerability_research.exploit_developer",
-  "intellicrack.dashboard",
-  "intellicrack.data",
-  "intellicrack.handlers",
-  "intellicrack.hexview",
-  "intellicrack.llm.tools",
-  "intellicrack.ml",
-  "intellicrack.models",
-  "intellicrack.models.repositories",
-  "intellicrack.plugins",
-  "intellicrack.plugins.custom_modules",
-  "intellicrack.protection",
-  "intellicrack.scripts",
-  "intellicrack.scripts.ghidra",
-  "intellicrack.scripts.setup",
-  "intellicrack.tools",
-  "intellicrack.ui",
-  "intellicrack.ui.dialogs",
-  "intellicrack.ui.tabs",
-  "intellicrack.ui.widgets",
-  "intellicrack.utils",
-  "intellicrack.utils.analysis",
-  "intellicrack.utils.binary",
-  "intellicrack.utils.core",
-  "intellicrack.utils.exploitation",
-  "intellicrack.utils.patching",
-  "intellicrack.utils.protection",
-  "intellicrack.utils.reporting",
-  "intellicrack.utils.runtime",
-  "intellicrack.utils.system",
-  "intellicrack.utils.tools",
-  "intellicrack.utils.ui",
-  "intellicrack.utils.validation",
+    "intellicrack",
+    "intellicrack.ai",
+    "intellicrack.analysis",
+    "intellicrack.analysis.handlers",
+    "intellicrack.cli",
+    "intellicrack.core",
+    "intellicrack.core.analysis",
+    "intellicrack.core.anti_analysis",
+    "intellicrack.core.execution",
+    "intellicrack.core.exploitation",
+    "intellicrack.core.logging",
+    "intellicrack.core.network",
+    "intellicrack.core.network.protocols",
+    "intellicrack.core.patching",
+    "intellicrack.core.processing",
+    "intellicrack.core.protection_bypass",
+    "intellicrack.core.reporting",
+    "intellicrack.core.resources",
+    "intellicrack.core.security",
+    "intellicrack.core.shared",
+    "intellicrack.core.vulnerability_research",
+    "intellicrack.core.vulnerability_research.exploit_developer",
+    "intellicrack.dashboard",
+    "intellicrack.data",
+    "intellicrack.handlers",
+    "intellicrack.hexview",
+    "intellicrack.llm.tools",
+    "intellicrack.ml",
+    "intellicrack.models",
+    "intellicrack.models.repositories",
+    "intellicrack.plugins",
+    "intellicrack.plugins.custom_modules",
+    "intellicrack.protection",
+    "intellicrack.scripts",
+    "intellicrack.scripts.ghidra",
+    "intellicrack.scripts.setup",
+    "intellicrack.tools",
+    "intellicrack.ui",
+    "intellicrack.ui.dialogs",
+    "intellicrack.ui.tabs",
+    "intellicrack.ui.widgets",
+    "intellicrack.utils",
+    "intellicrack.utils.analysis",
+    "intellicrack.utils.binary",
+    "intellicrack.utils.core",
+    "intellicrack.utils.exploitation",
+    "intellicrack.utils.patching",
+    "intellicrack.utils.protection",
+    "intellicrack.utils.reporting",
+    "intellicrack.utils.runtime",
+    "intellicrack.utils.system",
+    "intellicrack.utils.tools",
+    "intellicrack.utils.ui",
+    "intellicrack.utils.validation",
 ]
 include-package-data = true
 
 [tool.setuptools.package-data]
 intellicrack = [
-  "assets/*",
-  "data/signatures/*",
-  "plugins/custom_modules/*.py",
-  "models/*.pkl",
-  "models/*.joblib",
-  "config/*.json",
+    "assets/*",
+    "data/signatures/*",
+    "plugins/custom_modules/*.py",
+    "models/*.pkl",
+    "models/*.joblib",
+    "config/*.json",
 ]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
 addopts = [
-  "-ra",
-  "--strict-markers",
-  "--cov=intellicrack",
-  "--cov-report=term-missing",
-  "--cov-report=html",
-  "--cov-report=xml",
-  "--ignore=tests/runners",
-  "--ignore=tests/generators",
-  "--ignore=tests/checkpoints",
-  "--ignore=tests/framework",
+    "-ra",
+    "--strict-markers",
+    "--cov=intellicrack",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--ignore=tests/runners",
+    "--ignore=tests/generators",
+    "--ignore=tests/checkpoints",
+    "--ignore=tests/framework",
 ]
 norecursedirs = [
-  "runners",
-  "generators",
-  "checkpoints",
-  "framework",
-  ".git",
-  ".pixi",
-  "__pycache__",
-  "*.egg-info",
+    "runners",
+    "generators",
+    "checkpoints",
+    "framework",
+    ".git",
+    ".pixi",
+    "__pycache__",
+    "*.egg-info",
 ]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
-  "benchmark: Performance benchmark tests",
-  "slow: Slow running tests",
-  "integration: Integration tests",
-  "unit: Unit tests",
+    "benchmark: Performance benchmark tests",
+    "slow: Slow running tests",
+    "integration: Integration tests",
+    "unit: Unit tests",
 ]
 
 [tool.pytest-deadfixtures]
@@ -512,52 +512,52 @@ follow_imports = "silent"
 show_error_codes = true
 strict = true
 exclude = [
-  "^tools/",
-  "^build/",
-  "^dist/",
-  "^\\.git/",
-  "^\\.github/",
-  "^\\.pixi/",
-  "^venv/",
-  "^\\.venv/",
-  "^docs/",
-  "^\\.mypy_cache/",
-  "^\\.pytest_cache/",
-  "^\\.ruff_cache/",
-  "^\\.benchmarks/",
-  "^\\.aider\\.tags\\.cache\\.v4/",
-  "^\\.claude/",
-  "^\\.grok/",
-  "^\\.roo/",
-  "^\\.serena/",
-  "^\\.idea/",
-  "^\\.vscode/",
-  "^backups/",
-  "^htmlcov/",
-  "^htmlcov_mitigation/",
-  "^logs/",
-  "^reports/",
-  "^node_modules/",
-  "^CLI\\ Coding/",
-  "^Screenshots/",
-  ".*\\.egg-info/",
+    "^tools/",
+    "^build/",
+    "^dist/",
+    "^\\.git/",
+    "^\\.github/",
+    "^\\.pixi/",
+    "^venv/",
+    "^\\.venv/",
+    "^docs/",
+    "^\\.mypy_cache/",
+    "^\\.pytest_cache/",
+    "^\\.ruff_cache/",
+    "^\\.benchmarks/",
+    "^\\.aider\\.tags\\.cache\\.v4/",
+    "^\\.claude/",
+    "^\\.grok/",
+    "^\\.roo/",
+    "^\\.serena/",
+    "^\\.idea/",
+    "^\\.vscode/",
+    "^backups/",
+    "^htmlcov/",
+    "^htmlcov_mitigation/",
+    "^logs/",
+    "^reports/",
+    "^node_modules/",
+    "^CLI\\ Coding/",
+    "^Screenshots/",
+    ".*\\.egg-info/",
 ]
 
 [[tool.mypy.overrides]]
 module = [
-  "angr.*",
-  "claripy.*",
-  "capstone.*",
-  "keystone.*",
-  "r2pipe.*",
-  "frida.*",
-  "volatility3.*",
-  "yara.*",
-  "lief.*",
-  "pefile.*",
-  "qiling.*",
-  "unicorn.*",
-  "mitmproxy.*",
+    "angr.*",
+    "claripy.*",
+    "capstone.*",
+    "keystone.*",
+    "r2pipe.*",
+    "frida.*",
+    "volatility3.*",
+    "yara.*",
+    "lief.*",
+    "pefile.*",
+    "qiling.*",
+    "unicorn.*",
+    "mitmproxy.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true
@@ -567,26 +567,26 @@ ignore_errors = true
 [tool.ty.src]
 include = ["intellicrack"]
 exclude = [
-  "tests",
-  "dev",
-  "tools",
-  "build",
-  "dist",
-  "ghidra",
-  "backups",
-  "htmlcov",
-  "htmlcov_mitigation",
-  "logs",
-  "reports",
-  "node_modules",
-  "**/__pycache__",
-  "**/*.pyc",
-  "**/.pytest_cache",
-  ".git",
-  ".github",
-  ".pixi",
-  "venv",
-  ".venv",
+    "tests",
+    "dev",
+    "tools",
+    "build",
+    "dist",
+    "ghidra",
+    "backups",
+    "htmlcov",
+    "htmlcov_mitigation",
+    "logs",
+    "reports",
+    "node_modules",
+    "**/__pycache__",
+    "**/*.pyc",
+    "**/.pytest_cache",
+    ".git",
+    ".github",
+    ".pixi",
+    "venv",
+    ".venv",
 ]
 
 [tool.ty.environment]
@@ -634,37 +634,37 @@ invalid-return-type = "error"
 [tool.pyright]
 include = ["intellicrack"]
 exclude = [
-  "**/__pycache__",
-  "**/node_modules",
-  "**/.venv",
-  "**/venv",
-  "**/build",
-  "**/dist",
-  "**/.git",
-  "**/.github",
-  "**/.pytest_cache",
-  "**/.mypy_cache",
-  "**/.ruff_cache",
-  "**/.benchmarks",
-  "**/.aider.tags.cache.v4",
-  "**/.claude",
-  "**/.grok",
-  "**/.roo",
-  "**/.serena",
-  "**/.idea",
-  "**/.vscode",
-  "**/backups",
-  "**/htmlcov",
-  "**/htmlcov_mitigation",
-  "**/logs",
-  "**/reports",
-  "**/*.egg-info",
-  "**/tests",
-  "tools",
-  "docs",
-  ".pixi",
-  "CLI Coding",
-  "Screenshots",
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.venv",
+    "**/venv",
+    "**/build",
+    "**/dist",
+    "**/.git",
+    "**/.github",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/.benchmarks",
+    "**/.aider.tags.cache.v4",
+    "**/.claude",
+    "**/.grok",
+    "**/.roo",
+    "**/.serena",
+    "**/.idea",
+    "**/.vscode",
+    "**/backups",
+    "**/htmlcov",
+    "**/htmlcov_mitigation",
+    "**/logs",
+    "**/reports",
+    "**/*.egg-info",
+    "**/tests",
+    "tools",
+    "docs",
+    ".pixi",
+    "CLI Coding",
+    "Screenshots",
 ]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
@@ -749,37 +749,37 @@ extraPaths = []
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt5", "PyQt6"]
 ignore-paths = [
-  "^tests/.*",
-  "^dev/.*",
-  "^docs/.*",
-  "^tools/.*",
-  "^\\.git/.*",
-  "^\\.github/.*",
-  "^venv/.*",
-  "^\\.venv/.*",
-  "^build/.*",
-  "^dist/.*",
-  "^\\.pixi/.*",
-  "^\\.mypy_cache/.*",
-  "^\\.pytest_cache/.*",
-  "^\\.ruff_cache/.*",
-  "^\\.benchmarks/.*",
-  "^\\.aider\\.tags\\.cache\\.v4/.*",
-  "^\\.claude/.*",
-  "^\\.grok/.*",
-  "^\\.roo/.*",
-  "^\\.serena/.*",
-  "^\\.idea/.*",
-  "^\\.vscode/.*",
-  "^backups/.*",
-  "^htmlcov/.*",
-  "^htmlcov_mitigation/.*",
-  "^logs/.*",
-  "^reports/.*",
-  "^node_nodes/.*",
-  "^CLI\\ Coding/.*",
-  "^Screenshots/.*",
-  ".*\\.egg-info/.*",
+    "^tests/.*",
+    "^dev/.*",
+    "^docs/.*",
+    "^tools/.*",
+    "^\\.git/.*",
+    "^\\.github/.*",
+    "^venv/.*",
+    "^\\.venv/.*",
+    "^build/.*",
+    "^dist/.*",
+    "^\\.pixi/.*",
+    "^\\.mypy_cache/.*",
+    "^\\.pytest_cache/.*",
+    "^\\.ruff_cache/.*",
+    "^\\.benchmarks/.*",
+    "^\\.aider\\.tags\\.cache\\.v4/.*",
+    "^\\.claude/.*",
+    "^\\.grok/.*",
+    "^\\.roo/.*",
+    "^\\.serena/.*",
+    "^\\.idea/.*",
+    "^\\.vscode/.*",
+    "^backups/.*",
+    "^htmlcov/.*",
+    "^htmlcov_mitigation/.*",
+    "^logs/.*",
+    "^reports/.*",
+    "^node_nodes/.*",
+    "^CLI\\ Coding/.*",
+    "^Screenshots/.*",
+    ".*\\.egg-info/.*",
 ]
 jobs = 0
 py-version = "3.12"
@@ -789,79 +789,79 @@ max-complexity = 50
 
 [tool.pylint.TYPECHECK]
 ignored-modules = [
-  "PyQt5",
-  "PyQt5.QtCore",
-  "PyQt5.QtGui",
-  "PyQt5.QtWidgets",
-  "PyQt6",
-  "PyQt6.QtCore",
-  "PyQt6.QtGui",
-  "PyQt6.QtWidgets",
+    "PyQt5",
+    "PyQt5.QtCore",
+    "PyQt5.QtGui",
+    "PyQt5.QtWidgets",
+    "PyQt6",
+    "PyQt6.QtCore",
+    "PyQt6.QtGui",
+    "PyQt6.QtWidgets",
 ]
 ignored-classes = [
-  "QApplication",
-  "QWidget",
-  "QDialog",
-  "QMainWindow",
-  "QPushButton",
-  "QLabel",
-  "QLineEdit",
-  "QTextEdit",
-  "QTableWidget",
-  "QMessageBox",
-  "QFileDialog",
-  "QVBoxLayout",
-  "QHBoxLayout",
-  "Qt",
-  "pyqtSignal",
-  "QThread",
-  "QTimer",
-  "QFont",
-  "QIcon",
-  "QPixmap",
-  "QAction",
-  "QCheckBox",
-  "QComboBox",
-  "QSpinBox",
-  "QGroupBox",
-  "QFormLayout",
-  "QListWidget",
-  "QTreeWidget",
-  "QTabWidget",
-  "QSplitter",
-  "QProgressBar",
-  "QStatusBar",
-  "QToolBar",
-  "QMenu",
-  "QAbstractScrollArea",
-  "QPlainTextEdit",
-  "QInputDialog",
-  "QDesktopWidget",
-  "QSplashScreen",
-  "QWizard",
-  "QWizardPage",
-  "QTextBrowser",
-  "QHeaderView",
-  "QAbstractItemView",
-  "QDialogButtonBox",
-  "QSizePolicy",
-  "QSpacerItem",
-  "QFrame",
-  "QListWidgetItem",
-  "QTreeWidgetItem",
-  "QTableWidgetItem",
-  "QSize",
-  "QPoint",
-  "QRect",
-  "QColor",
-  "QPainter",
-  "QPen",
-  "QKeyEvent",
-  "QMouseEvent",
-  "QPaintEvent",
-  "QResizeEvent",
-  "QFontMetrics",
-  "QKeySequence",
+    "QApplication",
+    "QWidget",
+    "QDialog",
+    "QMainWindow",
+    "QPushButton",
+    "QLabel",
+    "QLineEdit",
+    "QTextEdit",
+    "QTableWidget",
+    "QMessageBox",
+    "QFileDialog",
+    "QVBoxLayout",
+    "QHBoxLayout",
+    "Qt",
+    "pyqtSignal",
+    "QThread",
+    "QTimer",
+    "QFont",
+    "QIcon",
+    "QPixmap",
+    "QAction",
+    "QCheckBox",
+    "QComboBox",
+    "QSpinBox",
+    "QGroupBox",
+    "QFormLayout",
+    "QListWidget",
+    "QTreeWidget",
+    "QTabWidget",
+    "QSplitter",
+    "QProgressBar",
+    "QStatusBar",
+    "QToolBar",
+    "QMenu",
+    "QAbstractScrollArea",
+    "QPlainTextEdit",
+    "QInputDialog",
+    "QDesktopWidget",
+    "QSplashScreen",
+    "QWizard",
+    "QWizardPage",
+    "QTextBrowser",
+    "QHeaderView",
+    "QAbstractItemView",
+    "QDialogButtonBox",
+    "QSizePolicy",
+    "QSpacerItem",
+    "QFrame",
+    "QListWidgetItem",
+    "QTreeWidgetItem",
+    "QTableWidgetItem",
+    "QSize",
+    "QPoint",
+    "QRect",
+    "QColor",
+    "QPainter",
+    "QPen",
+    "QKeyEvent",
+    "QMouseEvent",
+    "QPaintEvent",
+    "QResizeEvent",
+    "QFontMetrics",
+    "QKeySequence",
 ]
 
 [tool.ruff]
@@ -869,238 +869,238 @@ line-length = 140
 target-version = "py312"
 preview = true
 exclude = [
-  "tests/",
-  "test/",
-  "**/test_*.py",
-  "**/tests/*.py",
-  "dev/",
-  "development/",
-  ".git/",
-  ".github/",
-  ".gitignore",
-  ".venv/",
-  ".venv_windows/",
-  ".venv_wsl/",
-  "venv/",
-  "env/",
-  ".pixi/",
-  "build/",
-  "dist/",
-  "*.egg-info/",
-  "__pycache__/",
-  "*.pyc",
-  "*.pyo",
-  ".vscode/",
-  ".idea/",
-  "*.swp",
-  "*.swo",
-  "*~",
-  "docs/",
-  "documentation/",
-  "tools/",
-  "ghidra/",
-  ".ruff_cache/",
-  ".mypy_cache/",
-  ".pytest_cache/",
-  ".benchmarks/",
-  ".aider.tags.cache.v4/",
-  ".claude/",
-  ".grok/",
-  ".roo/",
-  ".serena/",
-  "backups/",
-  "htmlcov/",
-  "htmlcov_mitigation/",
-  "logs/",
-  "reports/",
-  "node_modules/",
-  "CLI Coding/",
-  "Screenshots/",
-  "*.ipynb",
-  "setup.py",
-  "setup.cfg",
+    "tests/",
+    "test/",
+    "**/test_*.py",
+    "**/tests/*.py",
+    "dev/",
+    "development/",
+    ".git/",
+    ".github/",
+    ".gitignore",
+    ".venv/",
+    ".venv_windows/",
+    ".venv_wsl/",
+    "venv/",
+    "env/",
+    ".pixi/",
+    "build/",
+    "dist/",
+    "*.egg-info/",
+    "__pycache__/",
+    "*.pyc",
+    "*.pyo",
+    ".vscode/",
+    ".idea/",
+    "*.swp",
+    "*.swo",
+    "*~",
+    "docs/",
+    "documentation/",
+    "tools/",
+    "ghidra/",
+    ".ruff_cache/",
+    ".mypy_cache/",
+    ".pytest_cache/",
+    ".benchmarks/",
+    ".aider.tags.cache.v4/",
+    ".claude/",
+    ".grok/",
+    ".roo/",
+    ".serena/",
+    "backups/",
+    "htmlcov/",
+    "htmlcov_mitigation/",
+    "logs/",
+    "reports/",
+    "node_modules/",
+    "CLI Coding/",
+    "Screenshots/",
+    "*.ipynb",
+    "setup.py",
+    "setup.cfg",
 ]
 
 [tool.ruff.lint]
 select = [
-  # pycodestyle (E/W) - replaces pycodestyle
-  "E",   # pycodestyle errors
-  "W",   # pycodestyle warnings
+    # pycodestyle (E/W) - replaces pycodestyle
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
 
-  # Pyflakes (F) - replaces pyflakes
-  "F",   # pyflakes
+    # Pyflakes (F) - replaces pyflakes
+    "F", # pyflakes
 
-  # isort (I) - replaces isort
-  "I",   # isort
+    # isort (I) - replaces isort
+    "I", # isort
 
-  # mccabe (C90) - replaces mccabe
-  "C9",  # mccabe complexity checker
+    # mccabe (C90) - replaces mccabe
+    "C9", # mccabe complexity checker
 
-  # pep8-naming (N) - replaces pep8-naming
-  "N",   # pep8-naming
+    # pep8-naming (N) - replaces pep8-naming
+    "N", # pep8-naming
 
-  # flake8-builtins (A) - replaces flake8-builtins
-  "A",   # flake8-builtins
+    # flake8-builtins (A) - replaces flake8-builtins
+    "A", # flake8-builtins
 
-  # flake8-comprehensions (C4) - replaces flake8-comprehensions
-  "C4",  # flake8-comprehensions
+    # flake8-comprehensions (C4) - replaces flake8-comprehensions
+    "C4", # flake8-comprehensions
 
-  # flake8-bugbear (B) - replaces flake8-bugbear
-  "B",   # flake8-bugbear
+    # flake8-bugbear (B) - replaces flake8-bugbear
+    "B", # flake8-bugbear
 
-  # flake8-simplify (SIM) - replaces flake8-simplify
-  "SIM", # flake8-simplify
+    # flake8-simplify (SIM) - replaces flake8-simplify
+    "SIM", # flake8-simplify
 
-  # pyupgrade (UP) - replaces pyupgrade
-  "UP",  # pyupgrade
+    # pyupgrade (UP) - replaces pyupgrade
+    "UP", # pyupgrade
 
-  # flake8-import-conventions (ICN)
-  "ICN", # flake8-import-conventions
+    # flake8-import-conventions (ICN)
+    "ICN", # flake8-import-conventions
 
-  # flake8-print (T20)
-  "T20", # flake8-print
+    # flake8-print (T20)
+    "T20", # flake8-print
 
-  # flake8-quotes (Q)
-  "Q",   # flake8-quotes
+    # flake8-quotes (Q)
+    "Q", # flake8-quotes
 
-  # flake8-boolean-trap (FBT)
-  "FBT", # flake8-boolean-trap
+    # flake8-boolean-trap (FBT)
+    "FBT", # flake8-boolean-trap
 
-  # flake8-unused-arguments (ARG)
-  "ARG", # flake8-unused-arguments
+    # flake8-unused-arguments (ARG)
+    "ARG", # flake8-unused-arguments
 
-  # flake8-implicit-str-concat (ISC)
-  "ISC", # flake8-implicit-str-concat
+    # flake8-implicit-str-concat (ISC)
+    "ISC", # flake8-implicit-str-concat
 
-  # flake8-get-type-plugin (G)
-  "G",   # flake8-get-type-plugin
+    # flake8-get-type-plugin (G)
+    "G", # flake8-get-type-plugin
 
-  # flake8-type-checking (TC)
-  "TC",  # flake8-type-checking
+    # flake8-type-checking (TC)
+    "TC", # flake8-type-checking
 
-  # flake8-return (RET)
-  "RET", # flake8-return
+    # flake8-return (RET)
+    "RET", # flake8-return
 
-  # pylint (PL) - replaces pylint
-  "PL",  # pylint (with extensions)
+    # pylint (PL) - replaces pylint
+    "PL", # pylint (with extensions)
 
-  # tryceratops (TRY) - for exception handling
-  "TRY", # tryceratops
+    # tryceratops (TRY) - for exception handling
+    "TRY", # tryceratops
 
-  # Ruff-specific rules (RUF)
-  "RUF", # ruff-specific
+    # Ruff-specific rules (RUF)
+    "RUF", # ruff-specific
 
-  # Perflint (PERF) - replaces some performance checking tools
-  "PERF", # perflint
+    # Perflint (PERF) - replaces some performance checking tools
+    "PERF", # perflint
 
-  # pydocstyle (D) - replaces pydocstyle
-  "D",   # pydocstyle
+    # pydocstyle (D) - replaces pydocstyle
+    "D", # pydocstyle
 
-  # Security (S) - replaces bandit
-  "S",   # Bandit security checks
+    # Security (S) - replaces bandit
+    "S", # Bandit security checks
 ]
 
 # Rules that should NEVER be auto-fixed (will break code)
 unfixable = [
-  "TRY400",  # Removes exception variables - causes NameError
-  "TID252",  # Relative→absolute imports - breaks circular imports
-  "Q000",    # Quote changes - breaks SQL/regex/Frida scripts
-  "Q001",    # Multiline quote changes - same risk as Q000
-  "UP012",   # unnecessary-encode-utf8 - binary analysis needs explicit encoding
-  "RUF013",  # implicit-optional - changes function signatures
-  "PLW1510", # subprocess check=True - breaks intentional error ignoring
-  "EM101",   # exception message changes - may break error parsing
-  "EM102",   # f-string in exception - may break error parsing
-  "RUF022",  # sorts __all__ - breaks initialization order
-  "RUF019",  # changes dict access behavior
-  "PERF102", # dict iteration - may break concurrent modification
-  "PLR0402", # import structure - may break circular imports
-  "RET503",  # adds explicit returns - may affect control flow
-  "FURB122", # file writing optimization - may break generators
-  "PLR1722", # sys.exit → exit (backwards advice!)
-  # Ruff auto-fix bugs (introduces syntax errors)
-  "G004",    # logging-f-string - auto-fix breaks code
-  "PLR6201", # literal-membership - auto-fix breaks code
-  "PLW1514", # unspecified-encoding - auto-fix breaks code
-  "B013",    # redundant-tuple-in-exception-handler - auto-fix breaks code
+    "TRY400",  # Removes exception variables - causes NameError
+    "TID252",  # Relative→absolute imports - breaks circular imports
+    "Q000",    # Quote changes - breaks SQL/regex/Frida scripts
+    "Q001",    # Multiline quote changes - same risk as Q000
+    "UP012",   # unnecessary-encode-utf8 - binary analysis needs explicit encoding
+    "RUF013",  # implicit-optional - changes function signatures
+    "PLW1510", # subprocess check=True - breaks intentional error ignoring
+    "EM101",   # exception message changes - may break error parsing
+    "EM102",   # f-string in exception - may break error parsing
+    "RUF022",  # sorts __all__ - breaks initialization order
+    "RUF019",  # changes dict access behavior
+    "PERF102", # dict iteration - may break concurrent modification
+    "PLR0402", # import structure - may break circular imports
+    "RET503",  # adds explicit returns - may affect control flow
+    "FURB122", # file writing optimization - may break generators
+    "PLR1722", # sys.exit → exit (backwards advice!)
+    # Ruff auto-fix bugs (introduces syntax errors)
+    "G004",    # logging-f-string - auto-fix breaks code
+    "PLR6201", # literal-membership - auto-fix breaks code
+    "PLW1514", # unspecified-encoding - auto-fix breaks code
+    "B013",    # redundant-tuple-in-exception-handler - auto-fix breaks code
 ]
 
 # Rules to ignore (stylistic preferences, not harmful)
 ignore = [
-  # Code formatting (handled by formatter)
-  "E501",   # line-too-long - handled by black/formatter
-  "RUF022", # unsorted-dunder-all - sorting breaks initialization order
+    # Code formatting (handled by formatter)
+    "E501",   # line-too-long - handled by black/formatter
+    "RUF022", # unsorted-dunder-all - sorting breaks initialization order
 
-  # CLI output (user-facing)
-  "T201",   # print() - CLI tool needs output
-  "T203",   # pprint() - debugging tool
-  "ERA001", # commented-out-code - reference implementations
+    # CLI output (user-facing)
+    "T201",   # print() - CLI tool needs output
+    "T203",   # pprint() - debugging tool
+    "ERA001", # commented-out-code - reference implementations
 
-  # Type annotation style (cosmetic, both forms work)
-  "UP006", # List[str] → list[str]
-  "UP045", # Optional[X] → X | None
-  "UP007", # Union[X,Y] → X | Y
+    # Type annotation style (cosmetic, both forms work)
+    "UP006", # List[str] → list[str]
+    "UP045", # Optional[X] → X | None
+    "UP007", # Union[X,Y] → X | Y
 
-  # Control flow style (readability preferences)
-  "RET504", # unnecessary-assign
-  "RET505", # superfluous-else-return
-  "RET506", # superfluous-else-raise
-  "RET507", # superfluous-else-continue
-  "RET508", # superfluous-else-break
+    # Control flow style (readability preferences)
+    "RET504", # unnecessary-assign
+    "RET505", # superfluous-else-return
+    "RET506", # superfluous-else-raise
+    "RET507", # superfluous-else-continue
+    "RET508", # superfluous-else-break
 
-  # Code structure style (readability)
-  "SIM102",  # collapsible-if
-  "SIM108",  # if-else vs. ternary
-  "SIM110",  # reimplemented-builtin
-  "SIM114",  # if-with-same-arms
-  "SIM401",  # if-else vs. dict.get
-  "PLR5501", # collapsible-else-if
+    # Code structure style (readability)
+    "SIM102",  # collapsible-if
+    "SIM108",  # if-else vs. ternary
+    "SIM110",  # reimplemented-builtin
+    "SIM114",  # if-with-same-arms
+    "SIM401",  # if-else vs. dict.get
+    "PLR5501", # collapsible-else-if
 
-  # Security tool requirements (intentional for research)
-  "S101", # assert - validation in security tools
-  "S603", # subprocess - binary analysis requires it
-  "S607", # partial paths - tool discovery needs PATH
-  "S608", # hardcoded-sql-expression - template queries
+    # Security tool requirements (intentional for research)
+    "S101", # assert - validation in security tools
+    "S603", # subprocess - binary analysis requires it
+    "S607", # partial paths - tool discovery needs PATH
+    "S608", # hardcoded-sql-expression - template queries
 
-  # Import style (intentional patterns)
-  "F401",    # unused-import - __init__ exports, lazy imports
-  "F403",    # import-star - API exports
-  "PLC0415", # import-outside-toplevel - lazy loading
+    # Import style (intentional patterns)
+    "F401",    # unused-import - __init__ exports, lazy imports
+    "F403",    # import-star - API exports
+    "PLC0415", # import-outside-toplevel - lazy loading
 
-  # Performance style (explicit loops sometimes clearer)
-  "PERF401", # manual-list-comprehension
-  "PERF403", # manual-dict-comprehension
+    # Performance style (explicit loops sometimes clearer)
+    "PERF401", # manual-list-comprehension
+    "PERF403", # manual-dict-comprehension
 
-  # Binary operation style (explicit for binary analysis)
-  "PIE790",  # unnecessary-placeholder
-  "PIE810",  # multiple-starts-ends-with
-  "FURB161", # bit-count
-  "FURB166", # int-on-sliced-str
+    # Binary operation style (explicit for binary analysis)
+    "PIE790",  # unnecessary-placeholder
+    "PIE810",  # multiple-starts-ends-with
+    "FURB161", # bit-count
+    "FURB166", # int-on-sliced-str
 
-  # Quote style (embedded SQL/regex/Frida scripts need specific quotes)
-  "Q000",    # bad-quotes-inline-string
-  "Q001",    # bad-quotes-multiline-string
+    # Quote style (embedded SQL/regex/Frida scripts need specific quotes)
+    "Q000", # bad-quotes-inline-string
+    "Q001", # bad-quotes-multiline-string
 
-  # Exception handling style
-  "TRY003", # raise-vanilla-args
-  "TRY300", # try-consider-else
-  "TRY301", # raise-within-try
+    # Exception handling style
+    "TRY003", # raise-vanilla-args
+    "TRY300", # try-consider-else
+    "TRY301", # raise-within-try
 
-  # Type checking style
-  "ANN401", # any-type - dynamic binary data
+    # Type checking style
+    "ANN401", # any-type - dynamic binary data
 
-  # Loop variable style
-  "PLW2901", # redefined-loop-name
+    # Loop variable style
+    "PLW2901", # redefined-loop-name
 
-  # Complexity rules (function design preferences)
-  "PLR0911", # too-many-return-statements
-  "PLR0912", # too-many-branches
-  "PLR0913", # too-many-arguments
-  "PLR0915", # too-many-statements
+    # Complexity rules (function design preferences)
+    "PLR0911", # too-many-return-statements
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
 
-  # Conflicting docstring rules (keep D211/D212, ignore D203/D213)
-  "D203", # incorrect-blank-line-before-class (conflicts with D211)
-  "D213", # multi-line-summary-second-line (conflicts with D212)
+    # Conflicting docstring rules (keep D211/D212, ignore D203/D213)
+    "D203", # incorrect-blank-line-before-class (conflicts with D211)
+    "D213", # multi-line-summary-second-line (conflicts with D212)
 ]
 
 # Allow autofix for all enabled rules (when safe).
@@ -1111,18 +1111,18 @@ dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.per-file-ignores]
 "intellicrack/core/analysis/angr_enhancements.py" = [
-  "N803",     # Windows API parameter names intentionally match SDK documentation
-  "ARG002",   # Unused args in Windows API hooks are intentional (hook signatures)
-  "G004",     # Logging f-strings are acceptable in analysis code
-  "PLR2004",  # Magic values are Windows API constants with clear context
-  "PLR1702",  # Nested blocks in complex API analysis logic
+    "N803",    # Windows API parameter names intentionally match SDK documentation
+    "ARG002",  # Unused args in Windows API hooks are intentional (hook signatures)
+    "G004",    # Logging f-strings are acceptable in analysis code
+    "PLR2004", # Magic values are Windows API constants with clear context
+    "PLR1702", # Nested blocks in complex API analysis logic
 ]
 "intellicrack/handlers/pyqt6_handler.py" = [
-  "N802",     # Function names match PyQt6 API naming (e.g., qRgba, setValue)
-  "N816",     # Variable names match PyQt6 API naming (e.g., pyqtSlot, pyqtSignal)
-  "ARG001",   # Unused function args in fallback implementations match PyQt6 signatures
-  "ARG002",   # Unused method args in fallback implementations match PyQt6 signatures
-  "PLR0904",  # FallbackWidget needs many public methods to mimic Qt widget API
+    "N802",    # Function names match PyQt6 API naming (e.g., qRgba, setValue)
+    "N816",    # Variable names match PyQt6 API naming (e.g., pyqtSlot, pyqtSignal)
+    "ARG001",  # Unused function args in fallback implementations match PyQt6 signatures
+    "ARG002",  # Unused method args in fallback implementations match PyQt6 signatures
+    "PLR0904", # FallbackWidget needs many public methods to mimic Qt widget API
 ]
 
 [tool.ruff.lint.mccabe]
@@ -1151,96 +1151,107 @@ force-wrap-aliases = true
 combine-as-imports = true
 split-on-trailing-comma = false
 known-first-party = ["intellicrack"]
-known-third-party = ["angr", "claripy", "capstone", "pyqt6", "requests", "numpy", "scipy", "pandas", "matplotlib", "aiohttp"]
+known-third-party = [
+    "angr",
+    "claripy",
+    "capstone",
+    "pyqt6",
+    "requests",
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "aiohttp",
+]
 
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = [
-  "id",
-  "type",
-  "file",
-  "help",
-  "all",
-  "dir",
-  "format",
-  "globals",
-  "hash",
-  "input",
-  "len",
-  "list",
-  "max",
-  "min",
-  "next",
-  "object",
-  "open",
-  "ord",
-  "pow",
-  "set",
-  "str",
-  "sum",
-  "vars",
-  "zip",
-  "bytes",
-  "classmethod",
-  "property",
-  "staticmethod",
-  "super",
-  "tuple",
-  "frozenset",
-  "int",
-  "float",
-  "bool",
-  "complex",
-  "dict",
-  "range",
-  "slice",
-  "bytes",
-  "bytearray",
-  "memoryview",
-  "slice",
-  "type",
-  "object",
-  "Exception",
-  "ValueError",
-  "TypeError",
-  "AttributeError",
-  "KeyError",
-  "IndexError",
-  "StopIteration",
-  "StopAsyncIteration",
-  "NotImplemented",
-  "NotImplementedError",
-  "SyntaxError",
-  "RuntimeError",
-  "NameError",
-  "ImportError",
-  "LookupError",
-  "FloatingPointError",
-  "OverflowError",
-  "ZeroDivisionError",
-  "AssertionError",
-  "EOFError",
-  "IOError",
-  "OSError",
-  "EnvironmentError",
-  "UnboundLocalError",
-  "ReferenceError",
-  "SystemError",
-  "SystemExit",
-  "KeyboardInterrupt",
-  "GeneratorExit",
-  "StopIteration",
-  "StopAsyncIteration",
-  "Warning",
-  "UserWarning",
-  "DeprecationWarning",
-  "PendingDeprecationWarning",
-  "SyntaxWarning",
-  "RuntimeWarning",
-  "FutureWarning",
-  "ImportWarning",
-  "UnicodeWarning",
-  "BytesWarning",
-  "ResourceWarning",
+    "id",
+    "type",
+    "file",
+    "help",
+    "all",
+    "dir",
+    "format",
+    "globals",
+    "hash",
+    "input",
+    "len",
+    "list",
+    "max",
+    "min",
+    "next",
+    "object",
+    "open",
+    "ord",
+    "pow",
+    "set",
+    "str",
+    "sum",
+    "vars",
+    "zip",
+    "bytes",
+    "classmethod",
+    "property",
+    "staticmethod",
+    "super",
+    "tuple",
+    "frozenset",
+    "int",
+    "float",
+    "bool",
+    "complex",
+    "dict",
+    "range",
+    "slice",
+    "bytes",
+    "bytearray",
+    "memoryview",
+    "slice",
+    "type",
+    "object",
+    "Exception",
+    "ValueError",
+    "TypeError",
+    "AttributeError",
+    "KeyError",
+    "IndexError",
+    "StopIteration",
+    "StopAsyncIteration",
+    "NotImplemented",
+    "NotImplementedError",
+    "SyntaxError",
+    "RuntimeError",
+    "NameError",
+    "ImportError",
+    "LookupError",
+    "FloatingPointError",
+    "OverflowError",
+    "ZeroDivisionError",
+    "AssertionError",
+    "EOFError",
+    "IOError",
+    "OSError",
+    "EnvironmentError",
+    "UnboundLocalError",
+    "ReferenceError",
+    "SystemError",
+    "SystemExit",
+    "KeyboardInterrupt",
+    "GeneratorExit",
+    "StopIteration",
+    "StopAsyncIteration",
+    "Warning",
+    "UserWarning",
+    "DeprecationWarning",
+    "PendingDeprecationWarning",
+    "SyntaxWarning",
+    "RuntimeWarning",
+    "FutureWarning",
+    "ImportWarning",
+    "UnicodeWarning",
+    "BytesWarning",
+    "ResourceWarning",
 ]
 
 [tool.ruff.format]
@@ -1262,48 +1273,48 @@ ignore_regex = "^(test_|_)"
 [tool.wemake-python-styleguide]
 # Strict code style following wemake guidelines
 ignore = [
-  "W503",  # line break before binary operator (contradicts Black)
+    "W503", # line break before binary operator (contradicts Black)
 ]
 
 [tool.vulture]
 exclude = [
-  ".git/",
-  ".github/",
-  ".pixi/",
-  ".venv*/",
-  "venv/",
-  "build/",
-  "dist/",
-  "*.egg-info/",
-  "__pycache__/",
-  "node_modules/",
-  "tests/",
-  "docs/",
-  "tools/",
-  "htmlcov/",
-  "htmlcov_mitigation/",
-  "logs/",
-  "reports/",
-  "backups/",
-  ".benchmarks/",
-  ".aider.tags.cache.v4/",
-  ".claude/",
-  ".grok/",
-  ".roo/",
-  ".serena/",
-  ".idea/",
-  ".vscode/",
-  "CLI Coding/",
-  "Screenshots/",
+    ".git/",
+    ".github/",
+    ".pixi/",
+    ".venv*/",
+    "venv/",
+    "build/",
+    "dist/",
+    "*.egg-info/",
+    "__pycache__/",
+    "node_modules/",
+    "tests/",
+    "docs/",
+    "tools/",
+    "htmlcov/",
+    "htmlcov_mitigation/",
+    "logs/",
+    "reports/",
+    "backups/",
+    ".benchmarks/",
+    ".aider.tags.cache.v4/",
+    ".claude/",
+    ".grok/",
+    ".roo/",
+    ".serena/",
+    ".idea/",
+    ".vscode/",
+    "CLI Coding/",
+    "Screenshots/",
 ]
 ignore_decorators = [
-  "@app.route",
-  "@celery.task",
-  "@pytest.fixture",
-  "@click.command",
-  "@staticmethod",
-  "@classmethod",
-  "@property",
+    "@app.route",
+    "@celery.task",
+    "@pytest.fixture",
+    "@click.command",
+    "@staticmethod",
+    "@classmethod",
+    "@property",
 ]
 ignore_names = ["*test_*", "*Test*", "setUp", "tearDown"]
 min_confidence = 80
@@ -1312,31 +1323,31 @@ sort_by_size = true
 
 [tool.bandit]
 exclude_dirs = [
-  "tests",
-  "docs",
-  "tools",
-  ".git",
-  ".github",
-  ".pixi",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".ruff_cache",
-  ".benchmarks",
-  ".aider.tags.cache.v4",
-  ".claude",
-  ".grok",
-  ".roo",
-  ".serena",
-  ".idea",
-  ".vscode",
-  "backups",
-  "htmlcov",
-  "htmlcov_mitigation",
-  "logs",
-  "reports",
-  "node_modules",
-  "CLI Coding",
-  "Screenshots",
+    "tests",
+    "docs",
+    "tools",
+    ".git",
+    ".github",
+    ".pixi",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".benchmarks",
+    ".aider.tags.cache.v4",
+    ".claude",
+    ".grok",
+    ".roo",
+    ".serena",
+    ".idea",
+    ".vscode",
+    "backups",
+    "htmlcov",
+    "htmlcov_mitigation",
+    "logs",
+    "reports",
+    "node_modules",
+    "CLI Coding",
+    "Screenshots",
 ]
 skips = ["B101", "B601"]
 
@@ -1350,36 +1361,36 @@ mitmproxy = { git = "https://github.com/Zachanardo/mitmproxy.git" }
 [tool.coverage.run]
 source = ["intellicrack"]
 omit = [
-  "*/.git/*",
-  "*/.github/*",
-  "*/.pixi/*",
-  "*/dev/*",
-  "*/tools/*",
-  "*/tests/*",
-  "*/docs/*",
-  "*/__pycache__/*",
-  "*/.mypy_cache/*",
-  "*/.pytest_cache/*",
-  "*/.ruff_cache/*",
-  "*/.benchmarks/*",
-  "*/.aider.tags.cache.v4/*",
-  "*/.claude/*",
-  "*/.grok/*",
-  "*/.roo/*",
-  "*/.serena/*",
-  "*/.idea/*",
-  "*/.vscode/*",
-  "*/backups/*",
-  "*/htmlcov/*",
-  "*/htmlcov_mitigation/*",
-  "*/logs/*",
-  "*/reports/*",
-  "*/node_modules/*",
-  "*/CLI Coding/*",
-  "*/Screenshots/*",
-  "*/*.egg-info/*",
-  "setup.py",
-  "conftest.py",
+    "*/.git/*",
+    "*/.github/*",
+    "*/.pixi/*",
+    "*/dev/*",
+    "*/tools/*",
+    "*/tests/*",
+    "*/docs/*",
+    "*/__pycache__/*",
+    "*/.mypy_cache/*",
+    "*/.pytest_cache/*",
+    "*/.ruff_cache/*",
+    "*/.benchmarks/*",
+    "*/.aider.tags.cache.v4/*",
+    "*/.claude/*",
+    "*/.grok/*",
+    "*/.roo/*",
+    "*/.serena/*",
+    "*/.idea/*",
+    "*/.vscode/*",
+    "*/backups/*",
+    "*/htmlcov/*",
+    "*/htmlcov_mitigation/*",
+    "*/logs/*",
+    "*/reports/*",
+    "*/node_modules/*",
+    "*/CLI Coding/*",
+    "*/Screenshots/*",
+    "*/*.egg-info/*",
+    "setup.py",
+    "conftest.py",
 ]
 branch = true
 
@@ -1390,16 +1401,16 @@ show_missing = true
 skip_covered = false
 sort = "Cover"
 exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "if settings.DEBUG",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if 0:",
-  "if __name__ == .__main__.:",
-  "class .*\\bProtocol\\):",
-  "@(abc\\.)?abstractmethod",
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
 ]
 
 [tool.coverage.html]
@@ -1428,35 +1439,35 @@ max-complexity = 50
 
 [tool.rumdl.global]
 exclude = [
-  ".git",
-  ".github",
-  ".pixi",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".ruff_cache",
-  ".benchmarks",
-  ".aider.tags.cache.v4",
-  ".claude",
-  ".grok",
-  ".roo",
-  ".serena",
-  ".idea",
-  ".vscode",
-  "backups",
-  "htmlcov",
-  "htmlcov_mitigation",
-  "logs",
-  "reports",
-  "node_modules",
-  "CLI Coding",
-  "Screenshots",
-  "vendor",
-  "dist",
-  "build",
-  "tools",
-  "tests",
-  "docs",
-  "CHANGELOG.md",
-  "LICENSE.md",
+    ".git",
+    ".github",
+    ".pixi",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".benchmarks",
+    ".aider.tags.cache.v4",
+    ".claude",
+    ".grok",
+    ".roo",
+    ".serena",
+    ".idea",
+    ".vscode",
+    "backups",
+    "htmlcov",
+    "htmlcov_mitigation",
+    "logs",
+    "reports",
+    "node_modules",
+    "CLI Coding",
+    "Screenshots",
+    "vendor",
+    "dist",
+    "build",
+    "tools",
+    "tests",
+    "docs",
+    "CHANGELOG.md",
+    "LICENSE.md",
 ]
 respect_gitignore = true

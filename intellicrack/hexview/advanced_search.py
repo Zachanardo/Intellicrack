@@ -144,9 +144,7 @@ class SearchType(Enum):
 class SearchResult:
     """Represents a single search result."""
 
-    def __init__(
-        self, offset: int, length: int, data: bytes, context: bytes | None = None
-    ) -> None:
+    def __init__(self, offset: int, length: int, data: bytes, context: bytes | None = None) -> None:
         """Initialize the SearchResult with offset, length, data, and context."""
         self.offset = offset
         self.length = length
@@ -198,9 +196,7 @@ class SearchHistory:
         self.entries: list[dict[str, Any]] = []
         self.load_history()
 
-    def add_search(
-        self, pattern: str, search_type: SearchType, options: dict[str, Any]
-    ) -> None:
+    def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]) -> None:
         """Add a search to history."""
         entry = {
             "pattern": pattern,
@@ -209,11 +205,7 @@ class SearchHistory:
             "timestamp": __import__("time").time(),
         }
 
-        self.entries = [
-            e
-            for e in self.entries
-            if e["pattern"] != pattern or e["type"] != search_type.value
-        ]
+        self.entries = [e for e in self.entries if e["pattern"] != pattern or e["type"] != search_type.value]
 
         self.entries.insert(0, entry)
 
@@ -222,15 +214,11 @@ class SearchHistory:
 
         self.save_history()
 
-    def get_recent_searches(
-        self, search_type: SearchType | None = None, limit: int = 10
-    ) -> list[str]:
+    def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
         """Get recent search patterns."""
         filtered_entries = self.entries
         if search_type:
-            filtered_entries = [
-                e for e in self.entries if e["type"] == search_type.value
-            ]
+            filtered_entries = [e for e in self.entries if e["type"] == search_type.value]
 
         return [str(e["pattern"]) for e in filtered_entries[:limit]]
 
@@ -300,9 +288,7 @@ class SearchEngine:
             if direction == "forward":
                 return self._search_forward(compiled_pattern, start_offset, whole_words)
             else:
-                return self._search_backward(
-                    compiled_pattern, start_offset, whole_words
-                )
+                return self._search_backward(compiled_pattern, start_offset, whole_words)
         return None
 
     def search_all(
@@ -333,9 +319,7 @@ class SearchEngine:
         results: list[SearchResult] = []
         file_size = self.file_handler.get_file_size()
         offset = 0
-        overlap_size = (
-            len(pattern) if isinstance(pattern, bytes) else len(pattern.encode("utf-8"))
-        )
+        overlap_size = len(pattern) if isinstance(pattern, bytes) else len(pattern.encode("utf-8"))
 
         while offset < file_size and len(results) < max_results:
             chunk_size = min(self.chunk_size, file_size - offset)
@@ -386,9 +370,7 @@ class SearchEngine:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        results = self.search_all(
-            find_pattern, search_type, case_sensitive, whole_words
-        )
+        results = self.search_all(find_pattern, search_type, case_sensitive, whole_words)
 
         if not results:
             return []
@@ -405,27 +387,19 @@ class SearchEngine:
                     if self.file_handler.insert(result.offset, replace_bytes):
                         replaced_ranges.append((result.offset, len(replace_bytes)))
                     else:
-                        original_data = self.file_handler.read(
-                            result.offset, result.length
-                        )
+                        original_data = self.file_handler.read(result.offset, result.length)
                         if original_data:
                             self.file_handler.insert(result.offset, original_data)
-                        error_msg = (
-                            f"Failed to insert replacement at offset {result.offset:#x}"
-                        )
+                        error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
                         logger.error(error_msg)
                         raise RuntimeError(error_msg)
             except Exception as e:
-                logger.error(
-                    f"Error during replace operation at offset {result.offset:#x}: {e}"
-                )
+                logger.error(f"Error during replace operation at offset {result.offset:#x}: {e}")
                 continue
 
         return list(reversed(replaced_ranges))
 
-    def _compile_pattern(
-        self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool
-    ) -> bytes | Pattern[str] | None:
+    def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | Pattern[str] | None:
         """Compile pattern based on search type."""
         try:
             if search_type == SearchType.HEX:
@@ -438,19 +412,11 @@ class SearchEngine:
                 return pattern if isinstance(pattern, bytes) else pattern.encode("utf-8")
             if search_type == SearchType.REGEX:
                 flags = 0 if case_sensitive else re.IGNORECASE
-                pattern_str = (
-                    pattern.decode("utf-8", errors="replace")
-                    if isinstance(pattern, bytes)
-                    else pattern
-                )
+                pattern_str = pattern.decode("utf-8", errors="replace") if isinstance(pattern, bytes) else pattern
                 return re.compile(pattern_str, flags)
 
             if search_type == SearchType.WILDCARD:
-                pattern_str = (
-                    pattern.decode("utf-8", errors="replace")
-                    if isinstance(pattern, bytes)
-                    else pattern
-                )
+                pattern_str = pattern.decode("utf-8", errors="replace") if isinstance(pattern, bytes) else pattern
 
                 escaped = re.escape(pattern_str)
                 escaped = escaped.replace(r"\*", ".*").replace(r"\?", ".")
@@ -558,13 +524,9 @@ class SearchEngine:
                     if pos == -1:
                         break
 
-                    if not whole_words or self._is_whole_word_match(
-                        chunk_data, pos, len(compiled_pattern)
-                    ):
+                    if not whole_words or self._is_whole_word_match(chunk_data, pos, len(compiled_pattern)):
                         context_start = max(0, pos - 16)
-                        context_end = min(
-                            len(chunk_data), pos + len(compiled_pattern) + 16
-                        )
+                        context_end = min(len(chunk_data), pos + len(compiled_pattern) + 16)
                         context = chunk_data[context_start:context_end]
 
                         match_result = SearchResult(
@@ -656,12 +618,7 @@ class SearchEngine:
             - 0-9 (48-57)
             - underscore (95)
             """
-            return (
-                (48 <= byte_val <= 57)
-                or (65 <= byte_val <= 90)
-                or (97 <= byte_val <= 122)
-                or (byte_val == 95)
-            )
+            return (48 <= byte_val <= 57) or (65 <= byte_val <= 90) or (97 <= byte_val <= 122) or (byte_val == 95)
 
         if pos > 0:
             prev_char = data[pos - 1]
@@ -848,9 +805,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         history_tab = self.create_history_tab()
         tab_widget.addTab(history_tab, "History")
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Close
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(self.close)
         layout.addWidget(button_box)
 
@@ -1009,9 +964,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
 
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(4)
-        self.results_table.setHorizontalHeaderLabels(
-            ["Offset", "Length", "Data", "Context"]
-        )
+        self.results_table.setHorizontalHeaderLabels(["Offset", "Length", "Data", "Context"])
         header = self.results_table.horizontalHeader()
         if header is not None:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -1111,18 +1064,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                 )
                 if result:
                     if self.search_status_label is not None:
-                        self.search_status_label.setText(
-                            f"Found at offset 0x{result.offset:X}"
-                        )
+                        self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     parent_widget = self.parent()
-                    if parent_widget is not None and hasattr(
-                        parent_widget, "hex_viewer"
-                    ):
+                    if parent_widget is not None and hasattr(parent_widget, "hex_viewer"):
                         hex_viewer = parent_widget.hex_viewer
                         if hasattr(hex_viewer, "select_range"):
-                            hex_viewer.select_range(
-                                result.offset, result.offset + result.length
-                            )
+                            hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     if self.search_status_label is not None:
                         self.search_status_label.setText("Pattern not found")
@@ -1160,18 +1107,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                 )
                 if result:
                     if self.search_status_label is not None:
-                        self.search_status_label.setText(
-                            f"Found at offset 0x{result.offset:X}"
-                        )
+                        self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     parent_widget = self.parent()
-                    if parent_widget is not None and hasattr(
-                        parent_widget, "hex_viewer"
-                    ):
+                    if parent_widget is not None and hasattr(parent_widget, "hex_viewer"):
                         hex_viewer = parent_widget.hex_viewer
                         if hasattr(hex_viewer, "select_range"):
-                            hex_viewer.select_range(
-                                result.offset, result.offset + result.length
-                            )
+                            hex_viewer.select_range(result.offset, result.offset + result.length)
                 else:
                     if self.search_status_label is not None:
                         self.search_status_label.setText("Pattern not found")
@@ -1184,9 +1125,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
     def replace_current(self) -> None:
         """Replace current selection."""
         if self.replace_status_label is not None:
-            self.replace_status_label.setText(
-                "Replace functionality requires hex viewer integration"
-            )
+            self.replace_status_label.setText("Replace functionality requires hex viewer integration")
 
     def replace_all(self) -> None:
         """Replace all occurrences."""
@@ -1204,10 +1143,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
 
         search_type = self._get_search_type(self.replace_type_combo.currentText())
 
-        if (
-            self.replace_case_sensitive_check is None
-            or self.replace_whole_words_check is None
-        ):
+        if self.replace_case_sensitive_check is None or self.replace_whole_words_check is None:
             return
 
         if self.search_engine:
@@ -1221,9 +1157,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                 )
 
                 if self.replace_status_label is not None:
-                    self.replace_status_label.setText(
-                        f"Replaced {len(replaced_ranges)} occurrences"
-                    )
+                    self.replace_status_label.setText(f"Replaced {len(replaced_ranges)} occurrences")
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in advanced_search: %s", e)
@@ -1265,14 +1199,8 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             max_results=max_results,
         )
 
-        if (
-            self.current_search_thread is not None
-            and PYQT6_AVAILABLE
-            and hasattr(self.current_search_thread, "search_completed")
-        ):
-            self.current_search_thread.search_completed.connect(
-                self.on_find_all_completed
-            )
+        if self.current_search_thread is not None and PYQT6_AVAILABLE and hasattr(self.current_search_thread, "search_completed"):
+            self.current_search_thread.search_completed.connect(self.on_find_all_completed)
             self.current_search_thread.start()
 
     def on_find_all_completed(self, results: list[SearchResult]) -> None:
@@ -1290,16 +1218,10 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         self.results_table.setRowCount(len(results))
 
         for i, result in enumerate(results):
-            self.results_table.setItem(
-                i, 0, QTableWidgetItem(f"0x{result.offset:X}")
-            )
+            self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:X}"))
             self.results_table.setItem(i, 1, QTableWidgetItem(str(result.length)))
-            self.results_table.setItem(
-                i, 2, QTableWidgetItem(result.data.hex(" ")[:32] + "...")
-            )
-            self.results_table.setItem(
-                i, 3, QTableWidgetItem(result.context.hex(" ")[:48] + "...")
-            )
+            self.results_table.setItem(i, 2, QTableWidgetItem(result.data.hex(" ")[:32] + "..."))
+            self.results_table.setItem(i, 3, QTableWidgetItem(result.context.hex(" ")[:48] + "..."))
 
     def cancel_search(self) -> None:
         """Cancel current search."""
@@ -1321,9 +1243,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         if entry and self.search_pattern_combo is not None:
             self.search_pattern_combo.setCurrentText(str(entry["pattern"]))
             if self.search_type_combo is not None:
-                type_index = self.search_type_combo.findText(
-                    str(entry["type"]).title()
-                )
+                type_index = self.search_type_combo.findText(str(entry["type"]).title())
                 if type_index >= 0:
                     self.search_type_combo.setCurrentIndex(type_index)
 
@@ -1395,26 +1315,16 @@ class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
 
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(4)
-        self.results_table.setHorizontalHeaderLabels(
-            ["Offset", "Hex", "ASCII", "Context"]
-        )
+        self.results_table.setHorizontalHeaderLabels(["Offset", "Hex", "ASCII", "Context"])
         header = self.results_table.horizontalHeader()
         if header is not None:
             header.setStretchLastSection(True)
 
         self.results_table.setRowCount(len(self.results))
         for i, result in enumerate(self.results):
-            self.results_table.setItem(
-                i, 0, QTableWidgetItem(f"0x{result.offset:08X}")
-            )
-            self.results_table.setItem(
-                i, 1, QTableWidgetItem(result.data.hex() if result.data else "")
-            )
-            ascii_text = (
-                "".join(chr(b) if 32 <= b < 127 else "." for b in result.data)
-                if result.data
-                else ""
-            )
+            self.results_table.setItem(i, 0, QTableWidgetItem(f"0x{result.offset:08X}"))
+            self.results_table.setItem(i, 1, QTableWidgetItem(result.data.hex() if result.data else ""))
+            ascii_text = "".join(chr(b) if 32 <= b < 127 else "." for b in result.data) if result.data else ""
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             context_hex = result.context.hex() if result.context else ""
             self.results_table.setItem(
@@ -1425,9 +1335,7 @@ class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
 
         layout.addWidget(self.results_table)
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Close
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(self.accept)
         layout.addWidget(button_box)
 
@@ -1491,9 +1399,7 @@ class ReplaceDialog(_ReplaceDialogBase):  # type: ignore[valid-type,misc]
 
         layout.addWidget(options_group)
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)

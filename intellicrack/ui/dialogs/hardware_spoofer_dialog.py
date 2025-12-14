@@ -1591,15 +1591,9 @@ class HardwareSpoofingDialog(QDialog):
         settings_path = os.path.join(settings_dir, "hw_spoofer_settings.json")
 
         settings: dict[str, Any] = {
-            "spoof_methods": {
-                method: check.isChecked() for method, check in self.spoof_methods.items()
-            },
-            "hook_methods": {
-                hook: check.isChecked() for hook, check in self.hook_methods.items()
-            },
-            "anti_detect_checks": {
-                detection: check.isChecked() for detection, check in self.anti_detect_checks.items()
-            },
+            "spoof_methods": {method: check.isChecked() for method, check in self.spoof_methods.items()},
+            "hook_methods": {hook: check.isChecked() for hook, check in self.hook_methods.items()},
+            "anti_detect_checks": {detection: check.isChecked() for detection, check in self.anti_detect_checks.items()},
         }
 
         if hasattr(self, "gen_mode_combo"):

@@ -99,7 +99,7 @@ def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
         return success
 
     except Exception as e:
-        logger.error(f"Integration failed with exception: {e}")
+        logger.error("Integration failed with exception: %s", e, exc_info=True)
 
         # Add error notification
         if hasattr(app_instance, "update_output"):
@@ -153,13 +153,13 @@ def integrate_with_main_app() -> bool:
                         break
 
         if main_app:
-            logger.info(f"Found main app instance: {type(main_app)}")
+            logger.info("Found main app instance: %s", type(main_app))
             return add_radare2_to_intellicrack_app(main_app)
         logger.warning("Could not find main IntellicrackApp instance for automatic integration")
         return False
 
     except Exception as e:
-        logger.error(f"Automatic integration failed: {e}")
+        logger.error("Automatic integration failed: %s", e, exc_info=True)
         return False
 
 
@@ -185,7 +185,7 @@ def create_standalone_radare2_app() -> tuple[object, object] | tuple[None, None]
         return None, None
 
     except Exception as e:
-        logger.error(f"Failed to create standalone application: {e}")
+        logger.error("Failed to create standalone application: %s", e, exc_info=True)
         return None, None
 
 
@@ -215,7 +215,7 @@ def show_integration_status(app_instance: object | None = None) -> dict:
         return status
 
     except Exception as e:
-        logger.error(f"Failed to get integration status: {e}")
+        logger.error("Failed to get integration status: %s", e, exc_info=True)
         return {"error": str(e)}
 
 

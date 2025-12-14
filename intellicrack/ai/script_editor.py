@@ -1132,12 +1132,10 @@ Generate the complete modified script:"""
         fixes = []
 
         if validation_result == ValidationResult.SYNTAX_ERROR:
-            fixes.extend(
-                (
-                    "Check for missing brackets, semicolons, or quotes",
-                    "Verify proper indentation",
-                )
-            )
+            fixes.extend((
+                "Check for missing brackets, semicolons, or quotes",
+                "Verify proper indentation",
+            ))
         elif validation_result == ValidationResult.SECURITY_ISSUE:
             security_issues = validation_details.get("security_scan", {})
             if security_issues.get("critical_issues"):
@@ -1146,12 +1144,10 @@ Generate the complete modified script:"""
                 fixes.append("Review and validate file/memory operations")
 
         elif validation_result == ValidationResult.PERFORMANCE_POOR:
-            fixes.extend(
-                (
-                    "Optimize loops and reduce complexity",
-                    "Consider batching memory operations",
-                )
-            )
+            fixes.extend((
+                "Optimize loops and reduce complexity",
+                "Consider batching memory operations",
+            ))
         return fixes
 
     def _generate_binary_specific_suggestions(

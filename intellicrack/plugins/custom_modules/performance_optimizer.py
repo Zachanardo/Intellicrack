@@ -1037,20 +1037,18 @@ class AdaptiveOptimizer:
 
         # Analyze recent performance
         if avg_score < 0.7:  # Poor performance
-            recommendations.extend(
-                (
-                    {
-                        "type": "memory",
-                        "action": "increase_cache",
-                        "description": "Consider increasing cache size for better performance",
-                    },
-                    {
-                        "type": "cpu",
-                        "action": "optimize_threads",
-                        "description": "Optimize thread pool configuration",
-                    },
-                )
-            )
+            recommendations.extend((
+                {
+                    "type": "memory",
+                    "action": "increase_cache",
+                    "description": "Consider increasing cache size for better performance",
+                },
+                {
+                    "type": "cpu",
+                    "action": "optimize_threads",
+                    "description": "Optimize thread pool configuration",
+                },
+            ))
         # Check for memory pressure
         recent_memory = np.mean([h["metrics"].get("memory_percent", 0) for h in recent_metrics])
         if recent_memory > 80:
@@ -1469,15 +1467,15 @@ if __name__ == "__main__":
     optimizer = PerformanceOptimizer(config)
 
     # Run some test operations
-    print("Starting performance optimization test...")
+    logger.info("Starting performance optimization test...")
 
     # Test memory optimization
-    print("Testing memory optimization...")
+    logger.info("Testing memory optimization...")
     result = optimizer.optimize_component(OptimizationType.MEMORY)
-    print(f"Memory optimization: {result.success}, {result.improvement:.1f}% improvement")
+    logger.info("Memory optimization: %s, %.1f%% improvement", result.success, result.improvement)
 
     # Test cache performance
-    print("Testing cache performance...")
+    logger.info("Testing cache performance...")
     for i in range(100):
         key = f"test_key_{i % 10}"
         value = f"test_value_{i}" * 100
@@ -1487,23 +1485,23 @@ if __name__ == "__main__":
             cached_value = optimizer.cache_manager.get(key)
 
     cache_stats = optimizer.cache_manager.get_stats()
-    print(f"Cache stats: {cache_stats}")
+    logger.info("Cache stats: %s", cache_stats)
 
     # Generate performance report
-    print("Generating performance report...")
+    logger.info("Generating performance report...")
     report = optimizer.get_performance_report()
 
-    print("Performance Report Summary:")
-    print(f"- CPU Usage: {report['system_metrics']['cpu_percent']:.1f}%")
-    print(f"- Memory Usage: {report['system_metrics']['memory_percent']:.1f}%")
-    print(f"- Cache Hit Rate: {report['cache_performance']['hit_rate']:.2%}")
-    print(f"- Thread Pool Workers: {report['thread_pool_stats']['current_workers']}")
+    logger.info("Performance Report Summary:")
+    logger.info("- CPU Usage: %.1f%%", report["system_metrics"]["cpu_percent"])
+    logger.info("- Memory Usage: %.1f%%", report["system_metrics"]["memory_percent"])
+    logger.info("- Cache Hit Rate: %.2f%%", report["cache_performance"]["hit_rate"] * 100)
+    logger.info("- Thread Pool Workers: %s", report["thread_pool_stats"]["current_workers"])
 
     # Test optimization recommendations
     recommendations = optimizer.adaptive_optimizer.get_recommendations()
     if recommendations.get("recommendations"):
-        print("Optimization Recommendations:")
+        logger.info("Optimization Recommendations:")
         for rec in recommendations["recommendations"]:
-            print(f"- {rec['description']}")
+            logger.info("- %s", rec["description"])
 
-    print("Performance optimization test completed.")
+    logger.info("Performance optimization test completed.")

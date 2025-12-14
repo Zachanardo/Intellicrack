@@ -118,8 +118,7 @@ def main(args: list[str] | None = None) -> int:
         logger.info("Interrupted by user")
         return 1
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Fatal error: %s", e)
-        logger.error(traceback.format_exc())
+        logger.error("Fatal error: %s", e, exc_info=True)
         return 1
 
 
@@ -149,11 +148,11 @@ def run_gui_mode(args: object) -> int:
         return app.exec()
 
     except ImportError as e:
-        logger.error("GUI dependencies not available: %s", e)
+        logger.error("GUI dependencies not available: %s", e, exc_info=True)
         logger.info("Please install PyQt6 to use GUI mode")
         return 1
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error launching GUI: %s", e)
+        logger.error("Error launching GUI: %s", e, exc_info=True)
         return 1
 
 
@@ -184,11 +183,10 @@ def run_cli_mode(args: object) -> int:
                 output_dir=args.output,
             )
 
-            # Print summary
             if "summary" in results["analysis"]:
-                print("\nAnalysis Summary:")
+                logger.info("Analysis Summary:")
                 for key, value in results["analysis"]["summary"].items():
-                    print(f"  {key}: {value}")
+                    logger.info("  %s: %s", key, value)
 
         # Run cracking if requested
         if args.crack:
@@ -196,22 +194,20 @@ def run_cli_mode(args: object) -> int:
             results["crack"] = run_autonomous_crack(args.binary)
 
             if results["crack"].get("success"):
-                print(f"\nCracking successful: {results['crack'].get('message')}")
+                logger.info("Cracking successful: %s", results["crack"].get("message"))
             else:
-                print(f"\nCracking failed: {results['crack'].get('message')}")
+                logger.warning("Cracking failed: %s", results["crack"].get("message"))
 
-        # Save results if output specified
         if args.output and results:
             output_file = f"{args.output}/intellicrack_results.json"
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, default=str)
-            print(f"\nResults saved to: {output_file}")
+            logger.info("Results saved to: %s", output_file)
 
         return 0
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in CLI mode: %s", e)
-        logger.error(traceback.format_exc())
+        logger.error("Error in CLI mode: %s", e, exc_info=True)
         return 1
 
 
@@ -278,8 +274,7 @@ def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, An
         error_trace = traceback.format_exc()
         error_msg = f"Error executing tool '{tool_name}': {e!s}"
 
-        logger.error(error_msg)
-        logger.error(error_trace)
+        logger.error("Error executing tool '%s': %s", tool_name, e, exc_info=True)
 
         # Update UI with error
         if app_instance and hasattr(app_instance, "update_output"):
@@ -313,7 +308,7 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
         logger.info("Registered tool: %s (category: %s)", name, category)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering tool %s: %s", name, e)
+        logger.error("Error registering tool %s: %s", name, e, exc_info=True)
         return False
 
 
@@ -369,11 +364,11 @@ def register_default_tools() -> bool | None:
         for name, func in tools.items():
             register_tool(name, func, category="wrapper")
 
-        logger.info(f"Registered {len(tools)} default tools")
+        logger.info("Registered %s default tools", len(tools))
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering default tools: %s", e)
+        logger.error("Error registering default tools: %s", e, exc_info=True)
         return False
 
 
@@ -393,25 +388,23 @@ def on_message(message: dict[str, Any], data: bytes | bytearray | None = None) -
         # Log the message
         logger.info("[Frida] %s", payload)
 
-        # Handle binary data if provided
         if data is not None:
-            logger.debug(f"[Frida] Binary data received: {len(data)} bytes")
-            # Could save or process binary data here if needed
+            logger.debug("[Frida] Binary data received: %s bytes", len(data))
 
         # Handle specific message types
         if isinstance(payload, dict):
             msg_type = payload.get("type")
 
             if msg_type == "license_check":
-                logger.info(f"License check detected: {payload.get('details', {})}")
+                logger.info("License check detected: %s", payload.get("details", {}))
             elif msg_type == "api_call":
-                logger.info(f"API call intercepted: {payload.get('function', 'unknown')}")
+                logger.info("API call intercepted: %s", payload.get("function", "unknown"))
             elif msg_type == "error":
-                logger.error(f"Frida error: {payload.get('error', 'unknown')}")
+                logger.error("Frida error: %s", payload.get("error", "unknown"))
 
     elif message["type"] == "error":
-        logger.error(f"[Frida Error] {message.get('description', 'Unknown error')}")
-        logger.error(f"Stack: {message.get('stack', 'No stack trace')}")
+        logger.error("[Frida Error] %s", message.get("description", "Unknown error"))
+        logger.error("Stack: %s", message.get("stack", "No stack trace"))
 
 
 def register(plugin_info: dict[str, Any]) -> bool:
@@ -433,9 +426,8 @@ def register(plugin_info: dict[str, Any]) -> bool:
             return False
 
     try:
-        # Register plugin
         plugin_name = plugin_info["name"]
-        logger.info(f"Registering plugin: {plugin_name} v{plugin_info['version']}")
+        logger.info("Registering plugin: %s v%s", plugin_name, plugin_info["version"])
 
         # Store plugin info (would be in a plugin manager)
         # For now, just register tools if any
@@ -447,7 +439,7 @@ def register(plugin_info: dict[str, Any]) -> bool:
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering plugin: %s", e)
+        logger.error("Error registering plugin: %s", e, exc_info=True)
         return False
 
 
@@ -542,7 +534,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, An
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in deep runtime monitoring: %s", e)
+        logger.error("Error in deep runtime monitoring: %s", e, exc_info=True)
         return {
             "status": "error",
             "error": str(e),
@@ -550,11 +542,10 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, An
         }
 
 
-# Initialize default tools when module is imported
 try:
     register_default_tools()
 except (OSError, ValueError, RuntimeError) as e:
-    logger.warning("Could not register default tools: %s", e)
+    logger.warning("Could not register default tools: %s", e, exc_info=True)
 
 
 # Export all functions

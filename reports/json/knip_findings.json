@@ -1,356 +1,356 @@
 {
-  "tool": "knip",
-  "generated": "2025-12-11T23:03:16.867397",
-  "total_findings": 27,
-  "total_files": 22,
-  "files": [
-    {
-      "path": "package.json",
-      "count": 5,
-      "findings": [
+    "tool": "knip",
+    "generated": "2025-12-13T23:22:26.464578",
+    "total_findings": 27,
+    "total_files": 22,
+    "files": [
         {
-          "line": 61,
-          "column": 6,
-          "category": "devDependencies",
-          "rule": "devDependencies",
-          "message": "[devDependencies] @anthropic-ai/sdk",
-          "raw": "package.json:61:6: [devDependencies] @anthropic-ai/sdk"
+            "path": "package.json",
+            "count": 5,
+            "findings": [
+                {
+                    "line": 61,
+                    "column": 6,
+                    "category": "devDependencies",
+                    "rule": "devDependencies",
+                    "message": "[devDependencies] @anthropic-ai/sdk",
+                    "raw": "package.json:61:6: [devDependencies] @anthropic-ai/sdk"
+                },
+                {
+                    "line": 63,
+                    "column": 6,
+                    "category": "devDependencies",
+                    "rule": "devDependencies",
+                    "message": "[devDependencies] @types/d3",
+                    "raw": "package.json:63:6: [devDependencies] @types/d3"
+                },
+                {
+                    "line": 64,
+                    "column": 6,
+                    "category": "devDependencies",
+                    "rule": "devDependencies",
+                    "message": "[devDependencies] @types/frida-gum",
+                    "raw": "package.json:64:6: [devDependencies] @types/frida-gum"
+                },
+                {
+                    "line": 67,
+                    "column": 6,
+                    "category": "devDependencies",
+                    "rule": "devDependencies",
+                    "message": "[devDependencies] eslint-config-prettier",
+                    "raw": "package.json:67:6: [devDependencies] eslint-config-prettier"
+                },
+                {
+                    "line": 68,
+                    "column": 6,
+                    "category": "devDependencies",
+                    "rule": "devDependencies",
+                    "message": "[devDependencies] eslint-plugin-import",
+                    "raw": "package.json:68:6: [devDependencies] eslint-plugin-import"
+                }
+            ]
         },
         {
-          "line": 63,
-          "column": 6,
-          "category": "devDependencies",
-          "rule": "devDependencies",
-          "message": "[devDependencies] @types/d3",
-          "raw": "package.json:63:6: [devDependencies] @types/d3"
+            "path": "intellicrack/scripts/frida/universal_unpacker.js",
+            "count": 2,
+            "findings": [
+                {
+                    "line": 14598,
+                    "column": 39,
+                    "category": "unlisted",
+                    "rule": "unlisted",
+                    "message": "[unlisted] ws",
+                    "raw": "intellicrack/scripts/frida/universal_unpacker.js:14598:39: [unlisted] ws"
+                },
+                {
+                    "line": 14850,
+                    "column": 41,
+                    "category": "unlisted",
+                    "rule": "unlisted",
+                    "message": "[unlisted] msgpack",
+                    "raw": "intellicrack/scripts/frida/universal_unpacker.js:14850:41: [unlisted] msgpack"
+                }
+            ]
         },
         {
-          "line": 64,
-          "column": 6,
-          "category": "devDependencies",
-          "rule": "devDependencies",
-          "message": "[devDependencies] @types/frida-gum",
-          "raw": "package.json:64:6: [devDependencies] @types/frida-gum"
+            "path": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 3704,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3704:22: [exports] default"
+                }
+            ]
         },
         {
-          "line": 67,
-          "column": 6,
-          "category": "devDependencies",
-          "rule": "devDependencies",
-          "message": "[devDependencies] eslint-config-prettier",
-          "raw": "package.json:67:6: [devDependencies] eslint-config-prettier"
+            "path": "intellicrack/scripts/frida/blockchain_license_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 2501,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/blockchain_license_bypass.js:2501:22: [exports] default"
+                }
+            ]
         },
         {
-          "line": 68,
-          "column": 6,
-          "category": "devDependencies",
-          "rule": "devDependencies",
-          "message": "[devDependencies] eslint-plugin-import",
-          "raw": "package.json:68:6: [devDependencies] eslint-plugin-import"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/universal_unpacker.js",
-      "count": 2,
-      "findings": [
-        {
-          "line": 14598,
-          "column": 39,
-          "category": "unlisted",
-          "rule": "unlisted",
-          "message": "[unlisted] ws",
-          "raw": "intellicrack/scripts/frida/universal_unpacker.js:14598:39: [unlisted] ws"
+            "path": "intellicrack/scripts/frida/bypass_success_tracker.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 2638,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/bypass_success_tracker.js:2638:22: [exports] default"
+                }
+            ]
         },
         {
-          "line": 14850,
-          "column": 41,
-          "category": "unlisted",
-          "rule": "unlisted",
-          "message": "[unlisted] msgpack",
-          "raw": "intellicrack/scripts/frida/universal_unpacker.js:14850:41: [unlisted] msgpack"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/central_orchestrator.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 4815,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/central_orchestrator.js:4815:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 3704,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3704:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/blockchain_license_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/certificate_pinner_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 3179,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/certificate_pinner_bypass.js:3179:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 2501,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/blockchain_license_bypass.js:2501:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/bypass_success_tracker.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/certificate_pinning_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 8859,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/certificate_pinning_bypass.js:8859:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 2638,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/bypass_success_tracker.js:2638:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/central_orchestrator.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/cloud_licensing_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 2786,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/cloud_licensing_bypass.js:2786:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 4815,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/central_orchestrator.js:4815:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/certificate_pinner_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/dotnet_bypass_suite.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 2502,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/dotnet_bypass_suite.js:2502:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 3179,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/certificate_pinner_bypass.js:3179:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/certificate_pinning_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/drm_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 4184,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/drm_bypass.js:4184:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 8859,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/certificate_pinning_bypass.js:8859:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/cloud_licensing_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/dynamic_script_generator.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 5603,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/dynamic_script_generator.js:5603:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 2786,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/cloud_licensing_bypass.js:2786:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/dotnet_bypass_suite.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/hook_effectiveness_monitor.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 5090,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/hook_effectiveness_monitor.js:5090:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 2502,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/dotnet_bypass_suite.js:2502:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/drm_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/http3_quic_interceptor.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 3443,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/http3_quic_interceptor.js:3443:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 4184,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/drm_bypass.js:4184:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/dynamic_script_generator.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/kernel_bridge.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 3334,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/kernel_bridge.js:3334:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 5603,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/dynamic_script_generator.js:5603:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/hook_effectiveness_monitor.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/kernel_mode_bypass.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 2453,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/kernel_mode_bypass.js:2453:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 5090,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/hook_effectiveness_monitor.js:5090:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/http3_quic_interceptor.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/keygen_generator.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 5808,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/keygen_generator.js:5808:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 3443,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/http3_quic_interceptor.js:3443:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/kernel_bridge.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/ml_license_detector.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 1533,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/ml_license_detector.js:1533:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 3334,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/kernel_bridge.js:3334:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/kernel_mode_bypass.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/ntp_blocker.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 4443,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/ntp_blocker.js:4443:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 2453,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/kernel_mode_bypass.js:2453:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/keygen_generator.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/obfuscation_detector.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 3260,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/obfuscation_detector.js:3260:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 5808,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/keygen_generator.js:5808:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/ml_license_detector.js",
-      "count": 1,
-      "findings": [
+            "path": "intellicrack/scripts/frida/realtime_protection_detector.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 10901,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/realtime_protection_detector.js:10901:22: [exports] default"
+                }
+            ]
+        },
         {
-          "line": 1533,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/ml_license_detector.js:1533:22: [exports] default"
+            "path": "intellicrack/scripts/frida/test_binary_patcher.js",
+            "count": 1,
+            "findings": [
+                {
+                    "line": 669,
+                    "column": 22,
+                    "category": "exports",
+                    "rule": "exports",
+                    "message": "[exports] default",
+                    "raw": "intellicrack/scripts/frida/test_binary_patcher.js:669:22: [exports] default"
+                }
+            ]
         }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/ntp_blocker.js",
-      "count": 1,
-      "findings": [
-        {
-          "line": 4443,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/ntp_blocker.js:4443:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/obfuscation_detector.js",
-      "count": 1,
-      "findings": [
-        {
-          "line": 3260,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/obfuscation_detector.js:3260:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/realtime_protection_detector.js",
-      "count": 1,
-      "findings": [
-        {
-          "line": 10901,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/realtime_protection_detector.js:10901:22: [exports] default"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack/scripts/frida/test_binary_patcher.js",
-      "count": 1,
-      "findings": [
-        {
-          "line": 669,
-          "column": 22,
-          "category": "exports",
-          "rule": "exports",
-          "message": "[exports] default",
-          "raw": "intellicrack/scripts/frida/test_binary_patcher.js:669:22: [exports] default"
-        }
-      ]
-    }
-  ]
+    ]
 }

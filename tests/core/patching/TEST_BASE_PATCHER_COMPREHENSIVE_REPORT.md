@@ -12,6 +12,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 ## Test Coverage Overview
 
 ### Total Test Count: 45 Tests
+
 - **Initialization Tests:** 10 tests
 - **Library Management Tests:** 6 tests
 - **Constants Initialization Tests:** 4 tests
@@ -30,6 +31,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate proper initialization of BaseWindowsPatcher instances
 
 **Tests:**
+
 - `test_initialization_creates_logger` - Logger instance created with correct name
 - `test_initialization_sets_ntdll_flag` - ntdll requirement flag initialized
 - `test_initialization_with_ntdll_requirement` - Optional ntdll requirement set correctly
@@ -37,6 +39,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 - `test_get_required_libraries_with_ntdll` - ntdll.dll included when required
 
 **Validation Method:**
+
 - Instantiate concrete patcher implementations
 - Verify logger objects and naming
 - Check required libraries lists
@@ -49,6 +52,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate Windows library (kernel32.dll, ntdll.dll) loading
 
 **Tests:**
+
 - `test_initialize_kernel32_successful` - kernel32.dll loads with process creation functions
 - `test_initialize_ntdll_successful` - ntdll.dll loads when available
 - `test_initialize_fails_without_kernel32` - RuntimeError raised when kernel32 unavailable
@@ -56,6 +60,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 - `test_initialize_succeeds_with_optional_ntdll_missing` - Continues when optional ntdll missing
 
 **Validation Method:**
+
 - Call `_initialize_windows_libraries()`
 - Verify library objects have required functions (CreateProcessW, CloseHandle)
 - Test error handling with monkeypatched library getters
@@ -68,12 +73,14 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate Windows constant values for process/memory operations
 
 **Tests:**
+
 - `test_initialize_constants_process_flags` - CREATE_SUSPENDED, CREATE_NO_WINDOW set correctly
 - `test_initialize_constants_memory_flags` - MEM_COMMIT, MEM_RESERVE, PAGE_EXECUTE_READWRITE set
 - `test_initialize_constants_thread_flags` - THREAD_SET_CONTEXT, THREAD_GET_CONTEXT, THREAD_SUSPEND_RESUME set
 - `test_constants_match_windows_constants_class` - Values match WindowsConstants class
 
 **Validation Method:**
+
 - Call `_initialize_windows_constants()`
 - Verify constant values match Windows API specifications
 - Compare against WindowsConstants class values
@@ -86,6 +93,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate suspended process result handling patterns
 
 **Tests:**
+
 - `test_handle_suspended_process_success` - Successful results extracted correctly
 - `test_handle_suspended_process_failure` - Failures return (False, None, None) tuple
 - `test_handle_suspended_process_logs_failure` - Failures logged at ERROR level
@@ -93,6 +101,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 - `test_handle_suspended_process_validates_structure` - Result dictionary structure validated
 
 **Validation Method:**
+
 - Call `handle_suspended_process_result()` with various result dictionaries
 - Verify return tuple structure (success, process_info, context)
 - Check logging output with caplog fixture
@@ -105,6 +114,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate actual Windows process creation in suspended state
 
 **Tests:**
+
 - `test_create_suspended_process_with_valid_executable` - Creates suspended notepad.exe process
 - `test_create_suspended_process_with_invalid_executable` - Returns empty dict for invalid paths
 - `test_get_thread_context_with_valid_handle` - Retrieves thread context from suspended process
@@ -112,6 +122,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 - `test_get_thread_context_without_kernel32` - Fails gracefully without kernel32
 
 **Validation Method:**
+
 - Use real Windows executable (notepad.exe)
 - Call Windows API CreateProcessW with CREATE_SUSPENDED flag
 - Verify process_handle, thread_handle, process_id, thread_id in results
@@ -126,12 +137,14 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate end-to-end suspended process creation workflow
 
 **Tests:**
+
 - `test_create_and_handle_success` - Complete workflow succeeds with valid executable
 - `test_create_and_handle_failure` - Workflow handles failures gracefully
 - `test_create_and_handle_custom_logger` - Custom logger used throughout workflow
 - `test_create_and_handle_calls_common_function` - Uses process_common utility function
 
 **Validation Method:**
+
 - Call `create_and_handle_suspended_process()` with real executable
 - Verify complete workflow: create process → get context → return results
 - Test with invalid paths to verify error handling
@@ -145,12 +158,14 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate ABC enforcement of abstract methods
 
 **Tests:**
+
 - `test_cannot_instantiate_base_class_directly` - BaseWindowsPatcher raises TypeError
 - `test_concrete_class_must_implement_get_required_libraries` - Abstract method required
 - `test_concrete_class_must_implement_create_suspended_process` - Abstract method required
 - `test_concrete_class_must_implement_get_thread_context` - Abstract method required
 
 **Validation Method:**
+
 - Attempt to instantiate BaseWindowsPatcher directly
 - Create incomplete subclasses missing each abstract method
 - Verify TypeError raised with "Can't instantiate abstract class" message
@@ -163,12 +178,14 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate complete patching workflows with real binaries
 
 **Tests:**
+
 - `test_full_initialization_workflow` - Complete library + constants initialization
 - `test_process_creation_with_real_binary` - Create suspended process with notepad.exe
 - `test_thread_context_retrieval_real_process` - Get thread context from real suspended process
 - `test_complete_patching_setup_workflow` - End-to-end initialization → process creation → context retrieval
 
 **Validation Method:**
+
 - Initialize Windows libraries and constants
 - Create suspended process using real Windows executable
 - Retrieve thread context from suspended process
@@ -183,6 +200,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate error handling and edge case behavior
 
 **Tests:**
+
 - `test_handle_null_process_info` - Handles None process_info gracefully
 - `test_handle_partial_result_structure` - Handles incomplete result dictionaries
 - `test_create_process_with_empty_path` - Returns empty dict for empty path
@@ -191,6 +209,7 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 - `test_get_context_with_negative_handle` - Returns empty dict for negative handle
 
 **Validation Method:**
+
 - Test with invalid inputs (empty strings, None, invalid handles)
 - Verify graceful degradation (empty dict returns, not exceptions)
 - Validate error handling doesn't crash patcher
@@ -203,11 +222,13 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 **Purpose:** Validate multiple patcher instances work independently
 
 **Tests:**
+
 - `test_multiple_instances_independent` - Separate instances maintain independent state
 - `test_multiple_initializations_safe` - Re-initialization doesn't corrupt state
 - `test_concurrent_process_creation` - Multiple patchers create processes independently
 
 **Validation Method:**
+
 - Create multiple ConcretePatcher instances
 - Verify independent loggers and attributes
 - Initialize libraries multiple times
@@ -219,24 +240,28 @@ Comprehensive production-ready test suite for BaseWindowsPatcher abstract base c
 ## Key Features Validated
 
 ### 1. Real Windows Process Manipulation
+
 - **Suspended Process Creation:** Tests create actual Windows processes in suspended state using notepad.exe
 - **Thread Context Retrieval:** Tests retrieve real thread context structures from suspended processes
 - **Handle Management:** Tests properly manage and cleanup Windows process/thread handles
 - **Resource Cleanup:** All tests cleanup suspended processes with TerminateProcess/CloseHandle
 
 ### 2. Production-Ready Error Handling
+
 - **Invalid Executable Paths:** Returns empty dict, doesn't crash
 - **Missing Libraries:** Raises RuntimeError with descriptive messages
 - **Invalid Handles:** Returns empty dict for zero/invalid handles
 - **Partial Data:** Handles incomplete result structures gracefully
 
 ### 3. Windows API Integration
+
 - **kernel32.dll Loading:** Tests verify CreateProcessW, CloseHandle, TerminateProcess, GetThreadContext functions available
 - **ntdll.dll Loading:** Tests verify optional ntdll loading with proper error handling
 - **Constant Values:** Tests validate Windows API constants match specifications
 - **Structure Definitions:** Tests use proper STARTUPINFO and PROCESS_INFORMATION structures
 
 ### 4. Abstract Base Class Pattern
+
 - **Method Enforcement:** Tests verify ABC enforces abstract method implementation
 - **Subclass Requirements:** Tests validate concrete implementations must provide all abstract methods
 - **Type Safety:** Tests ensure TypeError raised for incomplete implementations
@@ -300,24 +325,28 @@ tests/core/patching/test_base_patcher_comprehensive.py::TestMultipleInstances::t
 ## Critical Validation Points
 
 ### ✓ NO MOCKS for Core Functionality
+
 - Process creation uses real Windows API calls (CreateProcessW)
 - Thread context uses real Windows API calls (GetThreadContext)
 - Process cleanup uses real Windows API calls (TerminateProcess, CloseHandle)
 - Only error handling paths use monkeypatching to simulate failures
 
 ### ✓ Real Binary Testing
+
 - Tests use actual Windows executable (notepad.exe)
 - Suspended processes actually created and terminated
 - Thread context actually retrieved from running processes
 - Windows API calls validated against real system
 
 ### ✓ Production-Ready Error Handling
+
 - Invalid paths return empty dict, don't raise exceptions
 - Missing libraries raise RuntimeError with descriptive messages
 - Invalid handles handled gracefully
 - Partial data structures processed correctly
 
 ### ✓ Complete Type Annotations
+
 - All test functions have complete type hints
 - Fixture return types specified
 - Test parameters typed

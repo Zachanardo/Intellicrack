@@ -117,7 +117,6 @@ def patch_at_address(address, patch_bytes):
         # Commit transaction
         currentProgram.endTransaction(trans_id, True)
     except Exception as e:
-        logger.error("Exception in script_generation_tool: %s", e)
         print("[-] Patch failed: {{}}".format(e))
         currentProgram.endTransaction(trans_id, False)
 
@@ -233,7 +232,7 @@ deobfuscate_strings()''',
             }
 
         except Exception as e:
-            logger.error(f"Script generation error: {e}")
+            logger.error("Script generation error: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
 
     def _generate_frida_script(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:

@@ -69,7 +69,7 @@ try:
     FRIDA_VERSION = frida.__version__
 
 except ImportError as e:
-    logger.error("Frida not available, using fallback implementations: %s", e)
+    logger.error("Frida not available, using fallback implementations: %s", e, exc_info=True)
     HAS_FRIDA = False
     FRIDA_VERSION = None
 
@@ -187,7 +187,7 @@ except ImportError as e:
                                 continue
 
             except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-                logger.error("Failed to enumerate processes: %s", e)
+                logger.error("Failed to enumerate processes: %s", e, exc_info=True)
 
             self._processes = processes
             return processes
@@ -301,7 +301,7 @@ except ImportError as e:
                 return pid
 
             except Exception as e:
-                logger.error("Failed to spawn process: %s", e)
+                logger.error("Failed to spawn process: %s", e, exc_info=True)
                 raise
 
         def resume(self, pid: int) -> None:
@@ -343,7 +343,7 @@ except ImportError as e:
 
                     os.kill(pid, signal.SIGKILL)
             except Exception as e:
-                logger.error("Failed to kill process %d: %s", pid, e)
+                logger.error("Failed to kill process %d: %s", pid, e, exc_info=True)
 
         def get_process(self, name: str) -> Optional["FallbackProcess"]:
             """Get process by name.
@@ -438,7 +438,7 @@ except ImportError as e:
                 logger.warning("Could not extract PID from terminal session %s", session_id)
 
             except Exception as e:
-                logger.error("Error getting PID from terminal session: %s", e)
+                logger.error("Error getting PID from terminal session: %s", e, exc_info=True)
 
             return os.getpid()
 
@@ -591,7 +591,7 @@ except ImportError as e:
                 try:
                     handler("user-requested", None)
                 except Exception as e:
-                    logger.error("Error in detach handler: %s", e)
+                    logger.error("Error in detach handler: %s", e, exc_info=True)
 
             # Remove from device sessions
             if self.process.pid in self.device._attached_sessions:
@@ -829,7 +829,7 @@ except ImportError as e:
                     try:
                         handler(message, None)
                     except Exception as e:
-                        logger.error("Error in message handler: %s", e)
+                        logger.error("Error in message handler: %s", e, exc_info=True)
             else:
                 self._pending_messages.append(message)
 

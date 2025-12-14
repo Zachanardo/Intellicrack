@@ -1,23 +1,23 @@
 {
-  "tool": "cargo_audit",
-  "generated": "2025-12-11T23:03:14.999838",
-  "total_findings": 1,
-  "total_files": 1,
-  "files": [
-    {
-      "path": "Cargo.toml",
-      "count": 1,
-      "findings": [
+    "tool": "cargo_audit",
+    "generated": "2025-12-13T23:22:03.580499",
+    "total_findings": 1,
+    "total_files": 1,
+    "files": [
         {
-          "line": null,
-          "column": null,
-          "crate": "dotenv",
-          "vulnerability": "RUSTSEC-2021-0141",
-          "severity": "unmaintained",
-          "message": "[dotenv] dotenv is Unmaintained (RUSTSEC-2021-0141)",
-          "raw": "Cargo.toml: [unmaintained] dotenv - dotenv is Unmaintained (RUSTSEC-2021-0141)"
+            "path": "Cargo.toml",
+            "count": 1,
+            "findings": [
+                {
+                    "line": null,
+                    "column": null,
+                    "crate": "dotenv",
+                    "vulnerability": "RUSTSEC-2021-0141",
+                    "severity": "unmaintained",
+                    "message": "[dotenv] dotenv is Unmaintained (RUSTSEC-2021-0141)",
+                    "raw": "Cargo.toml: [unmaintained] dotenv - dotenv is Unmaintained (RUSTSEC-2021-0141)"
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

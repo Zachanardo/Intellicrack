@@ -568,18 +568,16 @@ class BinaryFeatureExtractor:
                 end = min(raw_offset + raw_size, len(data))
                 section_data = data[raw_offset:end]
 
-            result["sections"].append(
-                {
-                    "name": section_name,
-                    "virtual_size": virtual_size,
-                    "virtual_address": virtual_address,
-                    "raw_size": raw_size,
-                    "raw_offset": raw_offset,
-                    "characteristics": characteristics,
-                    "executable": executable,
-                    "data": section_data,
-                }
-            )
+            result["sections"].append({
+                "name": section_name,
+                "virtual_size": virtual_size,
+                "virtual_address": virtual_address,
+                "raw_size": raw_size,
+                "raw_offset": raw_offset,
+                "characteristics": characteristics,
+                "executable": executable,
+                "data": section_data,
+            })
 
         if number_of_sections > 0:
             last_section = result["sections"][-1]

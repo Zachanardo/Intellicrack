@@ -33,18 +33,21 @@ from typing import Any
 
 try:
     import ssdeep
+
     SSDEEP_AVAILABLE = True
 except ImportError:
     SSDEEP_AVAILABLE = False
 
 try:
     import tlsh
+
     TLSH_AVAILABLE = True
 except ImportError:
     TLSH_AVAILABLE = False
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -52,6 +55,7 @@ except ImportError:
 
 class FingerprintType(Enum):
     """Types of fingerprints that can be generated."""
+
     CRYPTOGRAPHIC = "cryptographic"
     FUZZY = "fuzzy"
     STRUCTURAL = "structural"
@@ -66,6 +70,7 @@ class FingerprintType(Enum):
 @dataclass
 class BinaryFingerprint:
     """Complete fingerprint of a binary."""
+
     path: str
     md5: str
     sha1: str
@@ -84,6 +89,7 @@ class BinaryFingerprint:
 @dataclass
 class ProtectionFingerprint:
     """Fingerprint of protection scheme characteristics."""
+
     protection_name: str
     confidence: float
     signatures: list[bytes]
@@ -97,6 +103,7 @@ class ProtectionFingerprint:
 @dataclass
 class CompilerFingerprint:
     """Fingerprint of compiler/linker characteristics."""
+
     compiler_name: str
     compiler_version: str | None
     linker_version: str | None
@@ -110,6 +117,7 @@ class CompilerFingerprint:
 @dataclass
 class LicenseSystemFingerprint:
     """Fingerprint of license system implementation."""
+
     license_system: str
     version: str | None
     confidence: float

@@ -112,7 +112,9 @@ const CRYPTO_CERT_SUBJECTS = [
 ];
 
 function randomDelay() {
-    if (!CONFIG.stealthMode) { return; }
+    if (!CONFIG.stealthMode) {
+        return;
+    }
     const delay =
         Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1)) +
         CONFIG.blockingDelay.min;
@@ -131,7 +133,9 @@ function isExcludedProcess() {
 }
 
 function encryptData(data) {
-    if (!CONFIG.logEncryption) { return data; }
+    if (!CONFIG.logEncryption) {
+        return data;
+    }
     const key = 0xdeadbeef;
     let result = '';
     for (let i = 0; i < data.length; i++) {
@@ -141,7 +145,9 @@ function encryptData(data) {
 }
 
 function detectDomainRotation(domain) {
-    if (!CONFIG.domainRotationDetection) { return false; }
+    if (!CONFIG.domainRotationDetection) {
+        return false;
+    }
 
     const suspiciousPatterns = [
         /\d{1,3}-\d{1,3}-\d{1,3}-\d{1,3}\.amazonaws\.com/,
@@ -180,12 +186,16 @@ function tryAttach(module, funcName, hooks) {
 // Hook Native API network functions
 tryAttach('ntdll.dll', 'NtCreateFile', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const objectAttrs = args[2];
         const objectNamePtr = objectAttrs.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
 
-        if (!objectNamePtr || objectNamePtr.isNull()) { return; }
+        if (!objectNamePtr || objectNamePtr.isNull()) {
+            return;
+        }
 
         try {
             const objectName = objectNamePtr.add(8).readPointer().readUtf16String();
@@ -208,10 +218,14 @@ tryAttach('ntdll.dll', 'NtCreateFile', {
 // Enhanced WinHTTP connection blocking with intelligent domain matching
 tryAttach('winhttp.dll', 'WinHttpConnect', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const serverName = args[1].readUtf16String();
-        if (!serverName) { return; }
+        if (!serverName) {
+            return;
+        }
 
         const lowerDomain = serverName.toLowerCase();
         let shouldBlock = false;
@@ -224,7 +238,9 @@ tryAttach('winhttp.dll', 'WinHttpConnect', {
                     break;
                 }
             }
-            if (shouldBlock) { break; }
+            if (shouldBlock) {
+                break;
+            }
         }
 
         // Additional pattern-based detection
@@ -255,7 +271,9 @@ tryAttach('winhttp.dll', 'WinHttpConnect', {
 // Enhanced WinHTTP request blocking
 tryAttach('winhttp.dll', 'WinHttpSendRequest', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         try {
             const headers = args[2] ? args[2].readUtf16String() : '';
@@ -295,7 +313,9 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
 // Hook modern HTTP.SYS API
 tryAttach('httpapi.dll', 'HttpSendHttpResponse', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         // Block HTTP.SYS responses that might contain telemetry data
         const responseEntity = args[3];
@@ -323,7 +343,9 @@ tryAttach('httpapi.dll', 'HttpSendHttpResponse', {
 if (CONFIG.cryptoHooking) {
     tryAttach('crypt32.dll', 'CryptVerifySignature', {
         onEnter(args) {
-            if (isExcludedProcess()) { return; }
+            if (isExcludedProcess()) {
+                return;
+            }
 
             // args[0] is HCRYPTHASH, args[1] is signature, args[2] is public key
             try {
@@ -353,7 +375,9 @@ if (CONFIG.cryptoHooking) {
     // Hook CertVerifySubjectCertificateContext
     tryAttach('crypt32.dll', 'CertVerifySubjectCertificateContext', {
         onEnter(args) {
-            if (isExcludedProcess()) { return; }
+            if (isExcludedProcess()) {
+                return;
+            }
 
             const certContext = args[0];
             if (certContext && !certContext.isNull()) {
@@ -388,7 +412,9 @@ if (CONFIG.cryptoHooking) {
     // Hook BCrypt functions for modern crypto
     tryAttach('bcrypt.dll', 'BCryptVerifySignature', {
         onEnter(_args) {
-            if (isExcludedProcess()) { return; }
+            if (isExcludedProcess()) {
+                return;
+            }
 
             // Block BCrypt signature verifications
             try {
@@ -417,10 +443,14 @@ if (CONFIG.cryptoHooking) {
 // Enhanced Winsock connection blocking with intelligent filtering
 tryAttach('ws2_32.dll', 'WSAConnect', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const sockAddr = args[1];
-        if (!sockAddr || sockAddr.isNull()) { return; }
+        if (!sockAddr || sockAddr.isNull()) {
+            return;
+        }
 
         const family = sockAddr.readU16();
         if (family === 2) {
@@ -480,10 +510,14 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
 // Enhanced connect() blocking with IPv6 support
 tryAttach('ws2_32.dll', 'connect', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const sockAddr = args[1];
-        if (!sockAddr || sockAddr.isNull()) { return; }
+        if (!sockAddr || sockAddr.isNull()) {
+            return;
+        }
 
         const family = sockAddr.readU16();
         let shouldBlock = false;
@@ -521,7 +555,9 @@ tryAttach('ws2_32.dll', 'connect', {
 // Block socket I/O operations
 tryAttach('ws2_32.dll', 'send', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const buffer = args[1];
         const len = args[2].toInt32();
@@ -560,10 +596,14 @@ tryAttach('ws2_32.dll', 'send', {
 // Enhanced DNS resolution blocking - GetAddrInfoW (Wide char)
 tryAttach('ws2_32.dll', 'GetAddrInfoW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const nodeName = args[0] ? args[0].readUtf16String() : null;
-        if (!nodeName) { return; }
+        if (!nodeName) {
+            return;
+        }
 
         const lowerDomain = nodeName.toLowerCase();
         let shouldBlock = false;
@@ -576,7 +616,9 @@ tryAttach('ws2_32.dll', 'GetAddrInfoW', {
                     break;
                 }
             }
-            if (shouldBlock) { break; }
+            if (shouldBlock) {
+                break;
+            }
         }
 
         // Pattern-based detection for domain rotation
@@ -607,10 +649,14 @@ tryAttach('ws2_32.dll', 'GetAddrInfoW', {
 // Enhanced DNS resolution blocking - GetAddrInfoA (ANSI)
 tryAttach('ws2_32.dll', 'GetAddrInfoA', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const nodeName = args[0] ? args[0].readCString() : null;
-        if (!nodeName) { return; }
+        if (!nodeName) {
+            return;
+        }
 
         const lowerDomain = nodeName.toLowerCase();
         let shouldBlock = false;
@@ -623,7 +669,9 @@ tryAttach('ws2_32.dll', 'GetAddrInfoA', {
                     break;
                 }
             }
-            if (shouldBlock) { break; }
+            if (shouldBlock) {
+                break;
+            }
         }
 
         if (!shouldBlock && detectDomainRotation(lowerDomain)) {
@@ -653,10 +701,14 @@ tryAttach('ws2_32.dll', 'GetAddrInfoA', {
 // Block legacy gethostbyname function
 tryAttach('ws2_32.dll', 'gethostbyname', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const hostName = args[0] ? args[0].readCString() : null;
-        if (!hostName) { return; }
+        if (!hostName) {
+            return;
+        }
 
         const lowerDomain = hostName.toLowerCase();
         const suspiciousPatterns = ['telemetry', 'activation', 'genuine', 'watson', 'analytics'];
@@ -684,10 +736,14 @@ tryAttach('ws2_32.dll', 'gethostbyname', {
 // Block modern DNS-over-HTTPS resolution
 tryAttach('dnsapi.dll', 'DnsQuery_W', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const queryName = args[0] ? args[0].readUtf16String() : null;
-        if (!queryName) { return; }
+        if (!queryName) {
+            return;
+        }
 
         const lowerQuery = queryName.toLowerCase();
         let shouldBlock = false;
@@ -699,7 +755,9 @@ tryAttach('dnsapi.dll', 'DnsQuery_W', {
                     break;
                 }
             }
-            if (shouldBlock) { break; }
+            if (shouldBlock) {
+                break;
+            }
         }
 
         if (shouldBlock) {
@@ -727,10 +785,14 @@ tryAttach('dnsapi.dll', 'DnsQuery_W', {
 // Enhanced CreateProcessW blocking
 tryAttach('kernel32.dll', 'CreateProcessW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const cmdLine = args[1] ? args[1].readUtf16String() : null;
-        if (!cmdLine) { return; }
+        if (!cmdLine) {
+            return;
+        }
 
         const lowerCmd = cmdLine.toLowerCase();
         const suspiciousProcesses = [
@@ -774,10 +836,14 @@ tryAttach('kernel32.dll', 'CreateProcessW', {
 // Block CreateProcessA (ANSI version)
 tryAttach('kernel32.dll', 'CreateProcessA', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const cmdLine = args[1] ? args[1].readCString() : null;
-        if (!cmdLine) { return; }
+        if (!cmdLine) {
+            return;
+        }
 
         const lowerCmd = cmdLine.toLowerCase();
         const suspiciousProcesses = [
@@ -816,7 +882,9 @@ tryAttach('kernel32.dll', 'CreateProcessA', {
 // Block ShellExecuteW for suspicious programs
 tryAttach('shell32.dll', 'ShellExecuteW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const file = args[2] ? args[2].readUtf16String() : null;
         const parameters = args[3] ? args[3].readUtf16String() : null;
@@ -847,7 +915,9 @@ tryAttach('shell32.dll', 'ShellExecuteW', {
 // Hook NtCreateProcess for deeper process blocking
 tryAttach('ntdll.dll', 'NtCreateProcess', {
     onEnter(_args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         // Block at the lowest level to catch all process creation attempts
         try {
@@ -875,10 +945,14 @@ tryAttach('ntdll.dll', 'NtCreateProcess', {
 // Enhanced RegSetValueExW blocking
 tryAttach('advapi32.dll', 'RegSetValueExW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const valueName = args[1] ? args[1].readUtf16String() : null;
-        if (!valueName) { return; }
+        if (!valueName) {
+            return;
+        }
 
         const lowerValue = valueName.toLowerCase();
         const suspiciousValues = [
@@ -922,10 +996,14 @@ tryAttach('advapi32.dll', 'RegSetValueExW', {
 // Block RegSetValueExA (ANSI version)
 tryAttach('advapi32.dll', 'RegSetValueExA', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const valueName = args[1] ? args[1].readCString() : null;
-        if (!valueName) { return; }
+        if (!valueName) {
+            return;
+        }
 
         const lowerValue = valueName.toLowerCase();
         const suspiciousValues = ['telemetry', 'diagtrack', 'watson', 'ceip'];
@@ -955,10 +1033,14 @@ tryAttach('advapi32.dll', 'RegSetValueExA', {
 // Block RegCreateKeyExW for telemetry key creation
 tryAttach('advapi32.dll', 'RegCreateKeyExW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const keyName = args[1] ? args[1].readUtf16String() : null;
-        if (!keyName) { return; }
+        if (!keyName) {
+            return;
+        }
 
         const lowerKey = keyName.toLowerCase();
         const suspiciousKeys = [
@@ -996,7 +1078,9 @@ tryAttach('advapi32.dll', 'RegCreateKeyExW', {
 // Hook Native API registry functions
 tryAttach('ntdll.dll', 'NtSetValueKey', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const valueNameStruct = args[1];
         if (valueNameStruct && !valueNameStruct.isNull()) {
@@ -1024,10 +1108,14 @@ tryAttach('ntdll.dll', 'NtSetValueKey', {
 // Enhanced CreateFileW blocking
 tryAttach('kernel32.dll', 'CreateFileW', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const fileName = args[0] ? args[0].readUtf16String() : null;
-        if (!fileName) { return; }
+        if (!fileName) {
+            return;
+        }
 
         const lowerFile = fileName.toLowerCase();
         const blockedPaths = [
@@ -1073,10 +1161,14 @@ tryAttach('kernel32.dll', 'CreateFileW', {
 // Block CreateFileA (ANSI version)
 tryAttach('kernel32.dll', 'CreateFileA', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const fileName = args[0] ? args[0].readCString() : null;
-        if (!fileName) { return; }
+        if (!fileName) {
+            return;
+        }
 
         const lowerFile = fileName.toLowerCase();
         const blockedPaths = ['telemetry', 'diagtrack', 'watson', 'activation'];
@@ -1106,7 +1198,9 @@ tryAttach('kernel32.dll', 'CreateFileA', {
 // Block WriteFile operations on suspicious files
 tryAttach('kernel32.dll', 'WriteFile', {
     onEnter(args) {
-        if (isExcludedProcess()) { return; }
+        if (isExcludedProcess()) {
+            return;
+        }
 
         const buffer = args[1];
         const bytesToWrite = args[2].toInt32();

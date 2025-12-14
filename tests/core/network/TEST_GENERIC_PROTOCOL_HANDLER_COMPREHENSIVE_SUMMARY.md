@@ -17,7 +17,9 @@ The comprehensive test suite validates real generic protocol handling, TCP/UDP p
 ### Test Classes and Categories
 
 #### 1. TestGenericProtocolHandlerInitialization (5 tests)
+
 Tests handler initialization and configuration:
+
 - Default TCP protocol initialization
 - TCP and UDP protocol configuration
 - Custom bind host configuration
@@ -25,7 +27,9 @@ Tests handler initialization and configuration:
 - Configuration parameter validation
 
 #### 2. TestGenericProtocolHandlerResponseGeneration (17 tests)
+
 Tests protocol response generation for various request types:
+
 - License verification keyword detection (license, verify, check, auth)
 - Status/heartbeat keyword detection (status, ping, heartbeat)
 - Version/info keyword responses
@@ -36,7 +40,9 @@ Tests protocol response generation for various request types:
 - Non-UTF8 binary data handling
 
 #### 3. TestGenericProtocolHandlerTCPProxy (15 tests)
+
 Tests TCP proxy server functionality:
+
 - Server startup and client connection acceptance
 - License request/response handling
 - Request and response data capture
@@ -50,7 +56,9 @@ Tests TCP proxy server functionality:
 - Clean shutdown and port release
 
 #### 4. TestGenericProtocolHandlerUDPProxy (7 tests)
+
 Tests UDP proxy server functionality:
+
 - UDP packet reception and response
 - License verification over UDP
 - Multiple packets from same client
@@ -60,7 +68,9 @@ Tests UDP proxy server functionality:
 - Clean shutdown verification
 
 #### 5. TestGenericProtocolHandlerDataManagement (9 tests)
+
 Tests data capture and management:
+
 - Request data capture with timestamp, hex representation, and source address
 - Response data capture with timestamp, hex representation, and destination address
 - Clear data functionality (requests, responses, active connections)
@@ -68,7 +78,9 @@ Tests data capture and management:
 - Metadata preservation in captured data
 
 #### 6. TestGenericProtocolHandlerConnectionHandling (7 tests)
+
 Tests connection handling and edge cases:
+
 - Socket without getpeername support
 - Request and response storage
 - UDP-like sendto socket handling
@@ -78,7 +90,9 @@ Tests connection handling and edge cases:
 - Active connection metadata
 
 #### 7. TestGenericProtocolHandlerEdgeCases (3 tests)
+
 Tests edge cases and robustness:
+
 - Protocol routing (TCP vs UDP dispatch)
 - Large request data handling (3000+ bytes)
 - Rapid connection cycling (10 consecutive connections)
@@ -87,14 +101,18 @@ Tests edge cases and robustness:
 ## Key Testing Principles Applied
 
 ### 1. No Mocks or Stubs
+
 All tests use real socket connections and actual network communication:
+
 - Real TCP sockets for client-server communication
 - Real UDP sockets for datagram protocols
 - Actual port binding and network I/O
 - Real protocol message parsing and generation
 
 ### 2. Genuine Capability Validation
+
 Tests validate that the protocol handler actually works:
+
 - License verification responses are correctly generated
 - Protocol detection works on real request data
 - Connection management properly tracks active sessions
@@ -102,7 +120,9 @@ Tests validate that the protocol handler actually works:
 - Server lifecycle (start/stop) properly manages resources
 
 ### 3. Real-World Scenarios
+
 Tests cover practical use cases:
+
 - Concurrent client connections (5+ simultaneous clients)
 - Sequential requests on persistent connections
 - Binary protocol handling with real binary sequences
@@ -111,7 +131,9 @@ Tests cover practical use cases:
 - Mixed protocol types (text and binary)
 
 ### 4. Production-Ready Code
+
 All tests demonstrate production functionality:
+
 - Complete type annotations on all test code
 - Proper error handling validation
 - Resource cleanup verification (ports, sockets, threads)
@@ -119,7 +141,9 @@ All tests demonstrate production functionality:
 - Windows compatibility (proper exception handling for OS-specific behavior)
 
 ### 5. Edge Case Coverage
+
 Tests handle challenging scenarios:
+
 - Sockets without standard methods (getpeername)
 - Failed send operations
 - Connection timeouts
@@ -133,6 +157,7 @@ Tests handle challenging scenarios:
 The test suite achieves comprehensive coverage of:
 
 **Public Methods**: 100% coverage
+
 - `__init__`
 - `_run_proxy` (TCP and UDP paths)
 - `_run_tcp_proxy`
@@ -143,6 +168,7 @@ The test suite achieves comprehensive coverage of:
 - `clear_data`
 
 **Protocol Detection Patterns**:
+
 - License validation keywords: license, verify, check, auth
 - Status keywords: status, ping, heartbeat
 - Information keywords: version, info
@@ -151,6 +177,7 @@ The test suite achieves comprehensive coverage of:
 - Unknown request fallback
 
 **Error Handling**:
+
 - Socket errors (ConnectionResetError, OSError)
 - Timeout errors
 - Send failures
@@ -158,6 +185,7 @@ The test suite achieves comprehensive coverage of:
 - Resource cleanup on errors
 
 **Concurrency**:
+
 - Multiple simultaneous TCP connections (5+ clients)
 - Multiple simultaneous UDP clients (5+ clients)
 - Sequential requests on persistent connections
@@ -189,17 +217,20 @@ The tests validate genuine license protocol handling capabilities:
 ## Testing Methodology
 
 ### Test Structure
+
 - Arrange: Set up handler with specific configuration
 - Act: Perform real network operations (connect, send, receive)
 - Assert: Validate actual responses and state changes
 
 ### Resource Management
+
 - All tests properly clean up resources (close sockets, stop proxies)
 - Free port allocation to avoid conflicts
 - Proper wait times for async operations
 - Thread cleanup verification
 
 ### Assertion Strategy
+
 - Direct equality checks for protocol responses
 - Length validation for captured data
 - Metadata verification (timestamps, addresses, hex representations)

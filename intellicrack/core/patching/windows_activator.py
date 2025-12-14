@@ -25,8 +25,10 @@ import subprocess
 import tempfile
 import uuid
 import winreg
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 
 try:
@@ -129,30 +131,24 @@ class WindowsActivator:
 
             # CPU info
             for processor in c.Win32_Processor():
-                hardware_info.extend(
-                    (
-                        (processor.ProcessorId.strip() if processor.ProcessorId else ""),
-                        str(processor.NumberOfCores),
-                        processor.Name.strip() if processor.Name else "",
-                    )
-                )
+                hardware_info.extend((
+                    (processor.ProcessorId.strip() if processor.ProcessorId else ""),
+                    str(processor.NumberOfCores),
+                    processor.Name.strip() if processor.Name else "",
+                ))
             # Motherboard info
             for board in c.Win32_BaseBoard():
-                hardware_info.extend(
-                    (
-                        board.SerialNumber.strip() if board.SerialNumber else "",
-                        board.Manufacturer.strip() if board.Manufacturer else "",
-                        board.Product.strip() if board.Product else "",
-                    )
-                )
+                hardware_info.extend((
+                    board.SerialNumber.strip() if board.SerialNumber else "",
+                    board.Manufacturer.strip() if board.Manufacturer else "",
+                    board.Product.strip() if board.Product else "",
+                ))
             # BIOS info
             for bios in c.Win32_BIOS():
-                hardware_info.extend(
-                    (
-                        bios.SerialNumber.strip() if bios.SerialNumber else "",
-                        bios.Manufacturer.strip() if bios.Manufacturer else "",
-                    )
-                )
+                hardware_info.extend((
+                    bios.SerialNumber.strip() if bios.SerialNumber else "",
+                    bios.Manufacturer.strip() if bios.Manufacturer else "",
+                ))
             # Network adapter MAC addresses (physical adapters only)
             for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
                 if nic.MACAddress:
@@ -186,7 +182,7 @@ class WindowsActivator:
                 mac = uuid.getnode()
                 machine_info += f"|{mac:012X}"
             except OSError:
-                pass
+                self.logger.debug("Failed to get MAC address", exc_info=True)
 
             # Generate fallback HWID
             fallback_hash = hashlib.sha256(machine_info.encode()).hexdigest()
@@ -195,8 +191,7 @@ class WindowsActivator:
             return hwid.upper()
 
         except Exception as e:
-            self.logger.error(f"Error generating HWID: {e}")
-            # Return a deterministic but unique HWID based on available info
+            self.logger.error(f"Error generating HWID: {e}", exc_info=True)
             basic_info = f"{os.environ.get('COMPUTERNAME', 'UNKNOWN')}|{platform.platform()}"
             basic_hash = hashlib.sha256(basic_info.encode()).hexdigest()
             return f"{basic_hash[:8]}-{basic_hash[8:12]}-{basic_hash[12:16]}-{basic_hash[16:20]}-{basic_hash[20:32]}".upper()
@@ -261,7 +256,7 @@ class WindowsActivator:
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error checking activation status: %s", e)
+            logger.error("Error checking activation status: %s", e, exc_info=True)
             return {
                 "status": ActivationStatus.ERROR.value,
                 "error": str(e),
@@ -331,13 +326,13 @@ class WindowsActivator:
             return activation_result
 
         except subprocess.TimeoutExpired:
-            logger.error("Windows activation timed out")
+            logger.error("Windows activation timed out", exc_info=True)
             return {
                 "success": False,
                 "error": "Activation process timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error during Windows activation: %s", e)
+            logger.error("Error during Windows activation: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -368,7 +363,7 @@ class WindowsActivator:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error resetting activation: %s", e)
+            logger.error("Error resetting activation: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -397,7 +392,7 @@ class WindowsActivator:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting product key info: %s", e)
+            logger.error("Error getting product key info: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -464,7 +459,7 @@ class WindowsActivator:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error during Office activation: %s", e)
+            logger.error("Error during Office activation: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": f"Office activation error: {e!s}",
@@ -504,7 +499,7 @@ class WindowsActivator:
                                 elif "Office14" in item or "14.0" in item:
                                     detected_versions.append("2010")
                     except OSError as e:
-                        logger.error("Error in windows_activator: %s", e)
+                        logger.error("Error in windows_activator: %s", e, exc_info=True)
                         continue
 
             # Also check registry for C2R installations
@@ -524,14 +519,13 @@ class WindowsActivator:
                                 elif version_info.startswith("15."):
                                     detected_versions.append("2013")
                             except FileNotFoundError as e:
-                                logger.error("File not found in windows_activator: %s", e)
+                                logger.error("File not found in windows_activator: %s", e, exc_info=True)
                     except FileNotFoundError as e:
-                        logger.error("File not found in windows_activator: %s", e)
+                        logger.error("File not found in windows_activator: %s", e, exc_info=True)
                         continue
 
             except ImportError as e:
-                logger.error("Import error in windows_activator: %s", e)
-                # winreg not available (non-Windows)
+                logger.error("Import error in windows_activator: %s", e, exc_info=True)
 
             # Return most recent version detected
             if detected_versions:
@@ -548,7 +542,7 @@ class WindowsActivator:
             return ""
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error detecting Office version: %s", e)
+            logger.error("Error detecting Office version: %s", e, exc_info=True)
             return ""
 
     def _activate_office_c2r(self, office_version: str) -> dict[str, any]:
@@ -595,14 +589,14 @@ class WindowsActivator:
             }
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in windows_activator: %s", e)
+            logger.error("Subprocess timeout in windows_activator: %s", e, exc_info=True)
             return {
                 "success": False,
                 "method": "C2R",
                 "error": "Office C2R activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in windows_activator: %s", e)
+            logger.error("Error in windows_activator: %s", e, exc_info=True)
             return {
                 "success": False,
                 "method": "C2R",
@@ -700,14 +694,14 @@ class WindowsActivator:
             }
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in windows_activator: %s", e)
+            logger.error("Subprocess timeout in windows_activator: %s", e, exc_info=True)
             return {
                 "success": False,
                 "method": "MSI",
                 "error": "Office MSI activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in windows_activator: %s", e)
+            logger.error("Error in windows_activator: %s", e, exc_info=True)
             return {
                 "success": False,
                 "method": "MSI",
@@ -767,15 +761,13 @@ class WindowsActivator:
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting Office status: %s", e)
+            logger.error("Error getting Office status: %s", e, exc_info=True)
             return {
                 "status": "error",
                 "error": str(e),
             }
 
-    def activate_windows_interactive(
-        self, output_callback: callable | None = None
-    ) -> dict[str, any]:
+    def activate_windows_interactive(self, output_callback: Callable[[str, bool], None] | None = None) -> dict[str, Any]:
         """Activate Windows with interactive output streaming.
 
         Runs the Windows activation process with real-time output streaming
@@ -841,7 +833,7 @@ class WindowsActivator:
                         line_list.append(line)
                         output_queue.put((line, is_stderr))
                 except Exception as e:
-                    self.logger.debug(f"Reader thread error: {e}")
+                    self.logger.debug(f"Reader thread error: {e}", exc_info=True)
                 finally:
                     pipe.close()
 
@@ -913,7 +905,7 @@ class WindowsActivator:
             return result
 
         except subprocess.TimeoutExpired:
-            self.logger.error("Windows activation timed out")
+            self.logger.error("Windows activation timed out", exc_info=True)
             if output_callback:
                 output_callback("ERROR: Activation timed out", True)
             return {
@@ -921,7 +913,7 @@ class WindowsActivator:
                 "error": "Activation process timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during Windows activation: %s", e)
+            self.logger.error("Error during Windows activation: %s", e, exc_info=True)
             if output_callback:
                 output_callback(f"ERROR: {e}", True)
             return {
@@ -998,7 +990,7 @@ class WindowsActivator:
                 return result
 
             except subprocess.TimeoutExpired:
-                self.logger.warning("Terminal activation window still open after timeout")
+                self.logger.warning("Terminal activation window still open after timeout", exc_info=True)
                 return {
                     "success": False,
                     "method": "terminal",
@@ -1007,19 +999,19 @@ class WindowsActivator:
                 }
 
         except FileNotFoundError:
-            self.logger.error("Activation script not found: %s", self.script_path)
+            self.logger.error("Activation script not found: %s", self.script_path, exc_info=True)
             return {
                 "success": False,
                 "error": f"Activation script not found: {self.script_path}",
             }
         except PermissionError:
-            self.logger.error("Permission denied - administrator privileges required")
+            self.logger.error("Permission denied - administrator privileges required", exc_info=True)
             return {
                 "success": False,
                 "error": "Administrator privileges required for activation",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during terminal activation: %s", e)
+            self.logger.error("Error during terminal activation: %s", e, exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -1081,9 +1073,9 @@ class WindowsActivatorInteractive:
     def run_with_callback(
         self,
         cmd_args: list[str],
-        output_callback: callable | None = None,
+        output_callback: Callable[[str, bool], None] | None = None,
         timeout: int = 300,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """Run activation command with real-time output streaming.
 
         Args:
@@ -1146,6 +1138,7 @@ class WindowsActivatorInteractive:
             stderr_thread.start()
 
             import time as time_module
+
             start_time = time_module.time()
 
             while process.poll() is None:

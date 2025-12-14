@@ -227,7 +227,7 @@ class HookObfuscator:
 
         name = f"{prefix}_{subject}_{suffix}"
 
-        logger.debug(f"Generated callback name: {name}")
+        logger.debug("Generated callback name: %s", name)
         return name
 
     def create_indirect_hook(
@@ -252,12 +252,12 @@ class HookObfuscator:
             True if indirect hook created successfully
 
         """
-        logger.info(f"Creating indirect hook: {hex(target)} -> {hex(handler)} (chain: {chain_length})")
+        logger.info("Creating indirect hook: %s -> %s (chain: %s)", hex(target), hex(handler), chain_length)
 
         try:
             with self._lock:
                 if target in self.installed_hooks:
-                    logger.warning(f"Hook already exists at {hex(target)}")
+                    logger.warning("Hook already exists at %s", hex(target))
                     return False
 
                 code_cave = self._find_code_cave(chain_length * 32)
@@ -299,11 +299,11 @@ class HookObfuscator:
 
                 self.installed_hooks[target] = hook_info
 
-                logger.info(f"Indirect hook installed successfully at {hex(target)}")
+                logger.info("Indirect hook installed successfully at %s", hex(target))
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to create indirect hook: {e}", exc_info=True)
+            logger.error("Failed to create indirect hook: %s", e, exc_info=True)
             return False
 
     def _find_code_cave(self, min_size: int) -> int | None:
@@ -319,7 +319,7 @@ class HookObfuscator:
             Address of suitable code cave or None
 
         """
-        logger.debug(f"Searching for code cave of size {min_size}")
+        logger.debug("Searching for code cave of size %s", min_size)
 
         try:
             caves = self.code_caves.get("available", [])
@@ -327,13 +327,13 @@ class HookObfuscator:
             for cave_addr in caves:
                 cave_size = self._get_cave_size(cave_addr)
                 if cave_size >= min_size:
-                    logger.debug(f"Found suitable code cave at {hex(cave_addr)}")
+                    logger.debug("Found suitable code cave at %s", hex(cave_addr))
                     return cave_addr
 
             return None
 
         except Exception as e:
-            logger.debug(f"Code cave search failed: {e}")
+            logger.debug("Code cave search failed: %s", e, exc_info=True)
             return None
 
     def _get_cave_size(self, address: int) -> int:
@@ -357,7 +357,7 @@ class HookObfuscator:
 
     def _allocate_trampoline_space(self, size: int) -> int:
         """Allocate memory for trampoline code."""
-        logger.debug(f"Allocating {size} bytes for trampoline")
+        logger.debug("Allocating %s bytes for trampoline", size)
 
         try:
             if hasattr(ctypes, "windll"):
@@ -373,13 +373,13 @@ class HookObfuscator:
                     MEM_COMMIT | MEM_RESERVE,
                     PAGE_EXECUTE_READWRITE,
                 ):
-                    logger.debug(f"Allocated trampoline space at {hex(addr)}")
+                    logger.debug("Allocated trampoline space at %s", hex(addr))
                     return addr
 
             return 0
 
         except Exception as e:
-            logger.debug(f"Trampoline allocation failed: {e}")
+            logger.debug("Trampoline allocation failed: %s", e, exc_info=True)
             return 0
 
     def _build_trampoline_chain(
@@ -400,16 +400,16 @@ class HookObfuscator:
                 jmp_code = self._generate_jmp_code(next_target)
 
                 if not self._write_memory(current_addr, jmp_code):
-                    logger.error(f"Failed to write trampoline {i}")
+                    logger.error("Failed to write trampoline %s", i)
                     return []
 
                 current_addr += 32
 
-            logger.debug(f"Built trampoline chain: {[hex(a) for a in chain_addresses]}")
+            logger.debug("Built trampoline chain: %s", [hex(a) for a in chain_addresses])
             return chain_addresses
 
         except Exception as e:
-            logger.error(f"Trampoline chain build failed: {e}")
+            logger.error("Trampoline chain build failed: %s", e, exc_info=True)
             return []
 
     def _generate_jmp_code(self, target: int) -> bytes:
@@ -417,23 +417,19 @@ class HookObfuscator:
         import platform
 
         if is_64bit := platform.machine().endswith("64"):
-            logger.debug(f"Generating {'64-bit' if is_64bit else '32-bit'} JMP to 0x{target:X}")
-            return bytes(
-                [
-                    0x48,
-                    0xB8,
-                    *target.to_bytes(8, "little"),
-                    0xFF,
-                    0xE0,
-                ]
-            )
-        logger.debug(f"Generating 32-bit JMP to 0x{target:X}")
-        return bytes(
-            [
-                0xE9,
-                *((target - 5) & 0xFFFFFFFF).to_bytes(4, "little"),
-            ]
-        )
+            logger.debug("Generating %s JMP to 0x%X", "64-bit" if is_64bit else "32-bit", target)
+            return bytes([
+                0x48,
+                0xB8,
+                *target.to_bytes(8, "little"),
+                0xFF,
+                0xE0,
+            ])
+        logger.debug("Generating 32-bit JMP to 0x%X", target)
+        return bytes([
+            0xE9,
+            *((target - 5) & 0xFFFFFFFF).to_bytes(4, "little"),
+        ])
 
     def _install_jump_to_chain(self, target: int, chain_start: int) -> bool:
         """Install initial jump from target to trampoline chain."""
@@ -447,7 +443,7 @@ class HookObfuscator:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to install jump: {e}")
+            logger.error("Failed to install jump: %s", e, exc_info=True)
             return False
 
     def _read_memory(self, address: int, size: int) -> bytes | None:
@@ -473,7 +469,7 @@ class HookObfuscator:
             return None
 
         except Exception as e:
-            logger.debug(f"Memory read failed: {e}")
+            logger.debug("Memory read failed: %s", e, exc_info=True)
             return None
 
     def _write_memory(self, address: int, data: bytes) -> bool:
@@ -518,7 +514,7 @@ class HookObfuscator:
             return False
 
         except Exception as e:
-            logger.debug(f"Memory write failed: {e}")
+            logger.debug("Memory write failed: %s", e, exc_info=True)
             return False
 
     def _flush_instruction_cache(self, address: int, size: int) -> None:
@@ -533,7 +529,7 @@ class HookObfuscator:
                     size,
                 )
         except Exception as e:
-            logger.debug(f"Failed to flush instruction cache: {e}")
+            logger.debug("Failed to flush instruction cache: %s", e, exc_info=True)
 
     def _calculate_hook_hash(
         self,
@@ -577,20 +573,20 @@ class HookObfuscator:
                 with self._lock:
                     for target, hook_info in list(self.installed_hooks.items()):
                         if self._check_hook_integrity(hook_info):
-                            logger.debug(f"Hook at {hex(target)} is intact")
+                            logger.debug("Hook at %s is intact", hex(target))
                         else:
-                            logger.warning(f"Hook at {hex(target)} was tampered with!")
+                            logger.warning("Hook at %s was tampered with!", hex(target))
                             hook_info.tamper_count += 1
 
                             if self._reinstall_hook(hook_info):
-                                logger.info(f"Hook at {hex(target)} reinstalled")
+                                logger.info("Hook at %s reinstalled", hex(target))
                             else:
-                                logger.error(f"Failed to reinstall hook at {hex(target)}")
+                                logger.error("Failed to reinstall hook at %s", hex(target))
 
                 time.sleep(check_interval)
 
             except Exception as e:
-                logger.error(f"Integrity monitor error: {e}", exc_info=True)
+                logger.error("Integrity monitor error: %s", e, exc_info=True)
                 time.sleep(check_interval)
 
         logger.info("Integrity monitor loop stopped")
@@ -605,13 +601,13 @@ class HookObfuscator:
                 return False
 
         except Exception as e:
-            logger.debug(f"Integrity check failed: {e}")
+            logger.debug("Integrity check failed: %s", e, exc_info=True)
             return False
 
     def _reinstall_hook(self, hook_info: HookInfo) -> bool:
         """Reinstall tampered hook."""
         try:
-            logger.info(f"Reinstalling hook at {hex(hook_info.target_address)}")
+            logger.info("Reinstalling hook at %s", hex(hook_info.target_address))
 
             if hook_info.hook_type == "indirect_chain":
                 return self.create_indirect_hook(
@@ -622,7 +618,7 @@ class HookObfuscator:
             return False
 
         except Exception as e:
-            logger.error(f"Hook reinstall failed: {e}")
+            logger.error("Hook reinstall failed: %s", e, exc_info=True)
             return False
 
     def stop_integrity_monitor(self) -> None:
@@ -654,7 +650,7 @@ class HookObfuscator:
             True if hardware breakpoint installed successfully
 
         """
-        logger.info(f"Installing hardware breakpoint hook at {hex(address)}")
+        logger.info("Installing hardware breakpoint hook at %s", hex(address))
 
         try:
             if not hasattr(ctypes, "windll"):
@@ -711,7 +707,7 @@ class HookObfuscator:
             return True
 
         except Exception as e:
-            logger.error(f"Hardware breakpoint hook failed: {e}", exc_info=True)
+            logger.error("Hardware breakpoint hook failed: %s", e, exc_info=True)
             return False
 
     def find_code_caves(self, module: str) -> list[int]:
@@ -727,7 +723,7 @@ class HookObfuscator:
             List of code cave addresses
 
         """
-        logger.info(f"Scanning for code caves in module: {module}")
+        logger.info("Scanning for code caves in module: %s", module)
 
         caves = []
 
@@ -740,7 +736,7 @@ class HookObfuscator:
 
             h_module = kernel32.GetModuleHandleW(module)
             if not h_module:
-                logger.error(f"Module not found: {module}")
+                logger.error("Module not found: %s", module)
                 return caves
 
             class MODULEINFO(ctypes.Structure):
@@ -765,7 +761,7 @@ class HookObfuscator:
             base_addr = mod_info.lpBaseOfDll
             size = mod_info.SizeOfImage
 
-            logger.debug(f"Scanning module: base={hex(base_addr)}, size={size}")
+            logger.debug("Scanning module: base=%s, size=%s", hex(base_addr), size)
 
             scan_size = 4096
             for offset in range(0, size, scan_size):
@@ -774,13 +770,13 @@ class HookObfuscator:
                     if cave_addr := self._find_cave_in_data(addr, data):
                         caves.append(cave_addr)
 
-            logger.info(f"Found {len(caves)} code caves in {module}")
+            logger.info("Found %s code caves in %s", len(caves), module)
             self.code_caves[module] = caves
 
             return caves
 
         except Exception as e:
-            logger.error(f"Code cave search failed: {e}", exc_info=True)
+            logger.error("Code cave search failed: %s", e, exc_info=True)
             return caves
 
     def _find_cave_in_data(self, base_addr: int, data: bytes) -> int | None:
@@ -822,20 +818,20 @@ class HookObfuscator:
                     if self._rotate_single_hook(hook_info):
                         rotated_count += 1
                     else:
-                        logger.warning(f"Failed to rotate hook at {hex(target)}")
+                        logger.warning("Failed to rotate hook at %s", hex(target))
 
-                logger.info(f"Rotated {rotated_count}/{len(self.installed_hooks)} hooks")
+                logger.info("Rotated %s/%s hooks", rotated_count, len(self.installed_hooks))
                 return rotated_count > 0
 
         except Exception as e:
-            logger.error(f"Hook rotation failed: {e}", exc_info=True)
+            logger.error("Hook rotation failed: %s", e, exc_info=True)
             return False
 
     def _rotate_single_hook(self, hook_info: HookInfo) -> bool:
         """Rotate a single hook to new location."""
         try:
             if new_cave := self._find_code_cave(96):
-                logger.debug(f"Found new code cave at 0x{new_cave:X} for hook rotation")
+                logger.debug("Found new code cave at 0x%X for hook rotation", new_cave)
                 return (
                     self.create_indirect_hook(
                         hook_info.target_address,
@@ -848,7 +844,7 @@ class HookObfuscator:
                 return False
 
         except Exception as e:
-            logger.debug(f"Single hook rotation failed: {e}")
+            logger.debug("Single hook rotation failed: %s", e, exc_info=True)
             return False
 
     def get_hook_status(self) -> dict:
@@ -885,7 +881,7 @@ class HookObfuscator:
                     removed_count += 1
                     del self.installed_hooks[target]
                 else:
-                    logger.error(f"Failed to remove hook at {hex(target)}")
+                    logger.error("Failed to remove hook at %s", hex(target))
 
-            logger.info(f"Removed {removed_count} hooks")
+            logger.info("Removed %s hooks", removed_count)
             return removed_count == len(self.installed_hooks)

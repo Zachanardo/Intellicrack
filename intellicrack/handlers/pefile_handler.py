@@ -29,7 +29,7 @@ from intellicrack.utils.logger import log_all_methods, logger
 logger.debug("PEfile handler module loaded")
 
 
-class _FallbackDIRECTORY_ENTRY:
+class _FallbackDirectoryEntry:
     """PE directory entry indices."""
 
     EXPORT = 0
@@ -50,7 +50,7 @@ class _FallbackDIRECTORY_ENTRY:
     RESERVED = 15
 
 
-class _FallbackSECTION_CHARACTERISTICS:
+class _FallbackSectionCharacteristics:
     """Section characteristics flags."""
 
     IMAGE_SCN_CNT_CODE = 0x00000020
@@ -63,7 +63,7 @@ class _FallbackSECTION_CHARACTERISTICS:
     IMAGE_SCN_MEM_DISCARDABLE = 0x02000000
 
 
-class _FallbackDLL_CHARACTERISTICS:
+class _FallbackDllCharacteristics:
     """DLL characteristics flags."""
 
     IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020
@@ -79,7 +79,7 @@ class _FallbackDLL_CHARACTERISTICS:
     IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
 
 
-class _FallbackMACHINE_TYPE:
+class _FallbackMachineType:
     """Machine types."""
 
     IMAGE_FILE_MACHINE_UNKNOWN = 0x0
@@ -114,7 +114,7 @@ class _FallbackMACHINE_TYPE:
     IMAGE_FILE_MACHINE_CEE = 0xC0EE
 
 
-class _FallbackSUBSYSTEM_TYPE:
+class _FallbackSubsystemType:
     """Subsystem types."""
 
     IMAGE_SUBSYSTEM_UNKNOWN = 0
@@ -132,7 +132,7 @@ class _FallbackSUBSYSTEM_TYPE:
     IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16
 
 
-class _FallbackIMAGE_CHARACTERISTICS:
+class _FallbackImageCharacteristics:
     """Image characteristics."""
 
     IMAGE_FILE_RELOCS_STRIPPED = 0x0001
@@ -152,7 +152,7 @@ class _FallbackIMAGE_CHARACTERISTICS:
     IMAGE_FILE_BYTES_REVERSED_HI = 0x8000
 
 
-class _FallbackDEBUG_TYPE:
+class _FallbackDebugType:
     """Debug types."""
 
     IMAGE_DEBUG_TYPE_UNKNOWN = 0
@@ -169,7 +169,7 @@ class _FallbackDEBUG_TYPE:
     IMAGE_DEBUG_TYPE_CLSID = 11
 
 
-class _FallbackRESOURCE_TYPE:
+class _FallbackResourceType:
     """Resource types."""
 
     RT_CURSOR = 1
@@ -368,9 +368,7 @@ class _ExportDirectory:
 class _FallbackPE:
     """Functional PE file parser implementation."""
 
-    def __init__(
-        self, name: str | None = None, data: bytes | None = None, fast_load: bool | None = None
-    ) -> None:
+    def __init__(self, name: str | None = None, data: bytes | None = None, fast_load: bool | None = None) -> None:
         """Initialize PE parser.
 
         Args:
@@ -629,10 +627,10 @@ class _FallbackPE:
         if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
             return
 
-        if len(self.OPTIONAL_HEADER.DATA_DIRECTORY) <= _FallbackDIRECTORY_ENTRY.IMPORT:
+        if len(self.OPTIONAL_HEADER.DATA_DIRECTORY) <= _FallbackDirectoryEntry.IMPORT:
             return
 
-        import_dir = self.OPTIONAL_HEADER.DATA_DIRECTORY[_FallbackDIRECTORY_ENTRY.IMPORT]
+        import_dir = self.OPTIONAL_HEADER.DATA_DIRECTORY[_FallbackDirectoryEntry.IMPORT]
         if import_dir.VirtualAddress == 0 or import_dir.Size == 0:
             return
 
@@ -715,10 +713,10 @@ class _FallbackPE:
         if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
             return
 
-        if len(self.OPTIONAL_HEADER.DATA_DIRECTORY) <= _FallbackDIRECTORY_ENTRY.EXPORT:
+        if len(self.OPTIONAL_HEADER.DATA_DIRECTORY) <= _FallbackDirectoryEntry.EXPORT:
             return
 
-        export_dir = self.OPTIONAL_HEADER.DATA_DIRECTORY[_FallbackDIRECTORY_ENTRY.EXPORT]
+        export_dir = self.OPTIONAL_HEADER.DATA_DIRECTORY[_FallbackDirectoryEntry.EXPORT]
         if export_dir.VirtualAddress == 0 or export_dir.Size == 0:
             return
 
@@ -753,9 +751,7 @@ class _FallbackPE:
         if 0 < export.NumberOfFunctions < 65536:
             func_offset = self.get_offset_from_rva(export.AddressOfFunctions)
             names_offset = self.get_offset_from_rva(export.AddressOfNames) if export.NumberOfNames > 0 else None
-            ordinal_offset = (
-                self.get_offset_from_rva(export.AddressOfNameOrdinals) if export.NumberOfNames > 0 else None
-            )
+            ordinal_offset = self.get_offset_from_rva(export.AddressOfNameOrdinals) if export.NumberOfNames > 0 else None
 
             name_ordinals: dict[int, str] = {}
             if names_offset and ordinal_offset:
@@ -979,9 +975,7 @@ class _FallbackPE:
 
         """
         if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
-            return bool(
-                self.FILE_HEADER.Characteristics & _FallbackIMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE
-            )
+            return bool(self.FILE_HEADER.Characteristics & _FallbackImageCharacteristics.IMAGE_FILE_EXECUTABLE_IMAGE)
         return False
 
     def is_dll(self) -> bool:
@@ -992,7 +986,7 @@ class _FallbackPE:
 
         """
         if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
-            return bool(self.FILE_HEADER.Characteristics & _FallbackIMAGE_CHARACTERISTICS.IMAGE_FILE_DLL)
+            return bool(self.FILE_HEADER.Characteristics & _FallbackImageCharacteristics.IMAGE_FILE_DLL)
         return False
 
     def is_driver(self) -> bool:
@@ -1003,7 +997,7 @@ class _FallbackPE:
 
         """
         if self.OPTIONAL_HEADER:
-            return self.OPTIONAL_HEADER.Subsystem == _FallbackSUBSYSTEM_TYPE.IMAGE_SUBSYSTEM_NATIVE
+            return self.OPTIONAL_HEADER.Subsystem == _FallbackSubsystemType.IMAGE_SUBSYSTEM_NATIVE
         return False
 
     def write(self, filename: str | None = None) -> bytes:
@@ -1042,14 +1036,14 @@ class _FallbackPefileModule:
     PEFormatError = _FallbackPEFormatError
     Structure = _FallbackStructure
 
-    DIRECTORY_ENTRY = _FallbackDIRECTORY_ENTRY
-    SECTION_CHARACTERISTICS = _FallbackSECTION_CHARACTERISTICS
-    DLL_CHARACTERISTICS = _FallbackDLL_CHARACTERISTICS
-    MACHINE_TYPE = _FallbackMACHINE_TYPE
-    SUBSYSTEM_TYPE = _FallbackSUBSYSTEM_TYPE
-    IMAGE_CHARACTERISTICS = _FallbackIMAGE_CHARACTERISTICS
-    DEBUG_TYPE = _FallbackDEBUG_TYPE
-    RESOURCE_TYPE = _FallbackRESOURCE_TYPE
+    DIRECTORY_ENTRY = _FallbackDirectoryEntry
+    SECTION_CHARACTERISTICS = _FallbackSectionCharacteristics
+    DLL_CHARACTERISTICS = _FallbackDllCharacteristics
+    MACHINE_TYPE = _FallbackMachineType
+    SUBSYSTEM_TYPE = _FallbackSubsystemType
+    IMAGE_CHARACTERISTICS = _FallbackImageCharacteristics
+    DEBUG_TYPE = _FallbackDebugType
+    RESOURCE_TYPE = _FallbackResourceType
 
 
 def _load_pefile_or_fallback() -> tuple[
@@ -1101,15 +1095,15 @@ def _load_pefile_or_fallback() -> tuple[
             False,
             False,
             None,
-            _FallbackDEBUG_TYPE,
-            _FallbackDIRECTORY_ENTRY,
-            _FallbackDLL_CHARACTERISTICS,
-            _FallbackIMAGE_CHARACTERISTICS,
-            _FallbackMACHINE_TYPE,
+            _FallbackDebugType,
+            _FallbackDirectoryEntry,
+            _FallbackDllCharacteristics,
+            _FallbackImageCharacteristics,
+            _FallbackMachineType,
             _FallbackPE,
-            _FallbackRESOURCE_TYPE,
-            _FallbackSECTION_CHARACTERISTICS,
-            _FallbackSUBSYSTEM_TYPE,
+            _FallbackResourceType,
+            _FallbackSectionCharacteristics,
+            _FallbackSubsystemType,
             _FallbackPEFormatError,
             _FallbackStructure,
             _FallbackPefileModule(),

@@ -999,13 +999,11 @@ class FlexLMLicenseGenerator:
 
             if keyword == "SERVER":
                 if len(parts) >= 3:
-                    license_data["servers"].append(
-                        {
-                            "hostname": parts[1],
-                            "hostid": parts[2],
-                            "port": int(parts[3]) if len(parts) > 3 else 27000,
-                        }
-                    )
+                    license_data["servers"].append({
+                        "hostname": parts[1],
+                        "hostid": parts[2],
+                        "port": int(parts[3]) if len(parts) > 3 else 27000,
+                    })
 
             elif keyword == "VENDOR":
                 vendor_info = {"name": parts[1] if len(parts) > 1 else ""}

@@ -125,7 +125,7 @@ class ProfileManager:
         if not self.profile_dir.exists() or self.central_config.get("cli_configuration.profiles_migrated", False):
             return
         try:
-            logger.info(f"Migrating CLI profiles from {self.profile_dir} to central config")
+            logger.info("Migrating CLI profiles from %s to central config", self.profile_dir)
 
             # Get current profiles from central config
             cli_config = self.central_config.get("cli_configuration", {})
@@ -139,9 +139,9 @@ class ProfileManager:
                         profile_name = data.get("name", profile_file.stem)
                         # Store profile data in central config
                         current_profiles[profile_name] = data
-                        logger.info(f"Migrated profile: {profile_name}")
+                        logger.info("Migrated profile: %s", profile_name)
                 except Exception as e:
-                    logger.error(f"Failed to migrate profile {profile_file}: {e}")
+                    logger.error("Failed to migrate profile %s: %s", profile_file, e, exc_info=True)
 
             # Update central config with all profiles
             cli_config["profiles"] = current_profiles
@@ -149,16 +149,16 @@ class ProfileManager:
             self.central_config.set("cli_configuration", cli_config)
             self.central_config.save()
 
-            logger.info("Successfully migrated all CLI profiles to central config")
+            logger.info("Successfully migrated all CLI profiles to central config: %d profiles", len(current_profiles))
 
             # Rename old profile directory to .backup
             backup_dir = self.profile_dir.with_suffix(".backup")
             if not backup_dir.exists():
                 self.profile_dir.rename(backup_dir)
-                logger.info(f"Renamed old profile directory to {backup_dir}")
+                logger.info("Renamed old profile directory to %s", backup_dir)
 
         except Exception as e:
-            logger.error(f"Failed to migrate CLI profiles: {e}")
+            logger.error("Failed to migrate CLI profiles: %s", e, exc_info=True)
 
     def _load_profiles(self) -> dict[str, ConfigProfile]:
         """Load all profiles from central config."""
@@ -178,7 +178,7 @@ class ProfileManager:
                 profile = ConfigProfile.from_dict(profile_data)
                 profiles[profile_name] = profile
             except Exception as e:
-                logger.error(f"Error loading profile {profile_name}: {e}")
+                logger.error("Error loading profile %s: %s", profile_name, e, exc_info=True)
 
         return profiles
 

@@ -23,7 +23,7 @@ from intellicrack.utils.logger import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from ctypes import _NamedFuncPointer, _Pointer
+    from ctypes import _Pointer
 
 logger = get_logger(__name__)
 
@@ -489,9 +489,7 @@ class HardwareFingerPrintSpoofer:
             cpu_id=original.cpu_id if "cpu" in preserve else self._generate_cpu_id(),
             cpu_name=original.cpu_name if "cpu" in preserve else self._generate_cpu_name(),
             motherboard_serial=original.motherboard_serial if "motherboard" in preserve else self._generate_mb_serial(),
-            motherboard_manufacturer=original.motherboard_manufacturer
-            if "motherboard" in preserve
-            else self._generate_mb_manufacturer(),
+            motherboard_manufacturer=original.motherboard_manufacturer if "motherboard" in preserve else self._generate_mb_manufacturer(),
             bios_serial=original.bios_serial if "bios" in preserve else self._generate_bios_serial(),
             bios_version=original.bios_version if "bios" in preserve else self._generate_bios_version(),
             disk_serial=original.disk_serial if "disk" in preserve else self._generate_disk_serials(),
@@ -1071,7 +1069,10 @@ class HardwareFingerPrintSpoofer:
                     ("AddRef", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
                     ("Release", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
                     ("Reset", ctypes.CFUNCTYPE(HRESULT, c_void_p)),
-                    ("Next", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong))),
+                    (
+                        "Next",
+                        ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong)),
+                    ),
                     ("NextAsync", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_ulong, c_void_p)),
                     ("Clone", ctypes.CFUNCTYPE(HRESULT, c_void_p, POINTER(c_void_p))),
                     ("Skip", ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong)),
@@ -1145,7 +1146,9 @@ class HardwareFingerPrintSpoofer:
             vtable.AddRef = ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)(add_ref)
             vtable.Release = ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)(release)
             vtable.Reset = ctypes.CFUNCTYPE(HRESULT, c_void_p)(reset)
-            vtable.Next = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong))(next_item)
+            vtable.Next = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong, POINTER(c_void_p), POINTER(ctypes.c_ulong))(
+                next_item
+            )
             vtable.NextAsync = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_ulong, c_void_p)(next_async)
             vtable.Clone = ctypes.CFUNCTYPE(HRESULT, c_void_p, POINTER(c_void_p))(clone)
             vtable.Skip = ctypes.CFUNCTYPE(HRESULT, c_void_p, ctypes.c_long, ctypes.c_ulong)(skip)
@@ -1238,6 +1241,7 @@ class HardwareFingerPrintSpoofer:
             HardwareIdentifiers with randomized values.
 
         """
+
         def random_hex(length: int) -> str:
             return secrets.token_hex(length // 2).upper()
 
@@ -1947,11 +1951,11 @@ class HardwareFingerPrintSpoofer:
         self.original_GetAdaptersAddresses = iphlpapi.GetAdaptersAddresses
         self.original_GetIfTable = iphlpapi.GetIfTable
 
-        class IP_ADAPTER_INFO(ctypes.Structure):
+        class IpAdapterInfo(ctypes.Structure):
             pass
 
-        IP_ADAPTER_INFO._fields_ = [
-            ("Next", POINTER(IP_ADAPTER_INFO)),
+        IpAdapterInfo._fields_ = [
+            ("Next", POINTER(IpAdapterInfo)),
             ("ComboIndex", wintypes.DWORD),
             ("AdapterName", ctypes.c_char * 260),
             ("Description", ctypes.c_char * 132),
@@ -1985,7 +1989,7 @@ class HardwareFingerPrintSpoofer:
             result: int = self.original_GetAdaptersInfo(pAdapterInfo, pOutBufLen)
 
             if result == 0 and pAdapterInfo and self.spoofed_hardware:
-                current: _Pointer[IP_ADAPTER_INFO] | None = cast(pAdapterInfo, POINTER(IP_ADAPTER_INFO))
+                current: _Pointer[IpAdapterInfo] | None = cast(pAdapterInfo, POINTER(IpAdapterInfo))
                 adapter_idx = 0
 
                 while current:

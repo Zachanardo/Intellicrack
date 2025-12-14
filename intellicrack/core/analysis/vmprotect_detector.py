@@ -318,9 +318,7 @@ class VMProtectDetector:
 
                 handler_size = self._estimate_handler_size(data, offset, architecture)
 
-                complexity_metrics = self._calculate_handler_complexity(
-                    data, offset, handler_size, architecture
-                )
+                complexity_metrics = self._calculate_handler_complexity(data, offset, handler_size, architecture)
                 complexity = complexity_metrics["complexity"]
                 branches = complexity_metrics["branches"]
                 memory_ops = complexity_metrics["memory_ops"]
@@ -373,9 +371,7 @@ class VMProtectDetector:
 
         return max(size, 16)
 
-    def _calculate_handler_complexity(
-        self, data: bytes, offset: int, size: int, architecture: str
-    ) -> dict[str, int]:
+    def _calculate_handler_complexity(self, data: bytes, offset: int, size: int, architecture: str) -> dict[str, int]:
         """Calculate handler complexity score with detailed metrics.
 
         Returns:
@@ -807,21 +803,17 @@ class VMProtectDetector:
             return recommendations
 
         if detection.protection_level == VMProtectLevel.ULTRA:
-            recommendations.extend(
-                (
-                    "Ultra protection detected - Requires advanced devirtualization techniques with symbolic execution and SMT solving",
-                    "Recommended tools: Custom devirtualizer, Triton framework, Miasm2, or commercial VMProtect devirtualizers",
-                    "Expected time: 4-8 weeks for full devirtualization",
-                    "Success rate: 40-60% depending on code complexity",
-                )
-            )
+            recommendations.extend((
+                "Ultra protection detected - Requires advanced devirtualization techniques with symbolic execution and SMT solving",
+                "Recommended tools: Custom devirtualizer, Triton framework, Miasm2, or commercial VMProtect devirtualizers",
+                "Expected time: 4-8 weeks for full devirtualization",
+                "Success rate: 40-60% depending on code complexity",
+            ))
         elif detection.protection_level == VMProtectLevel.STANDARD:
-            recommendations.extend(
-                (
-                    "Standard protection - Use pattern-based devirtualization with handler identification",
-                    "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
-                )
-            )
+            recommendations.extend((
+                "Standard protection - Use pattern-based devirtualization with handler identification",
+                "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
+            ))
             recommendations.extend(("Expected time: 1-3 weeks", "Success rate: 65-75%"))
         elif detection.protection_level == VMProtectLevel.LITE:
             recommendations.append("Lite protection - Basic handler analysis and code flow reconstruction")

@@ -124,16 +124,37 @@ class TrafficAnalyzer:
                 protocol_map = {socket.SOCK_STREAM: "TCP", socket.SOCK_DGRAM: "UDP"}
 
                 license_ports = {
-                    443, 80, 8080, 8443,
-                    27000, 27001, 27002, 27003, 27004, 27005,
-                    5093, 7788, 1947,
-                    2080, 8090, 9000,
-                    1688, 1689,
+                    443,
+                    80,
+                    8080,
+                    8443,
+                    27000,
+                    27001,
+                    27002,
+                    27003,
+                    27004,
+                    27005,
+                    5093,
+                    7788,
+                    1947,
+                    2080,
+                    8090,
+                    9000,
+                    1688,
+                    1689,
                 }
 
                 license_keywords = [
-                    "license", "activation", "auth", "register", "serial",
-                    "flexlm", "hasp", "sentinel", "widevine", "denuvo",
+                    "license",
+                    "activation",
+                    "auth",
+                    "register",
+                    "serial",
+                    "flexlm",
+                    "hasp",
+                    "sentinel",
+                    "widevine",
+                    "denuvo",
                 ]
 
                 for conn in connections:
@@ -1119,9 +1140,7 @@ def _perform_network_capture(self: object, interface: str | None, filter_str: st
                 iface=interface,
                 filter=filter_str,
                 prn=packet_handler,
-                stop_filter=lambda x: (
-                    self.logger.debug("Packet in stop_filter: %s", x) or True
-                )
+                stop_filter=lambda x: (self.logger.debug("Packet in stop_filter: %s", x) or True)
                 and not getattr(self, "_capture_active", False),
                 store=False,
             )

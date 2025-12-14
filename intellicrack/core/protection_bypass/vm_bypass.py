@@ -7,8 +7,6 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from intellicrack.utils.logger import logger
-
 # from ...utils.driver_utils import get_driver_path  # Removed unused import
 from ...utils.binary.binary_io import analyze_binary_for_strings
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
@@ -74,7 +72,7 @@ class VirtualizationDetectionBypass:
             self._hook_vm_detection_apis()
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"API hooking failed: {e!s}")
 
         # Strategy 2: Patch VM detection instructions
@@ -83,7 +81,7 @@ class VirtualizationDetectionBypass:
                 self._patch_vm_detection()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"Binary patching failed: {e!s}")
 
         # Strategy 3: Manipulate registry for VM artifacts
@@ -91,7 +89,7 @@ class VirtualizationDetectionBypass:
             self._hide_vm_registry_artifacts()
             results["methods_applied"].append("Registry Manipulation")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"Registry manipulation failed: {e!s}")
 
         # Strategy 4: Hook timing functions to mitigate timing attacks
@@ -99,7 +97,7 @@ class VirtualizationDetectionBypass:
             self._hook_timing_functions()
             results["methods_applied"].append("Timing Attack Mitigation")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"Timing hook failed: {e!s}")
 
         # Strategy 5: Hide VM artifacts (files, processes, etc.)
@@ -110,7 +108,7 @@ class VirtualizationDetectionBypass:
                 if renamed_count > 0:
                     results["renamed_vm_files"] = renamed_count
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"VM artifact hiding failed: {e!s}")
 
         # Strategy 6: Modify system information
@@ -118,7 +116,7 @@ class VirtualizationDetectionBypass:
             if self._modify_system_info():
                 results["methods_applied"].append("System Info Modification")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in vm_bypass: %s", e)
+            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
             results["errors"].append(f"System info modification failed: {e!s}")
 
         results["success"] = len(results["methods_applied"]) > 0
@@ -286,7 +284,7 @@ class VirtualizationDetectionBypass:
             self.logger.info("Found %s VM detection patterns to patch", patches_applied)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error patching VM detection: {e!s}")
+            self.logger.error("Error patching VM detection: %s", e, exc_info=True)
 
     def _hide_vm_registry_artifacts(self) -> None:
         """Hide VM-related registry entries."""
@@ -319,14 +317,13 @@ class VirtualizationDetectionBypass:
                     # Try to delete or rename the key
                     winreg.DeleteKey(hkey, path)
                     self.logger.info("Deleted VM registry key: %s", path)
-                except FileNotFoundError as e:
-                    logger.error("File not found in vm_bypass: %s", e)
-                    # Key doesn't exist, good
+                except FileNotFoundError:
+                    pass
                 except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.warning(f"Could not delete registry key {path}: {e!s}")
+                    self.logger.warning("Could not delete registry key %s: %s", path, e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Registry manipulation failed: {e!s}")
+            self.logger.error("Registry manipulation failed: %s", e, exc_info=True)
 
     def _hide_vm_artifacts(self) -> tuple[bool, int]:
         """Hide VM-specific artifacts from detection.
@@ -443,17 +440,17 @@ class VirtualizationDetectionBypass:
                         new_name = vm_file.replace(".sys", "_hidden.sys")
                         Path(vm_file).rename(new_name)
                         renamed_files += 1
-                        self.logger.info(f"Renamed {vm_file} to {new_name}")
+                        self.logger.info("Renamed %s to %s", vm_file, new_name)
                     except OSError as e:
-                        self.logger.debug(f"Could not rename {vm_file}: {e}")
+                        self.logger.debug("Could not rename %s: %s", vm_file, e)
 
             if renamed_files > 0:
-                self.logger.info(f"Successfully hid {renamed_files} VM artifact files")
+                self.logger.info("Successfully hid %s VM artifact files", renamed_files)
 
             return (True, renamed_files)
 
         except Exception as e:
-            self.logger.error(f"Error hiding VM artifacts: {e}")
+            self.logger.error("Error hiding VM artifacts: %s", e, exc_info=True)
             return (False, 0)
 
     def _modify_system_info(self) -> bool:
@@ -516,24 +513,22 @@ class VirtualizationDetectionBypass:
                     key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
 
                     if value is None:
-                        # Delete the value
                         try:
                             winreg.DeleteValue(key, name)
-                            self.logger.info(f"Deleted registry value {path}\\{name}")
+                            self.logger.info("Deleted registry value %s\\%s", path, name)
                             modifications_applied += 1
-                        except FileNotFoundError as e:
-                            logger.error("File not found in vm_bypass: %s", e)
-                            # Value doesn't exist, good
+                        except FileNotFoundError:
+                            pass
                     else:
                         # Set the value
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
-                        self.logger.info(f"Set {path}\\{name} = {value}")
+                        self.logger.info("Set %s\\%s = %s", path, name, value)
                         modifications_applied += 1
 
                     winreg.CloseKey(key)
 
                 except OSError as e:
-                    self.logger.debug(f"Could not modify {path}\\{name}: {e}")
+                    self.logger.debug("Could not modify %s\\%s: %s", path, name, e)
 
             # Hook WMI queries to return modified information
             if FRIDA_AVAILABLE:
@@ -575,7 +570,7 @@ class VirtualizationDetectionBypass:
             return modifications_applied > 0
 
         except Exception as e:
-            self.logger.error(f"Error modifying system info: {e}")
+            self.logger.error("Error modifying system info: %s", e, exc_info=True)
             return False
 
     def _modify_dmi_info(self) -> bool:
@@ -598,14 +593,14 @@ class VirtualizationDetectionBypass:
                     with open(path, "w") as f:
                         f.write(value)
                     modifications_applied += 1
-                    self.logger.info(f"Modified {path} = {value}")
+                    self.logger.info("Modified %s = %s", path, value)
                 except OSError as e:
-                    self.logger.debug(f"Could not modify {path}: {e}")
+                    self.logger.debug("Could not modify %s: %s", path, e)
 
             return modifications_applied > 0
 
         except Exception as e:
-            self.logger.error(f"Error modifying DMI info: {e}")
+            self.logger.error("Error modifying DMI info: %s", e, exc_info=True)
             return False
 
     def _hook_timing_functions(self) -> None:
@@ -777,7 +772,7 @@ class VMDetector:
                     if "virtual" in result.stdout.lower():
                         indicators.append("CPU name contains 'virtual'")
                 else:
-                    logger.debug("wmic not found in PATH")
+                    self.logger.debug("wmic not found in PATH")
             elif platform.system() == "Linux":
                 with open("/proc/cpuinfo", encoding="utf-8") as f:
                     cpuinfo = f.read().lower()
@@ -832,9 +827,8 @@ class VMDetector:
             "is_vm": len(indicators) > 0,
             "confidence": min(len(indicators) * 0.25, 1.0),
         }
-        # Log detected indicators for debugging
         for indicator in self.vm_indicators:
-            self.logger.debug(f"VM indicator detected: {indicator}")
+            self.logger.debug("VM indicator detected: %s", indicator)
 
         # Determine VM type
         if results["is_vm"]:
@@ -972,7 +966,7 @@ class VMDetector:
             }
 
         except Exception as e:
-            self.logger.error("VM bypass generation failed: %s", e)
+            self.logger.error("VM bypass generation failed: %s", e, exc_info=True)
             return {
                 "vm_type": vm_type,
                 "bypass_method": "failed",
@@ -1057,12 +1051,10 @@ class VMDetector:
                 ],
             )
             for reg_key in registry_mods[:3]:  # Limit to first 3 for safety
-                script_lines.extend(
-                    (
-                        f"        # Hide/modify {reg_key}",
-                        f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')",
-                    )
-                )
+                script_lines.extend((
+                    f"        # Hide/modify {reg_key}",
+                    f"        # winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, '{reg_key}')",
+                ))
             script_lines.extend(
                 [
                     "    except Exception as e:",
@@ -1190,7 +1182,7 @@ class VirtualizationAnalyzer:
             results["confidence"] = min((len(found_strings) + len(detection_methods)) * 0.15, 1.0)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error analyzing VM detection: {e!s}")
+            self.logger.error("Error analyzing VM detection: %s", e, exc_info=True)
 
         return results
 

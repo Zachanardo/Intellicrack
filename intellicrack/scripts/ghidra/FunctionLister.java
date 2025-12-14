@@ -875,7 +875,7 @@ public class FunctionLister extends GhidraScript {
       codeUnitMap.put(codeUnit.getAddress(), codeUnit);
 
       if (codeUnit instanceof Instruction inst) {
-          instructions++;
+        instructions++;
 
         // Count mnemonics
         String mnemonic = inst.getMnemonicString();
@@ -885,7 +885,7 @@ public class FunctionLister extends GhidraScript {
         analyzeInstructionPattern(inst);
 
       } else if (codeUnit instanceof Data data) {
-          if (data.isDefined()) {
+        if (data.isDefined()) {
           definedData++;
         } else {
           undefinedData++;
@@ -1139,10 +1139,10 @@ public class FunctionLister extends GhidraScript {
     // Check parameter count against architecture limits
     if (processor.contains("x86") && !processor.contains("x86_64")) {
       // x86-32 typically passes first few params in registers
-        return params.length > 6; // Potential stack overflow risk
+      return params.length > 6; // Potential stack overflow risk
     } else if (processor.contains("x86_64")) {
       // x86-64 passes first 6 params in registers
-        return params.length > 10; // Excessive parameters
+      return params.length > 10; // Excessive parameters
     }
 
     return false;
@@ -1409,7 +1409,7 @@ public class FunctionLister extends GhidraScript {
 
       // Check for dangerous structure members
       if (componentType instanceof Array arrayType) {
-          if (arrayType.getElementLength() > 1024) {
+        if (arrayType.getElementLength() > 1024) {
           // Large array in structure - potential overflow
           println("[DataType Finding] Large array in structure: " + structure.getName());
         }
@@ -1417,7 +1417,7 @@ public class FunctionLister extends GhidraScript {
 
       // Check for function pointers in structures
       if (componentType instanceof Pointer ptrType) {
-          if (ptrType.getDataType() instanceof FunctionDefinition) {
+        if (ptrType.getDataType() instanceof FunctionDefinition) {
           println("[DataType Finding] Function pointer in structure: " + structure.getName());
         }
       }
@@ -1453,7 +1453,7 @@ public class FunctionLister extends GhidraScript {
 
     // Check for arrays of function pointers
     if (elementType instanceof Pointer ptrType) {
-        if (ptrType.getDataType() instanceof FunctionDefinition) {
+      if (ptrType.getDataType() instanceof FunctionDefinition) {
         println("[DataType Finding] Array of function pointers: " + arrayType.getName());
       }
     }
@@ -1518,7 +1518,7 @@ public class FunctionLister extends GhidraScript {
 
     // Check for function pointers
     if (dataType instanceof Pointer ptrType) {
-        return ptrType.getDataType() instanceof FunctionDefinition;
+      return ptrType.getDataType() instanceof FunctionDefinition;
     }
 
     return false;
@@ -1771,8 +1771,8 @@ public class FunctionLister extends GhidraScript {
           }
 
           // Try to read from the address to check accessibility
-            byte testByte = memory.getByte(memAddr);
-            // Access succeeded
+          byte testByte = memory.getByte(memAddr);
+          // Access succeeded
         }
       }
     }
@@ -2207,9 +2207,7 @@ public class FunctionLister extends GhidraScript {
 
     // Analyze cached code unit data for patterns
     List<Address> sortedAddresses =
-        codeUnitMap.keySet().stream()
-            .sorted(Address::compareTo)
-            .toList();
+        codeUnitMap.keySet().stream().sorted(Address::compareTo).toList();
 
     // Analyze instruction sequences
     for (int i = 0; i < sortedAddresses.size() - 2; i++) {
@@ -2225,7 +2223,7 @@ public class FunctionLister extends GhidraScript {
           && unit2 instanceof Instruction inst2
           && unit3 instanceof Instruction inst3) {
 
-          String sequence =
+        String sequence =
             inst1.getMnemonicString()
                 + "-"
                 + inst2.getMnemonicString()
@@ -2373,7 +2371,7 @@ public class FunctionLister extends GhidraScript {
       } else if (unit instanceof Data data) {
         totalData++;
 
-          String dataType = data.getDataType().getName();
+        String dataType = data.getDataType().getName();
         dataPatternMap.merge(dataType, 1, Integer::sum);
       }
     }
@@ -2564,7 +2562,7 @@ public class FunctionLister extends GhidraScript {
     }
 
     // High data references with comparison instructions
-      return result.dataReferences >= 3 && result.mnemonic.toLowerCase().contains("cmp");
+    return result.dataReferences >= 3 && result.mnemonic.toLowerCase().contains("cmp");
   }
 
   private String getSuspiciousReason(CombinedAnalysisResult result) {
@@ -2606,9 +2604,9 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Mixed references in validation-like function
-      return result.callReferences > 0
-          && result.dataReferences >= 2
-          && (funcName.contains("check") || funcName.contains("verify"));
+    return result.callReferences > 0
+        && result.dataReferences >= 2
+        && (funcName.contains("check") || funcName.contains("verify"));
   }
 
   private boolean isAntiAnalysisCandidate(CombinedAnalysisResult result) {
@@ -2621,7 +2619,7 @@ public class FunctionLister extends GhidraScript {
     }
 
     // High indirect references (potential obfuscation)
-      return result.indirectReferences >= 2;
+    return result.indirectReferences >= 2;
   }
 
   private void generateCacheAnalysisReport(Map<Address, CombinedAnalysisResult> combinedResults) {

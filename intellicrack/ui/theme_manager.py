@@ -18,10 +18,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QApplication
+
+
+logger = logging.getLogger(__name__)
 
 
 class ThemeManager:
@@ -119,7 +123,7 @@ class ThemeManager:
         normalized_theme = theme_mapping.get(theme_name)
 
         if normalized_theme not in self.themes:
-            print(f"Warning: Unknown theme '{theme_name}', using light theme")
+            logger.warning("Unknown theme '%s', using light theme", theme_name)
             normalized_theme = "light"
 
         self.current_theme = normalized_theme
@@ -134,13 +138,12 @@ class ThemeManager:
 
             if app := QApplication.instance():
                 app.setStyleSheet(stylesheet_content)
-                print(f"Applied {self.current_theme} theme successfully")
+                logger.info("Applied %s theme successfully", self.current_theme)
             else:
-                print("Warning: No QApplication instance found")
+                logger.warning("No QApplication instance found")
 
         except Exception as e:
-            print(f"Error applying theme: {e}")
-            # Fallback to built-in dark theme
+            logger.error("Error applying theme: %s", e, exc_info=True)
             self._apply_builtin_dark_theme()
 
     def _get_theme_stylesheet(self) -> str:
@@ -162,7 +165,7 @@ class ThemeManager:
                 with open(theme_path, encoding="utf-8") as f:
                     return f.read()
             except Exception as e:
-                print(f"Error loading theme file {theme_path}: {e}")
+                logger.error("Error loading theme file %s: %s", theme_path, e, exc_info=True)
 
         # Fallback to built-in themes
         return self._get_builtin_theme_stylesheet()
@@ -987,9 +990,9 @@ QPushButton#resetButton:pressed {
         try:
             if app := QApplication.instance():
                 app.setStyleSheet(self._get_builtin_dark_stylesheet())
-                print("Applied built-in dark theme as fallback")
+                logger.info("Applied built-in dark theme as fallback")
         except Exception as e:
-            print(f"Error applying fallback theme: {e}")
+            logger.error("Error applying fallback theme: %s", e, exc_info=True)
 
 
 # Global theme manager instance (lazy initialization)

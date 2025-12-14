@@ -12,8 +12,8 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
-from PyQt6.QtCore import QCloseEvent, QObject, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QBrush, QCloseEvent, QColor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QGroupBox,
@@ -405,8 +405,8 @@ class SystemMonitorWidget(QWidget):
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
                         processes.append(pinfo)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug("Process access error during iteration: %s", e)
 
             # Sort by CPU usage
             processes.sort(key=lambda x: x["cpu_percent"], reverse=True)

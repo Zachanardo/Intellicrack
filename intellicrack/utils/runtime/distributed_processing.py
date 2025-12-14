@@ -197,10 +197,7 @@ def process_binary_chunks(
         results["total_chunks"] = len(chunks)
 
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            future_to_chunk = {
-                executor.submit(process_chunk, binary_path, chunk, processor_func): chunk
-                for chunk in chunks
-            }
+            future_to_chunk = {executor.submit(process_chunk, binary_path, chunk, processor_func): chunk for chunk in chunks}
 
             chunk_results_list: list[dict[str, Any]] = cast("list[dict[str, Any]]", results["chunk_results"])
             for future in as_completed(future_to_chunk):
@@ -459,11 +456,7 @@ def run_distributed_entropy_analysis(
 
     if results.get("aggregated"):
         chunk_results_list = cast("list[dict[str, Any]]", results["chunk_results"])
-        entropies = [
-            r["result"]["entropy"]
-            for r in chunk_results_list
-            if r.get("success") and "entropy" in r.get("result", {})
-        ]
+        entropies = [r["result"]["entropy"] for r in chunk_results_list if r.get("success") and "entropy" in r.get("result", {})]
 
         if entropies:
             results["statistics"] = {
@@ -1810,17 +1803,13 @@ def run_joblib_mmap_analysis(
                     "entropy": entropy,
                     "is_packed": is_packed,
                     "string_count": len(ascii_strings),
-                    "notable_strings": [
-                        s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])
-                    ],
+                    "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
                 }
 
         offsets = list(range(0, file_size - window_size + 1, step_size))
 
         with Parallel(n_jobs=n_jobs, backend="threading") as parallel:
-            window_results: list[dict[str, Any]] = parallel(
-                delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets
-            )
+            window_results: list[dict[str, Any]] = parallel(delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets)
 
         results["window_results"] = window_results
         results["num_windows"] = len(window_results)

@@ -97,24 +97,24 @@ const ObfuscationDetector = {
         // Create feature extractor
         this.featureExtractor = {
             extractFeatures: function (code, size) {
-              const features = {
-                entropy: 0,
-                jumpDensity: 0,
-                callDensity: 0,
-                unusualInstructions: 0,
-                stackManipulation: 0,
-                indirectBranches: 0,
-                selfModifying: 0,
-                antiDebug: 0,
-              };
+                const features = {
+                    entropy: 0,
+                    jumpDensity: 0,
+                    callDensity: 0,
+                    unusualInstructions: 0,
+                    stackManipulation: 0,
+                    indirectBranches: 0,
+                    selfModifying: 0,
+                    antiDebug: 0,
+                };
 
-              // Calculate entropy
-              const bytes = code.readByteArray(Math.min(size, 1024));
-              features.entropy = this.calculateEntropy(bytes);
+                // Calculate entropy
+                const bytes = code.readByteArray(Math.min(size, 1024));
+                features.entropy = this.calculateEntropy(bytes);
 
                 // Analyze instructions
-              const instructions = this.disassemble(code, size);
-              features.jumpDensity = this.calculateJumpDensity(instructions);
+                const instructions = this.disassemble(code, size);
+                features.jumpDensity = this.calculateJumpDensity(instructions);
                 features.callDensity = this.calculateCallDensity(instructions);
                 features.unusualInstructions = this.countUnusualInstructions(instructions);
                 features.stackManipulation = this.analyzeStackOperations(instructions);
@@ -124,15 +124,15 @@ const ObfuscationDetector = {
             }.bind(this),
 
             calculateEntropy: bytes => {
-              const freq = {};
-              for (let i = 0; i < bytes.length; i++) {
+                const freq = {};
+                for (let i = 0; i < bytes.length; i++) {
                     freq[bytes[i]] = (freq[bytes[i]] || 0) + 1;
                 }
 
-              let entropy = 0;
-              for (let byte in freq) {
-                  const p = freq[byte] / bytes.length;
-                  entropy -= p * Math.log2(p);
+                let entropy = 0;
+                for (let byte in freq) {
+                    const p = freq[byte] / bytes.length;
+                    entropy -= p * Math.log2(p);
                 }
 
                 return entropy;
@@ -140,13 +140,13 @@ const ObfuscationDetector = {
 
             disassemble: (code, size) => {
                 // Simple disassembly for feature extraction
-              const instructions = [];
-              let offset = 0;
+                const instructions = [];
+                let offset = 0;
 
-              while (offset < size && offset < 1024) {
+                while (offset < size && offset < 1024) {
                     try {
-                      const inst = Instruction.parse(code.add(offset));
-                      instructions.push({
+                        const inst = Instruction.parse(code.add(offset));
+                        instructions.push({
                             address: code.add(offset),
                             mnemonic: inst.mnemonic,
                             operands: inst.operands,
@@ -170,10 +170,10 @@ const ObfuscationDetector = {
             },
 
             calculateJumpDensity: instructions => {
-              let jumps = 0;
-              const jumpMnemonics = ['jmp', 'je', 'jne', 'jz', 'jnz', 'ja', 'jb', 'jg', 'jl'];
+                let jumps = 0;
+                const jumpMnemonics = ['jmp', 'je', 'jne', 'jz', 'jnz', 'ja', 'jb', 'jg', 'jl'];
 
-              instructions.forEach(inst => {
+                instructions.forEach(inst => {
                     if (jumpMnemonics.some(j => inst.mnemonic.startsWith(j))) {
                         jumps++;
                     }
@@ -183,9 +183,9 @@ const ObfuscationDetector = {
             },
 
             calculateCallDensity: instructions => {
-              let calls = 0;
+                let calls = 0;
 
-              instructions.forEach(inst => {
+                instructions.forEach(inst => {
                     if (inst.mnemonic === 'call') {
                         calls++;
                     }
@@ -195,10 +195,10 @@ const ObfuscationDetector = {
             },
 
             countUnusualInstructions: instructions => {
-              let unusual = 0;
-              const unusualMnemonics = ['int3', 'ud2', 'hlt', 'in', 'out', 'rdtsc', 'cpuid'];
+                let unusual = 0;
+                const unusualMnemonics = ['int3', 'ud2', 'hlt', 'in', 'out', 'rdtsc', 'cpuid'];
 
-              instructions.forEach(inst => {
+                instructions.forEach(inst => {
                     if (unusualMnemonics.includes(inst.mnemonic)) {
                         unusual++;
                     }
@@ -208,14 +208,14 @@ const ObfuscationDetector = {
             },
 
             analyzeStackOperations: instructions => {
-              let stackOps = 0;
+                let stackOps = 0;
 
-              instructions.forEach(inst => {
+                instructions.forEach(inst => {
                     if (
                         inst.mnemonic.includes('push') ||
                         inst.mnemonic.includes('pop') ||
-                        (inst.operands?.includes('esp')) ||
-                        (inst.operands?.includes('rsp'))
+                        inst.operands?.includes('esp') ||
+                        inst.operands?.includes('rsp')
                     ) {
                         stackOps++;
                     }
@@ -225,9 +225,9 @@ const ObfuscationDetector = {
             },
 
             countIndirectBranches: instructions => {
-              let indirect = 0;
+                let indirect = 0;
 
-              instructions.forEach(inst => {
+                instructions.forEach(inst => {
                     if (
                         (inst.mnemonic === 'jmp' || inst.mnemonic === 'call') &&
                         inst.operands &&
@@ -245,13 +245,23 @@ const ObfuscationDetector = {
         this.mlModel = {
             predict: function (features) {
                 // Simple threshold-based classification
-              let score = 0;
+                let score = 0;
 
-              if (features.entropy > 6.5) { score += 0.3; }
-                if (features.jumpDensity > 0.3) { score += 0.2; }
-                if (features.unusualInstructions > 2) { score += 0.2; }
-                if (features.indirectBranches > 3) { score += 0.15; }
-                if (features.stackManipulation > 0.4) { score += 0.15; }
+                if (features.entropy > 6.5) {
+                    score += 0.3;
+                }
+                if (features.jumpDensity > 0.3) {
+                    score += 0.2;
+                }
+                if (features.unusualInstructions > 2) {
+                    score += 0.2;
+                }
+                if (features.indirectBranches > 3) {
+                    score += 0.15;
+                }
+                if (features.stackManipulation > 0.4) {
+                    score += 0.15;
+                }
 
                 return {
                     isObfuscated: score > this.config.ml.confidence,
@@ -261,12 +271,20 @@ const ObfuscationDetector = {
             }.bind(this),
 
             classifyObfuscationType: features => {
-              const types = [];
+                const types = [];
 
-              if (features.jumpDensity > 0.4) { types.push('control_flow_flattening'); }
-                if (features.indirectBranches > 5) { types.push('virtualization'); }
-                if (features.entropy > 7) { types.push('encryption'); }
-                if (features.unusualInstructions > 3) { types.push('anti_analysis'); }
+                if (features.jumpDensity > 0.4) {
+                    types.push('control_flow_flattening');
+                }
+                if (features.indirectBranches > 5) {
+                    types.push('virtualization');
+                }
+                if (features.entropy > 7) {
+                    types.push('encryption');
+                }
+                if (features.unusualInstructions > 3) {
+                    types.push('anti_analysis');
+                }
 
                 return types;
             },
@@ -283,7 +301,9 @@ const ObfuscationDetector = {
 
         Process.enumerateModules().forEach(module => {
             // Skip system modules
-            if (this.isSystemModule(module.name)) { return; }
+            if (this.isSystemModule(module.name)) {
+                return;
+            }
 
             send({
                 type: 'info',
@@ -311,23 +331,23 @@ const ObfuscationDetector = {
         this.stats.functionsAnalyzed++;
 
         // Check cache
-      const cacheKey = address.toString();
-      if (this.config.analysis.cacheResults && this.cache[cacheKey]) {
+        const cacheKey = address.toString();
+        if (this.config.analysis.cacheResults && this.cache[cacheKey]) {
             return this.cache[cacheKey];
         }
 
-      const result = {
-        address: address,
-        name: name,
-        module: moduleName,
-        obfuscations: [],
-        bypassed: false,
-      };
+        const result = {
+            address: address,
+            name: name,
+            module: moduleName,
+            obfuscations: [],
+            bypassed: false,
+        };
 
-      // Control flow analysis
+        // Control flow analysis
         if (this.config.detection.controlFlow) {
-          const cfResult = this.detectControlFlowObfuscation(address);
-          if (cfResult.detected) {
+            const cfResult = this.detectControlFlowObfuscation(address);
+            if (cfResult.detected) {
                 result.obfuscations.push(cfResult);
                 this.detectedObfuscations.push(cfResult);
             }
@@ -335,8 +355,8 @@ const ObfuscationDetector = {
 
         // Opaque predicate detection
         if (this.config.detection.opaquePredicates) {
-          const opResult = this.detectOpaquePredicates(address);
-          if (opResult.detected) {
+            const opResult = this.detectOpaquePredicates(address);
+            if (opResult.detected) {
                 result.obfuscations.push(opResult);
                 this.detectedObfuscations.push(opResult);
             }
@@ -344,8 +364,8 @@ const ObfuscationDetector = {
 
         // Virtualization detection
         if (this.config.detection.virtualization) {
-          const vmResult = this.detectVirtualization(address);
-          if (vmResult.detected) {
+            const vmResult = this.detectVirtualization(address);
+            if (vmResult.detected) {
                 result.obfuscations.push(vmResult);
                 this.detectedObfuscations.push(vmResult);
             }
@@ -353,8 +373,8 @@ const ObfuscationDetector = {
 
         // String encryption detection
         if (this.config.detection.stringEncryption) {
-          const strResult = this.detectStringEncryption(address);
-          if (strResult.detected) {
+            const strResult = this.detectStringEncryption(address);
+            if (strResult.detected) {
                 result.obfuscations.push(strResult);
                 this.detectedObfuscations.push(strResult);
             }
@@ -362,10 +382,10 @@ const ObfuscationDetector = {
 
         // ML-based detection
         if (this.config.ml.enabled && this.mlModel) {
-          const features = this.featureExtractor.extractFeatures(address, 1024);
-          const prediction = this.mlModel.predict(features);
+            const features = this.featureExtractor.extractFeatures(address, 1024);
+            const prediction = this.mlModel.predict(features);
 
-          if (prediction.isObfuscated) {
+            if (prediction.isObfuscated) {
                 result.obfuscations.push({
                     type: 'ml_detected',
                     confidence: prediction.confidence,
@@ -400,35 +420,35 @@ const ObfuscationDetector = {
 
     // Detect control flow obfuscation
     detectControlFlowObfuscation: function (address) {
-      const result = {
-        type: 'control_flow_flattening',
-        detected: false,
-        patterns: [],
-        confidence: 0,
-      };
+        const result = {
+            type: 'control_flow_flattening',
+            detected: false,
+            patterns: [],
+            confidence: 0,
+        };
 
-      try {
+        try {
             // Look for dispatcher pattern
-          const code = address.readByteArray(512);
+            const code = address.readByteArray(512);
 
-          // Pattern 1: Switch-based dispatcher
-          const switchPattern = [0xff, 0x24, 0x85]; // jmp [eax*4 + dispatcher_table]
+            // Pattern 1: Switch-based dispatcher
+            const switchPattern = [0xff, 0x24, 0x85]; // jmp [eax*4 + dispatcher_table]
             if (this.findPattern(code, switchPattern)) {
                 result.patterns.push('switch_dispatcher');
                 result.confidence += 0.4;
             }
 
             // Pattern 2: State machine pattern
-          const statePattern = [0x83, 0xf8]; // cmp eax, state
-          const stateCount = this.countPattern(code, statePattern);
-          if (stateCount > 5) {
+            const statePattern = [0x83, 0xf8]; // cmp eax, state
+            const stateCount = this.countPattern(code, statePattern);
+            if (stateCount > 5) {
                 result.patterns.push('state_machine');
                 result.confidence += 0.3;
             }
 
             // Pattern 3: Excessive jumps
-          let jumpCount = 0;
-          for (let i = 0; i < code.length - 1; i++) {
+            let jumpCount = 0;
+            for (let i = 0; i < code.length - 1; i++) {
                 if (
                     code[i] === 0xe9 ||
                     code[i] === 0xeb || // jmp
@@ -454,36 +474,36 @@ const ObfuscationDetector = {
 
     // Detect opaque predicates
     detectOpaquePredicates: function (address) {
-      const result = {
-        type: 'opaque_predicates',
-        detected: false,
-        predicates: [],
-        confidence: 0,
-      };
+        const result = {
+            type: 'opaque_predicates',
+            detected: false,
+            predicates: [],
+            confidence: 0,
+        };
 
-      try {
-          const code = address.readByteArray(256);
+        try {
+            const code = address.readByteArray(256);
 
-          // Common opaque predicate patterns
-          const patterns = [
-            // (x^2) >= 0 always true
-            {
-              bytes: [0x0f, 0xaf, 0xc0, 0x79], // imul eax, eax; jns
-              name: 'square_non_negative',
-            },
-            // (x & -x) == x for x = 2^n
-            {
-              bytes: [0x89, 0xc2, 0xf7, 0xd2, 0x21, 0xd0, 0x39, 0xc2],
-              name: 'power_of_two',
-            },
-            // ((x * 7) & 1) == (x & 1)
-            {
-              bytes: [0x6b, 0xc0, 0x07, 0x83, 0xe0, 0x01],
-              name: 'modular_arithmetic',
-            },
-          ];
+            // Common opaque predicate patterns
+            const patterns = [
+                // (x^2) >= 0 always true
+                {
+                    bytes: [0x0f, 0xaf, 0xc0, 0x79], // imul eax, eax; jns
+                    name: 'square_non_negative',
+                },
+                // (x & -x) == x for x = 2^n
+                {
+                    bytes: [0x89, 0xc2, 0xf7, 0xd2, 0x21, 0xd0, 0x39, 0xc2],
+                    name: 'power_of_two',
+                },
+                // ((x * 7) & 1) == (x & 1)
+                {
+                    bytes: [0x6b, 0xc0, 0x07, 0x83, 0xe0, 0x01],
+                    name: 'modular_arithmetic',
+                },
+            ];
 
-          patterns.forEach(
+            patterns.forEach(
                 function (pattern) {
                     if (this.findPattern(code, pattern.bytes)) {
                         result.predicates.push({
@@ -496,8 +516,8 @@ const ObfuscationDetector = {
             );
 
             // Check for always-taken branches
-          const branches = this.findConditionalBranches(address);
-          branches.forEach(
+            const branches = this.findConditionalBranches(address);
+            branches.forEach(
                 function (branch) {
                     if (this.isAlwaysTaken(branch)) {
                         result.predicates.push({
@@ -519,27 +539,27 @@ const ObfuscationDetector = {
 
     // Detect virtualization
     detectVirtualization: function (address) {
-      const result = {
-        type: 'virtualization',
-        detected: false,
-        vmType: 'unknown',
-        confidence: 0,
-      };
+        const result = {
+            type: 'virtualization',
+            detected: false,
+            vmType: 'unknown',
+            confidence: 0,
+        };
 
-      try {
+        try {
             // Check for VM dispatcher patterns
-          const patterns = {
-            // VMProtect pattern
-            vmprotect: [0x8b, 0x04, 0x24, 0x83, 0xc4, 0x04, 0xff, 0x20],
-            // Themida pattern
-            themida: [0x60, 0x9c, 0xe8, 0x00, 0x00, 0x00, 0x00, 0x5d],
-            // Code Virtualizer pattern
-            cv: [0x55, 0x8b, 0xec, 0x83, 0xec, 0x20, 0x53, 0x56, 0x57, 0xe8],
-          };
+            const patterns = {
+                // VMProtect pattern
+                vmprotect: [0x8b, 0x04, 0x24, 0x83, 0xc4, 0x04, 0xff, 0x20],
+                // Themida pattern
+                themida: [0x60, 0x9c, 0xe8, 0x00, 0x00, 0x00, 0x00, 0x5d],
+                // Code Virtualizer pattern
+                cv: [0x55, 0x8b, 0xec, 0x83, 0xec, 0x20, 0x53, 0x56, 0x57, 0xe8],
+            };
 
-          const code = address.readByteArray(512);
+            const code = address.readByteArray(512);
 
-          Object.keys(patterns).forEach(
+            Object.keys(patterns).forEach(
                 function (vmType) {
                     if (this.findPattern(code, patterns[vmType])) {
                         result.vmType = vmType;
@@ -549,15 +569,15 @@ const ObfuscationDetector = {
             );
 
             // Check for VM context structure
-          const contextPattern = this.findVMContext(address);
-          if (contextPattern) {
+            const contextPattern = this.findVMContext(address);
+            if (contextPattern) {
                 result.confidence += 0.3;
                 result.context = contextPattern;
             }
 
             // Check for bytecode handlers
-          const handlers = this.findBytecodeHandlers(address);
-          if (handlers.length > 10) {
+            const handlers = this.findBytecodeHandlers(address);
+            if (handlers.length > 10) {
                 result.confidence += 0.2;
                 result.handlers = handlers;
             }
@@ -572,36 +592,36 @@ const ObfuscationDetector = {
 
     // Detect string encryption
     detectStringEncryption: function (address) {
-      const result = {
-        type: 'string_encryption',
-        detected: false,
-        methods: [],
-        confidence: 0,
-      };
+        const result = {
+            type: 'string_encryption',
+            detected: false,
+            methods: [],
+            confidence: 0,
+        };
 
-      try {
+        try {
             // Check for common decryption patterns
-          const patterns = [
-            // XOR decryption loop
-            {
-              bytes: [0x80, 0x34, 0x08], // xor byte [eax+ecx], key
-              name: 'xor_loop',
-            },
-            // RC4 initialization
-            {
-              bytes: [0x88, 0x04, 0x08, 0x40, 0x3d, 0x00, 0x01],
-              name: 'rc4_init',
-            },
-            // Base64 decode
-            {
-              bytes: [0x0f, 0xb6, 0x00, 0x83, 0xe8, 0x41],
-              name: 'base64_decode',
-            },
-          ];
+            const patterns = [
+                // XOR decryption loop
+                {
+                    bytes: [0x80, 0x34, 0x08], // xor byte [eax+ecx], key
+                    name: 'xor_loop',
+                },
+                // RC4 initialization
+                {
+                    bytes: [0x88, 0x04, 0x08, 0x40, 0x3d, 0x00, 0x01],
+                    name: 'rc4_init',
+                },
+                // Base64 decode
+                {
+                    bytes: [0x0f, 0xb6, 0x00, 0x83, 0xe8, 0x41],
+                    name: 'base64_decode',
+                },
+            ];
 
-          const code = address.readByteArray(512);
+            const code = address.readByteArray(512);
 
-          patterns.forEach(
+            patterns.forEach(
                 function (pattern) {
                     if (this.findPattern(code, pattern.bytes)) {
                         result.methods.push(pattern.name);
@@ -611,8 +631,8 @@ const ObfuscationDetector = {
             );
 
             // Check for string obfuscation calls
-          const calls = this.findFunctionCalls(address);
-          calls.forEach(
+            const calls = this.findFunctionCalls(address);
+            calls.forEach(
                 function (call) {
                     if (this.isStringDecryptor(call.target)) {
                         result.methods.push('decryptor_call');
@@ -631,9 +651,9 @@ const ObfuscationDetector = {
 
     // Apply bypasses
     applyBypasses: function (address, obfuscations) {
-      let bypassed = false;
+        let bypassed = false;
 
-      obfuscations.forEach(obfuscation => {
+        obfuscations.forEach(obfuscation => {
             switch (obfuscation.type) {
                 case 'control_flow_flattening':
                     if (this.config.bypass.autoDeobfuscate) {
@@ -667,13 +687,13 @@ const ObfuscationDetector = {
     // Bypass control flow flattening
     bypassControlFlow: function (address, obfuscation) {
         // Use obfuscation parameter for comprehensive control flow analysis
-      const obfuscationInfo = {
-        type: obfuscation.type || 'control_flow_flattening',
-        complexity: obfuscation.complexity || 'medium',
-        dispatcher_pattern: obfuscation.pattern || 'switch_based',
-      };
+        const obfuscationInfo = {
+            type: obfuscation.type || 'control_flow_flattening',
+            complexity: obfuscation.complexity || 'medium',
+            dispatcher_pattern: obfuscation.pattern || 'switch_based',
+        };
 
-      send({
+        send({
             type: 'bypass',
             target: 'obfuscation_detector',
             action: 'bypassing_control_flow_flattening',
@@ -683,31 +703,33 @@ const ObfuscationDetector = {
 
         try {
             // Use obfuscation information to optimize dispatcher search
-          const searchPattern =
-            obfuscationInfo.dispatcher_pattern === 'jump_table'
-              ? this.findJumpTableDispatcher
-              : this.findSwitchDispatcher;
+            const searchPattern =
+                obfuscationInfo.dispatcher_pattern === 'jump_table'
+                    ? this.findJumpTableDispatcher
+                    : this.findSwitchDispatcher;
 
-          // Use searchPattern to find dispatcher with pattern-specific optimization
-          let dispatcher = searchPattern.call(this, address, {
-            pattern_type: obfuscationInfo.dispatcher_pattern,
-            complexity_level: obfuscationInfo.complexity_level,
-            expected_branches: obfuscationInfo.estimated_original_blocks,
-            search_depth: obfuscationInfo.complexity_level * 50,
-          });
-          if (!dispatcher) {
+            // Use searchPattern to find dispatcher with pattern-specific optimization
+            let dispatcher = searchPattern.call(this, address, {
+                pattern_type: obfuscationInfo.dispatcher_pattern,
+                complexity_level: obfuscationInfo.complexity_level,
+                expected_branches: obfuscationInfo.estimated_original_blocks,
+                search_depth: obfuscationInfo.complexity_level * 50,
+            });
+            if (!dispatcher) {
                 // Fallback to generic dispatcher search
                 dispatcher = this.findDispatcher(address);
             }
-            if (!dispatcher) { return false; }
+            if (!dispatcher) {
+                return false;
+            }
 
             // Extract state transitions
-          const transitions = this.extractStateTransitions(dispatcher);
+            const transitions = this.extractStateTransitions(dispatcher);
 
-          // Rebuild original flow
-          const originalFlow = this.rebuildControlFlow(transitions);
+            // Rebuild original flow
+            const originalFlow = this.rebuildControlFlow(transitions);
 
-          // Patch the function
+            // Patch the function
             if (originalFlow.length > 0) {
                 this.patchControlFlow(address, originalFlow);
                 this.stats.obfuscationsBypassed++;
@@ -729,9 +751,9 @@ const ObfuscationDetector = {
             address: address.toString(),
         });
 
-      let patched = 0;
+        let patched = 0;
 
-      obfuscation.predicates.forEach(
+        obfuscation.predicates.forEach(
             function (predicate) {
                 try {
                     switch (predicate.type) {
@@ -823,9 +845,9 @@ const ObfuscationDetector = {
             address: address.toString(),
         });
 
-      let decrypted = 0;
+        let decrypted = 0;
 
-      obfuscation.methods.forEach(
+        obfuscation.methods.forEach(
             function (method) {
                 try {
                     switch (method) {
@@ -872,25 +894,29 @@ const ObfuscationDetector = {
 
     // Decrypt XOR strings
     decryptXorStrings: function (address) {
-      let decrypted = 0;
+        let decrypted = 0;
 
-      // Find XOR loops
-      const xorLoops = this.findXorLoops(address);
+        // Find XOR loops
+        const xorLoops = this.findXorLoops(address);
 
-      xorLoops.forEach(
+        xorLoops.forEach(
             function (loop) {
                 // Extract encrypted data
-              const data = this.extractEncryptedData(loop);
-              if (!data) { return; }
+                const data = this.extractEncryptedData(loop);
+                if (!data) {
+                    return;
+                }
 
                 // Find XOR key
-              const key = this.findXorKey(loop);
-              if (!key) { return; }
+                const key = this.findXorKey(loop);
+                if (!key) {
+                    return;
+                }
 
                 // Decrypt
-              const plaintext = this.xorDecrypt(data, key);
+                const plaintext = this.xorDecrypt(data, key);
 
-              // Replace encrypted with plaintext
+                // Replace encrypted with plaintext
                 this.replaceEncryptedString(loop.dataAddress, plaintext);
                 decrypted++;
 
@@ -908,17 +934,17 @@ const ObfuscationDetector = {
 
     // Hook module loading
     hookModuleLoading: function () {
-      const self = this;
+        const self = this;
 
-      // Windows
+        // Windows
         if (Process.platform === 'windows') {
-          const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
-          if (loadLibrary) {
+            const loadLibrary = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
+            if (loadLibrary) {
                 Interceptor.attach(loadLibrary, {
                     onLeave: retval => {
                         if (!retval.isNull()) {
-                          const module = Process.findModuleByAddress(retval);
-                          if (module) {
+                            const module = Process.findModuleByAddress(retval);
+                            if (module) {
                                 send({
                                     type: 'info',
                                     target: 'obfuscation_detector',
@@ -936,8 +962,8 @@ const ObfuscationDetector = {
 
         // Linux
         else if (Process.platform === 'linux') {
-          const dlopen = Module.findExportByName(null, 'dlopen');
-          if (dlopen) {
+            const dlopen = Module.findExportByName(null, 'dlopen');
+            if (dlopen) {
                 Interceptor.attach(dlopen, {
                     onEnter: function (args) {
                         this.path = args[0].readCString();
@@ -950,8 +976,8 @@ const ObfuscationDetector = {
                                 action: 'new_module_loaded_dlopen',
                                 module_path: this.path,
                             });
-                          const module = Process.findModuleByName(this.path);
-                          if (module) {
+                            const module = Process.findModuleByName(this.path);
+                            if (module) {
                                 self.analyzeModule(module);
                             }
                         }
@@ -977,16 +1003,16 @@ const ObfuscationDetector = {
 
     // Monitor dynamic code generation
     monitorDynamicCode: function () {
-      const self = this;
+        const self = this;
 
-      // VirtualAlloc
-      const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
-      if (virtualAlloc) {
+        // VirtualAlloc
+        const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
+        if (virtualAlloc) {
             Interceptor.attach(virtualAlloc, {
                 onLeave: function (retval) {
                     if (!retval.isNull()) {
-                      const protection = this.context.r9.toInt32();
-                      if (protection && 0x20) {
+                        const protection = this.context.r9.toInt32();
+                        if (protection && 0x20) {
                             // PAGE_EXECUTE
                             send({
                                 type: 'info',
@@ -1019,25 +1045,29 @@ const ObfuscationDetector = {
     // Helper functions
     findPattern: (haystack, needle) => {
         for (let i = 0; i <= haystack.length - needle.length; i++) {
-          let found = true;
-          for (let j = 0; j < needle.length; j++) {
+            let found = true;
+            for (let j = 0; j < needle.length; j++) {
                 if (haystack[i + j] !== needle[j]) {
                     found = false;
                     break;
                 }
             }
-            if (found) { return i; }
+            if (found) {
+                return i;
+            }
         }
         return -1;
     },
 
     countPattern: function (haystack, needle) {
-      let count = 0;
-      let offset = 0;
+        let count = 0;
+        let offset = 0;
 
-      while (offset < haystack.length) {
-          const pos = this.findPattern(haystack.slice(offset), needle);
-          if (pos === -1) { break; }
+        while (offset < haystack.length) {
+            const pos = this.findPattern(haystack.slice(offset), needle);
+            if (pos === -1) {
+                break;
+            }
             count++;
             offset += pos + needle.length;
         }
@@ -1046,27 +1076,27 @@ const ObfuscationDetector = {
     },
 
     isSystemModule: name => {
-      const systemModules = [
-        'ntdll',
-        'kernel32',
-        'user32',
-        'advapi32',
-        'msvcrt',
-        'libc',
-        'libpthread',
-        'ld-linux',
-      ];
+        const systemModules = [
+            'ntdll',
+            'kernel32',
+            'user32',
+            'advapi32',
+            'msvcrt',
+            'libc',
+            'libpthread',
+            'ld-linux',
+        ];
 
-      name = name.toLowerCase();
+        name = name.toLowerCase();
         return systemModules.some(sys => name.includes(sys));
     },
 
     analyzeCodeSection: function (range, moduleName) {
         // Analyze code section for obfuscation
-      const features = this.featureExtractor.extractFeatures(range.base, range.size);
-      const prediction = this.mlModel.predict(features);
+        const features = this.featureExtractor.extractFeatures(range.base, range.size);
+        const prediction = this.mlModel.predict(features);
 
-      if (prediction.isObfuscated) {
+        if (prediction.isObfuscated) {
             send({
                 type: 'info',
                 target: 'obfuscation_detector',
@@ -1091,86 +1121,86 @@ const ObfuscationDetector = {
 
     // Modern Packer Detection
     detectModernPackers: function (module) {
-      const packers = {
-        upx: {
-          signatures: [
-            [0x55, 0x50, 0x58, 0x30], // UPX0
-            [0x55, 0x50, 0x58, 0x31], // UPX1
-            [0x55, 0x50, 0x58, 0x21], // UPX!
-          ],
-          entryPoint: [0x60, 0xbe], // pushad; mov esi
-          detected: false,
-        },
-        aspack: {
-          signatures: [
-            [0x60, 0xe8, 0x03, 0x00, 0x00, 0x00, 0xe9, 0xeb],
-            [0x2e, 0x61, 0x73, 0x70, 0x61, 0x63, 0x6b], // .aspack
-          ],
-          detected: false,
-        },
-        pecompact: {
-          signatures: [
-            [0xb8, null, null, null, null, 0x50, 0x64, 0xff, 0x35],
-            [0x50, 0x45, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74], // PECompact
-          ],
-          detected: false,
-        },
-        enigma: {
-          signatures: [
-            [0x45, 0x6e, 0x69, 0x67, 0x6d, 0x61], // Enigma
-            [
-              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-              0x5e, 0x6e, 0x69, 0x67, 0x6d, 0x61,
-            ],
-          ],
-          detected: false,
-        },
-        mpress: {
-          signatures: [
-            [0x2d, 0x2d, 0x2d, 0x4d, 0x50, 0x52, 0x45, 0x53, 0x53], // ---MPRESS
-            [0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
-          ],
-          detected: false,
-        },
-        themida: {
-          signatures: [
-            [0xb8, null, null, null, null, 0x60, 0x0b, 0xc0],
-            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61], // Themida
-          ],
-          detected: false,
-        },
-        vmprotect: {
-          signatures: [
-            [0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74], // VMProtect
-            [
-              0x68,
-              null,
-              null,
-              null,
-              null,
-              0xe8,
-              null,
-              null,
-              null,
-              null,
-              0x00,
-              0x00,
-              0x00,
-              0x00,
-              0x00,
-            ],
-          ],
-          detected: false,
-        },
-      };
+        const packers = {
+            upx: {
+                signatures: [
+                    [0x55, 0x50, 0x58, 0x30], // UPX0
+                    [0x55, 0x50, 0x58, 0x31], // UPX1
+                    [0x55, 0x50, 0x58, 0x21], // UPX!
+                ],
+                entryPoint: [0x60, 0xbe], // pushad; mov esi
+                detected: false,
+            },
+            aspack: {
+                signatures: [
+                    [0x60, 0xe8, 0x03, 0x00, 0x00, 0x00, 0xe9, 0xeb],
+                    [0x2e, 0x61, 0x73, 0x70, 0x61, 0x63, 0x6b], // .aspack
+                ],
+                detected: false,
+            },
+            pecompact: {
+                signatures: [
+                    [0xb8, null, null, null, null, 0x50, 0x64, 0xff, 0x35],
+                    [0x50, 0x45, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74], // PECompact
+                ],
+                detected: false,
+            },
+            enigma: {
+                signatures: [
+                    [0x45, 0x6e, 0x69, 0x67, 0x6d, 0x61], // Enigma
+                    [
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x5e, 0x6e, 0x69, 0x67, 0x6d, 0x61,
+                    ],
+                ],
+                detected: false,
+            },
+            mpress: {
+                signatures: [
+                    [0x2d, 0x2d, 0x2d, 0x4d, 0x50, 0x52, 0x45, 0x53, 0x53], // ---MPRESS
+                    [0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                ],
+                detected: false,
+            },
+            themida: {
+                signatures: [
+                    [0xb8, null, null, null, null, 0x60, 0x0b, 0xc0],
+                    [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61], // Themida
+                ],
+                detected: false,
+            },
+            vmprotect: {
+                signatures: [
+                    [0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74], // VMProtect
+                    [
+                        0x68,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0xe8,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                        0x00,
+                    ],
+                ],
+                detected: false,
+            },
+        };
 
-      module.enumerateRanges('r--').forEach(range => {
+        module.enumerateRanges('r--').forEach(range => {
             try {
-              const data = range.base.readByteArray(Math.min(range.size, 4096));
+                const data = range.base.readByteArray(Math.min(range.size, 4096));
 
-              Object.keys(packers).forEach(packerName => {
-                  const packer = packers[packerName];
-                  packer.signatures.forEach(sig => {
+                Object.keys(packers).forEach(packerName => {
+                    const packer = packers[packerName];
+                    packer.signatures.forEach(sig => {
                         if (this.findPatternWithWildcards(data, sig)) {
                             packer.detected = true;
                             send({
@@ -1214,61 +1244,63 @@ const ObfuscationDetector = {
             return null;
         }
 
-      const obfuscators = {
-        confuserEx: {
-          signatures: ['ConfusedBy', 'ConfuserEx', '<Module>.cctor', 'Confuser.Core'],
-          detected: false,
-        },
-        eazfuscator: {
-          signatures: [
-            'Eazfuscator',
-            '{11111111-2222-3333-4444-555555555555}',
-            'EazfuscatorNet',
-          ],
-          detected: false,
-        },
-        dotfuscator: {
-          signatures: [
-            'DotfuscatorAttribute',
-            'PreEmptive.ObfuscationAttribute',
-            'a\u0001b\u0001c\u0001d',
-          ],
-          detected: false,
-        },
-        smartAssembly: {
-          signatures: ['SmartAssembly', 'PoweredBy', '{z}', 'SA.'],
-          detected: false,
-        },
-        cryptoObfuscator: {
-          signatures: ['CryptoObfuscator', 'LogicNP', '\u0001\u0002\u0003\u0004\u0005'],
-          detected: false,
-        },
-      };
+        const obfuscators = {
+            confuserEx: {
+                signatures: ['ConfusedBy', 'ConfuserEx', '<Module>.cctor', 'Confuser.Core'],
+                detected: false,
+            },
+            eazfuscator: {
+                signatures: [
+                    'Eazfuscator',
+                    '{11111111-2222-3333-4444-555555555555}',
+                    'EazfuscatorNet',
+                ],
+                detected: false,
+            },
+            dotfuscator: {
+                signatures: [
+                    'DotfuscatorAttribute',
+                    'PreEmptive.ObfuscationAttribute',
+                    'a\u0001b\u0001c\u0001d',
+                ],
+                detected: false,
+            },
+            smartAssembly: {
+                signatures: ['SmartAssembly', 'PoweredBy', '{z}', 'SA.'],
+                detected: false,
+            },
+            cryptoObfuscator: {
+                signatures: ['CryptoObfuscator', 'LogicNP', '\u0001\u0002\u0003\u0004\u0005'],
+                detected: false,
+            },
+        };
 
-      // Check for .NET metadata
-      const clrModule =
-        Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
-      if (!clrModule) { return null; }
+        // Check for .NET metadata
+        const clrModule =
+            Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
+        if (!clrModule) {
+            return null;
+        }
 
         // Scan for signatures using comprehensive analysis methods
         module.enumerateExports().forEach(exp => {
             Object.keys(obfuscators).forEach(obfName => {
-              const obf = obfuscators[obfName];
-              obf.signatures.forEach(sig => {
+                const obf = obfuscators[obfName];
+                obf.signatures.forEach(sig => {
                     if (exp.name?.includes(sig)) {
                         obf.detected = true;
 
                         // Use self to perform advanced obfuscator analysis
-                      const advancedAnalysis = this.analyzeDotNetObfuscation(module, obfName, {
-                        export_name: exp.name,
-                        signature_match: sig,
-                        obfuscator_type: obfName,
-                        complexity_assessment: this.assessComplexityLevel(exp.name, sig),
-                        bypass_strategy: this.determineDotNetBypassStrategy(obfName),
-                        metadata_corruption: this.checkMetadataCorruption(module, obfName),
-                      });
+                        const advancedAnalysis = this.analyzeDotNetObfuscation(module, obfName, {
+                            export_name: exp.name,
+                            signature_match: sig,
+                            obfuscator_type: obfName,
+                            complexity_assessment: this.assessComplexityLevel(exp.name, sig),
+                            bypass_strategy: this.determineDotNetBypassStrategy(obfName),
+                            metadata_corruption: this.checkMetadataCorruption(module, obfName),
+                        });
 
-                      send({
+                        send({
                             type: 'warning',
                             target: 'obfuscation_detector',
                             action: 'dotnet_obfuscator_detected',
@@ -1286,42 +1318,42 @@ const ObfuscationDetector = {
 
     // JavaScript Obfuscation Detection
     detectJavaScriptObfuscation: scriptContent => {
-      const patterns = {
-        obfuscatorIO: {
-          patterns: [
-            /_0x[a-f0-9]{4,6}/gi,
-            /\['\\x[0-9a-f]{2}'\]/gi,
-            /String\['fromCharCode'\]/g,
-          ],
-          score: 0,
-        },
-        jsfuck: {
-          patterns: [/\[\]\[\+\[\]\]/g, /\[!\[\]\+!\[\]\]/g, /\(!\[\]\+\[\]\)/g],
-          score: 0,
-        },
-        jjencode: {
-          patterns: [/\$\.\$/g, /\$\._/g, /\$\.\$\$/g],
-          score: 0,
-        },
-        aaencode: {
-          patterns: [/ﾟωﾟﾉ/g, /ﾟΘﾟ/g, /ﾟｰﾟ/g],
-          score: 0,
-        },
-        jscrambler: {
-          patterns: [
-            /_\$[a-z]{2}/gi,
-            /\b[a-z]{1}[0-9]{3,5}\b/gi,
-            /eval\(function\(p,a,c,k,e,/g,
-          ],
-          score: 0,
-        },
-      };
+        const patterns = {
+            obfuscatorIO: {
+                patterns: [
+                    /_0x[a-f0-9]{4,6}/gi,
+                    /\['\\x[0-9a-f]{2}'\]/gi,
+                    /String\['fromCharCode'\]/g,
+                ],
+                score: 0,
+            },
+            jsfuck: {
+                patterns: [/\[\]\[\+\[\]\]/g, /\[!\[\]\+!\[\]\]/g, /\(!\[\]\+\[\]\)/g],
+                score: 0,
+            },
+            jjencode: {
+                patterns: [/\$\.\$/g, /\$\._/g, /\$\.\$\$/g],
+                score: 0,
+            },
+            aaencode: {
+                patterns: [/ﾟωﾟﾉ/g, /ﾟΘﾟ/g, /ﾟｰﾟ/g],
+                score: 0,
+            },
+            jscrambler: {
+                patterns: [
+                    /_\$[a-z]{2}/gi,
+                    /\b[a-z]{1}[0-9]{3,5}\b/gi,
+                    /eval\(function\(p,a,c,k,e,/g,
+                ],
+                score: 0,
+            },
+        };
 
-      Object.keys(patterns).forEach(obfType => {
-          const obf = patterns[obfType];
-          obf.patterns.forEach(pattern => {
-              const matches = scriptContent.match(pattern);
-              if (matches) {
+        Object.keys(patterns).forEach(obfType => {
+            const obf = patterns[obfType];
+            obf.patterns.forEach(pattern => {
+                const matches = scriptContent.match(pattern);
+                if (matches) {
                     obf.score += matches.length;
                 }
             });
@@ -1341,38 +1373,38 @@ const ObfuscationDetector = {
 
     // Android/iOS Protection Detection
     detectMobileProtection: function () {
-      const protections = {
-        dexguard: false,
-        proguard: false,
-        ixguard: false,
-        appsealing: false,
-        arxan: false,
-      };
+        const protections = {
+            dexguard: false,
+            proguard: false,
+            ixguard: false,
+            appsealing: false,
+            arxan: false,
+        };
 
-      if (Process.platform === 'android') {
+        if (Process.platform === 'android') {
             // Check for DexGuard
-          const dexguardPatterns = ['dexguard', 'o0o0o0o0', 'iIiIiI'];
+            const dexguardPatterns = ['dexguard', 'o0o0o0o0', 'iIiIiI'];
 
-          Process.enumerateModules().forEach(module => {
+            Process.enumerateModules().forEach(module => {
                 if (module.name.includes('classes') && module.name.includes('.dex')) {
                     dexguardPatterns.forEach(pattern => {
                         if (module.name.includes(pattern)) {
                             protections.dexguard = true;
 
                             // Use self to perform comprehensive DexGuard analysis
-                          const dexguardAnalysis = this.analyzeMobileObfuscation(
-                            module,
-                            'dexguard',
-                            {
-                              pattern_match: pattern,
-                              module_name: module.name,
-                              complexity_level: this.assessMobileComplexity(module, pattern),
-                              bypass_methods: this.getMobileBypassMethods('dexguard'),
-                              anti_tampering_level: this.detectAntiTampering(module),
-                            }
-                          );
+                            const dexguardAnalysis = this.analyzeMobileObfuscation(
+                                module,
+                                'dexguard',
+                                {
+                                    pattern_match: pattern,
+                                    module_name: module.name,
+                                    complexity_level: this.assessMobileComplexity(module, pattern),
+                                    bypass_methods: this.getMobileBypassMethods('dexguard'),
+                                    anti_tampering_level: this.detectAntiTampering(module),
+                                }
+                            );
 
-                          send({
+                            send({
                                 type: 'mobile_protection_analysis',
                                 target: 'obfuscation_detector',
                                 protection: 'dexguard',
@@ -1398,20 +1430,20 @@ const ObfuscationDetector = {
 
         if (Process.platform === 'ios') {
             // Check for iXGuard
-          const ixguardSymbols = ['_ixguard_check', '_ix_verify', '_guard_init'];
+            const ixguardSymbols = ['_ixguard_check', '_ix_verify', '_guard_init'];
 
-          ixguardSymbols.forEach(symbol => {
-              const addr = Module.findExportByName(null, symbol);
-              if (addr) {
+            ixguardSymbols.forEach(symbol => {
+                const addr = Module.findExportByName(null, symbol);
+                if (addr) {
                     protections.ixguard = true;
                 }
             });
         }
 
         // Check for Arxan
-      const arxanPatterns = ['arxan', 'TransformIT', 'GuardIT'];
+        const arxanPatterns = ['arxan', 'TransformIT', 'GuardIT'];
 
-      Process.enumerateModules().forEach(module => {
+        Process.enumerateModules().forEach(module => {
             arxanPatterns.forEach(pattern => {
                 if (module.name.toLowerCase().includes(pattern.toLowerCase())) {
                     protections.arxan = true;
@@ -1424,23 +1456,23 @@ const ObfuscationDetector = {
 
     // Metamorphic/Polymorphic Engine Detection
     detectMetamorphicCode: function (address, size) {
-      const indicators = {
-        selfModifying: false,
-        polymorphic: false,
-        metamorphic: false,
-        mutations: [],
-      };
+        const indicators = {
+            selfModifying: false,
+            polymorphic: false,
+            metamorphic: false,
+            mutations: [],
+        };
 
-      // Monitor for self-modification
-      const originalCode = address.readByteArray(Math.min(size, 1024));
+        // Monitor for self-modification
+        const originalCode = address.readByteArray(Math.min(size, 1024));
 
-      // Set up write watch
+        // Set up write watch
         Memory.protect(address, size, 'r-x');
 
         Process.setExceptionHandler(details => {
             if (details.type === 'access-violation' && details.memory.operation === 'write') {
-              const writeAddress = details.memory.address;
-              if (
+                const writeAddress = details.memory.address;
+                if (
                     writeAddress.compare(address) >= 0 &&
                     writeAddress.compare(address.add(size)) < 0
                 ) {
@@ -1460,10 +1492,10 @@ const ObfuscationDetector = {
 
         // Check for polymorphic patterns
         setTimeout(() => {
-          const currentCode = address.readByteArray(Math.min(size, 1024));
-          let differences = 0;
+            const currentCode = address.readByteArray(Math.min(size, 1024));
+            let differences = 0;
 
-          for (let i = 0; i < originalCode.length && i < currentCode.length; i++) {
+            for (let i = 0; i < originalCode.length && i < currentCode.length; i++) {
                 if (originalCode[i] !== currentCode[i]) {
                     differences++;
                 }
@@ -1479,15 +1511,15 @@ const ObfuscationDetector = {
 
             if (indicators.selfModifying || indicators.polymorphic || indicators.metamorphic) {
                 // Use self to perform comprehensive metamorphic analysis
-              const metamorphicAnalysis = this.analyzeMetamorphicEngine(address, size, {
-                indicators: indicators,
-                mutation_rate: differences / originalCode.length,
-                complexity_assessment: this.assessMetamorphicComplexity(indicators),
-                bypass_strategy: this.getMetamorphicBypassStrategy(indicators),
-                engine_type: this.identifyMetamorphicEngine(indicators, differences),
-              });
+                const metamorphicAnalysis = this.analyzeMetamorphicEngine(address, size, {
+                    indicators: indicators,
+                    mutation_rate: differences / originalCode.length,
+                    complexity_assessment: this.assessMetamorphicComplexity(indicators),
+                    bypass_strategy: this.getMetamorphicBypassStrategy(indicators),
+                    engine_type: this.identifyMetamorphicEngine(indicators, differences),
+                });
 
-              send({
+                send({
                     type: 'warning',
                     target: 'obfuscation_detector',
                     action: 'metamorphic_code_detected',
@@ -1502,12 +1534,12 @@ const ObfuscationDetector = {
 
     // Dynamic Unpacking Detection
     detectDynamicUnpacking: function () {
-      const self = this;
-      const unpackingIndicators = [];
+        const self = this;
+        const unpackingIndicators = [];
 
-      // Monitor VirtualProtect calls
-      const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
-      if (virtualProtect) {
+        // Monitor VirtualProtect calls
+        const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
+        if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
                 onEnter: function (args) {
                     this.address = args[0];
@@ -1539,8 +1571,8 @@ const ObfuscationDetector = {
         }
 
         // Monitor WriteProcessMemory
-      const writeProcessMemory = Module.findExportByName('kernel32.dll', 'WriteProcessMemory');
-      if (writeProcessMemory) {
+        const writeProcessMemory = Module.findExportByName('kernel32.dll', 'WriteProcessMemory');
+        if (writeProcessMemory) {
             Interceptor.attach(writeProcessMemory, {
                 onEnter: function (args) {
                     this.process = args[0];
@@ -1565,74 +1597,78 @@ const ObfuscationDetector = {
 
     // Import Table Reconstruction
     reconstructImportTable: function (baseAddress) {
-      const iat = {
-        imports: [],
-        resolved: 0,
-        failed: 0,
-      };
+        const iat = {
+            imports: [],
+            resolved: 0,
+            failed: 0,
+        };
 
-      // Find IAT region
-      const module = Process.findModuleByAddress(baseAddress);
-      if (!module) { return iat; }
+        // Find IAT region
+        const module = Process.findModuleByAddress(baseAddress);
+        if (!module) {
+            return iat;
+        }
 
         // Parse PE header for IAT
-      const dosHeader = baseAddress.readU16();
-      if (dosHeader !== 0x5a4d) { return iat; // Not MZ
-}
+        const dosHeader = baseAddress.readU16();
+        if (dosHeader !== 0x5a4d) {
+            return iat; // Not MZ
+        }
 
-      const peOffset = baseAddress.add(0x3c).readU32();
-      const peSignature = baseAddress.add(peOffset).readU32();
-      if (peSignature !== 0x00004550) { return iat; // Not PE
-}
+        const peOffset = baseAddress.add(0x3c).readU32();
+        const peSignature = baseAddress.add(peOffset).readU32();
+        if (peSignature !== 0x00004550) {
+            return iat; // Not PE
+        }
 
-      const optionalHeaderOffset = peOffset + 24;
-      const importTableRVA = baseAddress.add(optionalHeaderOffset + 104).readU32();
-      const importTableSize = baseAddress.add(optionalHeaderOffset + 108).readU32();
+        const optionalHeaderOffset = peOffset + 24;
+        const importTableRVA = baseAddress.add(optionalHeaderOffset + 104).readU32();
+        const importTableSize = baseAddress.add(optionalHeaderOffset + 108).readU32();
 
-      // Use self to perform comprehensive IAT reconstruction analysis
-      const reconstructionAnalysis = this.analyzeImportTableReconstruction(module, {
-        import_table_rva: importTableRVA,
-        import_table_size: importTableSize,
-        pe_offset: peOffset,
-        base_address: baseAddress,
-        reconstruction_method: importTableRVA === 0 ? 'heuristic_scan' : 'pe_directory',
-        security_implications: this.assessIATSecurityImplications(
-          importTableRVA,
-          importTableSize
-        ),
-        obfuscation_level: this.detectIATObfuscation(module, importTableRVA),
-      });
+        // Use self to perform comprehensive IAT reconstruction analysis
+        const reconstructionAnalysis = this.analyzeImportTableReconstruction(module, {
+            import_table_rva: importTableRVA,
+            import_table_size: importTableSize,
+            pe_offset: peOffset,
+            base_address: baseAddress,
+            reconstruction_method: importTableRVA === 0 ? 'heuristic_scan' : 'pe_directory',
+            security_implications: this.assessIATSecurityImplications(
+                importTableRVA,
+                importTableSize
+            ),
+            obfuscation_level: this.detectIATObfuscation(module, importTableRVA),
+        });
 
-      // Use importTableSize for comprehensive import validation
-      const importValidation = {
-        declared_size: importTableSize,
-        actual_imports_found: 0,
-        size_consistency_check: importTableSize > 0 && importTableRVA > 0,
-        integrity_assessment: this.validateImportTableIntegrity(
-          baseAddress,
-          importTableRVA,
-          importTableSize
-        ),
-        potential_tampering: importTableSize === 0 && importTableRVA !== 0,
-        reconstruction_confidence: importTableSize > 0 ? 0.9 : 0.3,
-        analysis_results: reconstructionAnalysis,
-        security_level: reconstructionAnalysis.security_implications || 'unknown',
-        obfuscation_detected: reconstructionAnalysis.obfuscation_level > 0.5,
-      };
+        // Use importTableSize for comprehensive import validation
+        const importValidation = {
+            declared_size: importTableSize,
+            actual_imports_found: 0,
+            size_consistency_check: importTableSize > 0 && importTableRVA > 0,
+            integrity_assessment: this.validateImportTableIntegrity(
+                baseAddress,
+                importTableRVA,
+                importTableSize
+            ),
+            potential_tampering: importTableSize === 0 && importTableRVA !== 0,
+            reconstruction_confidence: importTableSize > 0 ? 0.9 : 0.3,
+            analysis_results: reconstructionAnalysis,
+            security_level: reconstructionAnalysis.security_implications || 'unknown',
+            obfuscation_detected: reconstructionAnalysis.obfuscation_level > 0.5,
+        };
 
-      if (importTableRVA === 0) {
+        if (importTableRVA === 0) {
             // IAT might be destroyed, try to reconstruct
             module.enumerateRanges('r--').forEach(range => {
                 // Look for function pointers
                 for (let offset = 0; offset < range.size - 8; offset += 8) {
                     try {
-                      const ptr = range.base.add(offset).readPointer();
-                      const targetModule = Process.findModuleByAddress(ptr);
+                        const ptr = range.base.add(offset).readPointer();
+                        const targetModule = Process.findModuleByAddress(ptr);
 
-                      if (targetModule && targetModule !== module) {
+                        if (targetModule && targetModule !== module) {
                             // Found external reference
-                          const symbol = DebugSymbol.fromAddress(ptr);
-                          if (symbol?.name) {
+                            const symbol = DebugSymbol.fromAddress(ptr);
+                            if (symbol?.name) {
                                 iat.imports.push({
                                     address: range.base.add(offset),
                                     target: ptr,
@@ -1645,22 +1681,21 @@ const ObfuscationDetector = {
                     } catch (e) {
                         iat.failed++;
                         // Use e for comprehensive IAT reconstruction error analysis
-                      const errorAnalysis = {
-                        error_type: e.name || 'UnknownError',
-                        error_message: e.message || 'No message',
-                        address_context: range.base.add(offset).toString(),
-                        reconstruction_impact: 'symbol_resolution_failure',
-                        potential_obfuscation:
-                          e.message?.includes('access')
-                            ? 'memory_protection'
-                            : 'address_invalid',
-                        bypass_strategy: this.getIATReconstructionBypassStrategy(
-                          e,
-                          range.base.add(offset)
-                        ),
-                        recovery_method: 'continue_scan',
-                      };
-                      importValidation.actual_imports_found +=
+                        const errorAnalysis = {
+                            error_type: e.name || 'UnknownError',
+                            error_message: e.message || 'No message',
+                            address_context: range.base.add(offset).toString(),
+                            reconstruction_impact: 'symbol_resolution_failure',
+                            potential_obfuscation: e.message?.includes('access')
+                                ? 'memory_protection'
+                                : 'address_invalid',
+                            bypass_strategy: this.getIATReconstructionBypassStrategy(
+                                e,
+                                range.base.add(offset)
+                            ),
+                            recovery_method: 'continue_scan',
+                        };
+                        importValidation.actual_imports_found +=
                             errorAnalysis.recovery_method === 'continue_scan' ? 0 : -1;
                     }
                 }
@@ -1682,32 +1717,34 @@ const ObfuscationDetector = {
 
     // Control Flow Graph Analysis
     analyzeControlFlowGraph: function (address, size) {
-      const cfg = {
-        nodes: [],
-        edges: [],
-        anomalies: [],
-      };
+        const cfg = {
+            nodes: [],
+            edges: [],
+            anomalies: [],
+        };
 
-      // Use self to perform comprehensive control flow analysis
-      const cfgAnalysisConfig = this.initializeCFGAnalysis(address, size, {
-        detection_mode: 'comprehensive',
-        obfuscation_techniques: [
-          'control_flow_flattening',
-          'opaque_predicates',
-          'indirect_calls',
-        ],
-        analysis_depth: this.getOptimalAnalysisDepth(size),
-        pattern_recognition: this.enableCFGPatternRecognition(),
-        anomaly_detection_threshold: 0.7,
-        branch_prediction_bypass: true,
-      });
+        // Use self to perform comprehensive control flow analysis
+        const cfgAnalysisConfig = this.initializeCFGAnalysis(address, size, {
+            detection_mode: 'comprehensive',
+            obfuscation_techniques: [
+                'control_flow_flattening',
+                'opaque_predicates',
+                'indirect_calls',
+            ],
+            analysis_depth: this.getOptimalAnalysisDepth(size),
+            pattern_recognition: this.enableCFGPatternRecognition(),
+            anomaly_detection_threshold: 0.7,
+            branch_prediction_bypass: true,
+        });
 
-      const visited = {};
-      const queue = [address];
+        const visited = {};
+        const queue = [address];
 
-      while (queue.length > 0) {
-          const current = queue.shift();
-          if (visited[current.toString()]) { continue; }
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (visited[current.toString()]) {
+                continue;
+            }
             visited[current.toString()] = true;
 
             var node = {
@@ -1718,11 +1755,11 @@ const ObfuscationDetector = {
 
             try {
                 // Disassemble until branch
-              let offset = 0;
-              while (offset < size) {
-                  const inst = Instruction.parse(current.add(offset));
+                let offset = 0;
+                while (offset < size) {
+                    const inst = Instruction.parse(current.add(offset));
 
-                  if (
+                    if (
                         inst.mnemonic.startsWith('j') ||
                         inst.mnemonic === 'call' ||
                         inst.mnemonic === 'ret'
@@ -1731,8 +1768,8 @@ const ObfuscationDetector = {
 
                         if (inst.mnemonic !== 'ret') {
                             // Extract target
-                          const target = this.extractBranchTarget(inst);
-                          if (target) {
+                            const target = this.extractBranchTarget(inst);
+                            if (target) {
                                 node.successors.push(target);
                                 cfg.edges.push({ from: current, to: target });
 
@@ -1748,20 +1785,19 @@ const ObfuscationDetector = {
                 }
             } catch (e) {
                 // Use e for comprehensive CFG parsing error analysis
-              const cfgErrorAnalysis = {
-                error_type: e.name || 'InstructionParseError',
-                error_message: e.message || 'Unknown instruction parsing error',
-                problematic_address: current.toString(),
-                instruction_offset: offset,
-                obfuscation_indicator:
-                  e.message?.includes('invalid')
-                    ? 'anti_disassembly'
-                    : 'code_corruption',
-                analysis_impact: cfgAnalysisConfig.detection_mode,
-                bypass_strategy: this.getCFGParsingBypassStrategy(e, current, offset),
-                recovery_action: 'skip_instruction',
-              };
-              cfg.anomalies.push({
+                const cfgErrorAnalysis = {
+                    error_type: e.name || 'InstructionParseError',
+                    error_message: e.message || 'Unknown instruction parsing error',
+                    problematic_address: current.toString(),
+                    instruction_offset: offset,
+                    obfuscation_indicator: e.message?.includes('invalid')
+                        ? 'anti_disassembly'
+                        : 'code_corruption',
+                    analysis_impact: cfgAnalysisConfig.detection_mode,
+                    bypass_strategy: this.getCFGParsingBypassStrategy(e, current, offset),
+                    recovery_action: 'skip_instruction',
+                };
+                cfg.anomalies.push({
                     type: 'parsing_error',
                     address: current,
                     details: cfgErrorAnalysis,
@@ -1774,9 +1810,9 @@ const ObfuscationDetector = {
         // Detect anomalies
         cfg.nodes.forEach(node => {
             // Check for unreachable code
-          const hasIncoming = cfg.edges.some(edge => edge.to.equals(node.address));
+            const hasIncoming = cfg.edges.some(edge => edge.to.equals(node.address));
 
-          if (!hasIncoming && !node.address.equals(address)) {
+            if (!hasIncoming && !node.address.equals(address)) {
                 cfg.anomalies.push({
                     type: 'unreachable_code',
                     address: node.address,
@@ -1798,33 +1834,33 @@ const ObfuscationDetector = {
 
     // ROP Detection
     detectROPChains: function (address, size) {
-      const ropGadgets = [];
+        const ropGadgets = [];
 
-      // Common ROP gadget patterns
-      const gadgetPatterns = [
-        [0xc3], // ret
-        [0xc2, null, null], // ret imm16
-        [0x5d, 0xc3], // pop ebp; ret
-        [0x58, 0xc3], // pop eax; ret
-        [0x59, 0xc3], // pop ecx; ret
-        [0x5a, 0xc3], // pop edx; ret
-        [0x5b, 0xc3], // pop ebx; ret
-        [0x5e, 0xc3], // pop esi; ret
-        [0x5f, 0xc3], // pop edi; ret
-        [0xff, 0xe0], // jmp eax
-        [0xff, 0xd0], // call eax
-        [0x94, 0xc3], // xchg eax, esp; ret
-      ];
+        // Common ROP gadget patterns
+        const gadgetPatterns = [
+            [0xc3], // ret
+            [0xc2, null, null], // ret imm16
+            [0x5d, 0xc3], // pop ebp; ret
+            [0x58, 0xc3], // pop eax; ret
+            [0x59, 0xc3], // pop ecx; ret
+            [0x5a, 0xc3], // pop edx; ret
+            [0x5b, 0xc3], // pop ebx; ret
+            [0x5e, 0xc3], // pop esi; ret
+            [0x5f, 0xc3], // pop edi; ret
+            [0xff, 0xe0], // jmp eax
+            [0xff, 0xd0], // call eax
+            [0x94, 0xc3], // xchg eax, esp; ret
+        ];
 
-      const code = address.readByteArray(size);
+        const code = address.readByteArray(size);
 
-      gadgetPatterns.forEach(pattern => {
-          let offset = 0;
-          while (offset < code.length) {
-              const found = this.findPatternWithWildcards(code.slice(offset), pattern);
-              if (found !== -1) {
-                  const gadgetAddr = address.add(offset + found);
-                  ropGadgets.push({
+        gadgetPatterns.forEach(pattern => {
+            let offset = 0;
+            while (offset < code.length) {
+                const found = this.findPatternWithWildcards(code.slice(offset), pattern);
+                if (found !== -1) {
+                    const gadgetAddr = address.add(offset + found);
+                    ropGadgets.push({
                         address: gadgetAddr,
                         pattern: pattern,
                         instruction: this.disassembleGadget(gadgetAddr, pattern.length + 3),
@@ -1851,36 +1887,36 @@ const ObfuscationDetector = {
 
     // Code Cave Detection
     detectCodeCaves: function (module) {
-      const caves = [];
+        const caves = [];
 
-      // Use self to perform comprehensive code cave analysis configuration
-      const caveAnalysisConfig = this.initializeCodeCaveAnalysis(module, {
-        detection_algorithms: [
-          'null_byte_scanning',
-          'nop_sled_detection',
-          'int3_padding_analysis',
-        ],
-        minimum_cave_size: this.getOptimalCaveSize(module),
-        pattern_analysis: this.enableCodeCavePatternRecognition(),
-        exploit_potential_assessment: true,
-        injection_feasibility_check: this.assessInjectionFeasibility(module),
-        security_implications: this.evaluateCodeCaveSecurityRisk(module),
-      });
+        // Use self to perform comprehensive code cave analysis configuration
+        const caveAnalysisConfig = this.initializeCodeCaveAnalysis(module, {
+            detection_algorithms: [
+                'null_byte_scanning',
+                'nop_sled_detection',
+                'int3_padding_analysis',
+            ],
+            minimum_cave_size: this.getOptimalCaveSize(module),
+            pattern_analysis: this.enableCodeCavePatternRecognition(),
+            exploit_potential_assessment: true,
+            injection_feasibility_check: this.assessInjectionFeasibility(module),
+            security_implications: this.evaluateCodeCaveSecurityRisk(module),
+        });
 
-      module.enumerateRanges('r-x').forEach(range => {
+        module.enumerateRanges('r-x').forEach(range => {
             try {
-              const data = range.base.readByteArray(Math.min(range.size, 0x10000));
-              let caveStart = -1;
-              const minCaveSize = 32;
+                const data = range.base.readByteArray(Math.min(range.size, 0x10000));
+                let caveStart = -1;
+                const minCaveSize = 32;
 
-              for (let i = 0; i < data.length; i++) {
+                for (let i = 0; i < data.length; i++) {
                     if (data[i] === 0x00 || data[i] === 0x90 || data[i] === 0xcc) {
                         if (caveStart === -1) {
                             caveStart = i;
                         }
                     } else if (caveStart !== -1) {
-                      const caveSize = i - caveStart;
-                      if (caveSize >= minCaveSize) {
+                        const caveSize = i - caveStart;
+                        if (caveSize >= minCaveSize) {
                             caves.push({
                                 address: range.base.add(caveStart),
                                 size: caveSize,
@@ -1897,20 +1933,19 @@ const ObfuscationDetector = {
                 }
             } catch (e) {
                 // Use e for comprehensive code cave detection error analysis
-              const caveErrorAnalysis = {
-                error_type: e.name || 'MemoryAccessError',
-                error_message: e.message || 'Code cave detection memory error',
-                problematic_range: range.base.toString(),
-                range_size: range.size,
-                protection_indication:
-                  e.message?.includes('access')
-                    ? 'memory_protection'
-                    : 'data_corruption',
-                analysis_impact: caveAnalysisConfig.detection_algorithms,
-                bypass_strategy: this.getCodeCaveDetectionBypassStrategy(e, range),
-                recovery_action: 'skip_range',
-              };
-              caves.push({
+                const caveErrorAnalysis = {
+                    error_type: e.name || 'MemoryAccessError',
+                    error_message: e.message || 'Code cave detection memory error',
+                    problematic_range: range.base.toString(),
+                    range_size: range.size,
+                    protection_indication: e.message?.includes('access')
+                        ? 'memory_protection'
+                        : 'data_corruption',
+                    analysis_impact: caveAnalysisConfig.detection_algorithms,
+                    bypass_strategy: this.getCodeCaveDetectionBypassStrategy(e, range),
+                    recovery_action: 'skip_range',
+                };
+                caves.push({
                     address: range.base,
                     size: 0,
                     type: 'detection_error',
@@ -1934,42 +1969,46 @@ const ObfuscationDetector = {
 
     // Entry Point Obfuscation Detection
     detectEntryPointObfuscation: function (module) {
-      const indicators = {
-        multipleEntryPoints: false,
-        tlsCallbacks: false,
-        fakeEntryPoint: false,
-        hiddenEntryPoint: false,
-      };
+        const indicators = {
+            multipleEntryPoints: false,
+            tlsCallbacks: false,
+            fakeEntryPoint: false,
+            hiddenEntryPoint: false,
+        };
 
-      try {
-          const base = module.base;
-          const dosHeader = base.readU16();
-          if (dosHeader !== 0x5a4d) { return indicators; }
+        try {
+            const base = module.base;
+            const dosHeader = base.readU16();
+            if (dosHeader !== 0x5a4d) {
+                return indicators;
+            }
 
-          const peOffset = base.add(0x3c).readU32();
-          const peSignature = base.add(peOffset).readU32();
-          if (peSignature !== 0x00004550) { return indicators; }
+            const peOffset = base.add(0x3c).readU32();
+            const peSignature = base.add(peOffset).readU32();
+            if (peSignature !== 0x00004550) {
+                return indicators;
+            }
 
-          const optHeader = peOffset + 24;
-          const entryPointRVA = base.add(optHeader + 16).readU32();
-          const imageBase = base.add(optHeader + 28).readU32();
+            const optHeader = peOffset + 24;
+            const entryPointRVA = base.add(optHeader + 16).readU32();
+            const imageBase = base.add(optHeader + 28).readU32();
 
-          // Use self and imageBase for comprehensive entry point obfuscation analysis
-          const entryPointAnalysis = this.analyzeEntryPointObfuscation(module, {
-            original_image_base: imageBase,
-            current_base: base.toInt32(),
-            entry_point_rva: entryPointRVA,
-            base_relocation_applied: imageBase !== base.toInt32(),
-            aslr_detected: this.detectASLRModification(imageBase, base),
-            entry_point_integrity: this.validateEntryPointIntegrity(
-              base,
-              entryPointRVA,
-              imageBase
-            ),
-            relocation_analysis: this.analyzeBaseRelocations(module, imageBase),
-          });
+            // Use self and imageBase for comprehensive entry point obfuscation analysis
+            const entryPointAnalysis = this.analyzeEntryPointObfuscation(module, {
+                original_image_base: imageBase,
+                current_base: base.toInt32(),
+                entry_point_rva: entryPointRVA,
+                base_relocation_applied: imageBase !== base.toInt32(),
+                aslr_detected: this.detectASLRModification(imageBase, base),
+                entry_point_integrity: this.validateEntryPointIntegrity(
+                    base,
+                    entryPointRVA,
+                    imageBase
+                ),
+                relocation_analysis: this.analyzeBaseRelocations(module, imageBase),
+            });
 
-          // Incorporate entry point analysis results into indicators
+            // Incorporate entry point analysis results into indicators
             if (entryPointAnalysis.obfuscation_detected) {
                 indicators.entryPointObfuscation = true;
                 indicators.entryPointDetails = {
@@ -1982,17 +2021,19 @@ const ObfuscationDetector = {
             }
 
             // Check for TLS callbacks
-          const tlsTableRVA = base.add(optHeader + 184).readU32();
-          if (tlsTableRVA !== 0) {
+            const tlsTableRVA = base.add(optHeader + 184).readU32();
+            if (tlsTableRVA !== 0) {
                 indicators.tlsCallbacks = true;
-              const tlsDir = base.add(tlsTableRVA);
-              const callbacksPtr = tlsDir.add(12).readPointer();
+                const tlsDir = base.add(tlsTableRVA);
+                const callbacksPtr = tlsDir.add(12).readPointer();
 
-              if (!callbacksPtr.isNull()) {
-                  const callbacks = [];
-                  for (let i = 0; i < 10; i++) {
-                      const callback = callbacksPtr.add(i * Process.pointerSize).readPointer();
-                      if (callback.isNull()) { break; }
+                if (!callbacksPtr.isNull()) {
+                    const callbacks = [];
+                    for (let i = 0; i < 10; i++) {
+                        const callback = callbacksPtr.add(i * Process.pointerSize).readPointer();
+                        if (callback.isNull()) {
+                            break;
+                        }
                         callbacks.push(callback);
                     }
 
@@ -2009,18 +2050,18 @@ const ObfuscationDetector = {
             }
 
             // Check for fake entry point patterns
-          const entryCode = base.add(entryPointRVA).readByteArray(32);
+            const entryCode = base.add(entryPointRVA).readByteArray(32);
 
-          // Common fake entry patterns
-          const fakePatterns = [
-            [0xe9], // Single jmp
-            [0xff, 0x25], // jmp [addr]
-            [0x68, null, null, null, null, 0xc3], // push addr; ret
-            [0xeb, 0xfe], // Infinite loop
-            [0xf4], // hlt
-          ];
+            // Common fake entry patterns
+            const fakePatterns = [
+                [0xe9], // Single jmp
+                [0xff, 0x25], // jmp [addr]
+                [0x68, null, null, null, null, 0xc3], // push addr; ret
+                [0xeb, 0xfe], // Infinite loop
+                [0xf4], // hlt
+            ];
 
-          fakePatterns.forEach(pattern => {
+            fakePatterns.forEach(pattern => {
                 if (this.findPatternWithWildcards(entryCode, pattern) === 0) {
                     indicators.fakeEntryPoint = true;
                 }
@@ -2030,27 +2071,26 @@ const ObfuscationDetector = {
             module.enumerateRanges('r--').forEach(range => {
                 if (range.protection.includes('r') && !range.protection.includes('x')) {
                     // Check if contains executable code signatures
-                  const data = range.base.readByteArray(Math.min(256, range.size));
-                  if (this.containsExecutableCode(data)) {
+                    const data = range.base.readByteArray(Math.min(256, range.size));
+                    if (this.containsExecutableCode(data)) {
                         indicators.hiddenEntryPoint = true;
                     }
                 }
             });
         } catch (e) {
             // Use e for comprehensive entry point obfuscation detection error analysis
-          const entryPointErrorAnalysis = {
-            error_type: e.name || 'EntryPointAnalysisError',
-            error_message: e.message || 'Entry point obfuscation detection error',
-            analysis_context: 'detect_entry_point_obfuscation',
-            module_name: module.name,
-            protection_indication:
-              e.message?.includes('access')
-                ? 'memory_protection'
-                : 'pe_corruption',
-            bypass_strategy: this.getEntryPointAnalysisBypassStrategy(e, module),
-            recovery_method: 'partial_analysis',
-          };
-          indicators.analysis_error = entryPointErrorAnalysis;
+            const entryPointErrorAnalysis = {
+                error_type: e.name || 'EntryPointAnalysisError',
+                error_message: e.message || 'Entry point obfuscation detection error',
+                analysis_context: 'detect_entry_point_obfuscation',
+                module_name: module.name,
+                protection_indication: e.message?.includes('access')
+                    ? 'memory_protection'
+                    : 'pe_corruption',
+                bypass_strategy: this.getEntryPointAnalysisBypassStrategy(e, module),
+                recovery_method: 'partial_analysis',
+            };
+            indicators.analysis_error = entryPointErrorAnalysis;
             indicators.partial_analysis = true;
         }
 
@@ -2059,44 +2099,46 @@ const ObfuscationDetector = {
 
     // Resource Section Analysis
     analyzeResourceSection: function (module) {
-      const analysis = {
-        encryptedResources: [],
-        fakeResources: [],
-        hiddenCode: false,
-        anomalies: [],
-      };
+        const analysis = {
+            encryptedResources: [],
+            fakeResources: [],
+            hiddenCode: false,
+            anomalies: [],
+        };
 
-      // Use self to perform comprehensive resource section analysis configuration
-      const resourceAnalysisConfig = this.initializeResourceSectionAnalysis(module, {
-        encryption_detection_algorithms: [
-          'entropy_analysis',
-          'xor_pattern_detection',
-          'custom_encryption_schemes',
-        ],
-        fake_resource_patterns: this.getKnownFakeResourcePatterns(),
-        hidden_code_detection: this.enableHiddenCodeDetection(),
-        steganography_analysis: this.configureSteganographyDetection(module),
-        resource_integrity_validation: true,
-        malicious_resource_signatures: this.loadResourceMalwareSignatures(),
-      });
+        // Use self to perform comprehensive resource section analysis configuration
+        const resourceAnalysisConfig = this.initializeResourceSectionAnalysis(module, {
+            encryption_detection_algorithms: [
+                'entropy_analysis',
+                'xor_pattern_detection',
+                'custom_encryption_schemes',
+            ],
+            fake_resource_patterns: this.getKnownFakeResourcePatterns(),
+            hidden_code_detection: this.enableHiddenCodeDetection(),
+            steganography_analysis: this.configureSteganographyDetection(module),
+            resource_integrity_validation: true,
+            malicious_resource_signatures: this.loadResourceMalwareSignatures(),
+        });
 
-      try {
-          const base = module.base;
-          const dosHeader = base.readU16();
-          if (dosHeader !== 0x5a4d) { return analysis; }
+        try {
+            const base = module.base;
+            const dosHeader = base.readU16();
+            if (dosHeader !== 0x5a4d) {
+                return analysis;
+            }
 
-          const peOffset = base.add(0x3c).readU32();
-          const sections = this.parseSections(base, peOffset);
+            const peOffset = base.add(0x3c).readU32();
+            const sections = this.parseSections(base, peOffset);
 
-          sections.forEach(section => {
+            sections.forEach(section => {
                 if (section.name.includes('.rsrc')) {
-                  const data = base
-                    .add(section.virtualAddress)
-                    .readByteArray(Math.min(section.size, 4096));
+                    const data = base
+                        .add(section.virtualAddress)
+                        .readByteArray(Math.min(section.size, 4096));
 
-                  // Check entropy for encryption
-                  const entropy = this.calculateEntropy(data);
-                  if (entropy > 7.5) {
+                    // Check entropy for encryption
+                    const entropy = this.calculateEntropy(data);
+                    if (entropy > 7.5) {
                         analysis.encryptedResources.push({
                             offset: section.virtualAddress,
                             entropy: entropy,
@@ -2109,13 +2151,13 @@ const ObfuscationDetector = {
                     }
 
                     // Check for fake resource signatures
-                  const fakeSignatures = [
-                    'PADDINGX',
-                    '\x00\x00\x00\x00\x00\x00\x00\x00',
-                    'DEADBEEF',
-                  ];
+                    const fakeSignatures = [
+                        'PADDINGX',
+                        '\x00\x00\x00\x00\x00\x00\x00\x00',
+                        'DEADBEEF',
+                    ];
 
-                  fakeSignatures.forEach(sig => {
+                    fakeSignatures.forEach(sig => {
                         if (data.indexOf(sig) !== -1) {
                             analysis.fakeResources.push(sig);
                         }
@@ -2124,20 +2166,19 @@ const ObfuscationDetector = {
             });
         } catch (e) {
             // Use e for comprehensive resource section analysis error handling
-          const resourceErrorAnalysis = {
-            error_type: e.name || 'ResourceSectionError',
-            error_message: e.message || 'Resource section analysis error',
-            analysis_context: 'analyze_resource_section',
-            module_name: module.name,
-            protection_indication:
-              e.message?.includes('access')
-                ? 'resource_protection'
-                : 'structure_corruption',
-            analysis_impact: resourceAnalysisConfig.encryption_detection_algorithms,
-            bypass_strategy: this.getResourceAnalysisBypassStrategy(e, module),
-            recovery_method: 'skip_encrypted_resources',
-          };
-          analysis.anomalies.push({
+            const resourceErrorAnalysis = {
+                error_type: e.name || 'ResourceSectionError',
+                error_message: e.message || 'Resource section analysis error',
+                analysis_context: 'analyze_resource_section',
+                module_name: module.name,
+                protection_indication: e.message?.includes('access')
+                    ? 'resource_protection'
+                    : 'structure_corruption',
+                analysis_impact: resourceAnalysisConfig.encryption_detection_algorithms,
+                bypass_strategy: this.getResourceAnalysisBypassStrategy(e, module),
+                recovery_method: 'skip_encrypted_resources',
+            };
+            analysis.anomalies.push({
                 type: 'analysis_error',
                 error_details: resourceErrorAnalysis,
             });
@@ -2148,48 +2189,52 @@ const ObfuscationDetector = {
 
     // Certificate Manipulation Detection
     detectCertificateManipulation: function (module) {
-      const cert = {
-        valid: false,
-        stolen: false,
-        manipulated: false,
-        details: {},
-      };
+        const cert = {
+            valid: false,
+            stolen: false,
+            manipulated: false,
+            details: {},
+        };
 
-      // Use self to perform comprehensive certificate manipulation analysis
-      const certAnalysisConfig = this.initializeCertificateAnalysis(module, {
-        validation_algorithms: [
-          'signature_verification',
-          'chain_validation',
-          'revocation_check',
-        ],
-        known_stolen_certificates: this.loadStolenCertificateDatabase(),
-        manipulation_patterns: this.getCertificateManipulationPatterns(),
-        timestamp_validation: this.enableTimestampValidation(),
-        issuer_verification: this.configureIssuerValidation(),
-        certificate_pinning_bypass: this.detectCertificatePinningBypass(module),
-      });
+        // Use self to perform comprehensive certificate manipulation analysis
+        const certAnalysisConfig = this.initializeCertificateAnalysis(module, {
+            validation_algorithms: [
+                'signature_verification',
+                'chain_validation',
+                'revocation_check',
+            ],
+            known_stolen_certificates: this.loadStolenCertificateDatabase(),
+            manipulation_patterns: this.getCertificateManipulationPatterns(),
+            timestamp_validation: this.enableTimestampValidation(),
+            issuer_verification: this.configureIssuerValidation(),
+            certificate_pinning_bypass: this.detectCertificatePinningBypass(module),
+        });
 
-      try {
-          const base = module.base;
-          const dosHeader = base.readU16();
-          if (dosHeader !== 0x5a4d) { return cert; }
+        try {
+            const base = module.base;
+            const dosHeader = base.readU16();
+            if (dosHeader !== 0x5a4d) {
+                return cert;
+            }
 
-          const peOffset = base.add(0x3c).readU32();
-          const optHeader = peOffset + 24;
-          const certTableRVA = base.add(optHeader + 144).readU32();
-          const certTableSize = base.add(optHeader + 148).readU32();
+            const peOffset = base.add(0x3c).readU32();
+            const optHeader = peOffset + 24;
+            const certTableRVA = base.add(optHeader + 144).readU32();
+            const certTableSize = base.add(optHeader + 148).readU32();
 
-          if (certTableRVA !== 0 && certTableSize !== 0) {
+            if (certTableRVA !== 0 && certTableSize !== 0) {
                 cert.valid = true;
 
                 // Parse certificate
-              const certData = base.add(certTableRVA).readByteArray(Math.min(certTableSize, 8192));
+                const certData = base
+                    .add(certTableRVA)
+                    .readByteArray(Math.min(certTableSize, 8192));
 
-              // Check for known stolen certificates
-              const stolenCertHashes = ['3E5D1E3B2A1C4F8D9B7A6E5C', 'A9B8C7D6E5F4A3B2C1D0E9F8'];
+                // Check for known stolen certificates
+                const stolenCertHashes = ['3E5D1E3B2A1C4F8D9B7A6E5C', 'A9B8C7D6E5F4A3B2C1D0E9F8'];
 
-              const certHash = this.hashData(certData);
-              if (stolenCertHashes.includes(certHash)) {
+                const certHash = this.hashData(certData);
+                if (stolenCertHashes.includes(certHash)) {
                     cert.stolen = true;
                 }
 
@@ -2200,20 +2245,19 @@ const ObfuscationDetector = {
             }
         } catch (e) {
             // Use e for comprehensive certificate manipulation detection error analysis
-          const certErrorAnalysis = {
-            error_type: e.name || 'CertificateAnalysisError',
-            error_message: e.message || 'Certificate manipulation detection error',
-            analysis_context: 'detect_certificate_manipulation',
-            module_name: module.name,
-            protection_indication:
-              e.message?.includes('access')
-                ? 'certificate_protection'
-                : 'certificate_corruption',
-            validation_impact: certAnalysisConfig.validation_algorithms,
-            bypass_strategy: this.getCertificateAnalysisBypassStrategy(e, module),
-            recovery_method: 'assume_invalid_certificate',
-          };
-          cert.details.analysis_error = certErrorAnalysis;
+            const certErrorAnalysis = {
+                error_type: e.name || 'CertificateAnalysisError',
+                error_message: e.message || 'Certificate manipulation detection error',
+                analysis_context: 'detect_certificate_manipulation',
+                module_name: module.name,
+                protection_indication: e.message?.includes('access')
+                    ? 'certificate_protection'
+                    : 'certificate_corruption',
+                validation_impact: certAnalysisConfig.validation_algorithms,
+                bypass_strategy: this.getCertificateAnalysisBypassStrategy(e, module),
+                recovery_method: 'assume_invalid_certificate',
+            };
+            cert.details.analysis_error = certErrorAnalysis;
             cert.valid = false;
         }
 
@@ -2222,40 +2266,44 @@ const ObfuscationDetector = {
 
     // Overlay Data Analysis
     analyzeOverlayData: function (module) {
-      const overlay = {
-        exists: false,
-        size: 0,
-        entropy: 0,
-        hiddenPayload: false,
-      };
+        const overlay = {
+            exists: false,
+            size: 0,
+            entropy: 0,
+            hiddenPayload: false,
+        };
 
-      // Use self to perform comprehensive overlay data analysis configuration
-      const overlayAnalysisConfig = this.initializeOverlayDataAnalysis(module, {
-        entropy_analysis: this.configureEntropyCalculation(),
-        payload_detection_algorithms: [
-          'signature_scanning',
-          'entropy_thresholds',
-          'pattern_recognition',
-        ],
-        steganography_detection: this.enableOverlaySteganographyDetection(),
-        executable_code_detection: this.configureExecutableCodeDetection(),
-        compression_analysis: this.analyzeCompressionPatterns(module),
-        hidden_resource_extraction: true,
-      });
+        // Use self to perform comprehensive overlay data analysis configuration
+        const overlayAnalysisConfig = this.initializeOverlayDataAnalysis(module, {
+            entropy_analysis: this.configureEntropyCalculation(),
+            payload_detection_algorithms: [
+                'signature_scanning',
+                'entropy_thresholds',
+                'pattern_recognition',
+            ],
+            steganography_detection: this.enableOverlaySteganographyDetection(),
+            executable_code_detection: this.configureExecutableCodeDetection(),
+            compression_analysis: this.analyzeCompressionPatterns(module),
+            hidden_resource_extraction: true,
+        });
 
-      try {
-          const base = module.base;
-          const fileSize = this.getFileSize(module);
-          const peSize = this.calculatePESize(base);
+        try {
+            const base = module.base;
+            const fileSize = this.getFileSize(module);
+            const peSize = this.calculatePESize(base);
 
-          if (fileSize > peSize) {
+            if (fileSize > peSize) {
                 overlay.exists = true;
                 overlay.size = fileSize - peSize;
 
                 // Read overlay data
-              const overlayData = this.readFileAt(module, peSize, Math.min(overlay.size, 0x10000));
+                const overlayData = this.readFileAt(
+                    module,
+                    peSize,
+                    Math.min(overlay.size, 0x10000)
+                );
 
-              // Calculate entropy
+                // Calculate entropy
                 overlay.entropy = this.calculateEntropy(overlayData);
 
                 // Check for hidden executables
@@ -2298,43 +2346,43 @@ const ObfuscationDetector = {
     // Section Header Manipulation Detection
     detectSectionManipulation: function (module) {
         // Use self to perform comprehensive section header manipulation analysis
-      const sectionAnalysisConfig = this.initializeSectionManipulationAnalysis(module, {
-        header_validation_algorithms: [
-          'checksum_verification',
-          'size_consistency_check',
-          'permission_validation',
-        ],
-        manipulation_patterns: this.getKnownSectionManipulationPatterns(),
-        entropy_analysis: this.configureSectionEntropyAnalysis(),
-        packing_detection: this.enablePackingDetectionInSections(module),
-        code_injection_detection: this.detectCodeInjectionInSections(),
-        section_alignment_validation: true,
-      });
-      const manipulation = {
-        unusualNames: [],
-        wrongCharacteristics: [],
-        overlappingSections: [],
-        hiddenSections: [],
-      };
+        const sectionAnalysisConfig = this.initializeSectionManipulationAnalysis(module, {
+            header_validation_algorithms: [
+                'checksum_verification',
+                'size_consistency_check',
+                'permission_validation',
+            ],
+            manipulation_patterns: this.getKnownSectionManipulationPatterns(),
+            entropy_analysis: this.configureSectionEntropyAnalysis(),
+            packing_detection: this.enablePackingDetectionInSections(module),
+            code_injection_detection: this.detectCodeInjectionInSections(),
+            section_alignment_validation: true,
+        });
+        const manipulation = {
+            unusualNames: [],
+            wrongCharacteristics: [],
+            overlappingSections: [],
+            hiddenSections: [],
+        };
 
-      try {
-          const base = module.base;
-          const peOffset = base.add(0x3c).readU32();
-          const sections = this.parseSections(base, peOffset);
+        try {
+            const base = module.base;
+            const peOffset = base.add(0x3c).readU32();
+            const sections = this.parseSections(base, peOffset);
 
-          sections.forEach((section, index) => {
+            sections.forEach((section, index) => {
                 // Check for unusual section names
-              const normalNames = [
-                '.text',
-                '.data',
-                '.rdata',
-                '.rsrc',
-                '.reloc',
-                '.idata',
-                '.edata',
-                '.bss',
-              ];
-              if (!normalNames.some(n => section.name.startsWith(n))) {
+                const normalNames = [
+                    '.text',
+                    '.data',
+                    '.rdata',
+                    '.rsrc',
+                    '.reloc',
+                    '.idata',
+                    '.edata',
+                    '.bss',
+                ];
+                if (!normalNames.some(n => section.name.startsWith(n))) {
                     manipulation.unusualNames.push(section.name);
                 }
 
@@ -2355,8 +2403,8 @@ const ObfuscationDetector = {
 
                 // Check for overlapping sections
                 for (let j = index + 1; j < sections.length; j++) {
-                  const other = sections[j];
-                  if (this.sectionsOverlap(section, other)) {
+                    const other = sections[j];
+                    if (this.sectionsOverlap(section, other)) {
                         manipulation.overlappingSections.push({
                             section1: section.name,
                             section2: other.name,
@@ -2389,37 +2437,37 @@ const ObfuscationDetector = {
 
     // Time-Based Obfuscation Detection
     detectTimeBasedObfuscation: function (address) {
-      const timeBased = {
-        detected: false,
-        behaviors: [],
-        timestamps: [],
-      };
+        const timeBased = {
+            detected: false,
+            behaviors: [],
+            timestamps: [],
+        };
 
-      // Monitor time-related API calls
-      const timeAPIs = [
-        {name: 'GetTickCount', module: 'kernel32.dll'},
-        {name: 'GetSystemTime', module: 'kernel32.dll'},
-        {name: 'QueryPerformanceCounter', module: 'kernel32.dll'},
-        {name: 'time', module: null},
-        {name: 'gettimeofday', module: null},
-      ];
+        // Monitor time-related API calls
+        const timeAPIs = [
+            { name: 'GetTickCount', module: 'kernel32.dll' },
+            { name: 'GetSystemTime', module: 'kernel32.dll' },
+            { name: 'QueryPerformanceCounter', module: 'kernel32.dll' },
+            { name: 'time', module: null },
+            { name: 'gettimeofday', module: null },
+        ];
 
-      timeAPIs.forEach(api => {
-          const apiAddr = Module.findExportByName(api.module, api.name);
-          if (apiAddr) {
+        timeAPIs.forEach(api => {
+            const apiAddr = Module.findExportByName(api.module, api.name);
+            if (apiAddr) {
                 Interceptor.attach(apiAddr, {
                     onEnter: function (args) {
                         // Use args for comprehensive time API call analysis
-                      const timeAPIAnalysis = {
-                        api_name: api.name,
-                        api_module: api.module,
-                        argument_count: args.length,
-                        arguments_analysis: [],
-                        timing_manipulation_indicators: {},
-                        sandbox_evasion_attempt: false,
-                      };
+                        const timeAPIAnalysis = {
+                            api_name: api.name,
+                            api_module: api.module,
+                            argument_count: args.length,
+                            arguments_analysis: [],
+                            timing_manipulation_indicators: {},
+                            sandbox_evasion_attempt: false,
+                        };
 
-                      // Analyze each argument for timing manipulation patterns
+                        // Analyze each argument for timing manipulation patterns
                         for (let i = 0; i < args.length; i++) {
                             timeAPIAnalysis.arguments_analysis.push({
                                 index: i,
@@ -2432,8 +2480,8 @@ const ObfuscationDetector = {
                             });
                         }
 
-                      const caller = this.returnAddress;
-                      if (
+                        const caller = this.returnAddress;
+                        if (
                             caller.compare(address) >= 0 &&
                             caller.compare(address.add(0x10000)) < 0
                         ) {
@@ -2450,11 +2498,11 @@ const ObfuscationDetector = {
         });
 
         // Monitor for behavior changes over time
-      const initialBehavior = this.captureBehavior(address);
+        const initialBehavior = this.captureBehavior(address);
 
-      setTimeout(() => {
-          const laterBehavior = this.captureBehavior(address);
-          if (!this.behaviorsMatch(initialBehavior, laterBehavior)) {
+        setTimeout(() => {
+            const laterBehavior = this.captureBehavior(address);
+            if (!this.behaviorsMatch(initialBehavior, laterBehavior)) {
                 timeBased.detected = true;
                 timeBased.behaviors.push({
                     type: 'behavior_change',
@@ -2469,56 +2517,56 @@ const ObfuscationDetector = {
 
     // Environmental Keying Detection
     detectEnvironmentalKeying: function () {
-      const keying = {
-        detected: false,
-        checks: [],
-        requirements: [],
-      };
+        const keying = {
+            detected: false,
+            checks: [],
+            requirements: [],
+        };
 
-      // Use self to perform comprehensive environmental keying analysis
-      const keyingAnalysisConfig = this.initializeEnvironmentalKeyingAnalysis({
-        environment_checks: [
-          'computer_name',
-          'user_name',
-          'system_time',
-          'hardware_fingerprinting',
-        ],
-        anti_analysis_detection: this.configureAntiAnalysisDetection(),
-        sandbox_evasion_patterns: this.getKnownSandboxEvasionPatterns(),
-        vm_detection_bypass: this.enableVMDetectionBypass(),
-        geolocation_requirements: this.detectGeolocationRequirements(),
-        network_environment_validation: true,
-      });
+        // Use self to perform comprehensive environmental keying analysis
+        const keyingAnalysisConfig = this.initializeEnvironmentalKeyingAnalysis({
+            environment_checks: [
+                'computer_name',
+                'user_name',
+                'system_time',
+                'hardware_fingerprinting',
+            ],
+            anti_analysis_detection: this.configureAntiAnalysisDetection(),
+            sandbox_evasion_patterns: this.getKnownSandboxEvasionPatterns(),
+            vm_detection_bypass: this.enableVMDetectionBypass(),
+            geolocation_requirements: this.detectGeolocationRequirements(),
+            network_environment_validation: true,
+        });
 
-      // Monitor environment checks
-      const envAPIs = [
-        {name: 'GetComputerNameW', check: 'computer_name'},
-        {name: 'GetUserNameW', check: 'user_name'},
-        {name: 'GetVolumeInformationW', check: 'volume_serial'},
-        {name: 'GetSystemInfo', check: 'system_info'},
-        {name: 'RegQueryValueExW', check: 'registry'},
-        {name: 'GetEnvironmentVariableW', check: 'env_var'},
-      ];
+        // Monitor environment checks
+        const envAPIs = [
+            { name: 'GetComputerNameW', check: 'computer_name' },
+            { name: 'GetUserNameW', check: 'user_name' },
+            { name: 'GetVolumeInformationW', check: 'volume_serial' },
+            { name: 'GetSystemInfo', check: 'system_info' },
+            { name: 'RegQueryValueExW', check: 'registry' },
+            { name: 'GetEnvironmentVariableW', check: 'env_var' },
+        ];
 
-      envAPIs.forEach(api => {
-          const addr =
-            Module.findExportByName('kernel32.dll', api.name) ||
-            Module.findExportByName('advapi32.dll', api.name);
+        envAPIs.forEach(api => {
+            const addr =
+                Module.findExportByName('kernel32.dll', api.name) ||
+                Module.findExportByName('advapi32.dll', api.name);
 
-          if (addr) {
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function (args) {
                         // Use args for comprehensive environmental API call analysis
-                      const envAPIAnalysis = {
-                        api_name: api.name,
-                        check_type: api.check,
-                        argument_count: args.length,
-                        arguments_analysis: [],
-                        environment_fingerprinting_level: 'high',
-                        evasion_indicators: {},
-                      };
+                        const envAPIAnalysis = {
+                            api_name: api.name,
+                            check_type: api.check,
+                            argument_count: args.length,
+                            arguments_analysis: [],
+                            environment_fingerprinting_level: 'high',
+                            evasion_indicators: {},
+                        };
 
-                      // Analyze each argument for environmental keying patterns
+                        // Analyze each argument for environmental keying patterns
                         for (let i = 0; i < args.length; i++) {
                             envAPIAnalysis.arguments_analysis.push({
                                 index: i,
@@ -2546,23 +2594,23 @@ const ObfuscationDetector = {
         });
 
         // Check for domain/IP restrictions
-      const connectAPIs = ['connect', 'WSAConnect', 'InternetConnectW'];
-      connectAPIs.forEach(api => {
-          const addr = Module.findExportByName(null, api);
-          if (addr) {
+        const connectAPIs = ['connect', 'WSAConnect', 'InternetConnectW'];
+        connectAPIs.forEach(api => {
+            const addr = Module.findExportByName(null, api);
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: args => {
                         // Use args for comprehensive network connection analysis
-                      const networkAnalysis = {
-                        api_name: api,
-                        connection_type: 'outbound',
-                        argument_count: args.length,
-                        socket_analysis: {},
-                        address_analysis: {},
-                        geolocation_restriction_indicators: [],
-                      };
+                        const networkAnalysis = {
+                            api_name: api,
+                            connection_type: 'outbound',
+                            argument_count: args.length,
+                            socket_analysis: {},
+                            address_analysis: {},
+                            geolocation_restriction_indicators: [],
+                        };
 
-                      // Analyze connection arguments for environmental keying
+                        // Analyze connection arguments for environmental keying
                         if (args.length > 1) {
                             networkAnalysis.socket_analysis = {
                                 socket_descriptor: args[0].toInt32(),
@@ -2587,32 +2635,32 @@ const ObfuscationDetector = {
 
     // API Call Obfuscation Detection
     detectAPIObfuscation: function (address) {
-      const apiObf = {
-        dynamicResolution: false,
-        hashLookup: false,
-        indirectCalls: 0,
-        obfuscatedImports: [],
-      };
+        const apiObf = {
+            dynamicResolution: false,
+            hashLookup: false,
+            indirectCalls: 0,
+            obfuscatedImports: [],
+        };
 
-      // Check for GetProcAddress patterns
-      const getProcAddr = Module.findExportByName('kernel32.dll', 'GetProcAddress');
-      if (getProcAddr) {
+        // Check for GetProcAddress patterns
+        const getProcAddr = Module.findExportByName('kernel32.dll', 'GetProcAddress');
+        if (getProcAddr) {
             Interceptor.attach(getProcAddr, {
                 onEnter: function (args) {
-                  const caller = this.returnAddress;
-                  if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
+                    const caller = this.returnAddress;
+                    if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
                         apiObf.dynamicResolution = true;
 
-                      const procName = args[1];
-                      if (procName.toInt32() < 0x10000) {
+                        const procName = args[1];
+                        if (procName.toInt32() < 0x10000) {
                             // Ordinal import
                             apiObf.obfuscatedImports.push({
                                 type: 'ordinal',
                                 value: procName.toInt32(),
                             });
                         } else {
-                          const name = procName.readCString();
-                          if (name && !name.match(/^[A-Za-z_][A-Za-z0-9_]*$/)) {
+                            const name = procName.readCString();
+                            if (name && !name.match(/^[A-Za-z_][A-Za-z0-9_]*$/)) {
                                 // Obfuscated name
                                 apiObf.obfuscatedImports.push({
                                     type: 'obfuscated_name',
@@ -2626,17 +2674,17 @@ const ObfuscationDetector = {
         }
 
         // Scan for hash-based lookups
-      const code = address.readByteArray(4096);
-      const hashPatterns = [
-        [0x81, 0xf9], // cmp ecx, hash
-        [0x81, 0xfa], // cmp edx, hash
-        [0x3d], // cmp eax, hash
-        [0x81, 0x3d], // cmp [addr], hash
-      ];
+        const code = address.readByteArray(4096);
+        const hashPatterns = [
+            [0x81, 0xf9], // cmp ecx, hash
+            [0x81, 0xfa], // cmp edx, hash
+            [0x3d], // cmp eax, hash
+            [0x81, 0x3d], // cmp [addr], hash
+        ];
 
-      hashPatterns.forEach(pattern => {
-          const count = this.countPattern(code, pattern);
-          if (count > 10) {
+        hashPatterns.forEach(pattern => {
+            const count = this.countPattern(code, pattern);
+            if (count > 10) {
                 apiObf.hashLookup = true;
             }
         });
@@ -2653,33 +2701,33 @@ const ObfuscationDetector = {
 
     // Stack String Construction Detection
     detectStackStringConstruction: function (address) {
-      const stackStrings = {
-        detected: false,
-        patterns: [],
-        count: 0,
-      };
+        const stackStrings = {
+            detected: false,
+            patterns: [],
+            count: 0,
+        };
 
-      const code = address.readByteArray(2048);
+        const code = address.readByteArray(2048);
 
-      // Patterns for stack string construction
-      const patterns = [
-        // mov byte [esp+X], char
-        {bytes: [0xc6, 0x44, 0x24], name: 'stack_byte_mov'},
-        // mov word [esp+X], chars
-        {bytes: [0x66, 0xc7, 0x44, 0x24], name: 'stack_word_mov'},
-        // mov dword [esp+X], chars
-        {bytes: [0xc7, 0x44, 0x24], name: 'stack_dword_mov'},
-        // push char sequences
-        {bytes: [0x6a], name: 'push_char'},
-        // mov [ebp-X], char
-        {bytes: [0xc6, 0x45], name: 'local_byte_mov'},
-      ];
+        // Patterns for stack string construction
+        const patterns = [
+            // mov byte [esp+X], char
+            { bytes: [0xc6, 0x44, 0x24], name: 'stack_byte_mov' },
+            // mov word [esp+X], chars
+            { bytes: [0x66, 0xc7, 0x44, 0x24], name: 'stack_word_mov' },
+            // mov dword [esp+X], chars
+            { bytes: [0xc7, 0x44, 0x24], name: 'stack_dword_mov' },
+            // push char sequences
+            { bytes: [0x6a], name: 'push_char' },
+            // mov [ebp-X], char
+            { bytes: [0xc6, 0x45], name: 'local_byte_mov' },
+        ];
 
-      patterns.forEach(pattern => {
-          let offset = 0;
-          while (offset < code.length) {
-              const found = this.findPattern(code.slice(offset), pattern.bytes);
-              if (found !== -1) {
+        patterns.forEach(pattern => {
+            let offset = 0;
+            while (offset < code.length) {
+                const found = this.findPattern(code.slice(offset), pattern.bytes);
+                if (found !== -1) {
                     stackStrings.patterns.push({
                         type: pattern.name,
                         offset: offset + found,
@@ -2708,45 +2756,45 @@ const ObfuscationDetector = {
 
     // Exception-Based Control Flow Detection
     detectExceptionBasedControlFlow: function (address) {
-      const ehObf = {
-        detected: false,
-        sehHandlers: [],
-        vehHandlers: [],
-        exceptionCount: 0,
-      };
+        const ehObf = {
+            detected: false,
+            sehHandlers: [],
+            vehHandlers: [],
+            exceptionCount: 0,
+        };
 
-      // Use self to perform comprehensive exception-based control flow analysis
-      const exceptionAnalysisConfig = this.initializeExceptionControlFlowAnalysis(address, {
-        seh_monitoring: this.configureSEHHandlerTracking(),
-        veh_monitoring: this.configureVEHHandlerTracking(),
-        exception_flow_patterns: this.getKnownExceptionFlowPatterns(),
-        anti_debugging_detection: this.detectExceptionAntiDebugging(address),
-        control_flow_obfuscation_level: this.assessExceptionObfuscationComplexity(),
-        handler_validation: true,
-      });
+        // Use self to perform comprehensive exception-based control flow analysis
+        const exceptionAnalysisConfig = this.initializeExceptionControlFlowAnalysis(address, {
+            seh_monitoring: this.configureSEHHandlerTracking(),
+            veh_monitoring: this.configureVEHHandlerTracking(),
+            exception_flow_patterns: this.getKnownExceptionFlowPatterns(),
+            anti_debugging_detection: this.detectExceptionAntiDebugging(address),
+            control_flow_obfuscation_level: this.assessExceptionObfuscationComplexity(),
+            handler_validation: true,
+        });
 
-      // Apply configuration settings to analysis
+        // Apply configuration settings to analysis
         if (exceptionAnalysisConfig.control_flow_obfuscation_level > 0.7) {
             ehObf.highComplexityDetected = true;
             ehObf.obfuscationLevel = exceptionAnalysisConfig.control_flow_obfuscation_level;
         }
 
         // Monitor SEH/VEH registration using configuration
-      const sehAPIs = exceptionAnalysisConfig.seh_monitoring
-        ? [
-          'SetUnhandledExceptionFilter',
-          'AddVectoredExceptionHandler',
-          'RemoveVectoredExceptionHandler',
-        ]
-        : ['SetUnhandledExceptionFilter'];
+        const sehAPIs = exceptionAnalysisConfig.seh_monitoring
+            ? [
+                  'SetUnhandledExceptionFilter',
+                  'AddVectoredExceptionHandler',
+                  'RemoveVectoredExceptionHandler',
+              ]
+            : ['SetUnhandledExceptionFilter'];
 
-      sehAPIs.forEach(api => {
-          const addr = Module.findExportByName('kernel32.dll', api);
-          if (addr) {
+        sehAPIs.forEach(api => {
+            const addr = Module.findExportByName('kernel32.dll', api);
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function (args) {
-                      const caller = this.returnAddress;
-                      if (
+                        const caller = this.returnAddress;
+                        if (
                             caller.compare(address) >= 0 &&
                             caller.compare(address.add(0x10000)) < 0
                         ) {
@@ -2765,16 +2813,16 @@ const ObfuscationDetector = {
         });
 
         // Monitor intentional exceptions
-      const code = address.readByteArray(1024);
-      const exceptionInstructions = [
-        [0xcc], // int3
-        [0xcd], // int XX
-        [0xf1], // int1
-        [0xce], // into
-        [0x0f, 0x0b], // ud2
-      ];
+        const code = address.readByteArray(1024);
+        const exceptionInstructions = [
+            [0xcc], // int3
+            [0xcd], // int XX
+            [0xf1], // int1
+            [0xce], // into
+            [0x0f, 0x0b], // ud2
+        ];
 
-      exceptionInstructions.forEach(pattern => {
+        exceptionInstructions.forEach(pattern => {
             ehObf.exceptionCount += this.countPattern(code, pattern);
         });
 
@@ -2787,14 +2835,14 @@ const ObfuscationDetector = {
 
     // Nanomite Protection Detection
     detectNanomiteProtection: function () {
-      const nanomite = {
-        detected: false,
-        parentProcess: null,
-        debuggerPresent: false,
-        patches: [],
-      };
+        const nanomite = {
+            detected: false,
+            parentProcess: null,
+            debuggerPresent: false,
+            patches: [],
+        };
 
-      // Initialize comprehensive nanomite analysis using self
+        // Initialize comprehensive nanomite analysis using self
         nanomite.analysisConfig = this.configureNanomiteAnalysis({
             parent_child_monitoring: true,
             runtime_patch_detection: true,
@@ -2804,16 +2852,16 @@ const ObfuscationDetector = {
         });
 
         // Check for parent-child debugging relationship
-      const debugAPIs = [
-        'CreateProcessW',
-        'DebugActiveProcess',
-        'WaitForDebugEvent',
-        'ContinueDebugEvent',
-      ];
+        const debugAPIs = [
+            'CreateProcessW',
+            'DebugActiveProcess',
+            'WaitForDebugEvent',
+            'ContinueDebugEvent',
+        ];
 
-      debugAPIs.forEach(api => {
-          const addr = Module.findExportByName('kernel32.dll', api);
-          if (addr) {
+        debugAPIs.forEach(api => {
+            const addr = Module.findExportByName('kernel32.dll', api);
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function (args) {
                         nanomite.debuggerPresent = true;
@@ -2832,10 +2880,10 @@ const ObfuscationDetector = {
         });
 
         // Monitor for runtime patching
-      const writeAPIs = ['WriteProcessMemory', 'VirtualProtect'];
-      writeAPIs.forEach(api => {
-          const addr = Module.findExportByName('kernel32.dll', api);
-          if (addr) {
+        const writeAPIs = ['WriteProcessMemory', 'VirtualProtect'];
+        writeAPIs.forEach(api => {
+            const addr = Module.findExportByName('kernel32.dll', api);
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function (args) {
                         if (api === 'WriteProcessMemory') {
@@ -2864,13 +2912,13 @@ const ObfuscationDetector = {
 
     // Thread Local Storage Abuse Detection
     detectTLSAbuse: function (module) {
-      const tlsAbuse = {
-        detected: false,
-        callbacks: [],
-        hiddenCode: false,
-      };
+        const tlsAbuse = {
+            detected: false,
+            callbacks: [],
+            hiddenCode: false,
+        };
 
-      // Use self to configure comprehensive TLS analysis
+        // Use self to configure comprehensive TLS analysis
         tlsAbuse.analysisConfig = this.configureTLSAbuseAnalysis({
             callback_analysis: this.enableTLSCallbackAnalysis(),
             hidden_code_detection: this.configureTLSHiddenCodeDetection(),
@@ -2880,32 +2928,36 @@ const ObfuscationDetector = {
         });
 
         try {
-          const base = module.base;
-          const dosHeader = base.readU16();
-          if (dosHeader !== 0x5a4d) { return tlsAbuse; }
+            const base = module.base;
+            const dosHeader = base.readU16();
+            if (dosHeader !== 0x5a4d) {
+                return tlsAbuse;
+            }
 
-          const peOffset = base.add(0x3c).readU32();
-          const optHeader = peOffset + 24;
-          const tlsTableRVA = base.add(optHeader + 184).readU32();
+            const peOffset = base.add(0x3c).readU32();
+            const optHeader = peOffset + 24;
+            const tlsTableRVA = base.add(optHeader + 184).readU32();
 
-          if (tlsTableRVA !== 0) {
-              const tlsDir = base.add(tlsTableRVA);
-              const callbacksPtr = tlsDir.add(12).readPointer();
+            if (tlsTableRVA !== 0) {
+                const tlsDir = base.add(tlsTableRVA);
+                const callbacksPtr = tlsDir.add(12).readPointer();
 
-              if (!callbacksPtr.isNull()) {
+                if (!callbacksPtr.isNull()) {
                     for (let i = 0; i < 32; i++) {
-                      const callback = callbacksPtr.add(i * Process.pointerSize).readPointer();
-                      if (callback.isNull()) { break; }
+                        const callback = callbacksPtr.add(i * Process.pointerSize).readPointer();
+                        if (callback.isNull()) {
+                            break;
+                        }
 
                         tlsAbuse.callbacks.push(callback);
 
                         // Check if callback contains suspicious code using configured analysis
-                      const callbackCode = callback.readByteArray(256);
-                      const analysisResult = this.analyzeTLSCallbackCode(
-                        callbackCode,
-                        tlsAbuse.analysisConfig
-                      );
-                      if (analysisResult.suspicious_patterns_detected) {
+                        const callbackCode = callback.readByteArray(256);
+                        const analysisResult = this.analyzeTLSCallbackCode(
+                            callbackCode,
+                            tlsAbuse.analysisConfig
+                        );
+                        if (analysisResult.suspicious_patterns_detected) {
                             tlsAbuse.hiddenCode = true;
                             tlsAbuse.detected = true;
                         }
@@ -2931,23 +2983,23 @@ const ObfuscationDetector = {
 
     // Heap Spray Detection
     detectHeapSpray: function () {
-      const heapSpray = {
-        detected: false,
-        allocations: [],
-        patterns: [],
-      };
+        const heapSpray = {
+            detected: false,
+            allocations: [],
+            patterns: [],
+        };
 
-      // Use self to perform comprehensive heap spray detection analysis
-      const heapSprayAnalysisConfig = this.initializeHeapSprayAnalysis({
-        allocation_monitoring: this.configureHeapAllocationMonitoring(),
-        pattern_recognition: this.getKnownHeapSprayPatterns(),
-        shellcode_detection: this.enableShellcodeDetectionInHeap(),
-        rop_chain_identification: this.configureROPChainDetection(),
-        allocation_threshold_analysis: this.setHeapSprayThresholds(),
-        exploit_preparation_indicators: true,
-      });
+        // Use self to perform comprehensive heap spray detection analysis
+        const heapSprayAnalysisConfig = this.initializeHeapSprayAnalysis({
+            allocation_monitoring: this.configureHeapAllocationMonitoring(),
+            pattern_recognition: this.getKnownHeapSprayPatterns(),
+            shellcode_detection: this.enableShellcodeDetectionInHeap(),
+            rop_chain_identification: this.configureROPChainDetection(),
+            allocation_threshold_analysis: this.setHeapSprayThresholds(),
+            exploit_preparation_indicators: true,
+        });
 
-      // Apply configuration settings to heap spray detection
+        // Apply configuration settings to heap spray detection
         heapSpray.detectionConfig = heapSprayAnalysisConfig;
         heapSpray.thresholds = {
             allocation_size_threshold:
@@ -2959,20 +3011,20 @@ const ObfuscationDetector = {
         };
 
         // Monitor heap allocations based on configuration
-      const heapAPIs = heapSprayAnalysisConfig.allocation_monitoring
-        ? [
-          {name: 'HeapAlloc', module: 'kernel32.dll'},
-          {name: 'GlobalAlloc', module: 'kernel32.dll'},
-          {name: 'LocalAlloc', module: 'kernel32.dll'},
-          {name: 'VirtualAlloc', module: 'kernel32.dll'},
-          {name: 'malloc', module: null},
-          {name: 'calloc', module: null},
-        ]
-        : [{name: 'VirtualAlloc', module: 'kernel32.dll'}];
+        const heapAPIs = heapSprayAnalysisConfig.allocation_monitoring
+            ? [
+                  { name: 'HeapAlloc', module: 'kernel32.dll' },
+                  { name: 'GlobalAlloc', module: 'kernel32.dll' },
+                  { name: 'LocalAlloc', module: 'kernel32.dll' },
+                  { name: 'VirtualAlloc', module: 'kernel32.dll' },
+                  { name: 'malloc', module: null },
+                  { name: 'calloc', module: null },
+              ]
+            : [{ name: 'VirtualAlloc', module: 'kernel32.dll' }];
 
-      heapAPIs.forEach(api => {
-          const addr = Module.findExportByName(api.module, api.name);
-          if (addr) {
+        heapAPIs.forEach(api => {
+            const addr = Module.findExportByName(api.module, api.name);
+            if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function (args) {
                         this.size = args[api.name.includes('Heap') ? 2 : 1].toInt32();
@@ -2994,11 +3046,11 @@ const ObfuscationDetector = {
 
                             // Check for spray patterns
                             if (this.size > 0x1000 && this.size < 0x100000) {
-                              const recentAllocs = heapSpray.allocations.filter(
-                                alloc => Date.now() - alloc.timestamp < 1000
-                              );
+                                const recentAllocs = heapSpray.allocations.filter(
+                                    alloc => Date.now() - alloc.timestamp < 1000
+                                );
 
-                              if (recentAllocs.length > 100) {
+                                if (recentAllocs.length > 100) {
                                     heapSpray.detected = true;
                                 }
                             }
@@ -3014,29 +3066,31 @@ const ObfuscationDetector = {
     // Helper Functions for Pattern Matching with Wildcards
     findPatternWithWildcards: (haystack, needle) => {
         for (let i = 0; i <= haystack.length - needle.length; i++) {
-          let found = true;
-          for (let j = 0; j < needle.length; j++) {
+            let found = true;
+            for (let j = 0; j < needle.length; j++) {
                 if (needle[j] !== null && haystack[i + j] !== needle[j]) {
                     found = false;
                     break;
                 }
             }
-            if (found) { return i; }
+            if (found) {
+                return i;
+            }
         }
         return -1;
     },
 
     // Calculate entropy for data analysis
     calculateEntropy: data => {
-      const freq = {};
-      for (let i = 0; i < data.length; i++) {
+        const freq = {};
+        for (let i = 0; i < data.length; i++) {
             freq[data[i]] = (freq[data[i]] || 0) + 1;
         }
 
-      let entropy = 0;
-      for (let byte in freq) {
-          const p = freq[byte] / data.length;
-          entropy -= p * Math.log2(p);
+        let entropy = 0;
+        for (let byte in freq) {
+            const p = freq[byte] / data.length;
+            entropy -= p * Math.log2(p);
         }
 
         return entropy;
@@ -3045,17 +3099,17 @@ const ObfuscationDetector = {
     // Check if data contains executable code signatures
     containsExecutableCode: function (data) {
         // Common executable signatures
-      const execSignatures = [
-        [0x55, 0x8b, 0xec], // push ebp; mov ebp, esp
-        [0x50, 0x53, 0x51], // push eax; push ebx; push ecx
-        [0x48, 0x83, 0xec], // sub rsp, XX (x64)
-        [0x48, 0x89, 0x5c], // mov [rsp+XX], rbx (x64)
-        [0xe8], // call
-        [0xe9], // jmp
-        [0xff, 0x15], // call [addr]
-      ];
+        const execSignatures = [
+            [0x55, 0x8b, 0xec], // push ebp; mov ebp, esp
+            [0x50, 0x53, 0x51], // push eax; push ebx; push ecx
+            [0x48, 0x83, 0xec], // sub rsp, XX (x64)
+            [0x48, 0x89, 0x5c], // mov [rsp+XX], rbx (x64)
+            [0xe8], // call
+            [0xe9], // jmp
+            [0xff, 0x15], // call [addr]
+        ];
 
-      return execSignatures.some(
+        return execSignatures.some(
             function (sig) {
                 return this.findPattern(data, sig) !== -1;
             }.bind(this)
@@ -3064,21 +3118,21 @@ const ObfuscationDetector = {
 
     // Check for suspicious patterns in code
     containsSuspiciousPatterns: function (data) {
-      const suspiciousPatterns = [
-        // Anti-debug
-        [0x64, 0x8b, 0x1d, 0x30, 0x00, 0x00, 0x00], // mov ebx, fs:[30h] (PEB)
-        [0x0f, 0x31], // rdtsc
-        [0xcd, 0x2d], // int 2Dh
-        // Obfuscation
-        [0x81, 0xc4], // add esp, large_value
-        [0x60], // pushad
-        [0x61], // popad
-        // Encryption loops
-        [0x80, 0x34], // xor byte ptr
-        [0x30, 0x04], // xor [reg+reg], al
-      ];
+        const suspiciousPatterns = [
+            // Anti-debug
+            [0x64, 0x8b, 0x1d, 0x30, 0x00, 0x00, 0x00], // mov ebx, fs:[30h] (PEB)
+            [0x0f, 0x31], // rdtsc
+            [0xcd, 0x2d], // int 2Dh
+            // Obfuscation
+            [0x81, 0xc4], // add esp, large_value
+            [0x60], // pushad
+            [0x61], // popad
+            // Encryption loops
+            [0x80, 0x34], // xor byte ptr
+            [0x30, 0x04], // xor [reg+reg], al
+        ];
 
-      return suspiciousPatterns.some(
+        return suspiciousPatterns.some(
             function (pattern) {
                 return this.findPattern(data, pattern) !== -1;
             }.bind(this)
@@ -3089,8 +3143,8 @@ const ObfuscationDetector = {
     extractBranchTarget: instruction => {
         try {
             if (instruction.operands && instruction.operands.length > 0) {
-              const operand = instruction.operands[0];
-              if (operand.type === 'imm') {
+                const operand = instruction.operands[0];
+                if (operand.type === 'imm') {
                     return ptr(operand.value);
                 }
             }
@@ -3100,16 +3154,18 @@ const ObfuscationDetector = {
 
     // Disassemble gadget for ROP analysis
     disassembleGadget: (address, maxLength) => {
-      const instructions = [];
-      let offset = 0;
+        const instructions = [];
+        let offset = 0;
 
-      while (offset < maxLength) {
+        while (offset < maxLength) {
             try {
-              const inst = Instruction.parse(address.add(offset));
-              instructions.push(inst.mnemonic);
+                const inst = Instruction.parse(address.add(offset));
+                instructions.push(inst.mnemonic);
                 offset += inst.size;
 
-                if (inst.mnemonic === 'ret') { break; }
+                if (inst.mnemonic === 'ret') {
+                    break;
+                }
             } catch (_e) {
                 break;
             }
@@ -3120,16 +3176,16 @@ const ObfuscationDetector = {
 
     // Parse PE sections
     parseSections: (base, peOffset) => {
-      const sections = [];
+        const sections = [];
 
-      try {
-          const fileHeader = peOffset + 4;
-          const numSections = base.add(fileHeader + 2).readU16();
-          const sectionTable = peOffset + 24 + base.add(fileHeader + 16).readU16();
+        try {
+            const fileHeader = peOffset + 4;
+            const numSections = base.add(fileHeader + 2).readU16();
+            const sectionTable = peOffset + 24 + base.add(fileHeader + 16).readU16();
 
-          for (let i = 0; i < numSections; i++) {
-              const sectionHeader = sectionTable + i * 40;
-              sections.push({
+            for (let i = 0; i < numSections; i++) {
+                const sectionHeader = sectionTable + i * 40;
+                sections.push({
                     name: base.add(sectionHeader).readCString(8),
                     virtualSize: base.add(sectionHeader + 8).readU32(),
                     virtualAddress: base.add(sectionHeader + 12).readU32(),
@@ -3189,7 +3245,9 @@ const ObfuscationDetector = {
 
         // Analyze all loaded modules comprehensively
         Process.enumerateModules().forEach(module => {
-            if (this.isSystemModule(module.name)) { return; }
+            if (this.isSystemModule(module.name)) {
+                return;
+            }
 
             // Comprehensive module analysis
             this.detectModernPackers(module);

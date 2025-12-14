@@ -229,9 +229,9 @@ class FridaBypassWizard:
         if mode in WIZARD_CONFIGS:
             self.mode = mode
             self.config = WIZARD_CONFIGS[mode]
-            logger.info(f"Wizard mode set to: {mode}")
+            logger.info("Wizard mode set to: %s", mode)
         else:
-            logger.warning(f"Unknown mode: {mode}, using balanced")
+            logger.warning("Unknown mode: %s, using balanced", mode)
 
     def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None) -> None:
         """Set callback functions for progress and status updates.
@@ -257,12 +257,12 @@ class FridaBypassWizard:
             self.progress_callback(progress)
         if self.status_callback and message:
             self.status_callback(message)
-        logger.info(f"Wizard progress: {progress}% - {message}")
+        logger.info("Wizard progress: %s%% - %s", progress, message)
 
     def _update_state(self, state: WizardState) -> None:
         """Update wizard state."""
         self.state = state
-        logger.debug(f"Wizard state changed to: {state.value}")
+        logger.debug("Wizard state changed to: %s", state.value)
 
     async def run(self, session_id: str, target_info: dict[str, Any] = None) -> dict[str, Any]:
         """Run the automated bypass wizard.
@@ -335,7 +335,7 @@ class FridaBypassWizard:
         except Exception as e:
             self._update_state(WizardState.FAILED)
             self._update_progress(self.progress, f"Wizard failed: {e}")
-            logger.error(f"Bypass wizard failed: {e}")
+            logger.error("Bypass wizard failed: %s", e, exc_info=True)
             raise
 
     async def _analyze_process(self) -> None:
@@ -377,7 +377,7 @@ class FridaBypassWizard:
                 str(temp_script),
                 {"analysis_mode": True},
             ):
-                logger.info(f"Analysis script loaded successfully: {success}")
+                logger.info("Analysis script loaded successfully: %s", success)
                 # Wait for analysis results
                 await asyncio.sleep(2)  # Give script time to analyze
             else:
@@ -389,7 +389,7 @@ class FridaBypassWizard:
             self._update_progress(20, "Process analysis complete")
 
         except Exception as e:
-            logger.error(f"Process analysis failed: {e}")
+            logger.error("Process analysis failed: %s", e, exc_info=True)
 
     def _create_analysis_script(self) -> str:
         """Create Frida script for process analysis.
@@ -535,7 +535,7 @@ class FridaBypassWizard:
                     self.detected_protections[prot_type] = True
                     self.protection_evidence[prot_type] = evidence
                 except ValueError as e:
-                    logger.error("Value error in frida_bypass_wizard: %s", e)
+                    logger.error("Value error in frida_bypass_wizard: %s", e, exc_info=True)
 
             # If no protections detected, try common ones based on target
             if not self.detected_protections and self.target_process:
@@ -551,7 +551,7 @@ class FridaBypassWizard:
                 )
 
         except Exception as e:
-            logger.error(f"Protection detection failed: {e}")
+            logger.error("Protection detection failed: %s", e, exc_info=True)
 
     def _analyze_imports_for_protections(self) -> None:
         """Analyze imported functions for protection indicators.
@@ -719,7 +719,7 @@ class FridaBypassWizard:
             self._update_progress(50, f"Planned {len(self.strategies)} bypass strategies")
 
         except Exception as e:
-            logger.error(f"Strategy planning failed: {e}")
+            logger.error("Strategy planning failed: %s", e, exc_info=True)
 
     async def _apply_bypasses(self) -> None:
         """Apply bypass strategies in order.
@@ -751,7 +751,7 @@ class FridaBypassWizard:
             for i, strategy in enumerate(self.strategies):
                 # Check dependencies
                 if not strategy.can_apply(completed_protections):
-                    logger.info(f"Skipping {strategy.protection_type.value} - dependencies not met")
+                    logger.info("Skipping %s - dependencies not met", strategy.protection_type.value)
                     continue
 
                 # Update progress
@@ -783,7 +783,7 @@ class FridaBypassWizard:
             self.metrics["bypasses_successful"] = len(self.successful_bypasses)
 
         except Exception as e:
-            logger.error(f"Bypass application failed: {e}")
+            logger.error("Bypass application failed: %s", e, exc_info=True)
 
     async def _apply_strategy(self, strategy: BypassStrategy) -> bool:
         """Apply a single bypass strategy.
@@ -819,18 +819,18 @@ class FridaBypassWizard:
                     script_name,
                     options,
                 ):
-                    logger.debug(f"Script load result: {success}")
+                    logger.debug("Script load result: %s", success)
                     success_count += 1
                     self.metrics["scripts_loaded"] += 1
-                    logger.info(f"Successfully loaded {script_name} for {strategy.protection_type.value}")
+                    logger.info("Successfully loaded %s for %s", script_name, strategy.protection_type.value)
                 else:
-                    logger.warning(f"Failed to load {script_name}")
+                    logger.warning("Failed to load %s", script_name)
 
             # Consider strategy successful if at least one script loaded
             return success_count > 0
 
         except Exception as e:
-            logger.error(f"Strategy application failed: {e}")
+            logger.error("Strategy application failed: %s", e, exc_info=True)
             return False
 
     async def _monitor_results(self) -> None:
@@ -877,12 +877,12 @@ class FridaBypassWizard:
                 await self._adaptive_retry(verification_results)
 
         except Exception as e:
-            logger.error(f"Result monitoring failed: {e}")
+            logger.error("Result monitoring failed: %s", e, exc_info=True)
 
     async def _verify_bypass(self, protection_type: ProtectionType) -> bool:
         """Verify if a protection is still active."""
         # Check if the specific protection is still being triggered
-        logger.info(f"Verifying bypass for {protection_type.value}")
+        logger.info("Verifying bypass for %s", protection_type.value)
 
         # Check if this protection type has been successfully bypassed
         if protection_type in self.executed_bypasses:
@@ -961,7 +961,7 @@ class FridaBypassWizard:
             return result.get("detected", False)
 
         except Exception as e:
-            logger.error(f"Anti-debug detection failed: {e}")
+            logger.error("Anti-debug detection failed: %s", e, exc_info=True)
             return False
 
     async def _check_anti_attach_active(self) -> bool:
@@ -1034,7 +1034,7 @@ class FridaBypassWizard:
             return result.get("detected", False)
 
         except Exception as e:
-            logger.error(f"Anti-attach detection failed: {e}")
+            logger.error("Anti-attach detection failed: %s", e, exc_info=True)
             return False
 
     async def _check_ssl_pinning_active(self) -> bool:
@@ -1130,7 +1130,7 @@ class FridaBypassWizard:
             return result.get("detected", False)
 
         except Exception as e:
-            logger.error(f"SSL pinning detection failed: {e}")
+            logger.error("SSL pinning detection failed: %s", e, exc_info=True)
             return False
 
     async def _run_detection_script(self, script_path: Path) -> dict[str, Any]:
@@ -1145,8 +1145,7 @@ class FridaBypassWizard:
                     if payload.get("type") == "detection":
                         result["detected"] = payload.get("result", False)
                 elif message["type"] == "error" and data:
-                    # Log additional error data if provided
-                    logger.error(f"Script error with data: {data}")
+                    logger.error("Script error with data: %s", data)
 
             # Load and run script with message handler
             script_loaded = self.frida_manager.load_script(
@@ -1163,7 +1162,7 @@ class FridaBypassWizard:
             return result
 
         except Exception as e:
-            logger.error(f"Detection script execution failed: {e}")
+            logger.error("Detection script execution failed: %s", e, exc_info=True)
             return {"detected": False}
 
     async def _adaptive_retry(self, verification_results: dict[ProtectionType, bool]) -> None:
@@ -1173,7 +1172,7 @@ class FridaBypassWizard:
 
         for prot_type, success in verification_results.items():
             if not success and retry_count < max_retries:
-                logger.info(f"Attempting adaptive retry for {prot_type.value}")
+                logger.info("Attempting adaptive retry for %s", prot_type.value)
 
                 if alternative_strategy := self._get_alternative_strategy(prot_type):
                     try:
@@ -1186,16 +1185,16 @@ class FridaBypassWizard:
                             verify_success = await self._verify_bypass(prot_type)
 
                             if verify_success:
-                                logger.info(f"Alternative strategy successful for {prot_type.value}")
+                                logger.info("Alternative strategy successful for %s", prot_type.value)
                                 self.metrics["retry_successes"] += 1
                             else:
-                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
+                                logger.warning("Alternative strategy failed verification for %s", prot_type.value)
                                 self.metrics["retry_failures"] += 1
                         else:
                             self.metrics["retry_failures"] += 1
 
                     except Exception as e:
-                        logger.error(f"Adaptive retry failed for {prot_type.value}: {e}")
+                        logger.error("Adaptive retry failed for %s: %s", prot_type.value, e, exc_info=True)
                         self.metrics["retry_failures"] += 1
 
                 retry_count += 1
@@ -1317,10 +1316,16 @@ class FridaBypassWizard:
             ValueError: If neither pid nor process_name is provided
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> wizard.attach_to_process(pid=1234)
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> wizard.attach_to_process(
+            ...     pid=1234
+            ... )
             True
-            >>> wizard.attach_to_process(process_name="target.exe")
+            >>> wizard.attach_to_process(
+            ...     process_name="target.exe"
+            ... )
             True
         """
         if pid is None and process_name is None:
@@ -1339,14 +1344,14 @@ class FridaBypassWizard:
                     "pid": pid or getattr(self.frida_manager, "target_pid", None),
                     "name": process_name or getattr(self.frida_manager, "target_name", "Unknown"),
                 }
-                logger.info(f"Successfully attached to process: {pid or process_name}")
+                logger.info("Successfully attached to process: %s", pid or process_name)
                 return True
             else:
-                logger.error(f"Failed to attach to process: {pid or process_name}")
+                logger.error("Failed to attach to process: %s", pid or process_name)
                 return False
 
         except Exception as e:
-            logger.error(f"Exception during process attachment: {e}")
+            logger.error("Exception during process attachment: %s", e, exc_info=True)
             return False
 
     def detach(self) -> bool:
@@ -1365,8 +1370,12 @@ class FridaBypassWizard:
             - Resets wizard state to IDLE
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> wizard.attach_to_process(pid=1234)
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> wizard.attach_to_process(
+            ...     pid=1234
+            ... )
             True
             >>> wizard.detach()
             True
@@ -1376,7 +1385,7 @@ class FridaBypassWizard:
                 try:
                     self.session.detach()
                 except Exception as e:
-                    logger.warning(f"Error detaching session directly: {e}")
+                    logger.warning("Error detaching session directly: %s", e, exc_info=True)
 
             if hasattr(self.frida_manager, "detach"):
                 self.frida_manager.detach()
@@ -1384,7 +1393,7 @@ class FridaBypassWizard:
                 try:
                     self.frida_manager.session.detach()
                 except Exception as e:
-                    logger.warning(f"Error detaching from frida_manager session: {e}")
+                    logger.warning("Error detaching from frida_manager session: %s", e, exc_info=True)
 
             self.session = None
             self.session_id = None
@@ -1395,7 +1404,7 @@ class FridaBypassWizard:
             return True
 
         except Exception as e:
-            logger.error(f"Exception during detachment: {e}")
+            logger.error("Exception during detachment: %s", e, exc_info=True)
             return False
 
     def inject_script(self, script_content: str, script_name: str = "bypass_script") -> bool:
@@ -1416,15 +1425,22 @@ class FridaBypassWizard:
             RuntimeError: If not attached to a process
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> wizard.attach_to_process(pid=1234)
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> wizard.attach_to_process(
+            ...     pid=1234
+            ... )
             True
             >>> script = '''
             ... Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
             ...     onLeave: function(retval) { retval.replace(0); }
             ... });
             ... '''
-            >>> wizard.inject_script(script, "anti_debug_bypass")
+            >>> wizard.inject_script(
+            ...     script,
+            ...     "anti_debug_bypass",
+            ... )
             True
         """
         if self.target_process is None:
@@ -1453,14 +1469,14 @@ class FridaBypassWizard:
 
             if success:
                 self.metrics["scripts_loaded"] += 1
-                logger.info(f"Successfully injected script: {script_name}")
+                logger.info("Successfully injected script: %s", script_name)
                 return True
             else:
-                logger.error(f"Failed to inject script: {script_name}")
+                logger.error("Failed to inject script: %s", script_name)
                 return False
 
         except Exception as e:
-            logger.error(f"Exception during script injection: {e}")
+            logger.error("Exception during script injection: %s", e, exc_info=True)
             return False
 
     def detect_protections(self) -> dict[str, float]:
@@ -1477,8 +1493,12 @@ class FridaBypassWizard:
             RuntimeError: If not attached to a process
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> wizard.attach_to_process(pid=1234)
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> wizard.attach_to_process(
+            ...     pid=1234
+            ... )
             True
             >>> detections = wizard.detect_protections()
             >>> detections
@@ -1512,12 +1532,12 @@ class FridaBypassWizard:
                     detection_results[prot_name] = 0.7
 
             self.metrics["protections_detected"] = len(detection_results)
-            logger.info(f"Detected {len(detection_results)} protection mechanisms")
+            logger.info("Detected %s protection mechanisms", len(detection_results))
 
             return detection_results
 
         except Exception as e:
-            logger.error(f"Exception during protection detection: {e}")
+            logger.error("Exception during protection detection: %s", e, exc_info=True)
             return {}
 
     def generate_bypass_script(self, protection_type: str) -> str | None:
@@ -1535,8 +1555,12 @@ class FridaBypassWizard:
             no bypass is available for the specified protection type
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> script = wizard.generate_bypass_script("ANTI_DEBUG")
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> script = wizard.generate_bypass_script(
+            ...     "ANTI_DEBUG"
+            ... )
             >>> print(script[:50])
             'Interceptor.attach(Module.findExportByName...'
         """
@@ -1559,7 +1583,7 @@ class FridaBypassWizard:
 
         script = bypass_templates.get(protection_type)
         if script:
-            logger.info(f"Generated bypass script for protection: {protection_type}")
+            logger.info("Generated bypass script for protection: %s", protection_type)
             return script
 
         scripts = get_scripts_for_protection(protection_type)
@@ -1568,7 +1592,7 @@ class FridaBypassWizard:
             if script_path.exists():
                 return script_path.read_text(encoding="utf-8")
 
-        logger.warning(f"No bypass script available for protection: {protection_type}")
+        logger.warning("No bypass script available for protection: %s", protection_type)
         return None
 
     def analyze_protections(self) -> dict[str, list[str]]:
@@ -1582,11 +1606,15 @@ class FridaBypassWizard:
             Dictionary mapping protection categories to lists of findings
 
         Example:
-            >>> wizard = FridaBypassWizard(frida_manager)
-            >>> wizard.attach_to_process(pid=1234)
+            >>> wizard = FridaBypassWizard(
+            ...     frida_manager
+            ... )
+            >>> wizard.attach_to_process(
+            ...     pid=1234
+            ... )
             True
             >>> analysis = wizard.analyze_protections()
-            >>> analysis['Anti-Debug']
+            >>> analysis["Anti-Debug"]
             ['IsDebuggerPresent hook detected', 'PEB.BeingDebugged flag checked']
         """
         analysis_result: dict[str, list[str]] = {
@@ -1621,11 +1649,11 @@ class FridaBypassWizard:
 
             analysis_result = {k: v for k, v in analysis_result.items() if v}
 
-            logger.info(f"Protection analysis completed: {len(analysis_result)} categories with findings")
+            logger.info("Protection analysis completed: %s categories with findings", len(analysis_result))
             return analysis_result
 
         except Exception as e:
-            logger.error(f"Exception during protection analysis: {e}")
+            logger.error("Exception during protection analysis: %s", e, exc_info=True)
             return {"Error": [str(e)]}
 
     def _get_anti_debug_bypass_script(self) -> str:
@@ -2103,7 +2131,7 @@ class WizardPresetManager:
 
         # Override wizard config
         wizard.config = custom_config
-        logger.info(f"Applied preset for: {software_name}")
+        logger.info("Applied preset for: %s", software_name)
 
     @staticmethod
     def create_custom_wizard(config: dict[str, Any]) -> "FridaBypassWizard":

@@ -89,7 +89,7 @@ class ConcolicExecutionEngine:
         if self.symbolic_engine:
             self.logger.info(f"Using {self.symbolic_engine_name} for symbolic execution")
         else:
-            self.logger.error("No symbolic execution engine available!")
+            self.logger.error("No symbolic execution engine available!", exc_info=True)
 
     @property
     def manticore_available(self) -> bool:
@@ -161,7 +161,7 @@ class ConcolicExecutionEngine:
             return results
 
         except Exception as e:
-            self.logger.error(f"Angr execution failed: {e}")
+            self.logger.error(f"Angr execution failed: {e}", exc_info=True)
             return {"error": str(e), "engine": "angr"}
 
     def _explore_paths_simconcolic(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:

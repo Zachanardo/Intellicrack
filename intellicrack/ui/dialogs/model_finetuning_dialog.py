@@ -2592,7 +2592,7 @@ class ModelFinetuningDialog(QDialog):
             if hasattr(tensor_or_model, "to") and callable(getattr(tensor_or_model, "to", None)):
                 device_str: str = str(self.training_device)
                 result = tensor_or_model.to(device_str)
-                if isinstance(result, (type(tensor_or_model), )):
+                if isinstance(result, (type(tensor_or_model),)):
                     return result
             return tensor_or_model
         except Exception as e:

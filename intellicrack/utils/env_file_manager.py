@@ -67,7 +67,7 @@ class EnvFileManager:
         # Create empty .env file if it doesn't exist
         if not self.env_path.exists():
             self.env_path.touch()
-            logger.info(f"Created new .env file at {self.env_path}")
+            logger.info("Created new .env file at %s", self.env_path)
 
         # Load environment variables into central config on initialization
         self._sync_to_central_config()
@@ -102,10 +102,10 @@ class EnvFileManager:
 
                         env_vars[key] = value
                     else:
-                        logger.debug(f"Skipping invalid line {line_num} in .env file: {line}")
+                        logger.debug("Skipping invalid line %s in .env file: %s", line_num, line)
 
         except Exception as e:
-            logger.error(f"Error reading .env file: {e}")
+            logger.error("Error reading .env file: %s", e, exc_info=True)
 
         return env_vars
 
@@ -164,7 +164,7 @@ class EnvFileManager:
 
                 # Atomic replace
                 shutil.move(temp_path, self.env_path)
-                logger.info(f"Successfully updated .env file at {self.env_path}")
+                logger.info("Successfully updated .env file at %s", self.env_path)
 
             except Exception:
                 # Clean up temp file on error
@@ -173,7 +173,7 @@ class EnvFileManager:
                 raise
 
         except Exception as e:
-            logger.error(f"Error writing .env file: {e}")
+            logger.error("Error writing .env file: %s", e, exc_info=True)
             # Restore from backup
             if backup_path and backup_path.exists():
                 shutil.copy2(backup_path, self.env_path)
@@ -273,7 +273,7 @@ class EnvFileManager:
             shutil.copy2(self.env_path, backup_path)
             return backup_path
         except Exception as e:
-            logger.warning(f"Could not create backup: {e}")
+            logger.warning("Could not create backup: %s", e, exc_info=True)
             return None
 
     def test_api_key(self, service: str, api_key: str) -> tuple[bool, str]:
@@ -352,18 +352,18 @@ class EnvFileManager:
             env_vars = self.read_env()
             # Store all environment variables in central config
             self.central_config.set("environment.variables", env_vars)
-            logger.debug(f"Synced {len(env_vars)} environment variables to central config")
+            logger.debug("Synced %s environment variables to central config", len(env_vars))
         except Exception as e:
-            logger.warning(f"Could not sync environment variables to central config: {e}")
+            logger.warning("Could not sync environment variables to central config: %s", e, exc_info=True)
 
     def _sync_from_central_config(self) -> None:
         """Sync environment variables from central config to .env file."""
         try:
             if env_vars := self.central_config.get("environment.variables", {}):
                 self.write_env(env_vars)
-                logger.debug(f"Synced {len(env_vars)} environment variables from central config")
+                logger.debug("Synced %s environment variables from central config", len(env_vars))
         except Exception as e:
-            logger.warning(f"Could not sync environment variables from central config: {e}")
+            logger.warning("Could not sync environment variables from central config: %s", e, exc_info=True)
 
     def load_into_environment(self, override: bool = False) -> None:
         """Load all variables from .env file into the actual environment.
@@ -376,12 +376,12 @@ class EnvFileManager:
         for key, value in env_vars.items():
             if override or key not in os.environ:
                 os.environ[key] = value
-                logger.debug(f"Loaded {key} into environment")
-        logger.info(f"Loaded {len(env_vars)} environment variables")
+                logger.debug("Loaded %s into environment", key)
+        logger.info("Loaded %s environment variables", len(env_vars))
 
     def auto_load(self) -> None:
         """Automatically load .env file if configured to do so in central config."""
         if auto_load := self.central_config.get("environment.auto_load_env", True):
-            logger.debug(f"Auto-load enabled: {auto_load}")
+            logger.debug("Auto-load enabled: %s", auto_load)
             self.load_into_environment(override=False)
             logger.info("Auto-loaded environment variables from .env file")

@@ -218,7 +218,7 @@ class SecretsManager:
                 self._cipher = Fernet(Fernet.generate_key())
             self._set_encryption_status(True, False)
         except Exception as e:
-            logger.error(f"Failed to initialize encryption: {e}")
+            logger.error("Failed to initialize encryption: %s", e, exc_info=True)
             self._cipher = Fernet(Fernet.generate_key())
             self._set_encryption_status(True, False)
 
@@ -286,7 +286,7 @@ class SecretsManager:
                     self._cache = json.loads(decrypted_data.decode())
                 logger.debug("Loaded secrets from file")
             except Exception as e:
-                logger.error(f"Failed to load secrets file: {e}")
+                logger.error("Failed to load secrets file: %s", e, exc_info=True)
                 self._cache = {}
         else:
             self._cache = {}
@@ -308,7 +308,7 @@ class SecretsManager:
             self.secrets_file.chmod(0o600)  # Restrict permissions
             logger.debug("Saved secrets to file")
         except Exception as e:
-            logger.error(f"Failed to save secrets: {e}")
+            logger.error("Failed to save secrets: %s", e, exc_info=True)
 
     def _get_from_keyring(self, key: str) -> str | None:
         """Get secret from OS keychain with error handling."""
@@ -500,7 +500,7 @@ class SecretsManager:
             logger.info("No .env file found in search path")
             return None
         except Exception as e:
-            logger.error(f"Error finding .env file: {e}")
+            logger.error("Error finding .env file: %s", e, exc_info=True)
             return None
 
     def verify_password_hash(self, password: str, stored_hash: bytes, salt: bytes) -> bool:

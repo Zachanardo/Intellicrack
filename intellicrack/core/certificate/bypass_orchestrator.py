@@ -215,7 +215,7 @@ class CertificateBypassOrchestrator:
             BypassResult containing operation results
 
         """
-        logger.info(f"Starting certificate bypass for target: {target}")
+        logger.info("Starting certificate bypass for target: %s", target)
 
         errors = []
         detection_report = None
@@ -246,7 +246,7 @@ class CertificateBypassOrchestrator:
                     target_state,
                 )
 
-            logger.info(f"Executing bypass with method: {method.value}")
+            logger.info("Executing bypass with method: %s", method.value)
 
             patch_result = None
             frida_status = None
@@ -283,7 +283,7 @@ class CertificateBypassOrchestrator:
             )
 
         except Exception as e:
-            logger.error(f"Bypass failed: {e}", exc_info=True)
+            logger.error("Bypass failed: %s", e, exc_info=True)
             errors.append(str(e))
 
             if detection_report is None:
@@ -370,17 +370,19 @@ class CertificateBypassOrchestrator:
 
             if result.success:
                 logger.info(
-                    f"Binary patch successful: {len(result.patched_functions)} functions patched",
+                    "Binary patch successful: %s functions patched",
+                    len(result.patched_functions),
                 )
             else:
                 logger.warning(
-                    f"Binary patch completed with failures: {len(result.failed_patches)} failed",
+                    "Binary patch completed with failures: %s failed",
+                    len(result.failed_patches),
                 )
 
             return result
 
         except Exception as e:
-            logger.error(f"Binary patch failed: {e}")
+            logger.error("Binary patch failed: %s", e, exc_info=True)
             raise
 
     def _execute_frida_hook(self, target: str) -> dict:
@@ -410,12 +412,12 @@ class CertificateBypassOrchestrator:
             status = self.frida_hooks.get_bypass_status()
             status["success"] = True
 
-            logger.info(f"Frida hook successful: {len(status.get('active_hooks', []))} hooks active")
+            logger.info("Frida hook successful: %s hooks active", len(status.get("active_hooks", [])))
 
             return status
 
         except Exception as e:
-            logger.error(f"Frida hook failed: {e}")
+            logger.error("Frida hook failed: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
 
     def _execute_mitm_proxy(self, target: str) -> bool:
@@ -447,7 +449,7 @@ class CertificateBypassOrchestrator:
                 logger.warning("No licensing server domains identified")
                 domains = ["licensing.example.com"]
 
-            logger.info(f"Identified {len(domains)} licensing domains: {domains}")
+            logger.info("Identified %s licensing domains: %s", len(domains), domains)
 
             cache = CertificateCache()
             generator = CertificateChainGenerator()
@@ -459,11 +461,11 @@ class CertificateBypassOrchestrator:
                 chain = cache.get_cached_cert(domain)
 
                 if not chain:
-                    logger.info(f"Generating certificate chain for {domain}")
+                    logger.info("Generating certificate chain for %s", domain)
                     chain = generator.generate_full_chain(domain)
                     cache.store_cert(domain, chain)
                 else:
-                    logger.info(f"Using cached certificate for {domain}")
+                    logger.info("Using cached certificate for %s", domain)
 
                 domain_safe = domain.replace("*", "wildcard").replace(".", "_")
                 cert_path = cert_dir / f"{domain_safe}.pem"
@@ -481,11 +483,12 @@ class CertificateBypassOrchestrator:
                         ),
                     )
 
-                logger.info(f"Certificate exported: {cert_path}")
-                logger.info(f"Private key exported: {key_path}")
+                logger.info("Certificate exported: %s", cert_path)
+                logger.info("Private key exported: %s", key_path)
 
             logger.info(
-                f"MITM certificates ready in: {cert_dir}",
+                "MITM certificates ready in: %s",
+                cert_dir,
             )
             logger.info(
                 "Start mitmproxy with: mitmproxy --set confdir=~/.intellicrack/mitm_certs",
@@ -494,7 +497,7 @@ class CertificateBypassOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"MITM proxy setup failed: {e}", exc_info=True)
+            logger.error("MITM proxy setup failed: %s", e, exc_info=True)
             return False
 
     def _extract_licensing_domains(self, target: str) -> list[str]:
@@ -549,16 +552,16 @@ class CertificateBypassOrchestrator:
 
                         if any(kw in domain_lower for kw in licensing_keywords) and domain not in domains:
                             domains.append(domain)
-                            logger.debug(f"Found licensing domain: {domain}")
+                            logger.debug("Found licensing domain: %s", domain)
 
                         if any(kw in string.lower() for kw in licensing_keywords) and domain not in domains:
                             domains.append(domain)
-                            logger.debug(f"Found domain in licensing context: {domain}")
+                            logger.debug("Found domain in licensing context: %s", domain)
 
             return list(set(domains))
 
         except Exception as e:
-            logger.debug(f"Domain extraction failed: {e}")
+            logger.debug("Domain extraction failed: %s", e, exc_info=True)
             return domains
 
     def _verify_bypass(self, target_path: Path) -> bool:
@@ -602,7 +605,7 @@ class CertificateBypassOrchestrator:
                 logger.debug("Validation bypass verification: Inconclusive")
 
             confidence = verification_score / max_score
-            logger.info(f"Overall bypass verification confidence: {confidence:.1%}")
+            logger.info("Overall bypass verification confidence: %.1f%%", confidence * 100)
 
             if confidence >= 0.33:
                 logger.info("Bypass verification PASSED")
@@ -611,7 +614,7 @@ class CertificateBypassOrchestrator:
             return False
 
         except Exception as e:
-            logger.error(f"Bypass verification failed: {e}", exc_info=True)
+            logger.error("Bypass verification failed: %s", e, exc_info=True)
             return False
 
     def _verify_binary_patches(self, target_path: Path) -> bool:
@@ -643,13 +646,13 @@ class CertificateBypassOrchestrator:
 
             for signature in patch_signatures:
                 if signature in binary_data:
-                    logger.debug(f"Found patch signature: {signature.hex()}")
+                    logger.debug("Found patch signature: %s", signature.hex())
                     return True
 
             return False
 
         except Exception as e:
-            logger.debug(f"Binary patch verification failed: {e}")
+            logger.debug("Binary patch verification failed: %s", e, exc_info=True)
             return False
 
     def _verify_frida_hooks(self) -> bool:
@@ -671,13 +674,13 @@ class CertificateBypassOrchestrator:
             status = self.frida_hooks.get_bypass_status()
 
             if status.active and len(status.active_hooks) > 0:
-                logger.debug(f"Active Frida hooks: {status.active_hooks}")
+                logger.debug("Active Frida hooks: %s", status.active_hooks)
                 return True
 
             return False
 
         except Exception as e:
-            logger.debug(f"Frida hook verification failed: {e}")
+            logger.debug("Frida hook verification failed: %s", e, exc_info=True)
             return False
 
     def _verify_validation_bypassed(self, target_path: Path) -> bool:
@@ -719,13 +722,13 @@ class CertificateBypassOrchestrator:
                 bypass_count = sum(bool(any(indicator in s.lower() for indicator in bypass_indicators)) for s in cert_strings)
 
                 if bypass_count > 0:
-                    logger.debug(f"Found {bypass_count} bypass indicators in strings")
+                    logger.debug("Found %s bypass indicators in strings", bypass_count)
                     return True
 
                 return True
 
         except Exception as e:
-            logger.debug(f"Validation bypass verification failed: {e}")
+            logger.debug("Validation bypass verification failed: %s", e, exc_info=True)
             return False
 
     def rollback(self, bypass_result: BypassResult) -> bool:
@@ -749,7 +752,7 @@ class CertificateBypassOrchestrator:
                     success = False
                     logger.error("Failed to rollback binary patches")
             except Exception as e:
-                logger.error(f"Patch rollback failed: {e}")
+                logger.error("Patch rollback failed: %s", e, exc_info=True)
                 success = False
 
         if self.frida_hooks:
@@ -758,7 +761,7 @@ class CertificateBypassOrchestrator:
                     success = False
                     logger.error("Failed to detach Frida hooks")
             except Exception as e:
-                logger.error(f"Frida detach failed: {e}")
+                logger.error("Frida detach failed: %s", e, exc_info=True)
                 success = False
 
         if success:

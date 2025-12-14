@@ -558,8 +558,7 @@ class ModelManagerDialog(BaseDialog):
             load_btn.setEnabled(status != "Loaded")
             load_btn.clicked.connect(
                 lambda checked, name=model_name: (
-                    logger.debug("Load button clicked, checked state: %s for model: %s", checked, name)
-                    or self.load_model(name)
+                    logger.debug("Load button clicked, checked state: %s for model: %s", checked, name) or self.load_model(name)
                 ),
             )
             self.models_table.setCellWidget(row, 4, load_btn)

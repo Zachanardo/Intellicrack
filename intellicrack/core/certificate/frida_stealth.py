@@ -161,7 +161,7 @@ class FridaStealth:
         if pid is None:
             pid = os.getpid()
 
-        logger.info(f"Scanning for anti-Frida techniques in PID {pid}")
+        logger.info("Scanning for anti-Frida techniques in PID %s", pid)
 
         if self._check_thread_enumeration(pid):
             detected_techniques.append("thread_enumeration")
@@ -184,7 +184,7 @@ class FridaStealth:
             logger.warning("Memory scanning for Frida signatures found")
 
         if detected_techniques:
-            logger.info(f"Detected {len(detected_techniques)} anti-Frida techniques")
+            logger.info("Detected %s anti-Frida techniques", len(detected_techniques))
         else:
             logger.info("No anti-Frida techniques detected")
 
@@ -240,7 +240,7 @@ class FridaStealth:
                 kernel32.CloseHandle(h_snapshot)
 
         except Exception as e:
-            logger.debug(f"Thread enumeration check failed: {e}")
+            logger.debug("Thread enumeration check failed: %s", e, exc_info=True)
             return False
 
     def _check_thread_enum_linux(self, pid: int) -> bool:
@@ -265,7 +265,7 @@ class FridaStealth:
             return False
 
         except Exception as e:
-            logger.debug(f"Thread enumeration check failed: {e}")
+            logger.debug("Thread enumeration check failed: %s", e, exc_info=True)
             return False
 
     def _check_dbus_detection(self, pid: int) -> bool:
@@ -289,7 +289,7 @@ class FridaStealth:
             return False
 
         except Exception as e:
-            logger.debug(f"D-Bus detection check failed: {e}")
+            logger.debug("D-Bus detection check failed: %s", e, exc_info=True)
             return False
 
     def _check_port_scanning(self, pid: int) -> bool:
@@ -322,7 +322,7 @@ class FridaStealth:
             return False
 
         except Exception as e:
-            logger.debug(f"Port scanning check failed: {e}")
+            logger.debug("Port scanning check failed: %s", e, exc_info=True)
             return False
 
     def _check_named_pipe_detection(self, pid: int) -> bool:
@@ -352,13 +352,13 @@ class FridaStealth:
 
                 if h_pipe != -1:
                     kernel32.CloseHandle(h_pipe)
-                    logger.debug(f"Found Frida named pipe: {pipe_pattern}")
+                    logger.debug("Found Frida named pipe: %s", pipe_pattern)
                     return True
 
             return False
 
         except Exception as e:
-            logger.debug(f"Named pipe detection check failed: {e}")
+            logger.debug("Named pipe detection check failed: %s", e, exc_info=True)
             return False
 
     def _check_memory_scanning(self, pid: int) -> bool:
@@ -369,7 +369,7 @@ class FridaStealth:
             return self._check_memory_scan_linux(pid)
 
         except Exception as e:
-            logger.debug(f"Memory scanning check failed: {e}")
+            logger.debug("Memory scanning check failed: %s", e, exc_info=True)
             return False
 
     def _check_memory_scan_windows(self, pid: int) -> bool:
@@ -419,7 +419,7 @@ class FridaStealth:
                         ):
                             name_lower = module_name.value.lower()
                             if any(sig.decode("latin1", errors="ignore").lower() in name_lower for sig in frida_signatures):
-                                logger.debug(f"Found Frida module: {module_name.value}")
+                                logger.debug("Found Frida module: %s", module_name.value)
                                 return True
 
                 return False
@@ -428,7 +428,7 @@ class FridaStealth:
                 kernel32.CloseHandle(h_process)
 
         except Exception as e:
-            logger.debug(f"Windows memory scan check failed: {e}")
+            logger.debug("Windows memory scan check failed: %s", e, exc_info=True)
             return False
 
     def _check_memory_scan_linux(self, pid: int) -> bool:
@@ -446,7 +446,7 @@ class FridaStealth:
             return False
 
         except Exception as e:
-            logger.debug(f"Memory scan check failed: {e}")
+            logger.debug("Memory scan check failed: %s", e, exc_info=True)
             return False
 
     def randomize_frida_threads(self) -> bool:
@@ -483,13 +483,13 @@ class FridaStealth:
 
                 if renamed_count > 0:
                     self.active_techniques["thread_randomization"] = True
-                    logger.info(f"Randomized {renamed_count} thread names")
+                    logger.info("Randomized %s thread names", renamed_count)
                     return True
                 logger.warning("No Frida threads found to randomize")
                 return False
 
             except Exception as e:
-                logger.error(f"Thread randomization failed: {e}", exc_info=True)
+                logger.error("Thread randomization failed: %s", e, exc_info=True)
                 return False
 
     def _get_common_thread_names(self) -> list[str]:
@@ -551,9 +551,9 @@ class FridaStealth:
                             with open(comm_file, "w") as f:
                                 f.write(new_name)
                             renamed_count += 1
-                            logger.debug(f"Renamed thread {tid}: {current_name} -> {new_name}")
+                            logger.debug("Renamed thread %s: %s -> %s", tid, current_name, new_name)
                         except OSError as e:
-                            logger.debug(f"Failed to rename thread {tid}: {e}")
+                            logger.debug("Failed to rename thread %s: %s", tid, e, exc_info=True)
 
                 except OSError:
                     continue
@@ -561,7 +561,7 @@ class FridaStealth:
             return renamed_count
 
         except Exception as e:
-            logger.debug(f"Linux thread randomization failed: {e}")
+            logger.debug("Linux thread randomization failed: %s", e, exc_info=True)
             return renamed_count
 
     def _randomize_threads_windows(
@@ -622,7 +622,8 @@ class FridaStealth:
                                         if result == 0:
                                             renamed_count += 1
                                             logger.debug(
-                                                f"Renamed thread {te32.th32ThreadID} to {new_name}",
+                                                "Renamed thread %s to %s",
+                                                te32.th32ThreadID, new_name,
                                             )
 
                                 finally:
@@ -637,7 +638,7 @@ class FridaStealth:
                 kernel32.CloseHandle(h_snapshot)
 
         except Exception as e:
-            logger.debug(f"Windows thread randomization failed: {e}")
+            logger.debug("Windows thread randomization failed: %s", e, exc_info=True)
             return renamed_count
 
     def hide_dbus_presence(self) -> bool:
@@ -671,7 +672,7 @@ class FridaStealth:
                             try:
                                 os.close(int(fd))
                                 closed_count += 1
-                                logger.debug(f"Closed D-Bus file descriptor: {fd}")
+                                logger.debug("Closed D-Bus file descriptor: %s", fd)
                             except (OSError, ValueError):
                                 pass
                     except OSError:
@@ -679,13 +680,13 @@ class FridaStealth:
 
             if closed_count > 0:
                 self.active_techniques["dbus_hiding"] = True
-                logger.info(f"Closed {closed_count} D-Bus file descriptors")
+                logger.info("Closed %s D-Bus file descriptors", closed_count)
                 return True
             logger.info("No D-Bus file descriptors found")
             return True
 
         except Exception as e:
-            logger.error(f"D-Bus hiding failed: {e}", exc_info=True)
+            logger.error("D-Bus hiding failed: %s", e, exc_info=True)
             return False
 
     def hide_frida_artifacts(self) -> bool:
@@ -713,13 +714,13 @@ class FridaStealth:
 
             if obfuscated_count > 0:
                 self.active_techniques["artifact_hiding"] = True
-                logger.info(f"Obfuscated {obfuscated_count} memory artifacts")
+                logger.info("Obfuscated %s memory artifacts", obfuscated_count)
                 return True
             logger.info("No Frida artifacts found to hide")
             return True
 
         except Exception as e:
-            logger.error(f"Artifact hiding failed: {e}", exc_info=True)
+            logger.error("Artifact hiding failed: %s", e, exc_info=True)
             return False
 
     def _hide_artifacts_linux(self) -> int:
@@ -753,7 +754,7 @@ class FridaStealth:
             return obfuscated_count
 
         except Exception as e:
-            logger.debug(f"Linux artifact hiding failed: {e}")
+            logger.debug("Linux artifact hiding failed: %s", e, exc_info=True)
             return obfuscated_count
 
     def _hide_artifacts_windows(self) -> int:
@@ -798,12 +799,12 @@ class FridaStealth:
                     name_lower = module_name.value.lower()
                     if any(sig.decode("latin1", errors="ignore").lower() in name_lower for sig in frida_signatures):
                         obfuscated_count += 1
-                        logger.debug(f"Detected Frida artifact: {module_name.value}")
+                        logger.debug("Detected Frida artifact: %s", module_name.value)
 
             return obfuscated_count
 
         except Exception as e:
-            logger.debug(f"Windows artifact hiding failed: {e}")
+            logger.debug("Windows artifact hiding failed: %s", e, exc_info=True)
             return obfuscated_count
 
     def enable_syscall_mode(self) -> bool:
@@ -832,7 +833,7 @@ class FridaStealth:
             return True
 
         except Exception as e:
-            logger.error(f"Syscall mode failed: {e}", exc_info=True)
+            logger.error("Syscall mode failed: %s", e, exc_info=True)
             return False
 
     def apply_anti_debugging_bypass(self, pid: int | None = None) -> bool:
@@ -855,7 +856,7 @@ class FridaStealth:
         if pid is None:
             pid = os.getpid()
 
-        logger.info(f"Applying anti-debugging bypass for PID {pid}")
+        logger.info("Applying anti-debugging bypass for PID %s", pid)
 
         try:
             bypassed_count = 0
@@ -867,13 +868,13 @@ class FridaStealth:
 
             if bypassed_count > 0:
                 self.active_techniques["anti_debugging"] = True
-                logger.info(f"Bypassed {bypassed_count} anti-debugging techniques")
+                logger.info("Bypassed %s anti-debugging techniques", bypassed_count)
                 return True
             logger.info("No anti-debugging techniques found")
             return True
 
         except Exception as e:
-            logger.error(f"Anti-debugging bypass failed: {e}", exc_info=True)
+            logger.error("Anti-debugging bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_anti_debug_windows(self, pid: int) -> int:
@@ -944,7 +945,7 @@ class FridaStealth:
             return bypassed_count
 
         except Exception as e:
-            logger.debug(f"Windows anti-debug bypass failed: {e}")
+            logger.debug("Windows anti-debug bypass failed: %s", e, exc_info=True)
             return bypassed_count
 
     def _bypass_anti_debug_linux(self, pid: int) -> int:
@@ -959,13 +960,13 @@ class FridaStealth:
                         if line.startswith("TracerPid:"):
                             tracer_pid = int(line.split(":")[1].strip())
                             if tracer_pid != 0:
-                                logger.debug(f"Process is being traced by PID {tracer_pid}")
+                                logger.debug("Process is being traced by PID %s", tracer_pid)
                                 bypassed_count += 1
 
             return bypassed_count
 
         except Exception as e:
-            logger.debug(f"Linux anti-debug bypass failed: {e}")
+            logger.debug("Linux anti-debug bypass failed: %s", e, exc_info=True)
             return bypassed_count
 
     def get_stealth_status(self) -> dict:
@@ -1015,9 +1016,9 @@ class FridaStealth:
                     try:
                         with open(comm_file, "w") as f:
                             f.write(original_name)
-                        logger.debug(f"Restored thread {tid} name to {original_name}")
+                        logger.debug("Restored thread %s name to %s", tid, original_name)
                     except OSError as e:
-                        logger.debug(f"Failed to restore thread {tid}: {e}")
+                        logger.debug("Failed to restore thread %s: %s", tid, e, exc_info=True)
                         restored = False
 
                 self._original_thread_names.clear()

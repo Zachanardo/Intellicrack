@@ -1928,7 +1928,9 @@ const QuantumCryptoHandler = {
         let score = 0;
         const total = Object.values(features).reduce((a, b) => a + b, 0);
 
-        if (total === 0) { return 0; }
+        if (total === 0) {
+            return 0;
+        }
 
         Object.entries(features).forEach(([key, value]) => {
             score += (value / total) * weights[key];
@@ -2057,7 +2059,9 @@ const QuantumCryptoHandler = {
     scanRangeForKeys: function (range) {
         // PQC key entropy patterns
         const data = range.base.readByteArray(Math.min(range.size, 0x10000));
-        if (!data) { return; }
+        if (!data) {
+            return;
+        }
 
         // Entropy analysis
         const entropy = this.calculateEntropy(data);
@@ -2277,8 +2281,12 @@ const QuantumCryptoHandler = {
 
     // Assess randomness quality
     assessRandomnessQuality: (entropy, chiSquare) => {
-        if (entropy > 7.8 && chiSquare < 300) { return 'HIGH'; }
-        if (entropy > 7.0 && chiSquare < 400) { return 'MEDIUM'; }
+        if (entropy > 7.8 && chiSquare < 300) {
+            return 'HIGH';
+        }
+        if (entropy > 7.0 && chiSquare < 400) {
+            return 'MEDIUM';
+        }
         return 'LOW';
     },
 

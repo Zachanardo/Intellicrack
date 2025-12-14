@@ -156,7 +156,7 @@ class BatchAnalysisWorker(QThread):
                 self.analysis_finished.emit(results)
 
         except Exception as e:
-            logger.error("Exception in batch_analysis_widget: %s", e)
+            logger.error("Exception in batch_analysis_widget: %s", e, exc_info=True)
             self.error_occurred.emit(f"Batch analysis failed: {e!s}")
 
     def _analyze_file(self, file_path: str) -> BatchAnalysisResult:
@@ -563,7 +563,7 @@ class BatchAnalysisWidget(QWidget):
                     f"Results exported to {file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in batch_analysis_widget: %s", e)
+                logger.error("Exception in batch_analysis_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Export Failed",

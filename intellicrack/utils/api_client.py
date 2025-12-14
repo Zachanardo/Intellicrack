@@ -141,7 +141,7 @@ class APIClient:
                             error_data = await response.json()
                             error_msg = f"{error_msg} - {error_data.get('error', error_data)}"
                         except Exception as e:
-                            logger.debug(f"Failed to parse error response: {e}")
+                            logger.debug("Failed to parse error response: %s", e, exc_info=True)
 
                         # Don't retry client errors (4xx)
                         if 400 <= response.status < 500:

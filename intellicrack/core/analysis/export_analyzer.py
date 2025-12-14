@@ -60,25 +60,33 @@ class ExportAnalyzer:
     """
 
     LICENSE_KEYWORDS: list[str] = [
-        "license", "licence", "activation", "activate", "register",
-        "registration", "serial", "key", "validation", "validate",
-        "verify", "check", "auth", "trial", "demo", "expire",
-        "deactivate", "unlock", "product", "subscription"
+        "license",
+        "licence",
+        "activation",
+        "activate",
+        "register",
+        "registration",
+        "serial",
+        "key",
+        "validation",
+        "validate",
+        "verify",
+        "check",
+        "auth",
+        "trial",
+        "demo",
+        "expire",
+        "deactivate",
+        "unlock",
+        "product",
+        "subscription",
     ]
 
-    CRYPTO_KEYWORDS: list[str] = [
-        "crypt", "encrypt", "decrypt", "hash", "sign", "verify",
-        "aes", "rsa", "sha", "md5", "hmac", "pbkdf"
-    ]
+    CRYPTO_KEYWORDS: list[str] = ["crypt", "encrypt", "decrypt", "hash", "sign", "verify", "aes", "rsa", "sha", "md5", "hmac", "pbkdf"]
 
-    REGISTRY_KEYWORDS: list[str] = [
-        "reg", "registry", "hkey", "hklm", "hkcu"
-    ]
+    REGISTRY_KEYWORDS: list[str] = ["reg", "registry", "hkey", "hklm", "hkcu"]
 
-    NETWORK_KEYWORDS: list[str] = [
-        "socket", "connect", "send", "recv", "http", "https",
-        "internet", "url", "download", "upload", "wsa"
-    ]
+    NETWORK_KEYWORDS: list[str] = ["socket", "connect", "send", "recv", "http", "https", "internet", "url", "download", "upload", "wsa"]
 
     def __init__(self, binary_path: str) -> None:
         """Initialize export analyzer.
@@ -132,25 +140,25 @@ class ExportAnalyzer:
         if pe_offset + 4 > len(self.pe_data):
             return False
 
-        return self.pe_data[pe_offset:pe_offset + 4] == b"PE\x00\x00"
+        return self.pe_data[pe_offset : pe_offset + 4] == b"PE\x00\x00"
 
     def _parse_pe_headers(self) -> None:
         """Parse PE headers to extract base address and image size."""
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
 
         coff_offset: int = pe_offset + 4
-        struct.unpack("<H", self.pe_data[coff_offset:coff_offset + 2])[0]
-        struct.unpack("<H", self.pe_data[coff_offset + 16:coff_offset + 18])[0]
+        struct.unpack("<H", self.pe_data[coff_offset : coff_offset + 2])[0]
+        struct.unpack("<H", self.pe_data[coff_offset + 16 : coff_offset + 18])[0]
 
         optional_header_offset: int = coff_offset + 20
-        magic: int = struct.unpack("<H", self.pe_data[optional_header_offset:optional_header_offset + 2])[0]
+        magic: int = struct.unpack("<H", self.pe_data[optional_header_offset : optional_header_offset + 2])[0]
 
         if magic == 0x010B:
-            self.base_address = struct.unpack("<I", self.pe_data[optional_header_offset + 28:optional_header_offset + 32])[0]
-            self.image_size = struct.unpack("<I", self.pe_data[optional_header_offset + 56:optional_header_offset + 60])[0]
+            self.base_address = struct.unpack("<I", self.pe_data[optional_header_offset + 28 : optional_header_offset + 32])[0]
+            self.image_size = struct.unpack("<I", self.pe_data[optional_header_offset + 56 : optional_header_offset + 60])[0]
         elif magic == 0x020B:
-            self.base_address = struct.unpack("<Q", self.pe_data[optional_header_offset + 24:optional_header_offset + 32])[0]
-            self.image_size = struct.unpack("<I", self.pe_data[optional_header_offset + 56:optional_header_offset + 60])[0]
+            self.base_address = struct.unpack("<Q", self.pe_data[optional_header_offset + 24 : optional_header_offset + 32])[0]
+            self.image_size = struct.unpack("<I", self.pe_data[optional_header_offset + 56 : optional_header_offset + 60])[0]
         else:
             raise ValueError(f"Unknown PE magic: {hex(magic)}")
 
@@ -159,7 +167,7 @@ class ExportAnalyzer:
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
         coff_offset: int = pe_offset + 4
         optional_header_offset: int = coff_offset + 20
-        magic: int = struct.unpack("<H", self.pe_data[optional_header_offset:optional_header_offset + 2])[0]
+        magic: int = struct.unpack("<H", self.pe_data[optional_header_offset : optional_header_offset + 2])[0]
 
         if magic == 0x010B:
             data_directory_offset: int = optional_header_offset + 96
@@ -168,8 +176,8 @@ class ExportAnalyzer:
         else:
             return
 
-        export_dir_rva: int = struct.unpack("<I", self.pe_data[data_directory_offset:data_directory_offset + 4])[0]
-        export_dir_size: int = struct.unpack("<I", self.pe_data[data_directory_offset + 4:data_directory_offset + 8])[0]
+        export_dir_rva: int = struct.unpack("<I", self.pe_data[data_directory_offset : data_directory_offset + 4])[0]
+        export_dir_size: int = struct.unpack("<I", self.pe_data[data_directory_offset + 4 : data_directory_offset + 8])[0]
 
         if export_dir_rva == 0 or export_dir_size == 0:
             self.export_directory = None
@@ -181,7 +189,7 @@ class ExportAnalyzer:
             return
 
         try:
-            export_data: bytes = self.pe_data[export_dir_offset:export_dir_offset + 40]
+            export_data: bytes = self.pe_data[export_dir_offset : export_dir_offset + 40]
 
             if len(export_data) < 40:
                 return
@@ -228,21 +236,21 @@ class ExportAnalyzer:
 
             function_rvas: list[int] = []
             for i in range(num_functions):
-                rva_data: bytes = self.pe_data[functions_offset + (i * 4):functions_offset + (i * 4) + 4]
+                rva_data: bytes = self.pe_data[functions_offset + (i * 4) : functions_offset + (i * 4) + 4]
                 if len(rva_data) == 4:
                     function_rvas.append(struct.unpack("<I", rva_data)[0])
 
             name_ptrs: list[int] = []
             if names_offset != 0:
                 for i in range(num_names):
-                    ptr_data: bytes = self.pe_data[names_offset + (i * 4):names_offset + (i * 4) + 4]
+                    ptr_data: bytes = self.pe_data[names_offset + (i * 4) : names_offset + (i * 4) + 4]
                     if len(ptr_data) == 4:
                         name_ptrs.append(struct.unpack("<I", ptr_data)[0])
 
             ordinal_values: list[int] = []
             if ordinals_offset != 0:
                 for i in range(num_names):
-                    ord_data: bytes = self.pe_data[ordinals_offset + (i * 2):ordinals_offset + (i * 2) + 2]
+                    ord_data: bytes = self.pe_data[ordinals_offset + (i * 2) : ordinals_offset + (i * 2) + 2]
                     if len(ord_data) == 2:
                         ordinal_values.append(struct.unpack("<H", ord_data)[0])
 
@@ -314,8 +322,8 @@ class ExportAnalyzer:
 
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
         coff_offset: int = pe_offset + 4
-        num_sections: int = struct.unpack("<H", self.pe_data[coff_offset + 2:coff_offset + 4])[0]
-        optional_header_size: int = struct.unpack("<H", self.pe_data[coff_offset + 16:coff_offset + 18])[0]
+        num_sections: int = struct.unpack("<H", self.pe_data[coff_offset + 2 : coff_offset + 4])[0]
+        optional_header_size: int = struct.unpack("<H", self.pe_data[coff_offset + 16 : coff_offset + 18])[0]
 
         section_table_offset: int = coff_offset + 20 + optional_header_size
 
@@ -325,9 +333,9 @@ class ExportAnalyzer:
             if section_offset + 40 > len(self.pe_data):
                 continue
 
-            virtual_address: int = struct.unpack("<I", self.pe_data[section_offset + 12:section_offset + 16])[0]
-            virtual_size: int = struct.unpack("<I", self.pe_data[section_offset + 8:section_offset + 12])[0]
-            raw_data_ptr: int = struct.unpack("<I", self.pe_data[section_offset + 20:section_offset + 24])[0]
+            virtual_address: int = struct.unpack("<I", self.pe_data[section_offset + 12 : section_offset + 16])[0]
+            virtual_size: int = struct.unpack("<I", self.pe_data[section_offset + 8 : section_offset + 12])[0]
+            raw_data_ptr: int = struct.unpack("<I", self.pe_data[section_offset + 20 : section_offset + 24])[0]
 
             if virtual_address <= rva < (virtual_address + virtual_size):
                 offset: int = raw_data_ptr + (rva - virtual_address)
@@ -636,8 +644,14 @@ class ExportAnalyzer:
         targets: list[ExportEntry] = []
 
         high_priority_keywords: list[str] = [
-            "validate", "verify", "check", "authenticate",
-            "activate", "register", "trial", "expire",
+            "validate",
+            "verify",
+            "check",
+            "authenticate",
+            "activate",
+            "register",
+            "trial",
+            "expire",
         ]
 
         for export in self.exports:

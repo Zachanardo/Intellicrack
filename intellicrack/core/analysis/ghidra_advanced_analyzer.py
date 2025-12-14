@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import contextlib
+import logging
 import re
 import struct
 from dataclasses import dataclass, field
@@ -19,6 +20,9 @@ import pefile
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
 from intellicrack.core.analysis.ghidra_analyzer import GhidraAnalysisResult, GhidraDataType, GhidraFunction
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -133,8 +137,8 @@ class GhidraAdvancedAnalyzer:
 
             if self.md:
                 self.md.detail = True
-        except Exception as e:
-            print(f"Warning: Failed to initialize analyzers: {e}")
+        except Exception:
+            logger.exception("Failed to initialize analyzers", exc_info=True)
 
     def recover_variables(self, function: GhidraFunction) -> list[RecoveredVariable]:
         """Recover variables with type propagation."""

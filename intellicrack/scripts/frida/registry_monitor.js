@@ -462,7 +462,9 @@
     }
 
     function getKeyPath(handle) {
-        if (!handle || handle.isNull()) { return null; }
+        if (!handle || handle.isNull()) {
+            return null;
+        }
 
         const cached = keyPathCache.get(handle.toString());
         if (cached && Date.now() - cached.timestamp < config.cacheTimeout) {
@@ -471,7 +473,9 @@
 
         try {
             const NtQueryObject = Module.findExportByName('ntdll.dll', 'NtQueryObject');
-            if (!NtQueryObject) { return null; }
+            if (!NtQueryObject) {
+                return null;
+            }
 
             const ObjectNameInformation = 1;
             const bufferSize = 1024;
@@ -516,7 +520,9 @@
     }
 
     function readUnicodeString(ptr) {
-        if (!ptr || ptr.isNull()) { return null; }
+        if (!ptr || ptr.isNull()) {
+            return null;
+        }
         try {
             const length = ptr.readU16();
             const buffer = ptr.add(8).readPointer();
@@ -528,7 +534,9 @@
     }
 
     function formatRegData(type, dataPtr, dataSize, truncate = false) {
-        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) { return { formatted: null, raw: null }; }
+        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) {
+            return { formatted: null, raw: null };
+        }
 
         const maxSize = truncate ? 256 : dataSize;
         const actualSize = Math.min(dataSize, maxSize);
@@ -542,7 +550,7 @@
                 case 3: {
                     // REG_BINARY
                     const bytes = dataPtr.readByteArray(actualSize);
-                    const hex = Array.from(bytes, b => (`0${b.toString(16)}`).slice(-2)).join(' ');
+                    const hex = Array.from(bytes, b => `0${b.toString(16)}`.slice(-2)).join(' ');
                     return { formatted: null, raw: hex };
                 }
 
@@ -577,7 +585,9 @@
                     let offset = 0;
                     while (offset < actualSize - 2) {
                         const str = dataPtr.add(offset).readUtf16String();
-                        if (!str || str.length === 0) { break; }
+                        if (!str || str.length === 0) {
+                            break;
+                        }
                         strings.push(str);
                         offset += (str.length + 1) * 2;
                     }
@@ -599,7 +609,9 @@
     }
 
     function matchesFilters(keyPath, valueName) {
-        if (!keyPath) { return false; }
+        if (!keyPath) {
+            return false;
+        }
 
         const lowerKey = keyPath.toLowerCase();
         const lowerValue = valueName ? valueName.toLowerCase() : '';
@@ -615,7 +627,9 @@
     }
 
     function detectLicensePattern(keyPath, valueName, data) {
-        if (!config.detectPatterns) { return; }
+        if (!config.detectPatterns) {
+            return;
+        }
 
         const patterns = [
             {
@@ -660,7 +674,9 @@
     }
 
     function getThreadContext() {
-        if (!config.captureThreadInfo) { return {}; }
+        if (!config.captureThreadInfo) {
+            return {};
+        }
 
         const tid = Process.getCurrentThreadId();
         let info = threadInfo.get(tid);
@@ -924,8 +940,12 @@
 
                         if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                            if (formatted.formatted) {
+                                evt.data_formatted = formatted.formatted;
+                            }
+                            if (formatted.raw) {
+                                evt.data_preview_hex = formatted.raw;
+                            }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -944,8 +964,12 @@
 
                         if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                            if (formatted.formatted) {
+                                evt.data_formatted = formatted.formatted;
+                            }
+                            if (formatted.raw) {
+                                evt.data_preview_hex = formatted.raw;
+                            }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -1003,8 +1027,12 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
-        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
+        if (this.dataFormatted) {
+            evt.data_formatted = this.dataFormatted;
+        }
+        if (this.dataRaw) {
+            evt.data_preview_hex = this.dataRaw;
+        }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -1214,8 +1242,12 @@
                         if (dataSize > 0) {
                             dataPtr = this.keyValueInfo.add(dataOffset);
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                            if (formatted.formatted) {
+                                evt.data_formatted = formatted.formatted;
+                            }
+                            if (formatted.raw) {
+                                evt.data_preview_hex = formatted.raw;
+                            }
 
                             if (config.performDeepAnalysis) {
                                 detectLicensePattern(this.keyPath, evt.value_name, formatted);
@@ -1234,8 +1266,12 @@
 
                         if (dataSize > 0) {
                             const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                            if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                            if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                            if (formatted.formatted) {
+                                evt.data_formatted = formatted.formatted;
+                            }
+                            if (formatted.raw) {
+                                evt.data_preview_hex = formatted.raw;
+                            }
                         }
                         break;
                 }
@@ -1713,8 +1749,12 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                    if (formatted.formatted) {
+                        evt.data_formatted = formatted.formatted;
+                    }
+                    if (formatted.raw) {
+                        evt.data_preview_hex = formatted.raw;
+                    }
 
                     if (config.performDeepAnalysis) {
                         detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -1772,8 +1812,12 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                    if (formatted.formatted) {
+                        evt.data_formatted = formatted.formatted;
+                    }
+                    if (formatted.raw) {
+                        evt.data_preview_hex = formatted.raw;
+                    }
 
                     if (config.performDeepAnalysis) {
                         detectLicensePattern(this.keyPath, this.valueName, formatted);
@@ -1829,8 +1873,12 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
-        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
+        if (this.dataFormatted) {
+            evt.data_formatted = this.dataFormatted;
+        }
+        if (this.dataRaw) {
+            evt.data_preview_hex = this.dataRaw;
+        }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -1885,8 +1933,12 @@
             duration: Date.now() - this.startTime,
         };
 
-        if (this.dataFormatted) { evt.data_formatted = this.dataFormatted; }
-        if (this.dataRaw) { evt.data_preview_hex = this.dataRaw; }
+        if (this.dataFormatted) {
+            evt.data_formatted = this.dataFormatted;
+        }
+        if (this.dataRaw) {
+            evt.data_preview_hex = this.dataRaw;
+        }
 
         if (config.performDeepAnalysis && success) {
             detectLicensePattern(this.keyPath, this.valueName, {
@@ -2164,8 +2216,12 @@
 
                     if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                         const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                        if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                        if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                        if (formatted.formatted) {
+                            evt.data_formatted = formatted.formatted;
+                        }
+                        if (formatted.raw) {
+                            evt.data_preview_hex = formatted.raw;
+                        }
                     }
                 }
             }
@@ -2229,8 +2285,12 @@
 
                     if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                         const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                        if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                        if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                        if (formatted.formatted) {
+                            evt.data_formatted = formatted.formatted;
+                        }
+                        if (formatted.raw) {
+                            evt.data_preview_hex = formatted.raw;
+                        }
                     }
                 }
             }
@@ -2617,8 +2677,12 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                    if (formatted.formatted) {
+                        evt.data_formatted = formatted.formatted;
+                    }
+                    if (formatted.raw) {
+                        evt.data_preview_hex = formatted.raw;
+                    }
                 }
             }
         }
@@ -2676,8 +2740,12 @@
 
                 if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
                     const formatted = formatRegData(regType, this.lpData, dataSize, true);
-                    if (formatted.formatted) { evt.data_formatted = formatted.formatted; }
-                    if (formatted.raw) { evt.data_preview_hex = formatted.raw; }
+                    if (formatted.formatted) {
+                        evt.data_formatted = formatted.formatted;
+                    }
+                    if (formatted.raw) {
+                        evt.data_preview_hex = formatted.raw;
+                    }
                 }
             }
         }

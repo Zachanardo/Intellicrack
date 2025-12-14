@@ -24,25 +24,31 @@ import os
 import shutil
 import subprocess
 import sys
-import types
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
+    import types
+
+    from PyQt6.QtCore import QPoint
     from PyQt6.QtGui import QCloseEvent
 
 HAS_FRIDA: bool = False
 frida_module: types.ModuleType | None = None
 try:
-    from intellicrack.handlers.frida_handler import HAS_FRIDA as _HAS_FRIDA
-    from intellicrack.handlers.frida_handler import frida as _frida_module
+    from intellicrack.handlers.frida_handler import (
+        HAS_FRIDA as _HAS_FRIDA,
+        frida as _frida_module,
+    )
+
     HAS_FRIDA = _HAS_FRIDA
     frida_module = _frida_module
 except ImportError:
     pass
 
-from PyQt6.QtCore import QEventLoop, QPoint, QSettings
+from PyQt6.QtCore import QEventLoop, QSettings
 from PyQt6.QtWidgets import QAbstractItemView
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -79,7 +85,6 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
-
 
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
@@ -376,7 +381,7 @@ class FridaManagerDialog(QDialog):
                 "scripts": {
                     "Custom Script": {
                         "path": None,
-                        "content": '''// Custom Frida Script Template
+                        "content": """// Custom Frida Script Template
 // Target: [Enter target binary]
 // Purpose: [Enter purpose]
 
@@ -403,7 +408,7 @@ if (Process.platform === 'windows') {
         });
     }
 }
-''',
+""",
                         "size": 0,
                     }
                 },
@@ -414,7 +419,7 @@ if (Process.platform === 'windows') {
                 "scripts": {
                     "Quick Bypass": {
                         "path": None,
-                        "content": '''// Quick License Bypass Template
+                        "content": """// Quick License Bypass Template
 'use strict';
 
 const commonLicensePatterns = [
@@ -442,7 +447,7 @@ commonLicensePatterns.forEach(function(pattern) {
         }
     });
 });
-''',
+""",
                         "size": 0,
                     }
                 },
@@ -741,9 +746,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
             if new_pids or removed_pids:
                 if hasattr(self, "status_label") and self.status_label:
-                    self.status_label.setText(
-                        f"Processes: {len(current_pids)} (+{len(new_pids)}/-{len(removed_pids)})"
-                    )
+                    self.status_label.setText(f"Processes: {len(current_pids)} (+{len(new_pids)}/-{len(removed_pids)})")
 
         self._last_known_pids = current_pids
 
@@ -800,9 +803,7 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.spawn_btn.setEnabled(False)
 
             if hasattr(self, "log_console") and self.log_console:
-                self.log_console.append_output(
-                    "[WARNING] Frida is not available. Install with: pip install frida-tools"
-                )
+                self.log_console.append_output("[WARNING] Frida is not available. Install with: pip install frida-tools")
 
             logger.warning("Frida is not available for dynamic instrumentation")
             return False
@@ -828,10 +829,7 @@ commonLicensePatterns.forEach(function(pattern) {
             if hasattr(self, "device_combo") and self.device_combo is not None:
                 self.device_combo.clear()
                 self.device_combo.addItems(available_devices)
-                local_idx = next(
-                    (i for i, d in enumerate(available_devices) if "local" in d.lower()),
-                    0
-                )
+                local_idx = next((i for i, d in enumerate(available_devices) if "local" in d.lower()), 0)
                 self.device_combo.setCurrentIndex(local_idx)
 
             self.available_frida_devices = available_devices
@@ -849,8 +847,7 @@ commonLicensePatterns.forEach(function(pattern) {
                     for dev in available_devices:
                         self.log_console.append_output(f"[INFO]   - {dev}")
 
-            logger.info("Frida %s available on device: %s (%d total devices)",
-                       frida_version, local_device.name, device_count)
+            logger.info("Frida %s available on device: %s (%d total devices)", frida_version, local_device.name, device_count)
             return True
 
         except Exception as e:
@@ -1098,9 +1095,7 @@ commonLicensePatterns.forEach(function(pattern) {
                     self.log_console.append_output(f"[ERROR] Failed to save script: {e}")
 
         if saved_count > 0:
-            QMessageBox.information(
-                self, "Success", f"Saved {saved_count} scripts to:\n{save_dir}"
-            )
+            QMessageBox.information(self, "Success", f"Saved {saved_count} scripts to:\n{save_dir}")
             if hasattr(self, "save_scripts_btn") and self.save_scripts_btn:
                 self.save_scripts_btn.setEnabled(False)
 
@@ -1143,22 +1138,18 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.progress_bar.setRange(0, 0)
 
             for script in self.ai_generated_scripts:
-                script_content = script.content if hasattr(script, "content") else str(script)
+                script.content if hasattr(script, "content") else str(script)
 
                 qemu = QEMUSystemEmulator(binary_path=target_binary)
                 success = qemu.start_system(headless=True)
 
                 if success:
                     if hasattr(self, "log_console") and self.log_console:
-                        self.log_console.append_output(
-                            f"[QEMU] System started for script testing"
-                        )
+                        self.log_console.append_output("[QEMU] System started for script testing")
                     qemu.stop_system()
                 else:
                     if hasattr(self, "log_console") and self.log_console:
-                        self.log_console.append_output(
-                            f"[QEMU] Failed to start system for testing"
-                        )
+                        self.log_console.append_output("[QEMU] Failed to start system for testing")
 
             if hasattr(self, "progress_label") and self.progress_label:
                 self.progress_label.setText("QEMU testing complete")
@@ -1167,10 +1158,7 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.progress_bar.setVisible(False)
 
         except ImportError:
-            QMessageBox.warning(
-                self, "QEMU Not Available",
-                "QEMU emulator is not available. Install QEMU for sandbox testing."
-            )
+            QMessageBox.warning(self, "QEMU Not Available", "QEMU emulator is not available. Install QEMU for sandbox testing.")
         except Exception as e:
             logger.error("QEMU testing failed: %s", e)
             QMessageBox.critical(self, "Error", f"QEMU testing failed: {e}")
@@ -1695,9 +1683,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
             # Add bypass button
             bypass_btn = QPushButton("Bypass")
-            bypass_btn.clicked.connect(
-                lambda checked, pt=prot_type: self._handle_bypass_click(checked, pt)
-            )
+            bypass_btn.clicked.connect(lambda checked, pt=prot_type: self._handle_bypass_click(checked, pt))
             bypass_btn.setEnabled(False)
             self.protection_grid.setCellWidget(i, 3, bypass_btn)
 
@@ -2187,6 +2173,7 @@ commonLicensePatterns.forEach(function(pattern) {
             argv_list: list[str] = [file_path]
             if args.strip():
                 import shlex
+
                 argv_list.extend(shlex.split(args))
 
             # Spawn with suspend flag to attach before execution
@@ -3372,7 +3359,9 @@ commonLicensePatterns.forEach(function(pattern) {
         if message_type == "detection":
             self._update_protection_display(payload)
 
-    def _format_structured_message(self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict[str, Any]) -> str:
+    def _format_structured_message(
+        self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict[str, Any]
+    ) -> str:
         """Format structured message for console display."""
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
 

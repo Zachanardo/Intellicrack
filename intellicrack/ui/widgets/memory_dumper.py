@@ -232,8 +232,8 @@ class MemoryDumperWidget(QWidget):
                 try:
                     info = proc.info
                     self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info["pid"])
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug("Process access error during iteration: %s", e, exc_info=True)
 
         except ImportError:
             self.output_log.append("psutil not installed. Using basic process enumeration.")
@@ -260,6 +260,7 @@ class MemoryDumperWidget(QWidget):
                         pid = parts[1].strip('"')
                         self.process_combo.addItem(f"{name} (PID: {pid})", int(pid))
             except Exception as e:
+                logger.error("Failed to enumerate processes: %s", e, exc_info=True)
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
     def _refresh_linux_processes(self) -> None:
@@ -271,8 +272,8 @@ class MemoryDumperWidget(QWidget):
                 try:
                     info = proc.info
                     self.process_combo.addItem(f"{info['name']} (PID: {info['pid']})", info["pid"])
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.debug("Process access error during iteration: %s", e, exc_info=True)
 
         except ImportError:
             # Fallback to /proc
@@ -284,8 +285,9 @@ class MemoryDumperWidget(QWidget):
                                 name = f.read().strip()
                             self.process_combo.addItem(f"{name} (PID: {pid_dir})", int(pid_dir))
                         except (ValueError, OSError) as e:
-                            logger.debug(f"Failed to read process info for PID {pid_dir}: {e}")
+                            logger.debug("Failed to read process info for PID %s: %s", pid_dir, e, exc_info=True)
             except Exception as e:
+                logger.error("Failed to enumerate processes: %s", e, exc_info=True)
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
     def attach_to_process(self) -> None:
@@ -298,7 +300,7 @@ class MemoryDumperWidget(QWidget):
                 text = self.process_combo.currentText()
                 pid = int(text.split("PID: ")[-1].rstrip(")"))
             except (ValueError, IndexError, AttributeError) as e:
-                logger.debug(f"Failed to parse PID from selection: {e}")
+                logger.debug("Failed to parse PID from selection: %s", e, exc_info=True)
                 self.output_log.append("Invalid process selection")
                 return
 
@@ -392,6 +394,7 @@ class MemoryDumperWidget(QWidget):
             self.output_log.append(f"Found {self.regions_table.rowCount()} memory regions")
 
         except Exception as e:
+            logger.error("Error scanning regions: %s", e, exc_info=True)
             self.output_log.append(f"Error scanning regions: {e}")
 
     def _scan_linux_regions(self) -> None:
@@ -425,6 +428,7 @@ class MemoryDumperWidget(QWidget):
             self.output_log.append(f"Found {self.regions_table.rowCount()} memory regions")
 
         except Exception as e:
+            logger.error("Error scanning regions: %s", e, exc_info=True)
             self.output_log.append(f"Error scanning regions: {e}")
 
     def _get_protection_string(self, protect: int) -> str:
@@ -650,6 +654,7 @@ class MemoryDumpThread(QThread):
                     self._dump_linux_region(addr, size)
 
             except Exception as e:
+                logger.error("Error dumping region: %s", e, exc_info=True)
                 self.log.emit(f"Error dumping region: {e}")
 
             # Update progress
@@ -687,7 +692,7 @@ class MemoryDumpThread(QThread):
                 size,
                 ctypes.byref(bytes_read),
             ):
-                logger.debug(f"Read {bytes_read.value} bytes from 0x{addr:X} (result: {result})")
+                logger.debug("Read %s bytes from 0x%X (result: %s)", bytes_read.value, addr, result)
                 # Save to file
                 filename = os.path.join(self.output_dir, f"dump_0x{addr:016X}.bin")
                 with open(filename, "wb") as f:
@@ -732,6 +737,7 @@ class MemoryDumpThread(QThread):
                     self._extract_strings(data, addr)
 
         except Exception as e:
+            logger.error("Failed to read memory at 0x%016X: %s", addr, e, exc_info=True)
             self.log.emit(f"Failed to read memory at 0x{addr:016X}: {e}")
 
     def _extract_strings(self, data: bytes, base_addr: int) -> None:

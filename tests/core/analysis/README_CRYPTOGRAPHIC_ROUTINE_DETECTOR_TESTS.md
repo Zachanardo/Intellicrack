@@ -13,6 +13,7 @@ Comprehensive production-ready tests for `CryptographicRoutineDetector` that val
 ### NO MOCKS, STUBS, OR SIMULATED DATA
 
 All tests use REAL PE binaries with actual cryptographic constants embedded:
+
 - Real AES S-boxes (forward and inverse)
 - Real SHA-256/SHA-1/MD5 constants
 - Real RSA public exponents
@@ -23,6 +24,7 @@ All tests use REAL PE binaries with actual cryptographic constants embedded:
 ### Test-Driven Development Approach
 
 Tests are designed to FAIL if Intellicrack doesn't work effectively:
+
 - Tests verify genuine offensive capability
 - Detection confidence scores are validated
 - Algorithm fingerprinting accuracy is checked
@@ -33,6 +35,7 @@ Tests are designed to FAIL if Intellicrack doesn't work effectively:
 ### 1. Symmetric Cryptography Detection (18 tests)
 
 **AES Detection:**
+
 - `test_detect_aes_forward_sbox_in_real_binary` - Detects AES forward S-box with 99%+ confidence
 - `test_detect_aes_inverse_sbox_in_real_binary` - Detects AES inverse S-box
 - `test_detect_aes_round_constants` - Identifies AES RCON round constants
@@ -41,12 +44,14 @@ Tests are designed to FAIL if Intellicrack doesn't work effectively:
 - `test_detect_obfuscated_aes_sbox_fuzzy_matching` - Fuzzy matching for obfuscated S-boxes
 
 **Stream Ciphers:**
+
 - `test_detect_rc4_state_array_initialization` - RC4 state array pattern
 - `test_detect_rc4_ksa_pattern_nearby` - RC4 Key Scheduling Algorithm detection
 - `test_detect_chacha20_constant_string` - ChaCha20 "expand 32-byte k" constant
 - `test_detect_chacha20_quarter_round_function` - ChaCha20 quarter round operations
 
 **Block Ciphers:**
+
 - `test_detect_blowfish_pi_subkeys` - Blowfish Pi-based subkeys
 - `test_detect_des_sboxes_all_eight` - DES S-box detection
 
@@ -61,10 +66,12 @@ Tests are designed to FAIL if Intellicrack doesn't work effectively:
 ### 3. Public Key Cryptography (7 tests)
 
 **RSA:**
+
 - `test_detect_rsa_public_exponent_65537` - Most common RSA exponent
 - `test_detect_rsa_with_modular_operations_nearby` - Modular arithmetic validation
 
 **ECC:**
+
 - `test_detect_ecc_secp256k1_field_prime` - Bitcoin curve (secp256k1)
 - `test_detect_ecc_secp256r1_field_prime` - NIST P-256 curve
 
@@ -114,6 +121,7 @@ RealCryptoBinaryBuilder.create_multi_crypto_binary()
 ```
 
 Each builder method:
+
 1. Creates valid PE header
 2. Embeds real cryptographic constants
 3. Adds surrounding code patterns
@@ -122,11 +130,13 @@ Each builder method:
 ## Key Validation Points
 
 ### Detection Confidence
+
 - Exact matches: >= 99% confidence
 - Fuzzy matches: >= 85% confidence
 - Obfuscated: >= 85% confidence with obfuscation flag
 
 ### Algorithm Coverage
+
 - AES (S-boxes, RCON, AES-NI)
 - DES/3DES (S-boxes)
 - RSA (public exponents, Montgomery multiplication)
@@ -140,6 +150,7 @@ Each builder method:
 - MD5 (T table)
 
 ### Data Structure Validation
+
 - CryptoDetection dataclass fields populated correctly
 - CryptoConstant dataclass fields validated
 - DataFlowNode structures for analysis
@@ -163,6 +174,7 @@ pixi run pytest tests/core/analysis/test_cryptographic_routine_detector_producti
 ## Success Criteria
 
 Tests pass when:
+
 1. All crypto constants detected with correct confidence scores
 2. Algorithm fingerprinting identifies implementation details
 3. Hardware acceleration properly detected
@@ -176,6 +188,7 @@ Tests pass when:
 ## Production Readiness
 
 These tests validate that CryptographicRoutineDetector is ready for:
+
 - Analyzing real-world protected software
 - Identifying licensing crypto implementations
 - Detecting anti-piracy mechanisms

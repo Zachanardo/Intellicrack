@@ -428,28 +428,22 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                requirements.extend(
-                    (
-                        "- Hook license validation functions and force success",
-                        "- Monitor registry/file access for license storage",
-                        "- Bypass string comparison checks",
-                    )
-                )
+                requirements.extend((
+                    "- Hook license validation functions and force success",
+                    "- Monitor registry/file access for license storage",
+                    "- Bypass string comparison checks",
+                ))
             elif "trial" in ptype.lower() or "time" in ptype.lower():
-                requirements.extend(
-                    (
-                        "- Hook time-related functions (GetSystemTime, etc.)",
-                        "- Manipulate time values to prevent expiration",
-                        "- Monitor trial timer mechanisms",
-                    )
-                )
+                requirements.extend((
+                    "- Hook time-related functions (GetSystemTime, etc.)",
+                    "- Manipulate time values to prevent expiration",
+                    "- Monitor trial timer mechanisms",
+                ))
             elif "network" in ptype.lower():
-                requirements.extend(
-                    (
-                        "- Intercept network validation calls",
-                        "- Inject custom license server responses",
-                    )
-                )
+                requirements.extend((
+                    "- Intercept network validation calls",
+                    "- Inject custom license server responses",
+                ))
                 requirements.append("- Block outbound license verification")
             elif "debug" in ptype.lower():
                 requirements.append("- Bypass debugger detection mechanisms")
@@ -488,28 +482,22 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                objectives.extend(
-                    (
-                        "- Patch license check jumps to always succeed",
-                        "- Modify string comparisons to return equal",
-                        "- Replace license validation with NOP instructions",
-                    )
-                )
+                objectives.extend((
+                    "- Patch license check jumps to always succeed",
+                    "- Modify string comparisons to return equal",
+                    "- Replace license validation with NOP instructions",
+                ))
             elif "trial" in ptype.lower():
-                objectives.extend(
-                    (
-                        "- Patch time check comparisons",
-                        "- Modify trial expiration logic",
-                        "- Replace time-based jumps with unconditional success",
-                    )
-                )
+                objectives.extend((
+                    "- Patch time check comparisons",
+                    "- Modify trial expiration logic",
+                    "- Replace time-based jumps with unconditional success",
+                ))
             elif "network" in ptype.lower():
-                objectives.extend(
-                    (
-                        "- Patch network calls to return success",
-                        "- Modify validation responses",
-                    )
-                )
+                objectives.extend((
+                    "- Patch network calls to return success",
+                    "- Modify validation responses",
+                ))
                 objectives.append("- Bypass online license requirements")
 
         if not objectives:

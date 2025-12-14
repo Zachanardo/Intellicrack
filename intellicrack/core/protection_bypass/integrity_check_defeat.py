@@ -242,7 +242,7 @@ class ChecksumRecalculator:
             return checksum & 0xFFFFFFFF
 
         except Exception as e:
-            logger.error(f"PE checksum calculation failed: {e}")
+            logger.error("PE checksum calculation failed: %s", e, exc_info=True)
             return 0
 
     def recalculate_section_hashes(self, binary_path: str) -> dict[str, dict[str, str]]:
@@ -269,7 +269,7 @@ class ChecksumRecalculator:
             pe.close()
 
         except Exception as e:
-            logger.error(f"Section hash calculation failed: {e}")
+            logger.error("Section hash calculation failed: %s", e, exc_info=True)
 
         return section_hashes
 
@@ -305,7 +305,7 @@ class ChecksumRecalculator:
             return hmac_keys[:10]
 
         except Exception as e:
-            logger.error(f"HMAC key extraction failed: {e}")
+            logger.error("HMAC key extraction failed: %s", e, exc_info=True)
             return []
 
     def _calculate_key_entropy(self, data: bytes) -> float:
@@ -441,7 +441,7 @@ class ChecksumRecalculator:
             pe.close()
 
         except Exception as e:
-            logger.error(f"Checksum location identification failed: {e}")
+            logger.error("Checksum location identification failed: %s", e, exc_info=True)
 
         return locations
 
@@ -466,7 +466,8 @@ class ChecksumRecalculator:
             pe.close()
             return False
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Checksum location validation failed: %s", e, exc_info=True)
             return offset > 0x400
 
     def recalculate_for_patched_binary(
@@ -653,7 +654,7 @@ class IntegrityCheckDetector:
                 checks.extend(self._scan_elf_checks(binary, binary_path))
 
         except Exception as e:
-            logger.error(f"Integrity check detection failed: {e}")
+            logger.error("Integrity check detection failed: %s", e, exc_info=True)
 
         return checks
 
@@ -793,7 +794,7 @@ class IntegrityCheckDetector:
                     )
                     checks.append(check)
         except Exception as e:
-            logger.debug(f"ELF check scan error: {e}")
+            logger.debug("ELF check scan error: %s", e, exc_info=True)
 
         return checks
 
@@ -1438,11 +1439,11 @@ class IntegrityBypassEngine:
             self.script.on("message", self._on_message)
             self.script.load()
 
-            logger.info(f"Installed {len(checks)} integrity check bypasses")
+            logger.info("Installed %d integrity check bypasses", len(checks))
             return True
 
         except Exception as e:
-            logger.error(f"Failed to bypass integrity checks: {e}")
+            logger.error("Failed to bypass integrity checks: %s", e, exc_info=True)
             return False
 
     def _build_bypass_script(self, checks: list[IntegrityCheck]) -> str:
@@ -1534,7 +1535,7 @@ class IntegrityBypassEngine:
                     script = script.replace("%PROTECTED_REGIONS%", str(protected_regions))
 
             except Exception as e:
-                logger.debug(f"Script customization error: {e}")
+                logger.debug("Script customization error: %s", e, exc_info=True)
                 script = script.replace("%EXPECTED_CRC32%", "0")
                 script = script.replace("%EXPECTED_CRC64%", "0")
                 script = script.replace("%EXPECTED_MD5%", "")
@@ -1552,9 +1553,9 @@ class IntegrityBypassEngine:
     def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle Frida script messages."""
         if message["type"] == "send":
-            logger.info(f"[Frida] {message['payload']}")
+            logger.info("[Frida] %s", message["payload"])
         elif message["type"] == "error":
-            logger.error(f"[Frida Error] {message['stack']}")
+            logger.error("[Frida Error] %s", message["stack"])
 
     def cleanup(self) -> None:
         """Clean up Frida session."""
@@ -1635,16 +1636,16 @@ class BinaryPatcher:
 
             checksums = self.checksum_calc.recalculate_for_patched_binary(binary_path, output_path)
 
-            logger.info(f"Binary patched: {output_path}")
-            logger.info(f"Applied {len(self.patch_history)} patches")
-            logger.info(f"Recalculated PE checksum: {hex(new_checksum)}")
-            logger.info(f"Original CRC32: {hex(checksums.original_crc32)}")
-            logger.info(f"Patched CRC32: {hex(checksums.patched_crc32)}")
+            logger.info("Binary patched: %s", output_path)
+            logger.info("Applied %d patches", len(self.patch_history))
+            logger.info("Recalculated PE checksum: %s", hex(new_checksum))
+            logger.info("Original CRC32: %s", hex(checksums.original_crc32))
+            logger.info("Patched CRC32: %s", hex(checksums.patched_crc32))
 
             return True, checksums
 
         except Exception as e:
-            logger.error(f"Binary patching failed: {e}")
+            logger.error("Binary patching failed: %s", e, exc_info=True)
             return False, None
 
     def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
@@ -1694,16 +1695,16 @@ class IntegrityCheckDefeatSystem:
             for location in checksum_locations:
                 if location.offset + location.size <= len(binary_data):
                     binary_data[location.offset : location.offset + location.size] = location.calculated_value
-                    logger.info(f"Patched {location.algorithm.name} at offset {hex(location.offset)}")
+                    logger.info("Patched %s at offset %s", location.algorithm.name, hex(location.offset))
 
             with open(output_path, "wb") as f:
                 f.write(binary_data)
 
-            logger.info(f"Patched {len(checksum_locations)} embedded checksums: {output_path}")
+            logger.info("Patched %d embedded checksums: %s", len(checksum_locations), output_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to patch embedded checksums: {e}")
+            logger.error("Failed to patch embedded checksums: %s", e, exc_info=True)
             return False
 
     def defeat_integrity_checks(
@@ -1713,7 +1714,7 @@ class IntegrityCheckDefeatSystem:
         patch_binary: bool = False,
     ) -> dict[str, Any]:
         """Complete integrity check defeat workflow."""
-        logger.info(f"Detecting integrity checks: {binary_path}")
+        logger.info("Detecting integrity checks: %s", binary_path)
         checks = self.detector.detect_checks(binary_path)
         result = {
             "success": False,
@@ -1728,7 +1729,7 @@ class IntegrityCheckDefeatSystem:
             result["success"] = True
             return result
 
-        logger.info(f"Detected {len(checks)} integrity checks")
+        logger.info("Detected %d integrity checks", len(checks))
 
         for check in checks:
             result["details"].append({
@@ -1741,7 +1742,7 @@ class IntegrityCheckDefeatSystem:
             })
 
         if process_name:
-            logger.info(f"Applying runtime bypasses: {process_name}")
+            logger.info("Applying runtime bypasses: %s", process_name)
             if self.bypasser.bypass_checks(process_name, checks):
                 result["checks_bypassed"] = len(checks)
                 result["success"] = True
@@ -1816,26 +1817,28 @@ def main() -> None:
 
     if args.find_checksums:
         locations = defeat_system.find_embedded_checksums(args.binary)
-        print(f"\n=== Found {len(locations)} Embedded Checksums ===")
+        logger.info("=== Found %d Embedded Checksums ===", len(locations))
         for loc in locations:
-            print(f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})")
-            print(f"  Current:    {loc.current_value.hex()}")
-            print(f"  Calculated: {loc.calculated_value.hex()}")
+            logger.info(
+                "- %s at offset %s (size=%d, confidence=%.1f%%)", loc.algorithm.name, hex(loc.offset), loc.size, loc.confidence * 100
+            )
+            logger.info("  Current:    %s", loc.current_value.hex())
+            logger.info("  Calculated: %s", loc.calculated_value.hex())
         return
 
     if args.extract_keys:
         keys = defeat_system.extract_hmac_keys(args.binary)
-        print(f"\n=== Found {len(keys)} Potential HMAC Keys ===")
+        logger.info("=== Found %d Potential HMAC Keys ===", len(keys))
         for key in keys:
-            print(f"- Offset: {hex(key['offset'])} Size: {key['size']} bytes")
-            print(f"  Key: {key['key_hex']}")
-            print(f"  Entropy: {key['entropy']:.2f} Confidence: {key['confidence']:.1%}")
+            logger.info("- Offset: %s Size: %d bytes", hex(key["offset"]), key["size"])
+            logger.info("  Key: %s", key["key_hex"])
+            logger.info("  Entropy: %.2f Confidence: %.1f%%", key["entropy"], key["confidence"] * 100)
         return
 
     if args.script:
         script = defeat_system.generate_bypass_script(args.binary)
-        print("\n=== Generated Bypass Script ===")
-        print(script)
+        logger.info("=== Generated Bypass Script ===")
+        logger.info("%s", script)
     else:
         result = defeat_system.defeat_integrity_checks(
             args.binary,
@@ -1843,41 +1846,43 @@ def main() -> None:
             patch_binary=args.patch,
         )
 
-        print("\n=== Integrity Check Defeat Results ===")
-        print(f"Checks Detected: {result['checks_detected']}")
-        print(f"Checks Bypassed: {result['checks_bypassed']}")
-        print(f"Binary Patched: {result['binary_patched']}")
-        print(f"Success: {result['success']}")
+        logger.info("=== Integrity Check Defeat Results ===")
+        logger.info("Checks Detected: %d", result["checks_detected"])
+        logger.info("Checks Bypassed: %d", result["checks_bypassed"])
+        logger.info("Binary Patched: %s", result["binary_patched"])
+        logger.info("Success: %s", result["success"])
 
         if result["details"]:
-            print("\n=== Detected Checks ===")
+            logger.info("=== Detected Checks ===")
             for detail in result["details"]:
-                print(f"- {detail['type']} at {detail['address']}")
-                print(f"  Function: {detail['function']}")
-                print(f"  Bypass: {detail['bypass_method']}")
-                print(f"  Confidence: {detail['confidence']:.1%}")
+                logger.info("- %s at %s", detail["type"], detail["address"])
+                logger.info("  Function: %s", detail["function"])
+                logger.info("  Bypass: %s", detail["bypass_method"])
+                logger.info("  Confidence: %.1f%%", detail["confidence"] * 100)
 
         if result["checksums"]:
-            print("\n=== Checksum Recalculation ===")
+            logger.info("=== Checksum Recalculation ===")
             cs = result["checksums"]
-            print(f"Original CRC32: {cs['original_crc32']}")
-            print(f"Patched CRC32:  {cs['patched_crc32']}")
-            print(f"Original CRC64: {cs['original_crc64']}")
-            print(f"Patched CRC64:  {cs['patched_crc64']}")
-            print(f"Original MD5:   {cs['original_md5']}")
-            print(f"Patched MD5:    {cs['patched_md5']}")
-            print(f"Original SHA1:  {cs['original_sha1']}")
-            print(f"Patched SHA1:   {cs['patched_sha1']}")
-            print(f"Original SHA256: {cs['original_sha256']}")
-            print(f"Patched SHA256:  {cs['patched_sha256']}")
-            print(f"Original SHA512: {cs['original_sha512']}")
-            print(f"Patched SHA512:  {cs['patched_sha512']}")
-            print(f"PE Checksum:    {cs['pe_checksum']}")
+            logger.info("Original CRC32: %s", cs["original_crc32"])
+            logger.info("Patched CRC32:  %s", cs["patched_crc32"])
+            logger.info("Original CRC64: %s", cs["original_crc64"])
+            logger.info("Patched CRC64:  %s", cs["patched_crc64"])
+            logger.info("Original MD5:   %s", cs["original_md5"])
+            logger.info("Patched MD5:    %s", cs["patched_md5"])
+            logger.info("Original SHA1:  %s", cs["original_sha1"])
+            logger.info("Patched SHA1:   %s", cs["patched_sha1"])
+            logger.info("Original SHA256: %s", cs["original_sha256"])
+            logger.info("Patched SHA256:  %s", cs["patched_sha256"])
+            logger.info("Original SHA512: %s", cs["original_sha512"])
+            logger.info("Patched SHA512:  %s", cs["patched_sha512"])
+            logger.info("PE Checksum:    %s", cs["pe_checksum"])
 
             if cs.get("hmac_keys"):
-                print("\n=== Extracted HMAC Keys ===")
+                logger.info("=== Extracted HMAC Keys ===")
                 for key in cs["hmac_keys"][:5]:
-                    print(f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})")
+                    logger.info(
+                        "- Key at offset %s: %s... (confidence=%.1f%%)", hex(key["offset"]), key["key_hex"][:32], key["confidence"] * 100
+                    )
 
 
 if __name__ == "__main__":

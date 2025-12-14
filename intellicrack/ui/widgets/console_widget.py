@@ -21,7 +21,11 @@ Console Widget for displaying logs and output
 A professional console widget with syntax highlighting, filtering, and search capabilities.
 """
 
+import logging
 from datetime import datetime
+
+
+logger = logging.getLogger(__name__)
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -477,7 +481,7 @@ class ConsoleWidget(QWidget):
                     f.write(self.output.toPlainText())
                 self.append_success(f"Log exported to: {filename}")
             except Exception as e:
-                self.logger.error("Exception in console_widget: %s", e)
+                logger.error("Failed to export log: %s", e, exc_info=True)
                 self.append_error(f"Failed to export log: {e}")
 
     def process_command(self) -> None:
