@@ -282,7 +282,7 @@ class FileResolver:
             return None, {"error": f"Shortcut target not found: {target_path}"}
 
         except Exception as e:
-            self.logger.error(f"Error resolving Windows shortcut {lnk_path}: {e}")
+            self.logger.error("Error resolving Windows shortcut %s: %s", lnk_path, e, exc_info=True)
             return None, {"error": f"Failed to resolve shortcut: {e!s}"}
 
     def _resolve_url_shortcut(self, url_path: Path) -> tuple[str | None, dict[str, any]]:
@@ -304,7 +304,7 @@ class FileResolver:
             return None, {"error": "No URL found in internet shortcut"}
 
         except Exception as e:
-            self.logger.error(f"Error resolving URL shortcut {url_path}: {e}")
+            self.logger.error("Error resolving URL shortcut %s: %s", url_path, e, exc_info=True)
             return None, {"error": f"Failed to resolve URL shortcut: {e!s}"}
 
     def _is_macos_alias(self, file_path: Path) -> bool:
@@ -326,7 +326,7 @@ class FileResolver:
             )
             return "alias" in result.stdout.lower()
         except Exception as e:
-            self.logger.debug(f"Error checking macOS alias for {file_path}: {e}")
+            self.logger.debug("Error checking macOS alias for %s: %s", file_path, e, exc_info=True)
             return False
 
     def _resolve_macos_alias(self, alias_path: Path) -> str | None:
@@ -358,7 +358,7 @@ class FileResolver:
                 return result.stdout.strip()
 
         except Exception as e:
-            self.logger.error(f"Error resolving macOS alias {alias_path}: {e}")
+            self.logger.error("Error resolving macOS alias %s: %s", alias_path, e, exc_info=True)
 
         return None
 
@@ -406,7 +406,7 @@ class FileResolver:
             return metadata
 
         except Exception as e:
-            self.logger.error(f"Error getting metadata for {file_path}: {e}")
+            self.logger.error("Error getting metadata for %s: %s", file_path, e, exc_info=True)
             return {"error": f"Failed to get metadata: {e!s}"}
 
     def _format_bytes(self, bytes_size: int) -> str:
@@ -431,7 +431,7 @@ class FileResolver:
                         version_info = win32api.GetFileVersionInfo(str(file_path), "\\")
                         metadata["version_info"] = version_info
                     except Exception as e:
-                        self.logger.debug(f"Failed to get version info for {file_path}: {e}")
+                        self.logger.debug("Failed to get version info for %s: %s", file_path, e, exc_info=True)
                 except ImportError as e:
                     self.logger.error("Import error in file_resolution: %s", e)
 
@@ -441,7 +441,7 @@ class FileResolver:
                 metadata["format_hint"] = "pe"
 
         except Exception as e:
-            self.logger.debug(f"Error getting Windows metadata: {e}")
+            self.logger.debug("Error getting Windows metadata: %s", e, exc_info=True)
 
         return metadata
 
@@ -472,7 +472,7 @@ class FileResolver:
                 metadata["file_command"] = result.stdout.strip()
 
         except Exception as e:
-            self.logger.debug(f"Error getting Linux metadata: {e}")
+            self.logger.debug("Error getting Linux metadata: %s", e, exc_info=True)
 
         return metadata
 
@@ -503,7 +503,7 @@ class FileResolver:
                 self.logger.error("Import error in file_resolution: %s", e)
 
         except Exception as e:
-            self.logger.debug(f"Error getting macOS metadata: {e}")
+            self.logger.debug("Error getting macOS metadata: %s", e, exc_info=True)
 
         return metadata
 

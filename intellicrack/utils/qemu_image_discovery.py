@@ -120,7 +120,7 @@ class QEMUImageDiscovery:
         search_dirs = self.get_search_directories()
 
         for directory in search_dirs:
-            logger.debug(f"Searching for QEMU images in: {directory}")
+            logger.debug("Searching for QEMU images in: %s", directory)
 
             for extension in self.SUPPORTED_FORMATS:
                 for image_path in directory.glob(f"*{extension}"):
@@ -145,16 +145,16 @@ class QEMUImageDiscovery:
                         )
 
                         discovered_images.append(image_info)
-                        logger.debug(f"Found QEMU image: {filename} ({os_type}/{architecture}, {size // (1024**2)}MB)")
+                        logger.debug("Found QEMU image: %s (%s/%s, %sMB)", filename, os_type, architecture, size // (1024**2))
 
                     except OSError as e:
-                        logger.warning(f"Error accessing QEMU image {image_path}: {e}")
+                        logger.warning("Error accessing QEMU image %s: %s", image_path, e, exc_info=True)
                         continue
 
         self._cache = discovered_images
         self._cache_valid = True
 
-        logger.info(f"Discovered {len(discovered_images)} QEMU images")
+        logger.info("Discovered %s QEMU images", len(discovered_images))
         return discovered_images
 
     def get_images_by_os(self, os_type: str) -> list[QEMUImageInfo]:
@@ -175,7 +175,7 @@ class QEMUImageDiscovery:
             if filename in (image.filename, image.path.name):
                 return image
 
-        logger.warning(f"QEMU image not found: {filename}")
+        logger.warning("QEMU image not found: %s", filename)
         return None
 
     def invalidate_cache(self) -> None:

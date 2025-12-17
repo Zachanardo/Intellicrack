@@ -1,6 +1,6 @@
 116 findings in D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1: File length is 7,656 lines (max allowed is 3,000). [FileLength]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1: File length is 7,657 lines (max allowed is 3,000). [FileLength]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:21:1: Missing package declaration. [PackageDeclaration]
 
@@ -16,221 +16,221 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:386:3: NPath Complexity is 401,943,540 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:386:3: Method run length is 327 lines (max allowed is 300). [MethodLength]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:386:3: Method run length is 325 lines (max allowed is 300). [MethodLength]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:876:9: 'if' construct must use '{}'s. [NeedBraces]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:877:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:878:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:879:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:880:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:887:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:881:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:888:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:889:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:890:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:891:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:914:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:892:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:919:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:916:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:920:5: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:921:5: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:922:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:923:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:986:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:924:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:987:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:988:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:989:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1162:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:990:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1167:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1164:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1373:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1169:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1482:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1375:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1624:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1484:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1784:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1626:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1852:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1786:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1858:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1854:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1868:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1860:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1896:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1870:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1913:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1898:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1938:28: Name 'VM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1915:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1945:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1940:28: Name 'VM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2228:28: Name 'THEMIDA_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:1947:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2236:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2230:28: Name 'THEMIDA_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2424:28: Name 'OBSIDIUM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2238:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2430:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2426:28: Name 'OBSIDIUM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2540:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2432:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2606:9: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2542:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2683:7: Unused named local variable 'lastOffset'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2608:9: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2814:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2685:7: Unused named local variable 'lastOffset'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2838:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2816:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3022:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:2840:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3094:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3024:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3388:11: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3096:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3476:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3390:11: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3919:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3478:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3931:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3921:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3945:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3933:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3964:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3947:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3989:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3966:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3991:7: Unused named local variable 'threshold'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3991:7: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4122:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:3993:11: Unused named local variable 'threshold'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4198:19: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4124:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4219:5: NPath Complexity is 643 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4200:19: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4255:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4221:5: NPath Complexity is 643 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4256:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4257:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4258:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4307:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4259:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4312:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4309:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4317:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4314:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4333:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4319:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4366:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4335:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4404:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4368:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4573:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4406:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4577:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4575:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4578:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4579:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4655:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4580:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4679:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4657:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4849:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4681:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5113:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:4851:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5114:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5115:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5116:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5232:35: Name 'static_' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5117:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5487:5: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5234:35: Name 'static_' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5515:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5489:5: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5736:3: NPath Complexity is 99,842 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5517:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5900:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5738:3: NPath Complexity is 99,842 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6014:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:5902:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6096:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6016:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6097:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6098:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6099:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6100:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6110:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6101:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6230:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6112:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6337:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6232:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6367:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6339:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6917:3: NPath Complexity is 2,702 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6369:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6989:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6919:3: NPath Complexity is 2,702 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7055:7: Unused named local variable 'complexityRatio'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:6991:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7059:7: Unused named local variable 'hasSuspiciousAlignment'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7057:7: Unused named local variable 'complexityRatio'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7088:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7061:7: Unused named local variable 'hasSuspiciousAlignment'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7110:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7090:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7118:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7112:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7121:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7120:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7153:7: Unused named local variable 'isOverlay'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7123:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7154:7: Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7155:7: Unused named local variable 'isOverlay'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7155:7: Unused named local variable 'isVariableSpace'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7156:7: Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7227:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7157:7: Unused named local variable 'isVariableSpace'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7239:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7229:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7242:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7241:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7289:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7244:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7308:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7291:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7311:5: Unused named local variable 'memory'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7310:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7353:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7313:5: Unused named local variable 'memory'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7373:17: Name 'MAX_SAMPLES' must match pattern '^([a-z][a-zA-Z0-9]*|_)$'. [LocalFinalVariableName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7355:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7377:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7375:17: Name 'MAX_SAMPLES' must match pattern '^([a-z][a-zA-Z0-9]*|_)$'. [LocalFinalVariableName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7396:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7379:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7433:7: switch without "default" clause. [MissingSwitchDefault]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7398:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7495:5: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7435:9: switch without "default" clause. [MissingSwitchDefault]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7494:5: 'if' construct must use '{}'s. [NeedBraces]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7631:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java:7632:5: 'if' construct must use '{}'s. [NeedBraces]
 
 
 78 findings in D:\Intellicrack\intellicrack\scripts\ghidra\QuickStringDump.java
@@ -394,7 +394,7 @@
 
 62 findings in D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1: File length is 8,828 lines (max allowed is 3,000). [FileLength]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1: File length is 8,826 lines (max allowed is 3,000). [FileLength]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1:1: Missing package declaration. [PackageDeclaration]
 
@@ -414,25 +414,27 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1461:3: NPath Complexity is 1,728 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1673:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1671:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1845:13: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1843:13: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1846:18: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1844:18: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1938:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:1936:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2116:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2114:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2288:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2286:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2502:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2499:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2550:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2547:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2690:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2689:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2809:5: NPath Complexity is 774 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2808:5: NPath Complexity is 774 (max allowed is 500). [NPathComplexity]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2821:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2822:9: 'if' construct must use '{}'s. [NeedBraces]
 
@@ -448,41 +450,43 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2828:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2829:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2980:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2981:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2982:14: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2983:14: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2984:9: 'else' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:2985:9: 'else' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3028:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3029:7: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3030:7: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3031:11: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3031:7: Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3032:11: Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3545:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3546:7: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3547:7: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:3548:11: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4319:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4320:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4508:9: Unused named local variable 'entryPoint'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4509:9: Unused named local variable 'entryPoint'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4526:5: Return count is 2 (max allowed for void methods/constructors/lambdas is 1). [ReturnCount]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:4527:5: Return count is 2 (max allowed for void methods/constructors/lambdas is 1). [ReturnCount]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5286:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5287:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5398:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5399:5: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5530:9: Unused named local variable 'memory'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:5531:9: Unused named local variable 'memory'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6727:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6728:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6877:5: Redundant 'public' modifier. [RedundantModifier]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6878:7: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6879:5: NPath Complexity is 4,106 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6881:5: NPath Complexity is 4,106 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6995:9: 'if' construct must use '{}'s. [NeedBraces]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6996:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6997:9: 'if' construct must use '{}'s. [NeedBraces]
 
@@ -490,13 +494,11 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:6999:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7000:9: 'if' construct must use '{}'s. [NeedBraces]
-
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7001:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7003:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7005:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7004:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7006:9: 'if' construct must use '{}'s. [NeedBraces]
 
@@ -506,17 +508,15 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7012:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7014:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7830:5: NPath Complexity is 4,096 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7832:5: NPath Complexity is 4,096 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7911:5: NPath Complexity is 65,536 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:7913:5: NPath Complexity is 65,536 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8011:5: NPath Complexity is 13,122 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8013:5: NPath Complexity is 13,122 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8122:5: NPath Complexity is 63,700,992 (max allowed is 500). [NPathComplexity]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8124:5: NPath Complexity is 63,700,992 (max allowed is 500). [NPathComplexity]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8301:5: NPath Complexity is 91,729,428,480 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java:8299:5: NPath Complexity is 91,729,428,480 (max allowed is 500). [NPathComplexity]
 
 
 58 findings in D:\Intellicrack\intellicrack\scripts\ghidra\CryptoRoutineIdentifier.java
@@ -759,7 +759,7 @@
 
 58 findings in D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:1: File length is 3,797 lines (max allowed is 3,000). [FileLength]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:1: File length is 3,799 lines (max allowed is 3,000). [FileLength]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:11:1: Missing package declaration. [PackageDeclaration]
 
@@ -873,7 +873,7 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:3326:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:3512:7: Unused named local variable 'imageBase'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java:3514:7: Unused named local variable 'imageBase'. [UnusedLocalVariable]
 
 
 46 findings in D:\Intellicrack\intellicrack\scripts\ghidra\LicenseValidationAnalyzer.java
@@ -1031,7 +1031,7 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:1722:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:1774:13: Unused named local variable 'testByte'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:1774:11: Unused named local variable 'testByte'. [UnusedLocalVariable]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:1788:7: 'if' construct must use '{}'s. [NeedBraces]
 
@@ -1043,19 +1043,19 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2044:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2289:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2287:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2299:3: NPath Complexity is 1,372 (max allowed is 500). [NPathComplexity]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2297:3: NPath Complexity is 1,372 (max allowed is 500). [NPathComplexity]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2476:11: 'if' construct must use '{}'s. [NeedBraces]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2477:11: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2478:11: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2479:11: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2535:3: Class CombinedAnalysisResult should be declared as final. [FinalClass]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2480:11: 'if' construct must use '{}'s. [NeedBraces]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2537:3: Class CombinedAnalysisResult should be declared as final. [FinalClass]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2591:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\FunctionLister.java:2589:5: 'if' construct must use '{}'s. [NeedBraces]
 
 
 39 findings in D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java
@@ -1084,64 +1084,64 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:25:1: Total number of methods is 55 (max allowed is 50). [MethodCount]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:824:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:823:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:828:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:827:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:832:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:831:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:836:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:835:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:840:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:839:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:844:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:843:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:848:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:847:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:852:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:851:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:856:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:855:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:860:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:859:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:864:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:863:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:868:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:867:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:872:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:871:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:895:5: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:894:5: 'if' construct must use '{}'s. [NeedBraces]
+
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1024:7: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1025:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1026:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1050:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1051:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1051:12: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1052:12: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1060:27: Name 'URL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1061:27: Name 'URL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1063:27: Name 'EMAIL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1064:27: Name 'EMAIL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1065:27: Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1066:27: Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1066:27: Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1067:27: Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1068:27: Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1069:27: Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1069:27: Name 'VERSION_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1070:27: Name 'VERSION_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1454:13: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1455:13: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1482:11: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1483:11: 'if' construct must use '{}'s. [NeedBraces]
-
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1484:11: 'else' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java:1483:11: 'else' construct must use '{}'s. [NeedBraces]
 
 
 36 findings in D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1: File length is 3,278 lines (max allowed is 3,000). [FileLength]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1: File length is 3,281 lines (max allowed is 3,000). [FileLength]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:11:1: Missing package declaration. [PackageDeclaration]
 
@@ -1179,7 +1179,7 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:761:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:898:13: Redundant 'public' modifier. [RedundantModifier]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:898:7: Redundant 'public' modifier. [RedundantModifier]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1044:11: Unused named local variable 'currentValue'. [UnusedLocalVariable]
 
@@ -1199,19 +1199,19 @@
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1732:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1777:7: switch without "default" clause. [MissingSwitchDefault]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:1777:5: switch without "default" clause. [MissingSwitchDefault]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2009:9: 'if' construct must use '{}'s. [NeedBraces]
 
 [WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2063:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2104:9: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2106:9: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2422:7: 'if' construct must use '{}'s. [NeedBraces]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2424:7: 'if' construct must use '{}'s. [NeedBraces]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2746:5: Unused named local variable 'endAddr'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2748:5: Unused named local variable 'endAddr'. [UnusedLocalVariable]
 
-[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2858:5: Unused named local variable 'toAddr'. [UnusedLocalVariable]
+[WARN] D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java:2860:5: Unused named local variable 'toAddr'. [UnusedLocalVariable]
 
 
 32 findings in D:\Intellicrack\intellicrack\scripts\ghidra\StringDecryptionAutomator.java

@@ -597,7 +597,7 @@ class AIAssistantWidget(QWidget):
 
     def on_model_changed(self, model: str) -> None:
         """Handle model change."""
-        logger.info(f"AI model changed to: {model}")
+        logger.info("AI model changed to: %s", model)
         self.add_message("System", f"Switched to {model} model")
 
     def set_current_context(self, file_path: str, content: str = "") -> None:

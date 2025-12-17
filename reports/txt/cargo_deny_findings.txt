@@ -162,261 +162,7 @@ error[rejected]: failed to satisfy license requirements
 
 error[rejected]: failed to satisfy license requirements
 
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
 warning[duplicate]: found 2 duplicate entries for crate 'getrandom'
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
 
 error[rejected]: failed to satisfy license requirements
 
@@ -522,43 +268,53 @@ error[rejected]: failed to satisfy license requirements
 
 error[rejected]: failed to satisfy license requirements
 
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
-error[rejected]: failed to satisfy license requirements
-
 warning[duplicate]: found 2 duplicate entries for crate 'windows'
 
 error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows-collections'
 
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows-core'
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows-future'
 
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows-link'
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows-numerics'
 
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows-result'
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows-strings'
 
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 3 duplicate entries for crate 'windows-sys'
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows-targets'
 
@@ -568,16 +324,260 @@ warning[duplicate]: found 2 duplicate entries for crate 'windows_aarch64_gnullvm
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows_aarch64_msvc'
 
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows_i686_gnu'
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows_i686_gnullvm'
 
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows_i686_msvc'
+
+error[rejected]: failed to satisfy license requirements
 
 warning[duplicate]: found 2 duplicate entries for crate 'windows_x86_64_gnu'
 
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows_x86_64_gnullvm'
 
+error[rejected]: failed to satisfy license requirements
+
 warning[duplicate]: found 2 duplicate entries for crate 'windows_x86_64_msvc'
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
+
+error[rejected]: failed to satisfy license requirements
 
 error[unmaintained]: dotenv is Unmaintained

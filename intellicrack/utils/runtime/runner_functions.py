@@ -2632,7 +2632,7 @@ def run_frida_script(
                 messages.append({"message": message, "data": data})
                 if isinstance(message, dict):
                     if message.get("type") == "send":
-                        logger.info("Frida: %s", message.get('payload', ''))
+                        logger.info("Frida: %s", message.get("payload", ""))
                     elif message.get("type") == "error":
                         logger.error("Frida error: %s", message)
 
@@ -2727,7 +2727,9 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
         patches_applied, analysis_phases, and verification_results.
 
     """
-    logger.debug("Autonomous patching called with app_instance: %s, %s kwargs: %s", app_instance is not None, len(kwargs), list(kwargs.keys()))
+    logger.debug(
+        "Autonomous patching called with app_instance: %s, %s kwargs: %s", app_instance is not None, len(kwargs), list(kwargs.keys())
+    )
     try:
         logger.info("Starting autonomous patching analysis")
 
@@ -3054,7 +3056,7 @@ def _autonomous_apply_patches(target_binary: str, patches: list[dict[str, Any]],
 
 def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str) -> dict[str, Any]:
     """Apply a single patch to the binary."""
-    logger.debug("Applying single patch to %s with strategy: %s, patch type: %s", target_binary, strategy, patch.get('type', 'unknown'))
+    logger.debug("Applying single patch to %s with strategy: %s, patch type: %s", target_binary, strategy, patch.get("type", "unknown"))
     result = {"success": False, "message": ""}
 
     try:

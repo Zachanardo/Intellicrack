@@ -207,7 +207,7 @@ class APIKeyConfigDialog(QDialog):
                 self.model_combo.addItem(display_name, model.id)
 
             self.status_label.setText(f"Loaded {len(models)} models")
-            logger.info(f"Fetched {len(models)} models from {provider_name}")
+            logger.info("Fetched %s models from %s", len(models), provider_name)
 
         except Exception as e:
             logger.error(f"Error fetching models: {e}")

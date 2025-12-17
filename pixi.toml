@@ -52,7 +52,8 @@ cargo-deny = "*"
 intellicrack = { path = ".", editable = true } # Editable install of Intellicrack for development
 
 # Build Tools
-build = "*" # PEP 517 package builder
+build = "*"   # PEP 517 package builder
+pyclean = "*" # Python bytecode and cache cleaner
 
 # Code Quality & Linting
 black = "*"                    # Opinionated Python code formatter

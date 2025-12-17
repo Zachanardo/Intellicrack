@@ -34,7 +34,7 @@ def inject_comprehensive_api_hooks(app: object, hook_types: list[str] | None = N
         Generated script content for API hooking
 
     """
-    logger.debug(f"Injecting API hooks for app: {app is not None}, hook_types: {hook_types}")
+    logger.debug("Injecting API hooks for app: %s, hook_types: %s", app is not None, hook_types)
     if hook_types is None:
         hook_types = ["hardware_id", "debugger", "time", "telemetry", "network"]
 
@@ -353,7 +353,7 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
                 protections["details"].append(f"Network validation API: {net_str.decode()}")
 
     except Exception as e:
-        logger.debug(f"Protection detection failed: {e}")
+        logger.debug("Protection detection failed: %s", e, exc_info=True)
         protections["details"].append(f"Detection error: {e}")
 
     return protections
@@ -670,7 +670,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
         "encryption_support": True,
     }
 
-    logger.info(f"Hardware dongle emulation configured for {dongle_type}")
+    logger.info("Hardware dongle emulation configured for %s", dongle_type)
     return emulation_result
 
 
@@ -687,7 +687,7 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
         Dictionary containing HWID spoofing configuration
 
     """
-    logger.info(f"Generating HWID spoof configuration for: {target_hwid}")
+    logger.info("Generating HWID spoof configuration for: %s", target_hwid)
 
     import uuid
 
@@ -770,7 +770,7 @@ def apply_hwid_spoof():
         winreg.CloseKey(key)
         print(f"HWID spoofed to: {hwid_uuid}")
     except Exception as e:
-        logger.error("Exception in protection_utils: %s", e)
+        logger.error("Exception in protection_utils: %s", e, exc_info=True)
         print(f"Failed to spoof HWID: {{e}}")
 
 if __name__ == "__main__":
@@ -806,7 +806,7 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
         Dictionary containing time bomb defusal strategy
 
     """
-    logger.info(f"Analyzing binary for time bombs: {binary_path}")
+    logger.info("Analyzing binary for time bombs: %s", binary_path)
 
     config = {
         "binary": binary_path,
@@ -959,11 +959,11 @@ if (time_func) {
         )
 
     except Exception as e:
-        logger.error(f"Time bomb analysis failed: {e}")
+        logger.error("Time bomb analysis failed: %s", e, exc_info=True)
         config["error"] = str(e)
         config["recommendations"].append("Manual analysis required")
 
-    logger.info(f"Found {config['time_checks_found']} time checks")
+    logger.info("Found %s time checks", config["time_checks_found"])
     return config
 
 
@@ -980,7 +980,7 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
         Dictionary containing telemetry blocking configuration
 
     """
-    logger.info(f"Generating telemetry blocker for: {app_name}")
+    logger.info("Generating telemetry blocker for: %s", app_name)
 
     # Common telemetry domains by application
     telemetry_domains = {
@@ -1184,7 +1184,7 @@ echo Note: Hosts file entries must be removed manually
 pause
 """
 
-    logger.info(f"Telemetry blocker configured with {len(blocked_domains)} blocked domains")
+    logger.info("Telemetry blocker configured with %s blocked domains", len(blocked_domains))
     return config
 
 

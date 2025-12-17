@@ -144,7 +144,7 @@ def configure_pybind11_environment() -> None:
 
         warnings.filterwarnings("ignore", category=UserWarning, message=".*pybind11.*GIL.*")
     except Exception as e:
-        logger.debug("Could not configure GIL warnings: %s", e)
+        logger.debug("Could not configure GIL warnings: %s", e, exc_info=True)
 
 
 def initialize_gil_safety() -> None:
@@ -166,7 +166,7 @@ def initialize_gil_safety() -> None:
     if current_thread is not main_thread:
         if launcher_env := os.environ.get("RUST_LAUNCHER_MODE") or os.environ.get("PYTHON_SUBPROCESS_MODE"):
             # In launcher mode, log at debug level instead of warning
-            logger.debug(f"GIL safety initialized from non-main thread in launcher environment: {launcher_env}")
+            logger.debug("GIL safety initialized from non-main thread in launcher environment: %s", launcher_env)
         else:
             import warnings
 

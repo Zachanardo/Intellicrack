@@ -90,8 +90,6 @@ src\process_manager.rs:807:5: [warning] docs for function which may panic missin
 
 src\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section
 
-src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
-
 src\process_manager.rs:1153:25: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1157:32: [warning] variables can be used directly in the `format!` string
@@ -101,6 +99,8 @@ src\process_manager.rs:1165:25: [warning] variables can be used directly in the 
 src\process_manager.rs:1169:29: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+
+src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
 
 
 31 findings in src\dependencies.rs
@@ -141,6 +141,16 @@ src\dependencies.rs:858:5: [warning] docs for function returning `Result` missin
 
 src\dependencies.rs:871:5: [warning] docs for function returning `Result` missing `# Errors` section
 
+src\dependencies.rs:1435:25: [warning] variables can be used directly in the `format!` string
+
+src\dependencies.rs:1445:25: [warning] variables can be used directly in the `format!` string
+
+src\dependencies.rs:1457:25: [warning] variables can be used directly in the `format!` string
+
+src\dependencies.rs:1469:25: [warning] variables can be used directly in the `format!` string
+
+src\dependencies.rs:1478:25: [warning] variables can be used directly in the `format!` string
+
 src\dependencies.rs:160:5: [warning] unused `async` for function with no await statements
 
 src\dependencies.rs:226:5: [warning] unused `async` for function with no await statements
@@ -156,16 +166,6 @@ src\dependencies.rs:493:5: [warning] unused `async` for function with no await s
 src\dependencies.rs:590:5: [warning] unused `async` for function with no await statements
 
 src\dependencies.rs:645:5: [warning] unused `async` for function with no await statements
-
-src\dependencies.rs:1435:25: [warning] variables can be used directly in the `format!` string
-
-src\dependencies.rs:1445:25: [warning] variables can be used directly in the `format!` string
-
-src\dependencies.rs:1457:25: [warning] variables can be used directly in the `format!` string
-
-src\dependencies.rs:1469:25: [warning] variables can be used directly in the `format!` string
-
-src\dependencies.rs:1478:25: [warning] variables can be used directly in the `format!` string
 
 
 27 findings in src\environment.rs
@@ -271,13 +271,13 @@ src\python_integration.rs:551:5: [warning] docs for function returning `Result` 
 
 src\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section
 
-src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
-
 src\python_integration.rs:795:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
 src\python_integration.rs:852:9: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
 src\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string
+
+src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
 
 
 25 findings in src\diagnostics.rs
@@ -476,6 +476,8 @@ src\tool_discovery.rs:930:5: [warning] unnecessary boolean `not` operation
 
 src\lib.rs:301:51: [warning] long literal lacking separators
 
+src\lib.rs:301:51: [warning] long literal lacking separators
+
 src\lib.rs:72:5: [warning] docs for function returning `Result` missing `# Errors` section
 
 src\lib.rs:100:5: [warning] docs for function returning `Result` missing `# Errors` section
@@ -507,8 +509,6 @@ src\lib.rs:357:17: [warning] variables can be used directly in the `format!` str
 src\lib.rs:365:1: [warning] docs for function returning `Result` missing `# Errors` section
 
 src\lib.rs:100:5: [warning] unused `async` for function with no await statements
-
-src\lib.rs:301:51: [warning] long literal lacking separators
 
 
 18 findings in src\preflight_checks.rs
@@ -591,16 +591,6 @@ src\flask_validator.rs:11:5: [warning] docs for function returning `Result` miss
 
 src\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)
 
-src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
-
 src\flask_validator.rs:550:45: [warning] redundant closure
 
 src\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
@@ -612,6 +602,47 @@ src\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for
 src\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect
 
 src\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string
+
+src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
+
+
+14 findings in src\security.rs
+
+src\security.rs:933:64: [warning] long literal lacking separators
+
+src\security.rs:11:1: [warning] more than 3 bools in a struct
+
+src\security.rs:62:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\security.rs:72:5: [warning] this function's return value is unnecessarily wrapped by `Result`
+
+src\security.rs:189:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\security.rs:203:5: [warning] this function's return value is unnecessary
+
+src\security.rs:251:43: [warning] unused `self` argument
+
+src\security.rs:255:12: [warning] this pattern matching can be expressed using `matches!`
+
+src\security.rs:328:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\security.rs:352:17: [warning] variables can be used directly in the `format!` string
+
+src\security.rs:373:17: [warning] variables can be used directly in the `format!` string
+
+src\security.rs:394:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\security.rs:420:17: [warning] variables can be used directly in the `format!` string
+
+src\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section
 
 
 14 findings in src\process_optimization.rs
@@ -643,37 +674,6 @@ src\process_optimization.rs:322:53: [warning] casting `usize` to `u32` may trunc
 src\process_optimization.rs:345:38: [warning] item in documentation is missing backticks
 
 src\process_optimization.rs:377:1: [warning] docs for function returning `Result` missing `# Errors` section
-
-
-14 findings in src\security.rs
-
-src\security.rs:11:1: [warning] more than 3 bools in a struct
-
-src\security.rs:62:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\security.rs:72:5: [warning] this function's return value is unnecessarily wrapped by `Result`
-
-src\security.rs:189:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\security.rs:203:5: [warning] this function's return value is unnecessary
-
-src\security.rs:251:43: [warning] unused `self` argument
-
-src\security.rs:255:12: [warning] this pattern matching can be expressed using `matches!`
-
-src\security.rs:328:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\security.rs:352:17: [warning] variables can be used directly in the `format!` string
-
-src\security.rs:373:17: [warning] variables can be used directly in the `format!` string
-
-src\security.rs:394:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\security.rs:420:17: [warning] variables can be used directly in the `format!` string
-
-src\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\security.rs:933:64: [warning] long literal lacking separators
 
 
 11 findings in tests\preflight_checks_tests.rs
@@ -801,17 +801,6 @@ src\main.rs:123:13: [warning] adding items after statements is confusing, since 
 src\main.rs:148:9: [warning] variables can be used directly in the `format!` string
 
 
-4 findings in tests\process_optimization_tests.rs
-
-tests\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string
-
-tests\process_optimization_tests.rs:105:83: [warning] redundant clone
-
-tests\process_optimization_tests.rs:105:76: [warning] redundant clone
-
-tests\process_optimization_tests.rs:127:32: [warning] redundant closure
-
-
 4 findings in benches\performance_benchmarks.rs
 
 benches\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect
@@ -821,6 +810,17 @@ benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed bin
 benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
 
 benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
+
+
+4 findings in tests\process_optimization_tests.rs
+
+tests\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string
+
+tests\process_optimization_tests.rs:105:83: [warning] redundant clone
+
+tests\process_optimization_tests.rs:105:76: [warning] redundant clone
+
+tests\process_optimization_tests.rs:127:32: [warning] redundant closure
 
 
 3 findings in src\intel_gpu.rs

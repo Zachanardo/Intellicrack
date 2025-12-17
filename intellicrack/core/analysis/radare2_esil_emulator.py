@@ -1060,7 +1060,7 @@ class RadareESILEmulator:
         """
         for access in step.get("memory_accesses", []):
             if access.address < 0x1000:
-                logger.warning("Null pointer access at %x", step['address'])
+                logger.warning("Null pointer access at %x", step["address"])
                 return True
 
             try:

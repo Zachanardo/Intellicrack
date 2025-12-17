@@ -2409,7 +2409,7 @@ class ICPBackend:
             + int(supplemental_data["analysis_summary"]["volatility_available"])
         )
 
-        logger.info("Supplemental analysis complete: %s", supplemental_data['engines_used'])
+        logger.info("Supplemental analysis complete: %s", supplemental_data["engines_used"])
         return supplemental_data
 
     def get_supplemental_engines_status(self) -> dict[str, Any]:

@@ -3636,7 +3636,7 @@ if __name__ == "__main__":
                     pos += int(total_width * weights[i] / total_weight)
                     self.main_paned.sash_place(i, pos, 0)
         except Exception:
-            pass
+            self.logger.error("Failed to reset layout", exc_info=True)
 
     def show_preferences(self) -> None:
         """Show preferences dialog."""

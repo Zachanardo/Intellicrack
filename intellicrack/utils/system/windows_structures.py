@@ -140,7 +140,7 @@ class WindowsContext:
             return CONTEXT, CONTEXT_FULL
 
         except Exception as e:
-            logger.error(f"Failed to create CONTEXT structure: {e}")
+            logger.error("Failed to create CONTEXT structure: %s", e, exc_info=True)
             return None, None
 
     def get_thread_context(self, thread_handle: int) -> ctypes.Structure | None:
@@ -159,13 +159,13 @@ class WindowsContext:
             success = self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context))
             if not success:
                 error = ctypes.get_last_error()
-                logger.error(f"GetThreadContext failed: {error}")
+                logger.error("GetThreadContext failed: %s", error)
                 return None
 
             return context
 
         except Exception as e:
-            logger.error(f"Failed to get thread context: {e}")
+            logger.error("Failed to get thread context: %s", e, exc_info=True)
             return None
 
     def set_thread_context(self, thread_handle: int, context: ctypes.Structure) -> bool:
@@ -177,11 +177,11 @@ class WindowsContext:
             success = self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
             if not success:
                 error = ctypes.get_last_error()
-                logger.error(f"SetThreadContext failed: {error}")
+                logger.error("SetThreadContext failed: %s", error)
                 return False
             return True
         except Exception as e:
-            logger.error(f"Failed to set thread context: {e}")
+            logger.error("Failed to set thread context: %s", e, exc_info=True)
             return False
 
     def get_entry_point(self, context: ctypes.Structure) -> int:
@@ -189,7 +189,7 @@ class WindowsContext:
         try:
             return context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
         except Exception as e:
-            logger.error(f"Failed to get entry point: {e}")
+            logger.error("Failed to get entry point: %s", e, exc_info=True)
             return 0
 
 
@@ -281,7 +281,7 @@ class WindowsProcessStructures:
 
             if not success:
                 error = ctypes.get_last_error()
-                logger.error(f"CreateProcess failed: {error}")
+                logger.error("CreateProcess failed: %s", error)
                 return None
 
             return {
@@ -292,7 +292,7 @@ class WindowsProcessStructures:
             }
 
         except Exception as e:
-            logger.error(f"Failed to create suspended process: {e}")
+            logger.error("Failed to create suspended process: %s", e, exc_info=True)
             return None
 
 

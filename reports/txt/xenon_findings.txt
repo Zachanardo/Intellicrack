@@ -93,79 +93,79 @@ tests\validation_system\phase2\detection_depth_validator.py:6213: '_detect_anti_
 
 37 findings in intellicrack\plugins\custom_modules\license_server_emulator.py
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6101: '_extract_kms_data' has rank E
+intellicrack\plugins\custom_modules\license_server_emulator.py:6102: '_extract_kms_data' has rank E
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3222: 'extract_flexlm_keys' has rank E
+intellicrack\plugins\custom_modules\license_server_emulator.py:3223: 'extract_flexlm_keys' has rank E
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3305: 'extract_hasp_keys' has rank E
+intellicrack\plugins\custom_modules\license_server_emulator.py:3306: 'extract_hasp_keys' has rank E
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:2923: '_extract_openssl_components' has rank D
+intellicrack\plugins\custom_modules\license_server_emulator.py:2924: '_extract_openssl_components' has rank D
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3383: 'extract_adobe_keys' has rank D
+intellicrack\plugins\custom_modules\license_server_emulator.py:3384: 'extract_adobe_keys' has rank D
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5766: '_generate_text_response' has rank D
+intellicrack\plugins\custom_modules\license_server_emulator.py:5767: '_generate_text_response' has rank D
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4573: '_hook_inline_apis' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4574: '_hook_inline_apis' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6561: 'modify_response' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:6562: 'modify_response' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3096: '_extract_key_from_process_memory' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:3097: '_extract_key_from_process_memory' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3842: '_scan_windows_memory' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:3843: '_scan_windows_memory' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1561: 'analyze_traffic' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1562: 'analyze_traffic' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1610: '_parse_http_request' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1611: '_parse_http_request' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4011: '_handle_vmprotect' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4012: '_handle_vmprotect' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1665: '_parse_flexlm_data' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1666: '_parse_flexlm_data' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1815: '_extract_key_with_advanced_patterns' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1816: '_extract_key_with_advanced_patterns' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4432: '_reconstruct_vmprotect_iat' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4433: '_reconstruct_vmprotect_iat' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6464: '_determine_adobe_subscription' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:6465: '_determine_adobe_subscription' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7011: '_handle_dns_query' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:7012: '_handle_dns_query' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1378: '_get_mac_address' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1379: '_get_mac_address' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1404: '_get_ram_size' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1405: '_get_ram_size' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1736: '_extract_adobe_private_key_from_memory' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1737: '_extract_adobe_private_key_from_memory' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3945: '_detect_memory_protection' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:3946: '_detect_memory_protection' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5731: '_extract_xml_features' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:5732: '_extract_xml_features' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1777: '_extract_key_from_adobe_process' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1778: '_extract_key_from_adobe_process' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1953: '_extract_key_via_entropy_analysis' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1954: '_extract_key_via_entropy_analysis' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1994: '_extract_key_via_crypto_structure_detection' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1995: '_extract_key_via_crypto_structure_detection' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3564: '_analyze_validation_function' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:3565: '_analyze_validation_function' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4065: '_handle_themida' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4066: '_handle_themida' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5583: '_determine_license_type' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:5584: '_determine_license_type' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5879: '_find_binary_by_process' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:5880: '_find_binary_by_process' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1323: '_get_disk_serial_linux' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:1324: '_get_disk_serial_linux' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3890: '_scan_unix_memory' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:3891: '_scan_unix_memory' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4105: '_handle_obsidium' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4106: '_handle_obsidium' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4216: '_deobfuscate_memory' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:4217: '_deobfuscate_memory' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5105: 'hasp_state_machine' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:5106: 'hasp_state_machine' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5989: '_generate_adobe_response' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:5990: '_generate_adobe_response' has rank C
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6485: '_get_adobe_products' has rank C
+intellicrack\plugins\custom_modules\license_server_emulator.py:6486: '_get_adobe_products' has rank C
 
 
 32 findings in intellicrack\core\debugging_engine.py
@@ -198,7 +198,7 @@ intellicrack\core\debugging_engine.py:5348: 'generate_position_independent_code'
 
 intellicrack\core\debugging_engine.py:6106: 'trace_execution' has rank C
 
-intellicrack\core\debugging_engine.py:885: '_debug_loop' has rank C
+intellicrack\core\debugging_engine.py:883: '_debug_loop' has rank C
 
 intellicrack\core\debugging_engine.py:4558: '_encode_push' has rank C
 
@@ -241,53 +241,53 @@ intellicrack\core\analysis\symbolic_executor.py:291: '_analyze_injection_and_rac
 
 intellicrack\core\analysis\symbolic_executor.py:236: '_analyze_memory_vulns' has rank D
 
-intellicrack\core\analysis\symbolic_executor.py:4035: '_analyze_path_memory_access' has rank D
+intellicrack\core\analysis\symbolic_executor.py:4054: '_analyze_path_memory_access' has rank D
 
-intellicrack\core\analysis\symbolic_executor.py:653: '_generate_uaf_exploit' has rank D
+intellicrack\core\analysis\symbolic_executor.py:656: '_generate_uaf_exploit' has rank D
 
-intellicrack\core\analysis\symbolic_executor.py:3525: '_build_basic_cfg' has rank C
+intellicrack\core\analysis\symbolic_executor.py:3544: '_build_basic_cfg' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:1702: '_check_dangerous_function_calls' has rank C
+intellicrack\core\analysis\symbolic_executor.py:1705: '_check_dangerous_function_calls' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:3680: '_find_all_paths' has rank C
+intellicrack\core\analysis\symbolic_executor.py:3699: '_find_all_paths' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:3779: '_analyze_path_for_vulnerabilities' has rank C
+intellicrack\core\analysis\symbolic_executor.py:3798: '_analyze_path_for_vulnerabilities' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2011: '_perform_basic_disassembly' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2014: '_perform_basic_disassembly' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2300: '_detect_command_injection_patterns' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2309: '_detect_command_injection_patterns' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2472: '_detect_null_pointer_patterns' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2491: '_detect_null_pointer_patterns' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:3366: '_disassemble_from_address' has rank C
+intellicrack\core\analysis\symbolic_executor.py:3385: '_disassemble_from_address' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:496: '_check_format_string' has rank C
+intellicrack\core\analysis\symbolic_executor.py:499: '_check_format_string' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:1824: '_analyze_vulnerable_paths' has rank C
+intellicrack\core\analysis\symbolic_executor.py:1827: '_analyze_vulnerable_paths' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:1877: '_native_vulnerability_discovery' has rank C
+intellicrack\core\analysis\symbolic_executor.py:1880: '_native_vulnerability_discovery' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2650: '_track_heap_read' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2671: '_track_heap_read' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:3645: '_extract_jump_target' has rank C
+intellicrack\core\analysis\symbolic_executor.py:3664: '_extract_jump_target' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:4129: '_extract_path_constraints' has rank C
+intellicrack\core\analysis\symbolic_executor.py:4148: '_extract_path_constraints' has rank C
 
 intellicrack\core\analysis\symbolic_executor.py:117: '_configure_exploration_techniques' has rank C
 
 intellicrack\core\analysis\symbolic_executor.py:188: '_analyze_integer_overflows' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:381: 'discover_vulnerabilities' has rank C
+intellicrack\core\analysis\symbolic_executor.py:384: 'discover_vulnerabilities' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:534: 'generate_exploit' has rank C
+intellicrack\core\analysis\symbolic_executor.py:537: 'generate_exploit' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:1396: '_build_rop_chain' has rank C
+intellicrack\core\analysis\symbolic_executor.py:1399: '_build_rop_chain' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:1623: '_check_memory_violations' has rank C
+intellicrack\core\analysis\symbolic_executor.py:1626: '_check_memory_violations' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2154: '_detect_buffer_overflow_patterns' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2157: '_detect_buffer_overflow_patterns' has rank C
 
-intellicrack\core\analysis\symbolic_executor.py:2970: '_execute_exploration_loop' has rank C
+intellicrack\core\analysis\symbolic_executor.py:2991: '_execute_exploration_loop' has rank C
 
 
 26 findings in tests\unit\core\analysis\test_symbolic_executor.py
@@ -347,31 +347,31 @@ tests\unit\core\analysis\test_symbolic_executor.py:1428: 'test_multi_binary_comp
 
 24 findings in intellicrack\core\anti_analysis\sandbox_detector.py
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2630: '_apply_sandbox_specific_evasion' has rank F
+intellicrack\core\anti_analysis\sandbox_detector.py:2625: '_apply_sandbox_specific_evasion' has rank F
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2025: '_determine_evasion_strategy' has rank E
+intellicrack\core\anti_analysis\sandbox_detector.py:2020: '_determine_evasion_strategy' has rank E
 
-intellicrack\core\anti_analysis\sandbox_detector.py:1592: '_check_mouse_movement' has rank D
+intellicrack\core\anti_analysis\sandbox_detector.py:1588: '_check_mouse_movement' has rank D
 
 intellicrack\core\anti_analysis\sandbox_detector.py:1315: '_check_time_acceleration' has rank D
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2261: '_apply_behavioral_adaptation' has rank D
+intellicrack\core\anti_analysis\sandbox_detector.py:2256: '_apply_behavioral_adaptation' has rank D
 
 intellicrack\core\anti_analysis\sandbox_detector.py:1060: '_check_network' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:88: '_build_dynamic_signatures' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2456: '_attempt_api_unhooking' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:2451: '_attempt_api_unhooking' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:998: '_check_resource_limits' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:759: '_check_virtualization_artifacts' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:3147: '_check_advanced_timing' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:3140: '_check_advanced_timing' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:1247: '_check_process_monitoring' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:3064: '_check_browser_automation' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:3057: '_check_browser_automation' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:576: '_check_against_known_profiles' has rank C
 
@@ -379,11 +379,11 @@ intellicrack\core\anti_analysis\sandbox_detector.py:628: '_check_hardware_indica
 
 intellicrack\core\anti_analysis\sandbox_detector.py:1139: '_check_user_interaction' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2774: '_verify_evasion_effectiveness' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:2769: '_verify_evasion_effectiveness' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2867: '_check_parent_process' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:2862: '_check_parent_process' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2919: '_check_cpuid_hypervisor' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:2914: '_check_cpuid_hypervisor' has rank C
 
 intellicrack\core\anti_analysis\sandbox_detector.py:46: 'SandboxDetector' has rank C
 
@@ -391,46 +391,46 @@ intellicrack\core\anti_analysis\sandbox_detector.py:886: '_check_environment' ha
 
 intellicrack\core\anti_analysis\sandbox_detector.py:955: '_check_behavioral' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:1841: '_identify_sandbox_type' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:1836: '_identify_sandbox_type' has rank C
 
-intellicrack\core\anti_analysis\sandbox_detector.py:2825: '_check_environment_variables' has rank C
+intellicrack\core\anti_analysis\sandbox_detector.py:2820: '_check_environment_variables' has rank C
 
 
 22 findings in intellicrack\core\processing\qemu_emulator.py
 
-intellicrack\core\processing\qemu_emulator.py:1491: '_analyze_process_changes' has rank E
+intellicrack\core\processing\qemu_emulator.py:1496: '_analyze_process_changes' has rank E
 
 intellicrack\core\processing\qemu_emulator.py:865: '_get_snapshot_filesystem' has rank D
 
-intellicrack\core\processing\qemu_emulator.py:1634: '_analyze_network_changes' has rank D
+intellicrack\core\processing\qemu_emulator.py:1639: '_analyze_network_changes' has rank D
 
 intellicrack\core\processing\qemu_emulator.py:1054: '_get_snapshot_network' has rank D
 
 intellicrack\core\processing\qemu_emulator.py:1153: '_query_dns_cache' has rank D
 
-intellicrack\core\processing\qemu_emulator.py:2767: '_parse_dns_logs' has rank D
+intellicrack\core\processing\qemu_emulator.py:2772: '_parse_dns_logs' has rank D
 
-intellicrack\core\processing\qemu_emulator.py:2692: '_monitor_dns_processes' has rank D
+intellicrack\core\processing\qemu_emulator.py:2697: '_monitor_dns_processes' has rank D
 
-intellicrack\core\processing\qemu_emulator.py:2622: '_analyze_dns_cache' has rank C
+intellicrack\core\processing\qemu_emulator.py:2627: '_analyze_dns_cache' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2524: '_capture_dns_via_ssh' has rank C
+intellicrack\core\processing\qemu_emulator.py:2529: '_capture_dns_via_ssh' has rank C
 
 intellicrack\core\processing\qemu_emulator.py:814: '_parse_memory_regions' has rank C
 
 intellicrack\core\processing\qemu_emulator.py:998: '_get_snapshot_processes' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:1253: '_parse_windows_dns_cache' has rank C
+intellicrack\core\processing\qemu_emulator.py:1256: '_parse_windows_dns_cache' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2279: '_monitor_linux_execution' has rank C
+intellicrack\core\processing\qemu_emulator.py:2284: '_monitor_linux_execution' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2438: '_get_guest_network_connections' has rank C
+intellicrack\core\processing\qemu_emulator.py:2443: '_get_guest_network_connections' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2400: '_get_guest_processes' has rank C
+intellicrack\core\processing\qemu_emulator.py:2405: '_get_guest_processes' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:1360: '_analyze_filesystem_changes' has rank C
+intellicrack\core\processing\qemu_emulator.py:1363: '_analyze_filesystem_changes' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2068: '_copy_binary_to_linux_guest' has rank C
+intellicrack\core\processing\qemu_emulator.py:2073: '_copy_binary_to_linux_guest' has rank C
 
 intellicrack\core\processing\qemu_emulator.py:52: 'QEMUSystemEmulator' has rank C
 
@@ -438,9 +438,9 @@ intellicrack\core\processing\qemu_emulator.py:311: '_build_qemu_command' has ran
 
 intellicrack\core\processing\qemu_emulator.py:759: '_analyze_memory_changes' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:1998: '_copy_binary_to_windows_guest' has rank C
+intellicrack\core\processing\qemu_emulator.py:2003: '_copy_binary_to_windows_guest' has rank C
 
-intellicrack\core\processing\qemu_emulator.py:2360: '_capture_filesystem_snapshot' has rank C
+intellicrack\core\processing\qemu_emulator.py:2365: '_capture_filesystem_snapshot' has rank C
 
 
 22 findings in tests\unit\core\analysis\test_radare2_bypass_generator.py
@@ -535,125 +535,127 @@ tests\core\anti_analysis\test_vm_detector_comprehensive.py:705: 'test_detection_
 tests\core\anti_analysis\test_vm_detector_comprehensive.py:324: 'test_sleep_timing_detection' has rank C
 
 
+20 findings in intellicrack\ui\tabs\analysis_tab.py
+
+intellicrack\ui\tabs\analysis_tab.py:1422: 'detect_protections' has rank F
+
+intellicrack\ui\tabs\analysis_tab.py:1117: '_run_static_analysis' has rank E
+
+intellicrack\ui\tabs\analysis_tab.py:3526: 'compare_snapshots' has rank E
+
+intellicrack\ui\tabs\analysis_tab.py:1320: 'start_dynamic_monitoring' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:4036: '_monitor_network_activity' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:1041: 'run_analysis' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:3773: '_monitor_api_calls' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:3943: '_monitor_file_operations' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:2960: 'detect_license_checks' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:1732: 'view_disassembly' has rank D
+
+intellicrack\ui\tabs\analysis_tab.py:4126: '_monitor_registry_operations' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:2156: 'update_structure_visualization' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:3093: 'generate_bypass_strategy' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:2854: 'scan_for_protections' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:2430: 'analyze_binary_entropy' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:1684: 'embed_hex_viewer' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:1903: 'attach_to_process' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:2596: 'detect_license_protection' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:3196: 'execute_subscription_bypass' has rank C
+
+intellicrack\ui\tabs\analysis_tab.py:3287: 'start_license_monitoring' has rank C
+
+
 19 findings in intellicrack\core\anti_analysis\vm_detector.py
 
 intellicrack\core\anti_analysis\vm_detector.py:583: '_check_hardware_signatures' has rank D
 
-intellicrack\core\anti_analysis\vm_detector.py:2085: 'get_hardware_fingerprint' has rank D
+intellicrack\core\anti_analysis\vm_detector.py:2090: 'get_hardware_fingerprint' has rank D
 
 intellicrack\core\anti_analysis\vm_detector.py:728: '_check_rdtsc_timing' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1220: '_check_disk_serial_numbers' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1223: '_check_disk_serial_numbers' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:945: '_check_network_adapters' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:948: '_check_network_adapters' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1296: '_check_mac_address_patterns' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1299: '_check_mac_address_patterns' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1675: '_check_acpi_tables' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1680: '_check_acpi_tables' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1099: '_check_cpu_model_detection' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1102: '_check_cpu_model_detection' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1804: '_check_memory_artifacts' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1809: '_check_memory_artifacts' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1740: '_check_pci_devices' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1745: '_check_pci_devices' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:2013: '_check_cache_timing' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:2018: '_check_cache_timing' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1036: '_check_device_drivers' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1039: '_check_device_drivers' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1495: '_check_rdtsc_vmexit_detection' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1498: '_check_rdtsc_vmexit_detection' has rank C
 
 intellicrack\core\anti_analysis\vm_detector.py:276: '_execute_cpuid' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1001: '_check_bios_info' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1004: '_check_bios_info' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1166: '_check_hardware_fingerprint' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1169: '_check_hardware_fingerprint' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1361: '_check_cpuid_feature_flags' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1364: '_check_cpuid_feature_flags' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1889: '_check_performance_counters' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1894: '_check_performance_counters' has rank C
 
-intellicrack\core\anti_analysis\vm_detector.py:1929: '_check_tsc_frequency_analysis' has rank C
-
-
-19 findings in intellicrack\ui\tabs\analysis_tab.py
-
-intellicrack\ui\tabs\analysis_tab.py:1549: 'detect_protections' has rank F
-
-intellicrack\ui\tabs\analysis_tab.py:3645: 'compare_snapshots' has rank E
-
-intellicrack\ui\tabs\analysis_tab.py:1447: 'start_dynamic_monitoring' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:4070: '_monitor_network_activity' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:1041: 'run_analysis' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:3892: '_monitor_api_calls' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:3997: '_monitor_file_operations' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:3081: 'detect_license_checks' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:1857: 'view_disassembly' has rank D
-
-intellicrack\ui\tabs\analysis_tab.py:4152: '_monitor_registry_operations' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:2277: 'update_structure_visualization' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:3214: 'generate_bypass_strategy' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:2975: 'scan_for_protections' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:2551: 'analyze_binary_entropy' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:1809: 'embed_hex_viewer' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:2028: 'attach_to_process' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:2717: 'detect_license_protection' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:3315: 'execute_subscription_bypass' has rank C
-
-intellicrack\ui\tabs\analysis_tab.py:3406: 'start_license_monitoring' has rank C
+intellicrack\core\anti_analysis\vm_detector.py:1934: '_check_tsc_frequency_analysis' has rank C
 
 
 18 findings in intellicrack\ai\multi_agent_system.py
 
-intellicrack\ai\multi_agent_system.py:2838: '_decode_x86_instruction' has rank D
+intellicrack\ai\multi_agent_system.py:2828: '_decode_x86_instruction' has rank D
 
-intellicrack\ai\multi_agent_system.py:1884: '_analyze_control_flow' has rank D
+intellicrack\ai\multi_agent_system.py:1880: '_analyze_control_flow' has rank D
 
-intellicrack\ai\multi_agent_system.py:2083: '_analyze_runtime' has rank D
+intellicrack\ai\multi_agent_system.py:2079: '_analyze_runtime' has rank D
 
-intellicrack\ai\multi_agent_system.py:2317: '_analyze_memory' has rank D
+intellicrack\ai\multi_agent_system.py:2311: '_analyze_memory' has rank D
 
-intellicrack\ai\multi_agent_system.py:2908: '_manual_x86_disassembly' has rank C
+intellicrack\ai\multi_agent_system.py:2898: '_manual_x86_disassembly' has rank C
 
-intellicrack\ai\multi_agent_system.py:3450: '_determine_optimization_level' has rank C
+intellicrack\ai\multi_agent_system.py:3434: '_determine_optimization_level' has rank C
 
-intellicrack\ai\multi_agent_system.py:2485: '_monitor_api_calls' has rank C
+intellicrack\ai\multi_agent_system.py:2479: '_monitor_api_calls' has rank C
 
-intellicrack\ai\multi_agent_system.py:3121: '_generate_pseudocode_from_blocks' has rank C
+intellicrack\ai\multi_agent_system.py:3109: '_generate_pseudocode_from_blocks' has rank C
 
-intellicrack\ai\multi_agent_system.py:3382: '_analyze_assembly_patterns' has rank C
+intellicrack\ai\multi_agent_system.py:3370: '_analyze_assembly_patterns' has rank C
 
 intellicrack\ai\multi_agent_system.py:1390: '_analyze_binary_with_lief' has rank C
 
-intellicrack\ai\multi_agent_system.py:3299: '_detect_string_algorithms' has rank C
+intellicrack\ai\multi_agent_system.py:3287: '_detect_string_algorithms' has rank C
 
 intellicrack\ai\multi_agent_system.py:1468: '_analyze_binary_basic' has rank C
 
-intellicrack\ai\multi_agent_system.py:2038: 'DynamicAnalysisAgent' has rank C
+intellicrack\ai\multi_agent_system.py:2034: 'DynamicAnalysisAgent' has rank C
 
 intellicrack\ai\multi_agent_system.py:472: '_extract_patterns' has rank C
 
 intellicrack\ai\multi_agent_system.py:1644: '_detect_language' has rank C
 
-intellicrack\ai\multi_agent_system.py:3087: '_analyze_assembly_patterns' has rank C
+intellicrack\ai\multi_agent_system.py:3075: '_analyze_assembly_patterns' has rank C
 
-intellicrack\ai\multi_agent_system.py:2754: 'ReverseEngineeringAgent' has rank C
+intellicrack\ai\multi_agent_system.py:2744: 'ReverseEngineeringAgent' has rank C
 
-intellicrack\ai\multi_agent_system.py:3749: '_create_unified_analysis' has rank C
+intellicrack\ai\multi_agent_system.py:3733: '_create_unified_analysis' has rank C
 
 
 17 findings in intellicrack\core\analysis\radare2_bypass_generator.py
@@ -736,21 +738,21 @@ intellicrack\core\analysis\radare2_vulnerability_engine.py:541: '_detect_memory_
 
 intellicrack\core\analysis\radare2_vulnerability_engine.py:429: '_detect_integer_overflows' has rank D
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:2188: '_analyze_dongle_bypass_opportunities' has rank D
+intellicrack\core\analysis\radare2_vulnerability_engine.py:2189: '_analyze_dongle_bypass_opportunities' has rank D
 
 intellicrack\core\analysis\radare2_vulnerability_engine.py:977: '_detect_license_bypass_vulns' has rank D
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:2003: '_analyze_hardware_protections' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:2004: '_analyze_hardware_protections' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:2275: '_analyze_commercial_licenses' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:2276: '_analyze_commercial_licenses' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:1826: '_analyze_cet_bypass_opportunities' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:1827: '_analyze_cet_bypass_opportunities' has rank C
 
 intellicrack\core\analysis\radare2_vulnerability_engine.py:877: '_detect_path_traversal' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:1905: '_analyze_cfi_bypass_opportunities' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:1906: '_analyze_cfi_bypass_opportunities' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:2106: '_analyze_tpm_bypass_opportunities' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:2107: '_analyze_tpm_bypass_opportunities' has rank C
 
 intellicrack\core\analysis\radare2_vulnerability_engine.py:359: '_detect_format_string_bugs' has rank C
 
@@ -758,9 +760,9 @@ intellicrack\core\analysis\radare2_vulnerability_engine.py:788: '_detect_code_in
 
 intellicrack\core\analysis\radare2_vulnerability_engine.py:1195: '_create_vulnerability_summary' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:1760: '_analyze_modern_protections' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:1761: '_analyze_modern_protections' has rank C
 
-intellicrack\core\analysis\radare2_vulnerability_engine.py:1559: '_generate_format_string_payload' has rank C
+intellicrack\core\analysis\radare2_vulnerability_engine.py:1557: '_generate_format_string_payload' has rank C
 
 
 16 findings in intellicrack\core\patching\license_check_remover.py
@@ -835,35 +837,35 @@ tests\unit\core\analysis\test_automated_patch_agent.py:308: 'test_serial_keygen_
 
 15 findings in intellicrack\cli\cli.py
 
-intellicrack\cli\cli.py:1193: 'run' has rank D
+intellicrack\cli\cli.py:1231: 'run' has rank D
 
-intellicrack\cli\cli.py:182: 'scan' has rank D
+intellicrack\cli\cli.py:954: 'basic_analyze' has rank D
 
-intellicrack\cli\cli.py:907: 'basic_analyze' has rank D
+intellicrack\cli\cli.py:2789: 'cert_rollback' has rank D
 
-intellicrack\cli\cli.py:2747: 'cert_rollback' has rank D
+intellicrack\cli\cli.py:1775: 'ai_analyze' has rank C
 
-intellicrack\cli\cli.py:1733: 'ai_analyze' has rank C
+intellicrack\cli\cli.py:226: '_display_vulnerability_summary_cli' has rank C
 
-intellicrack\cli\cli.py:1487: 'ai_generate' has rank C
+intellicrack\cli\cli.py:1528: 'ai_generate' has rank C
 
-intellicrack\cli\cli.py:2335: 'frida_run' has rank C
+intellicrack\cli\cli.py:2377: 'frida_run' has rank C
 
-intellicrack\cli\cli.py:2126: 'task' has rank C
+intellicrack\cli\cli.py:2168: 'task' has rank C
 
-intellicrack\cli\cli.py:1390: 'auto_exploit' has rank C
+intellicrack\cli\cli.py:1429: 'auto_exploit' has rank C
 
-intellicrack\cli\cli.py:1644: 'test' has rank C
+intellicrack\cli\cli.py:1686: 'test' has rank C
 
-intellicrack\cli\cli.py:2529: 'cert_bypass' has rank C
+intellicrack\cli\cli.py:2571: 'cert_bypass' has rank C
 
-intellicrack\cli\cli.py:2441: 'cert_detect' has rank C
+intellicrack\cli\cli.py:2483: 'cert_detect' has rank C
 
-intellicrack\cli\cli.py:750: '_display_ai_integration_results' has rank C
+intellicrack\cli\cli.py:772: '_display_ai_integration_results' has rank C
 
-intellicrack\cli\cli.py:807: 'analyze' has rank C
+intellicrack\cli\cli.py:829: 'analyze' has rank C
 
-intellicrack\cli\cli.py:1887: 'autonomous' has rank C
+intellicrack\cli\cli.py:1929: 'autonomous' has rank C
 
 
 15 findings in intellicrack\core\analysis\angr_enhancements.py
@@ -872,21 +874,21 @@ intellicrack\core\analysis\angr_enhancements.py:816: 'CreateFileW' has rank D
 
 intellicrack\core\analysis\angr_enhancements.py:819: 'run' has rank D
 
-intellicrack\core\analysis\angr_enhancements.py:1144: 'VirtualAlloc' has rank D
+intellicrack\core\analysis\angr_enhancements.py:1136: 'VirtualAlloc' has rank D
 
-intellicrack\core\analysis\angr_enhancements.py:1147: 'run' has rank D
+intellicrack\core\analysis\angr_enhancements.py:1139: 'run' has rank D
 
-intellicrack\core\analysis\angr_enhancements.py:1340: 'MessageBoxA' has rank C
+intellicrack\core\analysis\angr_enhancements.py:1332: 'MessageBoxA' has rank C
 
-intellicrack\core\analysis\angr_enhancements.py:1343: 'run' has rank C
+intellicrack\core\analysis\angr_enhancements.py:1335: 'run' has rank C
 
-intellicrack\core\analysis\angr_enhancements.py:992: 'WriteFile' has rank C
+intellicrack\core\analysis\angr_enhancements.py:988: 'WriteFile' has rank C
 
-intellicrack\core\analysis\angr_enhancements.py:995: 'run' has rank C
+intellicrack\core\analysis\angr_enhancements.py:991: 'run' has rank C
 
-intellicrack\core\analysis\angr_enhancements.py:1275: 'NtQueryInformationProcess' has rank C
+intellicrack\core\analysis\angr_enhancements.py:1267: 'NtQueryInformationProcess' has rank C
 
-intellicrack\core\analysis\angr_enhancements.py:1278: 'run' has rank C
+intellicrack\core\analysis\angr_enhancements.py:1270: 'run' has rank C
 
 intellicrack\core\analysis\angr_enhancements.py:192: '_calculate_path_score' has rank C
 
@@ -934,33 +936,33 @@ tests\core\analysis\test_symbol_resolver_production.py:1044: 'test_resolve_cross
 
 14 findings in intellicrack\utils\runtime\runner_functions.py
 
-intellicrack\utils\runtime\runner_functions.py:1996: '_run_ghidra_thread' has rank E
+intellicrack\utils\runtime\runner_functions.py:1999: '_run_ghidra_thread' has rank E
 
-intellicrack\utils\runtime\runner_functions.py:1750: 'run_network_analysis' has rank E
+intellicrack\utils\runtime\runner_functions.py:1753: 'run_network_analysis' has rank E
 
-intellicrack\utils\runtime\runner_functions.py:790: 'run_advanced_ghidra_analysis' has rank D
+intellicrack\utils\runtime\runner_functions.py:793: 'run_advanced_ghidra_analysis' has rank D
 
-intellicrack\utils\runtime\runner_functions.py:1613: 'run_memory_analysis' has rank D
+intellicrack\utils\runtime\runner_functions.py:1616: 'run_memory_analysis' has rank D
 
-intellicrack\utils\runtime\runner_functions.py:960: 'process_ghidra_analysis_results' has rank D
+intellicrack\utils\runtime\runner_functions.py:963: 'process_ghidra_analysis_results' has rank D
 
-intellicrack\utils\runtime\runner_functions.py:2068: 'run_deep_license_analysis' has rank C
+intellicrack\utils\runtime\runner_functions.py:2071: 'run_deep_license_analysis' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:2149: 'run_frida_analysis' has rank C
+intellicrack\utils\runtime\runner_functions.py:2152: 'run_frida_analysis' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:623: 'run_gpu_accelerated_analysis' has rank C
+intellicrack\utils\runtime\runner_functions.py:626: 'run_gpu_accelerated_analysis' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:3197: 'run_ghidra_analysis_gui' has rank C
+intellicrack\utils\runtime\runner_functions.py:3202: 'run_ghidra_analysis_gui' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:2333: 'run_dynamic_instrumentation' has rank C
+intellicrack\utils\runtime\runner_functions.py:2336: 'run_dynamic_instrumentation' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:3052: '_apply_single_patch' has rank C
+intellicrack\utils\runtime\runner_functions.py:3057: '_apply_single_patch' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:188: 'run_ssl_tls_interceptor' has rank C
+intellicrack\utils\runtime\runner_functions.py:191: 'run_ssl_tls_interceptor' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:2705: 'run_autonomous_patching' has rank C
+intellicrack\utils\runtime\runner_functions.py:2708: 'run_autonomous_patching' has rank C
 
-intellicrack\utils\runtime\runner_functions.py:2564: 'run_frida_script' has rank C
+intellicrack\utils\runtime\runner_functions.py:2567: 'run_frida_script' has rank C
 
 
 14 findings in tests\unit\core\analysis\test_radare2_json_standardizer.py
@@ -1077,56 +1079,56 @@ intellicrack\core\protection_bypass\tpm_bypass.py:990: 'detect_tpm_version' has 
 
 12 findings in intellicrack\utils\exploitation\exploitation.py
 
-intellicrack\utils\exploitation\exploitation.py:3939: '_generate_key_by_algorithm' has rank F
+intellicrack\utils\exploitation\exploitation.py:3929: '_generate_key_by_algorithm' has rank F
 
 intellicrack\utils\exploitation\exploitation.py:981: 'verify_patches_without_applying' has rank E
 
-intellicrack\utils\exploitation\exploitation.py:4359: '_validate_key_format' has rank E
+intellicrack\utils\exploitation\exploitation.py:4349: '_validate_key_format' has rank E
 
 intellicrack\utils\exploitation\exploitation.py:812: 'run_automated_patch_agent' has rank D
 
-intellicrack\utils\exploitation\exploitation.py:3574: '_find_dll_hijack_opportunities' has rank D
+intellicrack\utils\exploitation\exploitation.py:3564: '_find_dll_hijack_opportunities' has rank D
 
-intellicrack\utils\exploitation\exploitation.py:4289: '_analyze_key_patterns' has rank D
+intellicrack\utils\exploitation\exploitation.py:4279: '_analyze_key_patterns' has rank D
 
 intellicrack\utils\exploitation\exploitation.py:2719: 'run_patch_validation' has rank C
 
-intellicrack\utils\exploitation\exploitation.py:3808: '_detect_license_algorithm' has rank C
+intellicrack\utils\exploitation\exploitation.py:3798: '_detect_license_algorithm' has rank C
 
 intellicrack\utils\exploitation\exploitation.py:1198: '_analyze_key_algorithm' has rank C
 
-intellicrack\utils\exploitation\exploitation.py:4168: '_validate_generated_key' has rank C
+intellicrack\utils\exploitation\exploitation.py:4158: '_validate_generated_key' has rank C
 
 intellicrack\utils\exploitation\exploitation.py:3158: '_analyze_target_vulnerabilities' has rank C
 
-intellicrack\utils\exploitation\exploitation.py:4603: 'run_patch_preview' has rank C
+intellicrack\utils\exploitation\exploitation.py:4593: 'run_patch_preview' has rank C
 
 
 12 findings in intellicrack\utils\runtime\additional_runners.py
 
-intellicrack\utils\runtime\additional_runners.py:2233: '_is_license_check_pattern' has rank D
+intellicrack\utils\runtime\additional_runners.py:2235: '_is_license_check_pattern' has rank D
 
-intellicrack\utils\runtime\additional_runners.py:1307: '_detect_license_dongles' has rank C
+intellicrack\utils\runtime\additional_runners.py:1309: '_detect_license_dongles' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:65: 'run_comprehensive_analysis' has rank C
+intellicrack\utils\runtime\additional_runners.py:67: 'run_comprehensive_analysis' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:1804: '_verify_execution_testing' has rank C
+intellicrack\utils\runtime\additional_runners.py:1806: '_verify_execution_testing' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:2106: '_verify_patch_integrity' has rank C
+intellicrack\utils\runtime\additional_runners.py:2108: '_verify_patch_integrity' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:913: 'load_ai_model' has rank C
+intellicrack\utils\runtime\additional_runners.py:915: 'load_ai_model' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:994: '_detect_usb_dongles' has rank C
+intellicrack\utils\runtime\additional_runners.py:996: '_detect_usb_dongles' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:1938: '_verify_protection_bypass' has rank C
+intellicrack\utils\runtime\additional_runners.py:1940: '_verify_protection_bypass' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:2021: '_verify_license_bypass' has rank C
+intellicrack\utils\runtime\additional_runners.py:2023: '_verify_license_bypass' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:1155: '_detect_dongle_processes' has rank C
+intellicrack\utils\runtime\additional_runners.py:1157: '_detect_dongle_processes' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:2697: 'run_weak_crypto_detection' has rank C
+intellicrack\utils\runtime\additional_runners.py:2699: 'run_weak_crypto_detection' has rank C
 
-intellicrack\utils\runtime\additional_runners.py:2772: 'run_generate_patch_suggestions' has rank C
+intellicrack\utils\runtime\additional_runners.py:2774: 'run_generate_patch_suggestions' has rank C
 
 
 12 findings in tests\functional\memory_forensics\test_real_memory_forensics.py
@@ -1210,38 +1212,38 @@ intellicrack\ai\code_analysis_tools.py:625: 'get_analysis_suggestions' has rank 
 
 11 findings in intellicrack\core\analysis\behavioral_analysis.py
 
-intellicrack\core\analysis\behavioral_analysis.py:1310: '_detect_code_obfuscation' has rank D
+intellicrack\core\analysis\behavioral_analysis.py:1304: '_detect_code_obfuscation' has rank D
 
-intellicrack\core\analysis\behavioral_analysis.py:1222: '_detect_sandbox_artifacts' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1218: '_detect_sandbox_artifacts' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:967: '_detect_debugger_presence' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:965: '_detect_debugger_presence' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1272: '_detect_memory_protections' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1266: '_detect_memory_protections' has rank C
 
 intellicrack\core\analysis\behavioral_analysis.py:115: 'start' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1045: '_detect_vm_artifacts' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1043: '_detect_vm_artifacts' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1413: 'run_analysis' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1405: 'run_analysis' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:938: 'AntiAnalysisDetector' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:936: 'AntiAnalysisDetector' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1588: '_analyze_behavioral_patterns' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1580: '_analyze_behavioral_patterns' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1146: '_detect_process_hollowing' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1144: '_detect_process_hollowing' has rank C
 
-intellicrack\core\analysis\behavioral_analysis.py:1178: '_detect_api_hooks' has rank C
+intellicrack\core\analysis\behavioral_analysis.py:1174: '_detect_api_hooks' has rank C
 
 
 11 findings in intellicrack\core\analysis\radare2_signatures.py
 
-intellicrack\core\analysis\radare2_signatures.py:891: '_check_vulnerability_signatures' has rank F
+intellicrack\core\analysis\radare2_signatures.py:895: '_check_vulnerability_signatures' has rank F
 
-intellicrack\core\analysis\radare2_signatures.py:1022: '_apply_custom_patterns' has rank F
+intellicrack\core\analysis\radare2_signatures.py:1028: '_apply_custom_patterns' has rank F
 
 intellicrack\core\analysis\radare2_signatures.py:616: '_detect_anti_analysis_functions' has rank E
 
-intellicrack\core\analysis\radare2_signatures.py:758: '_identify_license_validation_functions' has rank E
+intellicrack\core\analysis\radare2_signatures.py:760: '_identify_license_validation_functions' has rank E
 
 intellicrack\core\analysis\radare2_signatures.py:404: '_detect_compiler_artifacts' has rank D
 
@@ -1335,27 +1337,27 @@ intellicrack\core\vulnerability_research\binary_differ.py:938: '_assess_function
 
 11 findings in intellicrack\ui\dialogs\ai_coding_assistant_dialog.py
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3287: 'generate_bypass' has rank F
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3289: 'generate_bypass' has rank F
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3597: 'ai_generate_license_bypass' has rank D
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3604: 'ai_generate_license_bypass' has rank D
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3816: 'send_quick_license_message' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3823: 'send_quick_license_message' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3137: 'handle_license_ai_message' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3139: 'handle_license_ai_message' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3904: '_classify_quick_license_query' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:3911: '_classify_quick_license_query' has rank C
 
 intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:447: 'load_available_models' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:1647: 'execute_license_bypass_script' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:1649: 'execute_license_bypass_script' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:1772: '_execute_keygen_script' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:1774: '_execute_keygen_script' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4442: 'process_ai_request' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4449: 'process_ai_request' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4515: 'run_current_script' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4522: 'run_current_script' has rank C
 
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4720: '_format_analysis_results' has rank C
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py:4727: '_format_analysis_results' has rank C
 
 
 11 findings in intellicrack\ui\dialogs\model_finetuning_dialog.py
@@ -1460,25 +1462,25 @@ tests\unit\core\analysis\test_vulnerability_engine.py:257: 'test_export_table_vu
 
 10 findings in intellicrack\core\analysis\cfg_explorer.py
 
-intellicrack\core\analysis\cfg_explorer.py:2415: 'run_deep_cfg_analysis' has rank E
+intellicrack\core\analysis\cfg_explorer.py:2414: 'run_deep_cfg_analysis' has rank E
 
-intellicrack\core\analysis\cfg_explorer.py:1943: 'analyze_cfg' has rank E
+intellicrack\core\analysis\cfg_explorer.py:1942: 'analyze_cfg' has rank E
 
-intellicrack\core\analysis\cfg_explorer.py:2112: '_generate_analysis_summary' has rank E
+intellicrack\core\analysis\cfg_explorer.py:2111: '_generate_analysis_summary' has rank E
 
-intellicrack\core\analysis\cfg_explorer.py:998: '_create_enhanced_function_graph' has rank C
+intellicrack\core\analysis\cfg_explorer.py:997: '_create_enhanced_function_graph' has rank C
 
-intellicrack\core\analysis\cfg_explorer.py:2223: 'export_json' has rank C
+intellicrack\core\analysis\cfg_explorer.py:2222: 'export_json' has rank C
 
 intellicrack\core\analysis\cfg_explorer.py:609: 'spring_layout' has rank C
 
-intellicrack\core\analysis\cfg_explorer.py:2571: 'run_cfg_explorer' has rank C
+intellicrack\core\analysis\cfg_explorer.py:2570: 'run_cfg_explorer' has rank C
 
 intellicrack\core\analysis\cfg_explorer.py:522: 'betweenness_centrality' has rank C
 
-intellicrack\core\analysis\cfg_explorer.py:1083: '_calculate_block_complexity' has rank C
+intellicrack\core\analysis\cfg_explorer.py:1082: '_calculate_block_complexity' has rank C
 
-intellicrack\core\analysis\cfg_explorer.py:1623: 'find_license_check_patterns' has rank C
+intellicrack\core\analysis\cfg_explorer.py:1622: 'find_license_check_patterns' has rank C
 
 
 10 findings in intellicrack\core\analysis\control_flow_deobfuscation.py
@@ -1531,28 +1533,28 @@ intellicrack\core\analysis\opaque_predicate_analyzer.py:1066: '_match_modulo_inv
 
 intellicrack\core\analysis\radare2_esil_emulator.py:538: 'step_instruction' has rank E
 
-intellicrack\core\analysis\radare2_esil_emulator.py:1169: 'find_license_checks' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:1167: 'find_license_checks' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:706: '_get_memory_accesses' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:704: '_get_memory_accesses' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:916: '_eval_binop' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:914: '_eval_binop' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:970: '_eval_compare' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:968: '_eval_compare' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:875: '_eval_node' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:873: '_eval_node' has rank C
 
 intellicrack\core\analysis\radare2_esil_emulator.py:235: '_setup_esil_vm' has rank C
 
 intellicrack\core\analysis\radare2_esil_emulator.py:310: '_setup_memory_regions' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:1129: '_extract_call_arguments' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:1127: '_extract_call_arguments' has rank C
 
-intellicrack\core\analysis\radare2_esil_emulator.py:1053: '_check_trap_conditions' has rank C
+intellicrack\core\analysis\radare2_esil_emulator.py:1051: '_check_trap_conditions' has rank C
 
 
 10 findings in intellicrack\core\vulnerability_research\fuzzing_engine.py
 
-intellicrack\core\vulnerability_research\fuzzing_engine.py:2278: '_generate_crash_recommendations' has rank E
+intellicrack\core\vulnerability_research\fuzzing_engine.py:2280: '_generate_crash_recommendations' has rank E
 
 intellicrack\core\vulnerability_research\fuzzing_engine.py:1602: '_parse_gdb_output' has rank D
 
@@ -1570,35 +1572,35 @@ intellicrack\core\vulnerability_research\fuzzing_engine.py:133: 'start_fuzzing' 
 
 intellicrack\core\vulnerability_research\fuzzing_engine.py:386: '_mutation_fuzzing' has rank C
 
-intellicrack\core\vulnerability_research\fuzzing_engine.py:2071: '_calculate_crash_severity' has rank C
+intellicrack\core\vulnerability_research\fuzzing_engine.py:2073: '_calculate_crash_severity' has rank C
 
 
 10 findings in intellicrack\ui\dialogs\frida_manager_dialog.py
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:596: 'setup_connections' has rank F
+intellicrack\ui\dialogs\frida_manager_dialog.py:597: 'setup_connections' has rank F
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:788: 'check_frida_availability' has rank D
+intellicrack\ui\dialogs\frida_manager_dialog.py:787: 'check_frida_availability' has rank D
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:932: 'load_settings' has rank D
+intellicrack\ui\dialogs\frida_manager_dialog.py:925: 'load_settings' has rank D
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:1125: 'test_scripts_in_qemu' has rank D
+intellicrack\ui\dialogs\frida_manager_dialog.py:1116: 'test_scripts_in_qemu' has rank D
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:996: 'save_settings' has rank D
+intellicrack\ui\dialogs\frida_manager_dialog.py:989: 'save_settings' has rank D
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:3317: 'closeEvent' has rank C
+intellicrack\ui\dialogs\frida_manager_dialog.py:3300: 'closeEvent' has rank C
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:1064: 'save_generated_scripts' has rank C
+intellicrack\ui\dialogs\frida_manager_dialog.py:1057: 'save_generated_scripts' has rank C
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:2554: 'update_performance_stats' has rank C
+intellicrack\ui\dialogs\frida_manager_dialog.py:2537: 'update_performance_stats' has rank C
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:3118: 'preview_ai_script' has rank C
+intellicrack\ui\dialogs\frida_manager_dialog.py:3101: 'preview_ai_script' has rank C
 
-intellicrack\ui\dialogs\frida_manager_dialog.py:3213: 'deploy_ai_script' has rank C
+intellicrack\ui\dialogs\frida_manager_dialog.py:3196: 'deploy_ai_script' has rank C
 
 
 10 findings in intellicrack\ui\dialogs\script_generator_dialog.py
 
-intellicrack\ui\dialogs\script_generator_dialog.py:1896: 'analyze_script' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:1886: 'analyze_script' has rank C
 
 intellicrack\ui\dialogs\script_generator_dialog.py:550: 'test_performance' has rank C
 
@@ -1606,40 +1608,40 @@ intellicrack\ui\dialogs\script_generator_dialog.py:498: 'test_security' has rank
 
 intellicrack\ui\dialogs\script_generator_dialog.py:824: 'update_syntax_display' has rank C
 
-intellicrack\ui\dialogs\script_generator_dialog.py:1684: 'get_bypass_config' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:1674: 'get_bypass_config' has rank C
 
 intellicrack\ui\dialogs\script_generator_dialog.py:746: 'generate_summary' has rank C
 
-intellicrack\ui\dialogs\script_generator_dialog.py:934: 'update_effectiveness_display' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:926: 'update_effectiveness_display' has rank C
 
-intellicrack\ui\dialogs\script_generator_dialog.py:1014: 'export_results' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:1004: 'export_results' has rank C
 
-intellicrack\ui\dialogs\script_generator_dialog.py:1833: 'save_script' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:1823: 'save_script' has rank C
 
-intellicrack\ui\dialogs\script_generator_dialog.py:1961: '_format_analysis_results' has rank C
+intellicrack\ui\dialogs\script_generator_dialog.py:1951: '_format_analysis_results' has rank C
 
 
 10 findings in intellicrack\ui\tabs\tools_tab.py
 
-intellicrack\ui\tabs\tools_tab.py:1842: 'service_scan' has rank C
+intellicrack\ui\tabs\tools_tab.py:1840: 'service_scan' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2141: 'run_protection_scanner' has rank C
+intellicrack\ui\tabs\tools_tab.py:2139: 'run_protection_scanner' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2203: 'run_vulnerability_engine' has rank C
+intellicrack\ui\tabs\tools_tab.py:2201: 'run_vulnerability_engine' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:1952: 'run_frida_analysis' has rank C
+intellicrack\ui\tabs\tools_tab.py:1950: 'run_frida_analysis' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2090: 'run_ghidra_analysis' has rank C
+intellicrack\ui\tabs\tools_tab.py:2088: 'run_ghidra_analysis' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2260: 'run_taint_analysis' has rank C
+intellicrack\ui\tabs\tools_tab.py:2258: 'run_taint_analysis' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:1132: 'analyze_entropy' has rank C
+intellicrack\ui\tabs\tools_tab.py:1130: 'analyze_entropy' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2307: 'run_ai_script_generator' has rank C
+intellicrack\ui\tabs\tools_tab.py:2305: 'run_ai_script_generator' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2446: 'run_rop_generator' has rank C
+intellicrack\ui\tabs\tools_tab.py:2444: 'run_rop_generator' has rank C
 
-intellicrack\ui\tabs\tools_tab.py:2500: 'run_payload_engine' has rank C
+intellicrack\ui\tabs\tools_tab.py:2498: 'run_payload_engine' has rank C
 
 
 10 findings in tests\security\test_vulnerability_validation.py
@@ -1667,40 +1669,40 @@ tests\security\test_vulnerability_validation.py:456: 'test_memory_corruption_pro
 
 9 findings in intellicrack\ai\model_format_converter.py
 
-intellicrack\ai\model_format_converter.py:397: '_convert_pytorch_to_safetensors' has rank D
+intellicrack\ai\model_format_converter.py:401: '_convert_pytorch_to_safetensors' has rank D
 
-intellicrack\ai\model_format_converter.py:692: '_run_inference' has rank C
+intellicrack\ai\model_format_converter.py:696: '_run_inference' has rank C
 
-intellicrack\ai\model_format_converter.py:272: '_convert_pytorch_to_onnx' has rank C
+intellicrack\ai\model_format_converter.py:276: '_convert_pytorch_to_onnx' has rank C
 
 intellicrack\ai\model_format_converter.py:156: 'convert_model' has rank C
 
 intellicrack\ai\model_format_converter.py:106: 'ModelFormatConverter' has rank C
 
-intellicrack\ai\model_format_converter.py:773: 'get_model_info' has rank C
+intellicrack\ai\model_format_converter.py:777: 'get_model_info' has rank C
 
-intellicrack\ai\model_format_converter.py:238: '_detect_format' has rank C
+intellicrack\ai\model_format_converter.py:242: '_detect_format' has rank C
 
-intellicrack\ai\model_format_converter.py:870: 'analyze_model_architecture' has rank C
+intellicrack\ai\model_format_converter.py:874: 'analyze_model_architecture' has rank C
 
-intellicrack\ai\model_format_converter.py:924: 'convert_model_with_automodel' has rank C
+intellicrack\ai\model_format_converter.py:928: 'convert_model_with_automodel' has rank C
 
 
 9 findings in intellicrack\core\analysis\multi_format_analyzer.py
 
-intellicrack\core\analysis\multi_format_analyzer.py:1237: 'run_multi_format_analysis' has rank F
+intellicrack\core\analysis\multi_format_analyzer.py:1257: 'run_multi_format_analysis' has rank F
 
 intellicrack\core\analysis\multi_format_analyzer.py:362: 'analyze_elf' has rank D
 
 intellicrack\core\analysis\multi_format_analyzer.py:146: 'identify_format' has rank D
 
-intellicrack\core\analysis\multi_format_analyzer.py:474: 'analyze_macho' has rank C
+intellicrack\core\analysis\multi_format_analyzer.py:486: 'analyze_macho' has rank C
 
-intellicrack\core\analysis\multi_format_analyzer.py:757: 'analyze_apk' has rank C
+intellicrack\core\analysis\multi_format_analyzer.py:773: 'analyze_apk' has rank C
 
-intellicrack\core\analysis\multi_format_analyzer.py:857: 'analyze_jar' has rank C
+intellicrack\core\analysis\multi_format_analyzer.py:873: 'analyze_jar' has rank C
 
-intellicrack\core\analysis\multi_format_analyzer.py:1016: 'analyze_com' has rank C
+intellicrack\core\analysis\multi_format_analyzer.py:1032: 'analyze_com' has rank C
 
 intellicrack\core\analysis\multi_format_analyzer.py:240: 'analyze_binary' has rank C
 
@@ -1723,9 +1725,9 @@ intellicrack\core\exploitation\automated_unpacker.py:1579: '_detect_enigma_versi
 
 intellicrack\core\exploitation\automated_unpacker.py:1645: '_analyze_enigma_vm_handlers' has rank C
 
-intellicrack\core\exploitation\automated_unpacker.py:1978: '_parse_enigma_imports' has rank C
+intellicrack\core\exploitation\automated_unpacker.py:1980: '_parse_enigma_imports' has rank C
 
-intellicrack\core\exploitation\automated_unpacker.py:2756: '_dynamic_unpack' has rank C
+intellicrack\core\exploitation\automated_unpacker.py:2758: '_dynamic_unpack' has rank C
 
 
 9 findings in intellicrack\protection\intellicrack_protection_advanced.py
@@ -1906,13 +1908,13 @@ intellicrack\ai\enhanced_training_interface.py:864: '_forward_pass' has rank C
 
 intellicrack\ai\enhanced_training_interface.py:1060: '_get_learning_rate' has rank C
 
-intellicrack\ai\enhanced_training_interface.py:1870: '_forward_pass_with_params' has rank C
+intellicrack\ai\enhanced_training_interface.py:1866: '_forward_pass_with_params' has rank C
 
-intellicrack\ai\enhanced_training_interface.py:2553: 'update_ui_from_config' has rank C
+intellicrack\ai\enhanced_training_interface.py:2549: 'update_ui_from_config' has rank C
 
 intellicrack\ai\enhanced_training_interface.py:1460: 'analyze_dataset' has rank C
 
-intellicrack\ai\enhanced_training_interface.py:2468: 'update_config_from_ui' has rank C
+intellicrack\ai\enhanced_training_interface.py:2464: 'update_config_from_ui' has rank C
 
 
 8 findings in intellicrack\ai\model_performance_monitor.py
@@ -1936,40 +1938,40 @@ intellicrack\ai\model_performance_monitor.py:606: 'compare_models' has rank C
 
 8 findings in intellicrack\ai\script_generation_agent.py
 
-intellicrack\ai\script_generation_agent.py:925: '_check_network_activity' has rank C
+intellicrack\ai\script_generation_agent.py:921: '_check_network_activity' has rank C
 
-intellicrack\ai\script_generation_agent.py:1118: '_analyze_elf_imports' has rank C
+intellicrack\ai\script_generation_agent.py:1114: '_analyze_elf_imports' has rank C
 
 intellicrack\ai\script_generation_agent.py:277: '_extract_binary_path' has rank C
 
 intellicrack\ai\script_generation_agent.py:537: '_extract_strings_with_command' has rank C
 
-intellicrack\ai\script_generation_agent.py:1433: '_analyze_elf_format' has rank C
+intellicrack\ai\script_generation_agent.py:1429: '_analyze_elf_format' has rank C
 
-intellicrack\ai\script_generation_agent.py:2271: '_test_direct' has rank C
+intellicrack\ai\script_generation_agent.py:2265: '_test_direct' has rank C
 
-intellicrack\ai\script_generation_agent.py:2337: '_verify_bypass' has rank C
+intellicrack\ai\script_generation_agent.py:2331: '_verify_bypass' has rank C
 
-intellicrack\ai\script_generation_agent.py:2891: '_try_qemu_emulation' has rank C
+intellicrack\ai\script_generation_agent.py:2889: '_try_qemu_emulation' has rank C
 
 
 8 findings in intellicrack\core\analysis\concolic_executor.py
 
-intellicrack\core\analysis\concolic_executor.py:863: '_manual_decode_instruction' has rank E
+intellicrack\core\analysis\concolic_executor.py:886: '_manual_decode_instruction' has rank E
 
-intellicrack\core\analysis\concolic_executor.py:456: '_emulate_instruction' has rank D
+intellicrack\core\analysis\concolic_executor.py:458: '_emulate_instruction' has rank D
 
-intellicrack\core\analysis\concolic_executor.py:187: 'set_symbolic_value' has rank C
+intellicrack\core\analysis\concolic_executor.py:191: 'set_symbolic_value' has rank C
 
-intellicrack\core\analysis\concolic_executor.py:360: 'run' has rank C
+intellicrack\core\analysis\concolic_executor.py:362: 'run' has rank C
 
-intellicrack\core\analysis\concolic_executor.py:546: '_handle_jump' has rank C
+intellicrack\core\analysis\concolic_executor.py:548: '_handle_jump' has rank C
 
-intellicrack\core\analysis\concolic_executor.py:978: '_get_modrm_instruction_length' has rank C
+intellicrack\core\analysis\concolic_executor.py:999: '_get_modrm_instruction_length' has rank C
 
-intellicrack\core\analysis\concolic_executor.py:1316: '_find_license_check_address' has rank C
+intellicrack\core\analysis\concolic_executor.py:1333: '_find_license_check_address' has rank C
 
-intellicrack\core\analysis\concolic_executor.py:1409: '_native_analyze' has rank C
+intellicrack\core\analysis\concolic_executor.py:1426: '_native_analyze' has rank C
 
 
 8 findings in intellicrack\core\analysis\taint_analyzer.py
@@ -1993,7 +1995,7 @@ intellicrack\core\analysis\taint_analyzer.py:1139: '_analyze_interprocedural_tai
 
 8 findings in intellicrack\core\reporting\pdf_generator.py
 
-intellicrack\core\reporting\pdf_generator.py:1339: 'run_report_generation' has rank D
+intellicrack\core\reporting\pdf_generator.py:1331: 'run_report_generation' has rank D
 
 intellicrack\core\reporting\pdf_generator.py:256: '_generate_comprehensive_report' has rank D
 
@@ -2001,11 +2003,11 @@ intellicrack\core\reporting\pdf_generator.py:625: 'generate_html_report' has ran
 
 intellicrack\core\reporting\pdf_generator.py:502: '_add_pe_section_analysis' has rank C
 
-intellicrack\core\reporting\pdf_generator.py:1162: '_convert_html_to_pdf_reportlab' has rank C
+intellicrack\core\reporting\pdf_generator.py:1158: '_convert_html_to_pdf_reportlab' has rank C
 
 intellicrack\core\reporting\pdf_generator.py:205: 'generate_report' has rank C
 
-intellicrack\core\reporting\pdf_generator.py:1296: '_generate_analysis_summary' has rank C
+intellicrack\core\reporting\pdf_generator.py:1288: '_generate_analysis_summary' has rank C
 
 intellicrack\core\reporting\pdf_generator.py:779: 'export_analysis' has rank C
 
@@ -2050,11 +2052,11 @@ intellicrack\plugins\plugin_system.py:115: 'load_plugins' has rank C
 
 8 findings in intellicrack\plugins\custom_modules\hardware_dongle_emulator.py
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1860: '_handle_sentinel_query' has rank D
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1869: '_handle_sentinel_query' has rank D
 
 intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:965: 'control_transfer' has rank D
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:2002: '_handle_hasp_login' has rank C
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:2013: '_handle_hasp_login' has rank C
 
 intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1360: '_process_data_write' has rank C
 
@@ -2062,7 +2064,7 @@ intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:480: 'write_file
 
 intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:925: 'find_dongles' has rank C
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1937: '_handle_hasp_encrypt' has rank C
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1946: '_handle_hasp_encrypt' has rank C
 
 intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:1435: '_process_latched_command' has rank C
 
@@ -2259,9 +2261,9 @@ tests\unit\core\network\test_protocol_fingerprinter.py:22: 'TestProtocolFingerpr
 
 7 findings in intellicrack\ai\ai_script_generator.py
 
-intellicrack\ai\ai_script_generator.py:2579: '_insert_enhancement' has rank D
+intellicrack\ai\ai_script_generator.py:2571: '_insert_enhancement' has rank D
 
-intellicrack\ai\ai_script_generator.py:1970: '_detect_protection_types' has rank D
+intellicrack\ai\ai_script_generator.py:1964: '_detect_protection_types' has rank D
 
 intellicrack\ai\ai_script_generator.py:1844: 'refine_script' has rank C
 
@@ -2269,26 +2271,26 @@ intellicrack\ai\ai_script_generator.py:383: '_insert_grouped_enhancements' has r
 
 intellicrack\ai\ai_script_generator.py:1629: 'generate_frida_script' has rank C
 
-intellicrack\ai\ai_script_generator.py:2025: '_assess_difficulty' has rank C
+intellicrack\ai\ai_script_generator.py:2019: '_assess_difficulty' has rank C
 
 intellicrack\ai\ai_script_generator.py:1711: 'generate_ghidra_script' has rank C
 
 
 7 findings in intellicrack\ai\model_manager_module.py
 
-intellicrack\ai\model_manager_module.py:1124: '_predict_vulnerabilities' has rank D
+intellicrack\ai\model_manager_module.py:1122: '_predict_vulnerabilities' has rank D
 
-intellicrack\ai\model_manager_module.py:1809: 'train_model' has rank D
+intellicrack\ai\model_manager_module.py:1807: 'train_model' has rank D
 
-intellicrack\ai\model_manager_module.py:1029: '_optimize_loaded_model' has rank C
+intellicrack\ai\model_manager_module.py:1027: '_optimize_loaded_model' has rank C
 
-intellicrack\ai\model_manager_module.py:1741: 'get_model_path' has rank C
+intellicrack\ai\model_manager_module.py:1739: 'get_model_path' has rank C
 
-intellicrack\ai\model_manager_module.py:2488: 'fine_tune_model' has rank C
+intellicrack\ai\model_manager_module.py:2486: 'fine_tune_model' has rank C
 
-intellicrack\ai\model_manager_module.py:2177: 'save_model' has rank C
+intellicrack\ai\model_manager_module.py:2175: 'save_model' has rank C
 
-intellicrack\ai\model_manager_module.py:2251: 'evaluate_model_with_split' has rank C
+intellicrack\ai\model_manager_module.py:2249: 'evaluate_model_with_split' has rank C
 
 
 7 findings in intellicrack\ai\qemu_manager.py
@@ -2301,7 +2303,7 @@ intellicrack\ai\qemu_manager.py:3413: 'copy_file_to_vm' has rank C
 
 intellicrack\ai\qemu_manager.py:2192: 'optimize_snapshot_storage' has rank C
 
-intellicrack\ai\qemu_manager.py:3937: 'test_frida_script_with_callback' has rank C
+intellicrack\ai\qemu_manager.py:3934: 'test_frida_script_with_callback' has rank C
 
 intellicrack\ai\qemu_manager.py:2601: 'perform_snapshot_maintenance' has rank C
 
@@ -2327,19 +2329,19 @@ intellicrack\core\analysis\binary_analyzer.py:1231: '_analyze_dex' has rank C
 
 7 findings in intellicrack\core\analysis\cryptographic_routine_detector.py
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1048: '_detect_hash_constants' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1040: '_detect_hash_constants' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1511: '_analyze_data_flow_region' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1503: '_analyze_data_flow_region' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1824: 'analyze_crypto_usage' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1816: 'analyze_crypto_usage' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1368: '_detect_ecc_point_ops' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1360: '_detect_ecc_point_ops' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1314: '_detect_feistel_structure' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1306: '_detect_feistel_structure' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1444: '_detect_lfsr_cipher' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1436: '_detect_lfsr_cipher' has rank C
 
-intellicrack\core\analysis\cryptographic_routine_detector.py:1945: 'main' has rank C
+intellicrack\core\analysis\cryptographic_routine_detector.py:1937: 'main' has rank C
 
 
 7 findings in intellicrack\core\analysis\ghidra_analyzer.py
@@ -2399,7 +2401,7 @@ intellicrack\core\license\keygen.py:477: '_determine_algorithm' has rank C
 
 intellicrack\core\license\keygen.py:412: '_find_patch_points' has rank C
 
-intellicrack\core\license\keygen.py:1152: 'synthesize_with_z3' has rank C
+intellicrack\core\license\keygen.py:1142: 'synthesize_with_z3' has rank C
 
 intellicrack\core\license\keygen.py:221: '_detect_crypto_constants' has rank C
 
@@ -2429,19 +2431,19 @@ intellicrack\core\vulnerability_research\vulnerability_analyzer.py:1796: '_conve
 
 7 findings in intellicrack\hexview\advanced_search.py
 
-intellicrack\hexview\advanced_search.py:631: '_is_whole_word_match' has rank C
+intellicrack\hexview\advanced_search.py:593: '_is_whole_word_match' has rank C
 
-intellicrack\hexview\advanced_search.py:1079: 'find_next' has rank C
+intellicrack\hexview\advanced_search.py:1032: 'find_next' has rank C
 
-intellicrack\hexview\advanced_search.py:1135: 'find_previous' has rank C
+intellicrack\hexview\advanced_search.py:1082: 'find_previous' has rank C
 
-intellicrack\hexview\advanced_search.py:529: '_find_matches_in_chunk' has rank C
+intellicrack\hexview\advanced_search.py:495: '_find_matches_in_chunk' has rank C
 
-intellicrack\hexview\advanced_search.py:1233: 'find_all' has rank C
+intellicrack\hexview\advanced_search.py:1167: 'find_all' has rank C
 
-intellicrack\hexview\advanced_search.py:426: '_compile_pattern' has rank C
+intellicrack\hexview\advanced_search.py:402: '_compile_pattern' has rank C
 
-intellicrack\hexview\advanced_search.py:1191: 'replace_all' has rank C
+intellicrack\hexview\advanced_search.py:1130: 'replace_all' has rank C
 
 
 7 findings in intellicrack\hexview\ai_bridge.py
@@ -2682,17 +2684,17 @@ intellicrack\cli\tutorial_system.py:1179: 'display_tutorial_structure_tree' has 
 
 6 findings in intellicrack\core\license_validation_bypass.py
 
-intellicrack\core\license_validation_bypass.py:1134: '_try_parse_openssh' has rank D
+intellicrack\core\license_validation_bypass.py:1132: '_try_parse_openssh' has rank D
 
-intellicrack\core\license_validation_bypass.py:538: '_analyze_crypto_api_usage' has rank C
+intellicrack\core\license_validation_bypass.py:536: '_analyze_crypto_api_usage' has rank C
 
-intellicrack\core\license_validation_bypass.py:811: '_read_openssl_bignum_10x' has rank C
+intellicrack\core\license_validation_bypass.py:809: '_read_openssl_bignum_10x' has rank C
 
-intellicrack\core\license_validation_bypass.py:290: '_extract_from_pe_resources' has rank C
+intellicrack\core\license_validation_bypass.py:288: '_extract_from_pe_resources' has rank C
 
-intellicrack\core\license_validation_bypass.py:328: '_extract_from_crypto_api_calls' has rank C
+intellicrack\core\license_validation_bypass.py:326: '_extract_from_crypto_api_calls' has rank C
 
-intellicrack\core\license_validation_bypass.py:1427: 'extract_ecc_keys_from_binary' has rank C
+intellicrack\core\license_validation_bypass.py:1425: 'extract_ecc_keys_from_binary' has rank C
 
 
 6 findings in intellicrack\core\subscription_validation_bypass.py
@@ -2727,17 +2729,17 @@ intellicrack\core\tool_discovery.py:841: '_search_windows_registry' has rank C
 
 6 findings in intellicrack\core\analysis\cross_tool_orchestrator.py
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:1586: '_correlate_strings' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:1582: '_correlate_strings' has rank C
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:972: 'run_parallel_analysis' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:968: 'run_parallel_analysis' has rank C
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:1540: '_correlate_functions' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:1536: '_correlate_functions' has rank C
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:606: '_merge_functions' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:604: '_merge_functions' has rank C
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:1076: '_run_ghidra_analysis_with_ipc' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:1072: '_run_ghidra_analysis_with_ipc' has rank C
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:1245: '_run_frida_analysis_with_ipc' has rank C
+intellicrack\core\analysis\cross_tool_orchestrator.py:1241: '_run_frida_analysis_with_ipc' has rank C
 
 
 6 findings in intellicrack\core\analysis\dynamic_analyzer.py
@@ -2757,17 +2759,17 @@ intellicrack\core\analysis\dynamic_analyzer.py:617: '_frida_memory_scan' has ran
 
 6 findings in intellicrack\core\analysis\fingerprint_engine.py
 
-intellicrack\core\analysis\fingerprint_engine.py:493: 'fingerprint_compiler' has rank D
+intellicrack\core\analysis\fingerprint_engine.py:505: 'fingerprint_compiler' has rank D
 
-intellicrack\core\analysis\fingerprint_engine.py:408: 'fingerprint_protection' has rank D
+intellicrack\core\analysis\fingerprint_engine.py:420: 'fingerprint_protection' has rank D
 
-intellicrack\core\analysis\fingerprint_engine.py:581: 'fingerprint_license_system' has rank D
+intellicrack\core\analysis\fingerprint_engine.py:593: 'fingerprint_license_system' has rank D
 
-intellicrack\core\analysis\fingerprint_engine.py:325: 'generate_fingerprint' has rank C
+intellicrack\core\analysis\fingerprint_engine.py:337: 'generate_fingerprint' has rank C
 
-intellicrack\core\analysis\fingerprint_engine.py:664: 'compare_fingerprints' has rank C
+intellicrack\core\analysis\fingerprint_engine.py:674: 'compare_fingerprints' has rank C
 
-intellicrack\core\analysis\fingerprint_engine.py:124: 'FingerprintEngine' has rank C
+intellicrack\core\analysis\fingerprint_engine.py:136: 'FingerprintEngine' has rank C
 
 
 6 findings in intellicrack\core\analysis\radare2_emulator.py
@@ -2787,17 +2789,17 @@ intellicrack\core\analysis\radare2_emulator.py:762: '_generate_buffer_overflow_e
 
 6 findings in intellicrack\core\analysis\vmprotect_detector.py
 
-intellicrack\core\analysis\vmprotect_detector.py:465: '_find_dispatcher' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:461: '_find_dispatcher' has rank C
 
-intellicrack\core\analysis\vmprotect_detector.py:586: '_find_vm_exit' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:582: '_find_vm_exit' has rank C
 
-intellicrack\core\analysis\vmprotect_detector.py:619: '_calculate_region_complexity' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:615: '_calculate_region_complexity' has rank C
 
-intellicrack\core\analysis\vmprotect_detector.py:679: '_calculate_junk_code_ratio' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:675: '_calculate_junk_code_ratio' has rank C
 
-intellicrack\core\analysis\vmprotect_detector.py:708: '_determine_protection_level' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:704: '_determine_protection_level' has rank C
 
-intellicrack\core\analysis\vmprotect_detector.py:761: '_analyze_control_flow' has rank C
+intellicrack\core\analysis\vmprotect_detector.py:757: '_analyze_control_flow' has rank C
 
 
 6 findings in intellicrack\core\certificate\layer_detector.py
@@ -2832,7 +2834,7 @@ intellicrack\core\network\traffic_analyzer.py:1371: 'generate_report' has rank C
 
 6 findings in intellicrack\core\processing\distributed_manager.py
 
-intellicrack\core\processing\distributed_manager.py:1333: 'wait_for_completion' has rank C
+intellicrack\core\processing\distributed_manager.py:1317: 'wait_for_completion' has rank C
 
 intellicrack\core\processing\distributed_manager.py:383: '_handle_client_connection' has rank C
 
@@ -2849,15 +2851,15 @@ intellicrack\core\processing\distributed_manager.py:795: '_run_task_analysis' ha
 
 intellicrack\hexview\hex_widget.py:522: 'viewportPaintEvent' has rank D
 
-intellicrack\hexview\hex_widget.py:1531: 'show_context_menu' has rank D
+intellicrack\hexview\hex_widget.py:1533: 'show_context_menu' has rank D
 
-intellicrack\hexview\hex_widget.py:2455: 'get_offset_at_position' has rank C
+intellicrack\hexview\hex_widget.py:2457: 'get_offset_at_position' has rank C
 
-intellicrack\hexview\hex_widget.py:2117: 'handle_navigation_key' has rank C
+intellicrack\hexview\hex_widget.py:2119: 'handle_navigation_key' has rank C
 
-intellicrack\hexview\hex_widget.py:2239: 'get_offset_from_position' has rank C
+intellicrack\hexview\hex_widget.py:2241: 'get_offset_from_position' has rank C
 
-intellicrack\hexview\hex_widget.py:1282: 'search' has rank C
+intellicrack\hexview\hex_widget.py:1284: 'search' has rank C
 
 
 6 findings in intellicrack\protection\icp_backend.py
@@ -2907,30 +2909,30 @@ intellicrack\ui\symbolic_execution.py:513: '_check_integer_overflow_constraint' 
 
 6 findings in intellicrack\utils\analysis\binary_analysis.py
 
-intellicrack\utils\analysis\binary_analysis.py:1053: 'analyze_traffic' has rank F
+intellicrack\utils\analysis\binary_analysis.py:1054: 'analyze_traffic' has rank F
 
-intellicrack\utils\analysis\binary_analysis.py:693: 'analyze_elf_with_lief' has rank D
+intellicrack\utils\analysis\binary_analysis.py:696: 'analyze_elf_with_lief' has rank D
 
-intellicrack\utils\analysis\binary_analysis.py:572: 'analyze_pe' has rank C
+intellicrack\utils\analysis\binary_analysis.py:575: 'analyze_pe' has rank C
 
-intellicrack\utils\analysis\binary_analysis.py:849: 'analyze_macho_with_lief' has rank C
+intellicrack\utils\analysis\binary_analysis.py:852: 'analyze_macho_with_lief' has rank C
 
-intellicrack\utils\analysis\binary_analysis.py:314: '_generate_ai_script_suggestions' has rank C
+intellicrack\utils\analysis\binary_analysis.py:319: '_generate_ai_script_suggestions' has rank C
 
-intellicrack\utils\analysis\binary_analysis.py:1650: '_optimized_entropy_analysis' has rank C
+intellicrack\utils\analysis\binary_analysis.py:1651: '_optimized_entropy_analysis' has rank C
 
 
 6 findings in intellicrack\utils\runtime\distributed_processing.py
 
-intellicrack\utils\runtime\distributed_processing.py:1180: '_gpu_pattern_matching' has rank D
+intellicrack\utils\runtime\distributed_processing.py:1173: '_gpu_pattern_matching' has rank D
 
-intellicrack\utils\runtime\distributed_processing.py:1310: '_gpu_ml_inference' has rank C
+intellicrack\utils\runtime\distributed_processing.py:1303: '_gpu_ml_inference' has rank C
 
-intellicrack\utils\runtime\distributed_processing.py:1129: '_run_cpu_fallback' has rank C
+intellicrack\utils\runtime\distributed_processing.py:1122: '_run_cpu_fallback' has rank C
 
-intellicrack\utils\runtime\distributed_processing.py:336: 'run_distributed_analysis' has rank C
+intellicrack\utils\runtime\distributed_processing.py:333: 'run_distributed_analysis' has rank C
 
-intellicrack\utils\runtime\distributed_processing.py:1405: 'run_dask_distributed_analysis' has rank C
+intellicrack\utils\runtime\distributed_processing.py:1398: 'run_dask_distributed_analysis' has rank C
 
 intellicrack\utils\runtime\distributed_processing.py:142: 'process_binary_chunks' has rank C
 
@@ -3169,7 +3171,7 @@ intellicrack\core\analysis\analysis_orchestrator.py:246: '_perform_static_analys
 
 5 findings in intellicrack\core\analysis\commercial_license_analyzer.py
 
-intellicrack\core\analysis\commercial_license_analyzer.py:2028: '_generate_codemeter_license_info' has rank D
+intellicrack\core\analysis\commercial_license_analyzer.py:2024: '_generate_codemeter_license_info' has rank D
 
 intellicrack\core\analysis\commercial_license_analyzer.py:1144: '_generate_codemeter_bypass' has rank C
 
@@ -3177,27 +3179,27 @@ intellicrack\core\analysis\commercial_license_analyzer.py:661: '_generate_hasp_b
 
 intellicrack\core\analysis\commercial_license_analyzer.py:376: '_generate_flexlm_bypass' has rank C
 
-intellicrack\core\analysis\commercial_license_analyzer.py:1925: '_generate_hasp_info_response' has rank C
+intellicrack\core\analysis\commercial_license_analyzer.py:1921: '_generate_hasp_info_response' has rank C
 
 
 5 findings in intellicrack\core\analysis\export_analyzer.py
 
-intellicrack\core\analysis\export_analyzer.py:209: '_parse_export_functions' has rank D
+intellicrack\core\analysis\export_analyzer.py:217: '_parse_export_functions' has rank D
 
-intellicrack\core\analysis\export_analyzer.py:543: 'get_export_summary' has rank C
+intellicrack\core\analysis\export_analyzer.py:551: 'get_export_summary' has rank C
 
-intellicrack\core\analysis\export_analyzer.py:383: 'categorize_license_exports' has rank C
+intellicrack\core\analysis\export_analyzer.py:391: 'categorize_license_exports' has rank C
 
-intellicrack\core\analysis\export_analyzer.py:523: 'get_export_statistics' has rank C
+intellicrack\core\analysis\export_analyzer.py:531: 'get_export_statistics' has rank C
 
-intellicrack\core\analysis\export_analyzer.py:589: 'analyze_export_usage' has rank C
+intellicrack\core\analysis\export_analyzer.py:597: 'analyze_export_usage' has rank C
 
 
 5 findings in intellicrack\core\analysis\network_forensics_engine.py
 
 intellicrack\core\analysis\network_forensics_engine.py:211: 'extract_artifacts' has rank D
 
-intellicrack\core\analysis\network_forensics_engine.py:372: 'detect_protocols' has rank D
+intellicrack\core\analysis\network_forensics_engine.py:370: 'detect_protocols' has rank D
 
 intellicrack\core\analysis\network_forensics_engine.py:38: 'analyze_capture' has rank D
 
@@ -3229,7 +3231,7 @@ intellicrack\core\analysis\radare2_binary_diff.py:314: 'get_string_diffs' has ra
 
 intellicrack\core\analysis\radare2_binary_diff.py:388: 'get_import_diffs' has rank C
 
-intellicrack\core\analysis\radare2_binary_diff.py:458: '_calculate_function_similarity' has rank C
+intellicrack\core\analysis\radare2_binary_diff.py:454: '_calculate_function_similarity' has rank C
 
 
 5 findings in intellicrack\core\analysis\yara_pattern_engine.py
@@ -3247,15 +3249,15 @@ intellicrack\core\analysis\yara_pattern_engine.py:941: '_calculate_confidence' h
 
 5 findings in intellicrack\core\processing\memory_optimizer.py
 
-intellicrack\core\processing\memory_optimizer.py:496: 'check_for_memory_leaks' has rank D
+intellicrack\core\processing\memory_optimizer.py:498: 'check_for_memory_leaks' has rank D
 
-intellicrack\core\processing\memory_optimizer.py:372: '_optimize_python_objects' has rank C
+intellicrack\core\processing\memory_optimizer.py:374: '_optimize_python_objects' has rank C
 
-intellicrack\core\processing\memory_optimizer.py:329: '_optimize_application_structures' has rank C
+intellicrack\core\processing\memory_optimizer.py:331: '_optimize_application_structures' has rank C
 
-intellicrack\core\processing\memory_optimizer.py:457: '_optimize_caches' has rank C
+intellicrack\core\processing\memory_optimizer.py:459: '_optimize_caches' has rank C
 
-intellicrack\core\processing\memory_optimizer.py:690: '_check_application_leaks' has rank C
+intellicrack\core\processing\memory_optimizer.py:692: '_check_application_leaks' has rank C
 
 
 5 findings in intellicrack\core\processing\parallel_processing_manager.py
@@ -3520,15 +3522,15 @@ tests\unit\core\test_config_schema_validation.py:166: 'test_llm_configuration_se
 
 5 findings in tests\unit\core\analysis\test_cfg_explorer.py
 
-tests\unit\core\analysis\test_cfg_explorer.py:76: 'test_cfg_explorer_initialization' has rank D
+tests\unit\core\analysis\test_cfg_explorer.py:79: 'test_cfg_explorer_initialization' has rank D
 
-tests\unit\core\analysis\test_cfg_explorer.py:254: 'test_cross_reference_analysis' has rank C
+tests\unit\core\analysis\test_cfg_explorer.py:259: 'test_cross_reference_analysis' has rank C
 
-tests\unit\core\analysis\test_cfg_explorer.py:143: 'test_vulnerability_pattern_detection' has rank C
+tests\unit\core\analysis\test_cfg_explorer.py:148: 'test_vulnerability_pattern_detection' has rank C
 
-tests\unit\core\analysis\test_cfg_explorer.py:110: 'test_load_binary_real_pe_analysis' has rank C
+tests\unit\core\analysis\test_cfg_explorer.py:115: 'test_load_binary_real_pe_analysis' has rank C
 
-tests\unit\core\analysis\test_cfg_explorer.py:367: 'test_visualization_and_export_capabilities' has rank C
+tests\unit\core\analysis\test_cfg_explorer.py:372: 'test_visualization_and_export_capabilities' has rank C
 
 
 5 findings in tests\unit\core\analysis\test_concolic_executor.py
@@ -3650,22 +3652,11 @@ intellicrack\ai\orchestrator.py:735: '_execute_reasoning_task' has rank C
 
 intellicrack\ai\visualization_analytics.py:421: '_get_real_agent_metrics' has rank C
 
-intellicrack\ai\visualization_analytics.py:1251: '_analyze_function_semantics' has rank C
+intellicrack\ai\visualization_analytics.py:1247: '_analyze_function_semantics' has rank C
 
 intellicrack\ai\visualization_analytics.py:1043: 'analyze_resource_efficiency' has rank C
 
-intellicrack\ai\visualization_analytics.py:1516: '_calculate_analysis_confidence' has rank C
-
-
-4 findings in intellicrack\cli\ai_chat_interface.py
-
-intellicrack\cli\ai_chat_interface.py:420: '_prepare_enriched_context' has rank D
-
-intellicrack\cli\ai_chat_interface.py:879: '_switch_backend' has rank D
-
-intellicrack\cli\ai_chat_interface.py:329: '_get_ai_response' has rank C
-
-intellicrack\cli\ai_chat_interface.py:514: '_infer_user_expertise' has rank C
+intellicrack\ai\visualization_analytics.py:1521: '_calculate_analysis_confidence' has rank C
 
 
 4 findings in intellicrack\cli\ascii_charts.py
@@ -3674,7 +3665,7 @@ intellicrack\cli\ascii_charts.py:167: 'generate_line_chart' has rank D
 
 intellicrack\cli\ascii_charts.py:412: 'generate_analysis_summary_chart' has rank C
 
-intellicrack\cli\ascii_charts.py:488: 'generate_rich_dashboard' has rank C
+intellicrack\cli\ascii_charts.py:484: 'generate_rich_dashboard' has rank C
 
 intellicrack\cli\ascii_charts.py:359: 'generate_scatter_plot' has rank C
 
@@ -3692,35 +3683,35 @@ intellicrack\cli\enhanced_runner.py:184: '_run_vulnerability_scan' has rank C
 
 4 findings in intellicrack\cli\pipeline.py
 
-intellicrack\cli\pipeline.py:495: 'parse_pipeline_command' has rank D
+intellicrack\cli\pipeline.py:493: 'parse_pipeline_command' has rank D
 
 intellicrack\cli\pipeline.py:96: 'validate_input' has rank C
 
-intellicrack\cli\pipeline.py:577: 'main' has rank C
+intellicrack\cli\pipeline.py:575: 'main' has rank C
 
 intellicrack\cli\pipeline.py:202: 'process' has rank C
 
 
 4 findings in intellicrack\core\license_snapshot.py
 
-intellicrack\core\license_snapshot.py:758: 'compare_snapshots' has rank D
+intellicrack\core\license_snapshot.py:756: 'compare_snapshots' has rank D
 
-intellicrack\core\license_snapshot.py:261: '_read_registry_key_recursive' has rank C
+intellicrack\core\license_snapshot.py:259: '_read_registry_key_recursive' has rank C
 
-intellicrack\core\license_snapshot.py:364: '_capture_file_state' has rank C
+intellicrack\core\license_snapshot.py:362: '_capture_file_state' has rank C
 
-intellicrack\core\license_snapshot.py:173: '_capture_process_state' has rank C
+intellicrack\core\license_snapshot.py:171: '_capture_process_state' has rank C
 
 
 4 findings in intellicrack\core\analysis\binary_ninja_analyzer.py
 
-intellicrack\core\analysis\binary_ninja_analyzer.py:253: '_analyze_single_function' has rank E
+intellicrack\core\analysis\binary_ninja_analyzer.py:262: '_analyze_single_function' has rank E
 
-intellicrack\core\analysis\binary_ninja_analyzer.py:448: '_identify_license_validators' has rank D
+intellicrack\core\analysis\binary_ninja_analyzer.py:454: '_identify_license_validators' has rank D
 
-intellicrack\core\analysis\binary_ninja_analyzer.py:515: '_fallback_analysis' has rank C
+intellicrack\core\analysis\binary_ninja_analyzer.py:516: '_fallback_analysis' has rank C
 
-intellicrack\core\analysis\binary_ninja_analyzer.py:491: '_detect_protection_mechanisms' has rank C
+intellicrack\core\analysis\binary_ninja_analyzer.py:497: '_detect_protection_mechanisms' has rank C
 
 
 4 findings in intellicrack\core\analysis\binary_similarity_search.py
@@ -3736,13 +3727,13 @@ intellicrack\core\analysis\binary_similarity_search.py:822: '_calculate_entropy_
 
 4 findings in intellicrack\core\analysis\core_analysis.py
 
-intellicrack\core\analysis\core_analysis.py:650: 'decrypt_embedded_script' has rank D
+intellicrack\core\analysis\core_analysis.py:648: 'decrypt_embedded_script' has rank D
 
-intellicrack\core\analysis\core_analysis.py:500: 'detect_packing' has rank D
+intellicrack\core\analysis\core_analysis.py:498: 'detect_packing' has rank D
 
-intellicrack\core\analysis\core_analysis.py:380: 'enhanced_deep_license_analysis' has rank D
+intellicrack\core\analysis\core_analysis.py:378: 'enhanced_deep_license_analysis' has rank D
 
-intellicrack\core\analysis\core_analysis.py:216: '_analyze_optional_header' has rank C
+intellicrack\core\analysis\core_analysis.py:214: '_analyze_optional_header' has rank C
 
 
 4 findings in intellicrack\core\analysis\firmware_analyzer.py
@@ -3769,13 +3760,13 @@ intellicrack\core\analysis\ghidra_advanced_analyzer.py:282: 'recover_structures'
 
 4 findings in intellicrack\core\analysis\protection_scanner.py
 
-intellicrack\core\analysis\protection_scanner.py:766: '_analyze_call_depth' has rank C
+intellicrack\core\analysis\protection_scanner.py:764: '_analyze_call_depth' has rank C
 
-intellicrack\core\analysis\protection_scanner.py:1639: 'run_scan_thread' has rank C
+intellicrack\core\analysis\protection_scanner.py:1629: 'run_scan_thread' has rank C
 
-intellicrack\core\analysis\protection_scanner.py:1170: '_detect_polymorphic_engines' has rank C
+intellicrack\core\analysis\protection_scanner.py:1166: '_detect_polymorphic_engines' has rank C
 
-intellicrack\core\analysis\protection_scanner.py:830: '_analyze_call_target' has rank C
+intellicrack\core\analysis\protection_scanner.py:828: '_analyze_call_target' has rank C
 
 
 4 findings in intellicrack\core\analysis\radare2_advanced_patcher.py
@@ -3857,13 +3848,13 @@ intellicrack\core\network\protocols\hasp_parser.py:1677: '_identify_packet_type'
 
 4 findings in intellicrack\core\patching\windows_activator.py
 
-intellicrack\core\patching\windows_activator.py:474: '_detect_office_version' has rank D
+intellicrack\core\patching\windows_activator.py:468: '_detect_office_version' has rank D
 
-intellicrack\core\patching\windows_activator.py:776: 'activate_windows_interactive' has rank D
+intellicrack\core\patching\windows_activator.py:770: 'activate_windows_interactive' has rank D
 
 intellicrack\core\patching\windows_activator.py:116: 'generate_hwid' has rank C
 
-intellicrack\core\patching\windows_activator.py:1081: 'run_with_callback' has rank C
+intellicrack\core\patching\windows_activator.py:1073: 'run_with_callback' has rank C
 
 
 4 findings in intellicrack\core\protection_bypass\integrity_check_defeat.py
@@ -3885,18 +3876,18 @@ intellicrack\core\protection_bypass\vm_bypass.py:59: 'bypass_vm_detection' has r
 
 intellicrack\core\protection_bypass\vm_bypass.py:980: '_generate_bypass_script' has rank C
 
-intellicrack\core\protection_bypass\vm_bypass.py:1120: 'analyze' has rank C
+intellicrack\core\protection_bypass\vm_bypass.py:1118: 'analyze' has rank C
 
 
 4 findings in intellicrack\core\reporting\report_generator.py
 
-intellicrack\core\reporting\report_generator.py:606: 'view_report' has rank D
+intellicrack\core\reporting\report_generator.py:604: 'view_report' has rank D
 
-intellicrack\core\reporting\report_generator.py:505: 'generate_report' has rank D
+intellicrack\core\reporting\report_generator.py:503: 'generate_report' has rank D
 
 intellicrack\core\reporting\report_generator.py:110: 'generate_html_report' has rank C
 
-intellicrack\core\reporting\report_generator.py:328: 'generate_text_report' has rank C
+intellicrack\core\reporting\report_generator.py:326: 'generate_text_report' has rank C
 
 
 4 findings in intellicrack\handlers\matplotlib_handler.py
@@ -3969,9 +3960,9 @@ intellicrack\scripts\radare2\radare2_license_analyzer.py:549: '_check_pattern' h
 
 intellicrack\ui\traffic_analyzer.py:95: 'analyze_network_traffic' has rank D
 
-intellicrack\ui\traffic_analyzer.py:1088: '_perform_network_capture' has rank C
+intellicrack\ui\traffic_analyzer.py:1109: '_perform_network_capture' has rank C
 
-intellicrack\ui\traffic_analyzer.py:917: '_generate_visualization' has rank C
+intellicrack\ui\traffic_analyzer.py:938: '_generate_visualization' has rank C
 
 intellicrack\ui\traffic_analyzer.py:49: 'TrafficAnalyzer' has rank C
 
@@ -3980,7 +3971,7 @@ intellicrack\ui\traffic_analyzer.py:49: 'TrafficAnalyzer' has rank C
 
 intellicrack\ui\dialogs\hardware_spoofer_dialog.py:1523: 'load_settings' has rank D
 
-intellicrack\ui\dialogs\hardware_spoofer_dialog.py:2030: 'save' has rank C
+intellicrack\ui\dialogs\hardware_spoofer_dialog.py:2024: 'save' has rank C
 
 intellicrack\ui\dialogs\hardware_spoofer_dialog.py:1041: 'on_capture_complete' has rank C
 
@@ -4011,13 +4002,13 @@ intellicrack\ui\dialogs\llm_config_dialog.py:1905: 'add_lora_adapter' has rank C
 
 4 findings in intellicrack\ui\dialogs\plugin_manager_dialog.py
 
-intellicrack\ui\dialogs\plugin_manager_dialog.py:1074: '_check_dependencies' has rank C
+intellicrack\ui\dialogs\plugin_manager_dialog.py:1075: '_check_dependencies' has rank C
 
-intellicrack\ui\dialogs\plugin_manager_dialog.py:410: '_fetch_latest_version' has rank C
+intellicrack\ui\dialogs\plugin_manager_dialog.py:411: '_fetch_latest_version' has rank C
 
-intellicrack\ui\dialogs\plugin_manager_dialog.py:819: 'configure_selected_plugin' has rank C
+intellicrack\ui\dialogs\plugin_manager_dialog.py:820: 'configure_selected_plugin' has rank C
 
-intellicrack\ui\dialogs\plugin_manager_dialog.py:315: 'check_for_updates' has rank C
+intellicrack\ui\dialogs\plugin_manager_dialog.py:316: 'check_for_updates' has rank C
 
 
 4 findings in intellicrack\ui\widgets\gpu_status_widget.py
@@ -4035,11 +4026,11 @@ intellicrack\ui\widgets\gpu_status_widget.py:47: 'GPUMonitorWorker' has rank C
 
 intellicrack\utils\protection_utils.py:277: 'detect_protection_mechanisms' has rank C
 
-intellicrack\utils\protection_utils.py:798: 'generate_time_bomb_defuser' has rank C
+intellicrack\utils\protection_utils.py:796: 'generate_time_bomb_defuser' has rank C
 
 intellicrack\utils\protection_utils.py:362: 'generate_bypass_strategy' has rank C
 
-intellicrack\utils\protection_utils.py:430: 'create_custom_hook_script' has rank C
+intellicrack\utils\protection_utils.py:428: 'create_custom_hook_script' has rank C
 
 
 4 findings in intellicrack\utils\core\final_utilities.py
@@ -4431,6 +4422,15 @@ intellicrack\analysis\protection_workflow.py:387: '_generate_supplemental_recomm
 intellicrack\analysis\protection_workflow.py:331: '_generate_recommendations' has rank C
 
 
+3 findings in intellicrack\cli\ai_chat_interface.py
+
+intellicrack\cli\ai_chat_interface.py:420: '_prepare_enriched_context' has rank D
+
+intellicrack\cli\ai_chat_interface.py:329: '_get_ai_response' has rank C
+
+intellicrack\cli\ai_chat_interface.py:514: '_infer_user_expertise' has rank C
+
+
 3 findings in intellicrack\cli\hex_viewer_cli.py
 
 intellicrack\cli\hex_viewer_cli.py:342: '_handle_view_input' has rank C
@@ -4442,9 +4442,9 @@ intellicrack\cli\hex_viewer_cli.py:196: '_draw_hex_line' has rank C
 
 3 findings in intellicrack\core\frida_bypass_wizard.py
 
-intellicrack\core\frida_bypass_wizard.py:1574: 'analyze_protections' has rank C
+intellicrack\core\frida_bypass_wizard.py:1598: 'analyze_protections' has rank C
 
-intellicrack\core\frida_bypass_wizard.py:1466: 'detect_protections' has rank C
+intellicrack\core\frida_bypass_wizard.py:1482: 'detect_protections' has rank C
 
 intellicrack\core\frida_bypass_wizard.py:657: '_plan_strategy' has rank C
 
@@ -4460,11 +4460,11 @@ intellicrack\core\frida_manager.py:611: 'analyze_api_call' has rank C
 
 3 findings in intellicrack\core\security_enforcement.py
 
-intellicrack\core\security_enforcement.py:764: 'validate_file_input' has rank C
+intellicrack\core\security_enforcement.py:766: 'validate_file_input' has rank C
 
-intellicrack\core\security_enforcement.py:190: '_secure_subprocess_run' has rank C
+intellicrack\core\security_enforcement.py:192: '_secure_subprocess_run' has rank C
 
-intellicrack\core\security_enforcement.py:238: '_secure_subprocess_popen' has rank C
+intellicrack\core\security_enforcement.py:240: '_secure_subprocess_popen' has rank C
 
 
 3 findings in intellicrack\core\serial_generator.py
@@ -4478,11 +4478,11 @@ intellicrack\core\serial_generator.py:155: '_detect_format' has rank C
 
 3 findings in intellicrack\core\trial_reset_engine.py
 
-intellicrack\core\trial_reset_engine.py:359: '_scan_alternate_data_streams' has rank D
+intellicrack\core\trial_reset_engine.py:367: '_scan_alternate_data_streams' has rank D
 
-intellicrack\core\trial_reset_engine.py:643: '_extract_trial_details' has rank C
+intellicrack\core\trial_reset_engine.py:649: '_extract_trial_details' has rank C
 
-intellicrack\core\trial_reset_engine.py:880: '_clear_alternate_data_streams' has rank C
+intellicrack\core\trial_reset_engine.py:890: '_clear_alternate_data_streams' has rank C
 
 
 3 findings in intellicrack\core\analysis\concolic_obfuscation_handler.py
@@ -4491,14 +4491,14 @@ intellicrack\core\analysis\concolic_obfuscation_handler.py:295: 'analyze_loop' h
 
 intellicrack\core\analysis\concolic_obfuscation_handler.py:183: 'analyze_block' has rank C
 
-intellicrack\core\analysis\concolic_obfuscation_handler.py:418: 'analyze_decryption_routine' has rank C
+intellicrack\core\analysis\concolic_obfuscation_handler.py:416: 'analyze_decryption_routine' has rank C
 
 
 3 findings in intellicrack\core\analysis\function_renaming.py
 
-intellicrack\core\analysis\function_renaming.py:310: 'extract_function_strings' has rank C
+intellicrack\core\analysis\function_renaming.py:303: 'extract_function_strings' has rank C
 
-intellicrack\core\analysis\function_renaming.py:361: 'identify_function_type' has rank C
+intellicrack\core\analysis\function_renaming.py:354: 'identify_function_type' has rank C
 
 intellicrack\core\analysis\function_renaming.py:201: '_load_binary' has rank C
 
@@ -4518,7 +4518,7 @@ intellicrack\core\analysis\radare2_scripting.py:678: '_identify_validation_mecha
 
 intellicrack\core\analysis\radare2_scripting.py:415: 'analyze_specific_function' has rank C
 
-intellicrack\core\analysis\radare2_scripting.py:974: '_generate_function_insights' has rank C
+intellicrack\core\analysis\radare2_scripting.py:966: '_generate_function_insights' has rank C
 
 
 3 findings in intellicrack\core\analysis\radare2_signature_detector.py
@@ -4552,7 +4552,7 @@ intellicrack\core\analysis\securom_analyzer.py:695: '_analyze_challenge_response
 
 intellicrack\core\anti_analysis\api_obfuscation.py:258: '_resolve_by_ordinal' has rank C
 
-intellicrack\core\anti_analysis\api_obfuscation.py:1158: '_resolve_delayed_imports' has rank C
+intellicrack\core\anti_analysis\api_obfuscation.py:1154: '_resolve_delayed_imports' has rank C
 
 intellicrack\core\anti_analysis\api_obfuscation.py:166: '_resolve_by_hash' has rank C
 
@@ -4658,9 +4658,9 @@ intellicrack\hexview\file_compare.py:300: '_trace_lcs' has rank C
 
 3 findings in intellicrack\hexview\hex_dialog.py
 
-intellicrack\hexview\hex_dialog.py:1055: 'show_structural_comparison' has rank D
+intellicrack\hexview\hex_dialog.py:1053: 'show_structural_comparison' has rank D
 
-intellicrack\hexview\hex_dialog.py:1163: 'update_status_bar' has rank C
+intellicrack\hexview\hex_dialog.py:1161: 'update_status_bar' has rank C
 
 intellicrack\hexview\hex_dialog.py:385: 'split_view' has rank C
 
@@ -4676,11 +4676,11 @@ intellicrack\llm\tools\yara_pattern_analysis_tool.py:437: '_analyze_protection_l
 
 3 findings in intellicrack\plugins\custom_modules\anti_anti_debug_suite.py
 
-intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2292: 'apply_bypass' has rank D
+intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2269: 'apply_bypass' has rank D
 
-intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2492: 'run_interactive_mode' has rank D
+intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2469: 'run_interactive_mode' has rank D
 
-intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2584: 'main' has rank C
+intellicrack\plugins\custom_modules\anti_anti_debug_suite.py:2561: 'main' has rank C
 
 
 3 findings in intellicrack\plugins\custom_modules\cloud_license_interceptor.py
@@ -4730,20 +4730,20 @@ intellicrack\tools\plugin_debugger.py:305: '_trace_return' has rank C
 
 3 findings in intellicrack\ui\distributed_processing.py
 
-intellicrack\ui\distributed_processing.py:1089: 'process_password_cracking' has rank D
+intellicrack\ui\distributed_processing.py:1085: 'process_password_cracking' has rank D
 
 intellicrack\ui\distributed_processing.py:834: 'process_binary_analysis' has rank C
 
-intellicrack\ui\distributed_processing.py:1930: 'process_generic_task' has rank C
+intellicrack\ui\distributed_processing.py:1912: 'process_generic_task' has rank C
 
 
 3 findings in intellicrack\ui\dialogs\export_dialog.py
 
 intellicrack\ui\dialogs\export_dialog.py:119: '_export_xml' has rank C
 
-intellicrack\ui\dialogs\export_dialog.py:348: '_export_html' has rank C
+intellicrack\ui\dialogs\export_dialog.py:346: '_export_html' has rank C
 
-intellicrack\ui\dialogs\export_dialog.py:727: 'refresh_preview' has rank C
+intellicrack\ui\dialogs\export_dialog.py:725: 'refresh_preview' has rank C
 
 
 3 findings in intellicrack\ui\dialogs\system_utilities_dialog.py
@@ -4752,16 +4752,16 @@ intellicrack\ui\dialogs\system_utilities_dialog.py:590: 'on_icon_extracted' has 
 
 intellicrack\ui\dialogs\system_utilities_dialog.py:549: 'extract_icon' has rank C
 
-intellicrack\ui\dialogs\system_utilities_dialog.py:734: 'on_dependencies_checked' has rank C
+intellicrack\ui\dialogs\system_utilities_dialog.py:730: 'on_dependencies_checked' has rank C
 
 
 3 findings in intellicrack\utils\gpu_autoloader.py
 
-intellicrack\utils\gpu_autoloader.py:396: 'detect_gpu_frameworks' has rank E
+intellicrack\utils\gpu_autoloader.py:395: 'detect_gpu_frameworks' has rank E
 
 intellicrack\utils\gpu_autoloader.py:84: '_try_intel_xpu' has rank C
 
-intellicrack\utils\gpu_autoloader.py:315: 'get_memory_info' has rank C
+intellicrack\utils\gpu_autoloader.py:314: 'get_memory_info' has rank C
 
 
 3 findings in intellicrack\utils\analysis\analysis_stats.py
@@ -5052,6 +5052,24 @@ tests\unit\protection\test_protection_detector.py:51: 'test_packer_identificatio
 tests\unit\protection\test_protection_detector.py:102: 'test_encryption_detection_real' has rank C
 
 
+3 findings in tests\utils\test_elf_analyzer_production.py
+
+tests\utils\test_elf_analyzer_production.py:221: 'test_section_structure' has rank C
+
+tests\utils\test_elf_analyzer_production.py:333: 'test_get_security_features' has rank C
+
+tests\utils\test_elf_analyzer_production.py:267: 'test_segment_structure' has rank C
+
+
+3 findings in tests\utils\test_pe_analysis_common_production.py
+
+tests\utils\test_pe_analysis_common_production.py:333: 'test_analyze_legitimate_binary' has rank C
+
+tests\utils\test_pe_analysis_common_production.py:142: 'test_extract_sections_legitimate_binary' has rank C
+
+tests\utils\test_pe_analysis_common_production.py:366: 'test_extract_imports_comprehensive' has rank C
+
+
 3 findings in tests\validation_system\anti_detection_verifier.py
 
 tests\validation_system\anti_detection_verifier.py:716: 'run_verification_suite' has rank D
@@ -5194,7 +5212,7 @@ intellicrack\ai\vulnerability_research_integration_helper.py:72: 'update_pattern
 
 2 findings in intellicrack\cli\advanced_export.py
 
-intellicrack\cli\advanced_export.py:1043: '_generate_detection_rules' has rank D
+intellicrack\cli\advanced_export.py:1041: '_generate_detection_rules' has rank D
 
 intellicrack\cli\advanced_export.py:465: '_generate_summary' has rank C
 
@@ -5206,18 +5224,11 @@ intellicrack\cli\ai_wrapper.py:93: 'request_confirmation' has rank C
 intellicrack\cli\ai_wrapper.py:205: '_determine_action_type' has rank C
 
 
-2 findings in intellicrack\cli\analysis_cli.py
-
-intellicrack\cli\analysis_cli.py:81: 'analyze_binary' has rank E
-
-intellicrack\cli\analysis_cli.py:405: 'main' has rank C
-
-
 2 findings in intellicrack\core\binary_analyzer.py
 
-intellicrack\core\binary_analyzer.py:422: '_extract_strings' has rank D
+intellicrack\core\binary_analyzer.py:424: '_extract_strings' has rank D
 
-intellicrack\core\binary_analyzer.py:696: '_check_pe_protections' has rank C
+intellicrack\core\binary_analyzer.py:700: '_check_pe_protections' has rank C
 
 
 2 findings in intellicrack\core\hardware_spoofer.py
@@ -5250,9 +5261,9 @@ intellicrack\core\terminal_manager.py:173: 'execute_script' has rank C
 
 2 findings in intellicrack\core\analysis\activation_analyzer.py
 
-intellicrack\core\analysis\activation_analyzer.py:394: '_determine_activation_type' has rank C
+intellicrack\core\analysis\activation_analyzer.py:433: '_determine_activation_type' has rank C
 
-intellicrack\core\analysis\activation_analyzer.py:447: '_detect_validation_algorithm' has rank C
+intellicrack\core\analysis\activation_analyzer.py:486: '_detect_validation_algorithm' has rank C
 
 
 2 findings in intellicrack\core\analysis\arxan_analyzer.py
@@ -5341,16 +5352,16 @@ intellicrack\core\execution\script_execution_manager.py:389: '_execute_ghidra_ho
 
 2 findings in intellicrack\core\exploitation\license_bypass_code_generator.py
 
-intellicrack\core\exploitation\license_bypass_code_generator.py:1448: '_analyze_license_protections' has rank D
+intellicrack\core\exploitation\license_bypass_code_generator.py:1397: '_analyze_license_protections' has rank D
 
-intellicrack\core\exploitation\license_bypass_code_generator.py:1247: 'generate_shellcode' has rank C
+intellicrack\core\exploitation\license_bypass_code_generator.py:1186: 'generate_shellcode' has rank C
 
 
 2 findings in intellicrack\core\integration\intelligent_correlation.py
 
 intellicrack\core\integration\intelligent_correlation.py:344: 'correlate_by_pattern' has rank C
 
-intellicrack\core\integration\intelligent_correlation.py:1052: 'main' has rank C
+intellicrack\core\integration\intelligent_correlation.py:1050: 'main' has rank C
 
 
 2 findings in intellicrack\core\logging\audit_logger.py
@@ -5446,7 +5457,7 @@ intellicrack\hexview\hex_commands.py:484: 'merge_with' has rank C
 
 2 findings in intellicrack\hexview\integration.py
 
-intellicrack\hexview\integration.py:177: 'wrapper_ai_binary_edit_suggest' has rank C
+intellicrack\hexview\integration.py:175: 'wrapper_ai_binary_edit_suggest' has rank C
 
 intellicrack\hexview\integration.py:91: 'wrapper_ai_binary_pattern_search' has rank C
 
@@ -5483,7 +5494,7 @@ intellicrack\models\model_manager.py:623: 'save_model' has rank C
 
 intellicrack\models\repositories\base.py:404: '_make_request' has rank C
 
-intellicrack\models\repositories\base.py:503: 'download_model' has rank C
+intellicrack\models\repositories\base.py:505: 'download_model' has rank C
 
 
 2 findings in intellicrack\plugins\__init__.py
@@ -5530,23 +5541,23 @@ intellicrack\ui\gpu_analysis.py:229: '_process_analysis_results' has rank C
 
 2 findings in intellicrack\ui\dialogs\debugger_dialog.py
 
-intellicrack\ui\dialogs\debugger_dialog.py:540: 'update_ui_state' has rank D
+intellicrack\ui\dialogs\debugger_dialog.py:539: 'update_ui_state' has rank D
 
-intellicrack\ui\dialogs\debugger_dialog.py:586: 'handle_debugger_output' has rank C
+intellicrack\ui\dialogs\debugger_dialog.py:585: 'handle_debugger_output' has rank C
 
 
 2 findings in intellicrack\ui\dialogs\serial_generator_dialog.py
 
 intellicrack\ui\dialogs\serial_generator_dialog.py:57: 'run' has rank C
 
-intellicrack\ui\dialogs\serial_generator_dialog.py:1186: 'handle_worker_result' has rank C
+intellicrack\ui\dialogs\serial_generator_dialog.py:1184: 'handle_worker_result' has rank C
 
 
 2 findings in intellicrack\ui\dialogs\trial_reset_dialog.py
 
 intellicrack\ui\dialogs\trial_reset_dialog.py:56: 'run' has rank C
 
-intellicrack\ui\dialogs\trial_reset_dialog.py:957: 'display_trial_info' has rank C
+intellicrack\ui\dialogs\trial_reset_dialog.py:956: 'display_trial_info' has rank C
 
 
 2 findings in intellicrack\ui\tabs\ai_assistant_tab.py
@@ -5558,9 +5569,9 @@ intellicrack\ui\tabs\ai_assistant_tab.py:161: 'fetch_available_models' has rank 
 
 2 findings in intellicrack\ui\tabs\settings_tab.py
 
-intellicrack\ui\tabs\settings_tab.py:1163: 'collect_settings_from_ui' has rank D
+intellicrack\ui\tabs\settings_tab.py:1162: 'collect_settings_from_ui' has rank D
 
-intellicrack\ui\tabs\settings_tab.py:1548: 'apply_tooltip_settings' has rank C
+intellicrack\ui\tabs\settings_tab.py:1547: 'apply_tooltip_settings' has rank C
 
 
 2 findings in intellicrack\ui\tabs\workspace_tab.py
@@ -5600,14 +5611,14 @@ intellicrack\ui\widgets\hex_viewer.py:313: 'paintEvent' has rank C
 
 2 findings in intellicrack\ui\widgets\hex_viewer_widget.py
 
-intellicrack\ui\widgets\hex_viewer_widget.py:712: 'export_selection' has rank C
+intellicrack\ui\widgets\hex_viewer_widget.py:708: 'export_selection' has rank C
 
 intellicrack\ui\widgets\hex_viewer_widget.py:479: 'highlight_region' has rank C
 
 
 2 findings in intellicrack\ui\widgets\intellicrack_protection_widget.py
 
-intellicrack\ui\widgets\intellicrack_protection_widget.py:623: 'display_ai_reasoning' has rank C
+intellicrack\ui\widgets\intellicrack_protection_widget.py:615: 'display_ai_reasoning' has rank C
 
 intellicrack\ui\widgets\intellicrack_protection_widget.py:354: 'display_summary' has rank C
 
@@ -5658,7 +5669,7 @@ intellicrack\utils\binary\binary_utils.py:34: 'compute_file_hash' has rank C
 
 intellicrack\utils\binary\certificate_extractor.py:242: '_parse_x509_certificate' has rank D
 
-intellicrack\utils\binary\certificate_extractor.py:498: 'export_certificates' has rank C
+intellicrack\utils\binary\certificate_extractor.py:500: 'export_certificates' has rank C
 
 
 2 findings in intellicrack\utils\binary\elf_analyzer.py
@@ -5672,7 +5683,7 @@ intellicrack\utils\binary\elf_analyzer.py:155: 'analyze_sections' has rank C
 
 intellicrack\utils\exploitation\patch_engine.py:141: '_apply_single_patch' has rank D
 
-intellicrack\utils\exploitation\patch_engine.py:433: 'show_analysis_results' has rank C
+intellicrack\utils\exploitation\patch_engine.py:427: 'show_analysis_results' has rank C
 
 
 2 findings in intellicrack\utils\system\process_utils.py
@@ -5932,6 +5943,13 @@ tests\protection\test_denuvo_ticket_analyzer_comprehensive.py:433: 'test_generat
 tests\protection\test_unified_protection_engine_comprehensive.py:610: 'test_perform_advanced_entropy_analysis' has rank C
 
 tests\protection\test_unified_protection_engine_comprehensive.py:607: 'TestAdvancedEntropyAnalysis' has rank C
+
+
+2 findings in tests\ui\widgets\test_cpu_status_widget_production.py
+
+tests\ui\widgets\test_cpu_status_widget_production.py:59: 'test_collect_cpu_data_returns_valid_metrics' has rank C
+
+tests\ui\widgets\test_cpu_status_widget_production.py:165: 'test_widget_initialization' has rank C
 
 
 2 findings in tests\unit\core\analysis\test_commercial_license_analyzer.py
@@ -6220,7 +6238,7 @@ intellicrack\ai\protection_aware_script_gen.py:73: 'generate_bypass_script' has 
 
 1 findings in intellicrack\ai\realtime_adaptation_engine.py
 
-intellicrack\ai\realtime_adaptation_engine.py:1316: 'get_adaptation_insights' has rank C
+intellicrack\ai\realtime_adaptation_engine.py:1319: 'get_adaptation_insights' has rank C
 
 
 1 findings in intellicrack\ai\script_generation_prompts.py
@@ -6231,6 +6249,11 @@ intellicrack\ai\script_generation_prompts.py:328: 'build_context_data' has rank 
 1 findings in intellicrack\analysis\analysis_result_orchestrator.py
 
 intellicrack\analysis\analysis_result_orchestrator.py:169: 'validate_icp_result' has rank C
+
+
+1 findings in intellicrack\cli\analysis_cli.py
+
+intellicrack\cli\analysis_cli.py:395: 'main' has rank C
 
 
 1 findings in intellicrack\cli\config_manager.py
@@ -6280,7 +6303,7 @@ intellicrack\core\__init__.py:161: '__getattr__' has rank C
 
 1 findings in intellicrack\core\analysis\binary_pattern_detector.py
 
-intellicrack\core\analysis\binary_pattern_detector.py:787: '_find_xrefs_to_offset' has rank C
+intellicrack\core\analysis\binary_pattern_detector.py:785: '_find_xrefs_to_offset' has rank C
 
 
 1 findings in intellicrack\core\analysis\concolic_executor_fixed.py
@@ -6375,7 +6398,7 @@ intellicrack\core\certificate\bypass_strategy.py:258: 'assess_patch_risk' has ra
 
 1 findings in intellicrack\core\certificate\patch_generators.py
 
-intellicrack\core\certificate\patch_generators.py:651: 'get_patch_for_architecture' has rank C
+intellicrack\core\certificate\patch_generators.py:627: 'get_patch_for_architecture' has rank C
 
 
 1 findings in intellicrack\core\certificate\pinning_detector.py
@@ -6460,7 +6483,7 @@ intellicrack\core\protection_detection\starforce_detector.py:349: '_detect_versi
 
 1 findings in intellicrack\dashboard\visualization_renderer.py
 
-intellicrack\dashboard\visualization_renderer.py:881: '_apply_hierarchical_layout' has rank C
+intellicrack\dashboard\visualization_renderer.py:879: '_apply_hierarchical_layout' has rank C
 
 
 1 findings in intellicrack\handlers\aiohttp_handler.py
@@ -6605,7 +6628,7 @@ intellicrack\ui\syntax_highlighter.py:743: 'detect_language' has rank C
 
 1 findings in intellicrack\ui\tooltip_helper.py
 
-intellicrack\ui\tooltip_helper.py:705: '_get_contextual_tooltip' has rank C
+intellicrack\ui\tooltip_helper.py:721: '_get_contextual_tooltip' has rank C
 
 
 1 findings in intellicrack\ui\__init__.py
@@ -6640,7 +6663,7 @@ intellicrack\ui\dialogs\guided_workflow_wizard.py:944: 'on_finished' has rank C
 
 1 findings in intellicrack\ui\dialogs\offline_activation_dialog.py
 
-intellicrack\ui\dialogs\offline_activation_dialog.py:1057: 'handle_worker_result' has rank C
+intellicrack\ui\dialogs\offline_activation_dialog.py:1055: 'handle_worker_result' has rank C
 
 
 1 findings in intellicrack\ui\dialogs\preferences_dialog.py
@@ -6670,7 +6693,7 @@ intellicrack\ui\dialogs\similarity_search_dialog.py:343: 'apply_selected_pattern
 
 1 findings in intellicrack\ui\dialogs\text_editor_dialog.py
 
-intellicrack\ui\dialogs\text_editor_dialog.py:806: '_perform_export' has rank C
+intellicrack\ui\dialogs\text_editor_dialog.py:854: '_perform_export' has rank C
 
 
 1 findings in intellicrack\ui\dialogs\visual_patch_editor.py
@@ -6690,7 +6713,7 @@ intellicrack\ui\tabs\adobe_injector_tab.py:294: 'launch_subprocess' has rank C
 
 1 findings in intellicrack\ui\tabs\base_tab.py
 
-intellicrack\ui\tabs\base_tab.py:178: 'cleanup' has rank D
+intellicrack\ui\tabs\base_tab.py:182: 'cleanup' has rank D
 
 
 1 findings in intellicrack\ui\widgets\cache_management_widget.py
@@ -6760,7 +6783,7 @@ intellicrack\utils\log_message.py:121: 'log_message' has rank C
 
 1 findings in intellicrack\utils\report_generator.py
 
-intellicrack\utils\report_generator.py:594: '_analyze_differences' has rank C
+intellicrack\utils\report_generator.py:590: '_analyze_differences' has rank C
 
 
 1 findings in intellicrack\utils\subprocess_security.py
@@ -6790,7 +6813,7 @@ intellicrack\utils\core\siphash24_replacement.py:153: '_siphash' has rank C
 
 1 findings in intellicrack\utils\patching\patch_utils.py
 
-intellicrack\utils\patching\patch_utils.py:164: 'apply_patch' has rank C
+intellicrack\utils\patching\patch_utils.py:177: 'apply_patch' has rank C
 
 
 1 findings in intellicrack\utils\system\snapshot_utils.py
@@ -6800,7 +6823,7 @@ intellicrack\utils\system\snapshot_utils.py:31: 'compare_snapshots' has rank C
 
 1 findings in intellicrack\utils\system\system_utils.py
 
-intellicrack\utils\system\system_utils.py:419: 'extract_executable_icon' has rank C
+intellicrack\utils\system\system_utils.py:423: 'extract_executable_icon' has rank C
 
 
 1 findings in intellicrack\utils\validation\import_validator.py
@@ -6963,6 +6986,16 @@ tests\core\analysis\test_streaming_crypto_detector_comprehensive.py:312: 'test_s
 tests\core\analysis\verify_test_quality.py:18: 'analyze_test_file' has rank D
 
 
+1 findings in tests\core\certificate\test_apk_analyzer_comprehensive.py
+
+tests\core\certificate\test_apk_analyzer_comprehensive.py:196: 'test_parse_network_security_config_with_pinning' has rank C
+
+
+1 findings in tests\core\certificate\test_detection_report_comprehensive.py
+
+tests\core\certificate\test_detection_report_comprehensive.py:393: 'test_detection_report_serialization_roundtrip' has rank C
+
+
 1 findings in tests\core\certificate\test_frida_cert_hooks_production.py
 
 tests\core\certificate\test_frida_cert_hooks_production.py:185: 'test_hooks_defines_available_scripts' has rank C
@@ -6983,6 +7016,11 @@ tests\core\exploitation\test_license_bypass_code_generator_comprehensive.py:97: 
 tests\core\exploitation\test_symbolic_execution_engine_production.py:167: 'test_symbolic_engine_initializes_with_valid_binary' has rank C
 
 
+1 findings in tests\core\network\test_license_protocol_handler_production.py
+
+tests\core\network\test_license_protocol_handler_production.py:224: 'test_initialization_default_config' has rank C
+
+
 1 findings in tests\core\network\test_ssl_interceptor_comprehensive.py
 
 tests\core\network\test_ssl_interceptor_comprehensive.py:291: 'test_generate_ca_certificate_creates_valid_certificate' has rank C
@@ -7001,6 +7039,11 @@ tests\core\patching\test_license_check_remover.py:156: 'test_check_type_values_e
 1 findings in tests\core\patching\validate_tests.py
 
 tests\core\patching\validate_tests.py:11: 'validate_test_file' has rank C
+
+
+1 findings in tests\core\processing\test_emulator_manager_production.py
+
+tests\core\processing\test_emulator_manager_production.py:36: 'test_manager_initializes_with_correct_state' has rank C
 
 
 1 findings in tests\core\processing\test_gpu_accelerator_production.py
@@ -7163,6 +7206,16 @@ tests\protection\test_themida_analyzer_comprehensive.py:1243: 'test_full_analysi
 tests\scripts\test_fix_types_summary.py:42: 'test_summary_harness_handles_max_parallelism' has rank D
 
 
+1 findings in tests\ui\test_thread_safety.py
+
+tests\ui\test_thread_safety.py:225: 'test_multiple_threads_concurrent_updates' has rank C
+
+
+1 findings in tests\ui\dialogs\test_ai_assistant_llm_integration.py
+
+tests\ui\dialogs\test_ai_assistant_llm_integration.py:97: 'test_llm_generates_working_keygen_algorithm' has rank C
+
+
 1 findings in tests\ui\dialogs\test_frida_manager_dialog.py
 
 tests\ui\dialogs\test_frida_manager_dialog.py:212: 'test_dialog_initializes_with_all_tabs' has rank C
@@ -7173,9 +7226,24 @@ tests\ui\dialogs\test_frida_manager_dialog.py:212: 'test_dialog_initializes_with
 tests\ui\dialogs\test_model_finetuning_dialog.py:978: 'test_dialog_initialization' has rank C
 
 
+1 findings in tests\ui\dialogs\test_plugin_creation_wizard_production.py
+
+tests\ui\dialogs\test_plugin_creation_wizard_production.py:286: 'test_generate_basic_python_plugin' has rank C
+
+
 1 findings in tests\ui\dialogs\validate_tests.py
 
 tests\ui\dialogs\validate_tests.py:11: 'validate_test_file' has rank D
+
+
+1 findings in tests\ui\widgets\test_memory_dumper_production.py
+
+tests\ui\widgets\test_memory_dumper_production.py:59: 'test_widget_initialization' has rank C
+
+
+1 findings in tests\ui\widgets\test_system_monitor_widget_production.py
+
+tests\ui\widgets\test_system_monitor_widget_production.py:189: 'test_widget_initialization' has rank C
 
 
 1 findings in tests\unit\ai\test_api_provider_clients.py
@@ -7331,6 +7399,11 @@ tests\utils\simple_ssl_interceptor_test.py:15: 'test_ssl_interceptor_basic_funct
 1 findings in tests\utils\ssl_interceptor_coverage_analysis.py
 
 tests\utils\ssl_interceptor_coverage_analysis.py:16: 'analyze_ssl_interceptor_coverage' has rank F
+
+
+1 findings in tests\utils\test_gpu_benchmark_production.py
+
+tests\utils\test_gpu_benchmark_production.py:434: 'test_run_gpu_accelerated_analysis_pattern_search' has rank C
 
 
 1 findings in tests\utils\validate_ssl_interceptor_tests.py

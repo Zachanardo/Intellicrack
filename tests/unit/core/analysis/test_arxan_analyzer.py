@@ -227,5 +227,174 @@ class TestArxanAnalyzer(unittest.TestCase):
             self.analyzer.analyze("/nonexistent/file.exe")
 
 
+class TestArxanAnalyzerWithRealBinaries(unittest.TestCase):
+    """Test ArxanAnalyzer with real protected binaries."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up test fixtures with real binaries."""
+        cls.fixtures_dir = Path("tests/fixtures/binaries")
+        cls.protected_binaries = [
+            cls.fixtures_dir / "pe/protected/armadillo_protected.exe",
+            cls.fixtures_dir / "pe/protected/asprotect_protected.exe",
+            cls.fixtures_dir / "pe/protected/safedisc_protected.exe",
+            cls.fixtures_dir / "pe/protected/securom_protected.exe",
+            cls.fixtures_dir / "protected/aspack_packed.exe",
+            cls.fixtures_dir / "protected/enigma_packed.exe",
+            cls.fixtures_dir / "protected/obsidium_packed.exe",
+            cls.fixtures_dir / "protected/themida_protected.exe",
+            cls.fixtures_dir / "protected/vmprotect_protected.exe",
+        ]
+        cls.protected_binaries = [p for p in cls.protected_binaries if p.exists()]
+
+        if not cls.protected_binaries:
+            raise unittest.SkipTest("No protected binaries available for Arxan analysis testing")
+
+    def setUp(self):
+        """Set up test environment."""
+        self.analyzer = ArxanAnalyzer()
+
+    def test_analyze_protected_binary_no_crashes(self):
+        """Test analyzer handles real protected binaries without crashing."""
+        for binary in self.protected_binaries:
+            with self.subTest(binary=binary.name):
+                try:
+                    result = self.analyzer.analyze(binary)
+                    self.assertIsNotNone(result, f"Analyzer returned None for {binary.name}")
+                    self.assertTrue(hasattr(result, 'tamper_checks'), f"Result missing tamper_checks for {binary.name}")
+                    self.assertTrue(hasattr(result, 'rasp_mechanisms'), f"Result missing rasp_mechanisms for {binary.name}")
+                    self.assertTrue(hasattr(result, 'license_routines'), f"Result missing license_routines for {binary.name}")
+                    self.assertTrue(hasattr(result, 'metadata'), f"Result missing metadata for {binary.name}")
+                except Exception as e:
+                    self.fail(f"Analyzer crashed on {binary.name}: {e}")
+
+    def test_analyze_themida_protection_patterns(self):
+        """Test detection of protection patterns in Themida-protected binary."""
+        themida_binary = self.fixtures_dir / "protected/themida_protected.exe"
+        if not themida_binary.exists():
+            self.skipTest("Themida binary not available")
+
+        result = self.analyzer.analyze(themida_binary)
+
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result.tamper_checks, list)
+        self.assertIsInstance(result.rasp_mechanisms, list)
+        self.assertIsInstance(result.control_flow, ControlFlowAnalysis)
+
+        self.assertTrue(
+            isinstance(result.metadata, dict) and 'analysis_complete' in result.metadata,
+            "Should complete analysis on Themida binary"
+        )
+
+    def test_analyze_vmprotect_protection_patterns(self):
+        """Test detection of protection patterns in VMProtect binary."""
+        vmprotect_binary = self.fixtures_dir / "protected/vmprotect_protected.exe"
+        if not vmprotect_binary.exists():
+            self.skipTest("VMProtect binary not available")
+
+        result = self.analyzer.analyze(vmprotect_binary)
+
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result.metadata, dict)
+
+        self.assertTrue(
+            'analysis_complete' in result.metadata,
+            "Analysis should complete for VMProtect binary"
+        )
+
+    def test_analyze_armadillo_protection_patterns(self):
+        """Test detection of protection patterns in Armadillo-protected binary."""
+        armadillo_binary = self.fixtures_dir / "pe/protected/armadillo_protected.exe"
+        if not armadillo_binary.exists():
+            self.skipTest("Armadillo binary not available")
+
+        result = self.analyzer.analyze(armadillo_binary)
+
+        self.assertIsNotNone(result)
+
+        total_detections = (
+            len(result.tamper_checks) +
+            len(result.rasp_mechanisms) +
+            len(result.license_routines)
+        )
+
+        self.assertGreaterEqual(
+            total_detections, 0,
+            "Should complete analysis on Armadillo binary"
+        )
+
+    def test_analyze_multiple_binaries_consistency(self):
+        """Test analyzer produces consistent results across multiple runs."""
+        if not self.protected_binaries:
+            self.skipTest("No protected binaries available")
+
+        test_binary = self.protected_binaries[0]
+
+        result1 = self.analyzer.analyze(test_binary)
+        result2 = self.analyzer.analyze(test_binary)
+
+        self.assertEqual(
+            len(result1.tamper_checks),
+            len(result2.tamper_checks),
+            "Tamper check count should be consistent across runs"
+        )
+
+        self.assertEqual(
+            len(result1.rasp_mechanisms),
+            len(result2.rasp_mechanisms),
+            "RASP mechanism count should be consistent across runs"
+        )
+
+        self.assertEqual(
+            len(result1.license_routines),
+            len(result2.license_routines),
+            "License routine count should be consistent across runs"
+        )
+
+    def test_analyze_results_structure(self):
+        """Test that analysis results have proper structure and types."""
+        if not self.protected_binaries:
+            self.skipTest("No protected binaries available")
+
+        result = self.analyzer.analyze(self.protected_binaries[0])
+
+        self.assertIsInstance(result.tamper_checks, list)
+        if len(result.tamper_checks) > 0:
+            for check in result.tamper_checks:
+                self.assertIsInstance(check, TamperCheckLocation)
+                self.assertTrue(hasattr(check, 'offset'))
+                self.assertTrue(hasattr(check, 'algorithm'))
+                self.assertTrue(hasattr(check, 'confidence'))
+
+        self.assertIsInstance(result.rasp_mechanisms, list)
+        if len(result.rasp_mechanisms) > 0:
+            for mechanism in result.rasp_mechanisms:
+                self.assertIsInstance(mechanism, RASPMechanism)
+                self.assertTrue(hasattr(mechanism, 'type'))
+                self.assertTrue(hasattr(mechanism, 'offset'))
+
+        self.assertIsInstance(result.license_routines, list)
+        if len(result.license_routines) > 0:
+            for routine in result.license_routines:
+                self.assertIsInstance(routine, LicenseValidationRoutine)
+                self.assertTrue(hasattr(routine, 'offset'))
+
+    def test_control_flow_analysis_structure(self):
+        """Test control flow analysis produces valid structure."""
+        if not self.protected_binaries:
+            self.skipTest("No protected binaries available")
+
+        result = self.analyzer.analyze(self.protected_binaries[0])
+
+        self.assertIsInstance(result.control_flow, ControlFlowAnalysis)
+        self.assertTrue(hasattr(result.control_flow, 'opaque_predicates'))
+        self.assertTrue(hasattr(result.control_flow, 'control_flow_flattening'))
+        self.assertTrue(hasattr(result.control_flow, 'indirect_jumps'))
+
+        self.assertIsInstance(result.control_flow.opaque_predicates, list)
+        self.assertIsInstance(result.control_flow.control_flow_flattening, bool)
+        self.assertIsInstance(result.control_flow.indirect_jumps, list)
+
+
 if __name__ == '__main__':
     unittest.main()

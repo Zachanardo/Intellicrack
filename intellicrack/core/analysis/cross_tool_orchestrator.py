@@ -268,7 +268,7 @@ class ResultSerializer:
 
             # Validate version
             if package.get("version") != ResultSerializer.PROTOCOL_VERSION:
-                logger.warning("Protocol version mismatch: %s != %s", package.get('version'), ResultSerializer.PROTOCOL_VERSION)
+                logger.warning("Protocol version mismatch: %s != %s", package.get("version"), ResultSerializer.PROTOCOL_VERSION)
 
             return package
 

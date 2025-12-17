@@ -3933,7 +3933,7 @@ class AnalysisTab(BaseTab):
                                     api_calls.append(f"{dll_str}!{name_str}")
 
             except Exception:
-                pass
+                logger.debug("Failed to extract API call info", exc_info=True)
 
         except Exception as e:
             self.log_activity(f"API monitoring error: {e!s}")
@@ -4084,7 +4084,7 @@ class AnalysisTab(BaseTab):
                         else:
                             net_activity.append(f"[URL] {url}")
                 except Exception:
-                    pass
+                    logger.debug("Failed to decode URL", exc_info=True)
 
             ip_pattern = rb"\b(?:\d{1,3}\.){3}\d{1,3}\b"
             ips = re.findall(ip_pattern, content)
@@ -4099,10 +4099,8 @@ class AnalysisTab(BaseTab):
                             seen_ips.add(ip)
                             if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172."):
                                 net_activity.append(f"[PRIVATE IP] {ip}")
-                            else:
-                                net_activity.append(f"[PUBLIC IP] {ip}")
                 except Exception:
-                    pass
+                    logger.debug("Failed to parse IP address", exc_info=True)
 
             domain_pattern = rb"[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}"
             domains = re.findall(domain_pattern, content)
@@ -4118,7 +4116,7 @@ class AnalysisTab(BaseTab):
                             seen_domains.add(domain)
                             net_activity.append(f"[LICENSE DOMAIN] {domain}")
                 except Exception:
-                    pass
+                    logger.debug("Failed to parse domain", exc_info=True)
 
         except Exception as e:
             self.log_activity(f"Network activity monitoring error: {e!s}")

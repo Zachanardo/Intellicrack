@@ -1,6 +1,6 @@
 {
     "tool": "shellcheck",
-    "generated": "2025-12-13T23:23:08.425433",
+    "generated": "2025-12-14T22:17:31.829645",
     "total_findings": 164,
     "total_files": 24,
     "files": [

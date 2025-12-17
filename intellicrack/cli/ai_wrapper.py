@@ -320,14 +320,14 @@ class IntellicrackAIInterface:
             }
 
         except subprocess.TimeoutExpired:
-            logger.error("Command timed out: %s", " ".join(action.command), exc_info=True)
+            logger.exception("Command timed out: %s", " ".join(action.command))
             return {
                 "status": "error",
                 "message": "Command timed out",
                 "action": action,
             }
         except Exception as e:
-            logger.error("Command execution failed: %s", e, exc_info=True)
+            logger.exception("Command execution failed: %s", e)
             return {
                 "status": "error",
                 "message": str(e),

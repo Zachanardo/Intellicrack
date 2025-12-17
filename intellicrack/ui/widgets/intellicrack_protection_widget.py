@@ -103,11 +103,11 @@ class ProtectionAnalysisThread(QThread):
                             "patterns_matched": license_file_results.get("patterns_matched", []),
                         }
                 except Exception as e:
-                    logger.warning(f"License file search failed: {e}")
+                    logger.warning("License file search failed: %s", e, exc_info=True)
 
             self.analysis_complete.emit(analysis)
         except Exception as e:
-            logger.error("Exception in intellicrack_protection_widget: %s", e)
+            logger.error("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
             self.analysis_error.emit(str(e))
 
 
@@ -529,7 +529,7 @@ class IntellicrackProtectionWidget(QWidget):
                     f"Results exported to:\n{file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in intellicrack_protection_widget: %s", e)
+                logger.error("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Export Error",
@@ -607,7 +607,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("AI reasoning complete")
 
         except Exception as e:
-            logger.error("Error in AI reasoning: %s", e)
+            logger.error("Error in AI reasoning: %s", e, exc_info=True)
             QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}")
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
@@ -726,7 +726,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("License file search complete")
 
         except Exception as e:
-            logger.error(f"Error searching for license files: {e}")
+            logger.error("Error searching for license files: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Error searching for license files:\n{e!s}")
             self.status_label.setText("License file search failed")
 
@@ -793,7 +793,7 @@ class IntellicrackProtectionWidget(QWidget):
                 response_text.append(f"<b>AI Response:</b>\n{response}")
 
             except Exception as e:
-                logger.error(f"Error asking AI question: {e}")
+                logger.error("Error asking AI question: %s", e, exc_info=True)
                 response_text.clear()
                 response_text.append(f"<b>Question:</b> {question}\n")
                 response_text.append(f"<b>Error:</b> {e!s}")

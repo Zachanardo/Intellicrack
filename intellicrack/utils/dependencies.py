@@ -41,9 +41,9 @@ def check_weasyprint_dependencies() -> list[str]:
 
         # Store CFFI version for debugging
         cffi_version = getattr(cffi, "__version__", "unknown")
-        logger.info(f"OK CFFI dependency found (version: {cffi_version})")
+        logger.info("OK CFFI dependency found (version: %s)", cffi_version)
     except ImportError as e:
-        logger.error("FAIL CFFI import error: %s", e)
+        logger.error("FAIL CFFI import error: %s", e, exc_info=True)
         missing_deps.append("cffi")
 
     try:
@@ -51,9 +51,9 @@ def check_weasyprint_dependencies() -> list[str]:
 
         # Store Cairo version for debugging
         cairo_version = getattr(cairocffi, "__version__", "unknown")
-        logger.info(f"OK Cairo dependency found (version: {cairo_version})")
+        logger.info("OK Cairo dependency found (version: %s)", cairo_version)
     except ImportError as e:
-        logger.error("FAIL Cairo import error: %s", e)
+        logger.error("FAIL Cairo import error: %s", e, exc_info=True)
         missing_deps.append("cairocffi")
 
     try:
@@ -61,9 +61,9 @@ def check_weasyprint_dependencies() -> list[str]:
 
         # Store TinyCSS2 version for debugging
         css_version = getattr(tinycss2, "__version__", "unknown")
-        logger.info(f"OK TinyCSS2 dependency found (version: {css_version})")
+        logger.info("OK TinyCSS2 dependency found (version: %s)", css_version)
     except ImportError as e:
-        logger.error("FAIL TinyCSS2 import error: %s", e)
+        logger.error("FAIL TinyCSS2 import error: %s", e, exc_info=True)
         missing_deps.append("tinycss2")
 
     if sys.platform == "win32":
@@ -92,7 +92,7 @@ def check_weasyprint_dependencies() -> list[str]:
                 missing_deps.append("gtk-runtime")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error checking GTK dependencies: %s", e)
+            logger.error("Error checking GTK dependencies: %s", e, exc_info=True)
             missing_deps.append("gtk-runtime")
 
     return missing_deps
@@ -186,7 +186,7 @@ def install_dependencies(deps: list[str]) -> bool:
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error installing dependencies: %s", e)
+        logger.error("Error installing dependencies: %s", e, exc_info=True)
         return False
 
 
@@ -213,7 +213,7 @@ def setup_required_environment() -> dict[str, Any]:
         # Get PyQt6 version for logging
         pyqt_version = getattr(PyQt6.QtCore, "PYQT_VERSION_STR", "unknown")
         env_status["gui_available"] = True
-        logger.info(f"OK GUI interface available (PyQt6 {pyqt_version})")
+        logger.info("OK GUI interface available (PyQt6 %s)", pyqt_version)
     except ImportError:
         logger.warning("FAIL GUI interface not available - running in CLI mode")
         env_status["missing_dependencies"].append("PyQt6")
@@ -229,7 +229,7 @@ def setup_required_environment() -> dict[str, Any]:
             numpy_version = getattr(numpy, "__version__", "unknown")
             sklearn_version = getattr(sklearn, "__version__", "unknown")
             env_status["ml_available"] = True
-            logger.info(f"OK Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
+            logger.info("OK Machine learning features available (numpy %s, sklearn %s)", numpy_version, sklearn_version)
         else:
             error_msg = "NumPy not available"
             logger.error(error_msg)
@@ -246,7 +246,7 @@ def setup_required_environment() -> dict[str, Any]:
             # Get Frida version for logging
             frida_version = getattr(frida, "__version__", "unknown")
             env_status["dynamic_analysis_available"] = True
-            logger.info(f"OK Dynamic analysis (Frida {frida_version}) available")
+            logger.info("OK Dynamic analysis (Frida %s) available", frida_version)
         else:
             error_msg = "Frida not available"
             logger.error(error_msg)
@@ -263,7 +263,7 @@ def setup_required_environment() -> dict[str, Any]:
         # Get angr version for logging
         angr_version = getattr(angr, "__version__", "unknown")
         env_status["symbolic_execution_available"] = True
-        logger.info(f"OK Symbolic execution (angr {angr_version}) available")
+        logger.info("OK Symbolic execution (angr %s) available", angr_version)
     except ImportError:
         logger.warning("FAIL Symbolic execution not available")
         env_status["missing_dependencies"].append("angr")

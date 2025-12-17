@@ -99,7 +99,7 @@ class TerminalTab(BaseTab):
             logger.info("Terminal tab content setup complete")
 
         except Exception as e:
-            logger.error(f"Terminal tab layout setup failed: {e}")
+            logger.error("Terminal tab layout setup failed: %s", e, exc_info=True)
             fallback_layout = QVBoxLayout(self)
             error_label = QLabel(f"Terminal initialization failed: {e}")
             fallback_layout.addWidget(error_label)

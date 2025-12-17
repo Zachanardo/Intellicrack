@@ -150,7 +150,7 @@ class PEFileModel(BinaryFileModel):
     def parse_file(self) -> None:
         """Parse PE file structure."""
         try:
-            logger.debug(f"Parsing PE file: {self.file_path}")
+            logger.debug("Parsing PE file: %s", self.file_path)
 
             # Load PE file
             self.pe = pefile.PE(str(self.file_path))
@@ -177,10 +177,10 @@ class PEFileModel(BinaryFileModel):
             self._build_structures()
 
             self._parsed = True
-            logger.info(f"Successfully parsed PE file with {len(self.sections)} sections")
+            logger.info("Successfully parsed PE file with %s sections", len(self.sections))
 
         except Exception as e:
-            logger.error(f"Failed to parse PE file {self.file_path}: {e}")
+            logger.error("Failed to parse PE file %s: %s", self.file_path, e, exc_info=True)
             raise
 
     def _parse_sections(self) -> None:
@@ -233,7 +233,7 @@ class PEFileModel(BinaryFileModel):
             return entropy
 
         except Exception as e:
-            logger.warning(f"Failed to calculate entropy for section {section.name}: {e}")
+            logger.warning("Failed to calculate entropy for section %s: %s", section.name, e, exc_info=True)
             return 0.0
 
     def _parse_imports(self) -> None:
@@ -258,7 +258,7 @@ class PEFileModel(BinaryFileModel):
                     self.imports.append(import_info)
 
         except Exception as e:
-            logger.warning(f"Failed to parse imports: {e}")
+            logger.warning("Failed to parse imports: %s", e, exc_info=True)
 
     def _parse_exports(self) -> None:
         """Parse PE exports."""
@@ -278,15 +278,15 @@ class PEFileModel(BinaryFileModel):
                 self.exports.append(export_info)
 
         except Exception as e:
-            logger.warning(f"Failed to parse exports: {e}")
+            logger.warning("Failed to parse exports: %s", e, exc_info=True)
 
     def _extract_certificates(self) -> None:
         """Extract digital certificates from PE file."""
         try:
             self.certificates = extract_pe_certificates(str(self.file_path))
-            logger.debug(f"Certificate extraction completed. Signed: {self.certificates.is_signed}")
+            logger.debug("Certificate extraction completed. Signed: %s", self.certificates.is_signed)
         except Exception as e:
-            logger.warning(f"Failed to extract certificates: {e}")
+            logger.warning("Failed to extract certificates: %s", e, exc_info=True)
             self.certificates = CodeSigningInfo(is_signed=False)
 
     def _build_structures(self) -> None:
@@ -504,9 +504,9 @@ def create_file_model(file_path: str) -> BinaryFileModel | None:
         # elif header == b'\x7fELF':
         #     return ELFFileModel(file_path)
 
-        logger.warning(f"Unsupported file format: {file_path}")
+        logger.warning("Unsupported file format: %s", file_path)
         return None
 
     except Exception as e:
-        logger.error(f"Failed to create file model for {file_path}: {e}")
+        logger.error("Failed to create file model for %s: %s", file_path, e, exc_info=True)
         return None

@@ -1,6 +1,6 @@
 {
     "tool": "clippy",
-    "generated": "2025-12-13T23:22:08.540876",
+    "generated": "2025-12-14T22:13:15.851884",
     "total_findings": 384,
     "total_files": 25,
     "files": [
@@ -324,13 +324,6 @@
                     "raw": "src\\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section"
                 },
                 {
-                    "line": 185,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
-                },
-                {
                     "line": 1153,
                     "column": 25,
                     "severity": "warning",
@@ -364,6 +357,13 @@
                     "severity": "warning",
                     "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
                     "raw": "src\\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
+                },
+                {
+                    "line": 185,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
                 }
             ]
         },
@@ -498,6 +498,41 @@
                     "raw": "src\\dependencies.rs:871:5: [warning] docs for function returning `Result` missing `# Errors` section"
                 },
                 {
+                    "line": 1435,
+                    "column": 25,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\dependencies.rs:1435:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 1445,
+                    "column": 25,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\dependencies.rs:1445:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 1457,
+                    "column": 25,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\dependencies.rs:1457:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 1469,
+                    "column": 25,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\dependencies.rs:1469:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 1478,
+                    "column": 25,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\dependencies.rs:1478:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
                     "line": 160,
                     "column": 5,
                     "severity": "warning",
@@ -552,41 +587,6 @@
                     "severity": "warning",
                     "message": "unused `async` for function with no await statements",
                     "raw": "src\\dependencies.rs:645:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 1435,
-                    "column": 25,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\dependencies.rs:1435:25: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 1445,
-                    "column": 25,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\dependencies.rs:1445:25: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 1457,
-                    "column": 25,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\dependencies.rs:1457:25: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 1469,
-                    "column": 25,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\dependencies.rs:1469:25: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 1478,
-                    "column": 25,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\dependencies.rs:1478:25: [warning] variables can be used directly in the `format!` string"
                 }
             ]
         },
@@ -944,13 +944,6 @@
                     "raw": "src\\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section"
                 },
                 {
-                    "line": 161,
-                    "column": 28,
-                    "severity": "warning",
-                    "message": "this argument is a mutable reference, but not used mutably",
-                    "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
-                },
-                {
                     "line": 795,
                     "column": 9,
                     "severity": "warning",
@@ -970,6 +963,13 @@
                     "severity": "warning",
                     "message": "variables can be used directly in the `format!` string",
                     "raw": "src\\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 161,
+                    "column": 28,
+                    "severity": "warning",
+                    "message": "this argument is a mutable reference, but not used mutably",
+                    "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
                 }
             ]
         },
@@ -1639,6 +1639,13 @@
                     "raw": "src\\lib.rs:301:51: [warning] long literal lacking separators"
                 },
                 {
+                    "line": 301,
+                    "column": 51,
+                    "severity": "warning",
+                    "message": "long literal lacking separators",
+                    "raw": "src\\lib.rs:301:51: [warning] long literal lacking separators"
+                },
+                {
                     "line": 72,
                     "column": 5,
                     "severity": "warning",
@@ -1749,13 +1756,6 @@
                     "severity": "warning",
                     "message": "unused `async` for function with no await statements",
                     "raw": "src\\lib.rs:100:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 301,
-                    "column": 51,
-                    "severity": "warning",
-                    "message": "long literal lacking separators",
-                    "raw": "src\\lib.rs:301:51: [warning] long literal lacking separators"
                 }
             ]
         },
@@ -2028,41 +2028,6 @@
                     "raw": "src\\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)"
                 },
                 {
-                    "line": 141,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 168,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 216,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 304,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
-                },
-                {
-                    "line": 384,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "unused `async` for function with no await statements",
-                    "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
-                },
-                {
                     "line": 550,
                     "column": 45,
                     "severity": "warning",
@@ -2103,6 +2068,145 @@
                     "severity": "warning",
                     "message": "variables can be used directly in the `format!` string",
                     "raw": "src\\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 141,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
+                },
+                {
+                    "line": 168,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
+                },
+                {
+                    "line": 216,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
+                },
+                {
+                    "line": 304,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
+                },
+                {
+                    "line": 384,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "unused `async` for function with no await statements",
+                    "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
+                }
+            ]
+        },
+        {
+            "path": "src\\security.rs",
+            "count": 14,
+            "findings": [
+                {
+                    "line": 933,
+                    "column": 64,
+                    "severity": "warning",
+                    "message": "long literal lacking separators",
+                    "raw": "src\\security.rs:933:64: [warning] long literal lacking separators"
+                },
+                {
+                    "line": 11,
+                    "column": 1,
+                    "severity": "warning",
+                    "message": "more than 3 bools in a struct",
+                    "raw": "src\\security.rs:11:1: [warning] more than 3 bools in a struct"
+                },
+                {
+                    "line": 62,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "docs for function returning `Result` missing `# Errors` section",
+                    "raw": "src\\security.rs:62:5: [warning] docs for function returning `Result` missing `# Errors` section"
+                },
+                {
+                    "line": 72,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "this function's return value is unnecessarily wrapped by `Result`",
+                    "raw": "src\\security.rs:72:5: [warning] this function's return value is unnecessarily wrapped by `Result`"
+                },
+                {
+                    "line": 189,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "docs for function returning `Result` missing `# Errors` section",
+                    "raw": "src\\security.rs:189:5: [warning] docs for function returning `Result` missing `# Errors` section"
+                },
+                {
+                    "line": 203,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "this function's return value is unnecessary",
+                    "raw": "src\\security.rs:203:5: [warning] this function's return value is unnecessary"
+                },
+                {
+                    "line": 251,
+                    "column": 43,
+                    "severity": "warning",
+                    "message": "unused `self` argument",
+                    "raw": "src\\security.rs:251:43: [warning] unused `self` argument"
+                },
+                {
+                    "line": 255,
+                    "column": 12,
+                    "severity": "warning",
+                    "message": "this pattern matching can be expressed using `matches!`",
+                    "raw": "src\\security.rs:255:12: [warning] this pattern matching can be expressed using `matches!`"
+                },
+                {
+                    "line": 328,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "docs for function returning `Result` missing `# Errors` section",
+                    "raw": "src\\security.rs:328:5: [warning] docs for function returning `Result` missing `# Errors` section"
+                },
+                {
+                    "line": 352,
+                    "column": 17,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\security.rs:352:17: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 373,
+                    "column": 17,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\security.rs:373:17: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 394,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "docs for function returning `Result` missing `# Errors` section",
+                    "raw": "src\\security.rs:394:5: [warning] docs for function returning `Result` missing `# Errors` section"
+                },
+                {
+                    "line": 420,
+                    "column": 17,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "src\\security.rs:420:17: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 431,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "docs for function returning `Result` missing `# Errors` section",
+                    "raw": "src\\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section"
                 }
             ]
         },
@@ -2207,110 +2311,6 @@
                     "severity": "warning",
                     "message": "docs for function returning `Result` missing `# Errors` section",
                     "raw": "src\\process_optimization.rs:377:1: [warning] docs for function returning `Result` missing `# Errors` section"
-                }
-            ]
-        },
-        {
-            "path": "src\\security.rs",
-            "count": 14,
-            "findings": [
-                {
-                    "line": 11,
-                    "column": 1,
-                    "severity": "warning",
-                    "message": "more than 3 bools in a struct",
-                    "raw": "src\\security.rs:11:1: [warning] more than 3 bools in a struct"
-                },
-                {
-                    "line": 62,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "docs for function returning `Result` missing `# Errors` section",
-                    "raw": "src\\security.rs:62:5: [warning] docs for function returning `Result` missing `# Errors` section"
-                },
-                {
-                    "line": 72,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "this function's return value is unnecessarily wrapped by `Result`",
-                    "raw": "src\\security.rs:72:5: [warning] this function's return value is unnecessarily wrapped by `Result`"
-                },
-                {
-                    "line": 189,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "docs for function returning `Result` missing `# Errors` section",
-                    "raw": "src\\security.rs:189:5: [warning] docs for function returning `Result` missing `# Errors` section"
-                },
-                {
-                    "line": 203,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "this function's return value is unnecessary",
-                    "raw": "src\\security.rs:203:5: [warning] this function's return value is unnecessary"
-                },
-                {
-                    "line": 251,
-                    "column": 43,
-                    "severity": "warning",
-                    "message": "unused `self` argument",
-                    "raw": "src\\security.rs:251:43: [warning] unused `self` argument"
-                },
-                {
-                    "line": 255,
-                    "column": 12,
-                    "severity": "warning",
-                    "message": "this pattern matching can be expressed using `matches!`",
-                    "raw": "src\\security.rs:255:12: [warning] this pattern matching can be expressed using `matches!`"
-                },
-                {
-                    "line": 328,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "docs for function returning `Result` missing `# Errors` section",
-                    "raw": "src\\security.rs:328:5: [warning] docs for function returning `Result` missing `# Errors` section"
-                },
-                {
-                    "line": 352,
-                    "column": 17,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\security.rs:352:17: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 373,
-                    "column": 17,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\security.rs:373:17: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 394,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "docs for function returning `Result` missing `# Errors` section",
-                    "raw": "src\\security.rs:394:5: [warning] docs for function returning `Result` missing `# Errors` section"
-                },
-                {
-                    "line": 420,
-                    "column": 17,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "src\\security.rs:420:17: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 431,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "docs for function returning `Result` missing `# Errors` section",
-                    "raw": "src\\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section"
-                },
-                {
-                    "line": 933,
-                    "column": 64,
-                    "severity": "warning",
-                    "message": "long literal lacking separators",
-                    "raw": "src\\security.rs:933:64: [warning] long literal lacking separators"
                 }
             ]
         },
@@ -2721,40 +2721,6 @@
             ]
         },
         {
-            "path": "tests\\process_optimization_tests.rs",
-            "count": 4,
-            "findings": [
-                {
-                    "line": 78,
-                    "column": 5,
-                    "severity": "warning",
-                    "message": "variables can be used directly in the `format!` string",
-                    "raw": "tests\\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string"
-                },
-                {
-                    "line": 105,
-                    "column": 83,
-                    "severity": "warning",
-                    "message": "redundant clone",
-                    "raw": "tests\\process_optimization_tests.rs:105:83: [warning] redundant clone"
-                },
-                {
-                    "line": 105,
-                    "column": 76,
-                    "severity": "warning",
-                    "message": "redundant clone",
-                    "raw": "tests\\process_optimization_tests.rs:105:76: [warning] redundant clone"
-                },
-                {
-                    "line": 127,
-                    "column": 32,
-                    "severity": "warning",
-                    "message": "redundant closure",
-                    "raw": "tests\\process_optimization_tests.rs:127:32: [warning] redundant closure"
-                }
-            ]
-        },
-        {
             "path": "benches\\performance_benchmarks.rs",
             "count": 4,
             "findings": [
@@ -2785,6 +2751,40 @@
                     "severity": "warning",
                     "message": "avoid using `collect()` when not needed",
                     "raw": "benches\\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed"
+                }
+            ]
+        },
+        {
+            "path": "tests\\process_optimization_tests.rs",
+            "count": 4,
+            "findings": [
+                {
+                    "line": 78,
+                    "column": 5,
+                    "severity": "warning",
+                    "message": "variables can be used directly in the `format!` string",
+                    "raw": "tests\\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string"
+                },
+                {
+                    "line": 105,
+                    "column": 83,
+                    "severity": "warning",
+                    "message": "redundant clone",
+                    "raw": "tests\\process_optimization_tests.rs:105:83: [warning] redundant clone"
+                },
+                {
+                    "line": 105,
+                    "column": 76,
+                    "severity": "warning",
+                    "message": "redundant clone",
+                    "raw": "tests\\process_optimization_tests.rs:105:76: [warning] redundant clone"
+                },
+                {
+                    "line": 127,
+                    "column": 32,
+                    "severity": "warning",
+                    "message": "redundant closure",
+                    "raw": "tests\\process_optimization_tests.rs:127:32: [warning] redundant closure"
                 }
             ]
         },

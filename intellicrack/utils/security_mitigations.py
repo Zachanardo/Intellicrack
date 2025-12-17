@@ -51,7 +51,8 @@ def mitigate_future_vulnerability() -> None:
 
                     if "future" in caller_module or "nampa" in caller_module:
                         logger.warning(
-                            f"Blocked potential exploitation attempt: future/nampa tried to import 'test' module from {caller_module}",
+                            "Blocked potential exploitation attempt: future/nampa tried to import 'test' module from %s",
+                            caller_module,
                         )
                         return type(sys)("test")
 
@@ -100,9 +101,9 @@ def scan_for_malicious_test_files() -> list[Path]:
 
                     if any(pattern in content for pattern in suspicious_patterns):
                         suspicious_files.append(test_file)
-                        logger.warning(f"Found suspicious test.py at {test_file} - potential future package vulnerability exploit")
+                        logger.warning("Found suspicious test.py at %s - potential future package vulnerability exploit", test_file)
         except OSError as e:
-            logger.debug(f"Could not scan {base_path}: {e}")
+            logger.debug("Could not scan %s: %s", base_path, e, exc_info=True)
 
     return suspicious_files
 
@@ -124,12 +125,12 @@ def remove_malicious_test_files(files: list[Path], force: bool = False) -> int:
         try:
             if force or _is_safe_to_remove(file_path):
                 file_path.unlink()
-                logger.info(f"Removed suspicious test.py: {file_path}")
+                logger.info("Removed suspicious test.py: %s", file_path)
                 removed += 1
             else:
-                logger.warning(f"Skipped removal of {file_path} - may be legitimate")
+                logger.warning("Skipped removal of %s - may be legitimate", file_path)
         except OSError as e:
-            logger.error(f"Failed to remove {file_path}: {e}")
+            logger.error("Failed to remove %s: %s", file_path, e, exc_info=True)
 
     return removed
 
@@ -175,7 +176,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
                 return True
 
     except Exception as e:
-        logger.debug(f"Error checking safety of {file_path}: {e}")
+        logger.debug("Error checking safety of %s: %s", file_path, e, exc_info=True)
         return False
 
     return False
@@ -193,7 +194,7 @@ def apply_all_mitigations() -> dict[str, bool]:
     if suspicious_files := scan_for_malicious_test_files():
         removed = remove_malicious_test_files(suspicious_files)
         results["malicious_test_files_removed"] = removed
-        logger.warning(f"Found and removed {removed} suspicious test.py files")
+        logger.warning("Found and removed %s suspicious test.py files", removed)
     else:
         results["malicious_test_files_removed"] = 0
 

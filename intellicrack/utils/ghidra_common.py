@@ -57,20 +57,20 @@ def run_ghidra_plugin(
     try:
         # Validate inputs
         if not os.path.exists(ghidra_path):
-            error_msg = f"Ghidra not found at: {ghidra_path}"
-            logger.error(error_msg)
-            return 1, "", error_msg
+            error_msg = "Ghidra not found at: %s"
+            logger.error(error_msg, ghidra_path)
+            return 1, "", error_msg % ghidra_path
 
         if not os.path.exists(binary_path):
-            error_msg = f"Binary not found at: {binary_path}"
-            logger.error(error_msg)
-            return 1, "", error_msg
+            error_msg = "Binary not found at: %s"
+            logger.error(error_msg, binary_path)
+            return 1, "", error_msg % binary_path
 
         script_path = os.path.join(script_dir, script_name)
         if not os.path.exists(script_path):
-            error_msg = f"Script not found at: {script_path}"
-            logger.error(error_msg)
-            return 1, "", error_msg
+            error_msg = "Script not found at: %s"
+            logger.error(error_msg, script_path)
+            return 1, "", error_msg % script_path
 
         # Create project directory
         os.makedirs(project_dir, exist_ok=True)
@@ -88,7 +88,7 @@ def run_ghidra_plugin(
         if app:
             app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
 
-        logger.info(f"Running Ghidra command: {' '.join(command)}")
+        logger.info("Running Ghidra command: %s", " ".join(command))
 
         # Execute Ghidra
         process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -103,7 +103,7 @@ def run_ghidra_plugin(
             stdout, stderr = process.communicate(timeout=timeout)
             return_code = process.returncode
 
-            logger.info(f"Ghidra execution completed with return code: {return_code}")
+            logger.info("Ghidra execution completed with return code: %s", return_code)
 
             return return_code, stdout, stderr
 
@@ -111,12 +111,12 @@ def run_ghidra_plugin(
             process.kill()
             stdout, stderr = process.communicate()
             error_msg = f"Ghidra execution timed out after {timeout} seconds"
-            logger.warning(error_msg)
+            logger.warning("Ghidra execution timed out after %s seconds", timeout)
             return 124, stdout, error_msg  # 124 is standard timeout exit code
 
     except Exception as e:
         error_msg = f"Ghidra execution failed: {e}"
-        logger.error(error_msg)
+        logger.error("Ghidra execution failed: %s", e, exc_info=True)
         return 1, "", error_msg
 
 
@@ -743,11 +743,11 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
         with open(script_path, "w", encoding="utf-8") as f:
             f.write(script_content)
 
-        logger.info(f"Ghidra script saved to: {script_path}")
+        logger.info("Ghidra script saved to: %s", script_path)
         return script_path
 
     except Exception as e:
-        logger.error(f"Failed to save Ghidra script: {e}")
+        logger.error("Failed to save Ghidra script: %s", e, exc_info=True)
         raise
 
 
@@ -783,7 +783,7 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, An
             info["files"] = project_files
 
     except Exception as e:
-        logger.debug(f"Failed to get project info: {e}")
+        logger.debug("Failed to get project info: %s", e, exc_info=True)
 
     return info
 
@@ -819,11 +819,11 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
         if project_path.is_dir() and not any(project_path.iterdir()):
             project_path.rmdir()
 
-        logger.info(f"Cleaned up Ghidra project: {project_name}")
+        logger.info("Cleaned up Ghidra project: %s", project_name)
         return True
 
     except Exception as e:
-        logger.error(f"Failed to cleanup Ghidra project: {e}")
+        logger.error("Failed to cleanup Ghidra project: %s", e, exc_info=True)
         return False
 
 

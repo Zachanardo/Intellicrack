@@ -278,15 +278,14 @@ class BinaryNinjaAnalyzer:
         try:
             if func.hlil:
                 hlil_code = "\n".join(str(line) for line in func.hlil.instructions)
-                decompiled = hlil_code
         except Exception:
-            pass
+            self.logger.error("Failed to generate HLIL for function", exc_info=True)
 
         try:
             if func.mlil:
                 mlil_ssa = "\n".join(str(line) for line in func.mlil.ssa_form.instructions)
         except Exception:
-            pass
+            self.logger.error("Failed to generate MLIL SSA for function", exc_info=True)
 
         comments = {}
         for addr in func.address_ranges:
@@ -473,7 +472,7 @@ class BinaryNinjaAnalyzer:
                     for keyword in self.LICENSE_VALIDATION_KEYWORDS:
                         score += hlil_text.count(keyword) * 2
             except Exception:
-                pass
+                self.logger.error("Failed to analyze HLIL for license validation keywords", exc_info=True)
 
             for string_addr, string_val in self._extract_strings():
                 string_lower = string_val.lower()

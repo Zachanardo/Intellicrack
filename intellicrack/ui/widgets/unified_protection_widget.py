@@ -89,7 +89,7 @@ class UnifiedAnalysisThread(QThread):
             self.analysis_complete.emit(result)
 
         except Exception as e:
-            logger.error("Exception in unified_protection_widget: %s", e)
+            logger.error("Exception in unified_protection_widget: %s", e, exc_info=True)
             self.analysis_error.emit(str(e))
 
 
@@ -476,7 +476,7 @@ class UnifiedProtectionWidget(QWidget):
             if main_window and hasattr(main_window.ai_coordinator, "suggest_strategy"):
                 analysis_type = "complex_patterns" if deep_scan else "quick_check"
                 suggested_strategy = main_window.ai_coordinator.suggest_strategy(file_path, analysis_type)
-                logger.info(f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}")
+                logger.info("AI coordinator suggests strategy: %s for %s", suggested_strategy, analysis_type)
 
                 # Update status to show strategy
                 strategy_text = str(suggested_strategy).replace("AnalysisStrategy.", "").replace("_", " ").title()
@@ -484,7 +484,7 @@ class UnifiedProtectionWidget(QWidget):
             else:
                 self.status_label.setText("Starting analysis...")
         except Exception as e:
-            logger.debug(f"Could not get strategy suggestion: {e}")
+            logger.debug("Could not get strategy suggestion: %s", e, exc_info=True)
             self.status_label.setText("Starting analysis...")
 
         # Update UI
@@ -982,7 +982,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 f"Bypass guide exported to:\n{file_path}",
             )
         except Exception as e:
-            logger.error("Exception in unified_protection_widget: %s", e)
+            logger.error("Exception in unified_protection_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Export Error",
@@ -1063,7 +1063,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             # Create a simple features dialog inline for now
             self._show_inline_icp_features()
         except Exception as e:
-            logger.error(f"Failed to show ICP features dialog: {e}")
+            logger.error("Failed to show ICP features dialog: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "ICP Features Error",
@@ -1143,7 +1143,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
                     self.analysis_complete.emit(analysis)
                 except Exception as e:
-                    logger.error(f"ICP analysis error: {e}")
+                    logger.error("ICP analysis error: %s", e, exc_info=True)
                     self.analysis_complete.emit({"error": str(e)})
 
         def update_analysis(analysis_data: dict[str, Any]) -> None:

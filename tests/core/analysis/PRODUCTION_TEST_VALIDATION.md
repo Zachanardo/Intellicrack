@@ -153,6 +153,7 @@ results: dict[str, list[YaraMatch]] = {}
     - **Proves tests correctly validate rule compilation**
 
 3. **Unreferenced anti-debug string** (yara_scanner.py line 207):
+
     ```
     ERROR: unreferenced string "$icebp"
     ```

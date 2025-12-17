@@ -1416,7 +1416,7 @@ class VisualizationAnalytics:
                 confidence += 0.1
 
         except Exception:
-            pass
+            logger.debug("Failed to calculate context confidence score", exc_info=True)
 
         return min(1.0, confidence)
 

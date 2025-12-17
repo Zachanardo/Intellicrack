@@ -19,12 +19,12 @@ from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
-import defusedxml.ElementTree as ElementTree
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC as PBKDF2
+from defusedxml import ElementTree
 
 from intellicrack.handlers.wmi_handler import wmi
 from intellicrack.utils.logger import log_all_methods, logger

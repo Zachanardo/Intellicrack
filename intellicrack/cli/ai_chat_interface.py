@@ -126,7 +126,7 @@ class AITerminalChat:
             if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
                 if not health_status.get("healthy", False):
-                    raise Exception(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
+                    raise RuntimeError(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             backend_name = type(self.ai_backend).__name__
             logger.info("AI backend (%s) initialized successfully", backend_name)
@@ -145,7 +145,7 @@ class AITerminalChat:
                     self.console.print(f"[yellow]Using AI tools fallback: {e}[/yellow]")
 
             except Exception as fallback_error:
-                logger.error("All AI backends failed: %s", fallback_error, exc_info=True)
+                logger.exception("All AI backends failed: %s", fallback_error)
                 if self.console:
                     self.console.print(f"[red]All AI backends failed: {fallback_error}[/red]")
                 self.ai_backend = None
@@ -417,7 +417,7 @@ class AITerminalChat:
 
             return f"AI backend error: {e}\n\nPlease check your AI configuration and try again."
 
-    def _prepare_enriched_context(self, user_input: str, base_context: dict) -> dict:
+    def _prepare_enriched_context(self, base_context: dict) -> dict:
         """Prepare enriched context for AI responses."""
         enriched_context = base_context.copy()
 
@@ -541,9 +541,11 @@ class AITerminalChat:
         advanced_count = sum(1 for msg in user_messages for term in advanced_terms if term in msg)
         intermediate_count = sum(1 for msg in user_messages for term in intermediate_terms if term in msg)
 
-        if advanced_count > 2:
+        ADVANCED_THRESHOLD = 2
+        INTERMEDIATE_THRESHOLD = 1
+        if advanced_count > ADVANCED_THRESHOLD:
             return "advanced"
-        if intermediate_count > 1 or advanced_count > 0:
+        if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0:
             return "intermediate"
         return "beginner"
 
@@ -629,7 +631,8 @@ class AITerminalChat:
 
         self.console.print()
 
-    def _process_code_blocks(self, response: str) -> str | object:
+    @staticmethod
+    def _process_code_blocks(response: str) -> str | object:
         """Process response with code blocks and apply syntax highlighting.
 
         Args:
@@ -734,7 +737,7 @@ class AITerminalChat:
             self.console.print(Panel(columns, title="Analysis Summary", border_style="cyan"))
             self.console.print("\n")
 
-    def _show_help(self, args: list[str]) -> str | None:
+    def _show_help(self) -> str | None:
         """Show help information."""
         if self.console:
             help_table = Table(title="AI Chat Commands")
@@ -766,7 +769,7 @@ class AITerminalChat:
 
         return None
 
-    def _clear_history(self, args: list[str]) -> str | None:
+    def _clear_history(self) -> str | None:
         """Clear conversation history."""
         self.conversation_history.clear()
         logger.info("Conversation history cleared")
@@ -804,7 +807,7 @@ class AITerminalChat:
                 sys.stdout.flush()
 
         except Exception as e:
-            logger.error("Save failed: %s", e, exc_info=True)
+            logger.exception("Save failed: %s", e)
             if self.console:
                 self.console.print(f"[red]Save failed: {e}[/red]")
             else:
@@ -813,7 +816,7 @@ class AITerminalChat:
 
         return None
 
-    def _analyze_current_binary(self, args: list[str]) -> str | None:
+    def _analyze_current_binary(self) -> str | None:
         """Provide analysis overview of current binary."""
         if not self.binary_path:
             logger.warning("Analyze command called but no binary loaded")
@@ -856,7 +859,7 @@ class AITerminalChat:
 
         return None
 
-    def _show_context(self, args: list[str]) -> str | None:
+    def _show_context(self) -> str | None:
         """Show current analysis context."""
         context = self._build_context()
 
@@ -879,101 +882,107 @@ class AITerminalChat:
     def _switch_backend(self, args: list[str]) -> str | None:
         """Switch AI backend."""
         try:
-            # Get available backends from LLM manager
-            if self.llm_manager:
-                available_backends = self.llm_manager.list_available_backends()
-                current_backend = self.llm_manager.get_current_backend()
-            else:
-                available_backends = ["openai", "anthropic", "google", "local", "ollama"]
-                current_backend = "openai"
+            available_backends, current_backend = self._get_available_backends()
 
             if not args:
-                # Show available backends with their status
-                if self.console:
-                    self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
-                    for backend in available_backends:
-                        status = ""
-                        if backend == current_backend:
-                            status = " [green](current)[/green]"
-
-                        # Check backend configuration status
-                        if self.llm_manager and hasattr(self.llm_manager, "is_backend_configured"):
-                            if self.llm_manager.is_backend_configured(backend):
-                                status += " [blue](configured)[/blue]"
-                            else:
-                                status += " [yellow](not configured)[/yellow]"
-
-                        self.console.print(f"   {backend}{status}")
-                    self.console.print("\n[dim]Usage: /backend <name>[/dim]")
-                else:
-                    logger.debug("Displaying available backends in basic mode")
-                    sys.stdout.write("\nAvailable AI Backends:\n")
-                    for backend in available_backends:
-                        status = " (current)" if backend == current_backend else ""
-                        sys.stdout.write(f"   {backend}{status}\n")
-                    sys.stdout.write("\nUsage: /backend <name>\n")
-                    sys.stdout.flush()
-
+                self._display_available_backends(available_backends, current_backend)
                 return None
 
-            # Switch to specified backend
             backend_name = args[0].lower()
-
-            if backend_name not in available_backends:
-                error_msg = "Backend '{}' not available. Available backends: {}".format(backend_name, ", ".join(available_backends))
-                logger.warning("Invalid backend requested: %s", backend_name)
-                if self.console:
-                    self.console.print(f"[red]{error_msg}[/red]")
-                else:
-                    sys.stdout.write(f"{error_msg}\n")
-                    sys.stdout.flush()
-                return None
-
-            try:
-                # Switch backend using LLM manager
-                if not self.llm_manager:
-                    # Reinitialize LLM manager if not available
-                    from intellicrack.ai.llm_config_manager import LLMConfigManager
-
-                    self.llm_manager = LLMConfigManager()
-                if success := self.llm_manager.switch_backend(backend_name):
-                    self._reinitialize_ai_with_backend(backend_name)
-
-                    msg = f"Successfully switched to {backend_name} backend (status: {success})!"
-                    logger.info("Backend switched to %s", backend_name)
-                    if self.console:
-                        self.console.print(f"[green]{msg}[/green]")
-                    else:
-                        sys.stdout.write(f"{msg}\n")
-                        sys.stdout.flush()
-                else:
-                    msg = f"Failed to switch to {backend_name} backend. Check configuration and API keys."
-                    logger.error("Failed to switch to backend: %s", backend_name)
-                    if self.console:
-                        self.console.print(f"[red]{msg}[/red]")
-                    else:
-                        sys.stdout.write(f"{msg}\n")
-                        sys.stdout.flush()
-
-            except Exception as e:
-                error_msg = f"Error switching to {backend_name}: {e}"
-                logger.error("Error switching to backend %s: %s", backend_name, e, exc_info=True)
-                if self.console:
-                    self.console.print(f"[red]{error_msg}[/red]")
-                else:
-                    sys.stdout.write(f"{error_msg}\n")
-                    sys.stdout.flush()
+            return self._handle_backend_switch_logic(backend_name, available_backends)
 
         except Exception as e:
             error_msg = f"Error in backend switching: {e}"
-            logger.error("Error in backend switching: %s", e, exc_info=True)
+            logger.exception("Error in backend switching: %s", e)
             if self.console:
                 self.console.print(f"[red]{error_msg}[/red]")
             else:
                 sys.stdout.write(f"{error_msg}\n")
                 sys.stdout.flush()
+            return None
 
-        return None
+    def _get_available_backends(self) -> tuple[list[str], str]:
+        """Helper to get available backends and current backend."""
+        if self.llm_manager:
+            available_backends = self.llm_manager.list_available_backends()
+            current_backend = self.llm_manager.get_current_backend()
+        else:
+            available_backends = ["openai", "anthropic", "google", "local", "ollama"]
+            current_backend = "openai"
+        return available_backends, current_backend
+
+    def _display_available_backends(self, available_backends: list[str], current_backend: str) -> None:
+        """Helper to display available AI backends."""
+        if self.console:
+            self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
+            for backend in available_backends:
+                status = ""
+                if backend == current_backend:
+                    status = " [green](current)[/green]"
+
+                if self.llm_manager and hasattr(self.llm_manager, "is_backend_configured"):
+                    if self.llm_manager.is_backend_configured(backend):
+                        status += " [blue](configured)[/blue]"
+                    else:
+                        status += " [yellow](not configured)[/yellow]"
+
+                self.console.print(f"   {backend}{status}")
+            self.console.print("\n[dim]Usage: /backend <name>[/dim]")
+        else:
+            logger.debug("Displaying available backends in basic mode")
+            sys.stdout.write("\nAvailable AI Backends:\n")
+            for backend in available_backends:
+                status = " (current)" if backend == current_backend else ""
+                sys.stdout.write(f"   {backend}{status}\n")
+            sys.stdout.write("\nUsage: /backend <name>\n")
+            sys.stdout.flush()
+
+    def _handle_backend_switch_logic(self, backend_name: str, available_backends: list[str]) -> str | None:
+        """Helper to handle the logic for switching AI backend."""
+        if backend_name not in available_backends:
+            error_msg = "Backend '{}' not available. Available backends: {}".format(backend_name, ", ".join(available_backends))
+            logger.warning("Invalid backend requested: %s", backend_name)
+            if self.console:
+                self.console.print(f"[red]{error_msg}[/red]")
+            else:
+                sys.stdout.write(f"{error_msg}\n")
+                sys.stdout.flush()
+            return None
+
+        try:
+            if not self.llm_manager:
+                from intellicrack.ai.llm_config_manager import LLMConfigManager
+
+                self.llm_manager = LLMConfigManager()
+
+            if success := self.llm_manager.switch_backend(backend_name):
+                self._reinitialize_ai_with_backend(backend_name)
+                msg = f"Successfully switched to {backend_name} backend (status: {success})!"
+                logger.info("Backend switched to %s", backend_name)
+                if self.console:
+                    self.console.print(f"[green]{msg}[/green]")
+                else:
+                    sys.stdout.write(f"{msg}\n")
+                    sys.stdout.flush()
+            else:
+                msg = f"Failed to switch to {backend_name} backend. Check configuration and API keys."
+                logger.error("Failed to switch to backend: %s", backend_name)
+                if self.console:
+                    self.console.print(f"[red]{msg}[/red]")
+                else:
+                    sys.stdout.write(f"{msg}\n")
+                    sys.stdout.flush()
+            return None
+
+        except Exception as e:
+            error_msg = f"Error switching to {backend_name}: {e}"
+            logger.exception("Error switching to backend %s: %s", backend_name, e)
+            if self.console:
+                self.console.print(f"[red]{error_msg}[/red]")
+            else:
+                sys.stdout.write(f"{error_msg}\n")
+                sys.stdout.flush()
+            return None
 
     def _reinitialize_ai_with_backend(self, backend_name: str) -> None:
         """Reinitialize AI backend systems with new backend configuration."""
@@ -996,7 +1005,7 @@ class AITerminalChat:
             if hasattr(self.ai_backend, "health_check"):
                 health_status = self.ai_backend.health_check()
                 if not health_status.get("healthy", False):
-                    raise Exception(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
+                    raise RuntimeError(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             backend_class_name = type(self.ai_backend).__name__
             logger.info("AI backend (%s) reinitialized with %s", backend_class_name, backend_name)
@@ -1022,7 +1031,7 @@ class AITerminalChat:
                     sys.stdout.flush()
 
             except Exception as fallback_error:
-                logger.error("Failed to reinitialize AI backend: %s", fallback_error, exc_info=True)
+                logger.exception("Failed to reinitialize AI backend: %s", fallback_error)
                 if self.console:
                     self.console.print(f"[red]Failed to reinitialize AI backend: {fallback_error}[/red]")
                 else:
@@ -1071,7 +1080,7 @@ class AITerminalChat:
                 sys.stdout.flush()
 
         except Exception as e:
-            logger.error("Failed to load conversation from %s: %s", filename, e, exc_info=True)
+            logger.exception("Failed to load conversation from %s: %s", filename, e)
             if self.console:
                 self.console.print(f"[red]Load failed: {e}[/red]")
             else:
@@ -1109,7 +1118,7 @@ class AITerminalChat:
                 sys.stdout.flush()
 
         except Exception as e:
-            logger.error("Failed to export conversation: %s", e, exc_info=True)
+            logger.exception("Failed to export conversation: %s", e)
             if self.console:
                 self.console.print(f"[red]Export failed: {e}[/red]")
             else:
@@ -1169,7 +1178,7 @@ def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, A
         chat = AITerminalChat(binary_path, analysis_results)
         chat.start_chat_session()
     except Exception as e:
-        logger.error("AI chat error: %s", e, exc_info=True)
+        logger.exception("AI chat error: %s", e)
         return False
     return True
 

@@ -207,7 +207,7 @@ def process_binary_chunks(
                     chunk_results_list.append(chunk_result)
                     results["chunks_processed"] = cast("int", results["chunks_processed"]) + 1
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Error processing chunk {chunk['index']}: {e}")
+                    logger.error("Error processing chunk %s: %s", chunk["index"], e, exc_info=True)
                     chunk_results_list.append(
                         {
                             "chunk": chunk,
@@ -1525,7 +1525,7 @@ def run_dask_distributed_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error(f"Dask distributed analysis error: {e}")
+        logger.error("Dask distributed analysis error: %s", e, exc_info=True)
         results["error"] = str(e)
         results["success"] = False
 
@@ -1634,7 +1634,7 @@ def run_celery_distributed_analysis(
             results["patterns_found"] = list(set(all_patterns))
 
     except Exception as e:
-        logger.error(f"Celery distributed analysis error: {e}")
+        logger.error("Celery distributed analysis error: %s", e, exc_info=True)
         results["error"] = str(e)
         results["success"] = False
         results["suggestion"] = "Ensure Celery broker (Redis/RabbitMQ) is running"
@@ -1721,7 +1721,7 @@ def run_joblib_parallel_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error(f"Joblib parallel analysis error: {e}")
+        logger.error("Joblib parallel analysis error: %s", e, exc_info=True)
         results["error"] = str(e)
         results["success"] = False
 
@@ -1834,7 +1834,7 @@ def run_joblib_mmap_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error(f"Joblib mmap analysis error: {e}")
+        logger.error("Joblib mmap analysis error: %s", e, exc_info=True)
         results["error"] = str(e)
         results["success"] = False
 

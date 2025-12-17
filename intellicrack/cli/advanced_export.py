@@ -172,7 +172,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            logger.error("JSON export failed: %s", e, exc_info=True)
+            logger.exception("JSON export failed: %s", e)
             return False
 
     def export_executive_summary(self, output_path: str, format_type: str = "markdown") -> bool:
@@ -198,7 +198,7 @@ class AdvancedExporter:
             logger.warning("Unsupported format: %s", format_type)
             return False
         except Exception as e:
-            logger.error("Executive summary export failed: %s", e, exc_info=True)
+            logger.exception("Executive summary export failed: %s", e)
             return False
 
     def export_vulnerability_report(self, output_path: str) -> bool:
@@ -234,7 +234,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            logger.error("Vulnerability report export failed: %s", e, exc_info=True)
+            logger.exception("Vulnerability report export failed: %s", e)
             return False
 
     def export_csv_data(self, output_path: str, data_type: str = "all") -> bool:
@@ -260,7 +260,7 @@ class AdvancedExporter:
             logger.warning("Unsupported CSV data type: %s", data_type)
             return False
         except Exception as e:
-            logger.error("CSV export failed: %s", e, exc_info=True)
+            logger.exception("CSV export failed: %s", e)
             return False
 
     def export_xml_report(self, output_path: str) -> bool:
@@ -298,7 +298,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            logger.error("XML export failed: %s", e, exc_info=True)
+            logger.exception("XML export failed: %s", e)
             return False
 
     def export_html_report(self, output_path: str) -> bool:
@@ -379,7 +379,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            logger.error("HTML export failed: %s", e, exc_info=True)
+            logger.exception("HTML export failed: %s", e)
             return False
 
     def export_yaml_config(self, output_path: str) -> bool:
@@ -409,7 +409,7 @@ class AdvancedExporter:
 
             return True
         except Exception as e:
-            logger.error("YAML export failed: %s", e, exc_info=True)
+            logger.exception("YAML export failed: %s", e)
             return False
 
     def export_excel_workbook(self, output_path: str) -> bool:
@@ -459,7 +459,7 @@ class AdvancedExporter:
             workbook.close()
             return True
         except Exception as e:
-            logger.error("Excel export failed: %s", e, exc_info=True)
+            logger.exception("Excel export failed: %s", e)
             return False
 
     def _generate_summary(self) -> dict[str, Any]:
@@ -946,7 +946,7 @@ KEY FINDINGS
 
             return True
         except Exception as e:
-            logger.error("Strings CSV export failed: %s", e, exc_info=True)
+            logger.exception("Strings CSV export failed: %s", e)
             return False
 
     def _export_imports_csv(self, output_path: str) -> bool:
@@ -977,7 +977,7 @@ KEY FINDINGS
 
             return True
         except Exception as e:
-            logger.error("Imports CSV export failed: %s", e, exc_info=True)
+            logger.exception("Imports CSV export failed: %s", e)
             return False
 
     def _export_comprehensive_csv(self, output_path: str) -> bool:
@@ -1013,7 +1013,7 @@ KEY FINDINGS
 
             return success
         except Exception as e:
-            logger.error("Comprehensive CSV export failed: %s", e, exc_info=True)
+            logger.exception("Comprehensive CSV export failed: %s", e)
             return False
 
     def _generate_analysis_config(self) -> dict[str, Any]:
@@ -1168,7 +1168,6 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
-        cell_format: object | None = None,
         worksheet_name: str = "Summary",
     ) -> object | None:
         """Create summary sheet for Excel export.
@@ -1222,14 +1221,13 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            logger.error("Failed to create summary sheet: %s", e, exc_info=True)
+            logger.exception("Failed to create summary sheet: %s", e)
             return None
 
     def _create_vulnerabilities_sheet(
         self,
         workbook: object,
         header_format: object | None = None,
-        cell_format: object | None = None,
         worksheet_name: str = "Vulnerabilities",
     ) -> object | None:
         """Create vulnerabilities sheet for Excel export.
@@ -1273,14 +1271,13 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            logger.error("Failed to create vulnerabilities sheet: %s", e, exc_info=True)
+            logger.exception("Failed to create vulnerabilities sheet: %s", e)
             return None
 
     def _create_strings_sheet(
         self,
         workbook: object,
         header_format: object | None = None,
-        cell_format: object | None = None,
         worksheet_name: str = "Strings",
     ) -> object | None:
         """Create strings sheet for Excel export.
@@ -1323,14 +1320,13 @@ KEY FINDINGS
                     worksheet.write(row, 4, len(str(string_item)))
             return worksheet
         except Exception as e:
-            logger.error("Failed to create strings sheet: %s", e, exc_info=True)
+            logger.exception("Failed to create strings sheet: %s", e)
             return None
 
     def _create_imports_sheet(
         self,
         workbook: object,
         header_format: object | None = None,
-        cell_format: object | None = None,
         worksheet_name: str = "Imports",
     ) -> object | None:
         """Create imports sheet for Excel export.
@@ -1381,14 +1377,13 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            logger.error("Failed to create imports sheet: %s", e, exc_info=True)
+            logger.exception("Failed to create imports sheet: %s", e)
             return None
 
     def _create_statistics_sheet(
         self,
         workbook: object,
         header_format: object | None = None,
-        cell_format: object | None = None,
         worksheet_name: str = "Statistics",
     ) -> object | None:
         """Create statistics sheet for Excel export.
@@ -1437,7 +1432,7 @@ KEY FINDINGS
 
             return worksheet
         except Exception as e:
-            logger.error("Failed to create statistics sheet: %s", e, exc_info=True)
+            logger.exception("Failed to create statistics sheet: %s", e)
             return None
 
 

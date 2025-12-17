@@ -64,7 +64,7 @@ class MemoryManager:
                 "available_mb": (self.max_memory_bytes - memory_info.rss) / 1024 / 1024,
             }
         except ImportError as e:
-            logger.error("Import error in performance_optimizer: %s", e)
+            logger.error("Import error in performance_optimizer: %s", e, exc_info=True)
             # Fallback if psutil not available
             return {
                 "rss_mb": 0,
@@ -145,7 +145,7 @@ class BinaryChunker:
             offset += current_chunk_size
             chunk_id += 1
 
-        logger.info(f"Split {file_path.name} into {len(chunks)} chunks of ~{chunk_size // 1024 // 1024}MB each")
+        logger.info("Split %s into %s chunks of ~%sMB each", file_path.name, len(chunks), chunk_size // 1024 // 1024)
         return chunks
 
     def read_chunk(self, chunk_info: dict[str, object]) -> bytes:
@@ -155,7 +155,7 @@ class BinaryChunker:
                 f.seek(chunk_info["offset"])
                 return f.read(chunk_info["size"])
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Error reading chunk {chunk_info['id']}: {e}")
+            logger.error("Error reading chunk %s: %s", chunk_info["id"], e, exc_info=True)
             return b""
 
     def analyze_chunk_parallel(
@@ -192,7 +192,7 @@ class BinaryChunker:
                         self.memory_manager.cleanup_memory()
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Error analyzing chunk {chunk['id']}: {e}")
+                    logger.error("Error analyzing chunk %s: %s", chunk["id"], e, exc_info=True)
                     results.append(
                         {
                             "chunk_id": chunk["id"],
@@ -259,7 +259,7 @@ class CacheManager:
 
                 return result
             except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("Error reading cache file %s: %s", cache_file, e)
+                logger.warning("Error reading cache file %s: %s", cache_file, e, exc_info=True)
 
         return None
 
@@ -279,7 +279,7 @@ class CacheManager:
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2, default=str)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Error writing cache file %s: %s", cache_file, e)
+            logger.warning("Error writing cache file %s: %s", cache_file, e, exc_info=True)
 
     def clear_cache(self) -> None:
         """Clear all cached results."""
@@ -291,7 +291,7 @@ class CacheManager:
             try:
                 cache_file.unlink()
             except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("Error removing cache file %s: %s", cache_file, e)
+                logger.warning("Error removing cache file %s: %s", cache_file, e, exc_info=True)
 
 
 class AdaptiveAnalyzer:
@@ -398,7 +398,7 @@ class AdaptiveAnalyzer:
                             break
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Error identifying priority sections: %s", e)
+            logger.warning("Error identifying priority sections: %s", e, exc_info=True)
 
         return priority_sections
 
@@ -435,10 +435,10 @@ class PerformanceOptimizer:
         # Get optimal strategy
         strategy = self.adaptive_analyzer.get_analysis_strategy(file_path)
 
-        logger.info(f"Analysis strategy for {Path(file_path).name}:")
-        logger.info(f"  File size: {strategy['file_size_mb']:.1f}MB")
-        logger.info(f"  Use chunking: {strategy['use_chunking']}")
-        logger.info(f"  Sampling rate: {strategy['sample_rate']:.1%}")
+        logger.info("Analysis strategy for %s:", Path(file_path).name)
+        logger.info("  File size: %.1fMB", strategy["file_size_mb"])
+        logger.info("  Use chunking: %s", strategy["use_chunking"])
+        logger.info("  Sampling rate: %.1f%%", strategy["sample_rate"] * 100)
 
         results = {
             "file_path": file_path,
@@ -476,7 +476,7 @@ class PerformanceOptimizer:
                 self.cache_manager.cache_result(file_path, func_name, result)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in %s: %s", func_name, e)
+                logger.error("Error in %s: %s", func_name, e, exc_info=True)
                 results["analysis_results"][func_name] = {
                     "error": str(e),
                     "status": "failed",
@@ -500,7 +500,7 @@ class PerformanceOptimizer:
         )
 
         logger.info("Analysis completed in %fs", total_time)
-        logger.info(f"Cache efficiency: {results['performance_metrics']['cache_efficiency']:.1%}")
+        logger.info("Cache efficiency: %.1f%%", results["performance_metrics"]["cache_efficiency"] * 100)
 
         return results
 
@@ -549,7 +549,7 @@ class PerformanceOptimizer:
             ):
                 return analysis_func(mm)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in performance_optimizer: %s", e)
+            logger.error("Error in performance_optimizer: %s", e, exc_info=True)
             # Fallback to regular file reading
             with open(file_path, "rb") as f:
                 data = f.read()

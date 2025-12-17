@@ -403,13 +403,13 @@ class DependencyFeedback:
         status = self.get_dependency_status(dep_name)
 
         if status["available"]:
-            logger.info(f"{dep_name} dependency available for {context}")
+            logger.info("%s dependency available for %s", dep_name, context)
         else:
             info = status.get("info", {})
             if info and info.get("critical"):
-                logger.error(f"Critical dependency {dep_name} missing for {context}")
+                logger.error("Critical dependency %s missing for %s", dep_name, context, exc_info=True)
             else:
-                logger.warning(f"Optional dependency {dep_name} missing for {context}")
+                logger.warning("Optional dependency %s missing for %s", dep_name, context)
 
     def create_user_friendly_error(self, dep_name: str, operation: str, error: Exception) -> str:
         """Create user-friendly error message with helpful guidance."""

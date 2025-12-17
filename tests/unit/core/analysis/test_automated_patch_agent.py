@@ -759,3 +759,141 @@ class TestAutomatedPatchAgentPerformance(IntellicrackTestBase):
         assert analysis_time < 120.0  # 2 minute maximum for 10MB binary
 
         os.remove(large_binary)
+
+
+class TestAutomatedPatchAgentWithRealProtectedBinaries(IntellicrackTestBase):
+    """Test automated patch agent with real protected software binaries."""
+
+    @pytest.fixture(autouse=True)
+    def setup_real_binaries(self):
+        """Set up test environment with real protected binaries."""
+        self.fixtures_dir = Path("tests/fixtures/binaries")
+        self.protected_binaries = [
+            self.fixtures_dir / "pe/protected/enterprise_license_check.exe",
+            self.fixtures_dir / "pe/protected/flexlm_license_protected.exe",
+            self.fixtures_dir / "pe/protected/hasp_sentinel_protected.exe",
+            self.fixtures_dir / "pe/protected/online_activation_app.exe",
+            self.fixtures_dir / "pe/protected/wibu_codemeter_protected.exe",
+            self.fixtures_dir / "protected/themida_protected.exe",
+            self.fixtures_dir / "protected/vmprotect_protected.exe",
+        ]
+        self.protected_binaries = [p for p in self.protected_binaries if p.exists()]
+
+        if not self.protected_binaries:
+            pytest.skip("No protected binaries available for automated patch testing")
+
+        self.agent = AutomatedPatchAgent()
+
+    def test_analyze_real_protected_binary_no_crash(self):
+        """Test agent analyzes real protected binaries without crashing."""
+        for binary in self.protected_binaries:
+            with self.subTest(binary=binary.name):
+                try:
+                    result = self.agent.analyze_binary(str(binary))
+                    assert result is not None, f"Analysis returned None for {binary.name}"
+                    assert hasattr(result, 'license_checks') or hasattr(result, 'protection_mechanisms'), \
+                        f"Result missing expected attributes for {binary.name}"
+                except Exception as e:
+                    pytest.fail(f"Agent crashed analyzing {binary.name}: {e}")
+
+    def test_identify_patch_points_in_real_binary(self):
+        """Test identification of patch points in real protected software."""
+        if not self.protected_binaries:
+            pytest.skip("No protected binaries available")
+
+        test_binary = self.protected_binaries[0]
+        result = self.agent.analyze_binary(str(test_binary))
+
+        assert result is not None
+        patch_points = getattr(result, 'patch_points', None) or getattr(result, 'potential_patches', None)
+
+        if patch_points is not None:
+            assert isinstance(patch_points, (list, dict)), \
+                "Patch points should be a collection"
+
+    def test_generate_patches_for_flexlm(self):
+        """Test patch generation for FlexLM-protected binary."""
+        flexlm_binary = self.fixtures_dir / "pe/protected/flexlm_license_protected.exe"
+        if not flexlm_binary.exists():
+            pytest.skip("FlexLM binary not available")
+
+        result = self.agent.analyze_binary(str(flexlm_binary))
+
+        assert result is not None
+        self.assert_real_output(result, "FlexLM analysis appears to be placeholder")
+
+    def test_generate_patches_for_hasp(self):
+        """Test patch generation for HASP Sentinel-protected binary."""
+        hasp_binary = self.fixtures_dir / "pe/protected/hasp_sentinel_protected.exe"
+        if not hasp_binary.exists():
+            pytest.skip("HASP binary not available")
+
+        result = self.agent.analyze_binary(str(hasp_binary))
+
+        assert result is not None
+        self.assert_real_output(result, "HASP analysis appears to be placeholder")
+
+    def test_generate_patches_for_wibu(self):
+        """Test patch generation for Wibu CodeMeter-protected binary."""
+        wibu_binary = self.fixtures_dir / "pe/protected/wibu_codemeter_protected.exe"
+        if not wibu_binary.exists():
+            pytest.skip("Wibu binary not available")
+
+        result = self.agent.analyze_binary(str(wibu_binary))
+
+        assert result is not None
+        self.assert_real_output(result, "Wibu analysis appears to be placeholder")
+
+    def test_themida_patch_generation(self):
+        """Test patch generation for Themida-protected binary."""
+        themida_binary = self.fixtures_dir / "protected/themida_protected.exe"
+        if not themida_binary.exists():
+            pytest.skip("Themida binary not available")
+
+        result = self.agent.analyze_binary(str(themida_binary))
+
+        assert result is not None
+        self.assert_real_output(result, "Themida analysis appears to be placeholder")
+
+    def test_vmprotect_patch_generation(self):
+        """Test patch generation for VMProtect-protected binary."""
+        vmprotect_binary = self.fixtures_dir / "protected/vmprotect_protected.exe"
+        if not vmprotect_binary.exists():
+            pytest.skip("VMProtect binary not available")
+
+        result = self.agent.analyze_binary(str(vmprotect_binary))
+
+        assert result is not None
+        self.assert_real_output(result, "VMProtect analysis appears to be placeholder")
+
+    def test_consistency_across_multiple_analyses(self):
+        """Test patch agent produces consistent results across multiple runs."""
+        if not self.protected_binaries:
+            pytest.skip("No protected binaries available")
+
+        test_binary = str(self.protected_binaries[0])
+
+        result1 = self.agent.analyze_binary(test_binary)
+        result2 = self.agent.analyze_binary(test_binary)
+
+        assert result1 is not None
+        assert result2 is not None
+
+        if hasattr(result1, 'patch_points') and hasattr(result2, 'patch_points'):
+            assert len(result1.patch_points) == len(result2.patch_points), \
+                "Patch point count should be consistent across runs"
+
+    def test_real_binary_performance(self):
+        """Test performance analyzing real protected binaries."""
+        if not self.protected_binaries:
+            pytest.skip("No protected binaries available")
+
+        test_binary = str(self.protected_binaries[0])
+
+        start_time = time.time()
+        result = self.agent.analyze_binary(test_binary)
+        analysis_time = time.time() - start_time
+
+        assert result is not None
+        assert analysis_time < 300.0, \
+            f"Analysis took too long: {analysis_time:.2f} seconds (max 5 minutes)"

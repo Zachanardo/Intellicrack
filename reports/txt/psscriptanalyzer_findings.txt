@@ -126,8 +126,6 @@ D:\Intellicrack\TypeFix.ps1:355:1: [Warning] File 'TypeFix.ps1' uses Write-Host.
 
 D:\Intellicrack\TypeFix.ps1:356:1: [Warning] File 'TypeFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
-D:\Intellicrack\TypeFix.ps1:12:1: [Warning] 'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)
-
 D:\Intellicrack\TypeFix.ps1:73:10: [Warning] The cmdlet 'Select-Workers' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
 D:\Intellicrack\TypeFix.ps1:112:10: [Warning] The cmdlet 'Select-MaxFiles' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
@@ -135,6 +133,8 @@ D:\Intellicrack\TypeFix.ps1:112:10: [Warning] The cmdlet 'Select-MaxFiles' uses 
 D:\Intellicrack\TypeFix.ps1:131:10: [Warning] The cmdlet 'Select-MaxIterations' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
 D:\Intellicrack\TypeFix.ps1:227:10: [Warning] The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
+
+D:\Intellicrack\TypeFix.ps1:12:1: [Warning] 'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)
 
 
 62 findings in D:\Intellicrack\tools\AdobeInjector\Source\Rebranded\build.ps1
@@ -350,8 +350,6 @@ D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\
 
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:449:1: [Warning] File 'build.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)
 
-D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:76:10: [Warning] The cmdlet 'Download-File' uses an unapproved verb. (PSUseApprovedVerbs)
-
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:215:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
 
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:229:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
@@ -377,6 +375,8 @@ D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:359:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
 
 D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:364:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)
+
+D:\Intellicrack\tools\AdobeInjector\Source\GenP_3.6.9_SOURCE-CGP\genp-3.6.9-src\build.ps1:76:10: [Warning] The cmdlet 'Download-File' uses an unapproved verb. (PSUseApprovedVerbs)
 
 
 47 findings in D:\Intellicrack\CLI Coding\UpdateTools.ps1
@@ -538,6 +538,8 @@ D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-rmi-trace\data\support\setupu
 
 12 findings in D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1
 
+D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:64:13: [Warning] The parameter 'ArgList' has been declared but not used. (PSReviewUnusedParameter)
+
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:68:10: [Warning] The cmdlet 'Compute-Lldb-Usermode-Args' uses an unapproved verb. (PSUseApprovedVerbs)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:81:10: [Warning] The cmdlet 'Compute-Lldb-Platform-Args' uses an unapproved verb. (PSUseApprovedVerbs)
@@ -559,8 +561,6 @@ D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbs
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:96:10: [Warning] The cmdlet 'Compute-Lldb-Remote-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
 
 D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:110:10: [Warning] The cmdlet 'Compute-Lldb-PipInstall-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)
-
-D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-lldb\data\support\lldbsetuputils.ps1:64:13: [Warning] The parameter 'ArgList' has been declared but not used. (PSReviewUnusedParameter)
 
 
 9 findings in D:\Intellicrack\tools\ghidra\Ghidra\Debug\Debugger-agent-gdb\data\support\gdbsetuputils.ps1

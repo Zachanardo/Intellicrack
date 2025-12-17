@@ -1,4 +1,291 @@
-14 findings in .\intellicrack\scripts\frida\qodana.yaml
+69 findings in .\.github\workflows\ci.yml
+
+.\.github\workflows\ci.yml:1:9: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\ci.yml:4:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\ci.yml:5:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:7:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:10:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\ci.yml:15:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\ci.yml:16:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:18:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:20:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:24:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:29:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:35:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:45:121: [warning] line too long (138 > 120 characters)  (line-length)
+
+.\.github\workflows\ci.yml:55:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:60:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:62:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:66:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:71:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:77:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:97:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:102:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:104:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:108:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:113:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:126:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:131:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:133:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:137:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:142:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:148:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:160:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:165:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:167:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:171:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:176:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:181:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:193:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:198:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:200:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:204:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:209:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:214:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:226:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:231:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:233:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:237:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:249:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:254:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:256:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:260:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:269:121: [warning] line too long (146 > 120 characters)  (line-length)
+
+.\.github\workflows\ci.yml:275:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:279:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:284:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:286:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:290:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:301:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:306:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:308:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:312:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:323:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\ci.yml:328:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\ci.yml:330:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:334:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:342:121: [warning] line too long (125 > 120 characters)  (line-length)
+
+.\.github\workflows\ci.yml:344:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:350:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:360:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\ci.yml:366:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+
+53 findings in .\.github\workflows\python-ci.yml
+
+.\.github\workflows\python-ci.yml:1:16: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\python-ci.yml:4:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\python-ci.yml:5:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:7:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:10:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\python-ci.yml:15:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\python-ci.yml:16:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:18:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:20:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:24:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:29:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:35:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:44:121: [warning] line too long (129 > 120 characters)  (line-length)
+
+.\.github\workflows\python-ci.yml:53:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:58:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:60:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:64:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:69:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:75:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:86:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:91:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:93:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:97:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:102:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:114:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:119:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:121:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:125:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:130:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:136:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:147:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:152:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:154:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:158:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:163:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:168:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:179:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:184:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:186:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:190:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:195:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:200:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:211:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:216:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:218:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:222:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:233:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\python-ci.yml:238:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\python-ci.yml:240:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:244:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:251:121: [warning] line too long (125 > 120 characters)  (line-length)
+
+.\.github\workflows\python-ci.yml:253:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\python-ci.yml:259:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+
+17 findings in .\.github\dependabot.yml
+
+.\.github\dependabot.yml:1:11: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\dependabot.yml:3:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\dependabot.yml:6:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:11:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:14:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:20:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:25:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:28:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:31:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:37:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:42:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:45:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:48:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:54:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:59:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:62:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.github\dependabot.yml:65:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+
+15 findings in .\intellicrack\scripts\frida\qodana.yaml
 
 .\intellicrack\scripts\frida\qodana.yaml:1:2: [warning] missing starting space in comment  (comments)
 
@@ -7,6 +294,8 @@
 .\intellicrack\scripts\frida\qodana.yaml:4:2: [warning] missing starting space in comment  (comments)
 
 .\intellicrack\scripts\frida\qodana.yaml:12:2: [warning] missing starting space in comment  (comments)
+
+.\intellicrack\scripts\frida\qodana.yaml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
 .\intellicrack\scripts\frida\qodana.yaml:16:2: [warning] missing starting space in comment  (comments)
 
@@ -29,6 +318,131 @@
 .\intellicrack\scripts\frida\qodana.yaml:45:2: [warning] missing starting space in comment  (comments)
 
 
+14 findings in .\.github\workflows\claude.yml
+
+.\.github\workflows\claude.yml:1:18: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\claude.yml:4:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\claude.yml:5:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude.yml:7:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude.yml:9:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude.yml:11:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude.yml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\claude.yml:15:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude.yml:19:121: [warning] line too long (142 > 120 characters)  (line-length)
+
+.\.github\workflows\claude.yml:22:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\claude.yml:28:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\claude.yml:31:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\claude.yml:37:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\claude.yml:43:121: [warning] line too long (165 > 120 characters)  (line-length)
+
+
+12 findings in .\.github\workflows\qodana_code_quality.yml
+
+.\.github\workflows\qodana_code_quality.yml:1:13: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\qodana_code_quality.yml:3:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:6:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:7:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:11:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:12:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:14:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:18:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:20:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:20:121: [warning] line too long (132 > 120 characters)  (line-length)
+
+.\.github\workflows\qodana_code_quality.yml:25:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\qodana_code_quality.yml:27:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+
+11 findings in .\.github\workflows\claude-code-review.yml
+
+.\.github\workflows\claude-code-review.yml:1:25: [error] wrong new line character: expected \n  (new-lines)
+
+.\.github\workflows\claude-code-review.yml:4:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\claude-code-review.yml:5:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude-code-review.yml:14:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.github\workflows\claude-code-review.yml:21:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.github\workflows\claude-code-review.yml:23:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\claude-code-review.yml:29:13: [error] wrong indentation: expected 10 but found 12  (indentation)
+
+.\.github\workflows\claude-code-review.yml:32:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\claude-code-review.yml:38:19: [error] wrong indentation: expected 16 but found 18  (indentation)
+
+.\.github\workflows\claude-code-review.yml:50:121: [warning] line too long (137 > 120 characters)  (line-length)
+
+.\.github\workflows\claude-code-review.yml:56:121: [warning] line too long (191 > 120 characters)  (line-length)
+
+
+10 findings in .\.pre-commit-config.yaml
+
+.\.pre-commit-config.yaml:1:7: [error] wrong new line character: expected \n  (new-lines)
+
+.\.pre-commit-config.yaml:3:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.pre-commit-config.yaml:6:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.pre-commit-config.yaml:15:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.pre-commit-config.yaml:40:121: [warning] line too long (169 > 120 characters)  (line-length)
+
+.\.pre-commit-config.yaml:57:121: [warning] line too long (127 > 120 characters)  (line-length)
+
+.\.pre-commit-config.yaml:67:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.pre-commit-config.yaml:75:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.pre-commit-config.yaml:82:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+.\.pre-commit-config.yaml:91:11: [error] wrong indentation: expected 8 but found 10  (indentation)
+
+
+8 findings in .\.readthedocs.yaml
+
+.\.readthedocs.yaml:1:35: [error] wrong new line character: expected \n  (new-lines)
+
+.\.readthedocs.yaml:9:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.readthedocs.yaml:11:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.readthedocs.yaml:15:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.readthedocs.yaml:20:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.readthedocs.yaml:25:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.readthedocs.yaml:26:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.readthedocs.yaml:30:15: [error] wrong indentation: expected 12 but found 14  (indentation)
+
+
 8 findings in .\.serena\project.yml
 
 .\.serena\project.yml:1:85: [error] wrong new line character: expected \n  (new-lines)
@@ -48,6 +462,23 @@
 .\.serena\project.yml:75:121: [warning] line too long (123 > 120 characters)  (line-length)
 
 
+7 findings in .\.sourcery.yaml
+
+.\.sourcery.yaml:1:56: [error] wrong new line character: expected \n  (new-lines)
+
+.\.sourcery.yaml:15:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.sourcery.yaml:32:5: [error] wrong indentation: expected 2 but found 4  (indentation)
+
+.\.sourcery.yaml:33:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.sourcery.yaml:36:9: [error] wrong indentation: expected 6 but found 8  (indentation)
+
+.\.sourcery.yaml:39:121: [warning] line too long (170 > 120 characters)  (line-length)
+
+.\.sourcery.yaml:1:17: [error] wrong new line character: expected \n  (new-lines)
+
+
 7 findings in .\.github\workflows\claude-type-fix-oauth.yml
 
 .\.github\workflows\claude-type-fix-oauth.yml:1:51: [error] wrong new line character: expected \n  (new-lines)
@@ -65,59 +496,28 @@
 .\.github\workflows\claude-type-fix-oauth.yml:513:121: [warning] line too long (122 > 120 characters)  (line-length)
 
 
-6 findings in .\.sourcery.yaml
+6 findings in .\tests\utils\audit_whitelist.yaml
 
-.\.sourcery.yaml:1:56: [error] wrong new line character: expected \n  (new-lines)
+.\tests\utils\audit_whitelist.yaml:1:45: [error] wrong new line character: expected \n  (new-lines)
 
-.\.sourcery.yaml:15:1: [error] wrong indentation: expected 2 but found 0  (indentation)
+.\tests\utils\audit_whitelist.yaml:7:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
-.\.sourcery.yaml:33:3: [error] wrong indentation: expected 4 but found 2  (indentation)
+.\tests\utils\audit_whitelist.yaml:17:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
-.\.sourcery.yaml:36:3: [error] wrong indentation: expected 4 but found 2  (indentation)
+.\tests\utils\audit_whitelist.yaml:30:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
-.\.sourcery.yaml:39:121: [warning] line too long (168 > 120 characters)  (line-length)
+.\tests\utils\audit_whitelist.yaml:41:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
-.\.sourcery.yaml:1:17: [error] wrong new line character: expected \n  (new-lines)
-
-
-4 findings in .\.github\workflows\claude-code-review.yml
-
-.\.github\workflows\claude-code-review.yml:1:25: [error] wrong new line character: expected \n  (new-lines)
-
-.\.github\workflows\claude-code-review.yml:50:121: [warning] line too long (127 > 120 characters)  (line-length)
-
-.\.github\workflows\claude-code-review.yml:56:121: [warning] line too long (183 > 120 characters)  (line-length)
-
-.\.github\workflows\claude-code-review.yml:57:1: [error] too many blank lines (1 > 0)  (empty-lines)
+.\tests\utils\audit_whitelist.yaml:47:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
 
-4 findings in .\.github\workflows\claude.yml
+3 findings in .\qodana.yaml
 
-.\.github\workflows\claude.yml:1:18: [error] wrong new line character: expected \n  (new-lines)
+.\qodana.yaml:1:117: [error] wrong new line character: expected \n  (new-lines)
 
-.\.github\workflows\claude.yml:19:121: [warning] line too long (136 > 120 characters)  (line-length)
+.\qodana.yaml:8:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
-.\.github\workflows\claude.yml:43:121: [warning] line too long (157 > 120 characters)  (line-length)
-
-.\.github\workflows\claude.yml:50:1: [error] too many blank lines (1 > 0)  (empty-lines)
-
-
-3 findings in .\.pre-commit-config.yaml
-
-.\.pre-commit-config.yaml:1:7: [error] wrong new line character: expected \n  (new-lines)
-
-.\.pre-commit-config.yaml:40:121: [warning] line too long (165 > 120 characters)  (line-length)
-
-.\.pre-commit-config.yaml:57:121: [warning] line too long (123 > 120 characters)  (line-length)
-
-
-3 findings in .\.github\workflows\ci.yml
-
-.\.github\workflows\ci.yml:1:9: [error] wrong new line character: expected \n  (new-lines)
-
-.\.github\workflows\ci.yml:45:121: [warning] line too long (130 > 120 characters)  (line-length)
-
-.\.github\workflows\ci.yml:269:121: [warning] line too long (138 > 120 characters)  (line-length)
+.\qodana.yaml:10:5: [error] wrong indentation: expected 2 but found 4  (indentation)
 
 
 3 findings in .\config\startup_optimization.yaml
@@ -129,42 +529,6 @@
 .\config\startup_optimization.yaml:79:85: [error] no new line character at the end of file  (new-line-at-end-of-file)
 
 
-2 findings in .\qodana.yaml
-
-.\qodana.yaml:1:117: [error] wrong new line character: expected \n  (new-lines)
-
-.\qodana.yaml:10:34: [error] no new line character at the end of file  (new-line-at-end-of-file)
-
-
-2 findings in .\.github\workflows\python-ci.yml
-
-.\.github\workflows\python-ci.yml:1:16: [error] wrong new line character: expected \n  (new-lines)
-
-.\.github\workflows\python-ci.yml:44:121: [warning] line too long (121 > 120 characters)  (line-length)
-
-
-2 findings in .\.github\workflows\qodana_code_quality.yml
-
-.\.github\workflows\qodana_code_quality.yml:1:13: [error] wrong new line character: expected \n  (new-lines)
-
-.\.github\workflows\qodana_code_quality.yml:20:121: [warning] line too long (125 > 120 characters)  (line-length)
-
-
-1 findings in .\.readthedocs.yaml
-
-.\.readthedocs.yaml:1:35: [error] wrong new line character: expected \n  (new-lines)
-
-
 1 findings in .\.yarnrc.yml
 
 .\.yarnrc.yml:1:25: [error] wrong new line character: expected \n  (new-lines)
-
-
-1 findings in .\.github\dependabot.yml
-
-.\.github\dependabot.yml:1:11: [error] wrong new line character: expected \n  (new-lines)
-
-
-1 findings in .\tests\utils\audit_whitelist.yaml
-
-.\tests\utils\audit_whitelist.yaml:1:45: [error] wrong new line character: expected \n  (new-lines)

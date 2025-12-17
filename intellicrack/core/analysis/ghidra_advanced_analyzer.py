@@ -138,7 +138,7 @@ class GhidraAdvancedAnalyzer:
             if self.md:
                 self.md.detail = True
         except Exception:
-            logger.exception("Failed to initialize analyzers", exc_info=True)
+            logger.error("Failed to initialize analyzers", exc_info=True)
 
     def recover_variables(self, function: GhidraFunction) -> list[RecoveredVariable]:
         """Recover variables with type propagation."""

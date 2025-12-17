@@ -1610,7 +1610,7 @@ class PluginSystem:
                         os.remove(dest_path)
 
             except Exception as e:
-                self.logger.exception("Error installing plugin from URL: %s", e, exc_info=True)
+                self.logger.error("Error installing plugin from URL: %s", e, exc_info=True)
                 return False
 
         # If it's a local file path, copy it
@@ -1639,7 +1639,7 @@ class PluginSystem:
                 plugin_installed = True
 
             except Exception as e:
-                self.logger.exception("Error installing plugin from file: %s", e, exc_info=True)
+                self.logger.error("Error installing plugin from file: %s", e, exc_info=True)
                 return False
 
         # If it's a plugin name from repository (future enhancement)
@@ -1770,7 +1770,7 @@ class PluginSystem:
                 return None
 
             except Exception as e:
-                self.logger.exception("Failed to execute plugin %s: %s", plugin_name, e, exc_info=True)
+                self.logger.error("Failed to execute plugin %s: %s", plugin_name, e, exc_info=True)
                 self.logger.debug("Traceback: %s", traceback.format_exc())
                 return None
 
@@ -1837,7 +1837,7 @@ class PluginSystem:
                     return messages or True
 
                 except Exception as e:
-                    self.logger.exception("Failed to execute Frida plugin %s: %s", plugin_name, e, exc_info=True)
+                    self.logger.error("Failed to execute Frida plugin %s: %s", plugin_name, e, exc_info=True)
                     return None
             else:
                 self.logger.error("Frida not available for JavaScript plugin execution")
@@ -1956,7 +1956,7 @@ class PluginSystem:
                         f.write(content_text)
 
             except Exception as e:
-                self.logger.exception("Failed to download remote plugin from %s: %s", plugin_url, e, exc_info=True)
+                self.logger.error("Failed to download remote plugin from %s: %s", plugin_url, e, exc_info=True)
                 return None
 
             # Execute the downloaded plugin
@@ -1973,7 +1973,7 @@ class PluginSystem:
                 return result
 
             except Exception as e:
-                self.logger.exception("Failed to execute downloaded plugin from %s: %s", temp_plugin_path, e, exc_info=True)
+                self.logger.error("Failed to execute downloaded plugin from %s: %s", temp_plugin_path, e, exc_info=True)
                 # Clean up on error
                 try:
                     os.remove(temp_plugin_path)
@@ -1982,7 +1982,7 @@ class PluginSystem:
                 return None
 
         except Exception as e:
-            self.logger.exception("An unexpected error occurred during remote plugin execution: %s", e, exc_info=True)
+            self.logger.error("An unexpected error occurred during remote plugin execution: %s", e, exc_info=True)
             self.logger.debug("Traceback: %s", traceback.format_exc())
             return None
 
@@ -2150,7 +2150,7 @@ finally:
             try:
                 stdout, stderr = process.communicate(timeout=35)  # 35 seconds (5 more than internal timeout)
             except subprocess.TimeoutExpired as e:
-                logger.exception("Subprocess timeout during sandboxed plugin execution for %s: %s", plugin_path, e, exc_info=True)
+                logger.error("Subprocess timeout during sandboxed plugin execution for %s: %s", plugin_path, e, exc_info=True)
                 # Kill the process group on timeout
                 if sys.platform != "win32":
                     os.killpg(os.getpgid(process.pid), signal.SIGTERM)
@@ -2187,7 +2187,7 @@ finally:
                 return None
 
         except Exception as e:
-            self.logger.exception("An unexpected error occurred while executing sandboxed plugin %s: %s", plugin_name, e, exc_info=True)
+            self.logger.error("An unexpected error occurred while executing sandboxed plugin %s: %s", plugin_name, e, exc_info=True)
             self.logger.debug("Traceback: %s", traceback.format_exc())
             return None
 
@@ -2204,7 +2204,7 @@ try:
     )
     __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]  # noqa: PLE0604
 except ImportError as e:
-    logger.exception("Import error in plugin_system, possibly due to missing plugin_config module: %s", e, exc_info=True)
+    logger.error("Import error in plugin_system, possibly due to missing plugin_config module: %s", e, exc_info=True)
     # Fallback in case of circular import issues
     __all__ = [
         "PluginSystem",

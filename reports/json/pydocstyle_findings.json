@@ -1,7 +1,7 @@
 {
     "tool": "pydocstyle",
-    "generated": "2025-12-13T23:58:47.230074",
-    "total_findings": 1015,
+    "generated": "2025-12-14T22:12:12.885650",
+    "total_findings": 1016,
     "total_files": 171,
     "files": [
         {
@@ -5773,76 +5773,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\analysis\\activation_analyzer.py",
-            "count": 8,
-            "findings": [
-                {
-                    "line": 40,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `ActivationType`:",
-                    "message": "in public class `ActivationType`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:40: D204: in public class `ActivationType`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 52,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `RegistrationType`:",
-                    "message": "in public class `RegistrationType`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:52: D204: in public class `RegistrationType`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 62,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `ActivationPattern`:",
-                    "message": "in public class `ActivationPattern`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:62: D204: in public class `ActivationPattern`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 73,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `RegistrationPattern`:",
-                    "message": "in public class `RegistrationPattern`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:73: D204: in public class `RegistrationPattern`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 83,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `TrialPattern`:",
-                    "message": "in public class `TrialPattern`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:83: D204: in public class `TrialPattern`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 93,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `HardwareIDPattern`:",
-                    "message": "in public class `HardwareIDPattern`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:93: D204: in public class `HardwareIDPattern`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 102,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `LicenseFilePattern`:",
-                    "message": "in public class `LicenseFilePattern`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:102: D204: in public class `LicenseFilePattern`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 111,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `ActivationAnalysisResult`:",
-                    "message": "in public class `ActivationAnalysisResult`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\activation_analyzer.py:111: D204: in public class `ActivationAnalysisResult`: - 1 blank line required after class docstring (found 0)"
-                }
-            ]
-        },
-        {
             "path": "tests\\conftest_original.py",
             "count": 8,
             "findings": [
@@ -6193,6 +6123,68 @@
             ]
         },
         {
+            "path": "intellicrack\\cli\\cli.py",
+            "count": 7,
+            "findings": [
+                {
+                    "line": 211,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_perform_vulnerability_scan_cli`:",
+                    "message": "in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:211: D401: in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 227,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_display_vulnerability_summary_cli`:",
+                    "message": "in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:227: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 257,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_perform_basic_security_scan_cli`:",
+                    "message": "in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:257: D401: in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 913,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_update_progress`:",
+                    "message": "in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:913: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 926,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_handle_gpu_acceleration_progress`:",
+                    "message": "in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:926: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 933,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_handle_distributed_processing_progress`:",
+                    "message": "in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:933: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 942,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private function `_handle_symbolic_execution_progress`:",
+                    "message": "in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\cli.py:942: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                }
+            ]
+        },
+        {
             "path": "tests\\validation_system\\phase2\\detection_depth_validator.py",
             "count": 7,
             "findings": [
@@ -6251,6 +6243,60 @@
                     "context": "in public function `main`:",
                     "message": "in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')",
                     "raw": "tests\\validation_system\\phase2\\detection_depth_validator.py:6370: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')"
+                }
+            ]
+        },
+        {
+            "path": "intellicrack\\cli\\analysis_cli.py",
+            "count": 6,
+            "findings": [
+                {
+                    "line": 119,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_binary_analysis`:",
+                    "message": "in private method `_perform_binary_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:119: D401: in private method `_perform_binary_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 137,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_protection_analysis`:",
+                    "message": "in private method `_perform_protection_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:137: D401: in private method `_perform_protection_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 157,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_vulnerability_scan`:",
+                    "message": "in private method `_perform_vulnerability_scan`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:157: D401: in private method `_perform_vulnerability_scan`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 172,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_pe_analysis`:",
+                    "message": "in private method `_perform_pe_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:172: D401: in private method `_perform_pe_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 193,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_elf_analysis`:",
+                    "message": "in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:193: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 208,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_perform_string_extraction`:",
+                    "message": "in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\analysis_cli.py:208: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
                 }
             ]
         },
@@ -6737,52 +6783,6 @@
                     "context": "in public function `main`:",
                     "message": "in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')",
                     "raw": "tests\\validation_system\\phase6\\statistical_requirements_validator.py:634: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\analysis\\fingerprint_engine.py",
-            "count": 5,
-            "findings": [
-                {
-                    "line": 54,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `FingerprintType`:",
-                    "message": "in public class `FingerprintType`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\fingerprint_engine.py:54: D204: in public class `FingerprintType`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 68,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `BinaryFingerprint`:",
-                    "message": "in public class `BinaryFingerprint`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\fingerprint_engine.py:68: D204: in public class `BinaryFingerprint`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 86,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `ProtectionFingerprint`:",
-                    "message": "in public class `ProtectionFingerprint`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\fingerprint_engine.py:86: D204: in public class `ProtectionFingerprint`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 99,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `CompilerFingerprint`:",
-                    "message": "in public class `CompilerFingerprint`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\fingerprint_engine.py:99: D204: in public class `CompilerFingerprint`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 112,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `LicenseSystemFingerprint`:",
-                    "message": "in public class `LicenseSystemFingerprint`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\core\\analysis\\fingerprint_engine.py:112: D204: in public class `LicenseSystemFingerprint`: - 1 blank line required after class docstring (found 0)"
                 }
             ]
         },
@@ -7359,6 +7359,36 @@
             ]
         },
         {
+            "path": "intellicrack\\cli\\ai_chat_interface.py",
+            "count": 3,
+            "findings": [
+                {
+                    "line": 905,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_get_available_backends`:",
+                    "message": "in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\ai_chat_interface.py:905: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 915,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_display_available_backends`:",
+                    "message": "in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\ai_chat_interface.py:915: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                },
+                {
+                    "line": 941,
+                    "column": null,
+                    "code": "D401",
+                    "context": "in private method `_handle_backend_switch_logic`:",
+                    "message": "in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+                    "raw": "intellicrack\\cli\\ai_chat_interface.py:941: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+                }
+            ]
+        },
+        {
             "path": "intellicrack\\core\\exploitation\\automated_unpacker.py",
             "count": 3,
             "findings": [
@@ -7379,12 +7409,12 @@
                     "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:1522: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')"
                 },
                 {
-                    "line": 2110,
+                    "line": 2112,
                     "column": null,
                     "code": "D403",
                     "context": "in private method `_unpack_asprotect`:",
                     "message": "in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')",
-                    "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:2110: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')"
+                    "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:2112: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')"
                 }
             ]
         },
@@ -7955,42 +7985,20 @@
             "count": 2,
             "findings": [
                 {
-                    "line": 874,
+                    "line": 870,
                     "column": null,
                     "code": "D202",
                     "context": "in private method `_setup_resolution_rules`:",
                     "message": "in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)",
-                    "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:874: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)"
+                    "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:870: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)"
                 },
                 {
-                    "line": 904,
+                    "line": 900,
                     "column": null,
                     "code": "D202",
                     "context": "in private method `_setup_recovery_strategies`:",
                     "message": "in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)",
-                    "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:904: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": 126,
-                    "column": null,
-                    "code": "D204",
-                    "context": "in public class `ARC4Cipher`:",
-                    "message": "in public class `ARC4Cipher`: - 1 blank line required after class docstring (found 0)",
-                    "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:126: D204: in public class `ARC4Cipher`: - 1 blank line required after class docstring (found 0)"
-                },
-                {
-                    "line": 126,
-                    "column": null,
-                    "code": "D205",
-                    "context": "in public class `ARC4Cipher`:",
-                    "message": "in public class `ARC4Cipher`: - 1 blank line required between summary line and description (found 0)",
-                    "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:126: D205: in public class `ARC4Cipher`: - 1 blank line required between summary line and description (found 0)"
+                    "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:900: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)"
                 }
             ]
         },
@@ -8329,12 +8337,12 @@
             "count": 1,
             "findings": [
                 {
-                    "line": 431,
+                    "line": 425,
                     "column": null,
                     "code": "D202",
                     "context": "in public method `load_model_in_background`:",
                     "message": "in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)",
-                    "raw": "intellicrack\\ai\\background_loader.py:431: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)"
+                    "raw": "intellicrack\\ai\\background_loader.py:425: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)"
                 }
             ]
         },
@@ -8371,12 +8379,12 @@
             "count": 1,
             "findings": [
                 {
-                    "line": 676,
+                    "line": 690,
                     "column": null,
                     "code": "D401",
                     "context": "in public function `analyze_exports`:",
                     "message": "in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')",
-                    "raw": "intellicrack\\core\\analysis\\export_analyzer.py:676: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')"
+                    "raw": "intellicrack\\core\\analysis\\export_analyzer.py:690: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')"
                 }
             ]
         },
@@ -8469,12 +8477,12 @@
             "count": 1,
             "findings": [
                 {
-                    "line": 431,
+                    "line": 432,
                     "column": null,
                     "code": "D401",
                     "context": "in private method `_algo_custom`:",
                     "message": "in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')",
-                    "raw": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py:431: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')"
+                    "raw": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py:432: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')"
                 }
             ]
         },

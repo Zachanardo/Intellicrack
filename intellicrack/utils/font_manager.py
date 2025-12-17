@@ -54,7 +54,7 @@ class FontManager:
                 font_config = self.central_config.get("font_configuration", {})
             return font_config
         except Exception as e:
-            logger.warning(f"Could not load font config from central config: {e}")
+            logger.warning("Could not load font config from central config: %s", e, exc_info=True)
             # Return default configuration structure
             return {
                 "monospace_fonts": {
@@ -89,9 +89,9 @@ class FontManager:
                     font_id = QFontDatabase.addApplicationFont(font_path)
                     if font_id >= 0:
                         self.loaded_fonts.append(font_file)
-                        logger.info(f"Loaded font: {font_file}")
+                        logger.info("Loaded font: %s", font_file)
                 except Exception as e:
-                    logger.warning(f"Failed to load font {font_file}: {e}")
+                    logger.warning("Failed to load font %s: %s", font_file, e, exc_info=True)
 
     def get_monospace_font(self, size: int | None = None) -> QFont:
         """Get the best available monospace font."""

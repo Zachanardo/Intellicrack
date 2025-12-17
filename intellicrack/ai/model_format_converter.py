@@ -198,7 +198,8 @@ class ModelFormatConverter:
                 initial_reserved = memory_reserved()
                 logger.info(
                     "GPU memory before conversion - Allocated: %.1fMB, Reserved: %.1fMB",
-                    initial_allocated / (1024**2), initial_reserved / (1024**2),
+                    initial_allocated / (1024**2),
+                    initial_reserved / (1024**2),
                 )
             except Exception as e:
                 logger.debug("Unable to get GPU memory stats: %s", e, exc_info=True)
@@ -224,7 +225,8 @@ class ModelFormatConverter:
                         final_reserved = memory_reserved()
                         logger.info(
                             "GPU memory after conversion - Allocated: %.1fMB, Reserved: %.1fMB",
-                            final_allocated / (1024**2), final_reserved / (1024**2),
+                            final_allocated / (1024**2),
+                            final_reserved / (1024**2),
                         )
                     except Exception as e:
                         logger.debug("Unable to get final GPU memory stats: %s", e, exc_info=True)

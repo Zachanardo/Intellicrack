@@ -105,14 +105,14 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             if kwargs:
                 arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
-            logger.debug(f"Entering {func_name}({', '.join(arg_strs)})")
+            logger.debug("Entering %s(%s)", func_name, ", ".join(arg_strs))
             result = func(*args, **kwargs)
-            logger.debug(f"Exiting {func_name} with result: {safe_repr(result)}")
+            logger.debug("Exiting %s with result: %s", func_name, safe_repr(result))
             return result
         except (OSError, ValueError, RuntimeError) as e:
             # Don't use logger.exception to avoid recursion - just log the error
             try:
-                logger.error(f"Exception in {func_name}: {e}", exc_info=False)
+                logger.error("Exception in %s: %s", func_name, e, exc_info=True)
             except (RuntimeError, OSError) as e:
                 logger.error("Error in logger: %s", e)
                 print(f"Exception in {func_name}: {e}")
@@ -156,14 +156,14 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                 if kwargs:
                     arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
-                logger.debug(f"Entering async {func_name}({', '.join(arg_strs)})")
+                logger.debug("Entering async %s(%s)", func_name, ", ".join(arg_strs))
                 result = await func(*args, **kwargs)
-                logger.debug(f"Exiting async {func_name} with result: {safe_repr(result)}")
+                logger.debug("Exiting async %s with result: %s", func_name, safe_repr(result))
                 return result
             except (OSError, ValueError, RuntimeError) as e:
                 # Don't use logger.exception to avoid recursion
                 try:
-                    logger.error(f"Exception in async {func_name}: {e}", exc_info=False)
+                    logger.error("Exception in async %s: %s", func_name, e, exc_info=True)
                 except (RuntimeError, OSError) as e:
                     logger.error("Error in logger: %s", e)
                     print(f"Exception in async {func_name}: {e}")
@@ -430,8 +430,8 @@ def setup_persistent_logging(
     )
 
     logger.info("Persistent logging initialized. Log file: %s", log_file)
-    logger.info(f"Log rotation: {'Enabled' if enable_rotation else 'Disabled'}")
-    logger.info(f"Max file size: {max_bytes / 1024 / 1024:.1f} MB, Backup count: {backup_count}")
+    logger.info("Log rotation: %s", "Enabled" if enable_rotation else "Disabled")
+    logger.info("Max file size: %.1f MB, Backup count: %s", max_bytes / 1024 / 1024, backup_count)
 
     return log_file
 

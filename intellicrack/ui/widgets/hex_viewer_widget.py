@@ -371,14 +371,14 @@ class HexViewerWidget(QWidget):
                     image_base = self.file_model.image_base
                     self.rva_spin.setMaximum(image_base + self.file_model.file_size)
 
-                logger.info(f"PE analysis successful for {file_path}")
+                logger.info("PE analysis successful for %s", file_path)
             else:
                 # Not a PE file or analysis failed
                 self._clear_structure_view()
-                logger.info(f"File {file_path} is not a supported format for structure analysis")
+                logger.info("File %s is not a supported format for structure analysis", file_path)
 
         except Exception as e:
-            logger.warning(f"PE analysis failed for {file_path}: {e}")
+            logger.warning("PE analysis failed for %s: %s", file_path, e, exc_info=True)
             self._clear_structure_view()
 
         # Start loading thread
@@ -768,7 +768,7 @@ class HexViewerWidget(QWidget):
                 )
 
                 # Log the export
-                logger.info(f"Exported {len(binary_data)} bytes to {file_path}")
+                logger.info("Exported %s bytes to %s", len(binary_data), file_path)
 
         except ValueError as e:
             QMessageBox.critical(
@@ -783,7 +783,7 @@ class HexViewerWidget(QWidget):
                 f"Failed to write file: {e!s}",
             )
         except Exception as e:
-            logger.error(f"Export error: {e}")
+            logger.error("Export error: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Export Error",
@@ -1157,7 +1157,7 @@ class HexViewerWidget(QWidget):
             dialog.exec()
 
         except Exception as e:
-            logger.error(f"String extraction failed: {e!s}")
+            logger.error("String extraction failed: %s", e, exc_info=True)
             QMessageBox.critical(self, "Extraction Error", f"Failed to extract strings: {e!s}")
 
     def _extract_unicode_strings(self, data: bytes, min_length: int = 5) -> list[str]:
@@ -1206,7 +1206,7 @@ class HexViewerWidget(QWidget):
             self.file_data = original_data
 
         except Exception as e:
-            logger.error(f"Failed to read file for string extraction: {e!s}")
+            logger.error("Failed to read file for string extraction: %s", e, exc_info=True)
             QMessageBox.critical(self, "Read Error", f"Failed to read file: {e!s}")
 
     def _find_license_patterns(self) -> None:
@@ -1260,7 +1260,7 @@ class HexViewerWidget(QWidget):
                             item_text = f"0x{offset:08X}: {description} - '{matched_text}'"
                             results_list.addItem(item_text)
                 except (struct.error, ValueError, TypeError) as e:
-                    logger.debug(f"Failed to parse signature match: {e}")
+                    logger.debug("Failed to parse signature match: %s", e)
 
             info_label.setText(f"Found {found_count} license-related patterns:")
 
@@ -1296,7 +1296,7 @@ class HexViewerWidget(QWidget):
             dialog.exec()
 
         except Exception as e:
-            logger.error(f"Pattern search failed: {e!s}")
+            logger.error("Pattern search failed: %s", e, exc_info=True)
             QMessageBox.critical(self, "Search Error", f"Failed to search patterns: {e!s}")
 
     def _copy_hex_selection(self) -> None:

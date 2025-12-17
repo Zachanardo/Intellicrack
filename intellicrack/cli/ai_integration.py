@@ -44,8 +44,8 @@ class AIModelAdapter(ABC):
 class ClaudeAdapter(AIModelAdapter):
     """Adapter for Anthropic Claude models."""
 
-    def _create_tool_definitions(self) -> list[dict[str, Any]]:
-        """Create tool definitions in Claude's format."""
+    @staticmethod
+    def _create_tool_definitions() -> list[dict[str, Any]]:
         return [
             {
                 "name": "analyze_binary",
@@ -155,7 +155,7 @@ class ClaudeAdapter(AIModelAdapter):
             }
 
         except Exception as e:
-            logger.exception("Error handling tool call: %s", e)
+            logger.exception("Error handling tool call")
             return {
                 "status": "error",
                 "message": str(e),
@@ -165,7 +165,8 @@ class ClaudeAdapter(AIModelAdapter):
 class OpenAIAdapter(AIModelAdapter):
     """Adapter for OpenAI models."""
 
-    def _create_tool_definitions(self) -> list[dict[str, Any]]:
+    @staticmethod
+    def _create_tool_definitions() -> list[dict[str, Any]]:
         """Create tool definitions in OpenAI's format."""
         return [
             {
@@ -281,7 +282,7 @@ class OpenAIAdapter(AIModelAdapter):
             }
 
         except KeyError as e:
-            logger.exception("Missing required parameter for tool %s: %s", tool_name, e)
+            logger.exception("Missing required parameter for tool %s", tool_name)
             return {
                 "status": "error",
                 "message": f"Missing required parameter: {e}",
@@ -290,7 +291,7 @@ class OpenAIAdapter(AIModelAdapter):
             }
 
         except Exception as e:
-            logger.exception("Tool execution failed for %s: %s", tool_name, e)
+            logger.exception("Tool execution failed for %s", tool_name)
             return {
                 "status": "error",
                 "message": f"Tool execution failed: {e}",
@@ -360,8 +361,9 @@ class LangChainIntegration:
     def _handle_cli_command(self, input_str: str) -> str:
         """Handle CLI command tool call."""
         # Format: "description | command args"
+        EXPECTED_PARTS_COUNT = 2
         parts = input_str.split("|", 1)
-        if len(parts) != 2:
+        if len(parts) != EXPECTED_PARTS_COUNT:
             return json.dumps({"error": "Invalid format. Use: 'description | command args'"})
 
         description = parts[0].strip()
@@ -374,7 +376,7 @@ class LangChainIntegration:
 class IntellicrackAIServer:
     """Server for AI model interactions."""
 
-    def __init__(self, auto_approve_low_risk: bool = False) -> None:
+    def __init__(self, *, auto_approve_low_risk: bool = False) -> None:
         """Initialize AI server with confirmation manager and multiple AI adapters."""
         self.confirmation_manager = ConfirmationManager(auto_approve_low_risk)
         self.interface = IntellicrackAIInterface(self.confirmation_manager)

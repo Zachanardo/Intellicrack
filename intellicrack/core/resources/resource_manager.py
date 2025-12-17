@@ -1564,17 +1564,17 @@ def setup_resource_monitoring() -> None:
 
             logger.info(
                 "Resource stats: %s total, Memory: %sMB",
-                stats['total_resources'],
-                stats['memory_usage'].get('rss_mb', 0),
+                stats["total_resources"],
+                stats["memory_usage"].get("rss_mb", 0),
             )
 
             if health["status"] != "healthy":
-                logger.warning("Resource health: %s - Issues: %s", health['status'], health['issues'])
+                logger.warning("Resource health: %s - Issues: %s", health["status"], health["issues"])
 
             # Log tool validation periodically
             validation = validate_external_dependencies()
             if validation["missing_required_tools"]:
-                logger.warning("Missing required tools: %s", validation['missing_required_tools'])
+                logger.warning("Missing required tools: %s", validation["missing_required_tools"])
 
         except Exception as e:
             logger.error("Failed to log resource stats: %s", e, exc_info=True)

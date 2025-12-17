@@ -20,10 +20,14 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import contextlib
+import logging
 from collections.abc import Callable
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QFont, QLabel, Qt, QVBoxLayout, QWidget
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseTab(QWidget):
@@ -213,7 +217,7 @@ class BaseTab(QWidget):
                         if hasattr(handle, "close") and not handle.closed:
                             handle.close()
                     except Exception:
-                        pass
+                        logger.debug("Failed to close file handle during cleanup", exc_info=True)
 
             if hasattr(self, "_cleanup_callbacks") and self.shared_context:
                 config_manager = self.shared_context.get("config_manager")
@@ -229,7 +233,7 @@ class BaseTab(QWidget):
             self._cleanup_callbacks = []
 
         except Exception:
-            pass
+            logger.debug("Error during base tab cleanup", exc_info=True)
 
     def register_timer_for_cleanup(self, timer: object) -> None:
         """Register a timer to be stopped during cleanup.

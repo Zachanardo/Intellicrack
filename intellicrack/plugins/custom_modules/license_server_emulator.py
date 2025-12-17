@@ -45,10 +45,10 @@ from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, TypedDict, cast
 
-import defusedxml.ElementTree as ElementTree
 import jwt
 import psutil
 import uvicorn
+from defusedxml import ElementTree
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer

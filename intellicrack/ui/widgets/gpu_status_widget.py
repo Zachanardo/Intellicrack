@@ -164,10 +164,10 @@ class GPUMonitorWorker(QObject):
                                     },
                                 )
                             except (ValueError, IndexError) as e:
-                                logger.debug(f"Failed to parse NVIDIA GPU data: {e}")
+                                logger.debug("Failed to parse NVIDIA GPU data: %s", e, exc_info=True)
                                 continue
         except (subprocess.SubprocessError, FileNotFoundError) as e:
-            logger.debug(f"nvidia-smi not available: {e}")
+            logger.debug("nvidia-smi not available: %s", e, exc_info=True)
 
         return gpus
 
@@ -199,7 +199,7 @@ class GPUMonitorWorker(QObject):
                             if engine_count > 0:
                                 utilization = min(total_util / engine_count, 100.0)
                     except Exception as e:
-                        logger.debug(f"Could not read GPU performance counters: {e}")
+                        logger.debug("Could not read GPU performance counters: %s", e, exc_info=True)
                         utilization = 0.0
 
                     total_memory_gb = gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0.0
@@ -219,7 +219,7 @@ class GPUMonitorWorker(QObject):
                             if total_dedicated > 0:
                                 memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
                     except Exception as e:
-                        logger.debug(f"Could not read GPU memory usage: {e}")
+                        logger.debug("Could not read GPU memory usage: %s", e, exc_info=True)
 
                     temperature = 0.0
                     try:
@@ -231,7 +231,7 @@ class GPUMonitorWorker(QObject):
                                     if 0 <= temp_val <= 150:
                                         temperature = max(temperature, temp_val)
                     except Exception as e:
-                        logger.debug(f"Could not read thermal sensors: {e}")
+                        logger.debug("Could not read thermal sensors: %s", e, exc_info=True)
 
                     if temperature == 0.0:
                         base_temp = 45.0
@@ -264,7 +264,7 @@ class GPUMonitorWorker(QObject):
                         },
                     )
         except Exception as e:
-            logger.debug(f"Failed to get Intel GPU info: {e}")
+            logger.debug("Failed to get Intel GPU info: %s", e, exc_info=True)
 
         return gpus
 
@@ -296,7 +296,7 @@ class GPUMonitorWorker(QObject):
                             if engine_count > 0:
                                 utilization = min(total_util / engine_count, 100.0)
                     except Exception as e:
-                        logger.debug(f"Could not read AMD GPU performance counters: {e}")
+                        logger.debug("Could not read AMD GPU performance counters: %s", e, exc_info=True)
 
                     total_memory_gb = gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0.0
                     if total_memory_gb == 0:
@@ -315,7 +315,7 @@ class GPUMonitorWorker(QObject):
                             if total_dedicated > 0:
                                 memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
                     except Exception as e:
-                        logger.debug(f"Could not read AMD GPU memory usage: {e}")
+                        logger.debug("Could not read AMD GPU memory usage: %s", e, exc_info=True)
 
                     temperature = 0.0
                     try:
@@ -327,7 +327,7 @@ class GPUMonitorWorker(QObject):
                                     if 0 <= temp_val <= 150:
                                         temperature = max(temperature, temp_val)
                     except Exception as e:
-                        logger.debug(f"Could not read AMD thermal sensors: {e}")
+                        logger.debug("Could not read AMD thermal sensors: %s", e, exc_info=True)
 
                     if temperature == 0.0:
                         base_temp = 50.0
@@ -355,7 +355,7 @@ class GPUMonitorWorker(QObject):
                         },
                     )
         except Exception as e:
-            logger.debug(f"Failed to get AMD GPU info: {e}")
+            logger.debug("Failed to get AMD GPU info: %s", e, exc_info=True)
 
         return gpus
 

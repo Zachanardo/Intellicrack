@@ -35,7 +35,6 @@ except ImportError as e:
     logger.error("Import error in certificate_utils: %s", e)
     HAS_CRYPTOGRAPHY = False
 
-    # Define dummy classes for type annotations when cryptography is not available
     class X509:
         class Certificate:
             pass
@@ -150,11 +149,11 @@ def generate_self_signed_cert(
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-        logger.info(f"Generated self-signed certificate for {common_name}")
+        logger.info("Generated self-signed certificate for %s", common_name)
         return cert_pem, key_pem
 
     except Exception as e:
-        logger.error(f"Failed to generate self-signed certificate: {e}")
+        logger.error("Failed to generate self-signed certificate: %s", e, exc_info=True)
         return None
 
 
@@ -179,11 +178,11 @@ def load_certificate_from_file(cert_path: str) -> x509.Certificate | None:
             cert_data = f.read()
 
         cert = x509.load_pem_x509_certificate(cert_data)
-        logger.info(f"Loaded certificate from {cert_path}")
+        logger.info("Loaded certificate from %s", cert_path)
         return cert
 
     except Exception as e:
-        logger.error(f"Failed to load certificate from {cert_path}: {e}")
+        logger.error("Failed to load certificate from %s: %s", cert_path, e, exc_info=True)
         return None
 
 
@@ -202,7 +201,7 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
         return cert.not_valid_before <= now <= cert.not_valid_after
 
     except Exception as e:
-        logger.error("Exception in certificate_utils: %s", e)
+        logger.error("Exception in certificate_utils: %s", e, exc_info=True)
         return False
 
 
@@ -248,7 +247,7 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
         return info
 
     except Exception as e:
-        logger.error("Exception in certificate_utils: %s", e)
+        logger.error("Exception in certificate_utils: %s", e, exc_info=True)
         return {"error": str(e)}
 
 

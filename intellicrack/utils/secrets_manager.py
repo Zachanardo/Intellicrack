@@ -171,7 +171,7 @@ class SecretsManager:
         unified_env_file = unified_config_dir / ".env"
         if unified_env_file.exists():
             load_dotenv(unified_env_file, override=True)
-            logger.debug(f"Loaded environment from unified config: {unified_env_file}")
+            logger.debug("Loaded environment from unified config: %s", unified_env_file)
             return  # Use only the unified config if it exists
 
         # Fallback: Look for .env files in other locations
@@ -189,7 +189,7 @@ class SecretsManager:
                 env_path = current / env_file
                 if env_path.exists():
                     load_dotenv(env_path, override=True)
-                    logger.debug(f"Loaded environment from {env_path}")
+                    logger.debug("Loaded environment from %s", env_path)
 
             # Check if we're at project root (has intellicrack directory)
             if (current / "intellicrack").exists():
@@ -254,7 +254,7 @@ class SecretsManager:
                     self._write_key_file(key)
                     self.central_config.set(KEYRING_IN_USE_KEY, True)
                 except Exception as e:
-                    logger.warning(f"Failed to store key in keychain: {e}")
+                    logger.warning("Failed to store key in keychain: %s", e, exc_info=True)
                     # Fall back to file storage
                     self._write_key_file(key)
                     self.central_config.set(KEYRING_IN_USE_KEY, False)
@@ -317,7 +317,7 @@ class SecretsManager:
         try:
             return keyring.get_password(self.SERVICE_NAME, key)
         except Exception as e:
-            logger.debug(f"Keychain lookup failed for {key}: {e}")
+            logger.debug("Keychain lookup failed for %s: %s", key, e, exc_info=True)
             return None
 
     def get(self, key: str, default: str | None = None) -> str | None:
@@ -355,7 +355,7 @@ class SecretsManager:
                 keyring.set_password(self.SERVICE_NAME, key, value)
                 logger.debug("Stored secret in OS keychain")
             except Exception:
-                logger.warning("Failed to store secret in keychain")
+                logger.warning("Failed to store secret in keychain", exc_info=True)
 
         # Always save to encrypted file as backup
         self._save_secrets()
@@ -373,7 +373,7 @@ class SecretsManager:
             try:
                 keyring.delete_password(self.SERVICE_NAME, key)
             except Exception as e:
-                logger.error("Exception in secrets_manager: %s", e)
+                logger.error("Exception in secrets_manager: %s", e, exc_info=True)
                 # Ignore if not in keychain
 
         # Save updated cache
@@ -447,7 +447,7 @@ class SecretsManager:
         if value := self.get(old_key):
             self.set(new_key, value)
             self.delete(old_key)
-            logger.info(f"Rotated secret from {old_key} to {new_key}")
+            logger.info("Rotated secret from %s to %s", old_key, new_key)
 
     def clear_cache(self) -> None:
         """Clear the in-memory secrets cache."""
@@ -495,7 +495,7 @@ class SecretsManager:
         try:
             # Use find_dotenv to locate the .env file
             if env_path := find_dotenv():
-                logger.info(f"Found .env file at: {env_path}")
+                logger.info("Found .env file at: %s", env_path)
                 return env_path
             logger.info("No .env file found in search path")
             return None
@@ -532,7 +532,7 @@ class SecretsManager:
             # Compare with stored hash
             return derived_key == stored_hash
         except Exception as e:
-            logger.error(f"Error verifying password hash: {e}")
+            logger.error("Error verifying password hash: %s", e, exc_info=True)
             return False
 
     def _sync_metadata_to_central_config(self) -> None:
@@ -559,7 +559,7 @@ class SecretsManager:
                         keychain_value = keyring.get_password(self.SERVICE_NAME, key)
                         key_info["in_keychain"] = bool(keychain_value)
                     except Exception as e:
-                        logger.debug("Error checking keychain: %s", e)
+                        logger.debug("Error checking keychain: %s", e, exc_info=True)
 
                 metadata["encrypted_keys"].append(key_info)
 
@@ -568,9 +568,9 @@ class SecretsManager:
             self.central_config.set("secrets.total_keys", metadata["total_keys"])
             self.central_config.set("secrets.last_sync", metadata["last_sync"])
 
-            logger.debug(f"Synced {metadata['total_keys']} keys metadata to central config")
+            logger.debug("Synced %s keys metadata to central config", metadata["total_keys"])
         except Exception as e:
-            logger.warning(f"Could not sync keys metadata to central config: {e}")
+            logger.warning("Could not sync keys metadata to central config: %s", e, exc_info=True)
 
 
 # Singleton instance

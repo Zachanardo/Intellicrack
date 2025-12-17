@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 try:
     from intellicrack.handlers.pefile_handler import pefile
 except ImportError as e:
-    logger.error("Import error in patch_utils: %s", e)
+    logger.error("Import error in patch_utils: %s", e, exc_info=True)
     pefile = None
 
 
@@ -76,7 +76,9 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
             # Ensure hex bytes string has an even number of characters
             if len(new_bytes_hex) % 2 != 0:
                 logger.warning(
-                    f"Skipped line {lines_processed}: Odd number of hex characters: '{new_bytes_hex_raw}'",
+                    "Skipped line %s: Odd number of hex characters: '%s'",
+                    lines_processed,
+                    new_bytes_hex_raw,
                 )
                 continue
 
@@ -85,7 +87,9 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
 
             if not new_bytes:
                 logger.warning(
-                    f"Skipped line {lines_processed}: Empty byte string for '{new_bytes_hex_raw}'",
+                    "Skipped line %s: Empty byte string for '%s'",
+                    lines_processed,
+                    new_bytes_hex_raw,
                 )
                 continue
 
@@ -97,23 +101,32 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                 },
             )
             logger.info(
-                f"Parsed instruction: Address=0x{address:X}, Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
+                "Parsed instruction: Address=0x%X, Bytes='%s', Desc='%s'",
+                address,
+                new_bytes.hex().upper(),
+                description,
             )
 
         except ValueError as e:
             logger.warning(
-                f"Skipped line {lines_processed}: Error parsing hex values: "
-                f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}",
+                "Skipped line %s: Error parsing hex values: Address='%s', Bytes='%s'. Error: %s",
+                lines_processed,
+                address_hex,
+                new_bytes_hex_raw,
+                e,
+                exc_info=True,
             )
         except (OSError, RuntimeError) as e:
-            logger.error("Unexpected error parsing line %s: %s", lines_processed, e)
+            logger.error("Unexpected error parsing line %s: %s", lines_processed, e, exc_info=True)
 
     # Log summary
     if not potential_matches:
         logger.warning("No lines matching patch format were found")
     else:
         logger.info(
-            f"Found {len(instructions)} valid patch instruction(s) out of {potential_matches} potential matches",
+            "Found %s valid patch instruction(s) out of %s potential matches",
+            len(instructions),
+            potential_matches,
         )
 
     return instructions
@@ -157,7 +170,7 @@ def create_patch(original_data: bytes, modified_data: bytes, base_address: int =
         else:
             i += 1
 
-    logger.info(f"Created {len(patches)} patch(es) from data comparison")
+    logger.info("Created %s patch(es) from data comparison", len(patches))
     return patches
 
 
@@ -190,7 +203,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
         except OSError as e:
-            logger.error("Failed to create backup: %s", e)
+            logger.error("Failed to create backup: %s", e, exc_info=True)
             return False, None
 
     # Create patched file
@@ -210,7 +223,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
                 description = patch.get("description", "")
 
                 if not new_bytes:
-                    logger.warning(f"Patch {i + 1}: No bytes to write")
+                    logger.warning("Patch %s: No bytes to write", i + 1)
                     continue
 
                 try:
@@ -218,10 +231,14 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
                     f.write(new_bytes)
                     applied_count += 1
                     logger.info(
-                        f"Applied patch {i + 1}: {len(new_bytes)} bytes at 0x{address:X} - {description}",
+                        "Applied patch %s: %s bytes at 0x%X - %s",
+                        i + 1,
+                        len(new_bytes),
+                        address,
+                        description,
                     )
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Failed to apply patch {i + 1}: {e}")
+                    logger.error("Failed to apply patch %s: %s", i + 1, e, exc_info=True)
 
         if applied_count > 0:
             logger.info("Successfully applied %s patches to %s", applied_count, patched_path)
@@ -232,7 +249,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
         return False, None
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during patching: %s", e)
+        logger.error("Error during patching: %s", e, exc_info=True)
         # Clean up on error
         if patched_path.exists():
             patched_path.unlink(missing_ok=True)
@@ -267,16 +284,20 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
 
                 if actual_bytes != expected_bytes:
                     logger.error(
-                        f"Patch {i + 1} validation failed at 0x{address:X}: Expected {expected_bytes.hex()}, got {actual_bytes.hex()}",
+                        "Patch %s validation failed at 0x%X: Expected %s, got %s",
+                        i + 1,
+                        address,
+                        expected_bytes.hex(),
+                        actual_bytes.hex(),
                     )
                     return False
-                logger.debug(f"Patch {i + 1} validated successfully")
+                logger.debug("Patch %s validated successfully", i + 1)
 
         logger.info("All patches validated successfully")
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during patch validation: %s", e)
+        logger.error("Error during patch validation: %s", e, exc_info=True)
         return False
 
 
@@ -301,7 +322,7 @@ def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
         pe.close()
         return offset
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error converting RVA to offset: %s", e)
+        logger.error("Error converting RVA to offset: %s", e, exc_info=True)
         return None
 
 
@@ -338,7 +359,7 @@ def get_section_info(file_path: str | Path) -> list[dict[str, Any]]:
         pe.close()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error reading section info: %s", e)
+        logger.error("Error reading section info: %s", e, exc_info=True)
 
     return sections
 
@@ -367,7 +388,11 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, 
     nop_count, remainder = divmod(length, len(nop))
     if remainder != 0:
         logger.warning(
-            f"Length {length} not divisible by NOP size {len(nop)} for {arch}. Padding with {remainder} extra bytes.",
+            "Length %s not divisible by NOP size %s for %s. Padding with %s extra bytes.",
+            length,
+            len(nop),
+            arch,
+            remainder,
         )
 
     return {

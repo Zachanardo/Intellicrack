@@ -623,7 +623,8 @@ class FridaStealth:
                                             renamed_count += 1
                                             logger.debug(
                                                 "Renamed thread %s to %s",
-                                                te32.th32ThreadID, new_name,
+                                                te32.th32ThreadID,
+                                                new_name,
                                             )
 
                                 finally:

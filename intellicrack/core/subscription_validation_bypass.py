@@ -1191,7 +1191,7 @@ class SubscriptionValidationBypass:
                                         "name": match.name,
                                     })
                                 except Exception:
-                                    pass
+                                    logger.debug("Failed to get token details for %s", match, exc_info=True)
                 except Exception as e:
                     logger.debug("Error searching for tokens: %s", e)
                     continue

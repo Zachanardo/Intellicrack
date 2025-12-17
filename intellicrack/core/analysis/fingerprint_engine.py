@@ -23,12 +23,16 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import contextlib
 import hashlib
+import logging
 import struct
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 try:
@@ -409,7 +413,7 @@ class FingerprintEngine:
                 fingerprint.metadata["pe_sections"] = pe.FILE_HEADER.NumberOfSections
 
             except Exception:
-                pass
+                logger.error("Failed to extract PE metadata for fingerprint", exc_info=True)
 
         return fingerprint
 
@@ -494,7 +498,7 @@ class FingerprintEngine:
                     protections.append(fingerprint)
 
         except Exception:
-            pass
+            logger.error("Error detecting protections", exc_info=True)
 
         return protections
 
@@ -665,9 +669,7 @@ class FingerprintEngine:
                     license_systems.append(fingerprint)
 
         except Exception:
-            pass
-
-        return license_systems
+            logger.error("Error identifying license system", exc_info=True)
 
     def compare_fingerprints(self, fp1: BinaryFingerprint, fp2: BinaryFingerprint) -> float:
         """Compare two binary fingerprints for similarity.
@@ -689,7 +691,7 @@ class FingerprintEngine:
                 ssdeep_sim = ssdeep.compare(fp1.ssdeep, fp2.ssdeep) / 100.0
                 similarity_scores.append(ssdeep_sim)
             except Exception:
-                pass
+                logger.error("Failed to calculate ssdeep similarity", exc_info=True)
 
         if TLSH_AVAILABLE and fp1.tlsh and fp2.tlsh:
             try:
@@ -697,7 +699,7 @@ class FingerprintEngine:
                 tlsh_sim = max(0.0, 1.0 - (tlsh_distance / 300.0))
                 similarity_scores.append(tlsh_sim)
             except Exception:
-                pass
+                logger.error("Failed to calculate TLSH similarity", exc_info=True)
 
         if fp1.imphash and fp2.imphash:
             imphash_sim = 1.0 if fp1.imphash == fp2.imphash else 0.0
@@ -792,7 +794,7 @@ class FingerprintEngine:
                             func_name = imp.name.decode("utf-8", errors="ignore")
                             imports[dll_name].append(func_name)
         except Exception:
-            pass
+            logger.error("Failed to extract import table hash", exc_info=True)
 
         return dict(imports)
 
@@ -831,7 +833,7 @@ class FingerprintEngine:
                     "is_writable": bool(section.Characteristics & 0x80000000),
                 }
         except Exception:
-            pass
+            logger.error("Failed to extract code section hashes", exc_info=True)
 
         return sections
 

@@ -1,6 +1,6 @@
 {
     "tool": "checkstyle",
-    "generated": "2025-12-13T23:21:50.757782",
+    "generated": "2025-12-14T22:14:59.771816",
     "total_findings": 699,
     "total_files": 15,
     "files": [
@@ -12,8 +12,8 @@
                     "line": 1,
                     "column": null,
                     "severity": "WARN",
-                    "message": "File length is 7,656 lines (max allowed is 3,000). [FileLength]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1: File length is 7,656 lines (max allowed is 3,000). [FileLength]"
+                    "message": "File length is 7,657 lines (max allowed is 3,000). [FileLength]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1: File length is 7,657 lines (max allowed is 3,000). [FileLength]"
                 },
                 {
                     "line": 21,
@@ -68,8 +68,22 @@
                     "line": 386,
                     "column": 3,
                     "severity": "WARN",
-                    "message": "Method run length is 327 lines (max allowed is 300). [MethodLength]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:386:3: Method run length is 327 lines (max allowed is 300). [MethodLength]"
+                    "message": "Method run length is 325 lines (max allowed is 300). [MethodLength]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:386:3: Method run length is 325 lines (max allowed is 300). [MethodLength]"
+                },
+                {
+                    "line": 876,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:876:9: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 877,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:877:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 878,
@@ -86,18 +100,18 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:879:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 880,
-                    "column": 9,
+                    "line": 887,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:880:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:887:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 881,
-                    "column": 9,
+                    "line": 888,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:881:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:888:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 889,
@@ -114,25 +128,25 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:890:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 891,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:891:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 892,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:892:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 916,
+                    "line": 914,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:916:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:914:5: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 919,
+                    "column": 5,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:919:5: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 920,
+                    "column": 5,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:920:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 921,
@@ -149,18 +163,18 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:922:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 923,
-                    "column": 5,
+                    "line": 986,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:923:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:986:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 924,
-                    "column": 5,
+                    "line": 987,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:924:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:987:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 988,
@@ -170,263 +184,263 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:988:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 989,
+                    "line": 1162,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:989:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1162:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 990,
+                    "line": 1167,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:990:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1167:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1164,
+                    "line": 1373,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1164:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1373:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1169,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1169:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 1375,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1375:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 1484,
+                    "line": 1482,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1484:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1482:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1626,
+                    "line": 1624,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1626:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1624:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1786,
+                    "line": 1784,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1786:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1784:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1854,
+                    "line": 1852,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1854:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1852:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1860,
+                    "line": 1858,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1860:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1858:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1870,
+                    "line": 1868,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1870:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1868:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1898,
+                    "line": 1896,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1898:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1896:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1915,
+                    "line": 1913,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1915:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1913:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 1940,
+                    "line": 1938,
                     "column": 28,
                     "severity": "WARN",
                     "message": "Name 'VM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1940:28: Name 'VM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1938:28: Name 'VM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 1947,
+                    "line": 1945,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1947:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:1945:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2230,
+                    "line": 2228,
                     "column": 28,
                     "severity": "WARN",
                     "message": "Name 'THEMIDA_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2230:28: Name 'THEMIDA_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2228:28: Name 'THEMIDA_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 2238,
+                    "line": 2236,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2238:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2236:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2426,
+                    "line": 2424,
                     "column": 28,
                     "severity": "WARN",
                     "message": "Name 'OBSIDIUM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2426:28: Name 'OBSIDIUM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2424:28: Name 'OBSIDIUM_PATTERNS' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 2432,
+                    "line": 2430,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2432:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2430:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2542,
+                    "line": 2540,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2542:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2540:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2608,
+                    "line": 2606,
                     "column": 9,
                     "severity": "WARN",
                     "message": "Each variable declaration must be in its own statement. [MultipleVariableDeclarations]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2608:9: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2606:9: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]"
                 },
                 {
-                    "line": 2685,
+                    "line": 2683,
                     "column": 7,
                     "severity": "WARN",
                     "message": "Unused named local variable 'lastOffset'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2685:7: Unused named local variable 'lastOffset'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2683:7: Unused named local variable 'lastOffset'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 2816,
+                    "line": 2814,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2816:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2814:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2840,
+                    "line": 2838,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2840:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:2838:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3024,
+                    "line": 3022,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3024:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3022:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 3096,
+                    "line": 3094,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3096:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3094:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3390,
+                    "line": 3388,
                     "column": 11,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3390:11: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3388:11: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 3478,
+                    "line": 3476,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3478:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3476:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3921,
+                    "line": 3919,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3921:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3919:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3933,
+                    "line": 3931,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3933:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3931:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3947,
+                    "line": 3945,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3947:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3945:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 3966,
+                    "line": 3964,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3966:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3964:5: Redundant 'public' modifier. [RedundantModifier]"
+                },
+                {
+                    "line": 3989,
+                    "column": 5,
+                    "severity": "WARN",
+                    "message": "Redundant 'public' modifier. [RedundantModifier]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3989:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
                     "line": 3991,
                     "column": 7,
                     "severity": "WARN",
-                    "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3991:7: Redundant 'public' modifier. [RedundantModifier]"
-                },
-                {
-                    "line": 3993,
-                    "column": 11,
-                    "severity": "WARN",
                     "message": "Unused named local variable 'threshold'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3993:11: Unused named local variable 'threshold'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:3991:7: Unused named local variable 'threshold'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 4124,
+                    "line": 4122,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4124:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4122:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4200,
+                    "line": 4198,
                     "column": 19,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4200:19: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4198:19: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4221,
+                    "line": 4219,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 643 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4221:5: NPath Complexity is 643 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4219:5: NPath Complexity is 643 (max allowed is 500). [NPathComplexity]"
+                },
+                {
+                    "line": 4255,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4255:9: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 4256,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4256:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 4257,
@@ -436,102 +450,102 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4257:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4258,
+                    "line": 4307,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4258:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4307:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4259,
+                    "line": 4312,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4259:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4312:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4309,
+                    "line": 4317,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4309:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4317:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4314,
+                    "line": 4333,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4314:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4333:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4319,
+                    "line": 4366,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4319:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4366:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4335,
+                    "line": 4404,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4335:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4404:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4368,
-                    "column": 9,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4368:9: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 4406,
-                    "column": 9,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4406:9: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 4575,
+                    "line": 4573,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4575:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4573:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4579,
+                    "line": 4577,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4579:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4577:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4580,
+                    "line": 4578,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4580:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4578:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4657,
+                    "line": 4655,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4657:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4655:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 4681,
+                    "line": 4679,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4681:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4679:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 4851,
+                    "line": 4849,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4851:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:4849:5: Redundant 'public' modifier. [RedundantModifier]"
+                },
+                {
+                    "line": 5113,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5113:7: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 5114,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5114:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 5115,
@@ -541,60 +555,60 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5115:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 5116,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5116:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 5117,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5117:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 5234,
+                    "line": 5232,
                     "column": 35,
                     "severity": "WARN",
                     "message": "Name 'static_' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5234:35: Name 'static_' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5232:35: Name 'static_' must match pattern '^[a-z][a-zA-Z0-9]*$'. [ParameterName]"
                 },
                 {
-                    "line": 5489,
+                    "line": 5487,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Each variable declaration must be in its own statement. [MultipleVariableDeclarations]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5489:5: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5487:5: Each variable declaration must be in its own statement. [MultipleVariableDeclarations]"
                 },
                 {
-                    "line": 5517,
+                    "line": 5515,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5517:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5515:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 5738,
+                    "line": 5736,
                     "column": 3,
                     "severity": "WARN",
                     "message": "NPath Complexity is 99,842 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5738:3: NPath Complexity is 99,842 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5736:3: NPath Complexity is 99,842 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 5902,
+                    "line": 5900,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5902:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:5900:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6016,
+                    "line": 6014,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6016:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6014:5: Redundant 'public' modifier. [RedundantModifier]"
+                },
+                {
+                    "line": 6096,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6096:7: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 6097,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6097:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 6098,
@@ -611,214 +625,200 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6099:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 6100,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6100:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 6101,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6101:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 6112,
+                    "line": 6110,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6112:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6110:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6232,
+                    "line": 6230,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6232:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6230:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6339,
+                    "line": 6337,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6339:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6337:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6369,
+                    "line": 6367,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6369:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6367:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6919,
+                    "line": 6917,
                     "column": 3,
                     "severity": "WARN",
                     "message": "NPath Complexity is 2,702 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6919:3: NPath Complexity is 2,702 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6917:3: NPath Complexity is 2,702 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 6991,
+                    "line": 6989,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6991:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:6989:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7057,
+                    "line": 7055,
                     "column": 7,
                     "severity": "WARN",
                     "message": "Unused named local variable 'complexityRatio'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7057:7: Unused named local variable 'complexityRatio'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7055:7: Unused named local variable 'complexityRatio'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 7061,
+                    "line": 7059,
                     "column": 7,
                     "severity": "WARN",
                     "message": "Unused named local variable 'hasSuspiciousAlignment'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7061:7: Unused named local variable 'hasSuspiciousAlignment'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7059:7: Unused named local variable 'hasSuspiciousAlignment'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 7090,
+                    "line": 7088,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7090:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7088:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7112,
+                    "line": 7110,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7112:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7110:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7120,
+                    "line": 7118,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7120:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7118:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7123,
+                    "line": 7121,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7123:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7121:9: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 7153,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "Unused named local variable 'isOverlay'. [UnusedLocalVariable]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7153:7: Unused named local variable 'isOverlay'. [UnusedLocalVariable]"
+                },
+                {
+                    "line": 7154,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7154:7: Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]"
                 },
                 {
                     "line": 7155,
                     "column": 7,
                     "severity": "WARN",
-                    "message": "Unused named local variable 'isOverlay'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7155:7: Unused named local variable 'isOverlay'. [UnusedLocalVariable]"
-                },
-                {
-                    "line": 7156,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7156:7: Unused named local variable 'isLoadedMemory'. [UnusedLocalVariable]"
-                },
-                {
-                    "line": 7157,
-                    "column": 7,
-                    "severity": "WARN",
                     "message": "Unused named local variable 'isVariableSpace'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7157:7: Unused named local variable 'isVariableSpace'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7155:7: Unused named local variable 'isVariableSpace'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 7229,
+                    "line": 7227,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7229:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7227:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7241,
+                    "line": 7239,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7241:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7239:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7244,
+                    "line": 7242,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7244:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7242:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7291,
+                    "line": 7289,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7291:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7289:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7310,
+                    "line": 7308,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7310:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7308:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7313,
+                    "line": 7311,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Unused named local variable 'memory'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7313:5: Unused named local variable 'memory'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7311:5: Unused named local variable 'memory'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 7355,
+                    "line": 7353,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7355:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7353:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7375,
+                    "line": 7373,
                     "column": 17,
                     "severity": "WARN",
                     "message": "Name 'MAX_SAMPLES' must match pattern '^([a-z][a-zA-Z0-9]*|_)$'. [LocalFinalVariableName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7375:17: Name 'MAX_SAMPLES' must match pattern '^([a-z][a-zA-Z0-9]*|_)$'. [LocalFinalVariableName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7373:17: Name 'MAX_SAMPLES' must match pattern '^([a-z][a-zA-Z0-9]*|_)$'. [LocalFinalVariableName]"
                 },
                 {
-                    "line": 7379,
+                    "line": 7377,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7379:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7377:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7398,
+                    "line": 7396,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7398:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7396:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7435,
-                    "column": 9,
+                    "line": 7433,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "switch without \"default\" clause. [MissingSwitchDefault]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7435:9: switch without \"default\" clause. [MissingSwitchDefault]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7433:7: switch without \"default\" clause. [MissingSwitchDefault]"
                 },
                 {
-                    "line": 7494,
+                    "line": 7495,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7494:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7495:5: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7631,
+                    "line": 7632,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7631:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AutomatedUnpacker.java:7632:5: 'if' construct must use '{}'s. [NeedBraces]"
                 }
             ]
         },
@@ -1382,8 +1382,8 @@
                     "line": 1,
                     "column": null,
                     "severity": "WARN",
-                    "message": "File length is 8,828 lines (max allowed is 3,000). [FileLength]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1: File length is 8,828 lines (max allowed is 3,000). [FileLength]"
+                    "message": "File length is 8,826 lines (max allowed is 3,000). [FileLength]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1: File length is 8,826 lines (max allowed is 3,000). [FileLength]"
                 },
                 {
                     "line": 1,
@@ -1449,74 +1449,81 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1461:3: NPath Complexity is 1,728 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 1673,
+                    "line": 1671,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1673:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1671:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 1845,
+                    "line": 1843,
                     "column": 13,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1845:13: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1843:13: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1846,
+                    "line": 1844,
                     "column": 18,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1846:18: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1844:18: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1938,
+                    "line": 1936,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1938:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1936:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2116,
+                    "line": 2114,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2116:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2114:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2288,
+                    "line": 2286,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2288:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2286:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2502,
+                    "line": 2499,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2502:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2499:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2550,
+                    "line": 2547,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2550:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2547:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2690,
+                    "line": 2689,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2690:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2689:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 2809,
+                    "line": 2808,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 774 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2809:5: NPath Complexity is 774 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2808:5: NPath Complexity is 774 (max allowed is 500). [NPathComplexity]"
+                },
+                {
+                    "line": 2821,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2821:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 2822,
@@ -1568,130 +1575,137 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2828:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2829,
+                    "line": 2980,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2829:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2980:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2981,
-                    "column": 9,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2981:9: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 2983,
+                    "line": 2982,
                     "column": 14,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2983:14: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2982:14: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2985,
+                    "line": 2984,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'else' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2985:9: 'else' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:2984:9: 'else' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 3029,
-                    "column": 7,
+                    "line": 3028,
+                    "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3029:7: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3028:5: Redundant 'public' modifier. [RedundantModifier]"
+                },
+                {
+                    "line": 3030,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3030:7: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]"
                 },
                 {
                     "line": 3031,
-                    "column": 11,
-                    "severity": "WARN",
-                    "message": "Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3031:11: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]"
-                },
-                {
-                    "line": 3032,
-                    "column": 11,
-                    "severity": "WARN",
-                    "message": "Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3032:11: Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]"
-                },
-                {
-                    "line": 3546,
                     "column": 7,
                     "severity": "WARN",
-                    "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3546:7: Redundant 'public' modifier. [RedundantModifier]"
+                    "message": "Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3031:7: Unused named local variable 'confidenceMetrics'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 3548,
-                    "column": 11,
-                    "severity": "WARN",
-                    "message": "Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3548:11: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]"
-                },
-                {
-                    "line": 4320,
+                    "line": 3545,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4320:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3545:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 4509,
+                    "line": 3547,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:3547:7: Unused named local variable 'detectedPatterns'. [UnusedLocalVariable]"
+                },
+                {
+                    "line": 4319,
+                    "column": 5,
+                    "severity": "WARN",
+                    "message": "Redundant 'public' modifier. [RedundantModifier]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4319:5: Redundant 'public' modifier. [RedundantModifier]"
+                },
+                {
+                    "line": 4508,
                     "column": 9,
                     "severity": "WARN",
                     "message": "Unused named local variable 'entryPoint'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4509:9: Unused named local variable 'entryPoint'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4508:9: Unused named local variable 'entryPoint'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 4527,
+                    "line": 4526,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Return count is 2 (max allowed for void methods/constructors/lambdas is 1). [ReturnCount]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4527:5: Return count is 2 (max allowed for void methods/constructors/lambdas is 1). [ReturnCount]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:4526:5: Return count is 2 (max allowed for void methods/constructors/lambdas is 1). [ReturnCount]"
                 },
                 {
-                    "line": 5287,
+                    "line": 5286,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5287:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5286:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 5399,
+                    "line": 5398,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5399:5: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5398:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 5531,
+                    "line": 5530,
                     "column": 9,
                     "severity": "WARN",
                     "message": "Unused named local variable 'memory'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5531:9: Unused named local variable 'memory'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:5530:9: Unused named local variable 'memory'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 6728,
+                    "line": 6727,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6728:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6727:5: NPath Complexity is 19,683 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 6878,
-                    "column": 7,
+                    "line": 6877,
+                    "column": 5,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6878:7: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6877:5: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
-                    "line": 6881,
+                    "line": 6879,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 4,106 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6881:5: NPath Complexity is 4,106 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6879:5: NPath Complexity is 4,106 (max allowed is 500). [NPathComplexity]"
+                },
+                {
+                    "line": 6995,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6995:9: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 6996,
+                    "column": 9,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6996:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 6997,
@@ -1715,13 +1729,6 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:6999:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7000,
-                    "column": 9,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7000:9: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
                     "line": 7001,
                     "column": 9,
                     "severity": "WARN",
@@ -1736,11 +1743,11 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7003:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7005,
+                    "line": 7004,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7005:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7004:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 7006,
@@ -1771,46 +1778,39 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7012:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 7014,
-                    "column": 9,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7014:9: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 7832,
+                    "line": 7830,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 4,096 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7832:5: NPath Complexity is 4,096 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7830:5: NPath Complexity is 4,096 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 7913,
+                    "line": 7911,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 65,536 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7913:5: NPath Complexity is 65,536 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:7911:5: NPath Complexity is 65,536 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 8013,
+                    "line": 8011,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 13,122 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8013:5: NPath Complexity is 13,122 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8011:5: NPath Complexity is 13,122 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 8124,
+                    "line": 8122,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 63,700,992 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8124:5: NPath Complexity is 63,700,992 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8122:5: NPath Complexity is 63,700,992 (max allowed is 500). [NPathComplexity]"
                 },
                 {
-                    "line": 8301,
+                    "line": 8299,
                     "column": 5,
                     "severity": "WARN",
                     "message": "NPath Complexity is 91,729,428,480 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8301:5: NPath Complexity is 91,729,428,480 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:8299:5: NPath Complexity is 91,729,428,480 (max allowed is 500). [NPathComplexity]"
                 }
             ]
         },
@@ -2646,8 +2646,8 @@
                     "line": 1,
                     "column": null,
                     "severity": "WARN",
-                    "message": "File length is 3,797 lines (max allowed is 3,000). [FileLength]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java:1: File length is 3,797 lines (max allowed is 3,000). [FileLength]"
+                    "message": "File length is 3,799 lines (max allowed is 3,000). [FileLength]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java:1: File length is 3,799 lines (max allowed is 3,000). [FileLength]"
                 },
                 {
                     "line": 11,
@@ -3042,11 +3042,11 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java:3326:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 3512,
+                    "line": 3514,
                     "column": 7,
                     "severity": "WARN",
                     "message": "Unused named local variable 'imageBase'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java:3512:7: Unused named local variable 'imageBase'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\ModernPackerDetector.java:3514:7: Unused named local variable 'imageBase'. [UnusedLocalVariable]"
                 }
             ]
         },
@@ -3587,10 +3587,10 @@
                 },
                 {
                     "line": 1774,
-                    "column": 13,
+                    "column": 11,
                     "severity": "WARN",
                     "message": "Unused named local variable 'testByte'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:1774:13: Unused named local variable 'testByte'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:1774:11: Unused named local variable 'testByte'. [UnusedLocalVariable]"
                 },
                 {
                     "line": 1788,
@@ -3628,18 +3628,32 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2044:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2289,
+                    "line": 2287,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2289:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2287:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2299,
+                    "line": 2297,
                     "column": 3,
                     "severity": "WARN",
                     "message": "NPath Complexity is 1,372 (max allowed is 500). [NPathComplexity]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2299:3: NPath Complexity is 1,372 (max allowed is 500). [NPathComplexity]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2297:3: NPath Complexity is 1,372 (max allowed is 500). [NPathComplexity]"
+                },
+                {
+                    "line": 2476,
+                    "column": 11,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2476:11: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 2477,
+                    "column": 11,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2477:11: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 2478,
@@ -3649,32 +3663,18 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2478:11: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2479,
-                    "column": 11,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2479:11: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 2480,
-                    "column": 11,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2480:11: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 2537,
+                    "line": 2535,
                     "column": 3,
                     "severity": "WARN",
                     "message": "Class CombinedAnalysisResult should be declared as final. [FinalClass]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2537:3: Class CombinedAnalysisResult should be declared as final. [FinalClass]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2535:3: Class CombinedAnalysisResult should be declared as final. [FinalClass]"
                 },
                 {
-                    "line": 2591,
+                    "line": 2589,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2591:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\FunctionLister.java:2589:5: 'if' construct must use '{}'s. [NeedBraces]"
                 }
             ]
         },
@@ -3767,102 +3767,109 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:25:1: Total number of methods is 55 (max allowed is 50). [MethodCount]"
                 },
                 {
-                    "line": 824,
+                    "line": 823,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:824:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:823:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 828,
+                    "line": 827,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:828:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:827:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 832,
+                    "line": 831,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:832:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:831:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 836,
+                    "line": 835,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:836:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:835:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 840,
+                    "line": 839,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:840:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:839:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 844,
+                    "line": 843,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:844:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:843:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 848,
+                    "line": 847,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:848:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:847:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 852,
+                    "line": 851,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:852:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:851:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 856,
+                    "line": 855,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:856:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:855:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 860,
+                    "line": 859,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:860:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:859:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 864,
+                    "line": 863,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:864:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:863:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 868,
+                    "line": 867,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:868:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:867:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 872,
+                    "line": 871,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:872:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:871:5: '}' at column 5 should be on the same line as the next part of a multi-block statement (one that directly contains multiple blocks: if/else-if/else, do/while or try/catch/finally). [RightCurly]"
                 },
                 {
-                    "line": 895,
+                    "line": 894,
                     "column": 5,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:895:5: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:894:5: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 1024,
+                    "column": 7,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1024:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 1025,
@@ -3872,88 +3879,81 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1025:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1026,
+                    "line": 1050,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1026:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1050:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 1051,
-                    "column": 7,
-                    "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1051:7: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 1052,
                     "column": 12,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1052:12: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1051:12: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 1061,
+                    "line": 1060,
                     "column": 27,
                     "severity": "WARN",
                     "message": "Name 'URL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1061:27: Name 'URL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1060:27: Name 'URL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 1064,
+                    "line": 1063,
                     "column": 27,
                     "severity": "WARN",
                     "message": "Name 'EMAIL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1064:27: Name 'EMAIL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1063:27: Name 'EMAIL_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                },
+                {
+                    "line": 1065,
+                    "column": 27,
+                    "severity": "WARN",
+                    "message": "Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1065:27: Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
                     "line": 1066,
                     "column": 27,
                     "severity": "WARN",
-                    "message": "Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1066:27: Name 'IP_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "message": "Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1066:27: Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 1067,
+                    "line": 1068,
                     "column": 27,
                     "severity": "WARN",
-                    "message": "Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1067:27: Name 'FILE_PATH_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "message": "Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1068:27: Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
                     "line": 1069,
                     "column": 27,
                     "severity": "WARN",
-                    "message": "Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1069:27: Name 'REGISTRY_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
-                },
-                {
-                    "line": 1070,
-                    "column": 27,
-                    "severity": "WARN",
                     "message": "Name 'VERSION_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1070:27: Name 'VERSION_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1069:27: Name 'VERSION_PATTERN' must match pattern '^[a-z][a-zA-Z0-9]*$'. [MemberName]"
                 },
                 {
-                    "line": 1455,
+                    "line": 1454,
                     "column": 13,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1455:13: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1454:13: 'if' construct must use '{}'s. [NeedBraces]"
+                },
+                {
+                    "line": 1482,
+                    "column": 11,
+                    "severity": "WARN",
+                    "message": "'if' construct must use '{}'s. [NeedBraces]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1482:11: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
                     "line": 1483,
                     "column": 11,
                     "severity": "WARN",
-                    "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1483:11: 'if' construct must use '{}'s. [NeedBraces]"
-                },
-                {
-                    "line": 1484,
-                    "column": 11,
-                    "severity": "WARN",
                     "message": "'else' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1484:11: 'else' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\SimpleStringExtractor.java:1483:11: 'else' construct must use '{}'s. [NeedBraces]"
                 }
             ]
         },
@@ -3965,8 +3965,8 @@
                     "line": 1,
                     "column": null,
                     "severity": "WARN",
-                    "message": "File length is 3,278 lines (max allowed is 3,000). [FileLength]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:1: File length is 3,278 lines (max allowed is 3,000). [FileLength]"
+                    "message": "File length is 3,281 lines (max allowed is 3,000). [FileLength]",
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:1: File length is 3,281 lines (max allowed is 3,000). [FileLength]"
                 },
                 {
                     "line": 11,
@@ -4096,10 +4096,10 @@
                 },
                 {
                     "line": 898,
-                    "column": 13,
+                    "column": 7,
                     "severity": "WARN",
                     "message": "Redundant 'public' modifier. [RedundantModifier]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:898:13: Redundant 'public' modifier. [RedundantModifier]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:898:7: Redundant 'public' modifier. [RedundantModifier]"
                 },
                 {
                     "line": 1044,
@@ -4166,10 +4166,10 @@
                 },
                 {
                     "line": 1777,
-                    "column": 7,
+                    "column": 5,
                     "severity": "WARN",
                     "message": "switch without \"default\" clause. [MissingSwitchDefault]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:1777:7: switch without \"default\" clause. [MissingSwitchDefault]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:1777:5: switch without \"default\" clause. [MissingSwitchDefault]"
                 },
                 {
                     "line": 2009,
@@ -4186,32 +4186,32 @@
                     "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2063:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2104,
+                    "line": 2106,
                     "column": 9,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2104:9: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2106:9: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2422,
+                    "line": 2424,
                     "column": 7,
                     "severity": "WARN",
                     "message": "'if' construct must use '{}'s. [NeedBraces]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2422:7: 'if' construct must use '{}'s. [NeedBraces]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2424:7: 'if' construct must use '{}'s. [NeedBraces]"
                 },
                 {
-                    "line": 2746,
+                    "line": 2748,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Unused named local variable 'endAddr'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2746:5: Unused named local variable 'endAddr'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2748:5: Unused named local variable 'endAddr'. [UnusedLocalVariable]"
                 },
                 {
-                    "line": 2858,
+                    "line": 2860,
                     "column": 5,
                     "severity": "WARN",
                     "message": "Unused named local variable 'toAddr'. [UnusedLocalVariable]",
-                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2858:5: Unused named local variable 'toAddr'. [UnusedLocalVariable]"
+                    "raw": "[WARN] D:\\Intellicrack\\intellicrack\\scripts\\ghidra\\KeygenTemplateGenerator.java:2860:5: Unused named local variable 'toAddr'. [UnusedLocalVariable]"
                 }
             ]
         },

@@ -1,6 +1,6 @@
 {
     "tool": "psscriptanalyzer",
-    "generated": "2025-12-13T23:23:23.425852",
+    "generated": "2025-12-14T22:18:26.767679",
     "total_findings": 304,
     "total_files": 18,
     "files": [
@@ -513,14 +513,6 @@
                     "raw": "D:\\Intellicrack\\TypeFix.ps1:356:1: [Warning] File 'TypeFix.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)"
                 },
                 {
-                    "line": 12,
-                    "column": 1,
-                    "severity": "Warning",
-                    "rule": "PSAvoidOverwritingBuiltInCmdlets",
-                    "message": "'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden",
-                    "raw": "D:\\Intellicrack\\TypeFix.ps1:12:1: [Warning] 'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)"
-                },
-                {
                     "line": 73,
                     "column": 10,
                     "severity": "Warning",
@@ -551,6 +543,14 @@
                     "rule": "PSUseSingularNouns",
                     "message": "The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead.",
                     "raw": "D:\\Intellicrack\\TypeFix.ps1:227:10: [Warning] The cmdlet 'Test-Prerequisites' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)"
+                },
+                {
+                    "line": 12,
+                    "column": 1,
+                    "severity": "Warning",
+                    "rule": "PSAvoidOverwritingBuiltInCmdlets",
+                    "message": "'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden",
+                    "raw": "D:\\Intellicrack\\TypeFix.ps1:12:1: [Warning] 'Write-Log' is a cmdlet that is included with PowerShell (version core-6.1.0-windows) whose definition should not be overridden (PSAvoidOverwritingBuiltInCmdlets)"
                 }
             ]
         },
@@ -1397,14 +1397,6 @@
                     "raw": "D:\\Intellicrack\\tools\\AdobeInjector\\Source\\GenP_3.6.9_SOURCE-CGP\\genp-3.6.9-src\\build.ps1:449:1: [Warning] File 'build.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (PSAvoidUsingWriteHost)"
                 },
                 {
-                    "line": 76,
-                    "column": 10,
-                    "severity": "Warning",
-                    "rule": "PSUseApprovedVerbs",
-                    "message": "The cmdlet 'Download-File' uses an unapproved verb.",
-                    "raw": "D:\\Intellicrack\\tools\\AdobeInjector\\Source\\GenP_3.6.9_SOURCE-CGP\\genp-3.6.9-src\\build.ps1:76:10: [Warning] The cmdlet 'Download-File' uses an unapproved verb. (PSUseApprovedVerbs)"
-                },
-                {
                     "line": 215,
                     "column": 1,
                     "severity": "Information",
@@ -1507,6 +1499,14 @@
                     "rule": "PSAvoidTrailingWhitespace",
                     "message": "Line has trailing whitespace",
                     "raw": "D:\\Intellicrack\\tools\\AdobeInjector\\Source\\GenP_3.6.9_SOURCE-CGP\\genp-3.6.9-src\\build.ps1:364:1: [Information] Line has trailing whitespace (PSAvoidTrailingWhitespace)"
+                },
+                {
+                    "line": 76,
+                    "column": 10,
+                    "severity": "Warning",
+                    "rule": "PSUseApprovedVerbs",
+                    "message": "The cmdlet 'Download-File' uses an unapproved verb.",
+                    "raw": "D:\\Intellicrack\\tools\\AdobeInjector\\Source\\GenP_3.6.9_SOURCE-CGP\\genp-3.6.9-src\\build.ps1:76:10: [Warning] The cmdlet 'Download-File' uses an unapproved verb. (PSUseApprovedVerbs)"
                 }
             ]
         },
@@ -2125,6 +2125,14 @@
             "count": 12,
             "findings": [
                 {
+                    "line": 64,
+                    "column": 13,
+                    "severity": "Warning",
+                    "rule": "PSReviewUnusedParameter",
+                    "message": "The parameter 'ArgList' has been declared but not used.",
+                    "raw": "D:\\Intellicrack\\tools\\ghidra\\Ghidra\\Debug\\Debugger-agent-lldb\\data\\support\\lldbsetuputils.ps1:64:13: [Warning] The parameter 'ArgList' has been declared but not used. (PSReviewUnusedParameter)"
+                },
+                {
                     "line": 68,
                     "column": 10,
                     "severity": "Warning",
@@ -2211,14 +2219,6 @@
                     "rule": "PSUseSingularNouns",
                     "message": "The cmdlet 'Compute-Lldb-PipInstall-Args' uses a plural noun. A singular noun should be used instead.",
                     "raw": "D:\\Intellicrack\\tools\\ghidra\\Ghidra\\Debug\\Debugger-agent-lldb\\data\\support\\lldbsetuputils.ps1:110:10: [Warning] The cmdlet 'Compute-Lldb-PipInstall-Args' uses a plural noun. A singular noun should be used instead. (PSUseSingularNouns)"
-                },
-                {
-                    "line": 64,
-                    "column": 13,
-                    "severity": "Warning",
-                    "rule": "PSReviewUnusedParameter",
-                    "message": "The parameter 'ArgList' has been declared but not used.",
-                    "raw": "D:\\Intellicrack\\tools\\ghidra\\Ghidra\\Debug\\Debugger-agent-lldb\\data\\support\\lldbsetuputils.ps1:64:13: [Warning] The parameter 'ArgList' has been declared but not used. (PSReviewUnusedParameter)"
                 }
             ]
         },

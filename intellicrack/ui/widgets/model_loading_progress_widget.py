@@ -250,9 +250,9 @@ class ModelLoadingProgressWidget(QWidget):
     def cancel_loading(self, model_id: str) -> None:
         """Cancel a loading task."""
         if self.llm_manager.cancel_loading(model_id):
-            logger.info(f"Cancelled loading task: {model_id}")
+            logger.info("Cancelled loading task: %s", model_id)
         else:
-            logger.error(f"Failed to cancel loading task: {model_id}")
+            logger.error("Failed to cancel loading task: %s", model_id)
 
     def update_statistics(self) -> None:
         """Update loading statistics display."""
@@ -286,8 +286,8 @@ Active Workers: {stats.get("active_workers", 0)}
             config=test_config,
             priority=5,
         ):
-            logger.debug(f"Test loading task created: {task}")
-            logger.info(f"Submitted test loading task: {model_id}")
+            logger.debug("Test loading task created: %s", task)
+            logger.info("Submitted test loading task: %s", model_id)
         else:
             logger.error("Failed to submit test loading task")
 

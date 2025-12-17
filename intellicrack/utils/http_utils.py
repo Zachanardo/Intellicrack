@@ -142,21 +142,21 @@ class SecureHTTPClient:
         kwargs["verify"] = self._get_ssl_verify(verify)
 
         # Log the request (without sensitive data)
-        logger.debug(f"Making {method} request to {url}")
+        logger.debug("Making %s request to %s", method, url)
 
         try:
             response = self.session.request(method, url, **kwargs)
             response.raise_for_status()
             return response
         except requests.exceptions.SSLError as e:
-            logger.error(f"SSL error for {url}: {e}")
+            logger.error("SSL error for %s: %s", url, e, exc_info=True)
             logger.info(
                 "If this is a self-signed certificate, you can disable SSL verification "
                 "by setting verify=False or providing a CA bundle path",
             )
             raise
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed for {url}: {e}")
+            logger.error("Request failed for %s: %s", url, e, exc_info=True)
             raise
 
     def get(self, url: str, **kwargs: object) -> requests.Response:

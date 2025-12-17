@@ -309,7 +309,7 @@ def create_minimal_qemu_disk() -> Path | None:
 
         # Create a real QEMU disk image
         cmd = ["qemu-img", "create", "-f", "qcow2", str(minimal_disk), "1G"]
-        logger.info("Executing command to create QEMU disk: %s", ' '.join(cmd))
+        logger.info("Executing command to create QEMU disk: %s", " ".join(cmd))
         result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
         if result.returncode == 0:
@@ -320,7 +320,7 @@ def create_minimal_qemu_disk() -> Path | None:
                 # Create an ext4 filesystem (Linux only)
                 if sys.platform.startswith("linux"):
                     format_cmd = ["mkfs.ext4", "-F", str(minimal_disk)]
-                    logger.info("Attempting to format QEMU disk with ext4: %s", ' '.join(format_cmd))
+                    logger.info("Attempting to format QEMU disk with ext4: %s", " ".join(format_cmd))
                     format_result = subprocess.run(format_cmd, capture_output=True, check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     if format_result.returncode == 0:
                         logger.info("Successfully formatted QEMU disk %s with ext4.", minimal_disk)
@@ -419,7 +419,7 @@ def validate_tensorflow_models() -> dict[str, any]:
             logger.error("TensorFlow model prediction test failed: No valid output.")
 
         tf_info["status"] = tf_info["model_building"]
-        logger.info("TensorFlow validation completed. Status: %s.", tf_info['status'])
+        logger.info("TensorFlow validation completed. Status: %s.", tf_info["status"])
         return tf_info
     except Exception as e:
         logger.exception("An unexpected error occurred during TensorFlow validation: %s", e)
@@ -470,7 +470,7 @@ def perform_startup_checks() -> dict[str, any]:
     check_protection_models()
 
     if missing_deps := [k for k, v in results["dependencies"].items() if not v]:
-        logger.warning("Missing critical dependencies: %s. Please install them for full functionality.", ', '.join(missing_deps))
+        logger.warning("Missing critical dependencies: %s. Please install them for full functionality.", ", ".join(missing_deps))
         logger.info("Recommendation: Run 'pip install -r requirements.txt' to install missing packages.")
     else:
         logger.info("All critical dependencies are met.")
@@ -481,10 +481,12 @@ def perform_startup_checks() -> dict[str, any]:
         if tf_val["status"]:
             logger.info(
                 "TensorFlow %s validated and ready (GPU available: %s, GPU count: %s).",
-                tf_val['version'], tf_val['gpu_available'], tf_val['gpu_count']
+                tf_val["version"],
+                tf_val["gpu_available"],
+                tf_val["gpu_count"],
             )
         else:
-            logger.warning("TensorFlow validation failed. Status: %s, Error: %s.", tf_val['status'], tf_val.get('error', 'N/A'))
+            logger.warning("TensorFlow validation failed. Status: %s, Error: %s.", tf_val["status"], tf_val.get("error", "N/A"))
 
     logger.info("All startup checks completed.")
     return results
@@ -500,7 +502,7 @@ def get_system_health_report() -> dict[str, any]:
         "python_version": sys.version.split()[0],
         "services": {},
     }
-    logger.debug("System basic info: Platform='%s', Python='%s'.", report['platform'], report['python_version'])
+    logger.debug("System basic info: Platform='%s', Python='%s'.", report["platform"], report["python_version"])
 
     # Check Flask web service health
     logger.debug("Checking Flask web service health.")
@@ -540,7 +542,7 @@ def get_system_health_report() -> dict[str, any]:
                 try:
                     gpu = gpu_devices[0]
                     memory_info["gpu_memory_growth"] = tf.config.experimental.get_memory_growth(gpu)
-                    logger.debug("ML Engine: GPU memory growth for %s: %s.", gpu.name, memory_info['gpu_memory_growth'])
+                    logger.debug("ML Engine: GPU memory growth for %s: %s.", gpu.name, memory_info["gpu_memory_growth"])
                 except Exception as mem_e:
                     logger.warning("ML Engine: Could not get GPU memory growth info: %s", mem_e, exc_info=True)
             else:
@@ -555,7 +557,8 @@ def get_system_health_report() -> dict[str, any]:
             }
             logger.info(
                 "ML Engine (TensorFlow) service is available and healthy. Version: %s, GPU support: %s.",
-                tf.__version__, report['services']['ml_engine']['gpu_support']
+                tf.__version__,
+                report["services"]["ml_engine"]["gpu_support"],
             )
     except Exception as e:
         report["services"]["ml_engine"] = {"available": False, "error": str(e)}
@@ -574,7 +577,8 @@ def get_system_health_report() -> dict[str, any]:
         }
         logger.info(
             "LLM Engine (llama-cpp-python) service is available and healthy. Version: %s, GPU support heuristic: %s.",
-            report['services']['llm_engine']['version'], report['services']['llm_engine']['gpu_support']
+            report["services"]["llm_engine"]["version"],
+            report["services"]["llm_engine"]["gpu_support"],
         )
     except Exception as e:
         report["services"]["llm_engine"] = {"available": False, "error": str(e)}
@@ -597,7 +601,7 @@ def get_system_health_report() -> dict[str, any]:
             "free_gb": round(disk_usage.free / (1024**3), 2),
             "percent_used": round((disk_usage.used / disk_usage.total) * 100, 1),
         }
-        logger.info("Disk space for data directory '%s' checked. Used: %s%%.", data_dir, report['disk_space']['percent_used'])
+        logger.info("Disk space for data directory '%s' checked. Used: %s%%.", data_dir, report["disk_space"]["percent_used"])
     except Exception as e:
         report["disk_space"] = {"available": False, "error": str(e)}
         logger.warning("Could not retrieve disk space information for '%s': %s", data_dir, e, exc_info=True)

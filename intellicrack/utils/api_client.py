@@ -98,7 +98,7 @@ class APIClient:
         """
         if not HAS_AIOHTTP:
             # Fallback implementation using requests or urllib
-            logger.warning(f"API call to {endpoint} skipped - aiohttp not available")
+            logger.warning("API call to %s skipped - aiohttp not available", endpoint)
             return {
                 "error": "aiohttp not available",
                 "fallback": True,
@@ -156,7 +156,7 @@ class APIClient:
                     return await response.json()
 
             except (TimeoutError, aiohttp.ClientError) as e:
-                logger.warning(f"API request attempt {attempt + 1} failed: {e}")
+                logger.warning("API request attempt %s failed: %s", attempt + 1, e, exc_info=True)
 
                 # Don't retry on last attempt
                 if attempt >= self.retry_attempts - 1:

@@ -83,7 +83,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
     try:
         return bytes.fromhex(hex_string)
     except ValueError as e:
-        logger.error(f"Invalid hex string: {e}")
+        logger.error("Invalid hex string: %s", e, exc_info=True)
         raise
 
 
@@ -189,7 +189,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Failed to patch bytes: {e}")
+        logger.error("Failed to patch bytes: %s", e, exc_info=True)
         return False
 
 
@@ -214,7 +214,7 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     }
 
     if arch not in nop_bytes:
-        logger.error(f"Unknown architecture: {arch}")
+        logger.error("Unknown architecture: %s", arch)
         return False
 
     nop = nop_bytes[arch]
@@ -235,7 +235,7 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
         if arch in {"x86", "x64"}:
             patch_data += b"\x90" * remainder
         else:
-            logger.warning(f"Cannot perfectly fill {remainder} bytes on {arch}")
+            logger.warning("Cannot perfectly fill %s bytes on %s", remainder, arch)
             return False
 
     return patch_bytes(data, start, patch_data)

@@ -299,7 +299,7 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
             decrypted.append(byte ^ key[i % len(key)])
         return bytes(decrypted)
     except Exception as e:
-        logger.error(f"Decryption error: {e}")
+        logger.error("Decryption error: %s", e, exc_info=True)
         # Return original data on error
         return data
 
@@ -347,7 +347,7 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
             encrypted.append(byte ^ key[i % len(key)])
         return bytes(encrypted)
     except Exception as e:
-        logger.error(f"Encryption error: {e}")
+        logger.error("Encryption error: %s", e, exc_info=True)
         # Return original data on error
         return data
 
@@ -2323,7 +2323,7 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         return _match_pattern(data, pattern)
 
     except Exception as e:
-        logger.error("TensorFlow pattern matching failed: %s", e)
+        logger.error("TensorFlow pattern matching failed: %s", e, exc_info=True)
         return _match_pattern(data, pattern)
 
 
@@ -2487,7 +2487,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
     if HAS_TENSORFLOW:
         try:
             if gpus := tf.config.list_physical_devices("GPU"):
-                logger.debug(f"Found {len(gpus)} TensorFlow GPUs available")
+                logger.debug("Found %s TensorFlow GPUs available", len(gpus))
                 return True  # Assume sufficient memory if GPU available
         except (RuntimeError, AttributeError) as e:
             logger.error("Error in internal_helpers: %s", e)
@@ -2836,7 +2836,7 @@ def _write_realistic_tensor_data(file_handle: BinaryIO, tensors: list[dict[str, 
                 file_handle.write(chunk)
 
     except Exception as e:
-        logger.error("Error writing realistic tensor data: %s", e)
+        logger.error("Error writing realistic tensor data: %s", e, exc_info=True)
         # Fallback to simple zero data if sophisticated generation fails
         for tensor in tensors:
             dims = tensor.get("dims", [1])

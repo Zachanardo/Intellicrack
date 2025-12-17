@@ -52,7 +52,7 @@ def safe_import_numpy() -> object:
         NUMPY_AVAILABLE = HAS_NUMPY
         return np
     except ImportError:
-        logger.warning("numpy not available - using fallback")
+        logger.warning("numpy not available - using fallback", exc_info=True)
         NUMPY_AVAILABLE = False
         return create_numpy_fallback()
     except Exception as e:
@@ -78,7 +78,7 @@ def safe_import_pandas() -> object:
         PANDAS_AVAILABLE = True
         return pd
     except ImportError:
-        logger.warning("pandas not available - using fallback")
+        logger.warning("pandas not available - using fallback", exc_info=True)
         PANDAS_AVAILABLE = False
         return create_pandas_fallback()
     except Exception as e:
@@ -104,7 +104,7 @@ def safe_import_sklearn() -> object:
         SKLEARN_AVAILABLE = True
         return sklearn
     except ImportError:
-        logger.warning("sklearn not available - using fallback")
+        logger.warning("sklearn not available - using fallback", exc_info=True)
         SKLEARN_AVAILABLE = False
         return create_sklearn_fallback()
     except Exception as e:
@@ -134,7 +134,7 @@ def safe_import_lief() -> object:
         logger.error(error_msg)
         raise ImportError(error_msg)
     except ImportError:
-        logger.warning("lief not available - using fallback")
+        logger.warning("lief not available - using fallback", exc_info=True)
         LIEF_AVAILABLE = False
         return create_lief_fallback()
 
@@ -156,12 +156,12 @@ def safe_import_pyelftools() -> bool | None:
         test_max = maxint  # Just reference it to ensure it's valid
 
         # Log successful import with usage verification
-        logger.debug(f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}")
+        logger.debug("pyelftools available - bytes2str: %s, maxint: %s, ELFFile: %s", test_str, test_max, ELFFile)
 
         PYELFTOOLS_AVAILABLE = True
         return True
     except ImportError:
-        logger.warning("pyelftools not available - using fallback")
+        logger.warning("pyelftools not available - using fallback", exc_info=True)
         PYELFTOOLS_AVAILABLE = False
         return False
 
@@ -628,7 +628,7 @@ def create_sklearn_fallback() -> object:
                 RandomForestFallback: Self for chaining.
 
             """
-            logger.debug(f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels")
+            logger.debug("RandomForest fallback fit called with %s samples and %s labels", len(X), len(y))
             return self
 
         def predict(self, X: list) -> list:
@@ -694,7 +694,7 @@ def create_sklearn_fallback() -> object:
                 StandardScalerFallback: Self for chaining.
 
             """
-            logger.debug(f"StandardScaler fallback fit called with {len(X)} samples")
+            logger.debug("StandardScaler fallback fit called with %s samples", len(X))
             return self
 
         def transform(self, X: list) -> list:
@@ -774,7 +774,7 @@ def create_lief_fallback() -> object:
                     None: Fallback does not perform actual parsing.
 
                 """
-                logger.debug(f"ELF fallback parse called for: {filename}")
+                logger.debug("ELF fallback parse called for: %s", filename)
 
         @staticmethod
         def parse(filename: str) -> None:
@@ -787,7 +787,7 @@ def create_lief_fallback() -> object:
                 None: Fallback does not perform actual parsing.
 
             """
-            logger.debug(f"Lief fallback parse called for: {filename}")
+            logger.debug("Lief fallback parse called for: %s", filename)
 
     return LiefFallback()
 
@@ -816,7 +816,7 @@ class SafeModuleReplacer:
         # Replace with fallback
         sys.modules[module_name] = fallback_factory()
         self.replaced_modules.add(module_name)
-        logger.info(f"Replaced {module_name} with fallback implementation")
+        logger.info("Replaced %s with fallback implementation", module_name)
 
     def restore_module(self, module_name: str) -> None:
         """Restore original module if available.
@@ -828,7 +828,7 @@ class SafeModuleReplacer:
         if module_name in self.original_modules:
             sys.modules[module_name] = self.original_modules[module_name]
             self.replaced_modules.discard(module_name)
-            logger.info(f"Restored original {module_name}")
+            logger.info("Restored original %s", module_name)
 
 
 # Global replacer instance
@@ -894,10 +894,10 @@ def get_dependency_status() -> dict[str, bool]:
     working_deps = sum(status.values())
     total_deps = len(status)
 
-    logger.info(f"Dependency status: {working_deps}/{total_deps} working")
+    logger.info("Dependency status: %s/%s working", working_deps, total_deps)
     for dep, available in status.items():
         status_text = "OK" if available else "WARNING"
-        logger.info(f"  [{status_text}] {dep}")
+        logger.info("  [%s] %s", status_text, dep)
 
     return status
 

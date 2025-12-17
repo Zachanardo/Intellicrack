@@ -2157,7 +2157,7 @@ class TPMBypassEngine:
                         self.frida_session.detach()
                         self.logger.info("Frida session detached")
                 except Exception:
-                    pass
+                    self.logger.error("Failed to detach Frida session", exc_info=True)
 
             self.frida_session = None
             self.frida_device = None
@@ -2213,7 +2213,7 @@ class TPMBypassEngine:
                         "pcr_operations": self.get_pcr_operations_frida(),
                     }
             except Exception:
-                pass
+                self.logger.error("Failed to gather Frida session data", exc_info=True)
 
         virtualized_state: dict[str, Any] = {
             "state": self._virtualized_tpm_state,

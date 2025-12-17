@@ -1,8 +1,8 @@
 {
     "tool": "uncalled",
-    "generated": "2025-12-13T23:22:40.816835",
-    "total_findings": 587,
-    "total_files": 250,
+    "generated": "2025-12-14T22:13:52.767475",
+    "total_findings": 525,
+    "total_files": 227,
     "files": [
         {
             "path": "intellicrack\\handlers\\pyelftools_handler.py",
@@ -246,7 +246,7 @@
         },
         {
             "path": "intellicrack\\scripts\\ghidra\\anti_analysis_detector.py",
-            "count": 18,
+            "count": 17,
             "findings": [
                 {
                     "line": null,
@@ -317,12 +317,6 @@
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: getValue",
-                    "raw": "intellicrack\\scripts\\ghidra\\anti_analysis_detector.py: Unused function getValue"
-                },
-                {
-                    "line": null,
-                    "column": null,
                     "message": "Unused function: isCancelled",
                     "raw": "intellicrack\\scripts\\ghidra\\anti_analysis_detector.py: Unused function isCancelled"
                 },
@@ -355,96 +349,6 @@
                     "column": null,
                     "message": "Unused function: setScriptArgs",
                     "raw": "intellicrack\\scripts\\ghidra\\anti_analysis_detector.py: Unused function setScriptArgs"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\handlers\\matplotlib_handler.py",
-            "count": 14,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: add_axes",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function add_axes"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_axes",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_axes"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_axes_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_axes_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_circle_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_circle_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_figure_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_figure_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_funcformatter_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_funcformatter_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_maxnlocator_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_maxnlocator_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_mpl",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_mpl"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_pdfpages_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_pdfpages_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_plt",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_plt"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_polygon_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_polygon_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_rectangle_class",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_rectangle_class"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: subplots_adjust",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function subplots_adjust"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: suptitle",
-                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function suptitle"
                 }
             ]
         },
@@ -589,6 +493,66 @@
                     "column": null,
                     "message": "Unused function: unregister_plugin",
                     "raw": "intellicrack\\core\\app_context.py: Unused function unregister_plugin"
+                }
+            ]
+        },
+        {
+            "path": "intellicrack\\handlers\\matplotlib_handler.py",
+            "count": 9,
+            "findings": [
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: add_axes",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function add_axes"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_axes",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_axes"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_circle_class",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_circle_class"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_funcformatter_class",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_funcformatter_class"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_maxnlocator_class",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_maxnlocator_class"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_mpl",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_mpl"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_polygon_class",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_polygon_class"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: get_rectangle_class",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function get_rectangle_class"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: subplots_adjust",
+                    "raw": "intellicrack\\handlers\\matplotlib_handler.py: Unused function subplots_adjust"
                 }
             ]
         },
@@ -1289,42 +1253,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\certificate\\frida_stealth.py",
-            "count": 5,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: apply_anti_debugging_bypass",
-                    "raw": "intellicrack\\core\\certificate\\frida_stealth.py: Unused function apply_anti_debugging_bypass"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: detect_anti_frida",
-                    "raw": "intellicrack\\core\\certificate\\frida_stealth.py: Unused function detect_anti_frida"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_stealth_status",
-                    "raw": "intellicrack\\core\\certificate\\frida_stealth.py: Unused function get_stealth_status"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: hide_dbus_presence",
-                    "raw": "intellicrack\\core\\certificate\\frida_stealth.py: Unused function hide_dbus_presence"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: hide_frida_artifacts",
-                    "raw": "intellicrack\\core\\certificate\\frida_stealth.py: Unused function hide_frida_artifacts"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\core\\orchestration\\tool_communication_bridge.py",
             "count": 5,
             "findings": [
@@ -1469,36 +1397,6 @@
             ]
         },
         {
-            "path": "intellicrack\\ai\\intelligent_code_modifier.py",
-            "count": 4,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: generate_side_by_side_diff",
-                    "raw": "intellicrack\\ai\\intelligent_code_modifier.py: Unused function generate_side_by_side_diff"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_change_summary",
-                    "raw": "intellicrack\\ai\\intelligent_code_modifier.py: Unused function get_change_summary"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_pending_changes",
-                    "raw": "intellicrack\\ai\\intelligent_code_modifier.py: Unused function get_pending_changes"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: preview_changes",
-                    "raw": "intellicrack\\ai\\intelligent_code_modifier.py: Unused function preview_changes"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\ai\\lazy_model_loader.py",
             "count": 4,
             "findings": [
@@ -1525,66 +1423,6 @@
                     "column": null,
                     "message": "Unused function: unload_all",
                     "raw": "intellicrack\\ai\\lazy_model_loader.py: Unused function unload_all"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\analysis\\concolic_obfuscation_handler.py",
-            "count": 4,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: analyze_basic_block_obfuscation",
-                    "raw": "intellicrack\\core\\analysis\\concolic_obfuscation_handler.py: Unused function analyze_basic_block_obfuscation"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: analyze_branch_obfuscation",
-                    "raw": "intellicrack\\core\\analysis\\concolic_obfuscation_handler.py: Unused function analyze_branch_obfuscation"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_execution_strategy",
-                    "raw": "intellicrack\\core\\analysis\\concolic_obfuscation_handler.py: Unused function get_execution_strategy"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: identify_bytecode_handler",
-                    "raw": "intellicrack\\core\\analysis\\concolic_obfuscation_handler.py: Unused function identify_bytecode_handler"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\frida_presets.py",
-            "count": 4,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_all_presets",
-                    "raw": "intellicrack\\core\\frida_presets.py: Unused function get_all_presets"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_quick_template",
-                    "raw": "intellicrack\\core\\frida_presets.py: Unused function get_quick_template"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_quick_templates",
-                    "raw": "intellicrack\\core\\frida_presets.py: Unused function get_quick_templates"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_wizard_configs",
-                    "raw": "intellicrack\\core\\frida_presets.py: Unused function get_wizard_configs"
                 }
             ]
         },
@@ -1649,36 +1487,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\tool_discovery.py",
-            "count": 4,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: discover_tool_with_fallbacks",
-                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function discover_tool_with_fallbacks"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_healthy_tools",
-                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function get_healthy_tools"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_manual_overrides",
-                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function get_manual_overrides"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: is_tool_compatible",
-                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function is_tool_compatible"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\hexview\\hex_commands.py",
             "count": 4,
             "findings": [
@@ -1735,36 +1543,6 @@
                     "column": null,
                     "message": "Unused function: update_highlight",
                     "raw": "intellicrack\\hexview\\hex_highlighter.py: Unused function update_highlight"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py",
-            "count": 4,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: detect_compression",
-                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function detect_compression"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_buffer",
-                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function get_buffer"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_optimal_batch_size",
-                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function get_optimal_batch_size"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_optimization_level",
-                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function set_optimization_level"
                 }
             ]
         },
@@ -2015,54 +1793,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\certificate\\detection_report.py",
-            "count": 3,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_high_confidence_functions",
-                    "raw": "intellicrack\\core\\certificate\\detection_report.py: Unused function get_high_confidence_functions"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_unique_apis",
-                    "raw": "intellicrack\\core\\certificate\\detection_report.py: Unused function get_unique_apis"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_unique_libraries",
-                    "raw": "intellicrack\\core\\certificate\\detection_report.py: Unused function get_unique_libraries"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\certificate\\patch_templates.py",
-            "count": 3,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_all_templates",
-                    "raw": "intellicrack\\core\\certificate\\patch_templates.py: Unused function get_all_templates"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_templates_by_api",
-                    "raw": "intellicrack\\core\\certificate\\patch_templates.py: Unused function get_templates_by_api"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_templates_by_arch",
-                    "raw": "intellicrack\\core\\certificate\\patch_templates.py: Unused function get_templates_by_arch"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\core\\config_migration_handler.py",
             "count": 3,
             "findings": [
@@ -2111,26 +1841,26 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\processing\\memory_optimizer.py",
+            "path": "intellicrack\\core\\tool_discovery.py",
             "count": 3,
             "findings": [
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: get_memory_report",
-                    "raw": "intellicrack\\core\\processing\\memory_optimizer.py: Unused function get_memory_report"
+                    "message": "Unused function: discover_tool_with_fallbacks",
+                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function discover_tool_with_fallbacks"
                 },
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: get_memory_usage_mb",
-                    "raw": "intellicrack\\core\\processing\\memory_optimizer.py: Unused function get_memory_usage_mb"
+                    "message": "Unused function: get_healthy_tools",
+                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function get_healthy_tools"
                 },
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: set_technique",
-                    "raw": "intellicrack\\core\\processing\\memory_optimizer.py: Unused function set_technique"
+                    "message": "Unused function: get_manual_overrides",
+                    "raw": "intellicrack\\core\\tool_discovery.py: Unused function get_manual_overrides"
                 }
             ]
         },
@@ -2159,30 +1889,6 @@
             ]
         },
         {
-            "path": "intellicrack\\data\\signature_templates.py",
-            "count": 3,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_sample_signatures",
-                    "raw": "intellicrack\\data\\signature_templates.py: Unused function get_sample_signatures"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_signature_template",
-                    "raw": "intellicrack\\data\\signature_templates.py: Unused function get_signature_template"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_template_description",
-                    "raw": "intellicrack\\data\\signature_templates.py: Unused function get_template_description"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\handlers\\frida_handler.py",
             "count": 3,
             "findings": [
@@ -2207,26 +1913,26 @@
             ]
         },
         {
-            "path": "intellicrack\\ui\\widgets\\drop_zone_widget.py",
+            "path": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py",
             "count": 3,
             "findings": [
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: dragEnterEvent",
-                    "raw": "intellicrack\\ui\\widgets\\drop_zone_widget.py: Unused function dragEnterEvent"
+                    "message": "Unused function: detect_compression",
+                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function detect_compression"
                 },
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: dragLeaveEvent",
-                    "raw": "intellicrack\\ui\\widgets\\drop_zone_widget.py: Unused function dragLeaveEvent"
+                    "message": "Unused function: get_buffer",
+                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function get_buffer"
                 },
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: dropEvent",
-                    "raw": "intellicrack\\ui\\widgets\\drop_zone_widget.py: Unused function dropEvent"
+                    "message": "Unused function: set_optimization_level",
+                    "raw": "intellicrack\\plugins\\custom_modules\\performance_optimizer.py: Unused function set_optimization_level"
                 }
             ]
         },
@@ -2275,54 +1981,6 @@
                     "column": null,
                     "message": "Unused function: generate_time_series_stats",
                     "raw": "intellicrack\\utils\\analysis\\analysis_stats.py: Unused function generate_time_series_stats"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\dependency_fallbacks.py",
-            "count": 3,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: safe_import_lief",
-                    "raw": "intellicrack\\utils\\dependency_fallbacks.py: Unused function safe_import_lief"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: safe_import_pandas",
-                    "raw": "intellicrack\\utils\\dependency_fallbacks.py: Unused function safe_import_pandas"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: safe_import_pyelftools",
-                    "raw": "intellicrack\\utils\\dependency_fallbacks.py: Unused function safe_import_pyelftools"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\env_file_manager.py",
-            "count": 3,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: delete_key",
-                    "raw": "intellicrack\\utils\\env_file_manager.py: Unused function delete_key"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_key",
-                    "raw": "intellicrack\\utils\\env_file_manager.py: Unused function get_key"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_api_key",
-                    "raw": "intellicrack\\utils\\env_file_manager.py: Unused function set_api_key"
                 }
             ]
         },
@@ -2633,24 +2291,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\adobe_injector_integration.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: send_command",
-                    "raw": "intellicrack\\core\\adobe_injector_integration.py: Unused function send_command"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_window_pos",
-                    "raw": "intellicrack\\core\\adobe_injector_integration.py: Unused function set_window_pos"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\core\\ai_model_manager.py",
             "count": 2,
             "findings": [
@@ -2701,24 +2341,6 @@
                     "column": null,
                     "message": "Unused function: is_supported_format",
                     "raw": "intellicrack\\core\\binary_analyzer.py: Unused function is_supported_format"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\certificate\\layer_detector.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: build_layer_dependency_graph",
-                    "raw": "intellicrack\\core\\certificate\\layer_detector.py: Unused function build_layer_dependency_graph"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: detect_validation_layers",
-                    "raw": "intellicrack\\core\\certificate\\layer_detector.py: Unused function detect_validation_layers"
                 }
             ]
         },
@@ -3173,24 +2795,6 @@
             ]
         },
         {
-            "path": "intellicrack\\utils\\core\\plugin_paths.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_frida_script_path",
-                    "raw": "intellicrack\\utils\\core\\plugin_paths.py: Unused function get_frida_script_path"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_ghidra_script_path",
-                    "raw": "intellicrack\\utils\\core\\plugin_paths.py: Unused function get_ghidra_script_path"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\utils\\http_utils.py",
             "count": 2,
             "findings": [
@@ -3263,24 +2867,6 @@
             ]
         },
         {
-            "path": "intellicrack\\utils\\secrets_manager.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: generate_key_from_password",
-                    "raw": "intellicrack\\utils\\secrets_manager.py: Unused function generate_key_from_password"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: import_secrets",
-                    "raw": "intellicrack\\utils\\secrets_manager.py: Unused function import_secrets"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\utils\\system\\program_discovery.py",
             "count": 2,
             "findings": [
@@ -3295,24 +2881,6 @@
                     "column": null,
                     "message": "Unused function: scan_executable_directories",
                     "raw": "intellicrack\\utils\\system\\program_discovery.py: Unused function scan_executable_directories"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\ui\\ui_helpers.py",
-            "count": 2,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: generate_exploit_payload_common",
-                    "raw": "intellicrack\\utils\\ui\\ui_helpers.py: Unused function generate_exploit_payload_common"
-                },
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: generate_exploit_strategy_common",
-                    "raw": "intellicrack\\utils\\ui\\ui_helpers.py: Unused function generate_exploit_strategy_common"
                 }
             ]
         },
@@ -3367,6 +2935,24 @@
                     "column": null,
                     "message": "Unused function: update_output_emit",
                     "raw": "tests\\core\\analysis\\test_frida_analyzer_production.py: Unused function update_output_emit"
+                }
+            ]
+        },
+        {
+            "path": "tests\\unit\\core\\analysis\\test_automated_patch_agent.py",
+            "count": 2,
+            "findings": [
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: setup_advanced",
+                    "raw": "tests\\unit\\core\\analysis\\test_automated_patch_agent.py: Unused function setup_advanced"
+                },
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: setup_real_binaries",
+                    "raw": "tests\\unit\\core\\analysis\\test_automated_patch_agent.py: Unused function setup_real_binaries"
                 }
             ]
         },
@@ -3515,42 +3101,6 @@
             ]
         },
         {
-            "path": "intellicrack\\ai\\ai_file_tools.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_max_file_size",
-                    "raw": "intellicrack\\ai\\ai_file_tools.py: Unused function set_max_file_size"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\ai\\code_analysis_tools.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_analysis_suggestions",
-                    "raw": "intellicrack\\ai\\code_analysis_tools.py: Unused function get_analysis_suggestions"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\ai\\headless_training_interface.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_training_parameters",
-                    "raw": "intellicrack\\ai\\headless_training_interface.py: Unused function set_training_parameters"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\ai\\integration_manager.py",
             "count": 1,
             "findings": [
@@ -3671,6 +3221,18 @@
             ]
         },
         {
+            "path": "intellicrack\\core\\adobe_injector_integration.py",
+            "count": 1,
+            "findings": [
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: set_window_pos",
+                    "raw": "intellicrack\\core\\adobe_injector_integration.py: Unused function set_window_pos"
+                }
+            ]
+        },
+        {
             "path": "intellicrack\\core\\analysis\\binary_similarity_search.py",
             "count": 1,
             "findings": [
@@ -3767,30 +3329,6 @@
             ]
         },
         {
-            "path": "intellicrack\\core\\certificate\\api_signatures.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: get_signatures_by_platform",
-                    "raw": "intellicrack\\core\\certificate\\api_signatures.py: Unused function get_signatures_by_platform"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\certificate\\hook_obfuscation.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: install_hwbp_hook",
-                    "raw": "intellicrack\\core\\certificate\\hook_obfuscation.py: Unused function install_hwbp_hook"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\core\\frida_bypass_wizard.py",
             "count": 1,
             "findings": [
@@ -3811,18 +3349,6 @@
                     "column": null,
                     "message": "Unused function: add_results_batch",
                     "raw": "intellicrack\\core\\orchestration\\intelligent_correlation_engine.py: Unused function add_results_batch"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\core\\processing\\base_snapshot_handler.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: has_snapshot",
-                    "raw": "intellicrack\\core\\processing\\base_snapshot_handler.py: Unused function has_snapshot"
                 }
             ]
         },
@@ -4307,6 +3833,18 @@
             ]
         },
         {
+            "path": "intellicrack\\ui\\widgets\\drop_zone_widget.py",
+            "count": 1,
+            "findings": [
+                {
+                    "line": null,
+                    "column": null,
+                    "message": "Unused function: dragLeaveEvent",
+                    "raw": "intellicrack\\ui\\widgets\\drop_zone_widget.py: Unused function dragLeaveEvent"
+                }
+            ]
+        },
+        {
             "path": "intellicrack\\ui\\widgets\\entropy_graph_widget.py",
             "count": 1,
             "findings": [
@@ -4355,18 +3893,6 @@
             ]
         },
         {
-            "path": "intellicrack\\ui\\widgets\\system_monitor_widget.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: set_thresholds",
-                    "raw": "intellicrack\\ui\\widgets\\system_monitor_widget.py: Unused function set_thresholds"
-                }
-            ]
-        },
-        {
             "path": "intellicrack\\ui\\window_sizing.py",
             "count": 1,
             "findings": [
@@ -4375,18 +3901,6 @@
                     "column": null,
                     "message": "Unused function: apply_dialog_sizing",
                     "raw": "intellicrack\\ui\\window_sizing.py: Unused function apply_dialog_sizing"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\api_client.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: sync_api_call",
-                    "raw": "intellicrack\\utils\\api_client.py: Unused function sync_api_call"
                 }
             ]
         },
@@ -4435,18 +3949,6 @@
                     "column": null,
                     "message": "Unused function: generate_patch_config",
                     "raw": "intellicrack\\utils\\exploitation\\patch_engine.py: Unused function generate_patch_config"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\gpu_benchmark.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: benchmark_gpu_frameworks",
-                    "raw": "intellicrack\\utils\\gpu_benchmark.py: Unused function benchmark_gpu_frameworks"
                 }
             ]
         },
@@ -4591,18 +4093,6 @@
                     "column": null,
                     "message": "Unused function: get_save_filename",
                     "raw": "intellicrack\\utils\\ui\\ui_common.py: Unused function get_save_filename"
-                }
-            ]
-        },
-        {
-            "path": "intellicrack\\utils\\ui\\ui_utils.py",
-            "count": 1,
-            "findings": [
-                {
-                    "line": null,
-                    "column": null,
-                    "message": "Unused function: add_update",
-                    "raw": "intellicrack\\utils\\ui\\ui_utils.py: Unused function add_update"
                 }
             ]
         },
@@ -4763,14 +4253,14 @@
             ]
         },
         {
-            "path": "tests\\unit\\core\\analysis\\test_automated_patch_agent.py",
+            "path": "tests\\unit\\core\\analysis\\test_arxan_analyzer.py",
             "count": 1,
             "findings": [
                 {
                     "line": null,
                     "column": null,
-                    "message": "Unused function: setup_advanced",
-                    "raw": "tests\\unit\\core\\analysis\\test_automated_patch_agent.py: Unused function setup_advanced"
+                    "message": "Unused function: setUpClass",
+                    "raw": "tests\\unit\\core\\analysis\\test_arxan_analyzer.py: Unused function setUpClass"
                 }
             ]
         },

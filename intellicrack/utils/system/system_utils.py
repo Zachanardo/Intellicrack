@@ -72,7 +72,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
     target_name = os.path.basename(binary_path).lower()
     potential_pids = []
 
-    logger.info(f"[PID Finder] Searching for process matching '{target_name}'...")
+    logger.info("[PID Finder] Searching for process matching '%s'...", target_name)
 
     # Find all matching processes (exact and partial)
     try:
@@ -103,7 +103,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
         return None
 
     if not potential_pids:
-        logger.warning(f"[PID Finder] No process found matching '{target_name}'.")
+        logger.warning("[PID Finder] No process found matching '%s'.", target_name)
         return None
 
     # Sort by match type (exact first) and then by creation time (newest first)
@@ -112,13 +112,17 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
     if len(potential_pids) == 1:
         pid_info = potential_pids[0]
         logger.info(
-            f"[PID Finder] Found unique process: {pid_info['name']} (PID: {pid_info['pid']}, Match: {pid_info['match']})",
+            "[PID Finder] Found unique process: %s (PID: %s, Match: %s)",
+            pid_info["name"],
+            pid_info["pid"],
+            pid_info["match"],
         )
         return pid_info["pid"]
     # Multiple processes found - in a library context, just return the first
     # In the full application, this would prompt the user
     logger.warning(
-        f"[PID Finder] Found {len(potential_pids)} potential processes. Returning first match.",
+        "[PID Finder] Found %s potential processes. Returning first match.",
+        len(potential_pids),
     )
     return potential_pids[0]["pid"]
 
@@ -224,10 +228,10 @@ def run_command(
         return result
 
     except subprocess.TimeoutExpired:
-        logger.error("Command timed out after %s seconds: %s", timeout, command)
+        logger.error("Command timed out after %s seconds: %s", timeout, command, exc_info=True)
         raise
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error(f"Error running command '{command}': {e}")
+        logger.error("Error running command '%s': %s", command, e, exc_info=True)
         raise
 
 
@@ -279,17 +283,17 @@ def kill_process(pid: int, force: bool = False) -> bool:
         else:
             process.terminate()  # SIGTERM
 
-        logger.info(f"Successfully {'killed' if force else 'terminated'} process {pid}")
+        logger.info("Successfully %s process %s", "killed" if force else "terminated", pid)
         return True
 
     except psutil.NoSuchProcess:
         logger.warning("Process %s does not exist", pid)
         return False
     except psutil.AccessDenied:
-        logger.error("Access denied when trying to kill process %s", pid)
+        logger.error("Access denied when trying to kill process %s", pid, exc_info=True)
         return False
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error killing process %s: %s", pid, e)
+        logger.error("Error killing process %s: %s", pid, e, exc_info=True)
         return False
 
 
@@ -412,7 +416,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
         return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running command as admin: %s", e)
+        logger.error("Error running command as admin: %s", e, exc_info=True)
         return False
 
 
@@ -498,7 +502,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
             except ImportError:
                 logger.warning("win32api not available, trying alternative method")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Windows icon extraction failed: %s", e)
+                logger.error("Windows icon extraction failed: %s", e, exc_info=True)
 
         # Cross-platform fallback: Try to extract from PE file
         try:
@@ -530,12 +534,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                                     logger.info("Icon extracted to: %s", output_path)
                                     return output_path
                                 except (OSError, ValueError, RuntimeError) as e:
-                                    logger.error("Failed to convert ICO to PNG: %s", e)
+                                    logger.error("Failed to convert ICO to PNG: %s", e, exc_info=True)
 
         except ImportError:
             logger.error("pefile not available for icon extraction")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("PE icon extraction failed: %s", e)
+            logger.error("PE icon extraction failed: %s", e, exc_info=True)
 
         # If all methods fail, create a default icon
         logger.warning("All icon extraction methods failed, creating default icon")
@@ -549,10 +553,10 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                 img.save(output_path, "PNG")
                 return output_path
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Failed to create default icon: %s", e)
+                logger.error("Failed to create default icon: %s", e, exc_info=True)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Icon extraction failed: %s", e)
+        logger.error("Icon extraction failed: %s", e, exc_info=True)
         return None
 
 
@@ -621,7 +625,7 @@ def optimize_memory_usage() -> dict[str, Any]:
 
             logger.debug("Cache clearing: %d successful, %d failed", cleared_count, failed_count)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.warning("Error clearing caches: %s", e)
+        logger.warning("Error clearing caches: %s", e, exc_info=True)
 
     # Get final memory stats
     if psutil:
@@ -635,7 +639,7 @@ def optimize_memory_usage() -> dict[str, Any]:
 
         # Calculate freed memory
         stats["freed"] = stats["before"]["used"] - stats["after"]["used"]
-        logger.info(f"Memory optimization freed: {stats['freed'] / 1024 / 1024:.2f} MB")
+        logger.info("Memory optimization freed: %.2f MB", stats["freed"] / 1024 / 1024)
 
     return stats
 

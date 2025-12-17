@@ -287,7 +287,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             # Build QEMU command
             qemu_cmd = self._build_qemu_command(qemu_binary, headless, enable_snapshot)
 
-            self.logger.info("Starting QEMU system: %s...", ' '.join(qemu_cmd[:5]))
+            self.logger.info("Starting QEMU system: %s...", " ".join(qemu_cmd[:5]))
 
             # Start QEMU process
             self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research
@@ -913,7 +913,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             self.logger.debug("Command failed: %s", cmd_err)
                             continue
 
-                    self.logger.info("Retrieved %s filesystem entries", len(filesystem_state['files']))
+                    self.logger.info("Retrieved %s filesystem entries", len(filesystem_state["files"]))
 
                 except Exception as e:
                     self.logger.warning("Guest agent filesystem query failed: %s", e)
@@ -1404,7 +1404,9 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     snap2_dirs = set(snap2_fs.get("directories", []))
                     directories_created = list(snap2_dirs - snap1_dirs)
 
-                    self.logger.debug("Snapshot %s -> %s: %s files created, %s deleted", snap1, snap2, len(files_created), len(files_deleted))
+                    self.logger.debug(
+                        "Snapshot %s -> %s: %s files created, %s deleted", snap1, snap2, len(files_created), len(files_deleted)
+                    )
 
             except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
                 self.logger.warning("Could not directly compare snapshots %s and %s: %s", snap1, snap2, e)

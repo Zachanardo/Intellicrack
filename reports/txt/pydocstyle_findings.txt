@@ -1506,25 +1506,6 @@ tests\validation_system\persistence_validator.py:586: D200: in public method `va
 tests\validation_system\persistence_validator.py:609: D200: in public method `validate_all_persistence`: - One-line docstring should fit on one line with quotes (found 3)
 
 
-8 findings in intellicrack\core\analysis\activation_analyzer.py
-
-intellicrack\core\analysis\activation_analyzer.py:40: D204: in public class `ActivationType`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:52: D204: in public class `RegistrationType`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:62: D204: in public class `ActivationPattern`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:73: D204: in public class `RegistrationPattern`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:83: D204: in public class `TrialPattern`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:93: D204: in public class `HardwareIDPattern`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:102: D204: in public class `LicenseFilePattern`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\activation_analyzer.py:111: D204: in public class `ActivationAnalysisResult`: - 1 blank line required after class docstring (found 0)
-
-
 8 findings in tests\conftest_original.py
 
 tests\conftest_original.py:34: D205: in public function `real_pe_binary`: - 1 blank line required between summary line and description (found 0)
@@ -1620,6 +1601,23 @@ tests\validation_system\phase6\exploitation_pass_criteria_validator.py:161: D401
 tests\validation_system\phase6\exploitation_pass_criteria_validator.py:2333: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
+7 findings in intellicrack\cli\cli.py
+
+intellicrack\cli\cli.py:211: D401: in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:227: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:257: D401: in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:913: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:926: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:933: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:942: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+
 7 findings in tests\validation_system\phase2\detection_depth_validator.py
 
 tests\validation_system\phase2\detection_depth_validator.py:1: D205: at module level: - 1 blank line required between summary line and description (found 0)
@@ -1635,6 +1633,21 @@ tests\validation_system\phase2\detection_depth_validator.py:111: D204: in public
 tests\validation_system\phase2\detection_depth_validator.py:127: D205: in public class `DetectionDepthValidator`: - 1 blank line required between summary line and description (found 0)
 
 tests\validation_system\phase2\detection_depth_validator.py:6370: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+
+
+6 findings in intellicrack\cli\analysis_cli.py
+
+intellicrack\cli\analysis_cli.py:119: D401: in private method `_perform_binary_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\analysis_cli.py:137: D401: in private method `_perform_protection_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\analysis_cli.py:157: D401: in private method `_perform_vulnerability_scan`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\analysis_cli.py:172: D401: in private method `_perform_pe_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\analysis_cli.py:193: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\analysis_cli.py:208: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
 
 6 findings in intellicrack\utils\deprecation_warnings.py
@@ -1770,19 +1783,6 @@ tests\validation_system\phase6\statistical_requirements_validator.py:38: D105: i
 tests\validation_system\phase6\statistical_requirements_validator.py:44: D204: in public class `StatisticalAnalysis`: - 1 blank line required after class docstring (found 0)
 
 tests\validation_system\phase6\statistical_requirements_validator.py:634: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
-
-
-5 findings in intellicrack\core\analysis\fingerprint_engine.py
-
-intellicrack\core\analysis\fingerprint_engine.py:54: D204: in public class `FingerprintType`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\fingerprint_engine.py:68: D204: in public class `BinaryFingerprint`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\fingerprint_engine.py:86: D204: in public class `ProtectionFingerprint`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\fingerprint_engine.py:99: D204: in public class `CompilerFingerprint`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\core\analysis\fingerprint_engine.py:112: D204: in public class `LicenseSystemFingerprint`: - 1 blank line required after class docstring (found 0)
 
 
 5 findings in tests\checkpoints\day2_checkpoint2_validation.py
@@ -1949,13 +1949,22 @@ intellicrack\ai\protection_aware_script_gen.py:4123: D403: in private method `_g
 intellicrack\ai\protection_aware_script_gen.py:4862: D403: in private method `_get_safenet_sentinel_scripts`: - First word of the first line should be properly capitalized ('Safenet', not 'SafeNet')
 
 
+3 findings in intellicrack\cli\ai_chat_interface.py
+
+intellicrack\cli\ai_chat_interface.py:905: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\ai_chat_interface.py:915: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\ai_chat_interface.py:941: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+
 3 findings in intellicrack\core\exploitation\automated_unpacker.py
 
 intellicrack\core\exploitation\automated_unpacker.py:697: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')
 
 intellicrack\core\exploitation\automated_unpacker.py:1522: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
-intellicrack\core\exploitation\automated_unpacker.py:2110: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
+intellicrack\core\exploitation\automated_unpacker.py:2112: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
 
 
 3 findings in intellicrack\handlers\numpy_handler.py
@@ -2129,16 +2138,9 @@ intellicrack\ai\llm_types.py:62: D401: in public method `on_completed`: - First 
 
 2 findings in intellicrack\core\analysis\cross_tool_orchestrator.py
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:874: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\analysis\cross_tool_orchestrator.py:870: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:904: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
-
-
-2 findings in intellicrack\plugins\custom_modules\license_server_emulator.py
-
-intellicrack\plugins\custom_modules\license_server_emulator.py:126: D204: in public class `ARC4Cipher`: - 1 blank line required after class docstring (found 0)
-
-intellicrack\plugins\custom_modules\license_server_emulator.py:126: D205: in public class `ARC4Cipher`: - 1 blank line required between summary line and description (found 0)
+intellicrack\core\analysis\cross_tool_orchestrator.py:900: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
 
 
 2 findings in intellicrack\ui\dialogs\model_finetuning_dialog.py
@@ -2248,7 +2250,7 @@ tests\validation_system\fingerprint_randomizer.py:322: D107: in public method `_
 
 1 findings in intellicrack\ai\background_loader.py
 
-intellicrack\ai\background_loader.py:431: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)
+intellicrack\ai\background_loader.py:425: D202: in public method `load_model_in_background`: - No blank lines allowed after function docstring (found 1)
 
 
 1 findings in intellicrack\ai\enhanced_training_interface.py
@@ -2263,7 +2265,7 @@ intellicrack\ai\headless_training_interface.py:888: D403: in private method `_re
 
 1 findings in intellicrack\core\analysis\export_analyzer.py
 
-intellicrack\core\analysis\export_analyzer.py:676: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')
+intellicrack\core\analysis\export_analyzer.py:690: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')
 
 
 1 findings in intellicrack\core\processing\parallel_processing_manager.py
@@ -2298,7 +2300,7 @@ intellicrack\models\repositories\openrouter_repository.py:225: D403: in public m
 
 1 findings in intellicrack\plugins\custom_modules\hardware_dongle_emulator.py
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:431: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:432: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
 
 
 1 findings in intellicrack\plugins\custom_modules\success_rate_analyzer.py

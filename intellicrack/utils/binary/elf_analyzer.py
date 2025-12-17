@@ -78,14 +78,14 @@ class ELFAnalyzer:
                 self.data = f.read()
 
             if not self._validate_elf():
-                logger.error(f"Invalid ELF file: {self.file_path}")
+                logger.error("Invalid ELF file: %s", self.file_path)
                 return False
 
             self._parse_header()
             return True
 
         except Exception as e:
-            logger.error(f"Failed to load ELF binary {self.file_path}: {e}")
+            logger.error("Failed to load ELF binary %s: %s", self.file_path, e, exc_info=True)
             return False
 
     def _validate_elf(self) -> bool:
@@ -202,7 +202,7 @@ class ELFAnalyzer:
                 sections.append(section)
 
             except struct.error as e:
-                logger.debug(f"Error parsing section {i}: {e}")
+                logger.debug("Error parsing section %s: %s", i, e, exc_info=True)
                 continue
 
         self.sections = sections
@@ -256,7 +256,7 @@ class ELFAnalyzer:
                 segments.append(segment)
 
             except struct.error as e:
-                logger.debug(f"Error parsing segment {i}: {e}")
+                logger.debug("Error parsing segment %s: %s", i, e, exc_info=True)
                 continue
 
         self.segments = segments
@@ -282,7 +282,7 @@ class ELFAnalyzer:
             try:
                 self._parse_symbol_table(section, symbols)
             except Exception as e:
-                logger.debug(f"Error parsing symbol table: {e}")
+                logger.debug("Error parsing symbol table: %s", e, exc_info=True)
                 continue
 
         self.symbols = symbols
@@ -340,7 +340,7 @@ class ELFAnalyzer:
                 symbols.append(symbol)
 
             except struct.error as e:
-                logger.debug(f"Error parsing symbol {i}: {e}")
+                logger.debug("Error parsing symbol %s: %s", i, e, exc_info=True)
                 continue
 
     def get_security_features(self) -> dict[str, Any]:
@@ -415,7 +415,7 @@ class ELFAnalyzer:
                 names.extend([s.decode("utf-8", errors="ignore") for s in strings if s])
 
             except Exception as e:
-                logger.debug(f"Error reading string table: {e}")
+                logger.debug("Error reading string table: %s", e, exc_info=True)
                 continue
 
         return names
@@ -531,5 +531,5 @@ def extract_elf_strings(file_path: str | Path, min_length: int = 4) -> list[str]
         return strings
 
     except Exception as e:
-        logger.error(f"Error extracting strings from {file_path}: {e}")
+        logger.error("Error extracting strings from %s: %s", file_path, e, exc_info=True)
         return []

@@ -2,126 +2,153 @@
 
 ## Missing Tests
 
-### Utils Root Level
+### Utils Root Level Without Tests (17+ files)
 
-- [x] `intellicrack/utils/api_client.py` - No dedicated test file
-- [x] `intellicrack/utils/config_cleanup.py` - test_config_cleanup_production.py created
-- [x] `intellicrack/utils/dependency_fallbacks.py` - No test coverage
-- [x] `intellicrack/utils/env_file_manager.py` - test_env_file_manager_production.py created
-- [ ] `intellicrack/utils/gpu_benchmark.py` - No test coverage
-- [x] `intellicrack/utils/secrets_manager.py` - No test coverage
-- [ ] `intellicrack/utils/security_mitigations.py` - No test coverage
+- [x] `intellicrack/utils/constants.py` - Production tests completed
+- [x] `intellicrack/utils/deprecation_warnings.py` - Production tests completed
+- [x] `intellicrack/utils/font_manager.py` - Production tests completed
+- [x] `intellicrack/utils/ghidra_common.py` - Production tests completed
+- [x] `intellicrack/utils/gpu_autoloader.py` - Production tests completed
+- [x] `intellicrack/utils/json_utils.py` - Production tests completed
+- [x] `intellicrack/utils/log_message.py` - Production tests completed
+- [x] `intellicrack/utils/logger.py` - Production tests completed
+- [x] `intellicrack/utils/path_resolver.py` - Production tests completed
+- [x] `intellicrack/utils/protection_utils.py` - Production tests completed
+- [ ] `intellicrack/utils/report_generator.py` - No test coverage
+- [ ] `intellicrack/utils/resource_helper.py` - No test coverage
+- [ ] `intellicrack/utils/service_utils.py` - No test coverage
+- [x] `intellicrack/utils/severity_levels.py` - Production tests completed
+- [ ] `intellicrack/utils/subprocess_security.py` - No test coverage
+- [ ] `intellicrack/utils/torch_gil_safety.py` - No test coverage
+- [x] `intellicrack/utils/url_validation.py` - Production tests completed
 
-### Utils Core
+### Utils/Core Without Tests (9 files)
 
-- [ ] `intellicrack/utils/core/core_utilities.py` - No dedicated test file
-- [ ] `intellicrack/utils/core/final_utilities.py` - No test coverage
-- [ ] `intellicrack/utils/core/plugin_paths.py` - No test coverage
+- [ ] `intellicrack/utils/core/dependency_feedback.py` - No test coverage
+- [ ] `intellicrack/utils/core/exception_utils.py` - No test coverage
+- [ ] `intellicrack/utils/core/import_checks.py` - No test coverage
+- [ ] `intellicrack/utils/core/import_patterns.py` - No test coverage
+- [ ] `intellicrack/utils/core/misc_utils.py` - No test coverage
+- [ ] `intellicrack/utils/core/path_discovery.py` - No test coverage
+- [x] `intellicrack/utils/core/siphash24_replacement.py` - Production tests completed
+- [x] `intellicrack/utils/core/string_utils.py` - Production tests completed
+- [x] `intellicrack/utils/core/type_validation.py` - Production tests completed
 
-### Utils Exploitation
+### Utils/Runtime Without Comprehensive Tests
 
-- [ ] `intellicrack/utils/exploitation/exploitation.py` - No dedicated test file
-- [ ] `intellicrack/utils/exploitation/patch_engine.py` - No test coverage
+- [ ] `intellicrack/utils/runtime/distributed_processing.py::ParallelProcessor` - No multiprocessing tests
+- [ ] `intellicrack/utils/runtime/distributed_processing.py::WorkerPool` - No pool management tests
 
-### Plugins Module
+### Utils/Patching Without Comprehensive Tests (3 files)
 
-- [ ] `intellicrack/plugins/plugin_system.py` - Limited test coverage
-- [ ] `intellicrack/plugins/custom_modules/anti_anti_debug_suite.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/cloud_license_interceptor.py` - No test coverage
-- [x] `intellicrack/plugins/custom_modules/hardware_dongle_emulator.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/intellicrack_core_engine.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/license_server_emulator.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/network_analysis_plugin.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/performance_optimizer.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/success_rate_analyzer.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/ui_enhancement_module.py` - No test coverage
-- [ ] `intellicrack/plugins/custom_modules/vm_protection_unwrapper.py` - No test coverage
+- [ ] `intellicrack/utils/patching/patch_generator.py` - No real patch generation tests
+- [ ] `intellicrack/utils/patching/patch_utils.py` - No test coverage
+- [ ] `intellicrack/utils/patching/patch_verification.py::verify_patch_integrity` - No validation tests
 
-### Models Module
+### Utils/Protection Without Comprehensive Tests (3 files)
 
-- [ ] `intellicrack/models/model_manager.py` - Limited test coverage
-- [ ] `intellicrack/models/protection_knowledge_base.py` - No test coverage
+- [ ] `intellicrack/utils/protection/protection_helpers.py` - No test coverage
+- [ ] `intellicrack/utils/protection/certificate_common.py` - No test coverage
+- [ ] `intellicrack/utils/protection/certificate_utils.py::generate_self_signed_cert` - No generation tests
+
+### Utils/System Without Comprehensive Tests (11 files)
+
+- [ ] `intellicrack/utils/system/driver_utils.py` - No test coverage
+- [ ] `intellicrack/utils/system/os_detection.py` - No test coverage
+- [ ] `intellicrack/utils/system/os_detection_mixin.py` - No test coverage
+- [ ] `intellicrack/utils/system/process_common.py` - No test coverage
+- [ ] `intellicrack/utils/system/process_helpers.py` - No test coverage
+- [ ] `intellicrack/utils/system/program_discovery.py` - No test coverage
+- [ ] `intellicrack/utils/system/snapshot_common.py` - No test coverage
+- [ ] `intellicrack/utils/system/snapshot_utils.py` - No test coverage
+- [ ] `intellicrack/utils/system/subprocess_utils.py` - No test coverage
+- [ ] `intellicrack/utils/system/windows_common.py` - No test coverage
+- [ ] `intellicrack/utils/system/windows_structures.py` - No test coverage
+
+### Plugins Without Tests (4 files)
+
+- [x] `intellicrack/plugins/plugin_base.py::PluginMetadata` - Production tests completed
+- [ ] `intellicrack/plugins/plugin_config.py` - No test coverage
+- [ ] `intellicrack/plugins/remote_executor.py` - No test coverage
+- [ ] `intellicrack/plugins/__init__.py` - No test coverage
+
+### Models/Repositories Without Tests (7 files)
+
 - [ ] `intellicrack/models/repositories/base.py` - No test coverage
+- [ ] `intellicrack/models/repositories/anthropic_repository.py` - No test coverage
+- [ ] `intellicrack/models/repositories/google_repository.py` - No test coverage
+- [ ] `intellicrack/models/repositories/lmstudio_repository.py` - No test coverage
+- [ ] `intellicrack/models/repositories/openai_repository.py` - No test coverage
+- [ ] `intellicrack/models/repositories/openrouter_repository.py` - No test coverage
 - [ ] `intellicrack/models/repositories/factory.py` - No test coverage
 
-### Core Integration
+### Models Without Tests
 
-- [ ] `intellicrack/core/integration/intelligent_correlation.py` - No dedicated test file
-- [ ] `intellicrack/core/integration/real_tool_communication.py` - No test coverage
+- [ ] `intellicrack/models/protection_knowledge_base.py` - No test coverage
 
-### LLM Module
+### Core/Resources Without Production Tests
 
-- [ ] `intellicrack/llm/tools/script_generation_tool.py` - No test coverage
+- [ ] `intellicrack/core/resources/resource_manager.py::ResourceManager` - No production tests
 
 ## Inadequate Tests
 
-### Plugin System Tests
+### Utils/Runtime Limited Tests
 
-- [ ] `tests/plugins/test_plugin_system.py` - May exist but doesn't cover all custom modules
-- [ ] Plugin discovery mechanism not fully tested
-- [ ] Plugin lifecycle management (load, unload, reload) not tested
-- [ ] Plugin dependency resolution not tested
+- [ ] `intellicrack/utils/runtime/runner_functions.py` - Fixture binaries only, no tool integration
+- [ ] `intellicrack/utils/runtime/additional_runners.py` - Fake scripts, no real analysis tools
+- [ ] `intellicrack/utils/runtime/performance_optimizer.py` - No memory constraint tests
 
-### Model Manager Tests
+### Plugins Limited Tests
 
-- [ ] `tests/models/test_model_manager.py` - May exist but lacks comprehensive coverage
-- [ ] Model loading performance not tested
-- [ ] Model caching effectiveness not tested
-- [ ] Model version management not tested
+- [ ] `intellicrack/plugins/plugin_system.py` - Skips real plugin loading
+- [ ] `intellicrack/plugins/custom_modules/*` - Mock binaries instead of real licensing crack tests
 
-### Utils Tests
+### Models Limited Tests
 
-- [ ] API client error handling not tested
-- [ ] Configuration cleanup edge cases not tested
-- [ ] Dependency fallback chains not validated
-- [ ] Environment file management not tested
+- [ ] `intellicrack/models/model_manager.py` - Repository interfaces only, no real LLM API tests
+- [ ] `intellicrack/models/repositories/local_repository.py` - No caching/verification tests
 
 ## Recommendations
 
-### Create New Test Files - Utils
+### Priority 1: Licensing Crack Functionality Validation
 
-- [x] Create `test_api_client_production.py` - Test real API interactions, error handling, retry logic
-- [x] Create `test_config_cleanup_production.py` - Test configuration file cleanup and migration ✅
-- [x] Create `test_dependency_fallbacks_production.py` - Test fallback chains for all dependencies
-- [x] Create `test_env_file_manager_production.py` - Test environment file parsing and writing ✅
-- [ ] Create `test_gpu_benchmark_production.py` - Test GPU benchmarking with real hardware
-- [x] Create `test_secrets_manager_production.py` - Test secure storage, encryption, retrieval
-- [ ] Create `test_security_mitigations_production.py` - Test security features
+- [ ] Test actual license server protocol emulation with real network traffic
+- [ ] Test certificate generation against real Windows certificate stores
+- [ ] Validate license key generation cryptographic correctness
+- [ ] Test actual binary patching against real protected software
 
-### Create New Test Files - Utils Core
+### Priority 2: System Integration Testing
 
-- [ ] Create `test_core_utilities_production.py` - Test common utility functions
-- [ ] Create `test_final_utilities_production.py` - Test final utility implementations
-- [ ] Create `test_plugin_paths_production.py` - Test plugin path resolution
+- [ ] Test real process attachment and monitoring (Windows injection, Linux ptrace)
+- [ ] Validate file resolution against actual Windows/Linux system paths
+- [ ] Test subprocess execution with real analysis tools (Ghidra, radare2, IDA)
+- [ ] Test Windows driver detection and interaction
 
-### Create New Test Files - Utils Exploitation
+### Priority 3: Binary Analysis Validation
 
-- [ ] Create `test_exploitation_production.py` - Test exploitation utilities
-- [ ] Create `test_patch_engine_production.py` - Test patching engine with real binaries
+- [ ] Test binary I/O against real PE/ELF files with various architectures
+- [ ] Validate network API extraction from real binaries
+- [ ] Test pattern search against real licensing protection code patterns
+- [ ] Validate entropy analysis against real compressed/encrypted sections
 
-### Create New Test Files - Plugins
+### Priority 4: Distributed Processing
 
-- [ ] Create `test_anti_anti_debug_suite_production.py` - Test anti-debugging bypass
-- [ ] Create `test_cloud_license_interceptor_production.py` - Test cloud license interception
-- [x] Create `test_hardware_dongle_emulator_production.py` - Test HASP, Sentinel, CodeMeter emulation
-- [ ] Create `test_intellicrack_core_engine_production.py` - Test core analysis engine
-- [ ] Create `test_license_server_emulator_production.py` - Test license server emulation
-- [ ] Create `test_network_analysis_plugin_production.py` - Test network analysis features
-- [ ] Create `test_performance_optimizer_production.py` - Test performance optimizations
-- [ ] Create `test_success_rate_analyzer_production.py` - Test success rate analysis
-- [ ] Create `test_ui_enhancement_module_production.py` - Test UI enhancements
-- [ ] Create `test_vm_protection_unwrapper_production.py` - Test VMProtect/Themida unwrapping
+- [ ] Test multiprocessing parallelization with actual binary analysis workloads
+- [ ] Validate thread-safe access to shared resources
+- [ ] Test resource cleanup on process/thread failure
+- [ ] Validate performance improvements from parallelization
 
-### Create New Test Files - Models
+### Priority 5: Model Integration
 
-- [ ] Create `test_protection_knowledge_base_production.py` - Test knowledge base queries
-- [ ] Create `test_repositories_production.py` - Test repository pattern implementations
+- [ ] Test repository factory selection and fallback mechanisms
+- [ ] Validate actual API calls to all supported model providers
+- [ ] Test model downloading, caching, and verification
+- [ ] Validate LLM responses to licensing analysis prompts
 
-### Create New Test Files - Core Integration
+### Priority 6: Edge Cases and Error Handling
 
-- [ ] Create `test_intelligent_correlation_production.py` - Test multi-tool result correlation
-- [ ] Create `test_real_tool_communication_production.py` - Test tool communication protocols
-
-### Create New Test Files - LLM
-
-- [ ] Create `test_script_generation_tool_production.py` - Test LLM-based script generation
+- [ ] Test handling of corrupted binaries
+- [ ] Test timeout handling in long-running operations
+- [ ] Test cleanup on out-of-memory conditions
+- [ ] Test recovery from network failures
+- [ ] Test malformed license data validation

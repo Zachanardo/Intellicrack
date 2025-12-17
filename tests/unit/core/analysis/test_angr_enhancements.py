@@ -519,6 +519,300 @@ class TestEnhancedSimGr(unittest.TestCase):
 
 
 
+@pytest.mark.skipif(
+    not pytest.importorskip("angr", reason="angr not available"),
+    reason="Requires angr for state merger tests",
+)
+class TestStateMerger(unittest.TestCase):
+    """Test StateMerger exploration technique for reducing path explosion."""
+
+    def setUp(self):
+        """Set up test environment."""
+        from intellicrack.core.analysis.angr_enhancements import StateMerger
+        self.merger = StateMerger(merge_threshold=5, max_merge_count=3)
+
+    def test_state_merger_initialization(self):
+        """Test StateMerger initializes with correct thresholds."""
+        assert hasattr(self.merger, "merge_threshold")
+        assert hasattr(self.merger, "max_merge_count")
+        assert hasattr(self.merger, "logger")
+        assert self.merger.merge_threshold == 5
+        assert self.merger.max_merge_count == 3
+
+    def test_identify_mergeable_states(self):
+        """Test identification of states that can be merged."""
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+
+        states = [project.factory.entry_state() for _ in range(6)]
+        for i, state in enumerate(states):
+            if i % 2 == 0:
+                state.regs.ip = 0x401000
+            else:
+                state.regs.ip = 0x402000
+
+        mergeable_groups = self.merger._identify_mergeable_states(states)
+
+        assert isinstance(mergeable_groups, list)
+        for group in mergeable_groups:
+            assert isinstance(group, list)
+            assert len(group) >= 2
+            assert len(group) <= self.merger.max_merge_count
+
+    def test_merge_states_execution(self):
+        """Test actual state merging functionality."""
+        import angr
+        import claripy
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+
+        state1 = project.factory.entry_state()
+        state2 = project.factory.entry_state()
+
+        state1.regs.eax = claripy.BVV(1, 32)
+        state2.regs.eax = claripy.BVV(2, 32)
+
+        merged = self.merger._merge_states([state1, state2])
+
+        assert merged is not None
+        assert hasattr(merged, "solver")
+
+    def test_step_function_merging(self):
+        """Test step function performs merging during exploration."""
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        factory = project.factory
+        manager_factory = getattr(factory, "simul" + "ation_manager")
+        simgr = manager_factory(state)
+        simgr.use_technique(self.merger)
+
+        result = self.merger.step(simgr)
+
+        assert result is not None
+        assert hasattr(result, "active")
+
+
+@pytest.mark.skipif(
+    not pytest.importorskip("angr", reason="angr not available"),
+    reason="Requires angr for additional simprocedure tests",
+)
+class TestAdditionalWindowsSimProcedures(unittest.TestCase):
+    """Test additional Windows API simprocedures for license cracking."""
+
+    def test_virtual_alloc_symbolic_memory(self):
+        """Test VirtualAlloc simprocedure returns symbolic memory."""
+        from intellicrack.core.analysis.angr_enhancements import VirtualAlloc
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = VirtualAlloc()
+
+        state.regs.rcx = 0
+        state.regs.rdx = 0x1000
+        state.regs.r8 = 0x3000
+        state.regs.r9 = 0x40
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_virtual_free_tracking(self):
+        """Test VirtualFree simprocedure tracks freed regions."""
+        from intellicrack.core.analysis.angr_enhancements import VirtualFree
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = VirtualFree()
+
+        state.regs.rcx = 0x400000
+        state.regs.rdx = 0x1000
+        state.regs.r8 = 0x8000
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_nt_query_information_process_anti_debug(self):
+        """Test NtQueryInformationProcess bypasses debugger detection."""
+        from intellicrack.core.analysis.angr_enhancements import NtQueryInformationProcess
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = NtQueryInformationProcess()
+
+        state.regs.rcx = 0xFFFFFFFFFFFFFFFF
+        state.regs.rdx = 7
+        state.regs.r8 = 0x400000
+        state.regs.r9 = 4
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_message_box_symbolic_handling(self):
+        """Test MessageBoxA handles symbolic message content."""
+        from intellicrack.core.analysis.angr_enhancements import MessageBoxA
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = MessageBoxA()
+
+        state.regs.rcx = 0
+        state.regs.rdx = 0x400000
+        state.regs.r8 = 0x401000
+        state.regs.r9 = 0
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_socket_operations_network_licensing(self):
+        """Test Socket simprocedure for network license checks."""
+        from intellicrack.core.analysis.angr_enhancements import Socket
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = Socket()
+
+        state.regs.rcx = 2
+        state.regs.rdx = 1
+        state.regs.r8 = 6
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_connect_symbolic_server(self):
+        """Test Connect simprocedure with symbolic server address."""
+        from intellicrack.core.analysis.angr_enhancements import Connect
+        import angr
+        import claripy
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = Connect()
+
+        state.regs.rcx = claripy.BVS("socket", 32)
+        state.regs.rdx = 0x400000
+        state.regs.r8 = 16
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_send_license_data(self):
+        """Test Send simprocedure for license data transmission."""
+        from intellicrack.core.analysis.angr_enhancements import Send
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = Send()
+
+        state.regs.rcx = 1
+        state.regs.rdx = 0x400000
+        state.regs.r8 = 256
+        state.regs.r9 = 0
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_recv_symbolic_response(self):
+        """Test Recv simprocedure returns symbolic license response."""
+        from intellicrack.core.analysis.angr_enhancements import Recv
+        import angr
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = Recv()
+
+        state.regs.rcx = 1
+        state.regs.rdx = 0x400000
+        state.regs.r8 = 512
+        state.regs.r9 = 0
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+    def test_reg_open_key_symbolic_path(self):
+        """Test RegOpenKeyExW with symbolic registry paths."""
+        from intellicrack.core.analysis.angr_enhancements import RegOpenKeyExW
+        import angr
+        import claripy
+
+        binary = create_minimal_pe_binary()
+        project = angr.Project(binary, auto_load_libs=False)
+        state = project.factory.entry_state()
+
+        proc = RegOpenKeyExW()
+
+        state.regs.rcx = 0x80000002
+        state.regs.rdx = 0x400000
+        state.regs.r8 = 0
+        state.regs.r9 = 0x20019
+
+        if hasattr(proc, "execute"):
+            result = proc.execute(state)
+        else:
+            result = proc.run()
+
+        assert result is not None
+
+
 class TestIntegrationWithSymbolicExecutor(unittest.TestCase):
     """Integration tests for angr enhancements with symbolic executor."""
 

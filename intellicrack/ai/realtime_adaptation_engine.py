@@ -1219,7 +1219,7 @@ class RealTimeAdaptationEngine:
             }
 
             # Store the hook modification for later use
-            logger.info("Fallback mode enabled with hook: %s", hook_modification['hook_id'])
+            logger.info("Fallback mode enabled with hook: %s", hook_modification["hook_id"])
 
             self.active_adaptations[adaptation_id] = {
                 "type": "fallback_mode",

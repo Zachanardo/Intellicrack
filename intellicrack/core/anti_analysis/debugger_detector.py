@@ -599,7 +599,7 @@ class DebuggerDetector(BaseDetector):
             # Calculate anti-debug effectiveness score
             results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
 
-            self.logger.info("Debugger detection complete: %s (confidence: %.2f)", results['is_debugged'], results['confidence'])
+            self.logger.info("Debugger detection complete: %s (confidence: %.2f)", results["is_debugged"], results["confidence"])
             return results
 
         except Exception as e:

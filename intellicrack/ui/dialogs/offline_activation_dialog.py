@@ -116,7 +116,7 @@ class ActivationWorker(QThread):
                 })
 
         except Exception as e:
-            logger.exception("Activation worker operation failed: %s", self.operation, exc_info=True)
+            logger.error("Activation worker operation failed: %s", self.operation, exc_info=True)
             self.error.emit(str(e))
 
 
@@ -728,7 +728,7 @@ class OfflineActivationDialog(QDialog):
                 self.worker.error.connect(self.handle_worker_error)
                 self.worker.start()
             except Exception as e:
-                logger.exception("Failed to export license file to %s", file_path, exc_info=True)
+                logger.error("Failed to export license file to %s", file_path, exc_info=True)
                 self.handle_worker_error(str(e))
 
     def validate_license_file(self) -> None:
@@ -761,7 +761,7 @@ class OfflineActivationDialog(QDialog):
                 self.btn_export_hardware.setEnabled(True)
                 self.log("Hardware profile imported from %s", file_path)
             except Exception as e:
-                logger.exception("Failed to import hardware profile from %s", file_path, exc_info=True)
+                logger.error("Failed to import hardware profile from %s", file_path, exc_info=True)
                 self.handle_worker_error(f"Failed to import profile: {e}")
 
     def export_hardware_profile(self) -> None:
@@ -789,7 +789,7 @@ class OfflineActivationDialog(QDialog):
 
                 self.log("Hardware profile exported to %s", file_path)
             except Exception as e:
-                logger.exception("Failed to export hardware profile to %s", file_path, exc_info=True)
+                logger.error("Failed to export hardware profile to %s", file_path, exc_info=True)
                 self.handle_worker_error(f"Failed to export profile: {e}")
 
     def save_custom_scheme(self) -> None:
@@ -976,7 +976,7 @@ class OfflineActivationDialog(QDialog):
             self.test_results.append("\nOK Test scenario completed successfully")
 
         except Exception as e:
-            logger.exception("Test scenario failed for %s", scenario, exc_info=True)
+            logger.error("Test scenario failed for %s", scenario, exc_info=True)
             self.test_results.append(f"\nFAIL Test failed: {e!s}")
 
     def display_hardware_profile(self, profile: HardwareProfile) -> None:
@@ -1039,7 +1039,7 @@ class OfflineActivationDialog(QDialog):
                     self.saved_profiles = json.load(f)
                 self.update_profiles_table()
             except Exception as e:
-                logger.exception("Failed to load profiles from %s", profiles_file, exc_info=True)
+                logger.error("Failed to load profiles from %s", profiles_file, exc_info=True)
                 self.log("Failed to load profiles: %s", str(e))
 
     def save_profiles_to_disk(self) -> None:
@@ -1049,7 +1049,7 @@ class OfflineActivationDialog(QDialog):
             with open(profiles_file, "w") as f:
                 json.dump(self.saved_profiles, f, indent=2, default=str)
         except Exception as e:
-            logger.exception("Failed to save profiles to %s", profiles_file, exc_info=True)
+            logger.error("Failed to save profiles to %s", profiles_file, exc_info=True)
             self.log("Failed to save profiles: %s", str(e))
 
     def handle_worker_result(self, result: dict) -> None:

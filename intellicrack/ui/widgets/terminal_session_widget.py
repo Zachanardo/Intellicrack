@@ -133,7 +133,7 @@ class TerminalSessionWidget(QWidget):
         self._active_session_id = session_id
         self.session_created.emit(session_id)
 
-        logger.info(f"Created new terminal session: {session_id} ({name})")
+        logger.info("Created new terminal session: %s (%s)", session_id, name)
 
         return session_id
 
@@ -145,7 +145,7 @@ class TerminalSessionWidget(QWidget):
 
         """
         if session_id not in self._sessions:
-            logger.warning(f"Session {session_id} not found")
+            logger.warning("Session %s not found", session_id)
             return
 
         session = self._sessions[session_id]
@@ -166,7 +166,7 @@ class TerminalSessionWidget(QWidget):
 
         self.session_closed.emit(session_id)
 
-        logger.info(f"Closed terminal session: {session_id}")
+        logger.info("Closed terminal session: %s", session_id)
 
         if len(self._sessions) == 0:
             self.create_new_session()
@@ -247,7 +247,7 @@ class TerminalSessionWidget(QWidget):
 
         """
         if session_id not in self._sessions:
-            logger.warning(f"Session {session_id} not found")
+            logger.warning("Session %s not found", session_id)
             return
 
         session = self._sessions[session_id]
@@ -268,7 +268,7 @@ class TerminalSessionWidget(QWidget):
 
         """
         if session_id not in self._sessions:
-            logger.warning(f"Session {session_id} not found")
+            logger.warning("Session %s not found", session_id)
             return
 
         self._sessions[session_id]["name"] = new_name
@@ -281,7 +281,7 @@ class TerminalSessionWidget(QWidget):
                 self.tab_widget.setTabText(i, new_name)
                 break
 
-        logger.info(f"Renamed session {session_id} to: {new_name}")
+        logger.info("Renamed session %s to: %s", session_id, new_name)
 
     def get_all_sessions(self) -> dict[str, Any]:
         """Get all active sessions.
