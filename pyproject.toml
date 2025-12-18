@@ -37,7 +37,7 @@ dependencies = [
     # Core ML/AI
     "accelerate",
     "anthropic",
-    "openai>=2.9.0,<3",
+    "openai>=2.11.0,<3",
     "torch",
     "torchvision",
     "torchaudio",
@@ -143,7 +143,7 @@ dependencies = [
 
     # Data Science
     "pandas>=2.3.3,<3",
-    "scikit-learn>=1.7.2,<2",
+    "scikit-learn>=1.8.0,<2",
     "scipy>=1.16.3,<2",
     "onnx>=1.20.0,<2",
     "numpy",
