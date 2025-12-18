@@ -516,7 +516,7 @@ yamllint==1.37.1
 yapf==0.43.0
 yara_python==4.5.4
 yarl==1.22.0
-z3_solver==4.13.0.0
+z3_solver==4.15.4.0
 zict==3.0.0
 zipp==3.23.0
 zope_event==6.1
