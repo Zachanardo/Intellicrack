@@ -153,7 +153,7 @@ importlib_resources==6.5.2
 installer==0.7.0
 intel_cmplr_lib_rt==2025.2.1
 intel_cmplr_lib_ur==2025.2.1
-intel_cmplr_lic_rt==2025.2.1
+intel_cmplr_lic_rt==2025.3.1
 intel_opencl_rt==2025.2.1
 intel_openmp==2025.2.1
 intel_pti==0.13.1
