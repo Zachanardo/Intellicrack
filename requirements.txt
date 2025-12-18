@@ -413,7 +413,7 @@ safety==3.7.0
 safety_schemas==0.0.16
 scalene==1.5.55
 scapy==2.6.1
-scikit_learn==1.7.2
+scikit_learn==1.8.0
 scipy==1.16.3
 seaborn==0.13.2
 sentry_sdk==2.47.0
