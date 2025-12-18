@@ -196,7 +196,7 @@ langchain_text_splitters==1.0.0
 langgraph==1.0.4
 langgraph_checkpoint==3.0.1
 langgraph_prebuilt==1.0.5
-langgraph_sdk==0.2.15
+langgraph_sdk==0.3.0
 langsmith==0.4.58
 levenshtein==0.27.3
 libarchive_c==5.3
