@@ -246,7 +246,7 @@ class ModelCacheManager:
             with open(self.disk_index_file) as f:
                 return json.load(f)
         except Exception as e:
-            logger.error(f"Failed to load disk cache index: {e}")
+            logger.error("Failed to load disk cache index: %s", e)
             return {}
 
     def _save_disk_index(self) -> None:
@@ -258,7 +258,7 @@ class ModelCacheManager:
             with open(self.disk_index_file, "w") as f:
                 json.dump(self.disk_index, f, indent=2, default=str)
         except Exception as e:
-            logger.error(f"Failed to save disk cache index: {e}")
+            logger.error("Failed to save disk cache index: %s", e)
 
     def _estimate_model_memory(self, model: object) -> int:
         """Estimate memory usage of a model.
@@ -300,7 +300,7 @@ class ModelCacheManager:
             total_size = int(total_size * 1.5)
 
         except Exception as e:
-            logger.warning(f"Could not estimate model memory: {e}")
+            logger.warning("Could not estimate model memory: %s", e)
             # Default estimate
             total_size = 500 * 1024 * 1024  # 500MB
 
@@ -330,7 +330,7 @@ class ModelCacheManager:
             self.cache[model_id] = entry
 
             self.stats["hits"] += 1
-            logger.info(f"Cache hit for model: {model_id}")
+            logger.info("Cache hit for model: %s", model_id)
 
             return entry.model_object, entry.tokenizer_object
 
@@ -370,7 +370,7 @@ class ModelCacheManager:
                 return model, tokenizer
 
             except Exception as e:
-                logger.error(f"Failed to load model {model_id}: {e}")
+                logger.error("Failed to load model %s: %s", model_id, e)
                 return None
 
         return None
@@ -451,12 +451,15 @@ class ModelCacheManager:
                 optimized_model = gpu_autoloader(model)
                 if optimized_model is not None:
                     entry.model_object = optimized_model
-                    logger.info(f"Applied GPU optimizations to model: {model_id}")
+                    logger.info("Applied GPU optimizations to model: %s", model_id)
             except Exception as e:
-                logger.debug(f"Could not apply GPU optimizations: {e}")
+                logger.debug("Could not apply GPU optimizations: %s", e)
 
         logger.info(
-            f"Cached model {model_id}: {memory_size / (1024**2):.1f}MB, total cache: {self.current_memory_usage / (1024**2):.1f}MB",
+            "Cached model %s: %.1fMB, total cache: %.1fMB",
+            model_id,
+            memory_size / (1024**2),
+            self.current_memory_usage / (1024**2),
         )
 
     def _evict_lru(self) -> None:
@@ -484,7 +487,7 @@ class ModelCacheManager:
                 torch.cuda.empty_cache()
         gc.collect()
 
-        logger.info(f"Evicted model from cache: {model_id}")
+        logger.info("Evicted model from cache: %s", model_id)
 
     def _save_to_disk(self, model_id: str, entry: CacheEntry) -> bool:
         """Save model to disk cache.
@@ -541,11 +544,11 @@ class ModelCacheManager:
             }
             self._save_disk_index()
 
-            logger.info(f"Saved model to disk cache: {model_id}")
+            logger.info("Saved model to disk cache: %s", model_id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to save model to disk: {e}")
+            logger.error("Failed to save model to disk: %s", e)
             return False
 
     def _load_from_disk(self, model_id: str) -> tuple[Any, Any | None] | None:
@@ -586,9 +589,9 @@ class ModelCacheManager:
             if GPU_AUTOLOADER_AVAILABLE and to_device and metadata.get("device", "cpu") != "cpu":
                 try:
                     model = to_device(model, metadata["device"])
-                    logger.info(f"Moved model to device: {metadata['device']}")
+                    logger.info("Moved model to device: %s", metadata['device'])
                 except Exception as e:
-                    logger.warning(f"Failed to move model to GPU, keeping on CPU: {e}")
+                    logger.warning("Failed to move model to GPU, keeping on CPU: %s", e)
 
             # Add back to memory cache
             self.put(
@@ -602,11 +605,11 @@ class ModelCacheManager:
                 adapter_info=metadata.get("adapter_info"),
             )
 
-            logger.info(f"Loaded model from disk cache: {model_id}")
+            logger.info("Loaded model from disk cache: %s", model_id)
             return model, tokenizer
 
         except Exception as e:
-            logger.error(f"Failed to load model from disk: {e}")
+            logger.error("Failed to load model from disk: %s", e)
             return None
 
     def clear(self, clear_disk: bool = False) -> None:
@@ -637,7 +640,7 @@ class ModelCacheManager:
                 self.disk_index = {}
                 self._save_disk_index()
             except Exception as e:
-                logger.error(f"Failed to clear disk cache: {e}")
+                logger.error("Failed to clear disk cache: %s", e)
 
         logger.info("Cleared model cache")
 
@@ -685,7 +688,7 @@ class ModelCacheManager:
             self.cache[name] = entry
 
             self.stats["hits"] += 1
-            logger.info(f"Cache hit for model: {name}")
+            logger.info("Cache hit for model: %s", name)
 
             return entry.model_object
 
@@ -787,7 +790,7 @@ class ModelCacheManager:
                 continue
 
             if model_id in load_functions:
-                logger.info(f"Preloading model: {model_id}")
+                logger.info("Preloading model: %s", model_id)
                 self.get(model_id, load_functions[model_id])
 
     def set_memory_limit(self, max_memory_gb: float) -> None:

@@ -2310,7 +2310,7 @@ intellicrack\plugins\custom_modules\success_rate_analyzer.py:1464: D202: in publ
 
 1 findings in intellicrack\tools\ml_manager.py
 
-intellicrack\tools\ml_manager.py:302: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
+intellicrack\tools\ml_manager.py:300: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Main')
 
 
 1 findings in intellicrack\tools\protection_analyzer_tool.py

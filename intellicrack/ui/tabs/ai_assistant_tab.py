@@ -210,7 +210,7 @@ class APIKeyConfigDialog(QDialog):
             logger.info("Fetched %s models from %s", len(models), provider_name)
 
         except Exception as e:
-            logger.error(f"Error fetching models: {e}")
+            logger.error("Error fetching models: %s", e)
             self.status_label.setText(f"Error: {e!s}")
 
         finally:
@@ -402,7 +402,7 @@ class AIAssistantTab(BaseTab):
             self.status_label.setText("AI Assistant initialized")
             logger.info("AI Assistant initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize AI Assistant: {e}")
+            logger.error("Failed to initialize AI Assistant: %s", e)
             self.status_label.setText(f"Error: {e}")
 
     def configure_model(self) -> None:
@@ -458,7 +458,7 @@ class AIAssistantTab(BaseTab):
 
                 if llm_manager.register_llm(model_key, llm_config):
                     self.status_label.setText(f"{config['provider']} - {config['model']} configured successfully")
-                    logger.info(f"Model {model_key} configured and registered")
+                    logger.info("Model %s configured and registered", model_key)
 
                     self.model_combo.addItem(f"{config['provider']}: {config['model']}")
                     self.model_combo.setCurrentText(f"{config['provider']}: {config['model']}")
@@ -476,7 +476,7 @@ class AIAssistantTab(BaseTab):
                     raise Exception(error_msg)
 
             except Exception as e:
-                logger.error(f"Failed to configure model: {e}")
+                logger.error("Failed to configure model: %s", e)
                 QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {e!s}")
                 self.status_label.setText("Configuration failed")
 
@@ -504,7 +504,7 @@ class AIAssistantTab(BaseTab):
                 self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
-            logger.error(f"Analysis failed: {e}")
+            logger.error("Analysis failed: %s", e)
             self.output_text.setPlainText(f"Analysis failed: {e!s}")
             self.status_label.setText("Analysis failed")
         finally:
@@ -535,7 +535,7 @@ class AIAssistantTab(BaseTab):
                 self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
-            logger.error(f"Script generation failed: {e}")
+            logger.error("Script generation failed: %s", e)
             self.output_text.setPlainText(f"Script generation failed: {e!s}")
             self.status_label.setText("Script generation failed")
         finally:
@@ -558,10 +558,10 @@ class AIAssistantTab(BaseTab):
                     f.write(self.output_text.toPlainText())
 
                 QMessageBox.information(self, "Success", f"Script exported to {file_path}")
-                logger.info(f"Script exported to {file_path}")
+                logger.info("Script exported to %s", file_path)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to export script: {e!s}")
-                logger.error(f"Failed to export script: {e}")
+                logger.error("Failed to export script: %s", e)
 
     def copy_to_clipboard(self) -> None:
         """Copy output to clipboard."""
@@ -584,10 +584,10 @@ class AIAssistantTab(BaseTab):
 
                 for display_name, _model_info in flat_models:
                     available_models.append(display_name)
-                    logger.debug(f"Found model: {display_name}")
+                    logger.debug("Found model: %s", display_name)
 
             except Exception as e:
-                logger.warning(f"Could not load models from ModelDiscoveryService: {e}")
+                logger.warning("Could not load models from ModelDiscoveryService: %s", e)
 
             try:
                 from intellicrack.ai.llm_backends import get_llm_manager
@@ -600,7 +600,7 @@ class AIAssistantTab(BaseTab):
                         available_models.append(f"Configured: {model_id}")
 
             except Exception as e:
-                logger.warning(f"Could not load configured API models: {e}")
+                logger.warning("Could not load configured API models: %s", e)
 
             try:
                 from intellicrack.ai.local_gguf_server import gguf_manager
@@ -613,7 +613,7 @@ class AIAssistantTab(BaseTab):
                     available_models.append(display_name)
 
             except Exception as e:
-                logger.warning(f"Could not load local GGUF models: {e}")
+                logger.warning("Could not load local GGUF models: %s", e)
 
             try:
                 from intellicrack.models.model_manager import ModelManager
@@ -628,10 +628,10 @@ class AIAssistantTab(BaseTab):
                             display_name = f"{repo_name.title()}: {model_name}"
                             available_models.append(display_name)
                     except Exception as repo_e:
-                        logger.debug(f"Could not load {repo_name} models: {repo_e}")
+                        logger.debug("Could not load %s models: %s", repo_name, repo_e)
 
             except Exception as e:
-                logger.warning(f"Could not load repository models: {e}")
+                logger.warning("Could not load repository models: %s", e)
 
             if not available_models:
                 self.model_combo.addItem("WARNING No models configured - Click 'Configure' to add")
@@ -640,10 +640,10 @@ class AIAssistantTab(BaseTab):
             else:
                 self.model_combo.addItems(available_models)
                 self.model_combo.setEnabled(True)
-                logger.info(f"Loaded {len(available_models)} AI models dynamically")
+                logger.info("Loaded %d AI models dynamically", len(available_models))
 
         except Exception as e:
-            logger.error(f"Failed to load available models: {e}")
+            logger.error("Failed to load available models: %s", e)
             self.model_combo.addItem("FAIL Error loading models - Check configuration")
             self.model_combo.setEnabled(False)
 
@@ -679,7 +679,7 @@ class AIAssistantTab(BaseTab):
                     QMessageBox.warning(self, "Error", "Failed to upload model file.")
 
             except Exception as e:
-                logger.error(f"Failed to upload model: {e}")
+                logger.error("Failed to upload model: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to upload model: {e!s}")
 
     def open_model_manager(self) -> None:
@@ -693,7 +693,7 @@ class AIAssistantTab(BaseTab):
                 self.load_available_models()
 
         except Exception as e:
-            logger.error(f"Failed to open model manager: {e}")
+            logger.error("Failed to open model manager: %s", e)
             from intellicrack.handlers.pyqt6_handler import QMessageBox
 
             QMessageBox.critical(self, "Error", f"Failed to open model manager: {e!s}")

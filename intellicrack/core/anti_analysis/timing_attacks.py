@@ -60,7 +60,7 @@ class TimingAttackDefense:
 
         """
         try:
-            self.logger.debug(f"Starting secure sleep for {duration} seconds")
+            self.logger.debug("Starting secure sleep for %s seconds", duration)
 
             # Use multiple timing sources
             start_time = time.time()
@@ -101,7 +101,7 @@ class TimingAttackDefense:
                     elapsed_thread = time.thread_time() - start_thread_time
                     thread_drift = abs(elapsed_thread - elapsed_perf)
                     if thread_drift > 0.1:
-                        self.logger.warning(f"Thread timing anomaly detected: {thread_drift:.3f}s drift")
+                        self.logger.warning("Thread timing anomaly detected: %.3fs drift", thread_drift)
                         return False
 
                 # Check tick count if available
@@ -110,13 +110,13 @@ class TimingAttackDefense:
                     tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
                     tick_drift = abs(tick_elapsed - elapsed_perf)
                     if tick_drift > 0.1:
-                        self.logger.warning(f"Tick count timing anomaly detected: {tick_drift:.3f}s drift")
+                        self.logger.warning("Tick count timing anomaly detected: %.3fs drift", tick_drift)
                         return False
 
                 # Check if time is accelerated
                 drift = abs(elapsed_real - elapsed_perf)
                 if drift > 0.1:  # 100ms drift threshold
-                    self.logger.warning(f"Timing anomaly detected: {drift:.3f}s drift")
+                    self.logger.warning("Timing anomaly detected: %.3fs drift", drift)
                     return False
 
                 remaining -= sleep_time
@@ -126,13 +126,13 @@ class TimingAttackDefense:
             expected_elapsed = duration
 
             if abs(final_elapsed - expected_elapsed) > expected_elapsed * 0.05:
-                self.logger.warning(f"Sleep duration mismatch: expected {expected_elapsed}s, got {final_elapsed}s")
+                self.logger.warning("Sleep duration mismatch: expected %ss, got %ss", expected_elapsed, final_elapsed)
                 return False
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Secure sleep failed: {e}", exc_info=True)
+            self.logger.error("Secure sleep failed: %s", e, exc_info=True)
             return False
 
     def stalling_code(self, min_duration: float, max_duration: float) -> None:
@@ -145,7 +145,7 @@ class TimingAttackDefense:
         """
         try:
             target_duration = random.uniform(min_duration, max_duration)  # noqa: S311 - Timing variation for anti-analysis
-            self.logger.debug(f"Starting stalling code for ~{target_duration:.1f}s")
+            self.logger.debug("Starting stalling code for ~%.1fs", target_duration)
 
             start_time = time.perf_counter()
 
@@ -170,10 +170,10 @@ class TimingAttackDefense:
                     time.sleep(0.0001)  # Micro-pause for realistic behavior
 
             elapsed = time.perf_counter() - start_time
-            self.logger.debug(f"Stalling completed: {elapsed:.2f}s, {iterations} iterations")
+            self.logger.debug("Stalling completed: %.2fs, %d iterations", elapsed, iterations)
 
         except Exception as e:
-            self.logger.error(f"Stalling code failed: {e}", exc_info=True)
+            self.logger.error("Stalling code failed: %s", e, exc_info=True)
 
     def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
         """Create a time bomb that triggers after specific duration.
@@ -189,7 +189,7 @@ class TimingAttackDefense:
 
         def time_bomb_thread() -> None:
             try:
-                self.logger.info(f"Time bomb armed for {trigger_time}s")
+                self.logger.info("Time bomb armed for %ss", trigger_time)
 
                 # Use secure sleep with verification
                 if self.secure_sleep(trigger_time):
@@ -199,7 +199,7 @@ class TimingAttackDefense:
                     self.logger.warning("Time bomb detected acceleration, aborting")
 
             except Exception as e:
-                self.logger.error(f"Time bomb failed: {e}", exc_info=True)
+                self.logger.error("Time bomb failed: %s", e, exc_info=True)
 
         thread = threading.Thread(target=time_bomb_thread, daemon=True)
         thread.start()
@@ -244,7 +244,7 @@ class TimingAttackDefense:
                 self.secure_sleep(delay)
 
         except Exception as e:
-            self.logger.error(f"Execution delay failed: {e}", exc_info=True)
+            self.logger.error("Execution delay failed: %s", e, exc_info=True)
 
     def rdtsc_timing_check(self) -> bool:
         """Use RDTSC instruction for precise timing checks.
@@ -270,13 +270,13 @@ class TimingAttackDefense:
             expected_ns = 1000000  # 1ms in nanoseconds
 
             # Use total to ensure computation isn't optimized away
-            self.logger.debug(f"RDTSC check completed with total: {total}")
+            self.logger.debug("RDTSC check completed with total: %s", total)
 
             # Check if execution was too fast (accelerated)
             return elapsed_ns >= expected_ns * 0.1
 
         except Exception as e:
-            self.logger.debug(f"RDTSC check failed: {e}", exc_info=True)
+            self.logger.debug("RDTSC check failed: %s", e, exc_info=True)
             return True
 
     def anti_acceleration_loop(self, duration: float) -> None:
@@ -287,7 +287,7 @@ class TimingAttackDefense:
 
         """
         try:
-            self.logger.debug(f"Starting anti-acceleration loop for {duration}s")
+            self.logger.debug("Starting anti-acceleration loop for %ss", duration)
 
             start_time = time.time()
             loops = 0
@@ -310,7 +310,7 @@ class TimingAttackDefense:
                     self.stalling_code(1, 2)
 
         except Exception as e:
-            self.logger.error(f"Anti-acceleration loop failed: {e}", exc_info=True)
+            self.logger.error("Anti-acceleration loop failed: %s", e, exc_info=True)
 
     def _check_rdtsc_availability(self) -> bool:
         """Check if RDTSC instruction is available."""
@@ -333,7 +333,7 @@ class TimingAttackDefense:
                 kernel32 = ctypes.windll.kernel32
                 return kernel32.GetTickCount64()
         except Exception as e:
-            self.logger.debug(f"Error getting system tick count: {e}")
+            self.logger.debug("Error getting system tick count: %s", e)
         return None
 
     def _quick_debugger_check(self) -> bool:
@@ -350,7 +350,7 @@ class TimingAttackDefense:
                     if line.startswith("TracerPid:"):
                         return int(line.split()[1]) != 0
         except Exception as e:
-            self.logger.debug(f"Error checking for debugger presence: {e}")
+            self.logger.debug("Error checking for debugger presence: %s", e)
         return False
 
     def generate_timing_defense_code(self) -> str:

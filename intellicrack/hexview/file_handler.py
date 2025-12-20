@@ -187,7 +187,7 @@ class ChunkManager:
             end_offset = min(offset + size, self.file_size)
             current_offset = offset
 
-            logger.debug(f"Reading from offset {current_offset} to {end_offset} ({end_offset - current_offset} bytes)")
+            logger.debug("Reading from offset %s to %s (%d bytes)", current_offset, end_offset, end_offset - current_offset)
             chunks_accessed = 0
             while current_offset < end_offset:
                 # Get appropriate chunk
@@ -209,12 +209,12 @@ class ChunkManager:
                         chunk.seek(local_offset)
                         chunk_data = chunk.read(local_size)
                         data.extend(chunk_data)
-                        logger.debug(f"Read {len(chunk_data)} bytes from chunk {chunk_index} using seek/read")
+                        logger.debug("Read %d bytes from chunk %s using seek/read", len(chunk_data), chunk_index)
                     else:
                         # If we got raw data instead of a memory map
                         chunk_data = chunk[local_offset : local_offset + local_size]
                         data.extend(chunk_data)
-                        logger.debug(f"Read {len(chunk_data)} bytes from chunk {chunk_index} using slice")
+                        logger.debug("Read %d bytes from chunk %s using slice", len(chunk_data), chunk_index)
 
                     # Move to next chunk
                     current_offset += local_size
@@ -224,7 +224,7 @@ class ChunkManager:
                     break
 
             result = bytes(data)
-            logger.debug(f"ChunkManager.read_data complete: Read {len(result)} bytes using {chunks_accessed} chunks")
+            logger.debug("ChunkManager.read_data complete: Read %d bytes using %d chunks", len(result), chunks_accessed)
 
             # Verify we have data
             if not result:
@@ -309,7 +309,7 @@ class VirtualFileAccess:
                 logger.debug("Reading original file into memory: %s", file_path)
                 with open(file_path, "rb") as src_file:
                     file_data = src_file.read()
-                    logger.debug(f"Read {len(file_data)} bytes from original file")
+                    logger.debug("Read %d bytes from original file", len(file_data))
 
                 # Write the data to the temporary file
                 logger.debug("Writing data to temporary file: %s", self.temp_file_path)
@@ -341,7 +341,7 @@ class VirtualFileAccess:
                 test_size = min(1024, self.file_size)
                 if test_size > 0:
                     test_data = self.chunk_manager.read_data(0, test_size)
-                    logger.debug(f"Test read from chunk manager: {len(test_data)} bytes")
+                    logger.debug("Test read from chunk manager: %d bytes", len(test_data))
                     if not test_data:
                         error_msg = "Chunk manager returned empty data in test read"
                         logger.error(error_msg)
@@ -352,7 +352,7 @@ class VirtualFileAccess:
 
                 logger.info("Successfully created and verified temporary copy: %s", self.temp_file_path)
             except Exception as copy_error:
-                logger.error(f"Failed to create temporary copy: {copy_error}", exc_info=True)
+                logger.error("Failed to create temporary copy: %s", copy_error, exc_info=True)
 
                 # Try to clean up the temp file if it exists
                 if self.temp_file_path and os.path.exists(self.temp_file_path):
@@ -397,13 +397,13 @@ class VirtualFileAccess:
                     read_only=read_only,
                     config=config,
                 )
-                logger.info(f"Large file optimization enabled for {self.file_size / (1024 * 1024):.1f}MB file")
+                logger.info("Large file optimization enabled for %.1fMB file", self.file_size / (1024 * 1024))
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Large file optimization failed, using fallback: %s", e)
                 self.large_file_handler = None
 
-        logger.info(f"VirtualFileAccess initialized for {file_path} (size: {self.file_size} bytes, read_only: {read_only})")
+        logger.info("VirtualFileAccess initialized for %s (size: %d bytes, read_only: %s)", file_path, self.file_size, read_only)
 
     def __del__(self) -> None:
         """Clean up resources when the object is destroyed."""
@@ -498,7 +498,7 @@ class VirtualFileAccess:
                         # Apply the edit
                         data[rel_offset : rel_offset + edit_size] = new_data[:edit_size]
 
-            logger.debug(f"Read completed: got {len(data)} bytes from offset {offset}")
+            logger.debug("Read completed: got %d bytes from offset %s", len(data), offset)
 
             # Force conversion to bytes and ensure we don't return None
             if data is None:
@@ -512,7 +512,7 @@ class VirtualFileAccess:
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Exception in file_handler.read: {e}", exc_info=True)
+            logger.error("Exception in file_handler.read: %s", e, exc_info=True)
             # Return empty data on error
             return b""
 
@@ -537,7 +537,8 @@ class VirtualFileAccess:
         # Ensure we don't write beyond the file size
         if offset + len(data) > self.file_size:
             logger.error(
-                f"Write operation would extend beyond file size: offset {offset}, data size {len(data)}, file size {self.file_size}",
+                "Write operation would extend beyond file size: offset %s, data size %d, file size %d",
+                offset, len(data), self.file_size,
             )
             return False
 
@@ -546,7 +547,7 @@ class VirtualFileAccess:
 
         # Store the edit
         self.pending_edits[offset] = (original_data, data)
-        logger.debug(f"Staged edit at offset {offset}, size {len(data)}")
+        logger.debug("Staged edit at offset %s, size %d", offset, len(data))
 
         return True
 
@@ -580,7 +581,7 @@ class VirtualFileAccess:
             # Clear pending edits
             self.pending_edits.clear()
 
-            logger.info(f"Applied {len(self.applied_edits)} edits to {self.file_path}")
+            logger.info("Applied %d edits to %s", len(self.applied_edits), self.file_path)
             return True
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error applying edits to file: %s", e)
@@ -610,7 +611,7 @@ class VirtualFileAccess:
             self.write_file.write(original_data)
             self.write_file.flush()
 
-            logger.info(f"Undid edit at offset {offset}, size {len(original_data)}")
+            logger.info("Undid edit at offset %s, size %d", offset, len(original_data))
             return True
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing edit: %s", e)
@@ -699,7 +700,7 @@ class VirtualFileAccess:
             self.chunk_manager.file_size = self.file_size
             self.chunk_manager.file_obj = self.write_file
 
-            logger.info(f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}")
+            logger.info("Inserted %d bytes at offset %s, new file size: %d", len(data), offset, self.file_size)
             return True
 
         except (OSError, ValueError, RuntimeError) as e:

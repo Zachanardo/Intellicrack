@@ -564,7 +564,7 @@ class AdvancedToolDiscovery:
                 terminal_manager = get_terminal_manager()
                 terminal_manager.log_terminal_message("Starting comprehensive tool discovery")
             except Exception as e:
-                logger.warning(f"Could not log to terminal manager: {e}")
+                logger.warning("Could not log to terminal manager: %s", e)
 
         tool_configs: dict[str, dict[str, Any]] = {
             "ghidra": {
@@ -621,12 +621,12 @@ class AdvancedToolDiscovery:
 
         for tool_name, config in tool_configs.items():
             try:
-                logger.debug(f"Discovering {tool_name}")
+                logger.debug("Discovering %s", tool_name)
                 tool_info = self.discover_tool(tool_name, config)
                 results[tool_name] = tool_info
 
                 if tool_info["available"]:
-                    logger.info(f"OK {tool_name} found: {tool_info['path']}")
+                    logger.info("OK %s found: %s", tool_name, tool_info['path'])
                     if HAS_TERMINAL_MANAGER:
                         try:
                             terminal_manager = get_terminal_manager()
@@ -635,7 +635,7 @@ class AdvancedToolDiscovery:
                             logger.debug("Could not log to terminal manager: %s", e)
                 else:
                     level = logging.WARNING if config["required"] else logging.INFO
-                    logger.log(level, f"FAIL {tool_name} not found")
+                    logger.log(level, "FAIL %s not found", tool_name)
                     if HAS_TERMINAL_MANAGER:
                         try:
                             terminal_manager = get_terminal_manager()
@@ -644,7 +644,7 @@ class AdvancedToolDiscovery:
                             logger.debug("Could not log to terminal manager: %s", e)
 
             except Exception as e:
-                logger.error(f"Error discovering {tool_name}: {e}")
+                logger.error("Error discovering %s: %s", tool_name, e)
                 if HAS_TERMINAL_MANAGER:
                     try:
                         terminal_manager = get_terminal_manager()
@@ -690,7 +690,7 @@ class AdvancedToolDiscovery:
         if tool_name in self.manual_overrides:
             manual_path = self.manual_overrides[tool_name]
             if manual_path and os.path.exists(manual_path):
-                logger.info(f"Using manual override for {tool_name}: {manual_path}")
+                logger.info("Using manual override for %s: %s", tool_name, manual_path)
                 override_info = self._validate_and_populate(manual_path, tool_name)
                 override_info["discovery_method"] = "manual_override"
                 override_info["discovery_time"] = discovery_start
@@ -704,7 +704,7 @@ class AdvancedToolDiscovery:
             if isinstance(cached_result, dict):
                 disc_time = cached_result.get("discovery_time")
                 if disc_time is not None and time.time() - float(disc_time) < 3600:
-                    logger.debug(f"Using cached result for {tool_name}")
+                    logger.debug("Using cached result for %s", tool_name)
                     return dict(cached_result)
 
         tool_info: dict[str, Any] = {
@@ -799,7 +799,7 @@ class AdvancedToolDiscovery:
             Full path to the executable if found, None otherwise.
 
         """
-        logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
+        logger.debug("Searching common locations for tool: %s with executables: %s", tool_name, executables)
         common_paths: list[str] = []
 
         if sys.platform == "win32":
@@ -887,7 +887,7 @@ class AdvancedToolDiscovery:
         except ImportError as e:
             logger.error("Import error in tool_discovery: %s", e)
         except Exception as e:
-            logger.debug(f"Registry search failed: {e}")
+            logger.debug("Registry search failed: %s", e)
 
         return None
 
@@ -1116,16 +1116,16 @@ class AdvancedToolDiscovery:
 
         """
         if not os.path.exists(tool_path):
-            logger.error(f"Cannot set manual override: path {tool_path} does not exist")
+            logger.error("Cannot set manual override: path %s does not exist", tool_path)
             return False
 
         if not os.access(tool_path, os.X_OK):
-            logger.warning(f"Path {tool_path} may not be executable")
+            logger.warning("Path %s may not be executable", tool_path)
 
         self.manual_overrides[tool_name] = tool_path
         self.config.set(f"tools.manual_overrides.{tool_name}", tool_path)
 
-        logger.info(f"Set manual override for {tool_name}: {tool_path}")
+        logger.info("Set manual override for %s: %s", tool_name, tool_path)
 
         if tool_name in self.discovered_tools:
             del self.discovered_tools[tool_name]
@@ -1149,7 +1149,7 @@ class AdvancedToolDiscovery:
         del self.manual_overrides[tool_name]
         self.config.set(f"tools.manual_overrides.{tool_name}", None)
 
-        logger.info(f"Cleared manual override for {tool_name}")
+        logger.info("Cleared manual override for %s", tool_name)
 
         if tool_name in self.discovered_tools:
             del self.discovered_tools[tool_name]
@@ -1279,7 +1279,7 @@ class AdvancedToolDiscovery:
                                 level="warning",
                             )
             except Exception as e:
-                logger.warning(f"Could not log health check to terminal manager: {e}")
+                logger.warning("Could not log health check to terminal manager: %s", e)
 
         self.config.set("tools.last_health_check", results)
         self.config.set("tools.last_health_check_time", time.time())
@@ -1307,7 +1307,7 @@ class AdvancedToolDiscovery:
             Dictionary containing tool information with fallback attempts included.
 
         """
-        logger.info(f"Starting enhanced discovery for {tool_name} with fallbacks")
+        logger.info("Starting enhanced discovery for %s with fallbacks", tool_name)
 
         tool_info = self.discover_tool(tool_name, config)
 
@@ -1320,7 +1320,7 @@ class AdvancedToolDiscovery:
 
         alternatives = self._get_tool_alternatives(tool_name)
         for alt_tool, alt_config in alternatives.items():
-            logger.info(f"Trying alternative tool: {alt_tool} for {tool_name}")
+            logger.info("Trying alternative tool: %s for %s", alt_tool, tool_name)
             alt_result = self.discover_tool(alt_tool, alt_config)
             if alt_result.get("available"):
                 alt_result["is_alternative"] = True
@@ -1353,10 +1353,10 @@ class AdvancedToolDiscovery:
             try:
                 result = strategy(tool_name, config)
                 if result and result.get("available"):
-                    logger.info(f"Fallback strategy '{strategy.__name__}' succeeded for {tool_name}")
+                    logger.info("Fallback strategy '%s' succeeded for %s", strategy.__name__, tool_name)
                     return result
             except Exception as e:
-                logger.debug(f"Fallback strategy '{strategy.__name__}' failed: {e}")
+                logger.debug("Fallback strategy '%s' failed: %s", strategy.__name__, e)
                 continue
 
         return {"available": False, "path": None}

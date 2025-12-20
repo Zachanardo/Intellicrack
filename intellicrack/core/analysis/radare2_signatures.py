@@ -126,7 +126,7 @@ class R2SignatureAnalyzer:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Signature analysis failed: {e}")
+            self.logger.error("Signature analysis failed: %s", e)
 
         return result
 
@@ -182,7 +182,7 @@ class R2SignatureAnalyzer:
 
         except R2Exception as e:
             flirt_result["error"] = str(e)
-            self.logger.debug(f"FLIRT signature application failed: {e}")
+            self.logger.debug("FLIRT signature application failed: %s", e)
 
         return flirt_result
 
@@ -212,7 +212,7 @@ class R2SignatureAnalyzer:
 
         except R2Exception as e:
             zignature_result["error"] = str(e)
-            self.logger.debug(f"Zignature analysis failed: {e}")
+            self.logger.debug("Zignature analysis failed: %s", e)
 
         return zignature_result
 
@@ -343,7 +343,7 @@ class R2SignatureAnalyzer:
             r2_enhanced["plt_entries"] = plt_entries
 
         except Exception as e:
-            self.logger.debug(f"Failed to get r2 library info: {e}")
+            self.logger.debug("Failed to get r2 library info: %s", e)
 
         c_runtime_list: list[dict[str, Any]] = library_analysis["c_runtime"]
         windows_api_list: list[dict[str, Any]] = library_analysis["windows_api"]
@@ -373,7 +373,7 @@ class R2SignatureAnalyzer:
                 func["r2_info"] = func_info
 
             except Exception as e:
-                self.logger.debug(f"Failed to get r2 info for {func_name}: {e}")
+                self.logger.debug("Failed to get r2 info for %s: %s", func_name, e)
 
             if any(crt in name_lower for crt in ["msvcrt", "ucrt", "libc", "malloc", "free", "printf"]):
                 c_runtime_list.append(func)
@@ -460,7 +460,7 @@ class R2SignatureAnalyzer:
                 compiler_info["msvc_jmc"] = True
 
         except Exception as e:
-            self.logger.debug(f"Failed to get compiler info from r2: {e}")
+            self.logger.debug("Failed to get compiler info from r2: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -478,7 +478,7 @@ class R2SignatureAnalyzer:
                     func["has_seh"] = True
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name}: {e}")
+                self.logger.debug("Failed to analyze %s: %s", func_name, e)
 
             if any(msvc in name_lower for msvc in ["__security_", "__report_", "_crt", "_chk"]):
                 msvc_list.append(func)
@@ -531,7 +531,7 @@ class R2SignatureAnalyzer:
             crypto_imports = crypto_imports_result if isinstance(crypto_imports_result, str) else str(crypto_imports_result)
 
         except Exception as e:
-            self.logger.debug(f"Failed to search for crypto patterns: {e}")
+            self.logger.debug("Failed to search for crypto patterns: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -575,7 +575,7 @@ class R2SignatureAnalyzer:
                     confidence = max(confidence, 0.9)
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name} for crypto: {e}")
+                self.logger.debug("Failed to analyze %s for crypto: %s", func_name, e)
 
             for ctype, patterns in crypto_patterns.items():
                 if any(pattern in name_lower for pattern in patterns):
@@ -651,7 +651,7 @@ class R2SignatureAnalyzer:
             jmp_patterns = jmp_result if isinstance(jmp_result, str) else str(jmp_result)
 
         except Exception as e:
-            self.logger.debug(f"Failed to scan for anti-analysis patterns: {e}")
+            self.logger.debug("Failed to scan for anti-analysis patterns: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -706,7 +706,7 @@ class R2SignatureAnalyzer:
                     risk_level = "high"
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name} for anti-analysis: {e}")
+                self.logger.debug("Failed to analyze %s for anti-analysis: %s", func_name, e)
 
             for cat, patterns in anti_patterns.items():
                 if any(pattern in name_lower for pattern in patterns):
@@ -797,7 +797,7 @@ class R2SignatureAnalyzer:
             crypto_calls = crypto_result if isinstance(crypto_result, str) else str(crypto_result)
 
         except Exception as e:
-            self.logger.debug(f"Failed to search for license patterns: {e}")
+            self.logger.debug("Failed to search for license patterns: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -858,7 +858,7 @@ class R2SignatureAnalyzer:
                     confidence += 0.1
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name} for license validation: {e}")
+                self.logger.debug("Failed to analyze %s for license validation: %s", func_name, e)
 
             patterns_matched = [pattern for pattern in license_patterns if pattern in name_lower]
             if patterns_matched:
@@ -931,7 +931,7 @@ class R2SignatureAnalyzer:
             has_canary = "canary" in canary_check.lower()
 
         except Exception as e:
-            self.logger.debug(f"Failed to analyze vulnerability patterns: {e}")
+            self.logger.debug("Failed to analyze vulnerability patterns: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -996,7 +996,7 @@ class R2SignatureAnalyzer:
                     vulnerability_type = "race_condition"
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name} for vulnerabilities: {e}")
+                self.logger.debug("Failed to analyze %s for vulnerabilities: %s", func_name, e)
 
             for vuln_type, patterns in vulnerable_functions.items():
                 if any(pattern in name_lower for pattern in patterns):
@@ -1054,7 +1054,7 @@ class R2SignatureAnalyzer:
             cmp_pattern = cmp_result if isinstance(cmp_result, str) else str(cmp_result)
 
         except Exception as e:
-            self.logger.debug(f"Failed to apply custom signatures: {e}")
+            self.logger.debug("Failed to apply custom signatures: %s", e)
 
         for func in functions:
             func_name = func.get("name", "")
@@ -1160,7 +1160,7 @@ class R2SignatureAnalyzer:
                     custom_matches.append(pattern_match)
 
             except Exception as e:
-                self.logger.debug(f"Failed to analyze {func_name} with custom patterns: {e}")
+                self.logger.debug("Failed to analyze %s with custom patterns: %s", func_name, e)
 
             for pattern_name, pattern in custom_patterns.items():
                 if re.search(pattern, func_name, re.IGNORECASE):

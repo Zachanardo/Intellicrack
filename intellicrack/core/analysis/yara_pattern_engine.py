@@ -154,7 +154,7 @@ class YaraPatternEngine:
                     with open(rule_file, encoding="utf-8") as f:
                         self.rule_sources[namespace] = f.read()
                 except Exception as e:
-                    logger.debug(f"Could not read rule source from {rule_file}: {e}")
+                    logger.debug("Could not read rule source from %s: %s", rule_file, e)
 
             # Load custom rules if specified
             if self.custom_rules_path:
@@ -168,7 +168,7 @@ class YaraPatternEngine:
                             with open(rule_file, encoding="utf-8") as f:
                                 self.rule_sources[namespace] = f.read()
                         except Exception as e:
-                            logger.debug(f"Could not read rule source from {rule_file}: {e}")
+                            logger.debug("Could not read rule source from %s: %s", rule_file, e)
 
             if not rule_files:
                 logger.warning("No YARA rules found - creating minimal rule set")
@@ -179,16 +179,16 @@ class YaraPatternEngine:
                     with open(rules_dir / "basic.yar", encoding="utf-8") as f:
                         self.rule_sources["basic"] = f.read()
                 except Exception as e:
-                    logger.warning(f"Failed to read basic.yar rule file: {e}")
+                    logger.warning("Failed to read basic.yar rule file: %s", e)
 
             # Compile rules
             self.compiled_rules = yara.compile(filepaths=rule_files)
             self._extract_rule_metadata()
 
-            logger.info(f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules")
+            logger.info("Loaded %d YARA rule namespaces with %d rules", len(rule_files), self._count_total_rules())
 
         except Exception as e:
-            logger.error(f"Failed to load YARA rules: {e}")
+            logger.error("Failed to load YARA rules: %s", e)
             self.compiled_rules = None
 
     def _create_default_rules(self, rules_dir: Path) -> None:
@@ -642,7 +642,7 @@ rule Basic_PE_Detection
             rules_path_obj = Path(rules_path)
 
             if not rules_path_obj.exists():
-                logger.warning(f"Rules path does not exist: {rules_path}")
+                logger.warning("Rules path does not exist: %s", rules_path)
                 return False
 
             rule_files: dict[str, str] = {}
@@ -655,9 +655,9 @@ rule Basic_PE_Detection
                         with open(rules_path_obj, encoding="utf-8") as f:
                             self.rule_sources[namespace] = f.read()
                     except Exception as e:
-                        logger.debug(f"Could not read rule source from {rules_path_obj}: {e}")
+                        logger.debug("Could not read rule source from %s: %s", rules_path_obj, e)
                 else:
-                    logger.warning(f"Invalid rule file extension: {rules_path_obj.suffix}")
+                    logger.warning("Invalid rule file extension: %s", rules_path_obj.suffix)
                     return False
             elif rules_path_obj.is_dir():
                 for rule_file in rules_path_obj.glob("*.yar"):
@@ -667,7 +667,7 @@ rule Basic_PE_Detection
                         with open(rule_file, encoding="utf-8") as f:
                             self.rule_sources[namespace] = f.read()
                     except Exception as e:
-                        logger.debug(f"Could not read rule source from {rule_file}: {e}")
+                        logger.debug("Could not read rule source from %s: %s", rule_file, e)
 
                 for rule_file in rules_path_obj.glob("*.yara"):
                     namespace = f"external_{rule_file.stem}"
@@ -676,10 +676,10 @@ rule Basic_PE_Detection
                         with open(rule_file, encoding="utf-8") as f:
                             self.rule_sources[namespace] = f.read()
                     except Exception as e:
-                        logger.debug(f"Could not read rule source from {rule_file}: {e}")
+                        logger.debug("Could not read rule source from %s: %s", rule_file, e)
 
             if not rule_files:
-                logger.warning(f"No YARA rule files found in: {rules_path}")
+                logger.warning("No YARA rule files found in: %s", rules_path)
                 return False
 
             existing_rule_files: dict[str, str] = {}
@@ -701,15 +701,15 @@ rule Basic_PE_Detection
             self.compiled_rules = yara.compile(filepaths=all_rule_files)
             self._extract_rule_metadata()
 
-            logger.info(f"Loaded {len(rule_files)} additional YARA rule namespaces from {rules_path}")
-            logger.info(f"Total rules now: {self._count_total_rules()}")
+            logger.info("Loaded %d additional YARA rule namespaces from %s", len(rule_files), rules_path)
+            logger.info("Total rules now: %d", self._count_total_rules())
             return True
 
         except yara.SyntaxError as e:
-            logger.error(f"YARA syntax error in rules from {rules_path}: {e}")
+            logger.error("YARA syntax error in rules from %s: %s", rules_path, e)
             return False
         except Exception as e:
-            logger.error(f"Failed to load YARA rules from {rules_path}: {e}")
+            logger.error("Failed to load YARA rules from %s: %s", rules_path, e)
             return False
 
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
@@ -749,7 +749,7 @@ rule Basic_PE_Detection
         temp_dir = None
         if os.path.getsize(file_path) > 100 * 1024 * 1024:  # > 100MB
             temp_dir = tempfile.mkdtemp(prefix="yara_scan_")
-            logger.debug(f"Created temporary directory for large file scan: {temp_dir}")
+            logger.debug("Created temporary directory for large file scan: %s", temp_dir)
 
         # Track scanned files with modification time and size to detect changes
         abs_file_path = os.path.abspath(file_path)
@@ -767,7 +767,7 @@ rule Basic_PE_Detection
         if abs_file_path in self.scanned_files:
             cached_mtime, cached_size, cached_hash = self.scanned_files[abs_file_path]
             if file_mtime == cached_mtime and file_size == cached_size:
-                logger.debug(f"File already scanned and unchanged: {abs_file_path}")
+                logger.debug("File already scanned and unchanged: %s", abs_file_path)
                 # Return cached result structure to avoid duplicate scanning
                 return YaraScanResult(
                     file_path=file_path,
@@ -777,7 +777,7 @@ rule Basic_PE_Detection
                     error=f"File already scanned and unchanged: {file_path} (skipping duplicate scan)",
                     metadata={"cached": True, "file_hash": cached_hash},
                 )
-            logger.debug(f"File changed since last scan, rescanning: {abs_file_path}")
+            logger.debug("File changed since last scan, rescanning: %s", abs_file_path)
 
         # Generate robust file hash for tracking and metadata
         file_hash = ""
@@ -804,8 +804,8 @@ rule Basic_PE_Detection
 
             file_hash = hasher.hexdigest()[:32]  # Use more hash bytes for better uniqueness
         except Exception as e:
-            logger.debug(f"Could not generate file hash: {e}")
-            file_hash = f"unknown_{file_size}_{file_mtime}"
+            logger.debug("Could not generate file hash: %s", e)
+            file_hash = "unknown_%s_%s" % (file_size, file_mtime)
 
         # Update cache with new file info
         self.scanned_files[abs_file_path] = (file_mtime, file_size, file_hash)
@@ -845,7 +845,7 @@ rule Basic_PE_Detection
                             length = len(matched_data) if matched_data else 0
                         except (AttributeError, IndexError, TypeError):
                             # Skip malformed matches
-                            logger.debug(f"Skipping malformed string match in file scan: {string_match}")
+                            logger.debug("Skipping malformed string match in file scan: %s", string_match)
                             continue
 
                     # Convert bytes to string if necessary
@@ -900,7 +900,7 @@ rule Basic_PE_Detection
                 },
             )
         except Exception as e:
-            logger.error(f"YARA scan error: {e}")
+            logger.error("YARA scan error: %s", e)
             return YaraScanResult(
                 file_path=file_path,
                 error=str(e),
@@ -913,9 +913,9 @@ rule Basic_PE_Detection
 
                 try:
                     shutil.rmtree(temp_dir)
-                    logger.debug(f"Cleaned up temporary directory: {temp_dir}")
+                    logger.debug("Cleaned up temporary directory: %s", temp_dir)
                 except Exception as cleanup_error:
-                    logger.warning(f"Failed to cleanup temp directory: {cleanup_error}")
+                    logger.warning("Failed to cleanup temp directory: %s", cleanup_error)
 
     def _determine_category(self, match: object) -> PatternCategory:
         """Determine pattern category from YARA match."""
@@ -1030,7 +1030,7 @@ rule Basic_PE_Detection
                                 length = len(matched_data) if matched_data else 0
                             except (IndexError, ValueError):
                                 # Skip malformed matches
-                                logger.debug(f"Skipping malformed string match: {string_match}")
+                                logger.debug("Skipping malformed string match: %s", string_match)
                                 continue
 
                     # Convert bytes to string if necessary
@@ -1063,9 +1063,9 @@ rule Basic_PE_Detection
             )
 
         except Exception as e:
-            logger.error(f"Memory scan error: {e}")
+            logger.error("Memory scan error: %s", e)
             return YaraScanResult(
-                file_path=f"process_{process_id}",
+                file_path="process_%s" % process_id,
                 error=str(e),
             )
 
@@ -1097,11 +1097,11 @@ rule Basic_PE_Detection
             # Reload rules to include the new one
             self._load_rules()
 
-            logger.info(f"Created custom YARA rule: {rule_name}")
+            logger.info("Created custom YARA rule: %s", rule_name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to create custom rule: {e}")
+            logger.error("Failed to create custom rule: %s", e)
             return False
 
     def get_rule_info(self) -> dict[str, Any]:
@@ -1169,9 +1169,9 @@ rule Basic_PE_Detection
                 "high_confidence_count": len(scan_result.high_confidence_matches),
             }
             json_summary = json.dumps(scan_summary, indent=2)
-            logger.debug(f"YARA scan summary: {json_summary}")
+            logger.debug("YARA scan summary: %s", json_summary)
         except Exception as json_error:
-            logger.warning(f"Failed to export scan summary as JSON: {json_error}")
+            logger.warning("Failed to export scan summary as JSON: %s", json_error)
 
         # Process protection matches
         for match in scan_result.get_matches_by_category(PatternCategory.PROTECTION):
@@ -1233,7 +1233,7 @@ def get_yara_engine() -> YaraPatternEngine | None:
         try:
             _yara_engine = YaraPatternEngine()
         except Exception as e:
-            logger.error(f"Failed to initialize YARA engine: {e}")
+            logger.error("Failed to initialize YARA engine: %s", e)
             return None
     return _yara_engine
 

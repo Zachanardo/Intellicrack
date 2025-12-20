@@ -790,6 +790,17 @@ benches\dependency_benchmarks.rs:258:24: [warning] it is more concise to loop ov
 benches\dependency_benchmarks.rs:260:13: [warning] variables can be used directly in the `format!` string
 
 
+4 findings in tests\process_optimization_tests.rs
+
+tests\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string
+
+tests\process_optimization_tests.rs:105:83: [warning] redundant clone
+
+tests\process_optimization_tests.rs:105:76: [warning] redundant clone
+
+tests\process_optimization_tests.rs:127:32: [warning] redundant closure
+
+
 4 findings in src\main.rs
 
 src\main.rs:21:7: [warning] this function has too many lines (144/100)
@@ -810,17 +821,6 @@ benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed bin
 benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
 
 benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
-
-
-4 findings in tests\process_optimization_tests.rs
-
-tests\process_optimization_tests.rs:78:5: [warning] variables can be used directly in the `format!` string
-
-tests\process_optimization_tests.rs:105:83: [warning] redundant clone
-
-tests\process_optimization_tests.rs:105:76: [warning] redundant clone
-
-tests\process_optimization_tests.rs:127:32: [warning] redundant closure
 
 
 3 findings in src\intel_gpu.rs

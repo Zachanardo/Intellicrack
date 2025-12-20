@@ -651,14 +651,14 @@ class AIAssistantWidget(QWidget):
 
                 self.script_output.setPlainText(header + generated_script)
                 self.script_generated.emit(script_type, generated_script)
-                logger.info(f"Generated {script_type} - Protection: {protection}")
+                logger.info("Generated %s - Protection: %s", script_type, protection)
             else:
                 error_msg = result.get("error", "Unknown error")
                 self.script_output.setPlainText(f"Error: {error_msg}")
 
         except Exception as e:
             self.script_output.setPlainText(f"Error: {e!s}")
-            logger.error(f"Script generation failed: {e}")
+            logger.error("Script generation failed: %s", e)
 
     def copy_script(self) -> None:
         """Copy generated script to clipboard."""
@@ -679,9 +679,9 @@ class AIAssistantWidget(QWidget):
             try:
                 with open(file_name, "w") as f:
                     f.write(self.script_output.toPlainText())
-                logger.info(f"Script saved to {file_name}")
+                logger.info("Script saved to %s", file_name)
             except Exception as e:
-                logger.error(f"Failed to save script: {e}")
+                logger.error("Failed to save script: %s", e)
 
     def test_script(self) -> None:
         """Test the generated script in appropriate execution environment."""
@@ -739,7 +739,7 @@ class AIAssistantWidget(QWidget):
                     else:
                         error_msg = result.stderr or result.stdout
                         self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Syntax error:\n{error_msg}")
-                        logger.error(f"Python validation failed: {error_msg}")
+                        logger.error("Python validation failed: %s", error_msg)
 
                 elif "Ghidra" in script_type:
                     script_file = temp_path / "test_script.py"
@@ -780,14 +780,14 @@ class AIAssistantWidget(QWidget):
                         f"OK Script generated for {script_type}\n"
                         f"Manual testing required for this script type",
                     )
-                    logger.info(f"Script prepared for {script_type}")
+                    logger.info("Script prepared for %s", script_type)
 
         except subprocess.TimeoutExpired:
             self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test timed out")
             logger.error("Script test timed out")
         except Exception as e:
             self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {e!s}")
-            logger.error(f"Script test failed: {e}")
+            logger.error("Script test failed: %s", e)
 
     def load_current_file_for_analysis(self) -> None:
         """Load current file content for analysis."""
@@ -832,7 +832,7 @@ Format as clear, actionable analysis."""
             if results and results.strip():
                 final_results = f"=== {analysis_type} Results ===\n\n{results.strip()}"
                 self.analysis_results.setText(final_results)
-                logger.info(f"Completed {analysis_type}")
+                logger.info("Completed %s", analysis_type)
             else:
                 self.analysis_results.setText("Error: AI generated empty response")
 
@@ -842,7 +842,7 @@ Format as clear, actionable analysis."""
             )
         except Exception as e:
             self.analysis_results.setText(f"Error during analysis: {e!s}")
-            logger.error(f"Code analysis failed: {e}")
+            logger.error("Code analysis failed: %s", e)
 
     def generate_keygen(self) -> None:
         """Generate keygen using AI-powered code generation."""
@@ -878,7 +878,7 @@ Return ONLY the code, no explanations."""
 
             if keygen_code and keygen_code.strip():
                 self.keygen_output.setPlainText(keygen_code.strip())
-                logger.info(f"Generated {algo_type} keygen in {language}")
+                logger.info("Generated %s keygen in %s", algo_type, language)
             else:
                 self.keygen_output.setPlainText("Error: AI generated empty response")
 
@@ -888,7 +888,7 @@ Return ONLY the code, no explanations."""
             )
         except Exception as e:
             self.keygen_output.setPlainText(f"Error generating keygen: {e!s}")
-            logger.error(f"Keygen generation failed: {e}")
+            logger.error("Keygen generation failed: %s", e)
 
     def copy_keygen(self) -> None:
         """Copy keygen code to clipboard."""
@@ -918,9 +918,9 @@ Return ONLY the code, no explanations."""
             try:
                 with open(file_name, "w") as f:
                     f.write(self.keygen_output.toPlainText())
-                logger.info(f"Keygen saved to {file_name}")
+                logger.info("Keygen saved to %s", file_name)
             except Exception as e:
-                logger.error(f"Failed to save keygen: {e}")
+                logger.error("Failed to save keygen: %s", e)
 
     def compile_keygen(self) -> None:
         """Compile the keygen code into standalone executable."""
@@ -985,7 +985,7 @@ Return ONLY the code, no explanations."""
                                     f"Executable saved to: {save_path}\n"
                                     f"Size: {Path(save_path).stat().st_size // 1024} KB",
                                 )
-                                logger.info(f"Keygen compiled successfully: {save_path}")
+                                logger.info("Keygen compiled successfully: %s", save_path)
                         else:
                             self.keygen_output.setPlainText(
                                 f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation succeeded but executable not found",
@@ -993,7 +993,7 @@ Return ONLY the code, no explanations."""
                     else:
                         error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
                         self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
-                        logger.error(f"PyInstaller compilation failed: {error_msg}")
+                        logger.error("PyInstaller compilation failed: %s", error_msg)
 
                 elif language in ["C", "C++"]:
                     extension = ".c" if language == "C" else ".cpp"
@@ -1010,7 +1010,7 @@ Return ONLY the code, no explanations."""
                             f"Install MinGW-w64 or MSVC\n"
                             f"Then run: {compiler} -o keygen.exe {keygen_file.name}",
                         )
-                        logger.warning(f"{compiler} not available")
+                        logger.warning("%s not available", compiler)
                         return
 
                     output_exe = temp_path / "keygen.exe"
@@ -1042,11 +1042,11 @@ Return ONLY the code, no explanations."""
                                 f"Executable saved to: {save_path}\n"
                                 f"Size: {Path(save_path).stat().st_size // 1024} KB",
                             )
-                            logger.info(f"Keygen compiled successfully: {save_path}")
+                            logger.info("Keygen compiled successfully: %s", save_path)
                     else:
                         error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
                         self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
-                        logger.error(f"{compiler} compilation failed: {error_msg}")
+                        logger.error("%s compilation failed: %s", compiler, error_msg)
 
                 elif language == "JavaScript":
                     self.keygen_output.setPlainText(
@@ -1077,7 +1077,7 @@ Return ONLY the code, no explanations."""
             logger.error("Keygen compilation timed out")
         except Exception as e:
             self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {e!s}")
-            logger.error(f"Keygen compilation failed: {e}")
+            logger.error("Keygen compilation failed: %s", e)
 
     def load_available_models(self, force_refresh: bool = False) -> None:
         """Load available AI models using dynamic API-based discovery."""
@@ -1121,10 +1121,10 @@ Return ONLY the code, no explanations."""
             self.model_combo.setEnabled(True)
             total_models = len(self.available_models)
             self._show_welcome_message(total_models)
-            logger.info(f"Loaded {total_models} AI models from API discovery")
+            logger.info("Loaded %d AI models from API discovery", total_models)
 
         except Exception as e:
-            logger.error(f"Failed to load models: {e}")
+            logger.error("Failed to load models: %s", e)
             self.available_models = []
             self.model_combo.clear()
             self.model_combo.addItem("Error loading models")

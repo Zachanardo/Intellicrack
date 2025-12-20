@@ -268,29 +268,29 @@ class SymbolicDevirtualizer:
 
         start_time = time.time()
 
-        logger.info(f"Starting symbolic devirtualization at entry point 0x{vm_entry_point:x}")
+        logger.info("Starting symbolic devirtualization at entry point 0x%x", vm_entry_point)
 
         self.project = angr.Project(self.binary_path, auto_load_libs=False, load_options={"main_opts": {"base_addr": 0}})
 
         self.architecture = "x64" if self.project.arch.bits == 64 else "x86"
         self.vm_type = vm_type if vm_type != VMType.UNKNOWN else self._detect_vm_type()
 
-        logger.info(f"Architecture: {self.architecture}, VM Type: {self.vm_type.value}")
+        logger.info("Architecture: %s, VM Type: %s", self.architecture, self.vm_type.value)
 
         self.vm_dispatcher = self._find_dispatcher_symbolic(vm_entry_point)
         self.handler_table = self._find_handler_table_symbolic(vm_entry_point)
 
-        logger.info(f"Dispatcher: 0x{self.vm_dispatcher:x if self.vm_dispatcher else 0}")
-        logger.info(f"Handler table: 0x{self.handler_table:x if self.handler_table else 0}")
+        logger.info("Dispatcher: 0x%x", self.vm_dispatcher if self.vm_dispatcher else 0)
+        logger.info("Handler table: 0x%x", self.handler_table if self.handler_table else 0)
 
         handler_addresses = self._extract_handler_addresses()
-        logger.info(f"Extracted {len(handler_addresses)} handler addresses")
+        logger.info("Extracted %d handler addresses", len(handler_addresses))
 
         for handler_addr in handler_addresses:
             if lifted := self._lift_handler_symbolic(handler_addr):
                 self.lifted_handlers[handler_addr] = lifted
 
-        logger.info(f"Lifted {len(self.lifted_handlers)} handlers with symbolic execution")
+        logger.info("Lifted %d handlers with symbolic execution", len(self.lifted_handlers))
 
         devirtualized_blocks = self._trace_vm_execution(vm_entry_point, exploration_strategy, max_paths, timeout_seconds)
 
@@ -323,7 +323,7 @@ class SymbolicDevirtualizer:
             },
         )
 
-        logger.info(f"Devirtualization complete in {elapsed:.2f}s - Confidence: {overall_confidence:.1f}%")
+        logger.info("Devirtualization complete in %.2fs - Confidence: %.1f%%", elapsed, overall_confidence)
 
         return result
 
@@ -350,10 +350,10 @@ class SymbolicDevirtualizer:
 
             if exploration_manager.found:
                 dispatcher_addr = exploration_manager.found[0].addr
-                logger.debug(f"Found dispatcher at 0x{dispatcher_addr:x}")
+                logger.debug("Found dispatcher at 0x%x", dispatcher_addr)
                 return dispatcher_addr
         except Exception as e:
-            logger.debug(f"Symbolic dispatcher search failed: {e}")
+            logger.debug("Symbolic dispatcher search failed: %s", e)
 
         return self._find_dispatcher_pattern()
 
@@ -398,10 +398,10 @@ class SymbolicDevirtualizer:
 
                     if addr_match := re.search(r"0x([0-9a-fA-F]+)", operand_str):
                         table_addr = int(addr_match.group(1), 16)
-                        logger.debug(f"Found handler table at 0x{table_addr:x}")
+                        logger.debug("Found handler table at 0x%x", table_addr)
                         return table_addr
         except Exception as e:
-            logger.debug(f"Handler table extraction failed: {e}")
+            logger.debug("Handler table extraction failed: %s", e)
 
         return self._scan_for_pointer_table()
 
@@ -499,7 +499,7 @@ class SymbolicDevirtualizer:
                             if 0x1000 < solution < 0x7FFFFFFFFFFF and solution not in handlers:
                                 handlers.append(solution)
                 except Exception as e:
-                    logger.debug(f"State analysis failed: {e}")
+                    logger.debug("State analysis failed: %s", e)
                     continue
 
             block = self.project.factory.block(self.vm_dispatcher)
@@ -507,7 +507,7 @@ class SymbolicDevirtualizer:
                 if 0x1000 < successor < 0x7FFFFFFFFFFF and successor not in handlers:
                     handlers.append(successor)
         except Exception as e:
-            logger.debug(f"Dispatcher target tracing failed: {e}")
+            logger.debug("Dispatcher target tracing failed: %s", e)
 
         return handlers
 
@@ -554,7 +554,7 @@ class SymbolicDevirtualizer:
                                 if reg_val.symbolic:
                                     symbolic_effects.append((f"reg_{reg_name}", reg_val))
                             except (KeyError, AttributeError, angr.errors.SimValueError) as e:
-                                logger.debug(f"Register {reg_name} not accessible: {e}")
+                                logger.debug("Register %s not accessible: %s", reg_name, e)
                     constraints.extend(final_state.solver.constraints)
 
             semantic = self._infer_handler_semantic(handler_addr, symbolic_effects, constraints)
@@ -576,7 +576,7 @@ class SymbolicDevirtualizer:
             )
 
         except Exception as e:
-            logger.debug(f"Handler lifting failed at 0x{handler_addr:x}: {e}")
+            logger.debug("Handler lifting failed at 0x%x: %s", handler_addr, e)
             return None
 
     def _infer_handler_semantic(self, handler_addr: int, effects: list[tuple[str, Any]], constraints: list[Any]) -> HandlerSemantic:
@@ -622,7 +622,7 @@ class SymbolicDevirtualizer:
                     return HandlerSemantic.MEMORY_LOAD
                 return HandlerSemantic.MEMORY_STORE
         except Exception as e:
-            logger.debug(f"Semantic inference failed: {e}")
+            logger.debug("Semantic inference failed: %s", e)
 
         return HandlerSemantic.UNKNOWN
 
@@ -662,7 +662,7 @@ class SymbolicDevirtualizer:
             assembly = [f"{insn.mnemonic} {insn.op_str}" for insn in block.capstone.insns]
             return block.bytes, assembly
         except (AttributeError, KeyError, angr.errors.SimEngineError) as e:
-            logger.debug(f"Failed to disassemble handler at 0x{handler_addr:x}: {e}")
+            logger.debug("Failed to disassemble handler at 0x%x: %s", handler_addr, e)
             return None, [f"unknown_handler_0x{handler_addr:x}"]
 
     def _calculate_handler_confidence(
@@ -737,7 +737,7 @@ class SymbolicDevirtualizer:
                 logger.info("Exploration timeout reached")
 
             if exploration_error:
-                logger.debug(f"Exploration error: {exploration_error}")
+                logger.debug("Exploration error: %s", exploration_error)
 
             all_states = exploration_manager.deadended + exploration_manager.active
 
@@ -747,7 +747,7 @@ class SymbolicDevirtualizer:
                     blocks.append(block)
 
         except Exception as e:
-            logger.error(f"VM execution tracing failed: {e}")
+            logger.error("VM execution tracing failed: %s", e)
 
         return blocks
 
@@ -786,7 +786,7 @@ class SymbolicDevirtualizer:
             )
 
         except Exception as e:
-            logger.debug(f"Block reconstruction failed: {e}")
+            logger.debug("Block reconstruction failed: %s", e)
             return None
 
     def _calculate_overall_confidence(self, blocks: list[DevirtualizedBlock]) -> float:

@@ -199,7 +199,7 @@ class ProtectionAnalysisWorkflow:
             self._report_progress("Analysis complete!", 100)
 
         except Exception as e:
-            logger.error(f"Workflow error: {e}")
+            logger.error("Workflow error: %s", e)
             result.recommendations = [f"Analysis failed: {e!s}"]
 
         return result
@@ -229,12 +229,12 @@ class ProtectionAnalysisWorkflow:
                         "scan_time": yara_result.scan_time,
                         "supplemental_data": yara_supplemental,
                     }
-                    logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
+                    logger.debug("YARA analysis complete: %d matches found", len(yara_result.matches))
                 else:
-                    logger.warning(f"YARA analysis failed: {yara_result.error}")
+                    logger.warning("YARA analysis failed: %s", yara_result.error)
 
         except Exception as e:
-            logger.error(f"YARA analysis error: {e}")
+            logger.error("YARA analysis error: %s", e)
 
         try:
             # Binwalk firmware analysis
@@ -255,12 +255,12 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": firmware_result.analysis_time,
                         "supplemental_data": firmware_supplemental,
                     }
-                    logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
+                    logger.debug("Binwalk analysis complete: %d signatures found", len(firmware_result.signatures))
                 else:
-                    logger.warning(f"Binwalk analysis failed: {firmware_result.error}")
+                    logger.warning("Binwalk analysis failed: %s", firmware_result.error)
 
         except Exception as e:
-            logger.error(f"Binwalk analysis error: {e}")
+            logger.error("Binwalk analysis error: %s", e)
 
         try:
             # Volatility3 memory forensics (for memory dumps)
@@ -279,15 +279,15 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": memory_result.analysis_time,
                         "supplemental_data": memory_supplemental,
                     }
-                    logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
+                    logger.debug("Volatility3 analysis complete: %d artifacts found", sum(memory_result.artifacts_found.values()))
                 else:
-                    logger.warning(f"Volatility3 analysis failed: {memory_result.error}")
+                    logger.warning("Volatility3 analysis failed: %s", memory_result.error)
 
         except Exception as e:
-            logger.error(f"Volatility3 analysis error: {e}")
+            logger.error("Volatility3 analysis error: %s", e)
 
         if supplemental_data:
-            logger.info(f"Supplemental analysis complete with {len(supplemental_data)} engines")
+            logger.info("Supplemental analysis complete with %d engines", len(supplemental_data))
         else:
             logger.debug("No supplemental analysis results available")
 
@@ -325,7 +325,7 @@ class ProtectionAnalysisWorkflow:
             return False
 
         except Exception as e:
-            logger.debug(f"Memory dump detection error: {e}")
+            logger.debug("Memory dump detection error: %s", e)
             return False
 
     def _generate_recommendations(self, analysis: UnifiedProtectionResult) -> list[str]:
@@ -495,7 +495,7 @@ class ProtectionAnalysisWorkflow:
                 if script := self._generate_single_bypass_script(analysis, protection):
                     scripts[protection["name"]] = script
             except Exception as e:
-                logger.error(f"Failed to generate script for {protection['name']}: {e}")
+                logger.error("Failed to generate script for %s: %s", protection['name'], e)
 
         return scripts
 
@@ -519,7 +519,7 @@ class ProtectionAnalysisWorkflow:
                 if response and response.get("success"):
                     return response.get("content", "")
             except Exception as e:
-                logger.warning(f"AI generation failed: {e}")
+                logger.warning("AI generation failed: %s", e)
 
         # Fallback to template-based generation
         protection_type = protection["type"].lower()
@@ -820,7 +820,7 @@ console.log("[+] Generic bypass active for " + protectionName);
         """Report workflow progress."""
         if self.progress_callback is not None and callable(self.progress_callback):
             self.progress_callback(message, percentage)
-        logger.debug(f"Workflow progress: {message} ({percentage}%)")
+        logger.debug("Workflow progress: %s (%d%%)", message, percentage)
 
 
 # Convenience functions

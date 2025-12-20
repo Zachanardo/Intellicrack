@@ -167,7 +167,7 @@ class ToolCommunicationBridge:
         self.subscriber_thread = threading.Thread(target=self._subscriber_loop, daemon=True)
         self.subscriber_thread.start()
 
-        logger.info(f"Communication bridge started on port {self.orchestrator_port}")
+        logger.info("Communication bridge started on port %d", self.orchestrator_port)
 
     def stop(self) -> None:
         """Stop the communication bridge."""
@@ -205,7 +205,7 @@ class ToolCommunicationBridge:
         dealer.setsockopt_string(zmq.IDENTITY, tool_id)
         self.dealer_sockets[tool_type] = dealer
 
-        logger.info(f"Registered tool {tool_type.value} with ID {tool_id}")
+        logger.info("Registered tool %s with ID %s", tool_type.value, tool_id)
         return tool_id
 
     def unregister_tool(self, tool_type: ToolType) -> None:
@@ -217,7 +217,7 @@ class ToolCommunicationBridge:
             self.dealer_sockets[tool_type].close()
             del self.dealer_sockets[tool_type]
 
-        logger.info(f"Unregistered tool {tool_type.value}")
+        logger.info("Unregistered tool %s", tool_type.value)
 
     def send_message(self, message: IPCMessage) -> str | None:
         """Send a message to a specific tool or broadcast."""
@@ -237,7 +237,7 @@ class ToolCommunicationBridge:
             if message.destination in self.dealer_sockets:
                 socket = self.dealer_sockets[message.destination]
                 socket.send(message.to_bytes())
-                logger.debug(f"Sent {message.message_type.value} to {message.destination.value}")
+                logger.debug("Sent %s to %s", message.message_type.value, message.destination.value)
 
                 if message.requires_response:
                     # Create future for response
@@ -247,7 +247,7 @@ class ToolCommunicationBridge:
         else:
             # Broadcast message
             self.publisher.send_multipart([message.source.value.encode(), message.to_bytes()])
-            logger.debug(f"Broadcast {message.message_type.value} from {message.source.value}")
+            logger.debug("Broadcast %s from %s", message.message_type.value, message.source.value)
 
         return None
 
@@ -291,7 +291,7 @@ class ToolCommunicationBridge:
                 del self.pending_responses[msg_id]
                 return response
             except TimeoutError:
-                logger.warning(f"Timeout waiting for response to {msg_id}")
+                logger.warning("Timeout waiting for response to %s", msg_id)
                 del self.pending_responses[msg_id]
                 return None
 
@@ -300,7 +300,7 @@ class ToolCommunicationBridge:
     def register_handler(self, message_type: MessageType, handler: Callable) -> None:
         """Register a message handler for specific message type."""
         self.message_handlers[message_type].append(handler)
-        logger.debug(f"Registered handler for {message_type.value}")
+        logger.debug("Registered handler for %s", message_type.value)
 
     def _router_loop(self) -> None:
         """Process request-reply messages."""
@@ -319,7 +319,7 @@ class ToolCommunicationBridge:
 
                     # Validate ZeroMQ router protocol (empty delimiter frame)
                     if empty != b"":
-                        logger.warning(f"Invalid ZeroMQ router protocol: expected empty delimiter, got {empty[:20]}")
+                        logger.warning("Invalid ZeroMQ router protocol: expected empty delimiter, got %s", empty[:20])
                         # Send error response
                         error_msg = IPCMessage(
                             type=MessageType.RESPONSE,
@@ -334,14 +334,14 @@ class ToolCommunicationBridge:
 
                     # Verify authentication
                     if not self._verify_message_auth(message):
-                        logger.warning(f"Authentication failed for message {message.id}")
+                        logger.warning("Authentication failed for message %s", message.id)
                         continue
 
                     # Handle message
                     self._handle_message(message, identity)
 
             except Exception as e:
-                logger.error(f"Router loop error: {e}")
+                logger.error("Router loop error: %s", e)
 
     def _subscriber_loop(self) -> None:
         """Process broadcast messages."""
@@ -354,14 +354,14 @@ class ToolCommunicationBridge:
 
                     # Verify authentication
                     if not self._verify_message_auth(message):
-                        logger.warning(f"Authentication failed for broadcast {message.id}")
+                        logger.warning("Authentication failed for broadcast %s", message.id)
                         continue
 
                     # Handle broadcast
                     self._handle_message(message, None)
 
             except Exception as e:
-                logger.error(f"Subscriber loop error: {e}")
+                logger.error("Subscriber loop error: %s", e)
 
     def _handle_message(self, message: IPCMessage, identity: bytes | None) -> None:
         """Handle incoming message."""
@@ -396,7 +396,7 @@ class ToolCommunicationBridge:
                     self.router.send_multipart([identity, b"", response_msg.to_bytes()])
 
             except Exception as e:
-                logger.error(f"Handler error for {message.message_type.value}: {e}")
+                logger.error("Handler error for %s: %s", message.message_type.value, e)
 
         # Record latency
         latency = time.time() - start_time
@@ -578,7 +578,7 @@ class ToolConnector:
         # Start message processing
         threading.Thread(target=self._process_messages, daemon=True).start()
 
-        logger.info(f"Tool {self.tool_type.value} connected with ID {self.tool_id}")
+        logger.info("Tool %s connected with ID %s", self.tool_type.value, self.tool_id)
         return self.tool_id
 
     def disconnect(self) -> None:
@@ -628,7 +628,7 @@ class ToolConnector:
                     self._handle_message(message)
 
             except Exception as e:
-                logger.error(f"Message processing error: {e}")
+                logger.error("Message processing error: %s", e)
 
     def _handle_message(self, message: IPCMessage) -> None:
         """Handle incoming message."""
@@ -636,7 +636,7 @@ class ToolConnector:
             try:
                 handler(message)
             except Exception as e:
-                logger.error(f"Handler error: {e}")
+                logger.error("Handler error: %s", e)
 
     def register_handler(self, message_type: MessageType, handler: Callable) -> None:
         """Register message handler."""

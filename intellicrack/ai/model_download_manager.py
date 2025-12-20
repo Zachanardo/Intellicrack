@@ -129,7 +129,7 @@ class ModelDownloadManager:
                 with open(self.metadata_file) as f:
                     return json.load(f)
             except Exception as e:
-                logger.error(f"Failed to load metadata: {e}")
+                logger.error("Failed to load metadata: %s", e)
         return {"models": {}, "downloads": {}}
 
     def _save_metadata(self) -> None:
@@ -138,7 +138,7 @@ class ModelDownloadManager:
             with open(self.metadata_file, "w") as f:
                 json.dump(self.metadata, f, indent=2, default=str)
         except Exception as e:
-            logger.error(f"Failed to save metadata: {e}")
+            logger.error("Failed to save metadata: %s", e)
 
     def search_models(
         self,
@@ -206,7 +206,7 @@ class ModelDownloadManager:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to search models: {e}")
+            logger.error("Failed to search models: %s", e)
             return []
 
     def get_model_info(self, model_id: str) -> ModelInfo | None:
@@ -235,7 +235,7 @@ class ModelDownloadManager:
                     if file.rfilename and file.size and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
                         model_size = (model_size or 0) + file.size
             except Exception as e:
-                logger.debug(f"Could not calculate model size for {model.modelId}: {e}")
+                logger.debug("Could not calculate model size for %s: %s", model.modelId, e)
 
             info = ModelInfo(
                 model_id=model.modelId,
@@ -262,10 +262,10 @@ class ModelDownloadManager:
             return info
 
         except RepositoryNotFoundError:
-            logger.error(f"Model not found: {model_id}")
+            logger.error("Model not found: %s", model_id)
             return None
         except Exception as e:
-            logger.error(f"Failed to get model info: {e}")
+            logger.error("Failed to get model info: %s", e)
             return None
 
     def get_model_card(self, model_id: str) -> dict[str, Any] | None:
@@ -309,11 +309,11 @@ class ModelDownloadManager:
             self.metadata["models"][model_id]["card_cached_at"] = datetime.now().isoformat()
             self._save_metadata()
 
-            logger.info(f"Successfully fetched model card for {model_id}")
+            logger.info("Successfully fetched model card for %s", model_id)
             return card_data
 
         except Exception as e:
-            logger.error(f"Failed to fetch model card for {model_id}: {e}")
+            logger.error("Failed to fetch model card for %s: %s", model_id, e)
             return None
 
     def get_model_readme(self, model_id: str) -> str | None:
@@ -359,7 +359,7 @@ class ModelDownloadManager:
         # Check if already downloaded
         model_dir = self.cache_dir / model_id.replace("/", "_")
         if model_dir.exists() and not force_download:
-            logger.info(f"Model already cached: {model_dir}")
+            logger.info("Model already cached: %s", model_dir)
             return model_dir
 
         try:
@@ -385,7 +385,7 @@ class ModelDownloadManager:
                     progress_callback(prog)
 
             # Download model
-            logger.info(f"Downloading model: {model_id}")
+            logger.info("Downloading model: %s", model_id)
 
             # Note: huggingface_hub snapshot_download doesn't directly support progress callbacks
             # so we'll call progress_hook with a start notification
@@ -414,11 +414,11 @@ class ModelDownloadManager:
             # Clean up tracking
             del self.active_downloads[download_id]
 
-            logger.info(f"Model downloaded successfully: {local_path}")
+            logger.info("Model downloaded successfully: %s", local_path)
             return Path(local_path)
 
         except Exception as e:
-            logger.error(f"Failed to download model: {e}")
+            logger.error("Failed to download model: %s", e)
             if download_id in self.active_downloads:
                 del self.active_downloads[download_id]
             return None
@@ -479,7 +479,7 @@ class ModelDownloadManager:
             return Path(local_path)
 
         except Exception as e:
-            logger.error(f"Failed to download file: {e}")
+            logger.error("Failed to download file: %s", e)
             return None
 
     def list_cached_models(self) -> dict[str, dict[str, Any]]:
@@ -536,11 +536,11 @@ class ModelDownloadManager:
                     del self.metadata["downloads"][model_id]
                     self._save_metadata()
 
-                logger.info(f"Deleted cached model: {model_id}")
+                logger.info("Deleted cached model: %s", model_id)
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to delete model: {e}")
+                logger.error("Failed to delete model: %s", e)
                 return False
 
         return False
@@ -585,7 +585,7 @@ class ModelDownloadManager:
                 logger.info("Cleared entire model cache")
                 return -1  # All models
             except Exception as e:
-                logger.error(f"Failed to clear cache: {e}")
+                logger.error("Failed to clear cache: %s", e)
                 return 0
 
         # Keep recent models

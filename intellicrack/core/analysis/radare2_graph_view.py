@@ -118,9 +118,9 @@ class R2GraphGenerator:
         try:
             self.r2 = r2pipe.open(self.binary_path)
             self.r2.cmd("aaa")  # Analyze all
-            self.logger.info(f"Initialized r2 session for graph generation: {self.binary_path}")
+            self.logger.info("Initialized r2 session for graph generation: %s", self.binary_path)
         except Exception as e:
-            self.logger.error(f"Failed to initialize r2 session: {e}")
+            self.logger.error("Failed to initialize r2 session: %s", e)
             self.r2 = None
 
     def generate_control_flow_graph(self, function_name: str) -> GraphData:
@@ -219,10 +219,10 @@ class R2GraphGenerator:
                     )
                     graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated CFG with {len(graph_data.nodes)} blocks and {len(graph_data.edges)} edges for {function_name}")
+            self.logger.info("Generated CFG with %d blocks and %d edges for %s", len(graph_data.nodes), len(graph_data.edges), function_name)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate CFG: {e}")
+            self.logger.error("Failed to generate CFG: %s", e)
 
         return graph_data
 
@@ -298,10 +298,10 @@ class R2GraphGenerator:
                             )
                             graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated call graph with {len(graph_data.nodes)} functions and {len(graph_data.edges)} calls")
+            self.logger.info("Generated call graph with %d functions and %d calls", len(graph_data.nodes), len(graph_data.edges))
 
         except Exception as e:
-            self.logger.error(f"Failed to generate call graph: {e}")
+            self.logger.error("Failed to generate call graph: %s", e)
 
         return graph_data
 
@@ -390,10 +390,10 @@ class R2GraphGenerator:
                 )
                 graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated xref graph with {len(graph_data.nodes)} nodes and {len(graph_data.edges)} references")
+            self.logger.info("Generated xref graph with %d nodes and %d references", len(graph_data.nodes), len(graph_data.edges))
 
         except Exception as e:
-            self.logger.error(f"Failed to generate xref graph: {e}")
+            self.logger.error("Failed to generate xref graph: %s", e)
 
         return graph_data
 
@@ -474,10 +474,10 @@ class R2GraphGenerator:
                         )
                         graph_data.edges.append(edge)
 
-            self.logger.info(f"Generated import dependency graph with {len(graph_data.nodes)} nodes")
+            self.logger.info("Generated import dependency graph with %d nodes", len(graph_data.nodes))
 
         except Exception as e:
-            self.logger.error(f"Failed to generate import dependency graph: {e}")
+            self.logger.error("Failed to generate import dependency graph: %s", e)
 
         return graph_data
 
@@ -510,10 +510,10 @@ class R2GraphGenerator:
 
                 f.write("}\n")
 
-            self.logger.info(f"Exported graph to DOT format: {output_path}")
+            self.logger.info("Exported graph to DOT format: %s", output_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to export to DOT: {e}")
+            self.logger.error("Failed to export to DOT: %s", e)
 
     def visualize_graph(self, graph_data: GraphData, output_path: str | None = None, layout: str = "spring") -> bool:
         """Visualize graph using matplotlib/networkx.
@@ -585,13 +585,13 @@ class R2GraphGenerator:
 
             if output_path:
                 plt.savefig(output_path, dpi=150, bbox_inches="tight")
-                self.logger.info(f"Saved graph visualization to {output_path}")
+                self.logger.info("Saved graph visualization to %s", output_path)
 
             plt.show()
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to visualize graph: {e}")
+            self.logger.error("Failed to visualize graph: %s", e)
             return False
 
     def cleanup(self) -> None:
@@ -600,7 +600,7 @@ class R2GraphGenerator:
             try:
                 self.r2.quit()
             except Exception as e:
-                self.logger.warning(f"Error closing r2 session: {e}")
+                self.logger.warning("Error closing r2 session: %s", e)
 
 
 def create_graph_generator(binary_path: str) -> R2GraphGenerator:

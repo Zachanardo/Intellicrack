@@ -57,13 +57,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"License validation analysis completed for {binary_path.name}: {result.get('validation_functions', 0)} functions found",
+                "License validation analysis completed for %s: %s functions found",
+                binary_path.name,
+                result.get('validation_functions', 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"License validation analysis failed: {e}")
+            self.logger.error("License validation analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def detect_protections(self, binary_path: Path) -> dict[str, Any]:
@@ -92,7 +94,9 @@ class GhidraBinaryIntegration:
                 protections_found.append("Enigma")
 
             self.logger.info(
-                f"Protection detection completed for {binary_path.name}: {len(protections_found)} protections found",
+                "Protection detection completed for %s: %d protections found",
+                binary_path.name,
+                len(protections_found),
             )
 
             return {
@@ -102,7 +106,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error(f"Protection detection failed: {e}")
+            self.logger.error("Protection detection failed: %s", e)
             return {"error": str(e), "success": False, "protections": []}
 
     def analyze_crypto_routines(self, binary_path: Path) -> dict[str, Any]:
@@ -132,8 +136,10 @@ class GhidraBinaryIntegration:
             custom_crypto = identifier_result.get("custom_crypto", [])
 
             self.logger.info(
-                f"Crypto analysis completed for {binary_path.name}: "
-                f"{len(algorithms_found)} algorithms, {len(custom_crypto)} custom routines",
+                "Crypto analysis completed for %s: %d algorithms, %d custom routines",
+                binary_path.name,
+                len(algorithms_found),
+                len(custom_crypto),
             )
 
             return {
@@ -145,7 +151,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error(f"Crypto analysis failed: {e}")
+            self.logger.error("Crypto analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def generate_keygen_template(self, binary_path: Path) -> dict[str, Any]:
@@ -166,13 +172,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Keygen template generated for {binary_path.name}: algorithm={result.get('algorithm_type', 'unknown')}",
+                "Keygen template generated for %s: algorithm=%s",
+                binary_path.name,
+                result.get('algorithm_type', 'unknown'),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Keygen template generation failed: {e}")
+            self.logger.error("Keygen template generation failed: %s", e)
             return {"error": str(e), "success": False}
 
     def deobfuscate_control_flow(self, binary_path: Path) -> dict[str, Any]:
@@ -193,13 +201,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Control flow deobfuscation completed for {binary_path.name}: {result.get('blocks_deobfuscated', 0)} blocks processed",
+                "Control flow deobfuscation completed for %s: %s blocks processed",
+                binary_path.name,
+                result.get('blocks_deobfuscated', 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Control flow deobfuscation failed: {e}")
+            self.logger.error("Control flow deobfuscation failed: %s", e)
             return {"error": str(e), "success": False}
 
     def decrypt_strings(self, binary_path: Path) -> dict[str, Any]:
@@ -222,13 +232,15 @@ class GhidraBinaryIntegration:
             decrypted_count = len(result.get("decrypted_strings", []))
 
             self.logger.info(
-                f"String decryption completed for {binary_path.name}: {decrypted_count} strings decrypted",
+                "String decryption completed for %s: %d strings decrypted",
+                binary_path.name,
+                decrypted_count,
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"String decryption failed: {e}")
+            self.logger.error("String decryption failed: %s", e)
             return {"error": str(e), "success": False}
 
     def detect_anti_analysis(self, binary_path: Path) -> dict[str, Any]:
@@ -257,7 +269,9 @@ class GhidraBinaryIntegration:
                 techniques.append("anti-dump")
 
             self.logger.info(
-                f"Anti-analysis detection completed for {binary_path.name}: {len(techniques)} techniques found",
+                "Anti-analysis detection completed for %s: %d techniques found",
+                binary_path.name,
+                len(techniques),
             )
 
             return {
@@ -267,7 +281,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error(f"Anti-analysis detection failed: {e}")
+            self.logger.error("Anti-analysis detection failed: %s", e)
             return {"error": str(e), "success": False, "techniques": []}
 
     def perform_comprehensive_analysis(
@@ -295,13 +309,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Comprehensive analysis completed for {binary_path.name}: {result.get('function_count', 0)} functions analyzed",
+                "Comprehensive analysis completed for %s: %s functions analyzed",
+                binary_path.name,
+                result.get('function_count', 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Comprehensive analysis failed: {e}")
+            self.logger.error("Comprehensive analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def unpack_binary(self, binary_path: Path, max_iterations: int = 10) -> dict[str, Any]:
@@ -323,13 +339,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Unpacking completed for {binary_path.name}: OEP={hex(result.get('oep', 0))}",
+                "Unpacking completed for %s: OEP=%s",
+                binary_path.name,
+                hex(result.get('oep', 0)),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Unpacking failed: {e}")
+            self.logger.error("Unpacking failed: %s", e)
             return {"error": str(e), "success": False}
 
     def analyze_network_communication(self, binary_path: Path) -> dict[str, Any]:
@@ -350,13 +368,15 @@ class GhidraBinaryIntegration:
             )
 
             self.logger.info(
-                f"Network analysis completed for {binary_path.name}: {len(result.get('network_functions', []))} functions found",
+                "Network analysis completed for %s: %d functions found",
+                binary_path.name,
+                len(result.get('network_functions', [])),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error(f"Network analysis failed: {e}")
+            self.logger.error("Network analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def perform_licensing_crack_workflow(self, binary_path: Path) -> dict[str, Any]:
@@ -378,7 +398,7 @@ class GhidraBinaryIntegration:
             Dictionary with complete workflow results
 
         """
-        self.logger.info(f"Starting licensing crack workflow for {binary_path.name}")
+        self.logger.info("Starting licensing crack workflow for %s", binary_path.name)
 
         workflow_results = {
             "binary": str(binary_path),
@@ -404,7 +424,7 @@ class GhidraBinaryIntegration:
 
         workflow_results["stages"]["anti_analysis"] = self.detect_anti_analysis(binary_path)
 
-        self.logger.info(f"Licensing crack workflow completed for {binary_path.name}")
+        self.logger.info("Licensing crack workflow completed for %s", binary_path.name)
 
         return workflow_results
 

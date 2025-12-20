@@ -678,7 +678,7 @@ class HASPSentinelParser:
             Parsed HASPRequest object or None if invalid
 
         """
-        self.logger.debug(f"Starting HASP request parsing, data length: {len(data)}")
+        self.logger.debug("Starting HASP request parsing, data length: %d", len(data))
         try:
             if len(data) < 24:
                 self.logger.warning("HASP request too short")
@@ -690,7 +690,7 @@ class HASPSentinelParser:
             offset += 4
 
             if magic not in [0x48415350, 0x53454E54, 0x484C4D58, 0x48535350]:
-                self.logger.debug(f"Invalid HASP magic: 0x{magic:X}")
+                self.logger.debug("Invalid HASP magic: 0x%X", magic)
                 return None
 
             packet_version = struct.unpack("<H", data[offset : offset + 2])[0]
@@ -744,7 +744,7 @@ class HASPSentinelParser:
                     client_info_json = data[offset : offset + client_info_length].decode("utf-8")
                     client_info = json.loads(client_info_json)
                 except Exception as e:
-                    self.logger.debug(f"Failed to parse client info: {e}")
+                    self.logger.debug("Failed to parse client info: %s", e)
                 offset += client_info_length
 
             encryption_length = struct.unpack("<H", data[offset : offset + 2])[0]
@@ -785,12 +785,12 @@ class HASPSentinelParser:
             )
 
             command_name = HASPCommandType(command).name if command in HASPCommandType._value2member_map_ else f"UNKNOWN_{command:02X}"
-            self.logger.info(f"Parsed HASP {command_name} request for feature {feature_id} (session {session_id})")
+            self.logger.info("Parsed HASP %s request for feature %d (session %d)", command_name, feature_id, session_id)
 
             return request
 
         except Exception as e:
-            self.logger.error(f"Failed to parse HASP request: {e}")
+            self.logger.error("Failed to parse HASP request: %s", e)
             return None
 
     def _parse_additional_params(self, data: bytes) -> dict[str, Any]:
@@ -832,7 +832,7 @@ class HASPSentinelParser:
                     params[f"param_{param_type:04X}"] = param_data
 
         except Exception as e:
-            self.logger.debug(f"Error parsing additional params: {e}")
+            self.logger.debug("Error parsing additional params: %s", e)
 
         return params
 
@@ -1368,7 +1368,7 @@ class HASPSentinelParser:
 
     def _handle_unknown_command(self, request: HASPRequest) -> HASPResponse:
         """Handle unknown command."""
-        self.logger.warning(f"Unknown HASP command: 0x{request.command:02X}")
+        self.logger.warning("Unknown HASP command: 0x%02X", request.command)
         return self._create_error_response(request, HASPStatusCode.INV_SPEC)
 
     def _create_error_response(
@@ -1474,7 +1474,7 @@ class HASPSentinelParser:
             return bytes(packet)
 
         except Exception as e:
-            self.logger.error(f"Failed to serialize HASP response: {e}")
+            self.logger.error("Failed to serialize HASP response: %s", e)
             return struct.pack("<II", 0x48415350, response.status)
 
     def add_feature(self, feature: HASPFeature) -> None:
@@ -1487,7 +1487,7 @@ class HASPSentinelParser:
         self.features[feature.feature_id] = feature
         self.memory_storage[feature.feature_id] = bytearray(feature.memory_size)
         self._initialize_feature_memory(feature.feature_id)
-        self.logger.info(f"Added HASP feature {feature.feature_id}: {feature.name}")
+        self.logger.info("Added HASP feature %d: %s", feature.feature_id, feature.name)
 
     def remove_feature(self, feature_id: int) -> None:
         """Remove HASP feature from emulator.
@@ -1500,7 +1500,7 @@ class HASPSentinelParser:
             del self.features[feature_id]
             if feature_id in self.memory_storage:
                 del self.memory_storage[feature_id]
-            self.logger.info(f"Removed HASP feature {feature_id}")
+            self.logger.info("Removed HASP feature %d", feature_id)
 
     def get_active_sessions(self) -> list[dict[str, Any]]:
         """Get list of active sessions.
@@ -1545,7 +1545,7 @@ class HASPSentinelParser:
 
         tree = ET.ElementTree(root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
-        self.logger.info(f"Exported license data to {output_path}")
+        self.logger.info("Exported license data to %s", output_path)
 
 
 class HASPPacketAnalyzer:
@@ -1586,10 +1586,10 @@ class HASPPacketAnalyzer:
                         packets.append(packet)
                         self.captured_packets.append(packet)
 
-            self.logger.info(f"Parsed {len(packets)} HASP packets from {pcap_path}")
+            self.logger.info("Parsed %d HASP packets from %s", len(packets), pcap_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to parse PCAP file: {e}")
+            self.logger.error("Failed to parse PCAP file: %s", e)
 
         return packets
 
@@ -1649,7 +1649,7 @@ class HASPPacketAnalyzer:
             return packet
 
         except Exception as e:
-            self.logger.debug(f"Error parsing packet: {e}")
+            self.logger.debug("Error parsing packet: %s", e)
             return None
 
     def _ip_to_str(self, ip_bytes: bytes) -> str:
@@ -1703,7 +1703,7 @@ class HASPPacketAnalyzer:
                 if command in HASPCommandType._value2member_map_:
                     return HASPCommandType(command).name
             except Exception as e:
-                self.logger.debug(f"Failed to extract command from payload: {e}")
+                self.logger.debug("Failed to extract command from payload: %s", e)
 
         return "UNKNOWN"
 
@@ -1764,7 +1764,7 @@ class HASPPacketAnalyzer:
                 return server_info
 
         except Exception as e:
-            self.logger.debug(f"Failed to extract server info: {e}")
+            self.logger.debug("Failed to extract server info: %s", e)
 
         return None
 
@@ -1789,7 +1789,7 @@ class HASPPacketAnalyzer:
         response = self.parser.generate_response(request)
         response_bytes = self.parser.serialize_response(response)
 
-        self.logger.info(f"Generated spoofed {request_packet.packet_type} response")
+        self.logger.info("Generated spoofed %s response", request_packet.packet_type)
 
         return response_bytes
 
@@ -1826,7 +1826,7 @@ class HASPPacketAnalyzer:
         with open(output_path, "w") as f:
             json.dump(analysis, f, indent=2)
 
-        self.logger.info(f"Exported capture analysis to {output_path}")
+        self.logger.info("Exported capture analysis to %s", output_path)
 
 
 class HASPUSBEmulator:
@@ -1891,7 +1891,7 @@ class HASPUSBEmulator:
         if request == HASPUSBProtocol.CMD_GET_RTC:
             return self._handle_usb_get_rtc()
 
-        self.logger.warning(f"Unknown USB request: 0x{request:02X}")
+        self.logger.warning("Unknown USB request: 0x%02X", request)
         return b"\x00" * 64
 
     def _handle_usb_read_memory(self, address: int, length: int) -> bytes:
@@ -2055,7 +2055,7 @@ class HASPServerEmulator:
         tcp_socket.bind((self.bind_address, self.port))
         tcp_socket.listen(5)
 
-        self.logger.info(f"HASP server started on {self.bind_address}:{self.port}")
+        self.logger.info("HASP server started on %s:%d", self.bind_address, self.port)
 
         udp_thread = threading.Thread(target=self._handle_udp, args=(udp_socket,))
         udp_thread.daemon = True
@@ -2083,18 +2083,18 @@ class HASPServerEmulator:
                 if HASPNetworkProtocol.DISCOVERY_MAGIC in data:
                     response = self.generate_discovery_response()
                     sock.sendto(response, addr)
-                    self.logger.info(f"Sent discovery response to {addr}")
+                    self.logger.info("Sent discovery response to %s", addr)
 
             except Exception as e:
                 if self.running:
-                    self.logger.error(f"UDP handler error: {e}")
+                    self.logger.error("UDP handler error: %s", e)
 
     def _handle_tcp(self, sock: socket.socket) -> None:
         """Handle TCP license requests."""
         while self.running:
             try:
                 client_sock, addr = sock.accept()
-                self.logger.info(f"TCP connection from {addr}")
+                self.logger.info("TCP connection from %s", addr)
 
                 if data := client_sock.recv(4096):
                     if response := self.handle_client_request(data):
@@ -2104,7 +2104,7 @@ class HASPServerEmulator:
 
             except Exception as e:
                 if self.running:
-                    self.logger.error(f"TCP handler error: {e}")
+                    self.logger.error("TCP handler error: %s", e)
 
     def stop_server(self) -> None:
         """Stop HASP license server."""

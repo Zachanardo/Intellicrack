@@ -166,7 +166,7 @@ class HardwareFingerPrintSpoofer:
                         if "serial" in line.lower():
                             return line.split(":")[1].strip()
         except OSError as e:
-            logger.debug(f"Failed to retrieve CPU ID from /proc/cpuinfo: {e}")
+            logger.debug("Failed to retrieve CPU ID from /proc/cpuinfo: %s", e)
         return "BFEBFBFF000306C3"
 
     def _get_cpu_name(self) -> str:
@@ -182,13 +182,13 @@ class HardwareFingerPrintSpoofer:
                     cpu_name: str = cpu.Name.strip()
                     return cpu_name
         except AttributeError as e:
-            logger.debug(f"WMI CPU name query failed: {e}")
+            logger.debug("WMI CPU name query failed: %s", e)
 
         try:
             if cpu_name := platform.processor():
                 return cpu_name
         except Exception as e:
-            logger.debug(f"Platform CPU name query failed: {e}")
+            logger.debug("Platform CPU name query failed: %s", e)
 
         return "Intel(R) Core(TM) i7-4770K CPU @ 3.50GHz"
 
@@ -205,7 +205,7 @@ class HardwareFingerPrintSpoofer:
                     serial: str = board.SerialNumber.strip()
                     return serial
         except Exception as e:
-            logger.debug(f"Failed to retrieve motherboard serial via WMI: {e}")
+            logger.debug("Failed to retrieve motherboard serial via WMI: %s", e)
         return "MB-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(12))
 
     def _get_motherboard_manufacturer(self) -> str:
@@ -221,7 +221,7 @@ class HardwareFingerPrintSpoofer:
                     manufacturer: str = board.Manufacturer.strip()
                     return manufacturer
         except Exception as e:
-            logger.debug(f"Failed to retrieve motherboard manufacturer via WMI: {e}")
+            logger.debug("Failed to retrieve motherboard manufacturer via WMI: %s", e)
         return "ASUSTeK COMPUTER INC."
 
     def _get_bios_serial(self) -> str:
@@ -237,7 +237,7 @@ class HardwareFingerPrintSpoofer:
                     serial: str = bios.SerialNumber.strip()
                     return serial
         except Exception as e:
-            logger.debug(f"Failed to retrieve BIOS serial via WMI: {e}")
+            logger.debug("Failed to retrieve BIOS serial via WMI: %s", e)
         return "BIOS-" + "".join(secrets.choice("0123456789") for _ in range(10))
 
     def _get_bios_version(self) -> str:
@@ -253,7 +253,7 @@ class HardwareFingerPrintSpoofer:
                     version: str = bios.SMBIOSBIOSVersion.strip()
                     return version
         except Exception as e:
-            logger.debug(f"Failed to retrieve BIOS version via WMI: {e}")
+            logger.debug("Failed to retrieve BIOS version via WMI: %s", e)
         return "2.17.1246"
 
     def _get_disk_serials(self) -> list[str]:
@@ -268,7 +268,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 serials.extend(disk.SerialNumber.strip() for disk in self.wmi_client.Win32_PhysicalMedia() if disk.SerialNumber)
         except Exception as e:
-            logger.debug(f"Failed to retrieve disk serials via WMI: {e}")
+            logger.debug("Failed to retrieve disk serials via WMI: %s", e)
 
         if not serials:
             serials.append("WD-" + "".join(secrets.choice("0123456789ABCDEF") for _ in range(10)))
@@ -287,7 +287,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 models.extend(disk.Model.strip() for disk in self.wmi_client.Win32_DiskDrive() if disk.Model)
         except Exception as e:
-            logger.debug(f"Failed to retrieve disk models via WMI: {e}")
+            logger.debug("Failed to retrieve disk models via WMI: %s", e)
 
         if not models:
             models.append("Samsung SSD 970 EVO Plus 1TB")
@@ -312,7 +312,7 @@ class HardwareFingerPrintSpoofer:
                         if "addr" in addr and addr["addr"] != "00:00:00:00:00:00"
                     )
         except Exception as e:
-            logger.debug(f"Failed to retrieve MAC addresses via netifaces: {e}")
+            logger.debug("Failed to retrieve MAC addresses via netifaces: %s", e)
 
         if not macs:
             mac = "00:50:56:" + ":".join(["".join(secrets.choice("0123456789ABCDEF") for _ in range(2)) for _ in range(3)])
@@ -333,7 +333,7 @@ class HardwareFingerPrintSpoofer:
                     system_uuid: str = system.UUID.strip()
                     return system_uuid
         except Exception as e:
-            logger.debug(f"Failed to retrieve system UUID via WMI: {e}")
+            logger.debug("Failed to retrieve system UUID via WMI: %s", e)
         return str(uuid.uuid4()).upper()
 
     def _get_machine_guid(self) -> str:
@@ -348,7 +348,7 @@ class HardwareFingerPrintSpoofer:
                 guid: str = winreg.QueryValueEx(key, "MachineGuid")[0]
                 return guid
         except Exception as e:
-            logger.debug(f"Failed to retrieve machine GUID from registry: {e}")
+            logger.debug("Failed to retrieve machine GUID from registry: %s", e)
         return str(uuid.uuid4()).upper()
 
     def _get_volume_serial(self) -> str:
@@ -365,7 +365,7 @@ class HardwareFingerPrintSpoofer:
                     if "Serial Number" in line:
                         return line.split()[-1]
         except Exception as e:
-            logger.debug(f"Failed to retrieve volume serial: {e}")
+            logger.debug("Failed to retrieve volume serial: %s", e)
         return "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
 
     def _get_product_id(self) -> str:
@@ -380,7 +380,7 @@ class HardwareFingerPrintSpoofer:
                 product_id: str = winreg.QueryValueEx(key, "ProductId")[0]
                 return product_id
         except Exception as e:
-            logger.debug(f"Failed to retrieve Windows product ID from registry: {e}")
+            logger.debug("Failed to retrieve Windows product ID from registry: %s", e)
         return "00000-00000-00000-AAOEM"
 
     def _get_network_adapters(self) -> list[dict[str, str]]:
@@ -404,7 +404,7 @@ class HardwareFingerPrintSpoofer:
                     if nic.PhysicalAdapter
                 )
         except Exception as e:
-            logger.debug(f"Failed to retrieve network adapter info via WMI: {e}")
+            logger.debug("Failed to retrieve network adapter info via WMI: %s", e)
 
         return adapters
 
@@ -420,7 +420,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 gpu_ids.extend(gpu.PNPDeviceID for gpu in self.wmi_client.Win32_VideoController())
         except Exception as e:
-            logger.debug(f"Failed to retrieve GPU IDs via WMI: {e}")
+            logger.debug("Failed to retrieve GPU IDs via WMI: %s", e)
 
         if not gpu_ids:
             gpu_ids.append("PCI\\VEN_10DE&DEV_1B80&SUBSYS_85AA1043&REV_A1")
@@ -443,7 +443,7 @@ class HardwareFingerPrintSpoofer:
                     if hasattr(mem, "SerialNumber") and mem.SerialNumber
                 )
         except Exception as e:
-            logger.debug(f"Failed to retrieve RAM serials via WMI: {e}")
+            logger.debug("Failed to retrieve RAM serials via WMI: %s", e)
 
         if not serials:
             serials.append("".join(secrets.choice("0123456789") for _ in range(8)))
@@ -462,7 +462,7 @@ class HardwareFingerPrintSpoofer:
             if self.wmi_client:
                 devices.extend({"device_id": usb.DeviceID, "pnp_id": usb.PNPDeviceID} for usb in self.wmi_client.Win32_USBHub())
         except Exception as e:
-            logger.debug(f"Failed to retrieve USB device info via WMI: {e}")
+            logger.debug("Failed to retrieve USB device info via WMI: %s", e)
 
         return devices
 
@@ -826,12 +826,12 @@ class HardwareFingerPrintSpoofer:
                                         mac = self.spoofed_hardware.mac_addresses[i % len(self.spoofed_hardware.mac_addresses)]
                                         winreg.SetValueEx(subkey, "NetworkAddress", 0, winreg.REG_SZ, mac)
                                 except OSError as e:
-                                    logger.debug(f"Failed to set NetworkAddress for adapter {subkey_name}: {e}")
+                                    logger.debug("Failed to set NetworkAddress for adapter %s: %s", subkey_name, e)
                         i += 1
                     except OSError:
                         break
         except Exception as e:
-            logger.debug(f"Failed to spoof network registry settings: {e}")
+            logger.debug("Failed to spoof network registry settings: %s", e)
 
     def _apply_hook_spoof(self) -> bool:
         """Apply spoofing via API hooking.
@@ -1162,7 +1162,7 @@ class HardwareFingerPrintSpoofer:
             return S_OK
 
         except Exception as e:
-            logger.error(f"Failed to create spoofed enumerator: {e}")
+            logger.error("Failed to create spoofed enumerator: %s", e)
             return E_FAIL
 
     def _get_spoofed_values_for_class(self, hw_class: str) -> list[dict[str, Any]]:
@@ -2452,7 +2452,7 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "ProcessorNameString", 0, winreg.REG_SZ, cpu_name)
                 winreg.SetValueEx(key, "Identifier", 0, winreg.REG_SZ, cpu_id)
         except Exception as e:
-            logger.debug(f"Failed to spoof CPU information in registry: {e}")
+            logger.debug("Failed to spoof CPU information in registry: %s", e)
 
     def _spoof_motherboard(self, serial: str | None = None, manufacturer: str | None = None) -> None:
         """Spoof motherboard information.
@@ -2474,7 +2474,7 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "BaseBoardManufacturer", 0, winreg.REG_SZ, manufacturer)
                 winreg.SetValueEx(key, "BaseBoardProduct", 0, winreg.REG_SZ, serial)
         except Exception as e:
-            logger.debug(f"Failed to spoof motherboard information in registry: {e}")
+            logger.debug("Failed to spoof motherboard information in registry: %s", e)
 
     def _spoof_bios(self, serial: str | None = None, version: str | None = None) -> None:
         """Spoof BIOS information.
@@ -2495,7 +2495,7 @@ class HardwareFingerPrintSpoofer:
                 winreg.SetValueEx(key, "SystemManufacturer", 0, winreg.REG_SZ, "System Manufacturer")
                 winreg.SetValueEx(key, "SystemProductName", 0, winreg.REG_SZ, serial)
         except Exception as e:
-            logger.debug(f"Failed to spoof BIOS information in registry: {e}")
+            logger.debug("Failed to spoof BIOS information in registry: %s", e)
 
     def _spoof_disk(self, serials: list[str] | None = None) -> None:
         """Spoof disk serial numbers.
@@ -2512,7 +2512,7 @@ class HardwareFingerPrintSpoofer:
                 with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\IDE\\Disk{i}") as key:
                     winreg.SetValueEx(key, "SerialNumber", 0, winreg.REG_SZ, serial)
         except Exception as e:
-            logger.debug(f"Failed to spoof disk serial numbers in registry: {e}")
+            logger.debug("Failed to spoof disk serial numbers in registry: %s", e)
 
     def _spoof_mac_address(self, mac_addresses: list[str] | None = None) -> None:
         """Spoof MAC addresses.
@@ -2540,7 +2540,7 @@ class HardwareFingerPrintSpoofer:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation") as key:
                 winreg.SetValueEx(key, "ComputerHardwareId", 0, winreg.REG_SZ, uuid_str)
         except Exception as e:
-            logger.debug(f"Failed to spoof system UUID in registry: {e}")
+            logger.debug("Failed to spoof system UUID in registry: %s", e)
 
     def _spoof_gpu(self, gpu_ids: list[str] | None = None) -> None:
         """Spoof GPU information.
@@ -2556,7 +2556,7 @@ class HardwareFingerPrintSpoofer:
             with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Video"):
                 pass
         except Exception as e:
-            logger.debug(f"Failed to spoof GPU information in registry: {e}")
+            logger.debug("Failed to spoof GPU information in registry: %s", e)
 
     def _spoof_ram(self, serials: list[str] | None = None) -> None:
         """Spoof RAM serial numbers.
@@ -2581,7 +2581,7 @@ class HardwareFingerPrintSpoofer:
         try:
             pass
         except Exception as e:
-            logger.debug(f"Failed to spoof USB device information in registry: {e}")
+            logger.debug("Failed to spoof USB device information in registry: %s", e)
 
     def restore_original(self) -> bool:
         """Restore original hardware identifiers.
@@ -2626,12 +2626,12 @@ class HardwareFingerPrintSpoofer:
                                 try:
                                     winreg.DeleteValue(subkey, "NetworkAddress")
                                 except OSError as e:
-                                    logger.debug(f"Failed to delete NetworkAddress for adapter {subkey_name}: {e}")
+                                    logger.debug("Failed to delete NetworkAddress for adapter %s: %s", subkey_name, e)
                         i += 1
                     except OSError:
                         break
         except Exception as e:
-            logger.debug(f"Failed to restore network registry settings: {e}")
+            logger.debug("Failed to restore network registry settings: %s", e)
 
     def _remove_hooks(self) -> None:
         """Remove installed hooks."""
@@ -2695,6 +2695,6 @@ class HardwareFingerPrintSpoofer:
                 self.spoofed_hardware = HardwareIdentifiers(**spoofed_config)
                 return True
         except Exception as e:
-            logger.debug(f"Failed to import spoofing configuration: {e}")
+            logger.debug("Failed to import spoofing configuration: %s", e)
 
         return False

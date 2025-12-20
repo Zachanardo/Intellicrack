@@ -4007,7 +4007,7 @@ intellicrack\cli\cli.py:2942:13: WPS504 Found negated condition
 intellicrack\cli\cli.py:2947:9: WPS111 Found too short name: e < 2
 
 
-545 findings in intellicrack\ai\qemu_manager.py
+538 findings in intellicrack\ai\qemu_manager.py
 
 intellicrack\ai\qemu_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 14.7 > 8
 
@@ -4495,8 +4495,6 @@ intellicrack\ai\qemu_manager.py:1798:9: WPS221 Found line with high Jones Comple
 
 intellicrack\ai\qemu_manager.py:1806:17: WPS226 Found string literal over-use: id > 3
 
-intellicrack\ai\qemu_manager.py:1839:84: WPS226 Found string literal over-use: ) > 3
-
 intellicrack\ai\qemu_manager.py:1842:5: C901 'QEMUManager.rollback_snapshot' is too complex (16)
 
 intellicrack\ai\qemu_manager.py:1842:5: WPS238 Found too many raises in a function: 4 > 3
@@ -4639,8 +4637,6 @@ intellicrack\ai\qemu_manager.py:2271:29: WPS220 Found too deep nesting: 28 > 20
 
 intellicrack\ai\qemu_manager.py:2273:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\qemu_manager.py:2293:34: WPS237 Found a too complex `f` string
-
 intellicrack\ai\qemu_manager.py:2301:25: WPS505 Found nested `try` block
 
 intellicrack\ai\qemu_manager.py:2301:25: WPS220 Found too deep nesting: 24 > 20
@@ -4683,421 +4679,411 @@ intellicrack\ai\qemu_manager.py:2328:45: WPS220 Found too deep nesting: 44 > 20
 
 intellicrack\ai\qemu_manager.py:2333:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2334:49: WPS237 Found a too complex `f` string
-
-intellicrack\ai\qemu_manager.py:2335:79: WPS226 Found string literal over-use: .2f > 3
-
-intellicrack\ai\qemu_manager.py:2339:45: WPS220 Found too deep nesting: 44 > 20
-
-intellicrack\ai\qemu_manager.py:2340:45: WPS220 Found too deep nesting: 44 > 20
-
 intellicrack\ai\qemu_manager.py:2341:45: WPS220 Found too deep nesting: 44 > 20
 
 intellicrack\ai\qemu_manager.py:2342:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2344:41: WPS220 Found too deep nesting: 40 > 20
+intellicrack\ai\qemu_manager.py:2343:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2344:41: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2344:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2346:45: WPS220 Found too deep nesting: 44 > 20
+intellicrack\ai\qemu_manager.py:2346:41: WPS220 Found too deep nesting: 40 > 20
 
-intellicrack\ai\qemu_manager.py:2347:49: WPS220 Found too deep nesting: 48 > 20
+intellicrack\ai\qemu_manager.py:2346:41: WPS111 Found too short name: e < 2
 
 intellicrack\ai\qemu_manager.py:2348:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2350:41: WPS220 Found too deep nesting: 40 > 20
+intellicrack\ai\qemu_manager.py:2349:49: WPS220 Found too deep nesting: 48 > 20
 
-intellicrack\ai\qemu_manager.py:2355:37: WPS220 Found too deep nesting: 36 > 20
+intellicrack\ai\qemu_manager.py:2350:45: WPS220 Found too deep nesting: 44 > 20
 
-intellicrack\ai\qemu_manager.py:2358:33: WPS220 Found too deep nesting: 32 > 20
+intellicrack\ai\qemu_manager.py:2352:41: WPS220 Found too deep nesting: 40 > 20
 
-intellicrack\ai\qemu_manager.py:2360:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:2357:37: WPS220 Found too deep nesting: 36 > 20
 
-intellicrack\ai\qemu_manager.py:2360:25: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2360:33: WPS220 Found too deep nesting: 32 > 20
 
-intellicrack\ai\qemu_manager.py:2361:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\qemu_manager.py:2362:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\qemu_manager.py:2362:25: WPS111 Found too short name: e < 2
 
 intellicrack\ai\qemu_manager.py:2363:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\qemu_manager.py:2367:17: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2365:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\qemu_manager.py:2368:67: WPS226 Found string literal over-use: :  > 3
+intellicrack\ai\qemu_manager.py:2369:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2397:91: WPS226 Found string literal over-use: .1f > 3
+intellicrack\ai\qemu_manager.py:2370:67: WPS226 Found string literal over-use: :  > 3
 
-intellicrack\ai\qemu_manager.py:2415:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)
+intellicrack\ai\qemu_manager.py:2418:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)
 
-intellicrack\ai\qemu_manager.py:2415:5: WPS210 Found too many local variables: 19 > 5
+intellicrack\ai\qemu_manager.py:2418:5: WPS210 Found too many local variables: 19 > 5
 
-intellicrack\ai\qemu_manager.py:2415:5: WPS213 Found too many expressions: 23 > 9
+intellicrack\ai\qemu_manager.py:2418:5: WPS213 Found too many expressions: 23 > 9
 
-intellicrack\ai\qemu_manager.py:2415:5: WPS231 Found function with too much cognitive complexity: 66 > 12
+intellicrack\ai\qemu_manager.py:2418:5: WPS231 Found function with too much cognitive complexity: 66 > 12
 
-intellicrack\ai\qemu_manager.py:2449:13: WPS226 Found string literal over-use: snapshots_removed > 3
+intellicrack\ai\qemu_manager.py:2454:13: WPS226 Found string literal over-use: snapshots_removed > 3
 
-intellicrack\ai\qemu_manager.py:2450:13: WPS226 Found string literal over-use: snapshots_kept > 3
+intellicrack\ai\qemu_manager.py:2455:13: WPS226 Found string literal over-use: snapshots_kept > 3
 
-intellicrack\ai\qemu_manager.py:2452:13: WPS226 Found string literal over-use: space_freed_mb > 3
+intellicrack\ai\qemu_manager.py:2457:13: WPS226 Found string literal over-use: space_freed_mb > 3
 
-intellicrack\ai\qemu_manager.py:2477:56: WPS111 Found too short name: x < 2
+intellicrack\ai\qemu_manager.py:2482:56: WPS111 Found too short name: x < 2
 
-intellicrack\ai\qemu_manager.py:2494:17: WPS223 Found too many `elif` branches: 4 > 3
+intellicrack\ai\qemu_manager.py:2499:17: WPS223 Found too many `elif` branches: 4 > 3
 
-intellicrack\ai\qemu_manager.py:2494:20: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:2499:20: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:2499:21: WPS204 Found overused expression: cleanup_results['snapshots_kept']; used 6 > 4
+intellicrack\ai\qemu_manager.py:2504:21: WPS204 Found overused expression: cleanup_results['snapshots_kept']; used 6 > 4
 
-intellicrack\ai\qemu_manager.py:2521:13: WPS229 Found too long ``try`` body length: 8 > 1
+intellicrack\ai\qemu_manager.py:2527:13: WPS229 Found too long ``try`` body length: 8 > 1
 
-intellicrack\ai\qemu_manager.py:2526:35: WPS441 Found control variable used after block: snapshot
+intellicrack\ai\qemu_manager.py:2532:35: WPS441 Found control variable used after block: snapshot
 
-intellicrack\ai\qemu_manager.py:2527:49: WPS441 Found control variable used after block: snapshot
+intellicrack\ai\qemu_manager.py:2533:49: WPS441 Found control variable used after block: snapshot
 
-intellicrack\ai\qemu_manager.py:2545:57: WPS441 Found control variable used after block: snapshot
+intellicrack\ai\qemu_manager.py:2551:57: WPS441 Found control variable used after block: snapshot
 
-intellicrack\ai\qemu_manager.py:2547:40: WPS441 Found control variable used after block: snapshot
+intellicrack\ai\qemu_manager.py:2553:40: WPS441 Found control variable used after block: snapshot
 
-intellicrack\ai\qemu_manager.py:2553:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2559:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2601:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)
+intellicrack\ai\qemu_manager.py:2608:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)
 
-intellicrack\ai\qemu_manager.py:2601:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\qemu_manager.py:2608:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\qemu_manager.py:2601:5: WPS213 Found too many expressions: 20 > 9
+intellicrack\ai\qemu_manager.py:2608:5: WPS213 Found too many expressions: 20 > 9
 
-intellicrack\ai\qemu_manager.py:2601:5: WPS231 Found function with too much cognitive complexity: 40 > 12
+intellicrack\ai\qemu_manager.py:2608:5: WPS231 Found function with too much cognitive complexity: 40 > 12
 
-intellicrack\ai\qemu_manager.py:2622:13: WPS226 Found string literal over-use: tasks_performed > 3
+intellicrack\ai\qemu_manager.py:2629:13: WPS226 Found string literal over-use: tasks_performed > 3
 
-intellicrack\ai\qemu_manager.py:2647:13: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\qemu_manager.py:2654:13: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\qemu_manager.py:2651:17: WPS204 Found overused expression: maintenance_results['tasks_performed']; used 5 > 4
+intellicrack\ai\qemu_manager.py:2658:17: WPS204 Found overused expression: maintenance_results['tasks_performed']; used 5 > 4
 
-intellicrack\ai\qemu_manager.py:2654:59: WPS226 Found string literal over-use: corrupted_snapshots > 3
+intellicrack\ai\qemu_manager.py:2661:59: WPS226 Found string literal over-use: corrupted_snapshots > 3
 
-intellicrack\ai\qemu_manager.py:2655:21: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:2662:21: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:2655:21: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\qemu_manager.py:2662:21: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\qemu_manager.py:2656:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:2663:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:2657:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:2664:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:2658:21: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2665:21: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2659:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:2666:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:2659:25: WPS204 Found overused expression: maintenance_results['errors']; used 5 > 4
+intellicrack\ai\qemu_manager.py:2666:25: WPS204 Found overused expression: maintenance_results['errors']; used 5 > 4
 
-intellicrack\ai\qemu_manager.py:2663:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2670:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2670:13: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:2677:13: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:2679:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2686:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2686:13: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:2693:13: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:2692:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2699:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2703:13: WPS226 Found string literal over-use: snapshots_remaining > 3
+intellicrack\ai\qemu_manager.py:2710:13: WPS226 Found string literal over-use: snapshots_remaining > 3
 
-intellicrack\ai\qemu_manager.py:2704:13: WPS226 Found string literal over-use: total_disk_usage_mb > 3
+intellicrack\ai\qemu_manager.py:2711:13: WPS226 Found string literal over-use: total_disk_usage_mb > 3
 
-intellicrack\ai\qemu_manager.py:2705:17: WPS221 Found line with high Jones Complexity: 21 > 14
+intellicrack\ai\qemu_manager.py:2712:17: WPS221 Found line with high Jones Complexity: 21 > 14
 
-intellicrack\ai\qemu_manager.py:2705:66: WPS111 Found too short name: s < 2
+intellicrack\ai\qemu_manager.py:2712:66: WPS111 Found too short name: s < 2
 
-intellicrack\ai\qemu_manager.py:2736:5: WPS213 Found too many expressions: 10 > 9
+intellicrack\ai\qemu_manager.py:2744:5: WPS213 Found too many expressions: 10 > 9
 
-intellicrack\ai\qemu_manager.py:2736:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+intellicrack\ai\qemu_manager.py:2744:5: WPS231 Found function with too much cognitive complexity: 18 > 12
 
-intellicrack\ai\qemu_manager.py:2756:13: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:2764:13: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:2765:17: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:2773:17: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:2770:29: WPS432 Found magic number: 30
+intellicrack\ai\qemu_manager.py:2778:29: WPS432 Found magic number: 30
 
-intellicrack\ai\qemu_manager.py:2794:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2802:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2809:5: WPS115 Found upper-case constant in a class: SUPPORTED_ARCHITECTURES
+intellicrack\ai\qemu_manager.py:2819:5: WPS115 Found upper-case constant in a class: SUPPORTED_ARCHITECTURES
 
-intellicrack\ai\qemu_manager.py:2810:20: WPS226 Found string literal over-use: qemu > 3
+intellicrack\ai\qemu_manager.py:2820:20: WPS226 Found string literal over-use: qemu > 3
 
-intellicrack\ai\qemu_manager.py:2826:12: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:2836:12: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:2839:71: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\qemu_manager.py:2849:71: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\qemu_manager.py:2849:82: WPS432 Found magic number: 2048
+intellicrack\ai\qemu_manager.py:2859:82: WPS432 Found magic number: 2048
 
-intellicrack\ai\qemu_manager.py:2854:88: WPS432 Found magic number: 55555
+intellicrack\ai\qemu_manager.py:2864:88: WPS432 Found magic number: 55555
 
-intellicrack\ai\qemu_manager.py:2855:78: WPS432 Found magic number: 300
+intellicrack\ai\qemu_manager.py:2865:78: WPS432 Found magic number: 300
 
-intellicrack\ai\qemu_manager.py:2860:18: WPS110 Found wrong variable name: value
+intellicrack\ai\qemu_manager.py:2870:18: WPS110 Found wrong variable name: value
 
-intellicrack\ai\qemu_manager.py:2863:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\qemu_manager.py:2873:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\qemu_manager.py:2876:12: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:2886:12: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:2879:12: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:2889:12: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:2892:12: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:2902:12: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:2910:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\qemu_manager.py:2920:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\qemu_manager.py:2910:5: WPS231 Found function with too much cognitive complexity: 15 > 12
+intellicrack\ai\qemu_manager.py:2920:5: WPS231 Found function with too much cognitive complexity: 15 > 12
 
-intellicrack\ai\qemu_manager.py:2929:9: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:2939:9: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:2930:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:2940:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:2946:34: WPS237 Found a too complex `f` string
+intellicrack\ai\qemu_manager.py:2957:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:2947:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:2965:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\qemu_manager.py:2955:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\qemu_manager.py:3010:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\qemu_manager.py:3000:13: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\qemu_manager.py:3010:33: WPS237 Found a too complex `f` string
 
-intellicrack\ai\qemu_manager.py:3000:33: WPS237 Found a too complex `f` string
+intellicrack\ai\qemu_manager.py:3010:65: WPS432 Found magic number: 5900
 
-intellicrack\ai\qemu_manager.py:3000:65: WPS432 Found magic number: 5900
+intellicrack\ai\qemu_manager.py:3010:73: WPS432 Found magic number: 5900
 
-intellicrack\ai\qemu_manager.py:3000:73: WPS432 Found magic number: 5900
+intellicrack\ai\qemu_manager.py:3017:21: WPS237 Found a too complex `f` string
 
-intellicrack\ai\qemu_manager.py:3007:21: WPS237 Found a too complex `f` string
+intellicrack\ai\qemu_manager.py:3017:78: WPS432 Found magic number: 2222
 
-intellicrack\ai\qemu_manager.py:3007:78: WPS432 Found magic number: 2222
+intellicrack\ai\qemu_manager.py:3028:12: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:3018:12: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:3045:13: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\ai\qemu_manager.py:3035:13: WPS221 Found line with high Jones Complexity: 16 > 14
+intellicrack\ai\qemu_manager.py:3046:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3036:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3046:16: WPS204 Found overused expression: (OSError, ValueError, RuntimeError); used 9 > 7
 
-intellicrack\ai\qemu_manager.py:3036:16: WPS204 Found overused expression: (OSError, ValueError, RuntimeError); used 9 > 7
+intellicrack\ai\qemu_manager.py:3083:9: WPS229 Found too long ``try`` body length: 3 > 1
 
-intellicrack\ai\qemu_manager.py:3073:9: WPS229 Found too long ``try`` body length: 3 > 1
+intellicrack\ai\qemu_manager.py:3088:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3078:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3091:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3081:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3095:5: WPS231 Found function with too much cognitive complexity: 13 > 12
 
-intellicrack\ai\qemu_manager.py:3085:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+intellicrack\ai\qemu_manager.py:3108:9: WPS229 Found too long ``try`` body length: 9 > 1
 
-intellicrack\ai\qemu_manager.py:3098:9: WPS229 Found too long ``try`` body length: 9 > 1
+intellicrack\ai\qemu_manager.py:3125:34: WPS432 Found magic number: 4096
 
-intellicrack\ai\qemu_manager.py:3115:34: WPS432 Found magic number: 4096
+intellicrack\ai\qemu_manager.py:3130:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3120:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3134:5: C901 'QEMUManager._send_qmp_command' is too complex (13)
 
-intellicrack\ai\qemu_manager.py:3124:5: C901 'QEMUManager._send_qmp_command' is too complex (13)
+intellicrack\ai\qemu_manager.py:3134:5: WPS212 Found too many return statements: 8 > 5
 
-intellicrack\ai\qemu_manager.py:3124:5: WPS212 Found too many return statements: 8 > 5
+intellicrack\ai\qemu_manager.py:3134:5: WPS210 Found too many local variables: 9 > 5
 
-intellicrack\ai\qemu_manager.py:3124:5: WPS210 Found too many local variables: 9 > 5
+intellicrack\ai\qemu_manager.py:3134:5: WPS213 Found too many expressions: 14 > 9
 
-intellicrack\ai\qemu_manager.py:3124:5: WPS213 Found too many expressions: 14 > 9
+intellicrack\ai\qemu_manager.py:3134:5: WPS231 Found function with too much cognitive complexity: 39 > 12
 
-intellicrack\ai\qemu_manager.py:3124:5: WPS231 Found function with too much cognitive complexity: 39 > 12
+intellicrack\ai\qemu_manager.py:3150:9: WPS229 Found too long ``try`` body length: 17 > 1
 
-intellicrack\ai\qemu_manager.py:3140:9: WPS229 Found too long ``try`` body length: 17 > 1
+intellicrack\ai\qemu_manager.py:3169:34: WPS432 Found magic number: 4096
 
-intellicrack\ai\qemu_manager.py:3159:34: WPS432 Found magic number: 4096
+intellicrack\ai\qemu_manager.py:3175:78: WPS336 Found explicit string concatenation
 
-intellicrack\ai\qemu_manager.py:3165:78: WPS336 Found explicit string concatenation
+intellicrack\ai\qemu_manager.py:3177:43: WPS432 Found magic number: 4096
 
-intellicrack\ai\qemu_manager.py:3167:43: WPS432 Found magic number: 4096
+intellicrack\ai\qemu_manager.py:3184:46: WPS336 Found explicit string concatenation
 
-intellicrack\ai\qemu_manager.py:3174:46: WPS336 Found explicit string concatenation
+intellicrack\ai\qemu_manager.py:3188:34: WPS432 Found magic number: 8192
 
-intellicrack\ai\qemu_manager.py:3178:34: WPS432 Found magic number: 8192
+intellicrack\ai\qemu_manager.py:3192:13: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3182:13: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3194:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3184:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3197:17: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\qemu_manager.py:3187:17: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\qemu_manager.py:3198:21: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3188:21: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3198:21: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3188:21: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3199:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:3189:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:3200:21: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3190:21: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3201:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:3191:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:3202:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:3192:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:3205:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3195:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3209:5: WPS231 Found function with too much cognitive complexity: 14 > 12
 
-intellicrack\ai\qemu_manager.py:3199:5: WPS231 Found function with too much cognitive complexity: 14 > 12
+intellicrack\ai\qemu_manager.py:3224:9: WPS229 Found too long ``try`` body length: 10 > 1
 
-intellicrack\ai\qemu_manager.py:3214:9: WPS229 Found too long ``try`` body length: 10 > 1
+intellicrack\ai\qemu_manager.py:3243:16: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\qemu_manager.py:3221:30: WPS237 Found a too complex `f` string
+intellicrack\ai\qemu_manager.py:3250:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3233:16: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\qemu_manager.py:3254:5: WPS213 Found too many expressions: 18 > 9
 
-intellicrack\ai\qemu_manager.py:3240:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3254:5: WPS231 Found function with too much cognitive complexity: 29 > 12
 
-intellicrack\ai\qemu_manager.py:3244:5: WPS213 Found too many expressions: 18 > 9
+intellicrack\ai\qemu_manager.py:3268:9: WPS229 Found too long ``try`` body length: 6 > 1
 
-intellicrack\ai\qemu_manager.py:3244:5: WPS231 Found function with too much cognitive complexity: 29 > 12
+intellicrack\ai\qemu_manager.py:3275:17: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3258:9: WPS229 Found too long ``try`` body length: 6 > 1
+intellicrack\ai\qemu_manager.py:3275:17: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:3265:17: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3278:52: WPS432 Found magic number: 30
 
-intellicrack\ai\qemu_manager.py:3265:17: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:3287:13: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3268:52: WPS432 Found magic number: 30
+intellicrack\ai\qemu_manager.py:3287:13: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\qemu_manager.py:3277:13: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3291:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3277:13: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\qemu_manager.py:3300:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3281:13: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3307:17: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3290:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3309:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3297:17: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3326:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\qemu_manager.py:3299:17: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3330:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3316:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\qemu_manager.py:3347:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3320:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3369:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\qemu_manager.py:3337:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3372:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3359:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\qemu_manager.py:3380:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3362:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3403:9: WPS229 Found too long ``try`` body length: 6 > 1
 
-intellicrack\ai\qemu_manager.py:3370:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3412:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3393:9: WPS229 Found too long ``try`` body length: 6 > 1
+intellicrack\ai\qemu_manager.py:3419:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3402:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3423:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)
 
-intellicrack\ai\qemu_manager.py:3409:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3423:5: WPS212 Found too many return statements: 8 > 5
 
-intellicrack\ai\qemu_manager.py:3413:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)
+intellicrack\ai\qemu_manager.py:3423:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\qemu_manager.py:3413:5: WPS212 Found too many return statements: 8 > 5
+intellicrack\ai\qemu_manager.py:3423:5: WPS213 Found too many expressions: 16 > 9
 
-intellicrack\ai\qemu_manager.py:3413:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\qemu_manager.py:3423:5: WPS231 Found function with too much cognitive complexity: 32 > 12
 
-intellicrack\ai\qemu_manager.py:3413:5: WPS213 Found too many expressions: 16 > 9
+intellicrack\ai\qemu_manager.py:3457:9: WPS229 Found too long ``try`` body length: 7 > 1
 
-intellicrack\ai\qemu_manager.py:3413:5: WPS231 Found function with too much cognitive complexity: 32 > 12
+intellicrack\ai\qemu_manager.py:3462:17: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3447:9: WPS229 Found too long ``try`` body length: 7 > 1
+intellicrack\ai\qemu_manager.py:3470:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\qemu_manager.py:3452:17: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3478:13: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3460:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\qemu_manager.py:3479:51: WPS432 Found magic number: 0o755
 
-intellicrack\ai\qemu_manager.py:3468:13: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3491:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3469:51: WPS432 Found magic number: 0o755
+intellicrack\ai\qemu_manager.py:3495:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3481:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3504:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3485:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3514:17: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3494:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3531:5: WPS212 Found too many return statements: 8 > 5
 
-intellicrack\ai\qemu_manager.py:3504:17: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3531:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\qemu_manager.py:3521:5: WPS212 Found too many return statements: 8 > 5
+intellicrack\ai\qemu_manager.py:3531:5: WPS213 Found too many expressions: 18 > 9
 
-intellicrack\ai\qemu_manager.py:3521:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\qemu_manager.py:3531:5: WPS231 Found function with too much cognitive complexity: 23 > 12
 
-intellicrack\ai\qemu_manager.py:3521:5: WPS213 Found too many expressions: 18 > 9
+intellicrack\ai\qemu_manager.py:3551:9: WPS229 Found too long ``try`` body length: 11 > 1
 
-intellicrack\ai\qemu_manager.py:3521:5: WPS231 Found function with too much cognitive complexity: 23 > 12
+intellicrack\ai\qemu_manager.py:3573:17: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\qemu_manager.py:3541:9: WPS229 Found too long ``try`` body length: 11 > 1
-
-intellicrack\ai\qemu_manager.py:3563:17: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\qemu_manager.py:3565:43: WPS226 Found string literal over-use: default_vm > 3
-
-intellicrack\ai\qemu_manager.py:3577:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\qemu_manager.py:3582:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3575:43: WPS226 Found string literal over-use: default_vm > 3
 
 intellicrack\ai\qemu_manager.py:3587:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3592:5: WPS213 Found too many expressions: 12 > 9
+intellicrack\ai\qemu_manager.py:3592:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3603:9: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:3597:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3608:17: WPS505 Found nested `try` block
+intellicrack\ai\qemu_manager.py:3602:5: WPS213 Found too many expressions: 12 > 9
 
-intellicrack\ai\qemu_manager.py:3608:17: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\qemu_manager.py:3613:9: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\qemu_manager.py:3620:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3618:17: WPS505 Found nested `try` block
 
-intellicrack\ai\qemu_manager.py:3635:9: WPS221 Found line with high Jones Complexity: 20 > 14
+intellicrack\ai\qemu_manager.py:3618:17: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\qemu_manager.py:3637:5: WPS210 Found too many local variables: 12 > 5
+intellicrack\ai\qemu_manager.py:3630:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3637:5: WPS231 Found function with too much cognitive complexity: 26 > 12
+intellicrack\ai\qemu_manager.py:3645:9: WPS221 Found line with high Jones Complexity: 20 > 14
 
-intellicrack\ai\qemu_manager.py:3669:9: WPS229 Found too long ``try`` body length: 16 > 1
+intellicrack\ai\qemu_manager.py:3647:5: WPS210 Found too many local variables: 12 > 5
 
-intellicrack\ai\qemu_manager.py:3673:66: WPS432 Found magic number: 120
+intellicrack\ai\qemu_manager.py:3647:5: WPS231 Found function with too much cognitive complexity: 26 > 12
 
-intellicrack\ai\qemu_manager.py:3758:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3679:9: WPS229 Found too long ``try`` body length: 16 > 1
 
-intellicrack\ai\qemu_manager.py:3784:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3683:66: WPS432 Found magic number: 120
 
-intellicrack\ai\qemu_manager.py:3795:5: WPS210 Found too many local variables: 10 > 5
+intellicrack\ai\qemu_manager.py:3768:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3795:5: WPS231 Found function with too much cognitive complexity: 22 > 12
+intellicrack\ai\qemu_manager.py:3794:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3827:9: WPS229 Found too long ``try`` body length: 14 > 1
+intellicrack\ai\qemu_manager.py:3805:5: WPS210 Found too many local variables: 10 > 5
 
-intellicrack\ai\qemu_manager.py:3831:66: WPS432 Found magic number: 120
+intellicrack\ai\qemu_manager.py:3805:5: WPS231 Found function with too much cognitive complexity: 22 > 12
 
-intellicrack\ai\qemu_manager.py:3897:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:3837:9: WPS229 Found too long ``try`` body length: 14 > 1
 
-intellicrack\ai\qemu_manager.py:3923:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3841:66: WPS432 Found magic number: 120
 
-intellicrack\ai\qemu_manager.py:3934:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)
+intellicrack\ai\qemu_manager.py:3907:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:3934:5: WPS210 Found too many local variables: 20 > 5
+intellicrack\ai\qemu_manager.py:3933:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:3934:5: WPS213 Found too many expressions: 23 > 9
+intellicrack\ai\qemu_manager.py:3944:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)
 
-intellicrack\ai\qemu_manager.py:3934:5: WPS231 Found function with too much cognitive complexity: 49 > 12
+intellicrack\ai\qemu_manager.py:3944:5: WPS210 Found too many local variables: 20 > 5
 
-intellicrack\ai\qemu_manager.py:3973:9: WPS229 Found too long ``try`` body length: 26 > 1
+intellicrack\ai\qemu_manager.py:3944:5: WPS213 Found too many expressions: 23 > 9
 
-intellicrack\ai\qemu_manager.py:3979:66: WPS432 Found magic number: 120
+intellicrack\ai\qemu_manager.py:3944:5: WPS231 Found function with too much cognitive complexity: 49 > 12
 
-intellicrack\ai\qemu_manager.py:4074:25: WPS432 Found magic number: 120
+intellicrack\ai\qemu_manager.py:3983:9: WPS229 Found too long ``try`` body length: 26 > 1
 
-intellicrack\ai\qemu_manager.py:4117:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:3989:66: WPS432 Found magic number: 120
 
-intellicrack\ai\qemu_manager.py:4160:17: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:4084:25: WPS432 Found magic number: 120
 
-intellicrack\ai\qemu_manager.py:4178:9: WPS229 Found too long ``try`` body length: 3 > 1
+intellicrack\ai\qemu_manager.py:4127:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:4179:13: WPS110 Found wrong variable name: result
+intellicrack\ai\qemu_manager.py:4170:17: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:4190:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:4188:9: WPS229 Found too long ``try`` body length: 3 > 1
 
-intellicrack\ai\qemu_manager.py:4212:9: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\qemu_manager.py:4189:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\qemu_manager.py:4236:64: WPS111 Found too short name: f < 2
+intellicrack\ai\qemu_manager.py:4200:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\qemu_manager.py:4241:9: WPS111 Found too short name: e < 2
+intellicrack\ai\qemu_manager.py:4222:9: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\qemu_manager.py:4246:64: WPS111 Found too short name: f < 2
+
+intellicrack\ai\qemu_manager.py:4251:9: WPS111 Found too short name: e < 2
 
 
 497 findings in intellicrack\ai\enhanced_training_interface.py
@@ -7733,9 +7719,9 @@ intellicrack\ai\llm_backends.py:3064:9: WPS121 Found usage of a variable marked 
 intellicrack\ai\llm_backends.py:3065:9: WPS122 Found all unused variables definition: _LLM_MANAGER
 
 
-366 findings in intellicrack\ai\predictive_intelligence.py
+364 findings in intellicrack\ai\predictive_intelligence.py
 
-intellicrack\ai\predictive_intelligence.py:0:1: WPS232 Found module cognitive complexity that is too high: 11.4 > 8
+intellicrack\ai\predictive_intelligence.py:0:1: WPS232 Found module cognitive complexity that is too high: 11.3 > 8
 
 intellicrack\ai\predictive_intelligence.py:0:1: WPS201 Found module with too many imports: 31 > 12
 
@@ -7879,593 +7865,589 @@ intellicrack\ai\predictive_intelligence.py:397:86: WPS358 Found a float zero (0.
 
 intellicrack\ai\predictive_intelligence.py:399:47: WPS432 Found magic number: 10.0
 
-intellicrack\ai\predictive_intelligence.py:401:87: WPS226 Found string literal over-use: .3f > 3
+intellicrack\ai\predictive_intelligence.py:413:1: WPS338 Found incorrect order of methods in a class
 
-intellicrack\ai\predictive_intelligence.py:415:1: WPS338 Found incorrect order of methods in a class
+intellicrack\ai\predictive_intelligence.py:425:28: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:427:28: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:432:16: WPS226 Found string literal over-use: features > 3
 
-intellicrack\ai\predictive_intelligence.py:434:16: WPS226 Found string literal over-use: features > 3
+intellicrack\ai\predictive_intelligence.py:433:38: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:435:38: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:441:5: C901 'LinearRegressionModel.train' is too complex (11)
 
-intellicrack\ai\predictive_intelligence.py:443:5: C901 'LinearRegressionModel.train' is too complex (11)
+intellicrack\ai\predictive_intelligence.py:441:5: WPS210 Found too many local variables: 13 > 5
 
-intellicrack\ai\predictive_intelligence.py:443:5: WPS210 Found too many local variables: 13 > 5
+intellicrack\ai\predictive_intelligence.py:441:5: WPS231 Found function with too much cognitive complexity: 25 > 12
 
-intellicrack\ai\predictive_intelligence.py:443:5: WPS231 Found function with too much cognitive complexity: 25 > 12
+intellicrack\ai\predictive_intelligence.py:445:12: WPS204 Found overused expression: not training_data; used 9 > 7
 
-intellicrack\ai\predictive_intelligence.py:447:12: WPS204 Found overused expression: not training_data; used 9 > 7
+intellicrack\ai\predictive_intelligence.py:452:28: WPS432 Found magic number: 50
 
-intellicrack\ai\predictive_intelligence.py:454:28: WPS432 Found magic number: 50
+intellicrack\ai\predictive_intelligence.py:453:27: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:455:27: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:460:37: WPS226 Found string literal over-use: target > 3
 
-intellicrack\ai\predictive_intelligence.py:462:37: WPS226 Found string literal over-use: target > 3
+intellicrack\ai\predictive_intelligence.py:460:47: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:462:47: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:464:35: WPS110 Found wrong variable name: value
 
-intellicrack\ai\predictive_intelligence.py:466:35: WPS110 Found wrong variable name: value
+intellicrack\ai\predictive_intelligence.py:466:39: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:468:39: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:474:35: WPS110 Found wrong variable name: value
 
-intellicrack\ai\predictive_intelligence.py:476:35: WPS110 Found wrong variable name: value
+intellicrack\ai\predictive_intelligence.py:476:25: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:478:25: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:479:16: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:481:16: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:479:30: WPS432 Found magic number: 0.001
 
-intellicrack\ai\predictive_intelligence.py:481:30: WPS432 Found magic number: 0.001
+intellicrack\ai\predictive_intelligence.py:483:39: WPS111 Found too short name: w < 2
 
-intellicrack\ai\predictive_intelligence.py:485:39: WPS111 Found too short name: w < 2
+intellicrack\ai\predictive_intelligence.py:485:13: WPS221 Found line with high Jones Complexity: 17 > 14
 
-intellicrack\ai\predictive_intelligence.py:487:13: WPS221 Found line with high Jones Complexity: 17 > 14
+intellicrack\ai\predictive_intelligence.py:489:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\predictive_intelligence.py:491:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\predictive_intelligence.py:497:27: WPS110 Found wrong variable name: value
 
-intellicrack\ai\predictive_intelligence.py:499:27: WPS110 Found wrong variable name: value
+intellicrack\ai\predictive_intelligence.py:499:31: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:501:31: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:507:64: WPS432 Found magic number: 0.9
 
-intellicrack\ai\predictive_intelligence.py:509:64: WPS432 Found magic number: 0.9
+intellicrack\ai\predictive_intelligence.py:510:9: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\ai\predictive_intelligence.py:512:9: WPS221 Found line with high Jones Complexity: 16 > 14
+intellicrack\ai\predictive_intelligence.py:510:20: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:512:20: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:513:1: WPS338 Found incorrect order of methods in a class
 
-intellicrack\ai\predictive_intelligence.py:515:1: WPS338 Found incorrect order of methods in a class
+intellicrack\ai\predictive_intelligence.py:528:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)
 
-intellicrack\ai\predictive_intelligence.py:530:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)
+intellicrack\ai\predictive_intelligence.py:528:5: WPS210 Found too many local variables: 17 > 5
 
-intellicrack\ai\predictive_intelligence.py:530:5: WPS210 Found too many local variables: 17 > 5
+intellicrack\ai\predictive_intelligence.py:528:5: WPS213 Found too many expressions: 11 > 9
 
-intellicrack\ai\predictive_intelligence.py:530:5: WPS213 Found too many expressions: 11 > 9
+intellicrack\ai\predictive_intelligence.py:528:5: WPS231 Found function with too much cognitive complexity: 52 > 12
 
-intellicrack\ai\predictive_intelligence.py:530:5: WPS231 Found function with too much cognitive complexity: 52 > 12
+intellicrack\ai\predictive_intelligence.py:540:13: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\predictive_intelligence.py:542:13: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\predictive_intelligence.py:545:31: WPS462 Wrong multiline string usage
 
-intellicrack\ai\predictive_intelligence.py:547:31: WPS462 Wrong multiline string usage
+intellicrack\ai\predictive_intelligence.py:571:21: WPS204 Found overused expression: training_data.append({'features': features, 'target': target}); used 9 > 7
 
-intellicrack\ai\predictive_intelligence.py:573:21: WPS204 Found overused expression: training_data.append({'features': features, 'target': target}); used 9 > 7
+intellicrack\ai\predictive_intelligence.py:572:25: WPS204 Found overused expression: {'features': features, 'target': target}; used 9 > 7
 
-intellicrack\ai\predictive_intelligence.py:574:25: WPS204 Found overused expression: {'features': features, 'target': target}; used 9 > 7
+intellicrack\ai\predictive_intelligence.py:580:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:582:13: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:587:17: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\predictive_intelligence.py:589:17: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\predictive_intelligence.py:588:46: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:590:46: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:589:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:591:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:592:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:594:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:593:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:595:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:596:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:598:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:597:57: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:599:57: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:597:66: WPS432 Found magic number: 2.0
 
-intellicrack\ai\predictive_intelligence.py:599:66: WPS432 Found magic number: 2.0
+intellicrack\ai\predictive_intelligence.py:598:48: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:600:48: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:599:60: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:601:60: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:599:120: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:601:120: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:600:47: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:602:47: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:601:46: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:603:46: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:602:49: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:604:49: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:605:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:607:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:608:47: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:610:47: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:612:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:614:17: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:619:17: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\predictive_intelligence.py:621:17: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\predictive_intelligence.py:620:21: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\predictive_intelligence.py:622:21: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\predictive_intelligence.py:621:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:623:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:621:51: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:623:51: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:622:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:624:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:622:29: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:624:29: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:625:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:627:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:626:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:628:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:626:39: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:628:39: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:627:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:629:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:630:103: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:632:103: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:637:29: WPS220 Found too deep nesting: 28 > 20
 
 intellicrack\ai\predictive_intelligence.py:639:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:641:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:647:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:649:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:723:5: WPS210 Found too many local variables: 7 > 5
 
-intellicrack\ai\predictive_intelligence.py:725:5: WPS210 Found too many local variables: 7 > 5
+intellicrack\ai\predictive_intelligence.py:732:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:734:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:732:32: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:734:32: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:734:14: WPS459 Found comparison with float or complex number
+
+intellicrack\ai\predictive_intelligence.py:734:34: WPS432 Found magic number: 0.6
 
 intellicrack\ai\predictive_intelligence.py:736:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:736:34: WPS432 Found magic number: 0.6
+intellicrack\ai\predictive_intelligence.py:736:34: WPS432 Found magic number: 0.4
 
 intellicrack\ai\predictive_intelligence.py:738:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:738:34: WPS432 Found magic number: 0.4
+intellicrack\ai\predictive_intelligence.py:738:34: WPS432 Found magic number: 0.2
 
-intellicrack\ai\predictive_intelligence.py:740:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:747:51: WPS432 Found magic number: 0.2
 
-intellicrack\ai\predictive_intelligence.py:740:34: WPS432 Found magic number: 0.2
+intellicrack\ai\predictive_intelligence.py:749:17: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:749:51: WPS432 Found magic number: 0.2
+intellicrack\ai\predictive_intelligence.py:768:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:751:17: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:768:52: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:770:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:768:59: WPS432 Found magic number: 0.9
 
-intellicrack\ai\predictive_intelligence.py:770:52: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:770:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:770:59: WPS432 Found magic number: 0.9
+intellicrack\ai\predictive_intelligence.py:770:54: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:772:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:770:61: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:772:54: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:773:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:772:61: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:775:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:775:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:775:58: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:777:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:778:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:777:58: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:778:47: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:780:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:781:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:780:47: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:781:30: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:783:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:783:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:783:30: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:783:32: WPS432 Found magic number: 0.6
 
-intellicrack\ai\predictive_intelligence.py:785:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:789:20: WPS237 Found a too complex `f` string
 
-intellicrack\ai\predictive_intelligence.py:785:32: WPS432 Found magic number: 0.6
+intellicrack\ai\predictive_intelligence.py:794:9: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\predictive_intelligence.py:791:20: WPS237 Found a too complex `f` string
+intellicrack\ai\predictive_intelligence.py:799:24: WPS111 Found too short name: x < 2
 
-intellicrack\ai\predictive_intelligence.py:796:9: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\predictive_intelligence.py:806:1: WPS338 Found incorrect order of methods in a class
 
-intellicrack\ai\predictive_intelligence.py:801:24: WPS111 Found too short name: x < 2
+intellicrack\ai\predictive_intelligence.py:821:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)
 
-intellicrack\ai\predictive_intelligence.py:808:1: WPS338 Found incorrect order of methods in a class
+intellicrack\ai\predictive_intelligence.py:821:5: WPS210 Found too many local variables: 21 > 5
 
-intellicrack\ai\predictive_intelligence.py:823:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)
+intellicrack\ai\predictive_intelligence.py:821:5: WPS213 Found too many expressions: 14 > 9
 
-intellicrack\ai\predictive_intelligence.py:823:5: WPS210 Found too many local variables: 21 > 5
+intellicrack\ai\predictive_intelligence.py:821:5: WPS231 Found function with too much cognitive complexity: 94 > 12
 
-intellicrack\ai\predictive_intelligence.py:823:5: WPS213 Found too many expressions: 14 > 9
+intellicrack\ai\predictive_intelligence.py:833:13: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\predictive_intelligence.py:823:5: WPS231 Found function with too much cognitive complexity: 94 > 12
+intellicrack\ai\predictive_intelligence.py:838:31: WPS462 Wrong multiline string usage
 
-intellicrack\ai\predictive_intelligence.py:835:13: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\predictive_intelligence.py:872:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:840:31: WPS462 Wrong multiline string usage
+intellicrack\ai\predictive_intelligence.py:879:17: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\predictive_intelligence.py:874:13: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:880:50: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:881:17: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\predictive_intelligence.py:881:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:882:50: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:884:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:883:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:889:88: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:886:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:893:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:891:88: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:893:68: WPS432 Found magic number: 5.0
 
 intellicrack\ai\predictive_intelligence.py:895:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:895:68: WPS432 Found magic number: 5.0
+intellicrack\ai\predictive_intelligence.py:902:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:897:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:909:17: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\predictive_intelligence.py:904:17: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:910:21: WPS229 Found too long ``try`` body length: 6 > 1
 
-intellicrack\ai\predictive_intelligence.py:911:17: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\predictive_intelligence.py:914:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:912:21: WPS229 Found too long ``try`` body length: 6 > 1
+intellicrack\ai\predictive_intelligence.py:915:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:916:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:918:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:917:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:921:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:920:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:922:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:923:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:923:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:924:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:923:53: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:925:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:924:33: WPS220 Found too deep nesting: 32 > 20
 
-intellicrack\ai\predictive_intelligence.py:925:53: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:926:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:926:33: WPS220 Found too deep nesting: 32 > 20
+intellicrack\ai\predictive_intelligence.py:931:95: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:928:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:934:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:933:95: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:941:21: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:936:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:942:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:943:21: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:943:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:944:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:950:44: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:945:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:951:25: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\predictive_intelligence.py:952:44: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:951:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:953:25: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\predictive_intelligence.py:952:29: WPS505 Found nested `try` block
 
-intellicrack\ai\predictive_intelligence.py:953:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:952:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:954:29: WPS505 Found nested `try` block
+intellicrack\ai\predictive_intelligence.py:954:33: WPS220 Found too deep nesting: 32 > 20
 
-intellicrack\ai\predictive_intelligence.py:954:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:955:37: WPS220 Found too deep nesting: 36 > 20
 
-intellicrack\ai\predictive_intelligence.py:956:33: WPS220 Found too deep nesting: 32 > 20
+intellicrack\ai\predictive_intelligence.py:956:37: WPS220 Found too deep nesting: 36 > 20
 
-intellicrack\ai\predictive_intelligence.py:957:37: WPS220 Found too deep nesting: 36 > 20
+intellicrack\ai\predictive_intelligence.py:957:41: WPS220 Found too deep nesting: 40 > 20
 
-intellicrack\ai\predictive_intelligence.py:958:37: WPS220 Found too deep nesting: 36 > 20
-
-intellicrack\ai\predictive_intelligence.py:959:41: WPS220 Found too deep nesting: 40 > 20
+intellicrack\ai\predictive_intelligence.py:964:41: WPS220 Found too deep nesting: 40 > 20
 
 intellicrack\ai\predictive_intelligence.py:966:41: WPS220 Found too deep nesting: 40 > 20
 
-intellicrack\ai\predictive_intelligence.py:968:41: WPS220 Found too deep nesting: 40 > 20
+intellicrack\ai\predictive_intelligence.py:972:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:974:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:973:33: WPS220 Found too deep nesting: 32 > 20
 
-intellicrack\ai\predictive_intelligence.py:975:33: WPS220 Found too deep nesting: 32 > 20
+intellicrack\ai\predictive_intelligence.py:976:21: WPS420 Found wrong keyword: pass
 
-intellicrack\ai\predictive_intelligence.py:978:21: WPS420 Found wrong keyword: pass
+intellicrack\ai\predictive_intelligence.py:1058:5: WPS210 Found too many local variables: 7 > 5
 
-intellicrack\ai\predictive_intelligence.py:1060:5: WPS210 Found too many local variables: 7 > 5
+intellicrack\ai\predictive_intelligence.py:1065:55: WPS432 Found magic number: 3600.0
 
-intellicrack\ai\predictive_intelligence.py:1067:55: WPS432 Found magic number: 3600.0
+intellicrack\ai\predictive_intelligence.py:1068:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1070:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1068:32: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:1070:32: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:1070:14: WPS459 Found comparison with float or complex number
+
+intellicrack\ai\predictive_intelligence.py:1070:34: WPS432 Found magic number: 0.6
 
 intellicrack\ai\predictive_intelligence.py:1072:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1072:34: WPS432 Found magic number: 0.6
+intellicrack\ai\predictive_intelligence.py:1072:34: WPS432 Found magic number: 0.4
 
-intellicrack\ai\predictive_intelligence.py:1074:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1081:41: WPS432 Found magic number: 0.2
 
-intellicrack\ai\predictive_intelligence.py:1074:34: WPS432 Found magic number: 0.4
+intellicrack\ai\predictive_intelligence.py:1108:1: WPS338 Found incorrect order of methods in a class
 
-intellicrack\ai\predictive_intelligence.py:1083:41: WPS432 Found magic number: 0.2
+intellicrack\ai\predictive_intelligence.py:1126:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)
 
-intellicrack\ai\predictive_intelligence.py:1110:1: WPS338 Found incorrect order of methods in a class
+intellicrack\ai\predictive_intelligence.py:1126:5: WPS210 Found too many local variables: 38 > 5
 
-intellicrack\ai\predictive_intelligence.py:1128:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)
+intellicrack\ai\predictive_intelligence.py:1126:5: WPS213 Found too many expressions: 12 > 9
 
-intellicrack\ai\predictive_intelligence.py:1128:5: WPS210 Found too many local variables: 38 > 5
+intellicrack\ai\predictive_intelligence.py:1126:5: WPS231 Found function with too much cognitive complexity: 164 > 12
 
-intellicrack\ai\predictive_intelligence.py:1128:5: WPS213 Found too many expressions: 12 > 9
+intellicrack\ai\predictive_intelligence.py:1138:13: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\predictive_intelligence.py:1128:5: WPS231 Found function with too much cognitive complexity: 164 > 12
+intellicrack\ai\predictive_intelligence.py:1143:31: WPS462 Wrong multiline string usage
 
-intellicrack\ai\predictive_intelligence.py:1140:13: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\predictive_intelligence.py:1174:21: WPS221 Found line with high Jones Complexity: 17 > 14
 
-intellicrack\ai\predictive_intelligence.py:1145:31: WPS462 Wrong multiline string usage
+intellicrack\ai\predictive_intelligence.py:1174:80: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:1176:21: WPS221 Found line with high Jones Complexity: 17 > 14
+intellicrack\ai\predictive_intelligence.py:1177:21: WPS221 Found line with high Jones Complexity: 17 > 14
 
-intellicrack\ai\predictive_intelligence.py:1176:80: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1177:82: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:1179:21: WPS221 Found line with high Jones Complexity: 17 > 14
+intellicrack\ai\predictive_intelligence.py:1184:61: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:1179:82: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1198:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:1186:61: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1205:17: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\predictive_intelligence.py:1200:13: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:1206:44: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:1207:17: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\predictive_intelligence.py:1207:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1208:44: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:1211:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1209:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\predictive_intelligence.py:1213:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1212:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\predictive_intelligence.py:1214:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1216:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1223:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1225:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1224:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\predictive_intelligence.py:1226:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1228:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1226:39: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:1228:39: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:1227:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1229:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1228:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:1230:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:1231:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\predictive_intelligence.py:1233:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1235:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1240:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:1242:17: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:1247:17: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\predictive_intelligence.py:1249:17: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\predictive_intelligence.py:1248:21: WPS229 Found too long ``try`` body length: 7 > 1
 
-intellicrack\ai\predictive_intelligence.py:1250:21: WPS229 Found too long ``try`` body length: 7 > 1
+intellicrack\ai\predictive_intelligence.py:1249:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1251:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1249:51: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:1251:51: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:1250:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:1252:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:1252:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1254:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1253:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\predictive_intelligence.py:1255:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1257:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1258:106: WPS432 Found magic number: 20
 
-intellicrack\ai\predictive_intelligence.py:1260:106: WPS432 Found magic number: 20
+intellicrack\ai\predictive_intelligence.py:1259:73: WPS432 Found magic number: 0.6
 
-intellicrack\ai\predictive_intelligence.py:1261:73: WPS432 Found magic number: 0.6
+intellicrack\ai\predictive_intelligence.py:1260:46: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1262:46: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1260:95: WPS432 Found magic number: 0.4
 
-intellicrack\ai\predictive_intelligence.py:1262:95: WPS432 Found magic number: 0.4
+intellicrack\ai\predictive_intelligence.py:1264:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1266:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1264:89: WPS111 Found too short name: c < 2
 
-intellicrack\ai\predictive_intelligence.py:1266:89: WPS111 Found too short name: c < 2
+intellicrack\ai\predictive_intelligence.py:1265:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\predictive_intelligence.py:1265:65: WPS432 Found magic number: 0.2
+
+intellicrack\ai\predictive_intelligence.py:1265:86: WPS432 Found magic number: 0.05
 
 intellicrack\ai\predictive_intelligence.py:1267:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1267:65: WPS432 Found magic number: 0.2
+intellicrack\ai\predictive_intelligence.py:1275:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1267:86: WPS432 Found magic number: 0.05
+intellicrack\ai\predictive_intelligence.py:1281:17: WPS327 Found useless `continue` at the end of the loop
 
-intellicrack\ai\predictive_intelligence.py:1269:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1282:21: WPS229 Found too long ``try`` body length: 10 > 1
 
-intellicrack\ai\predictive_intelligence.py:1277:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1283:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1283:17: WPS327 Found useless `continue` at the end of the loop
+intellicrack\ai\predictive_intelligence.py:1283:51: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:1284:21: WPS229 Found too long ``try`` body length: 10 > 1
+intellicrack\ai\predictive_intelligence.py:1284:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:1285:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1286:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1285:51: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:1287:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1286:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:1292:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1288:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1293:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1289:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1294:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:1294:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1294:68: WPS111 Found too short name: s < 2
 
-intellicrack\ai\predictive_intelligence.py:1295:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1294:73: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:1296:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:1295:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\predictive_intelligence.py:1296:68: WPS111 Found too short name: s < 2
+intellicrack\ai\predictive_intelligence.py:1297:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1296:73: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:1298:47: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1297:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\predictive_intelligence.py:1298:96: WPS432 Found magic number: 0.4
 
-intellicrack\ai\predictive_intelligence.py:1299:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1299:88: WPS432 Found magic number: 1000000
 
-intellicrack\ai\predictive_intelligence.py:1300:47: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1299:100: WPS432 Found magic number: 100000000
 
-intellicrack\ai\predictive_intelligence.py:1300:96: WPS432 Found magic number: 0.4
+intellicrack\ai\predictive_intelligence.py:1300:84: WPS432 Found magic number: 50
 
-intellicrack\ai\predictive_intelligence.py:1301:88: WPS432 Found magic number: 1000000
+intellicrack\ai\predictive_intelligence.py:1302:46: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:1301:100: WPS432 Found magic number: 100000000
+intellicrack\ai\predictive_intelligence.py:1302:94: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:1302:84: WPS432 Found magic number: 50
+intellicrack\ai\predictive_intelligence.py:1306:25: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\ai\predictive_intelligence.py:1304:46: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:1306:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1304:94: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1306:55: WPS441 Found control variable used after block: f
 
-intellicrack\ai\predictive_intelligence.py:1308:25: WPS221 Found line with high Jones Complexity: 16 > 14
+intellicrack\ai\predictive_intelligence.py:1306:88: WPS111 Found too short name: f < 2
 
-intellicrack\ai\predictive_intelligence.py:1308:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1307:25: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\ai\predictive_intelligence.py:1308:55: WPS441 Found control variable used after block: f
+intellicrack\ai\predictive_intelligence.py:1307:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1308:88: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:1307:57: WPS441 Found control variable used after block: f
 
-intellicrack\ai\predictive_intelligence.py:1309:25: WPS221 Found line with high Jones Complexity: 16 > 14
+intellicrack\ai\predictive_intelligence.py:1307:92: WPS111 Found too short name: f < 2
 
 intellicrack\ai\predictive_intelligence.py:1309:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1309:57: WPS441 Found control variable used after block: f
+intellicrack\ai\predictive_intelligence.py:1309:64: WPS432 Found magic number: 0.15
 
-intellicrack\ai\predictive_intelligence.py:1309:92: WPS111 Found too short name: f < 2
+intellicrack\ai\predictive_intelligence.py:1309:94: WPS432 Found magic number: 0.05
 
 intellicrack\ai\predictive_intelligence.py:1311:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1311:64: WPS432 Found magic number: 0.15
+intellicrack\ai\predictive_intelligence.py:1319:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\predictive_intelligence.py:1311:94: WPS432 Found magic number: 0.05
+intellicrack\ai\predictive_intelligence.py:1389:31: WPS339 Found number with meaningless zeros: 0.70
 
-intellicrack\ai\predictive_intelligence.py:1313:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1401:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\predictive_intelligence.py:1321:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\predictive_intelligence.py:1408:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1391:31: WPS339 Found number with meaningless zeros: 0.70
+intellicrack\ai\predictive_intelligence.py:1408:32: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1403:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\predictive_intelligence.py:1410:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1410:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1419:17: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:1410:32: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1419:45: WPS432 Found magic number: 0.15
 
-intellicrack\ai\predictive_intelligence.py:1412:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1420:45: WPS432 Found magic number: 0.15
 
-intellicrack\ai\predictive_intelligence.py:1421:17: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:1438:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1421:45: WPS432 Found magic number: 0.15
+intellicrack\ai\predictive_intelligence.py:1438:50: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1422:45: WPS432 Found magic number: 0.15
+intellicrack\ai\predictive_intelligence.py:1441:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1440:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1441:55: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1440:50: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1444:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1443:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1444:43: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:1443:55: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1447:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1446:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1447:25: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1446:43: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:1449:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1449:12: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1449:27: WPS432 Found magic number: 0.4
 
-intellicrack\ai\predictive_intelligence.py:1449:25: WPS432 Found magic number: 0.7
+intellicrack\ai\predictive_intelligence.py:1455:20: WPS237 Found a too complex `f` string
 
-intellicrack\ai\predictive_intelligence.py:1451:14: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1460:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\predictive_intelligence.py:1451:27: WPS432 Found magic number: 0.4
+intellicrack\ai\predictive_intelligence.py:1473:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1457:20: WPS237 Found a too complex `f` string
+intellicrack\ai\predictive_intelligence.py:1485:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:1462:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\predictive_intelligence.py:1491:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\predictive_intelligence.py:1475:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1496:24: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:1487:9: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:1504:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1493:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\predictive_intelligence.py:1507:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\predictive_intelligence.py:1498:24: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:1509:20: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:1506:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1512:1: WPS214 Found too many methods: 8 > 7
 
-intellicrack\ai\predictive_intelligence.py:1509:9: WPS111 Found too short name: e < 2
+intellicrack\ai\predictive_intelligence.py:1512:1: WPS338 Found incorrect order of methods in a class
 
-intellicrack\ai\predictive_intelligence.py:1511:20: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:1526:13: WPS226 Found string literal over-use: total_predictions > 3
 
-intellicrack\ai\predictive_intelligence.py:1514:1: WPS214 Found too many methods: 8 > 7
+intellicrack\ai\predictive_intelligence.py:1540:29: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\predictive_intelligence.py:1514:1: WPS338 Found incorrect order of methods in a class
+intellicrack\ai\predictive_intelligence.py:1542:69: WPS432 Found magic number: 300
 
-intellicrack\ai\predictive_intelligence.py:1528:13: WPS226 Found string literal over-use: total_predictions > 3
+intellicrack\ai\predictive_intelligence.py:1548:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1542:29: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\predictive_intelligence.py:1553:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1544:69: WPS432 Found magic number: 300
+intellicrack\ai\predictive_intelligence.py:1558:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1550:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1561:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\predictive_intelligence.py:1555:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1566:34: WPS432 Found magic number: 0.3
 
-intellicrack\ai\predictive_intelligence.py:1560:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1597:24: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\predictive_intelligence.py:1563:13: WPS110 Found wrong variable name: result
+intellicrack\ai\predictive_intelligence.py:1635:21: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\predictive_intelligence.py:1568:34: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1640:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\predictive_intelligence.py:1599:24: WPS358 Found a float zero (0.0)
+intellicrack\ai\predictive_intelligence.py:1640:5: WPS231 Found function with too much cognitive complexity: 18 > 12
 
-intellicrack\ai\predictive_intelligence.py:1620:21: WPS237 Found a too complex `f` string
+intellicrack\ai\predictive_intelligence.py:1648:16: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\predictive_intelligence.py:1637:21: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\predictive_intelligence.py:1648:46: WPS111 Found too short name: p < 2
 
-intellicrack\ai\predictive_intelligence.py:1642:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\predictive_intelligence.py:1649:57: WPS111 Found too short name: p < 2
 
-intellicrack\ai\predictive_intelligence.py:1642:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+intellicrack\ai\predictive_intelligence.py:1650:20: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1650:16: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\predictive_intelligence.py:1650:34: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:1650:46: WPS111 Found too short name: p < 2
+intellicrack\ai\predictive_intelligence.py:1652:22: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1651:57: WPS111 Found too short name: p < 2
+intellicrack\ai\predictive_intelligence.py:1652:36: WPS432 Found magic number: 0.6
 
-intellicrack\ai\predictive_intelligence.py:1652:20: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1655:16: WPS332 Found walrus operator outside a comprehension
 
-intellicrack\ai\predictive_intelligence.py:1652:34: WPS432 Found magic number: 0.8
+intellicrack\ai\predictive_intelligence.py:1655:43: WPS111 Found too short name: p < 2
 
-intellicrack\ai\predictive_intelligence.py:1654:22: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1656:54: WPS111 Found too short name: p < 2
 
-intellicrack\ai\predictive_intelligence.py:1654:36: WPS432 Found magic number: 0.6
+intellicrack\ai\predictive_intelligence.py:1657:31: WPS432 Found magic number: 30
 
-intellicrack\ai\predictive_intelligence.py:1657:16: WPS332 Found walrus operator outside a comprehension
+intellicrack\ai\predictive_intelligence.py:1661:46: WPS111 Found too short name: p < 2
 
-intellicrack\ai\predictive_intelligence.py:1657:43: WPS111 Found too short name: p < 2
+intellicrack\ai\predictive_intelligence.py:1661:78: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1658:54: WPS111 Found too short name: p < 2
+intellicrack\ai\predictive_intelligence.py:1661:99: WPS432 Found magic number: 0.8
 
-intellicrack\ai\predictive_intelligence.py:1659:31: WPS432 Found magic number: 30
+intellicrack\ai\predictive_intelligence.py:1664:12: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1663:46: WPS111 Found too short name: p < 2
+intellicrack\ai\predictive_intelligence.py:1664:30: WPS432 Found magic number: 0.7
 
-intellicrack\ai\predictive_intelligence.py:1663:78: WPS459 Found comparison with float or complex number
+intellicrack\ai\predictive_intelligence.py:1666:14: WPS459 Found comparison with float or complex number
 
-intellicrack\ai\predictive_intelligence.py:1663:99: WPS432 Found magic number: 0.8
-
-intellicrack\ai\predictive_intelligence.py:1666:12: WPS459 Found comparison with float or complex number
-
-intellicrack\ai\predictive_intelligence.py:1666:30: WPS432 Found magic number: 0.7
-
-intellicrack\ai\predictive_intelligence.py:1668:14: WPS459 Found comparison with float or complex number
-
-intellicrack\ai\predictive_intelligence.py:1668:32: WPS432 Found magic number: 0.3
+intellicrack\ai\predictive_intelligence.py:1666:32: WPS432 Found magic number: 0.3
 
 
 336 findings in intellicrack\core\analysis\angr_enhancements.py
@@ -11652,425 +11634,6 @@ intellicrack\ai\interactive_assistant.py:1418:5: WPS300 Found local folder impor
 intellicrack\ai\interactive_assistant.py:1445:5: WPS430 Found nested function: send_message
 
 
-208 findings in intellicrack\ai\orchestrator.py
-
-intellicrack\ai\orchestrator.py:0:1: WPS201 Found module with too many imports: 23 > 12
-
-intellicrack\ai\orchestrator.py:0:1: WPS202 Found too many module members: 9 > 7
-
-intellicrack\ai\orchestrator.py:34:1: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:38:1: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:39:5: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:40:5: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:41:5: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:42:5: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:43:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:150:29: WPS110 Found wrong variable name: value
-
-intellicrack\ai\orchestrator.py:171:48: WPS110 Found wrong variable name: results
-
-intellicrack\ai\orchestrator.py:209:21: WPS226 Found string literal over-use: component > 3
-
-intellicrack\ai\orchestrator.py:215:5: WPS231 Found function with too much cognitive complexity: 13 > 12
-
-intellicrack\ai\orchestrator.py:215:37: WPS110 Found wrong variable name: data
-
-intellicrack\ai\orchestrator.py:228:13: WPS426 Found `lambda` in loop's body
-
-intellicrack\ai\orchestrator.py:229:17: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\orchestrator.py:231:21: WPS430 Found nested function: call_subscriber
-
-intellicrack\ai\orchestrator.py:232:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\orchestrator.py:241:25: WPS505 Found nested `try` block
-
-intellicrack\ai\orchestrator.py:241:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\orchestrator.py:242:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\orchestrator.py:243:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\orchestrator.py:243:25: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:243:32: WPS204 Found overused expression: (OSError, ValueError, RuntimeError); used 15 > 7
-
-intellicrack\ai\orchestrator.py:244:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\orchestrator.py:246:21: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\orchestrator.py:248:17: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:255:17: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:255:17: WPS221 Found line with high Jones Complexity: 17 > 14
-
-intellicrack\ai\orchestrator.py:255:65: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:258:1: WPS230 Found too many public instance attributes: 15 > 6
-
-intellicrack\ai\orchestrator.py:258:1: WPS214 Found too many methods: 36 > 7
-
-intellicrack\ai\orchestrator.py:258:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\ai\orchestrator.py:298:5: C901 'AIOrchestrator._initialize_components' is too complex (17)
-
-intellicrack\ai\orchestrator.py:298:5: WPS213 Found too many expressions: 24 > 9
-
-intellicrack\ai\orchestrator.py:315:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:318:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:331:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:334:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:350:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:354:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:368:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:371:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:380:83: WPS226 Found string literal over-use: orchestrator > 3
-
-intellicrack\ai\orchestrator.py:385:37: WPS110 Found wrong variable name: data
-
-intellicrack\ai\orchestrator.py:387:28: WPS226 Found string literal over-use: task_id > 3
-
-intellicrack\ai\orchestrator.py:387:39: WPS226 Found string literal over-use: unknown > 3
-
-intellicrack\ai\orchestrator.py:394:48: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:402:42: WPS110 Found wrong variable name: data
-
-intellicrack\ai\orchestrator.py:407:31: WPS226 Found string literal over-use: confidence > 3
-
-intellicrack\ai\orchestrator.py:407:45: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:408:12: WPS459 Found comparison with float or complex number
-
-intellicrack\ai\orchestrator.py:408:25: WPS432 Found magic number: 0.7
-
-intellicrack\ai\orchestrator.py:411:32: WPS110 Found wrong variable name: data
-
-intellicrack\ai\orchestrator.py:415:34: WPS110 Found wrong variable name: data
-
-intellicrack\ai\orchestrator.py:417:58: WPS226 Found string literal over-use: error > 3
-
-intellicrack\ai\orchestrator.py:458:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\orchestrator.py:460:17: WPS505 Found nested `try` block
-
-intellicrack\ai\orchestrator.py:469:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:472:5: C901 'AIOrchestrator._execute_task' is too complex (20)
-
-intellicrack\ai\orchestrator.py:472:5: WPS210 Found too many local variables: 8 > 5
-
-intellicrack\ai\orchestrator.py:472:5: WPS213 Found too many expressions: 30 > 9
-
-intellicrack\ai\orchestrator.py:472:5: WPS231 Found function with too much cognitive complexity: 76 > 12
-
-intellicrack\ai\orchestrator.py:479:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:481:9: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:495:13: WPS223 Found too many `elif` branches: 9 > 3
-
-intellicrack\ai\orchestrator.py:496:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:497:17: WPS204 Found overused expression: (result_data, components_used, confidence); used 20 > 7
-
-intellicrack\ai\orchestrator.py:497:17: WPS204 Found overused expression: (result_data, components_used, confidence); used 10 > 4
-
-intellicrack\ai\orchestrator.py:501:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:506:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:511:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:516:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:521:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:526:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:531:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:536:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:541:57: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:550:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:557:53: WPS432 Found magic number: 90
-
-intellicrack\ai\orchestrator.py:561:9: WPS110 Found wrong variable name: result
-
-intellicrack\ai\orchestrator.py:583:17: WPS226 Found string literal over-use: success > 3
-
-intellicrack\ai\orchestrator.py:593:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:594:78: WPS226 Found string literal over-use: :  > 3
-
-intellicrack\ai\orchestrator.py:597:9: WPS430 Found nested function: clear_progress
-
-intellicrack\ai\orchestrator.py:604:9: WPS504 Found negated condition
-
-intellicrack\ai\orchestrator.py:612:5: WPS210 Found too many local variables: 6 > 5
-
-intellicrack\ai\orchestrator.py:612:5: WPS231 Found function with too much cognitive complexity: 22 > 12
-
-intellicrack\ai\orchestrator.py:616:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:618:43: WPS226 Found string literal over-use: binary_path > 3
-
-intellicrack\ai\orchestrator.py:624:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:627:93: WPS459 Found comparison with float or complex number
-
-intellicrack\ai\orchestrator.py:627:106: WPS432 Found magic number: 0.7
-
-intellicrack\ai\orchestrator.py:630:13: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:639:40: WPS226 Found string literal over-use: ai_assistant > 3
-
-intellicrack\ai\orchestrator.py:642:76: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:644:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:649:5: WPS231 Found function with too much cognitive complexity: 17 > 12
-
-intellicrack\ai\orchestrator.py:653:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:657:13: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:667:64: WPS432 Found magic number: 0.8
-
-intellicrack\ai\orchestrator.py:669:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:674:5: C901 'AIOrchestrator._execute_binary_analysis' is too complex (12)
-
-intellicrack\ai\orchestrator.py:674:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\orchestrator.py:674:5: WPS231 Found function with too much cognitive complexity: 41 > 12
-
-intellicrack\ai\orchestrator.py:678:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:684:13: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:693:60: WPS432 Found magic number: 0.7
-
-intellicrack\ai\orchestrator.py:695:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:702:13: WPS229 Found too long ``try`` body length: 5 > 1
-
-intellicrack\ai\orchestrator.py:711:56: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:715:57: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:726:87: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:728:120: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:730:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:735:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\orchestrator.py:735:5: WPS231 Found function with too much cognitive complexity: 42 > 12
-
-intellicrack\ai\orchestrator.py:739:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:743:13: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:747:21: WPS462 Wrong multiline string usage
-
-intellicrack\ai\orchestrator.py:781:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:786:13: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\orchestrator.py:795:66: WPS432 Found magic number: 0.8
-
-intellicrack\ai\orchestrator.py:797:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:802:40: WPS110 Found wrong variable name: content
-
-intellicrack\ai\orchestrator.py:808:13: WPS120 Found regular name with trailing underscore: line_
-
-intellicrack\ai\orchestrator.py:810:13: WPS221 Found line with high Jones Complexity: 16 > 14
-
-intellicrack\ai\orchestrator.py:810:59: WPS335 Found incorrect `for` loop iter type
-
-intellicrack\ai\orchestrator.py:811:29: WPS432 Found magic number: 20
-
-intellicrack\ai\orchestrator.py:811:48: WPS432 Found magic number: 200
-
-intellicrack\ai\orchestrator.py:817:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\orchestrator.py:821:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:823:9: WPS229 Found too long ``try`` body length: 6 > 1
-
-intellicrack\ai\orchestrator.py:825:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:829:36: WPS226 Found string literal over-use: ai_script_generator > 3
-
-intellicrack\ai\orchestrator.py:833:49: WPS226 Found string literal over-use: analysis_data > 3
-
-intellicrack\ai\orchestrator.py:835:16: WPS332 Found walrus operator outside a comprehension
-
-intellicrack\ai\orchestrator.py:836:29: WPS226 Found string literal over-use: script > 3
-
-intellicrack\ai\orchestrator.py:837:29: WPS226 Found string literal over-use: metadata > 3
-
-intellicrack\ai\orchestrator.py:838:21: WPS226 Found string literal over-use: script_id > 3
-
-intellicrack\ai\orchestrator.py:841:54: WPS111 Found too short name: p < 2
-
-intellicrack\ai\orchestrator.py:842:21: WPS226 Found string literal over-use: success_probability > 3
-
-intellicrack\ai\orchestrator.py:843:21: WPS226 Found string literal over-use: entry_point > 3
-
-intellicrack\ai\orchestrator.py:844:21: WPS226 Found string literal over-use: dependencies > 3
-
-intellicrack\ai\orchestrator.py:856:17: WPS204 Found overused expression: result_data['error']; used 9 > 7
-
-intellicrack\ai\orchestrator.py:857:30: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:859:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:862:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:866:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\orchestrator.py:870:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:872:9: WPS229 Found too long ``try`` body length: 6 > 1
-
-intellicrack\ai\orchestrator.py:874:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:884:16: WPS332 Found walrus operator outside a comprehension
-
-intellicrack\ai\orchestrator.py:890:54: WPS111 Found too short name: p < 2
-
-intellicrack\ai\orchestrator.py:906:30: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:908:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:911:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:915:5: WPS210 Found too many local variables: 10 > 5
-
-intellicrack\ai\orchestrator.py:915:5: WPS231 Found function with too much cognitive complexity: 18 > 12
-
-intellicrack\ai\orchestrator.py:919:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:921:9: WPS229 Found too long ``try`` body length: 14 > 1
-
-intellicrack\ai\orchestrator.py:923:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:967:51: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:975:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:978:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:982:5: WPS210 Found too many local variables: 9 > 5
-
-intellicrack\ai\orchestrator.py:982:5: WPS231 Found function with too much cognitive complexity: 18 > 12
-
-intellicrack\ai\orchestrator.py:986:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:988:9: WPS229 Found too long ``try`` body length: 12 > 1
-
-intellicrack\ai\orchestrator.py:990:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:1019:26: WPS432 Found magic number: 0.9
-
-intellicrack\ai\orchestrator.py:1019:63: WPS432 Found magic number: 0.3
-
-intellicrack\ai\orchestrator.py:1030:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:1033:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1037:5: WPS210 Found too many local variables: 8 > 5
-
-intellicrack\ai\orchestrator.py:1041:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1043:9: WPS229 Found too long ``try`` body length: 7 > 1
-
-intellicrack\ai\orchestrator.py:1045:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:1056:16: WPS332 Found walrus operator outside a comprehension
-
-intellicrack\ai\orchestrator.py:1064:30: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1066:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:1069:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1073:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\orchestrator.py:1077:22: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1079:9: WPS229 Found too long ``try`` body length: 7 > 1
-
-intellicrack\ai\orchestrator.py:1081:13: WPS300 Found local folder import
-
-intellicrack\ai\orchestrator.py:1095:36: WPS226 Found string literal over-use: status > 3
-
-intellicrack\ai\orchestrator.py:1106:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:1109:26: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1127:25: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:1157:12: WPS332 Found walrus operator outside a comprehension
-
-intellicrack\ai\orchestrator.py:1168:24: WPS432 Found magic number: 0.85
-
-intellicrack\ai\orchestrator.py:1168:49: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1169:29: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\orchestrator.py:1171:20: WPS504 Found negated condition
-
-intellicrack\ai\orchestrator.py:1177:21: WPS237 Found a too complex `f` string
-
-intellicrack\ai\orchestrator.py:1189:21: WPS237 Found a too complex `f` string
-
-intellicrack\ai\orchestrator.py:1201:21: WPS237 Found a too complex `f` string
-
-intellicrack\ai\orchestrator.py:1271:17: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\orchestrator.py:1272:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:1277:5: WPS615 Found unpythonic getter or setter: get_task_progress
-
-intellicrack\ai\orchestrator.py:1308:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\orchestrator.py:1321:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\orchestrator.py:1323:9: WPS122 Found all unused variables definition: _ORCHESTRATOR_INSTANCE
-
-intellicrack\ai\orchestrator.py:1324:12: WPS121 Found usage of a variable marked as unused: _ORCHESTRATOR_INSTANCE
-
-intellicrack\ai\orchestrator.py:1329:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\orchestrator.py:1331:9: WPS121 Found usage of a variable marked as unused: _ORCHESTRATOR_INSTANCE
-
-intellicrack\ai\orchestrator.py:1332:9: WPS122 Found all unused variables definition: _ORCHESTRATOR_INSTANCE
-
-
 208 findings in intellicrack\ai\visualization_analytics.py
 
 intellicrack\ai\visualization_analytics.py:0:1: WPS201 Found module with too many imports: 20 > 12
@@ -12488,6 +12051,423 @@ intellicrack\ai\visualization_analytics.py:1621:68: WPS111 Found too short name:
 intellicrack\ai\visualization_analytics.py:1630:54: WPS111 Found too short name: p < 2
 
 intellicrack\ai\visualization_analytics.py:1676:54: WPS111 Found too short name: f < 2
+
+
+207 findings in intellicrack\ai\orchestrator.py
+
+intellicrack\ai\orchestrator.py:0:1: WPS201 Found module with too many imports: 23 > 12
+
+intellicrack\ai\orchestrator.py:0:1: WPS202 Found too many module members: 9 > 7
+
+intellicrack\ai\orchestrator.py:34:1: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:38:1: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:39:5: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:40:5: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:41:5: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:42:5: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:43:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:150:29: WPS110 Found wrong variable name: value
+
+intellicrack\ai\orchestrator.py:171:48: WPS110 Found wrong variable name: results
+
+intellicrack\ai\orchestrator.py:209:21: WPS226 Found string literal over-use: component > 3
+
+intellicrack\ai\orchestrator.py:215:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+
+intellicrack\ai\orchestrator.py:215:37: WPS110 Found wrong variable name: data
+
+intellicrack\ai\orchestrator.py:228:13: WPS426 Found `lambda` in loop's body
+
+intellicrack\ai\orchestrator.py:229:17: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\orchestrator.py:231:21: WPS430 Found nested function: call_subscriber
+
+intellicrack\ai\orchestrator.py:232:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\orchestrator.py:241:25: WPS505 Found nested `try` block
+
+intellicrack\ai\orchestrator.py:241:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\orchestrator.py:242:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\orchestrator.py:243:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\orchestrator.py:243:25: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:243:32: WPS204 Found overused expression: (OSError, ValueError, RuntimeError); used 15 > 7
+
+intellicrack\ai\orchestrator.py:244:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\orchestrator.py:246:21: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\orchestrator.py:248:17: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:255:17: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:255:17: WPS221 Found line with high Jones Complexity: 17 > 14
+
+intellicrack\ai\orchestrator.py:255:65: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:258:1: WPS230 Found too many public instance attributes: 15 > 6
+
+intellicrack\ai\orchestrator.py:258:1: WPS214 Found too many methods: 36 > 7
+
+intellicrack\ai\orchestrator.py:258:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\ai\orchestrator.py:298:5: C901 'AIOrchestrator._initialize_components' is too complex (17)
+
+intellicrack\ai\orchestrator.py:298:5: WPS213 Found too many expressions: 24 > 9
+
+intellicrack\ai\orchestrator.py:315:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:318:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:331:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:334:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:350:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:354:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:368:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:371:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:380:83: WPS226 Found string literal over-use: orchestrator > 3
+
+intellicrack\ai\orchestrator.py:385:37: WPS110 Found wrong variable name: data
+
+intellicrack\ai\orchestrator.py:387:28: WPS226 Found string literal over-use: task_id > 3
+
+intellicrack\ai\orchestrator.py:387:39: WPS226 Found string literal over-use: unknown > 3
+
+intellicrack\ai\orchestrator.py:394:48: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:402:42: WPS110 Found wrong variable name: data
+
+intellicrack\ai\orchestrator.py:407:31: WPS226 Found string literal over-use: confidence > 3
+
+intellicrack\ai\orchestrator.py:407:45: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:408:12: WPS459 Found comparison with float or complex number
+
+intellicrack\ai\orchestrator.py:408:25: WPS432 Found magic number: 0.7
+
+intellicrack\ai\orchestrator.py:411:32: WPS110 Found wrong variable name: data
+
+intellicrack\ai\orchestrator.py:415:34: WPS110 Found wrong variable name: data
+
+intellicrack\ai\orchestrator.py:417:58: WPS226 Found string literal over-use: error > 3
+
+intellicrack\ai\orchestrator.py:458:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\orchestrator.py:460:17: WPS505 Found nested `try` block
+
+intellicrack\ai\orchestrator.py:469:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:472:5: C901 'AIOrchestrator._execute_task' is too complex (20)
+
+intellicrack\ai\orchestrator.py:472:5: WPS210 Found too many local variables: 8 > 5
+
+intellicrack\ai\orchestrator.py:472:5: WPS213 Found too many expressions: 30 > 9
+
+intellicrack\ai\orchestrator.py:472:5: WPS231 Found function with too much cognitive complexity: 76 > 12
+
+intellicrack\ai\orchestrator.py:479:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:481:9: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:495:13: WPS223 Found too many `elif` branches: 9 > 3
+
+intellicrack\ai\orchestrator.py:496:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:497:17: WPS204 Found overused expression: (result_data, components_used, confidence); used 20 > 7
+
+intellicrack\ai\orchestrator.py:497:17: WPS204 Found overused expression: (result_data, components_used, confidence); used 10 > 4
+
+intellicrack\ai\orchestrator.py:501:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:506:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:511:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:516:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:521:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:526:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:531:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:536:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:541:57: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:550:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:557:53: WPS432 Found magic number: 90
+
+intellicrack\ai\orchestrator.py:561:9: WPS110 Found wrong variable name: result
+
+intellicrack\ai\orchestrator.py:583:17: WPS226 Found string literal over-use: success > 3
+
+intellicrack\ai\orchestrator.py:593:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:597:9: WPS430 Found nested function: clear_progress
+
+intellicrack\ai\orchestrator.py:604:9: WPS504 Found negated condition
+
+intellicrack\ai\orchestrator.py:612:5: WPS210 Found too many local variables: 6 > 5
+
+intellicrack\ai\orchestrator.py:612:5: WPS231 Found function with too much cognitive complexity: 22 > 12
+
+intellicrack\ai\orchestrator.py:616:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:618:43: WPS226 Found string literal over-use: binary_path > 3
+
+intellicrack\ai\orchestrator.py:624:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:627:93: WPS459 Found comparison with float or complex number
+
+intellicrack\ai\orchestrator.py:627:106: WPS432 Found magic number: 0.7
+
+intellicrack\ai\orchestrator.py:630:13: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:639:40: WPS226 Found string literal over-use: ai_assistant > 3
+
+intellicrack\ai\orchestrator.py:642:76: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:644:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:649:5: WPS231 Found function with too much cognitive complexity: 17 > 12
+
+intellicrack\ai\orchestrator.py:653:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:657:13: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:667:64: WPS432 Found magic number: 0.8
+
+intellicrack\ai\orchestrator.py:669:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:674:5: C901 'AIOrchestrator._execute_binary_analysis' is too complex (12)
+
+intellicrack\ai\orchestrator.py:674:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\orchestrator.py:674:5: WPS231 Found function with too much cognitive complexity: 41 > 12
+
+intellicrack\ai\orchestrator.py:678:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:684:13: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:693:60: WPS432 Found magic number: 0.7
+
+intellicrack\ai\orchestrator.py:695:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:702:13: WPS229 Found too long ``try`` body length: 5 > 1
+
+intellicrack\ai\orchestrator.py:711:56: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:715:57: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:726:87: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:728:123: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:730:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:735:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\orchestrator.py:735:5: WPS231 Found function with too much cognitive complexity: 42 > 12
+
+intellicrack\ai\orchestrator.py:739:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:743:13: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:747:21: WPS462 Wrong multiline string usage
+
+intellicrack\ai\orchestrator.py:781:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:786:13: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\orchestrator.py:795:66: WPS432 Found magic number: 0.8
+
+intellicrack\ai\orchestrator.py:797:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:802:40: WPS110 Found wrong variable name: content
+
+intellicrack\ai\orchestrator.py:808:13: WPS120 Found regular name with trailing underscore: line_
+
+intellicrack\ai\orchestrator.py:810:13: WPS221 Found line with high Jones Complexity: 16 > 14
+
+intellicrack\ai\orchestrator.py:810:59: WPS335 Found incorrect `for` loop iter type
+
+intellicrack\ai\orchestrator.py:811:29: WPS432 Found magic number: 20
+
+intellicrack\ai\orchestrator.py:811:48: WPS432 Found magic number: 200
+
+intellicrack\ai\orchestrator.py:817:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\orchestrator.py:821:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:823:9: WPS229 Found too long ``try`` body length: 6 > 1
+
+intellicrack\ai\orchestrator.py:825:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:829:36: WPS226 Found string literal over-use: ai_script_generator > 3
+
+intellicrack\ai\orchestrator.py:833:49: WPS226 Found string literal over-use: analysis_data > 3
+
+intellicrack\ai\orchestrator.py:835:16: WPS332 Found walrus operator outside a comprehension
+
+intellicrack\ai\orchestrator.py:836:29: WPS226 Found string literal over-use: script > 3
+
+intellicrack\ai\orchestrator.py:837:29: WPS226 Found string literal over-use: metadata > 3
+
+intellicrack\ai\orchestrator.py:838:21: WPS226 Found string literal over-use: script_id > 3
+
+intellicrack\ai\orchestrator.py:841:54: WPS111 Found too short name: p < 2
+
+intellicrack\ai\orchestrator.py:842:21: WPS226 Found string literal over-use: success_probability > 3
+
+intellicrack\ai\orchestrator.py:843:21: WPS226 Found string literal over-use: entry_point > 3
+
+intellicrack\ai\orchestrator.py:844:21: WPS226 Found string literal over-use: dependencies > 3
+
+intellicrack\ai\orchestrator.py:856:17: WPS204 Found overused expression: result_data['error']; used 9 > 7
+
+intellicrack\ai\orchestrator.py:857:30: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:859:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:862:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:866:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\orchestrator.py:870:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:872:9: WPS229 Found too long ``try`` body length: 6 > 1
+
+intellicrack\ai\orchestrator.py:874:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:884:16: WPS332 Found walrus operator outside a comprehension
+
+intellicrack\ai\orchestrator.py:890:54: WPS111 Found too short name: p < 2
+
+intellicrack\ai\orchestrator.py:906:30: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:908:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:911:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:915:5: WPS210 Found too many local variables: 10 > 5
+
+intellicrack\ai\orchestrator.py:915:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+
+intellicrack\ai\orchestrator.py:919:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:921:9: WPS229 Found too long ``try`` body length: 14 > 1
+
+intellicrack\ai\orchestrator.py:923:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:967:51: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:975:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:978:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:982:5: WPS210 Found too many local variables: 9 > 5
+
+intellicrack\ai\orchestrator.py:982:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+
+intellicrack\ai\orchestrator.py:986:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:988:9: WPS229 Found too long ``try`` body length: 12 > 1
+
+intellicrack\ai\orchestrator.py:990:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:1019:26: WPS432 Found magic number: 0.9
+
+intellicrack\ai\orchestrator.py:1019:63: WPS432 Found magic number: 0.3
+
+intellicrack\ai\orchestrator.py:1030:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:1033:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1037:5: WPS210 Found too many local variables: 8 > 5
+
+intellicrack\ai\orchestrator.py:1041:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1043:9: WPS229 Found too long ``try`` body length: 7 > 1
+
+intellicrack\ai\orchestrator.py:1045:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:1056:16: WPS332 Found walrus operator outside a comprehension
+
+intellicrack\ai\orchestrator.py:1064:30: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1066:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:1069:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1073:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\orchestrator.py:1077:22: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1079:9: WPS229 Found too long ``try`` body length: 7 > 1
+
+intellicrack\ai\orchestrator.py:1081:13: WPS300 Found local folder import
+
+intellicrack\ai\orchestrator.py:1095:36: WPS226 Found string literal over-use: status > 3
+
+intellicrack\ai\orchestrator.py:1106:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:1109:26: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1127:25: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:1157:12: WPS332 Found walrus operator outside a comprehension
+
+intellicrack\ai\orchestrator.py:1168:24: WPS432 Found magic number: 0.85
+
+intellicrack\ai\orchestrator.py:1168:49: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1169:29: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\orchestrator.py:1171:20: WPS504 Found negated condition
+
+intellicrack\ai\orchestrator.py:1177:21: WPS237 Found a too complex `f` string
+
+intellicrack\ai\orchestrator.py:1189:21: WPS237 Found a too complex `f` string
+
+intellicrack\ai\orchestrator.py:1201:21: WPS237 Found a too complex `f` string
+
+intellicrack\ai\orchestrator.py:1271:17: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\orchestrator.py:1272:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:1277:5: WPS615 Found unpythonic getter or setter: get_task_progress
+
+intellicrack\ai\orchestrator.py:1308:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\orchestrator.py:1321:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\orchestrator.py:1323:9: WPS122 Found all unused variables definition: _ORCHESTRATOR_INSTANCE
+
+intellicrack\ai\orchestrator.py:1324:12: WPS121 Found usage of a variable marked as unused: _ORCHESTRATOR_INSTANCE
+
+intellicrack\ai\orchestrator.py:1329:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\orchestrator.py:1331:9: WPS121 Found usage of a variable marked as unused: _ORCHESTRATOR_INSTANCE
+
+intellicrack\ai\orchestrator.py:1332:9: WPS122 Found all unused variables definition: _ORCHESTRATOR_INSTANCE
 
 
 196 findings in intellicrack\ai\headless_training_interface.py
@@ -14947,7 +14927,7 @@ intellicrack\ai\model_performance_monitor.py:851:9: WPS122 Found all unused vari
 intellicrack\ai\model_performance_monitor.py:852:12: WPS121 Found usage of a variable marked as unused: _PERFORMANCE_MONITOR
 
 
-154 findings in intellicrack\ai\performance_optimization_layer.py
+151 findings in intellicrack\ai\performance_optimization_layer.py
 
 intellicrack\ai\performance_optimization_layer.py:0:1: WPS201 Found module with too many imports: 17 > 12
 
@@ -15151,8 +15131,6 @@ intellicrack\ai\performance_optimization_layer.py:947:21: WPS110 Found wrong var
 
 intellicrack\ai\performance_optimization_layer.py:949:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\performance_optimization_layer.py:966:52: WPS226 Found string literal over-use: .2f > 3
-
 intellicrack\ai\performance_optimization_layer.py:971:5: WPS210 Found too many local variables: 9 > 5
 
 intellicrack\ai\performance_optimization_layer.py:971:5: WPS234 Found overly complex annotation: 4 > 3
@@ -15193,8 +15171,6 @@ intellicrack\ai\performance_optimization_layer.py:1096:28: WPS529 Found implicit
 
 intellicrack\ai\performance_optimization_layer.py:1102:29: WPS110 Found wrong variable name: value
 
-intellicrack\ai\performance_optimization_layer.py:1136:22: WPS237 Found a too complex `f` string
-
 intellicrack\ai\performance_optimization_layer.py:1148:9: WPS221 Found line with high Jones Complexity: 16 > 14
 
 intellicrack\ai\performance_optimization_layer.py:1148:61: WPS111 Found too short name: x < 2
@@ -15208,8 +15184,6 @@ intellicrack\ai\performance_optimization_layer.py:1153:17: WPS529 Found implicit
 intellicrack\ai\performance_optimization_layer.py:1154:13: WPS420 Found wrong keyword: del
 
 intellicrack\ai\performance_optimization_layer.py:1155:13: WPS420 Found wrong keyword: del
-
-intellicrack\ai\performance_optimization_layer.py:1160:26: WPS237 Found a too complex `f` string
 
 intellicrack\ai\performance_optimization_layer.py:1169:9: WPS221 Found line with high Jones Complexity: 16 > 14
 
@@ -15360,17 +15334,17 @@ intellicrack\cli\terminal_dashboard.py:392:19: WPS237 Found a too complex `f` st
 
 intellicrack\cli\terminal_dashboard.py:402:10: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\cli\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: 🟢 > 3
+intellicrack\cli\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: ≡ƒƒó > 3
 
 intellicrack\cli\terminal_dashboard.py:402:54: WPS432 Found magic number: else
 
 intellicrack\cli\terminal_dashboard.py:402:62: WPS509 Found incorrectly nested ternary
 
-intellicrack\cli\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: 🟡 > 3
+intellicrack\cli\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: ≡ƒƒí > 3
 
 intellicrack\cli\terminal_dashboard.py:402:106: WPS432 Found magic number: 95
 
-intellicrack\cli\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: 🔴 > 3
+intellicrack\cli\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: ≡ƒö┤ > 3
 
 intellicrack\cli\terminal_dashboard.py:403:10: WPS221 Found line with high Jones Complexity: 15 > 14
 
@@ -17173,247 +17147,6 @@ intellicrack\cli\tutorial_system.py:1268:16: WPS204 Found overused expression: p
 intellicrack\cli\tutorial_system.py:1271:13: WPS223 Found too many `elif` branches: 4 > 3
 
 
-119 findings in intellicrack\ai\quantization_manager.py
-
-intellicrack\ai\quantization_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 12.2 > 8
-
-intellicrack\ai\quantization_manager.py:25:1: WPS300 Found local folder import
-
-intellicrack\ai\quantization_manager.py:26:1: WPS300 Found local folder import
-
-intellicrack\ai\quantization_manager.py:32:1: WPS229 Found too long ``try`` body length: 3 > 1
-
-intellicrack\ai\quantization_manager.py:38:5: WPS505 Found nested `try` block
-
-intellicrack\ai\quantization_manager.py:38:5: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\quantization_manager.py:39:9: WPS300 Found local folder import
-
-intellicrack\ai\quantization_manager.py:39:9: WPS347 Found vague import that may cause confusion: to_device
-
-intellicrack\ai\quantization_manager.py:54:1: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\quantization_manager.py:58:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:63:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:69:1: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\quantization_manager.py:73:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:83:1: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\quantization_manager.py:87:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:95:1: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\quantization_manager.py:99:1: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:108:1: WPS214 Found too many methods: 19 > 7
-
-intellicrack\ai\quantization_manager.py:108:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\ai\quantization_manager.py:130:25: WPS226 Found string literal over-use: available > 3
-
-intellicrack\ai\quantization_manager.py:130:63: WPS226 Found string literal over-use: device_count > 3
-
-intellicrack\ai\quantization_manager.py:132:29: WPS237 Found a too complex `f` string
-
-intellicrack\ai\quantization_manager.py:135:25: WPS237 Found a too complex `f` string
-
-intellicrack\ai\quantization_manager.py:137:5: WPS212 Found too many return statements: 6 > 5
-
-intellicrack\ai\quantization_manager.py:137:5: WPS231 Found function with too much cognitive complexity: 14 > 12
-
-intellicrack\ai\quantization_manager.py:140:34: WPS226 Found string literal over-use: auto > 3
-
-intellicrack\ai\quantization_manager.py:168:9: WPS229 Found too long ``try`` body length: 5 > 1
-
-intellicrack\ai\quantization_manager.py:169:37: WPS226 Found string literal over-use: 8bit > 3
-
-intellicrack\ai\quantization_manager.py:171:37: WPS226 Found string literal over-use: 4bit > 3
-
-intellicrack\ai\quantization_manager.py:173:37: WPS226 Found string literal over-use: gptq > 3
-
-intellicrack\ai\quantization_manager.py:181:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:193:16: WPS226 Found string literal over-use: cpu > 3
-
-intellicrack\ai\quantization_manager.py:195:5: WPS210 Found too many local variables: 6 > 5
-
-intellicrack\ai\quantization_manager.py:195:5: WPS231 Found function with too much cognitive complexity: 17 > 12
-
-intellicrack\ai\quantization_manager.py:199:13: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\quantization_manager.py:200:17: WPS110 Found wrong variable name: file
-
-intellicrack\ai\quantization_manager.py:209:39: WPS111 Found too short name: f < 2
-
-intellicrack\ai\quantization_manager.py:212:36: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\quantization_manager.py:213:24: WPS226 Found string literal over-use: bits > 3
-
-intellicrack\ai\quantization_manager.py:214:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:214:35: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\quantization_manager.py:216:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:218:16: WPS226 Found string literal over-use: none > 3
-
-intellicrack\ai\quantization_manager.py:220:5: WPS231 Found function with too much cognitive complexity: 13 > 12
-
-intellicrack\ai\quantization_manager.py:220:5: WPS114 Found underscored number name pattern: _load_8bit_model
-
-intellicrack\ai\quantization_manager.py:230:9: WPS229 Found too long ``try`` body length: 6 > 1
-
-intellicrack\ai\quantization_manager.py:253:46: WPS226 Found string literal over-use: trust_remote_code > 3
-
-intellicrack\ai\quantization_manager.py:260:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:264:5: WPS231 Found function with too much cognitive complexity: 18 > 12
-
-intellicrack\ai\quantization_manager.py:264:5: WPS114 Found underscored number name pattern: _load_4bit_model
-
-intellicrack\ai\quantization_manager.py:274:9: WPS229 Found too long ``try`` body length: 7 > 1
-
-intellicrack\ai\quantization_manager.py:308:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:322:9: WPS229 Found too long ``try`` body length: 3 > 1
-
-intellicrack\ai\quantization_manager.py:336:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:340:5: C901 'QuantizationManager._load_standard_model' is too complex (11)
-
-intellicrack\ai\quantization_manager.py:340:5: WPS231 Found function with too much cognitive complexity: 35 > 12
-
-intellicrack\ai\quantization_manager.py:346:9: WPS229 Found too long ``try`` body length: 7 > 1
-
-intellicrack\ai\quantization_manager.py:350:31: WPS504 Found negated condition
-
-intellicrack\ai\quantization_manager.py:385:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:386:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:391:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:416:9: WPS229 Found too long ``try`` body length: 5 > 1
-
-intellicrack\ai\quantization_manager.py:434:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:453:9: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\quantization_manager.py:470:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:494:13: WPS519 Found implicit `sum()` call
-
-intellicrack\ai\quantization_manager.py:494:17: WPS110 Found wrong variable name: file
-
-intellicrack\ai\quantization_manager.py:496:13: WPS519 Found implicit `sum()` call
-
-intellicrack\ai\quantization_manager.py:496:17: WPS110 Found wrong variable name: file
-
-intellicrack\ai\quantization_manager.py:513:23: WPS226 Found string literal over-use: estimated_memory_gb > 3
-
-intellicrack\ai\quantization_manager.py:513:78: WPS432 Found magic number: 1.2
-
-intellicrack\ai\quantization_manager.py:515:78: WPS432 Found magic number: 1.2
-
-intellicrack\ai\quantization_manager.py:517:58: WPS432 Found magic number: 0.25
-
-intellicrack\ai\quantization_manager.py:519:78: WPS432 Found magic number: 1.2
-
-intellicrack\ai\quantization_manager.py:525:9: WPS111 Found too short name: r < 2
-
-intellicrack\ai\quantization_manager.py:584:19: WPS509 Found incorrectly nested ternary
-
-intellicrack\ai\quantization_manager.py:607:5: C901 'QuantizationManager.quantize_model_with_bnb' is too complex (13)
-
-intellicrack\ai\quantization_manager.py:607:5: WPS210 Found too many local variables: 9 > 5
-
-intellicrack\ai\quantization_manager.py:607:5: WPS231 Found function with too much cognitive complexity: 36 > 12
-
-intellicrack\ai\quantization_manager.py:623:9: WPS229 Found too long ``try`` body length: 3 > 1
-
-intellicrack\ai\quantization_manager.py:630:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:631:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:634:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:634:25: WPS114 Found underscored number name pattern: linear_8bit
-
-intellicrack\ai\quantization_manager.py:639:63: WPS432 Found magic number: 6.0
-
-intellicrack\ai\quantization_manager.py:643:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:649:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:650:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\quantization_manager.py:653:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:654:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:655:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:656:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\quantization_manager.py:657:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:662:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:663:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:666:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:666:25: WPS114 Found underscored number name pattern: linear_4bit
-
-intellicrack\ai\quantization_manager.py:674:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:681:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:682:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\quantization_manager.py:685:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:686:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:687:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:688:29: WPS220 Found too deep nesting: 28 > 20
-
-intellicrack\ai\quantization_manager.py:689:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\quantization_manager.py:694:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:714:9: WPS229 Found too long ``try`` body length: 3 > 1
-
-intellicrack\ai\quantization_manager.py:731:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:753:9: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\quantization_manager.py:758:57: WPS432 Found magic number: 128
-
-intellicrack\ai\quantization_manager.py:789:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\quantization_manager.py:793:5: C901 'QuantizationManager.create_quantization_config' is too complex (12)
-
-intellicrack\ai\quantization_manager.py:793:5: WPS212 Found too many return statements: 11 > 5
-
-intellicrack\ai\quantization_manager.py:793:5: WPS231 Found function with too much cognitive complexity: 21 > 12
-
-intellicrack\ai\quantization_manager.py:804:21: WPS226 Found string literal over-use: quantization_type > 3
-
-intellicrack\ai\quantization_manager.py:860:5: WPS231 Found function with too much cognitive complexity: 18 > 12
-
-intellicrack\ai\quantization_manager.py:886:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\quantization_manager.py:888:9: WPS122 Found all unused variables definition: _QUANTIZATION_MANAGER
-
-intellicrack\ai\quantization_manager.py:889:12: WPS121 Found usage of a variable marked as unused: _QUANTIZATION_MANAGER
-
-
 119 findings in intellicrack\ai\script_editor.py
 
 intellicrack\ai\script_editor.py:0:1: WPS201 Found module with too many imports: 18 > 12
@@ -17653,6 +17386,243 @@ intellicrack\ai\script_editor.py:1119:12: WPS459 Found comparison with float or 
 intellicrack\ai\script_editor.py:1122:40: WPS432 Found magic number: 50
 
 intellicrack\ai\script_editor.py:1125:42: WPS432 Found magic number: 20
+
+
+117 findings in intellicrack\ai\quantization_manager.py
+
+intellicrack\ai\quantization_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 12.2 > 8
+
+intellicrack\ai\quantization_manager.py:25:1: WPS300 Found local folder import
+
+intellicrack\ai\quantization_manager.py:26:1: WPS300 Found local folder import
+
+intellicrack\ai\quantization_manager.py:32:1: WPS229 Found too long ``try`` body length: 3 > 1
+
+intellicrack\ai\quantization_manager.py:38:5: WPS505 Found nested `try` block
+
+intellicrack\ai\quantization_manager.py:38:5: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\quantization_manager.py:39:9: WPS300 Found local folder import
+
+intellicrack\ai\quantization_manager.py:39:9: WPS347 Found vague import that may cause confusion: to_device
+
+intellicrack\ai\quantization_manager.py:54:1: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\quantization_manager.py:58:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:63:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:69:1: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\quantization_manager.py:73:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:83:1: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\quantization_manager.py:87:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:95:1: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\quantization_manager.py:99:1: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:108:1: WPS214 Found too many methods: 19 > 7
+
+intellicrack\ai\quantization_manager.py:108:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\ai\quantization_manager.py:130:25: WPS226 Found string literal over-use: available > 3
+
+intellicrack\ai\quantization_manager.py:130:63: WPS226 Found string literal over-use: device_count > 3
+
+intellicrack\ai\quantization_manager.py:137:5: WPS212 Found too many return statements: 6 > 5
+
+intellicrack\ai\quantization_manager.py:137:5: WPS231 Found function with too much cognitive complexity: 14 > 12
+
+intellicrack\ai\quantization_manager.py:140:34: WPS226 Found string literal over-use: auto > 3
+
+intellicrack\ai\quantization_manager.py:168:9: WPS229 Found too long ``try`` body length: 5 > 1
+
+intellicrack\ai\quantization_manager.py:169:37: WPS226 Found string literal over-use: 8bit > 3
+
+intellicrack\ai\quantization_manager.py:171:37: WPS226 Found string literal over-use: 4bit > 3
+
+intellicrack\ai\quantization_manager.py:173:37: WPS226 Found string literal over-use: gptq > 3
+
+intellicrack\ai\quantization_manager.py:181:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:193:16: WPS226 Found string literal over-use: cpu > 3
+
+intellicrack\ai\quantization_manager.py:195:5: WPS210 Found too many local variables: 6 > 5
+
+intellicrack\ai\quantization_manager.py:195:5: WPS231 Found function with too much cognitive complexity: 17 > 12
+
+intellicrack\ai\quantization_manager.py:199:13: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\quantization_manager.py:200:17: WPS110 Found wrong variable name: file
+
+intellicrack\ai\quantization_manager.py:209:39: WPS111 Found too short name: f < 2
+
+intellicrack\ai\quantization_manager.py:212:36: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\quantization_manager.py:213:24: WPS226 Found string literal over-use: bits > 3
+
+intellicrack\ai\quantization_manager.py:214:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:214:35: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\quantization_manager.py:216:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:218:16: WPS226 Found string literal over-use: none > 3
+
+intellicrack\ai\quantization_manager.py:220:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+
+intellicrack\ai\quantization_manager.py:220:5: WPS114 Found underscored number name pattern: _load_8bit_model
+
+intellicrack\ai\quantization_manager.py:230:9: WPS229 Found too long ``try`` body length: 6 > 1
+
+intellicrack\ai\quantization_manager.py:253:46: WPS226 Found string literal over-use: trust_remote_code > 3
+
+intellicrack\ai\quantization_manager.py:260:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:264:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+
+intellicrack\ai\quantization_manager.py:264:5: WPS114 Found underscored number name pattern: _load_4bit_model
+
+intellicrack\ai\quantization_manager.py:274:9: WPS229 Found too long ``try`` body length: 7 > 1
+
+intellicrack\ai\quantization_manager.py:308:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:322:9: WPS229 Found too long ``try`` body length: 3 > 1
+
+intellicrack\ai\quantization_manager.py:336:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:340:5: C901 'QuantizationManager._load_standard_model' is too complex (11)
+
+intellicrack\ai\quantization_manager.py:340:5: WPS231 Found function with too much cognitive complexity: 35 > 12
+
+intellicrack\ai\quantization_manager.py:346:9: WPS229 Found too long ``try`` body length: 7 > 1
+
+intellicrack\ai\quantization_manager.py:350:31: WPS504 Found negated condition
+
+intellicrack\ai\quantization_manager.py:385:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:386:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:391:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:416:9: WPS229 Found too long ``try`` body length: 5 > 1
+
+intellicrack\ai\quantization_manager.py:434:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:453:9: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\quantization_manager.py:470:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:494:13: WPS519 Found implicit `sum()` call
+
+intellicrack\ai\quantization_manager.py:494:17: WPS110 Found wrong variable name: file
+
+intellicrack\ai\quantization_manager.py:496:13: WPS519 Found implicit `sum()` call
+
+intellicrack\ai\quantization_manager.py:496:17: WPS110 Found wrong variable name: file
+
+intellicrack\ai\quantization_manager.py:513:23: WPS226 Found string literal over-use: estimated_memory_gb > 3
+
+intellicrack\ai\quantization_manager.py:513:78: WPS432 Found magic number: 1.2
+
+intellicrack\ai\quantization_manager.py:515:78: WPS432 Found magic number: 1.2
+
+intellicrack\ai\quantization_manager.py:517:58: WPS432 Found magic number: 0.25
+
+intellicrack\ai\quantization_manager.py:519:78: WPS432 Found magic number: 1.2
+
+intellicrack\ai\quantization_manager.py:525:9: WPS111 Found too short name: r < 2
+
+intellicrack\ai\quantization_manager.py:584:19: WPS509 Found incorrectly nested ternary
+
+intellicrack\ai\quantization_manager.py:607:5: C901 'QuantizationManager.quantize_model_with_bnb' is too complex (13)
+
+intellicrack\ai\quantization_manager.py:607:5: WPS210 Found too many local variables: 9 > 5
+
+intellicrack\ai\quantization_manager.py:607:5: WPS231 Found function with too much cognitive complexity: 36 > 12
+
+intellicrack\ai\quantization_manager.py:623:9: WPS229 Found too long ``try`` body length: 3 > 1
+
+intellicrack\ai\quantization_manager.py:630:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:631:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:634:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:634:25: WPS114 Found underscored number name pattern: linear_8bit
+
+intellicrack\ai\quantization_manager.py:639:63: WPS432 Found magic number: 6.0
+
+intellicrack\ai\quantization_manager.py:643:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:649:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:650:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\quantization_manager.py:653:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:654:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:655:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:656:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\quantization_manager.py:657:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:662:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:663:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:666:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:666:25: WPS114 Found underscored number name pattern: linear_4bit
+
+intellicrack\ai\quantization_manager.py:674:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:681:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:682:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\quantization_manager.py:685:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:686:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:687:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:688:29: WPS220 Found too deep nesting: 28 > 20
+
+intellicrack\ai\quantization_manager.py:689:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\quantization_manager.py:694:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:714:9: WPS229 Found too long ``try`` body length: 3 > 1
+
+intellicrack\ai\quantization_manager.py:731:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:753:9: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\quantization_manager.py:758:57: WPS432 Found magic number: 128
+
+intellicrack\ai\quantization_manager.py:789:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\quantization_manager.py:793:5: C901 'QuantizationManager.create_quantization_config' is too complex (12)
+
+intellicrack\ai\quantization_manager.py:793:5: WPS212 Found too many return statements: 11 > 5
+
+intellicrack\ai\quantization_manager.py:793:5: WPS231 Found function with too much cognitive complexity: 21 > 12
+
+intellicrack\ai\quantization_manager.py:804:21: WPS226 Found string literal over-use: quantization_type > 3
+
+intellicrack\ai\quantization_manager.py:860:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+
+intellicrack\ai\quantization_manager.py:886:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\quantization_manager.py:888:9: WPS122 Found all unused variables definition: _QUANTIZATION_MANAGER
+
+intellicrack\ai\quantization_manager.py:889:12: WPS121 Found usage of a variable marked as unused: _QUANTIZATION_MANAGER
 
 
 117 findings in intellicrack\cli\hex_viewer_cli.py
@@ -18127,7 +18097,7 @@ intellicrack\ai\coordination_layer.py:646:9: WPS111 Found too short name: e < 2
 intellicrack\ai\coordination_layer.py:671:30: WPS432 Found magic number: 0.8
 
 
-114 findings in intellicrack\ai\intelligent_code_modifier.py
+113 findings in intellicrack\ai\intelligent_code_modifier.py
 
 intellicrack\ai\intelligent_code_modifier.py:0:1: WPS232 Found module cognitive complexity that is too high: 11.2 > 8
 
@@ -18168,8 +18138,6 @@ intellicrack\ai\intelligent_code_modifier.py:151:59: WPS111 Found too short name
 intellicrack\ai\intelligent_code_modifier.py:152:21: WPS110 Found wrong variable name: content
 
 intellicrack\ai\intelligent_code_modifier.py:163:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\intelligent_code_modifier.py:164:60: WPS226 Found string literal over-use: :  > 3
 
 intellicrack\ai\intelligent_code_modifier.py:177:5: C901 'CodeAnalyzer._analyze_python_file' is too complex (13)
 
@@ -18358,7 +18326,7 @@ intellicrack\ai\intelligent_code_modifier.py:872:64: WPS111 Found too short name
 intellicrack\ai\intelligent_code_modifier.py:888:5: WPS615 Found unpythonic getter or setter: get_pending_changes
 
 
-114 findings in intellicrack\ai\llm_config_manager.py
+113 findings in intellicrack\ai\llm_config_manager.py
 
 intellicrack\ai\llm_config_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 8.7 > 8
 
@@ -18393,8 +18361,6 @@ intellicrack\ai\llm_config_manager.py:130:43: WPS226 Found string literal over-u
 intellicrack\ai\llm_config_manager.py:130:55: WPS111 Found too short name: f < 2
 
 intellicrack\ai\llm_config_manager.py:132:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\llm_config_manager.py:133:54: WPS226 Found string literal over-use: :  > 3
 
 intellicrack\ai\llm_config_manager.py:145:13: WPS226 Found string literal over-use: code_generation > 3
 
@@ -18589,7 +18555,7 @@ intellicrack\ai\llm_config_manager.py:882:9: WPS122 Found all unused variables d
 intellicrack\ai\llm_config_manager.py:883:12: WPS121 Found usage of a variable marked as unused: _CONFIG_MANAGER
 
 
-113 findings in intellicrack\ai\lora_adapter_manager.py
+112 findings in intellicrack\ai\lora_adapter_manager.py
 
 intellicrack\ai\lora_adapter_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 12.1 > 8
 
@@ -18645,177 +18611,175 @@ intellicrack\ai\lora_adapter_manager.py:244:50: WPS111 Found too short name: p <
 
 intellicrack\ai\lora_adapter_manager.py:245:46: WPS111 Found too short name: p < 2
 
-intellicrack\ai\lora_adapter_manager.py:248:17: WPS237 Found a too complex `f` string
+intellicrack\ai\lora_adapter_manager.py:257:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:255:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:261:5: WPS231 Found function with too much cognitive complexity: 13 > 12
 
-intellicrack\ai\lora_adapter_manager.py:259:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+intellicrack\ai\lora_adapter_manager.py:284:9: WPS229 Found too long ``try`` body length: 8 > 1
 
-intellicrack\ai\lora_adapter_manager.py:282:9: WPS229 Found too long ``try`` body length: 8 > 1
+intellicrack\ai\lora_adapter_manager.py:291:24: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\lora_adapter_manager.py:289:24: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\lora_adapter_manager.py:314:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:312:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:341:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\lora_adapter_manager.py:339:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\lora_adapter_manager.py:357:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:355:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:382:9: WPS229 Found too long ``try`` body length: 3 > 1
 
-intellicrack\ai\lora_adapter_manager.py:380:9: WPS229 Found too long ``try`` body length: 3 > 1
+intellicrack\ai\lora_adapter_manager.py:393:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:391:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:420:9: WPS229 Found too long ``try`` body length: 3 > 1
 
-intellicrack\ai\lora_adapter_manager.py:418:9: WPS229 Found too long ``try`` body length: 3 > 1
+intellicrack\ai\lora_adapter_manager.py:428:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:426:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:451:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\lora_adapter_manager.py:449:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\lora_adapter_manager.py:457:27: WPS435 Found list multiply
 
-intellicrack\ai\lora_adapter_manager.py:455:27: WPS435 Found list multiply
+intellicrack\ai\lora_adapter_manager.py:468:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:466:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:472:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)
 
-intellicrack\ai\lora_adapter_manager.py:470:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)
+intellicrack\ai\lora_adapter_manager.py:472:5: WPS210 Found too many local variables: 9 > 5
 
-intellicrack\ai\lora_adapter_manager.py:470:5: WPS210 Found too many local variables: 9 > 5
+intellicrack\ai\lora_adapter_manager.py:472:5: WPS231 Found function with too much cognitive complexity: 61 > 12
 
-intellicrack\ai\lora_adapter_manager.py:470:5: WPS231 Found function with too much cognitive complexity: 61 > 12
+intellicrack\ai\lora_adapter_manager.py:487:9: WPS110 Found wrong variable name: results
 
-intellicrack\ai\lora_adapter_manager.py:485:9: WPS110 Found wrong variable name: results
+intellicrack\ai\lora_adapter_manager.py:488:13: WPS226 Found string literal over-use: compatible > 3
 
-intellicrack\ai\lora_adapter_manager.py:486:13: WPS226 Found string literal over-use: compatible > 3
+intellicrack\ai\lora_adapter_manager.py:489:13: WPS226 Found string literal over-use: differences > 3
 
-intellicrack\ai\lora_adapter_manager.py:487:13: WPS226 Found string literal over-use: differences > 3
+intellicrack\ai\lora_adapter_manager.py:499:9: WPS229 Found too long ``try`` body length: 7 > 1
 
-intellicrack\ai\lora_adapter_manager.py:497:9: WPS229 Found too long ``try`` body length: 7 > 1
+intellicrack\ai\lora_adapter_manager.py:512:69: WPS226 Found string literal over-use: target_modules > 3
 
-intellicrack\ai\lora_adapter_manager.py:510:69: WPS226 Found string literal over-use: target_modules > 3
+intellicrack\ai\lora_adapter_manager.py:514:17: WPS110 Found wrong variable name: param
 
-intellicrack\ai\lora_adapter_manager.py:512:17: WPS110 Found wrong variable name: param
+intellicrack\ai\lora_adapter_manager.py:526:25: WPS420 Found wrong keyword: pass
 
-intellicrack\ai\lora_adapter_manager.py:524:25: WPS420 Found wrong keyword: pass
+intellicrack\ai\lora_adapter_manager.py:526:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:524:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:529:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:527:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:532:25: WPS421 Found wrong function call: dir
 
-intellicrack\ai\lora_adapter_manager.py:530:25: WPS421 Found wrong function call: dir
+intellicrack\ai\lora_adapter_manager.py:534:21: WPS505 Found nested `try` block
 
-intellicrack\ai\lora_adapter_manager.py:532:21: WPS505 Found nested `try` block
+intellicrack\ai\lora_adapter_manager.py:534:21: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\lora_adapter_manager.py:532:21: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\lora_adapter_manager.py:535:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:533:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:535:25: WPS110 Found wrong variable name: val
 
-intellicrack\ai\lora_adapter_manager.py:533:25: WPS110 Found wrong variable name: val
+intellicrack\ai\lora_adapter_manager.py:536:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:534:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:537:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\lora_adapter_manager.py:535:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\lora_adapter_manager.py:539:25: WPS420 Found wrong keyword: pass
 
-intellicrack\ai\lora_adapter_manager.py:537:25: WPS420 Found wrong keyword: pass
+intellicrack\ai\lora_adapter_manager.py:539:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:537:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:541:25: WPS421 Found wrong function call: dir
 
-intellicrack\ai\lora_adapter_manager.py:539:25: WPS421 Found wrong function call: dir
+intellicrack\ai\lora_adapter_manager.py:543:21: WPS505 Found nested `try` block
 
-intellicrack\ai\lora_adapter_manager.py:541:21: WPS505 Found nested `try` block
+intellicrack\ai\lora_adapter_manager.py:543:21: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\lora_adapter_manager.py:541:21: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\lora_adapter_manager.py:544:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:542:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:544:25: WPS110 Found wrong variable name: val
 
-intellicrack\ai\lora_adapter_manager.py:542:25: WPS110 Found wrong variable name: val
+intellicrack\ai\lora_adapter_manager.py:545:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:543:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:546:29: WPS220 Found too deep nesting: 28 > 20
 
-intellicrack\ai\lora_adapter_manager.py:544:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\lora_adapter_manager.py:548:25: WPS420 Found wrong keyword: pass
 
-intellicrack\ai\lora_adapter_manager.py:546:25: WPS420 Found wrong keyword: pass
+intellicrack\ai\lora_adapter_manager.py:548:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:546:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:550:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:548:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:573:9: WPS229 Found too long ``try`` body length: 5 > 1
 
-intellicrack\ai\lora_adapter_manager.py:571:9: WPS229 Found too long ``try`` body length: 5 > 1
+intellicrack\ai\lora_adapter_manager.py:591:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:589:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:595:5: WPS210 Found too many local variables: 7 > 5
 
-intellicrack\ai\lora_adapter_manager.py:593:5: WPS210 Found too many local variables: 7 > 5
+intellicrack\ai\lora_adapter_manager.py:595:5: WPS231 Found function with too much cognitive complexity: 38 > 12
 
-intellicrack\ai\lora_adapter_manager.py:593:5: WPS231 Found function with too much cognitive complexity: 38 > 12
+intellicrack\ai\lora_adapter_manager.py:606:9: WPS110 Found wrong variable name: info
 
-intellicrack\ai\lora_adapter_manager.py:604:9: WPS110 Found wrong variable name: info
+intellicrack\ai\lora_adapter_manager.py:622:13: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\lora_adapter_manager.py:620:13: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\lora_adapter_manager.py:623:43: WPS111 Found too short name: f < 2
 
-intellicrack\ai\lora_adapter_manager.py:621:43: WPS111 Found too short name: f < 2
+intellicrack\ai\lora_adapter_manager.py:628:21: WPS505 Found nested `try` block
 
-intellicrack\ai\lora_adapter_manager.py:626:21: WPS505 Found nested `try` block
-
-intellicrack\ai\lora_adapter_manager.py:626:21: WPS229 Found too long ``try`` body length: 5 > 1
-
-intellicrack\ai\lora_adapter_manager.py:627:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\lora_adapter_manager.py:628:25: WPS220 Found too deep nesting: 24 > 20
+intellicrack\ai\lora_adapter_manager.py:628:21: WPS229 Found too long ``try`` body length: 5 > 1
 
 intellicrack\ai\lora_adapter_manager.py:629:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\lora_adapter_manager.py:630:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:631:29: WPS220 Found too deep nesting: 28 > 20
+intellicrack\ai\lora_adapter_manager.py:631:25: WPS220 Found too deep nesting: 24 > 20
 
 intellicrack\ai\lora_adapter_manager.py:632:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:633:21: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:633:29: WPS220 Found too deep nesting: 28 > 20
 
 intellicrack\ai\lora_adapter_manager.py:634:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:635:13: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:635:21: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:638:50: WPS110 Found wrong variable name: file
+intellicrack\ai\lora_adapter_manager.py:636:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\lora_adapter_manager.py:639:9: WPS519 Found implicit `sum()` call
+intellicrack\ai\lora_adapter_manager.py:637:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:639:13: WPS110 Found wrong variable name: file
+intellicrack\ai\lora_adapter_manager.py:640:50: WPS110 Found wrong variable name: file
 
-intellicrack\ai\lora_adapter_manager.py:646:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)
+intellicrack\ai\lora_adapter_manager.py:641:9: WPS519 Found implicit `sum()` call
 
-intellicrack\ai\lora_adapter_manager.py:646:5: WPS231 Found function with too much cognitive complexity: 32 > 12
+intellicrack\ai\lora_adapter_manager.py:641:13: WPS110 Found wrong variable name: file
 
-intellicrack\ai\lora_adapter_manager.py:657:9: WPS110 Found wrong variable name: results
+intellicrack\ai\lora_adapter_manager.py:648:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)
 
-intellicrack\ai\lora_adapter_manager.py:659:13: WPS226 Found string literal over-use: errors > 3
+intellicrack\ai\lora_adapter_manager.py:648:5: WPS231 Found function with too much cognitive complexity: 32 > 12
 
-intellicrack\ai\lora_adapter_manager.py:660:13: WPS226 Found string literal over-use: warnings > 3
+intellicrack\ai\lora_adapter_manager.py:659:9: WPS110 Found wrong variable name: results
 
-intellicrack\ai\lora_adapter_manager.py:661:13: WPS226 Found string literal over-use: config_details > 3
+intellicrack\ai\lora_adapter_manager.py:661:13: WPS226 Found string literal over-use: errors > 3
 
-intellicrack\ai\lora_adapter_manager.py:665:13: WPS204 Found overused expression: results['errors']; used 5 > 4
+intellicrack\ai\lora_adapter_manager.py:662:13: WPS226 Found string literal over-use: warnings > 3
 
-intellicrack\ai\lora_adapter_manager.py:671:13: WPS229 Found too long ``try`` body length: 3 > 1
+intellicrack\ai\lora_adapter_manager.py:663:13: WPS226 Found string literal over-use: config_details > 3
 
-intellicrack\ai\lora_adapter_manager.py:672:43: WPS111 Found too short name: f < 2
+intellicrack\ai\lora_adapter_manager.py:667:13: WPS204 Found overused expression: results['errors']; used 5 > 4
 
-intellicrack\ai\lora_adapter_manager.py:674:17: WPS204 Found overused expression: results['config_details']; used 6 > 4
+intellicrack\ai\lora_adapter_manager.py:673:13: WPS229 Found too long ``try`` body length: 3 > 1
 
-intellicrack\ai\lora_adapter_manager.py:676:13: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:674:43: WPS111 Found too short name: f < 2
 
-intellicrack\ai\lora_adapter_manager.py:680:9: WPS229 Found too long ``try`` body length: 7 > 1
+intellicrack\ai\lora_adapter_manager.py:676:17: WPS204 Found overused expression: results['config_details']; used 6 > 4
 
-intellicrack\ai\lora_adapter_manager.py:685:13: WPS504 Found negated condition
+intellicrack\ai\lora_adapter_manager.py:678:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:692:36: WPS432 Found magic number: 64
+intellicrack\ai\lora_adapter_manager.py:682:9: WPS229 Found too long ``try`` body length: 7 > 1
 
-intellicrack\ai\lora_adapter_manager.py:709:9: WPS111 Found too short name: e < 2
+intellicrack\ai\lora_adapter_manager.py:687:13: WPS504 Found negated condition
 
-intellicrack\ai\lora_adapter_manager.py:728:13: WPS420 Found wrong keyword: del
+intellicrack\ai\lora_adapter_manager.py:694:36: WPS432 Found magic number: 64
 
-intellicrack\ai\lora_adapter_manager.py:739:5: WPS420 Found wrong keyword: global
+intellicrack\ai\lora_adapter_manager.py:711:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\lora_adapter_manager.py:741:9: WPS122 Found all unused variables definition: _ADAPTER_MANAGER
+intellicrack\ai\lora_adapter_manager.py:730:13: WPS420 Found wrong keyword: del
 
-intellicrack\ai\lora_adapter_manager.py:742:12: WPS121 Found usage of a variable marked as unused: _ADAPTER_MANAGER
+intellicrack\ai\lora_adapter_manager.py:741:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\lora_adapter_manager.py:743:9: WPS122 Found all unused variables definition: _ADAPTER_MANAGER
+
+intellicrack\ai\lora_adapter_manager.py:744:12: WPS121 Found usage of a variable marked as unused: _ADAPTER_MANAGER
 
 
 109 findings in intellicrack\ai\model_comparison.py
@@ -20212,45 +20176,45 @@ intellicrack\ai\model_sharding.py:711:20: WPS358 Found a float zero (0.0)
 
 intellicrack\ai\model_sharding.py:722:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\model_sharding.py:763:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\model_sharding.py:764:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\model_sharding.py:795:13: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:796:13: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:815:9: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\model_sharding.py:816:9: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:824:17: WPS122 Found all unused variables definition: _
+intellicrack\ai\model_sharding.py:825:17: WPS122 Found all unused variables definition: _
 
-intellicrack\ai\model_sharding.py:830:59: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:831:59: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:853:59: WPS111 Found too short name: j < 2
+intellicrack\ai\model_sharding.py:854:59: WPS111 Found too short name: j < 2
 
-intellicrack\ai\model_sharding.py:862:13: WPS122 Found all unused variables definition: _
+intellicrack\ai\model_sharding.py:863:13: WPS122 Found all unused variables definition: _
 
-intellicrack\ai\model_sharding.py:877:13: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\model_sharding.py:878:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:877:67: WPS111 Found too short name: j < 2
+intellicrack\ai\model_sharding.py:878:67: WPS111 Found too short name: j < 2
 
-intellicrack\ai\model_sharding.py:878:62: WPS111 Found too short name: j < 2
-
-intellicrack\ai\model_sharding.py:885:13: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\model_sharding.py:885:65: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:879:62: WPS111 Found too short name: j < 2
 
 intellicrack\ai\model_sharding.py:886:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:886:70: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:886:65: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:890:5: WPS211 Found too many arguments: 6 > 5
+intellicrack\ai\model_sharding.py:887:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:890:5: WPS210 Found too many local variables: 7 > 5
+intellicrack\ai\model_sharding.py:887:70: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:908:9: WPS110 Found wrong variable name: results
+intellicrack\ai\model_sharding.py:891:5: WPS211 Found too many arguments: 6 > 5
 
-intellicrack\ai\model_sharding.py:942:5: WPS420 Found wrong keyword: global
+intellicrack\ai\model_sharding.py:891:5: WPS210 Found too many local variables: 7 > 5
 
-intellicrack\ai\model_sharding.py:944:9: WPS122 Found all unused variables definition: _sharding_manager
+intellicrack\ai\model_sharding.py:909:9: WPS110 Found wrong variable name: results
 
-intellicrack\ai\model_sharding.py:945:12: WPS121 Found usage of a variable marked as unused: _sharding_manager
+intellicrack\ai\model_sharding.py:943:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\model_sharding.py:945:9: WPS122 Found all unused variables definition: _sharding_manager
+
+intellicrack\ai\model_sharding.py:946:12: WPS121 Found usage of a variable marked as unused: _sharding_manager
 
 
 87 findings in intellicrack\analysis\protection_workflow.py
@@ -20430,7 +20394,7 @@ intellicrack\analysis\protection_workflow.py:880:9: WPS519 Found implicit `sum()
 intellicrack\analysis\protection_workflow.py:881:23: WPS336 Found explicit string concatenation
 
 
-85 findings in intellicrack\ai\model_cache_manager.py
+83 findings in intellicrack\ai\model_cache_manager.py
 
 intellicrack\ai\model_cache_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 10.7 > 8
 
@@ -20540,67 +20504,63 @@ intellicrack\ai\model_cache_manager.py:449:13: WPS229 Found too long ``try`` bod
 
 intellicrack\ai\model_cache_manager.py:455:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\model_cache_manager.py:459:13: WPS237 Found a too complex `f` string
+intellicrack\ai\model_cache_manager.py:465:5: WPS231 Found function with too much cognitive complexity: 13 > 12
 
-intellicrack\ai\model_cache_manager.py:459:15: WPS221 Found line with high Jones Complexity: 18 > 14
+intellicrack\ai\model_cache_manager.py:478:9: WPS420 Found wrong keyword: del
 
-intellicrack\ai\model_cache_manager.py:462:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+intellicrack\ai\model_cache_manager.py:492:5: WPS210 Found too many local variables: 6 > 5
 
-intellicrack\ai\model_cache_manager.py:475:9: WPS420 Found wrong keyword: del
+intellicrack\ai\model_cache_manager.py:492:5: WPS231 Found function with too much cognitive complexity: 15 > 12
 
-intellicrack\ai\model_cache_manager.py:489:5: WPS210 Found too many local variables: 6 > 5
+intellicrack\ai\model_cache_manager.py:506:9: WPS229 Found too long ``try`` body length: 12 > 1
 
-intellicrack\ai\model_cache_manager.py:489:5: WPS231 Found function with too much cognitive complexity: 15 > 12
+intellicrack\ai\model_cache_manager.py:536:46: WPS111 Found too short name: f < 2
 
-intellicrack\ai\model_cache_manager.py:503:9: WPS229 Found too long ``try`` body length: 12 > 1
+intellicrack\ai\model_cache_manager.py:550:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\model_cache_manager.py:533:46: WPS111 Found too short name: f < 2
+intellicrack\ai\model_cache_manager.py:554:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\model_cache_manager.py:547:9: WPS111 Found too short name: e < 2
+intellicrack\ai\model_cache_manager.py:554:5: WPS231 Found function with too much cognitive complexity: 31 > 12
 
-intellicrack\ai\model_cache_manager.py:551:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\model_cache_manager.py:567:9: WPS229 Found too long ``try`` body length: 12 > 1
 
-intellicrack\ai\model_cache_manager.py:551:5: WPS231 Found function with too much cognitive complexity: 31 > 12
+intellicrack\ai\model_cache_manager.py:574:41: WPS111 Found too short name: f < 2
 
-intellicrack\ai\model_cache_manager.py:564:9: WPS229 Found too long ``try`` body length: 12 > 1
+intellicrack\ai\model_cache_manager.py:590:17: WPS505 Found nested `try` block
 
-intellicrack\ai\model_cache_manager.py:571:41: WPS111 Found too short name: f < 2
+intellicrack\ai\model_cache_manager.py:590:17: WPS229 Found too long ``try`` body length: 2 > 1
 
-intellicrack\ai\model_cache_manager.py:587:17: WPS505 Found nested `try` block
+intellicrack\ai\model_cache_manager.py:593:17: WPS111 Found too short name: e < 2
 
-intellicrack\ai\model_cache_manager.py:587:17: WPS229 Found too long ``try`` body length: 2 > 1
+intellicrack\ai\model_cache_manager.py:611:9: WPS111 Found too short name: e < 2
 
-intellicrack\ai\model_cache_manager.py:590:17: WPS111 Found too short name: e < 2
+intellicrack\ai\model_cache_manager.py:615:5: WPS213 Found too many expressions: 10 > 9
 
-intellicrack\ai\model_cache_manager.py:608:9: WPS111 Found too short name: e < 2
+intellicrack\ai\model_cache_manager.py:615:5: WPS231 Found function with too much cognitive complexity: 16 > 12
 
-intellicrack\ai\model_cache_manager.py:612:5: WPS213 Found too many expressions: 10 > 9
+intellicrack\ai\model_cache_manager.py:637:13: WPS229 Found too long ``try`` body length: 4 > 1
 
-intellicrack\ai\model_cache_manager.py:612:5: WPS231 Found function with too much cognitive complexity: 16 > 12
+intellicrack\ai\model_cache_manager.py:642:13: WPS111 Found too short name: e < 2
 
-intellicrack\ai\model_cache_manager.py:634:13: WPS229 Found too long ``try`` body length: 4 > 1
+intellicrack\ai\model_cache_manager.py:688:13: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\model_cache_manager.py:639:13: WPS111 Found too short name: e < 2
+intellicrack\ai\model_cache_manager.py:698:13: WPS110 Found wrong variable name: result
 
-intellicrack\ai\model_cache_manager.py:685:13: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\model_cache_manager.py:704:5: WPS615 Found unpythonic getter or setter: get_stats
 
-intellicrack\ai\model_cache_manager.py:695:13: WPS110 Found wrong variable name: result
+intellicrack\ai\model_cache_manager.py:712:83: WPS358 Found a float zero (0.0)
 
-intellicrack\ai\model_cache_manager.py:701:5: WPS615 Found unpythonic getter or setter: get_stats
+intellicrack\ai\model_cache_manager.py:730:17: WPS221 Found line with high Jones Complexity: 18 > 14
 
-intellicrack\ai\model_cache_manager.py:709:83: WPS358 Found a float zero (0.0)
+intellicrack\ai\model_cache_manager.py:767:23: WPS110 Found wrong variable name: info
 
-intellicrack\ai\model_cache_manager.py:727:17: WPS221 Found line with high Jones Complexity: 18 > 14
+intellicrack\ai\model_cache_manager.py:794:36: WPS529 Found implicit `.get()` dict usage
 
-intellicrack\ai\model_cache_manager.py:764:23: WPS110 Found wrong variable name: info
+intellicrack\ai\model_cache_manager.py:816:5: WPS420 Found wrong keyword: global
 
-intellicrack\ai\model_cache_manager.py:791:36: WPS529 Found implicit `.get()` dict usage
+intellicrack\ai\model_cache_manager.py:818:9: WPS122 Found all unused variables definition: _CACHE_MANAGER
 
-intellicrack\ai\model_cache_manager.py:813:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\model_cache_manager.py:815:9: WPS122 Found all unused variables definition: _CACHE_MANAGER
-
-intellicrack\ai\model_cache_manager.py:816:12: WPS121 Found usage of a variable marked as unused: _CACHE_MANAGER
+intellicrack\ai\model_cache_manager.py:819:12: WPS121 Found usage of a variable marked as unused: _CACHE_MANAGER
 
 
 82 findings in intellicrack\ai\ai_file_tools.py
@@ -21094,161 +21054,6 @@ intellicrack\cli\ai_wrapper.py:1235:23: WPS432 Found magic number: 80
 intellicrack\cli\ai_wrapper.py:1238:5: WPS110 Found wrong variable name: result
 
 
-76 findings in intellicrack\ai\llm_fallback_chains.py
-
-intellicrack\ai\llm_fallback_chains.py:32:1: WPS300 Found local folder import
-
-intellicrack\ai\llm_fallback_chains.py:33:1: WPS300 Found local folder import
-
-intellicrack\ai\llm_fallback_chains.py:71:32: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\llm_fallback_chains.py:82:38: WPS111 Found too short name: f < 2
-
-intellicrack\ai\llm_fallback_chains.py:102:1: WPS230 Found too many public instance attributes: 9 > 6
-
-intellicrack\ai\llm_fallback_chains.py:102:1: WPS214 Found too many methods: 9 > 7
-
-intellicrack\ai\llm_fallback_chains.py:102:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\ai\llm_fallback_chains.py:105:5: WPS211 Found too many arguments: 6 > 5
-
-intellicrack\ai\llm_fallback_chains.py:149:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\llm_fallback_chains.py:152:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\llm_fallback_chains.py:153:69: WPS226 Found string literal over-use: :  > 3
-
-intellicrack\ai\llm_fallback_chains.py:160:52: WPS335 Found incorrect `for` loop iter type
-
-intellicrack\ai\llm_fallback_chains.py:164:52: WPS335 Found incorrect `for` loop iter type
-
-intellicrack\ai\llm_fallback_chains.py:168:52: WPS335 Found incorrect `for` loop iter type
-
-intellicrack\ai\llm_fallback_chains.py:172:52: WPS335 Found incorrect `for` loop iter type
-
-intellicrack\ai\llm_fallback_chains.py:177:5: WPS231 Found function with too much cognitive complexity: 14 > 12
-
-intellicrack\ai\llm_fallback_chains.py:177:89: WPS358 Found a float zero (0.0)
-
-intellicrack\ai\llm_fallback_chains.py:186:17: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\llm_fallback_chains.py:208:54: WPS432 Found magic number: 50
-
-intellicrack\ai\llm_fallback_chains.py:209:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:209:74: WPS432 Found magic number: 50
-
-intellicrack\ai\llm_fallback_chains.py:212:21: WPS221 Found line with high Jones Complexity: 20 > 14
-
-intellicrack\ai\llm_fallback_chains.py:212:50: WPS111 Found too short name: f < 2
-
-intellicrack\ai\llm_fallback_chains.py:215:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:216:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:217:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:225:9: WPS430 Found nested function: model_score
-
-intellicrack\ai\llm_fallback_chains.py:225:25: WPS110 Found wrong variable name: item
-
-intellicrack\ai\llm_fallback_chains.py:236:35: WPS432 Found magic number: 0.7
-
-intellicrack\ai\llm_fallback_chains.py:236:63: WPS432 Found magic number: 0.3
-
-intellicrack\ai\llm_fallback_chains.py:249:5: WPS210 Found too many local variables: 11 > 5
-
-intellicrack\ai\llm_fallback_chains.py:249:5: WPS213 Found too many expressions: 11 > 9
-
-intellicrack\ai\llm_fallback_chains.py:249:5: WPS231 Found function with too much cognitive complexity: 41 > 12
-
-intellicrack\ai\llm_fallback_chains.py:249:26: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\llm_fallback_chains.py:268:17: WPS229 Found too long ``try`` body length: 4 > 1
-
-intellicrack\ai\llm_fallback_chains.py:272:32: WPS476 Found `await` in `for` loop
-
-intellicrack\ai\llm_fallback_chains.py:281:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:282:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:284:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:284:38: WPS237 Found a too complex `f` string
-
-intellicrack\ai\llm_fallback_chains.py:285:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:288:17: WPS111 Found too short name: e < 2
-
-intellicrack\ai\llm_fallback_chains.py:297:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:298:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:302:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:303:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:303:38: WPS237 Found a too complex `f` string
-
-intellicrack\ai\llm_fallback_chains.py:304:25: WPS476 Found `await` in `for` loop
-
-intellicrack\ai\llm_fallback_chains.py:304:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:306:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\llm_fallback_chains.py:311:14: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\llm_fallback_chains.py:313:9: WPS229 Found too long ``try`` body length: 3 > 1
-
-intellicrack\ai\llm_fallback_chains.py:317:13: WPS501 Found `finally` in `try` block without `except`
-
-intellicrack\ai\llm_fallback_chains.py:317:13: WPS505 Found nested `try` block
-
-intellicrack\ai\llm_fallback_chains.py:321:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\llm_fallback_chains.py:331:48: WPS111 Found too short name: h < 2
-
-intellicrack\ai\llm_fallback_chains.py:332:17: WPS226 Found string literal over-use: models > 3
-
-intellicrack\ai\llm_fallback_chains.py:356:21: WPS529 Found implicit `.get()` dict usage
-
-intellicrack\ai\llm_fallback_chains.py:364:1: WPS214 Found too many methods: 12 > 7
-
-intellicrack\ai\llm_fallback_chains.py:472:13: WPS226 Found string literal over-use: chains > 3
-
-intellicrack\ai\llm_fallback_chains.py:494:13: WPS420 Found wrong keyword: del
-
-intellicrack\ai\llm_fallback_chains.py:498:17: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\llm_fallback_chains.py:503:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\llm_fallback_chains.py:518:13: WPS300 Found local folder import
-
-intellicrack\ai\llm_fallback_chains.py:527:67: WPS432 Found magic number: 4096
-
-intellicrack\ai\llm_fallback_chains.py:528:61: WPS432 Found magic number: 0.7
-
-intellicrack\ai\llm_fallback_chains.py:529:59: WPS432 Found magic number: 2048
-
-intellicrack\ai\llm_fallback_chains.py:547:5: WPS210 Found too many local variables: 7 > 5
-
-intellicrack\ai\llm_fallback_chains.py:601:17: WPS111 Found too short name: e < 2
-
-intellicrack\ai\llm_fallback_chains.py:616:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\llm_fallback_chains.py:618:9: WPS122 Found all unused variables definition: _FALLBACK_MANAGER
-
-intellicrack\ai\llm_fallback_chains.py:619:12: WPS121 Found usage of a variable marked as unused: _FALLBACK_MANAGER
-
-intellicrack\ai\llm_fallback_chains.py:622:1: WPS210 Found too many local variables: 6 > 5
-
-intellicrack\ai\llm_fallback_chains.py:622:1: WPS231 Found function with too much cognitive complexity: 14 > 12
-
-intellicrack\ai\llm_fallback_chains.py:638:5: WPS327 Found useless `continue` at the end of the loop
-
-intellicrack\ai\llm_fallback_chains.py:646:16: WPS332 Found walrus operator outside a comprehension
-
-
 76 findings in intellicrack\ai\model_download_manager.py
 
 intellicrack\ai\model_download_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 10.4 > 8
@@ -21402,6 +21207,155 @@ intellicrack\ai\model_download_manager.py:674:5: WPS420 Found wrong keyword: glo
 intellicrack\ai\model_download_manager.py:676:9: WPS122 Found all unused variables definition: _DOWNLOAD_MANAGER
 
 intellicrack\ai\model_download_manager.py:677:12: WPS121 Found usage of a variable marked as unused: _DOWNLOAD_MANAGER
+
+
+73 findings in intellicrack\ai\llm_fallback_chains.py
+
+intellicrack\ai\llm_fallback_chains.py:32:1: WPS300 Found local folder import
+
+intellicrack\ai\llm_fallback_chains.py:33:1: WPS300 Found local folder import
+
+intellicrack\ai\llm_fallback_chains.py:71:32: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\llm_fallback_chains.py:82:38: WPS111 Found too short name: f < 2
+
+intellicrack\ai\llm_fallback_chains.py:102:1: WPS230 Found too many public instance attributes: 9 > 6
+
+intellicrack\ai\llm_fallback_chains.py:102:1: WPS214 Found too many methods: 9 > 7
+
+intellicrack\ai\llm_fallback_chains.py:102:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\ai\llm_fallback_chains.py:105:5: WPS211 Found too many arguments: 6 > 5
+
+intellicrack\ai\llm_fallback_chains.py:149:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\llm_fallback_chains.py:152:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\llm_fallback_chains.py:160:52: WPS335 Found incorrect `for` loop iter type
+
+intellicrack\ai\llm_fallback_chains.py:164:52: WPS335 Found incorrect `for` loop iter type
+
+intellicrack\ai\llm_fallback_chains.py:168:52: WPS335 Found incorrect `for` loop iter type
+
+intellicrack\ai\llm_fallback_chains.py:172:52: WPS335 Found incorrect `for` loop iter type
+
+intellicrack\ai\llm_fallback_chains.py:177:5: WPS231 Found function with too much cognitive complexity: 14 > 12
+
+intellicrack\ai\llm_fallback_chains.py:177:89: WPS358 Found a float zero (0.0)
+
+intellicrack\ai\llm_fallback_chains.py:186:17: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\llm_fallback_chains.py:208:54: WPS432 Found magic number: 50
+
+intellicrack\ai\llm_fallback_chains.py:209:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:209:74: WPS432 Found magic number: 50
+
+intellicrack\ai\llm_fallback_chains.py:212:21: WPS221 Found line with high Jones Complexity: 20 > 14
+
+intellicrack\ai\llm_fallback_chains.py:212:50: WPS111 Found too short name: f < 2
+
+intellicrack\ai\llm_fallback_chains.py:215:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:216:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:217:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:225:9: WPS430 Found nested function: model_score
+
+intellicrack\ai\llm_fallback_chains.py:225:25: WPS110 Found wrong variable name: item
+
+intellicrack\ai\llm_fallback_chains.py:236:35: WPS432 Found magic number: 0.7
+
+intellicrack\ai\llm_fallback_chains.py:236:63: WPS432 Found magic number: 0.3
+
+intellicrack\ai\llm_fallback_chains.py:249:5: WPS210 Found too many local variables: 11 > 5
+
+intellicrack\ai\llm_fallback_chains.py:249:5: WPS213 Found too many expressions: 11 > 9
+
+intellicrack\ai\llm_fallback_chains.py:249:5: WPS231 Found function with too much cognitive complexity: 41 > 12
+
+intellicrack\ai\llm_fallback_chains.py:249:26: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\llm_fallback_chains.py:268:17: WPS229 Found too long ``try`` body length: 4 > 1
+
+intellicrack\ai\llm_fallback_chains.py:272:32: WPS476 Found `await` in `for` loop
+
+intellicrack\ai\llm_fallback_chains.py:281:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:282:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:284:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:285:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:288:17: WPS111 Found too short name: e < 2
+
+intellicrack\ai\llm_fallback_chains.py:297:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:298:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:302:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:303:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:304:25: WPS476 Found `await` in `for` loop
+
+intellicrack\ai\llm_fallback_chains.py:304:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:306:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\llm_fallback_chains.py:311:14: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\llm_fallback_chains.py:313:9: WPS229 Found too long ``try`` body length: 3 > 1
+
+intellicrack\ai\llm_fallback_chains.py:317:13: WPS501 Found `finally` in `try` block without `except`
+
+intellicrack\ai\llm_fallback_chains.py:317:13: WPS505 Found nested `try` block
+
+intellicrack\ai\llm_fallback_chains.py:321:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\llm_fallback_chains.py:331:48: WPS111 Found too short name: h < 2
+
+intellicrack\ai\llm_fallback_chains.py:332:17: WPS226 Found string literal over-use: models > 3
+
+intellicrack\ai\llm_fallback_chains.py:356:21: WPS529 Found implicit `.get()` dict usage
+
+intellicrack\ai\llm_fallback_chains.py:364:1: WPS214 Found too many methods: 12 > 7
+
+intellicrack\ai\llm_fallback_chains.py:472:13: WPS226 Found string literal over-use: chains > 3
+
+intellicrack\ai\llm_fallback_chains.py:494:13: WPS420 Found wrong keyword: del
+
+intellicrack\ai\llm_fallback_chains.py:498:17: WPS221 Found line with high Jones Complexity: 15 > 14
+
+intellicrack\ai\llm_fallback_chains.py:503:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\llm_fallback_chains.py:518:13: WPS300 Found local folder import
+
+intellicrack\ai\llm_fallback_chains.py:527:67: WPS432 Found magic number: 4096
+
+intellicrack\ai\llm_fallback_chains.py:528:61: WPS432 Found magic number: 0.7
+
+intellicrack\ai\llm_fallback_chains.py:529:59: WPS432 Found magic number: 2048
+
+intellicrack\ai\llm_fallback_chains.py:547:5: WPS210 Found too many local variables: 7 > 5
+
+intellicrack\ai\llm_fallback_chains.py:601:17: WPS111 Found too short name: e < 2
+
+intellicrack\ai\llm_fallback_chains.py:616:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\llm_fallback_chains.py:618:9: WPS122 Found all unused variables definition: _FALLBACK_MANAGER
+
+intellicrack\ai\llm_fallback_chains.py:619:12: WPS121 Found usage of a variable marked as unused: _FALLBACK_MANAGER
+
+intellicrack\ai\llm_fallback_chains.py:622:1: WPS210 Found too many local variables: 6 > 5
+
+intellicrack\ai\llm_fallback_chains.py:622:1: WPS231 Found function with too much cognitive complexity: 14 > 12
+
+intellicrack\ai\llm_fallback_chains.py:638:5: WPS327 Found useless `continue` at the end of the loop
+
+intellicrack\ai\llm_fallback_chains.py:646:16: WPS332 Found walrus operator outside a comprehension
 
 
 72 findings in intellicrack\cli\pipeline.py

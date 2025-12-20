@@ -122,17 +122,17 @@ class QuantizationManager:
             "peft": HAS_PEFT,
         }
 
-        logger.info(f"Quantization backends available: {self.available_backends}")
+        logger.info("Quantization backends available: %s", self.available_backends)
 
         # Initialize sharding manager if multi-GPU available
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
             if gpu_info["available"] and gpu_info["info"].get("device_count", 1) > 1:
                 self.sharding_manager = get_sharding_manager()
-                logger.info(f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices")
+                logger.info("Multi-GPU sharding enabled with %d devices", gpu_info['info']['device_count'])
         elif HAS_TORCH and torch.cuda.device_count() > 1:
             self.sharding_manager = get_sharding_manager()
-            logger.info(f"Multi-GPU sharding enabled with {torch.cuda.device_count()} devices")
+            logger.info("Multi-GPU sharding enabled with %d devices", torch.cuda.device_count())
 
     def load_quantized_model(
         self,
@@ -163,7 +163,7 @@ class QuantizationManager:
         if quantization_type == "auto":
             quantization_type = self._detect_quantization_type(model_path)
 
-        logger.info(f"Loading model with {quantization_type} quantization on {device}")
+        logger.info("Loading model with %s quantization on %s", quantization_type, device)
 
         try:
             if quantization_type == "8bit":
@@ -179,7 +179,7 @@ class QuantizationManager:
             return self._load_standard_model(model_path, device, **kwargs)
 
         except Exception as e:
-            logger.error(f"Failed to load quantized model: {e}")
+            logger.error("Failed to load quantized model: %s", e)
             return None
 
     def _get_best_device(self) -> str:
@@ -258,7 +258,7 @@ class QuantizationManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load 8-bit model: {e}")
+            logger.error("Failed to load 8-bit model: %s", e)
             return None
 
     def _load_4bit_model(self, model_path: Path, device: str, **kwargs: object) -> ModelType | None:
@@ -306,7 +306,7 @@ class QuantizationManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load 4-bit model: {e}")
+            logger.error("Failed to load 4-bit model: %s", e)
             return None
 
     def _load_gptq_model(self, model_path: Path, device: str, **kwargs: object) -> ModelType | None:
@@ -334,7 +334,7 @@ class QuantizationManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load GPTQ model: {e}")
+            logger.error("Failed to load GPTQ model: %s", e)
             return None
 
     def _load_standard_model(self, model_path: Path, device: str, **kwargs: object) -> ModelType | None:
@@ -389,7 +389,7 @@ class QuantizationManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load standard model: {e}")
+            logger.error("Failed to load standard model: %s", e)
             return None
 
     def load_lora_adapter(
@@ -428,11 +428,11 @@ class QuantizationManager:
             if kwargs.get("merge_adapter"):
                 model = model.merge_and_unload()
 
-            logger.info(f"Successfully loaded LoRA adapter from {adapter_path}")
+            logger.info("Successfully loaded LoRA adapter from %s", adapter_path)
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load LoRA adapter: {e}")
+            logger.error("Failed to load LoRA adapter: %s", e)
             return None
 
     def apply_dynamic_quantization(
@@ -464,11 +464,11 @@ class QuantizationManager:
                 # Convert to FP16
                 model = model.half()
 
-            logger.info(f"Applied {quant_type} dynamic quantization")
+            logger.info("Applied %s dynamic quantization", quant_type)
             return model
 
         except Exception as e:
-            logger.error(f"Failed to apply dynamic quantization: {e}")
+            logger.error("Failed to apply dynamic quantization: %s", e)
             return None
 
     def estimate_memory_usage(
@@ -688,11 +688,11 @@ class QuantizationManager:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_4bit)
 
-            logger.info(f"Successfully quantized model to {quantization_bits}-bit using bnb")
+            logger.info("Successfully quantized model to %d-bit using bnb", quantization_bits)
             return model
 
         except Exception as e:
-            logger.error(f"Failed to quantize model with bnb: {e}")
+            logger.error("Failed to quantize model with bnb: %s", e)
             return None
 
     def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs: object) -> ConfigType | None:
@@ -725,11 +725,11 @@ class QuantizationManager:
                 model_file_base_name=kwargs.get("model_file_base_name", "model"),
             )
 
-            logger.info(f"Created GPTQ config: {bits}-bit, group_size={group_size}")
+            logger.info("Created GPTQ config: %d-bit, group_size=%d", bits, group_size)
             return config
 
         except Exception as e:
-            logger.error(f"Failed to create GPTQ config: {e}")
+            logger.error("Failed to create GPTQ config: %s", e)
             return None
 
     def prepare_model_for_gptq_quantization(
@@ -787,7 +787,7 @@ class QuantizationManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to prepare model for GPTQ: {e}")
+            logger.error("Failed to prepare model for GPTQ: %s", e)
             return None
 
     def create_quantization_config(self, quantization_type: str) -> dict[str, object]:

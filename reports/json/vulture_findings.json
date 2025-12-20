@@ -1,6 +1,6 @@
 {
   "tool": "vulture",
-  "generated": "2025-12-16T21:18:49.142267",
+  "generated": "2025-12-20T00:01:51.181237",
   "total_findings": 3903,
   "total_files": 468,
   "files": [

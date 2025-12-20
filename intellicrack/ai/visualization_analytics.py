@@ -177,7 +177,7 @@ class DataCollector:
                     time.sleep(self.collection_interval)
 
                 except Exception as e:
-                    logger.error(f"Error in data collection: {e}")
+                    logger.error("Error in data collection: %s", e)
                     time.sleep(5)  # Wait on error
 
         thread = threading.Thread(target=collection_worker, daemon=True)
@@ -216,7 +216,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error(f"Error collecting performance metrics: {e}")
+            logger.error("Error collecting performance metrics: %s", e)
             return []
 
     def _collect_success_rate_metrics(self) -> list[DataPoint]:
@@ -249,7 +249,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error(f"Error collecting success rate metrics: {e}")
+            logger.error("Error collecting success rate metrics: %s", e)
             return []
 
     def _collect_resource_usage_metrics(self) -> list[DataPoint]:
@@ -312,7 +312,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error(f"Error collecting resource usage metrics: {e}")
+            logger.error("Error collecting resource usage metrics: %s", e)
             return []
 
     def _collect_error_rate_metrics(self) -> list[DataPoint]:
@@ -331,7 +331,7 @@ class DataCollector:
                 )
             ]
         except Exception as e:
-            logger.error(f"Error collecting error rate metrics: {e}")
+            logger.error("Error collecting error rate metrics: %s", e)
             return []
 
     def _calculate_real_error_rate(self, current_time: datetime) -> float:
@@ -373,7 +373,7 @@ class DataCollector:
             return min(error_rate, 50.0)
 
         except Exception as e:
-            logger.error(f"Error calculating real error rate: {e}")
+            logger.error("Error calculating real error rate: %s", e)
             # Return conservative estimate if calculation fails
             return 2.5
 
@@ -415,7 +415,7 @@ class DataCollector:
             return execution_time > 30000
 
         except Exception as e:
-            logger.error(f"Error checking error indicators: {e}")
+            logger.error("Error checking error indicators: %s", e)
             return False
 
     def _get_real_agent_metrics(self) -> tuple[int, int]:
@@ -441,7 +441,7 @@ class DataCollector:
 
                         total_tasks += 1
                 except Exception as e:
-                    logger.warning(f"Error parsing learning record {record_id}: {e}")
+                    logger.warning("Error parsing learning record %s: %s", record_id, e)
                     continue
 
             # Also check for active analysis operations
@@ -490,7 +490,7 @@ class DataCollector:
                             if record_time >= recent_hour:
                                 total_tasks += 1
                         except Exception as e:
-                            logger.debug(f"Skipping task record due to error: {e}")
+                            logger.debug("Skipping task record due to error: %s", e)
                             continue
 
                     # Scale down to represent current activity level
@@ -505,7 +505,7 @@ class DataCollector:
             return active_agents, total_tasks
 
         except Exception as e:
-            logger.error(f"Error getting real agent metrics: {e}")
+            logger.error("Error getting real agent metrics: %s", e)
             # Return conservative estimates if calculation fails
             return 1, 10
 
@@ -540,7 +540,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error(f"Error collecting learning metrics: {e}")
+            logger.error("Error collecting learning metrics: %s", e)
             return []
 
     def _collect_exploit_chain_metrics(self) -> list[DataPoint]:
@@ -569,7 +569,7 @@ class DataCollector:
                 ),
             ]
         except Exception as e:
-            logger.error(f"Error collecting agent activity metrics: {e}")
+            logger.error("Error collecting agent activity metrics: %s", e)
             return []
 
     def get_data(self, metric_type: MetricType, time_range: int = 3600) -> list[DataPoint]:
@@ -780,13 +780,13 @@ class DashboardManager:
         for template_name, template in self.dashboard_templates.items():
             if dashboard := self.create_dashboard_from_template(template_name):
                 self.dashboards[dashboard.dashboard_id] = dashboard
-                logger.info(f"Created default dashboard: {template['name']}")
+                logger.info("Created default dashboard: %s", template['name'])
 
     @profile_ai_operation("dashboard_creation")
     def create_dashboard_from_template(self, template_name: str) -> Dashboard | None:
         """Create dashboard from template."""
         if template_name not in self.dashboard_templates:
-            logger.error(f"Unknown dashboard template: {template_name}")
+            logger.error("Unknown dashboard template: %s", template_name)
             return None
 
         template = self.dashboard_templates[template_name]
@@ -803,7 +803,7 @@ class DashboardManager:
                     chart = self.chart_generator.generate_chart(chart_template)
                 charts.append(chart)
             except Exception as e:
-                logger.error(f"Error generating chart {chart_template}: {e}")
+                logger.error("Error generating chart %s: %s", chart_template, e)
 
         return Dashboard(
             dashboard_id=str(uuid.uuid4()),
@@ -822,7 +822,7 @@ class DashboardManager:
                 chart = self.chart_generator.generate_custom_chart(chart_config)
                 charts.append(chart)
             except Exception as e:
-                logger.error(f"Error generating custom chart: {e}")
+                logger.error("Error generating custom chart: %s", e)
 
         dashboard = Dashboard(
             dashboard_id=str(uuid.uuid4()),
@@ -848,7 +848,7 @@ class DashboardManager:
                 if refreshed_chart := self._refresh_chart(chart):
                     dashboard.charts[i] = refreshed_chart
             except Exception as e:
-                logger.error(f"Error refreshing chart {chart.chart_id}: {e}")
+                logger.error("Error refreshing chart %s: %s", chart.chart_id, e)
 
         dashboard.last_updated = datetime.now()
         return True
@@ -918,7 +918,7 @@ class DashboardManager:
                 json.dump(export_data, f, indent=2)
             return True
         except Exception as e:
-            logger.error(f"Error exporting dashboard: {e}")
+            logger.error("Error exporting dashboard: %s", e)
             return False
 
 

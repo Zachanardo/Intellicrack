@@ -6,11 +6,10 @@ using behavioral analysis, environment checks, resource limits, and artifact det
 
 import os
 import platform
-import pytest
-import tempfile
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+
+import pytest
 
 from intellicrack.core.anti_analysis.sandbox_detector import SandboxDetector
 
@@ -77,14 +76,27 @@ class TestEnvironmentChecks:
         except Exception as e:
             pytest.fail(f"Environment variable check raised exception: {e}")
 
-    @patch.dict(os.environ, {"SANDBOX": "1", "CUCKOO": "true"})
     def test_detect_sandbox_environment_variables(self) -> None:
         """Sandbox environment variables trigger detection."""
         detector = SandboxDetector()
 
-        result = detector._check_environment_variables()
+        old_sandbox = os.environ.get("SANDBOX")
+        old_cuckoo = os.environ.get("CUCKOO")
 
-        assert result is not None
+        try:
+            os.environ["SANDBOX"] = "1"
+            os.environ["CUCKOO"] = "true"
+            result = detector._check_environment_variables()
+            assert result is not None
+        finally:
+            if old_sandbox is None:
+                os.environ.pop("SANDBOX", None)
+            else:
+                os.environ["SANDBOX"] = old_sandbox
+            if old_cuckoo is None:
+                os.environ.pop("CUCKOO", None)
+            else:
+                os.environ["CUCKOO"] = old_cuckoo
 
 
 class TestBehavioralDetection:

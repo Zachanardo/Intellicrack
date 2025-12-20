@@ -230,7 +230,7 @@ class DistributedAnalysisManager:
         }
 
         self._register_self_as_worker()
-        self.logger.info(f"Distributed manager initialized in {self.mode} mode (Node ID: {self.node_id})")
+        self.logger.info("Distributed manager initialized in %s mode (Node ID: %s)", self.mode, self.node_id)
 
     def _register_self_as_worker(self) -> None:
         """Register this instance as a worker node."""
@@ -329,11 +329,11 @@ class DistributedAnalysisManager:
                 scheduler_thread.start()
                 self.background_threads.append(scheduler_thread)
 
-            self.logger.info(f"Cluster started on port {port} (coordinator: {self.is_coordinator})")
+            self.logger.info("Cluster started on port %d (coordinator: %s)", port, self.is_coordinator)
             return True
 
         except OSError as e:
-            self.logger.error(f"Failed to start cluster: {e}")
+            self.logger.error("Failed to start cluster: %s", e)
             self.running = False
             return False
 
@@ -352,10 +352,10 @@ class DistributedAnalysisManager:
             accept_thread.start()
             self.background_threads.append(accept_thread)
 
-            self.logger.info(f"Coordinator server started on {self.coordinator_address}")
+            self.logger.info("Coordinator server started on %s", self.coordinator_address)
 
         except OSError as e:
-            self.logger.error(f"Failed to start coordinator server: {e}")
+            self.logger.error("Failed to start coordinator server: %s", e)
             raise
 
     def _accept_connections_loop(self) -> None:
@@ -363,7 +363,7 @@ class DistributedAnalysisManager:
         while self.running and self.server_socket:
             try:
                 client_socket, client_address = self.server_socket.accept()
-                self.logger.info(f"New connection from {client_address}")
+                self.logger.info("New connection from %s", client_address)
 
                 handler_thread = threading.Thread(
                     target=self._handle_client_connection,
@@ -377,7 +377,7 @@ class DistributedAnalysisManager:
                 continue
             except OSError as e:
                 if self.running:
-                    self.logger.error(f"Error accepting connection: {e}")
+                    self.logger.error("Error accepting connection: %s", e)
                 break
 
     def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple) -> None:
@@ -428,7 +428,7 @@ class DistributedAnalysisManager:
                         self._send_message(client_socket, {"type": "no_tasks"})
 
         except OSError as e:
-            self.logger.error(f"Client connection error from {client_address}: {e}")
+            self.logger.error("Client connection error from %s: %s", client_address, e)
         finally:
             if node_id:
                 self._mark_node_offline(node_id)
@@ -463,7 +463,7 @@ class DistributedAnalysisManager:
             response = self._receive_message(client_socket)
             if response and response.get("type") == "registered":
                 self.coordinator_address = (coordinator_host, coordinator_port)
-                self.logger.info(f"Connected to coordinator at {self.coordinator_address}")
+                self.logger.info("Connected to coordinator at %s", self.coordinator_address)
 
                 comm_thread = threading.Thread(
                     target=self._worker_communication_loop,
@@ -476,7 +476,7 @@ class DistributedAnalysisManager:
                 raise ConnectionError("Failed to register with coordinator")
 
         except (OSError, ConnectionError) as e:
-            self.logger.error(f"Failed to connect to coordinator: {e}")
+            self.logger.error("Failed to connect to coordinator: %s", e)
             raise
 
     def _worker_communication_loop(self, coordinator_socket: socket.socket) -> None:
@@ -503,7 +503,7 @@ class DistributedAnalysisManager:
                     time.sleep(2.0)
 
         except OSError as e:
-            self.logger.error(f"Worker communication error: {e}")
+            self.logger.error("Worker communication error: %s", e)
 
     def _send_message(self, sock: socket.socket, message: dict[str, Any]) -> None:
         """Send a message over socket with length prefix and HMAC."""
@@ -514,7 +514,7 @@ class DistributedAnalysisManager:
             length = struct.pack("!I", len(payload))
             sock.sendall(length + payload)
         except (OSError, pickle.PickleError) as e:
-            self.logger.error(f"Error sending message: {e}")
+            self.logger.error("Error sending message: %s", e)
             raise
 
     def _receive_message(self, sock: socket.socket) -> dict[str, Any] | None:
@@ -539,7 +539,7 @@ class DistributedAnalysisManager:
 
             return pickle.loads(data) if data else None  # noqa: S301
         except (OSError, pickle.PickleError, struct.error) as e:
-            self.logger.error(f"Error receiving message: {e}")
+            self.logger.error("Error receiving message: %s", e)
             return None
 
     def _recv_exactly(self, sock: socket.socket, length: int) -> bytes | None:
@@ -574,7 +574,7 @@ class DistributedAnalysisManager:
 
             self.nodes[node_id] = worker_node
             self.client_connections[node_id] = connection
-            self.logger.info(f"Registered worker node: {node_id} ({worker_node.hostname})")
+            self.logger.info("Registered worker node: %s (%s)", node_id, worker_node.hostname)
 
     def _update_node_heartbeat(self, node_id: str, status: dict[str, Any]) -> None:
         """Update node heartbeat and status."""
@@ -594,7 +594,7 @@ class DistributedAnalysisManager:
         with self.nodes_lock:
             if node_id in self.nodes:
                 self.nodes[node_id].status = NodeStatus.OFFLINE
-                self.logger.warning(f"Node {node_id} marked as offline")
+                self.logger.warning("Node %s marked as offline", node_id)
 
                 with self.task_lock:
                     for task_id in self.nodes[node_id].active_tasks[:]:
@@ -604,7 +604,7 @@ class DistributedAnalysisManager:
                             task.assigned_node = None
                             task.retry_count += 1
                             heapq.heappush(self.task_queue, task)
-                            self.logger.info(f"Reassigning task {task_id} after node failure")
+                            self.logger.info("Reassigning task %s after node failure", task_id)
 
                 self.nodes[node_id].active_tasks.clear()
 
@@ -638,7 +638,7 @@ class DistributedAnalysisManager:
                 with self.task_lock:
                     for task_id, task in list(self.tasks.items()):
                         if task.status == TaskStatus.RUNNING and task.started_at and current_time - task.started_at > task.timeout:
-                            self.logger.warning(f"Task {task_id} timed out")
+                            self.logger.warning("Task %s timed out", task_id)
                             self._handle_task_failure(task_id, "Task timeout exceeded")
 
                 time.sleep(self.TASK_CHECK_INTERVAL)
@@ -664,7 +664,7 @@ class DistributedAnalysisManager:
                         task = heapq.heappop(self.task_queue)
 
                         if task.retry_count > task.max_retries:
-                            self.logger.error(f"Task {task.task_id} exceeded max retries")
+                            self.logger.error("Task %s exceeded max retries", task.task_id)
                             task.status = TaskStatus.FAILED
                             task.error = "Maximum retry count exceeded"
                             continue
@@ -730,7 +730,7 @@ class DistributedAnalysisManager:
             if node.current_load >= node.max_load:
                 node.status = NodeStatus.BUSY
 
-        self.logger.info(f"Assigned task {task.task_id} to node {node.node_id}")
+        self.logger.info("Assigned task %s to node %s", task.task_id, node.node_id)
 
     def _assign_task_to_node(self, node_id: str) -> AnalysisTask | None:
         """Assign next available task to requesting node."""
@@ -771,7 +771,7 @@ class DistributedAnalysisManager:
             else:
                 self._handle_task_result(task.task_id, result)
 
-            self.logger.info(f"Completed task {task.task_id} in {time.time() - start_time:.2f}s")
+            self.logger.info("Completed task %s in %.2fs", task.task_id, time.time() - start_time)
 
         except Exception as e:
             error_msg = f"Task execution failed: {e!s}\n{traceback.format_exc()}"
@@ -1144,7 +1144,7 @@ class DistributedAnalysisManager:
                             if node.status == NodeStatus.BUSY and node.current_load < node.max_load:
                                 node.status = NodeStatus.READY
 
-                self.logger.info(f"Task {task_id} completed successfully")
+                self.logger.info("Task %s completed successfully", task_id)
 
     def _handle_task_failure(self, task_id: str, error: str) -> None:
         """Handle task failure and schedule retry if applicable."""
@@ -1158,11 +1158,11 @@ class DistributedAnalysisManager:
                     task.status = TaskStatus.RETRY
                     task.assigned_node = None
                     heapq.heappush(self.task_queue, task)
-                    self.logger.warning(f"Task {task_id} failed, scheduling retry {task.retry_count}/{task.max_retries}")
+                    self.logger.warning("Task %s failed, scheduling retry %d/%d", task_id, task.retry_count, task.max_retries)
                 else:
                     task.status = TaskStatus.FAILED
                     self.performance_metrics["tasks_failed"] += 1
-                    self.logger.error(f"Task {task_id} failed permanently after {task.retry_count} retries")
+                    self.logger.error("Task %s failed permanently after %d retries", task_id, task.retry_count)
 
                 if task.assigned_node:
                     with self.nodes_lock:
@@ -1216,7 +1216,7 @@ class DistributedAnalysisManager:
         self.performance_metrics["tasks_submitted"] += 1
         self.performance_metrics["task_distribution"][task_type] += 1
 
-        self.logger.info(f"Submitted task {task_id} ({task_type}) with priority {priority.name}")
+        self.logger.info("Submitted task %s (%s) with priority %s", task_id, task_type, priority.name)
         return task_id
 
     def submit_binary_analysis(
@@ -1254,7 +1254,7 @@ class DistributedAnalysisManager:
             task_ids.append(self.submit_task("string_extraction", binary_path, chunk_params, priority))
             task_ids.append(self.submit_task("crypto_detection", binary_path, chunk_params, priority))
 
-        self.logger.info(f"Submitted {len(task_ids)} tasks for binary analysis of {binary_path}")
+        self.logger.info("Submitted %d tasks for binary analysis of %s", len(task_ids), binary_path)
         return task_ids
 
     def get_task_status(self, task_id: str) -> dict[str, Any] | None:
@@ -1470,11 +1470,11 @@ class DistributedAnalysisManager:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, default=str)
 
-            self.logger.info(f"Exported results to {output_path}")
+            self.logger.info("Exported results to %s", output_path)
             return True
 
         except (OSError, json.JSONEncodeError) as e:
-            self.logger.error(f"Failed to export results: {e}")
+            self.logger.error("Failed to export results: %s", e)
             return False
 
     def shutdown(self) -> None:

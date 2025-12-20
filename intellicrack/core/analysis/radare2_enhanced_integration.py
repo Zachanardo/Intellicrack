@@ -114,7 +114,7 @@ class EnhancedR2Integration:
         self.monitoring_enabled = self.config.get("real_time_monitoring", False)
         self.monitoring_thread = None
 
-        self.logger.info(f"EnhancedR2Integration initialized for {binary_path}")
+        self.logger.info("EnhancedR2Integration initialized for %s", binary_path)
 
     def _initialize_components(self) -> None:
         """Initialize all analysis components with error handling."""
@@ -144,9 +144,9 @@ class EnhancedR2Integration:
                         self.components[name] = R2BinaryDiff(self.binary_path)
                     else:
                         self.components[name] = component_class(self.binary_path)
-                    self.logger.debug(f"Initialized {name} component")
+                    self.logger.debug("Initialized %s component", name)
             except Exception as e:
-                self.logger.error(f"Failed to initialize {name} component: {e}")
+                self.logger.error("Failed to initialize %s component: %s", name, e)
                 self.components[name] = None
 
     def run_comprehensive_analysis(self, analysis_types: list[str] | None = None) -> dict[str, Any]:
@@ -189,7 +189,7 @@ class EnhancedR2Integration:
                 if component_result := self._run_single_analysis(analysis_type):
                     results["components"][analysis_type] = component_result
             except Exception as e:
-                self.logger.error(f"Failed to run {analysis_type} analysis: {e}")
+                self.logger.error("Failed to run %s analysis: %s", analysis_type, e)
                 results["errors"].append(
                     {
                         "component": analysis_type,
@@ -226,7 +226,7 @@ class EnhancedR2Integration:
                     if result := future.result():
                         results[analysis_type] = result
                 except Exception as e:
-                    self.logger.error(f"Parallel analysis {analysis_type} failed: {e}")
+                    self.logger.error("Parallel analysis %s failed: %s", analysis_type, e)
                     self.error_handler.handle_error(
                         e,
                         f"parallel_{analysis_type}",
@@ -252,12 +252,12 @@ class EnhancedR2Integration:
 
         # Check if component is available
         if analysis_type not in self.components or self.components[analysis_type] is None:
-            self.logger.warning(f"Component {analysis_type} not available")
+            self.logger.warning("Component %s not available", analysis_type)
             return None
 
         # Check if operation is degraded
         if self.error_handler.is_operation_degraded(f"r2_{analysis_type}"):
-            self.logger.warning(f"Analysis {analysis_type} is in degraded mode, skipping")
+            self.logger.warning("Analysis %s is in degraded mode, skipping", analysis_type)
             return {"degraded": True, "reason": "Circuit breaker open"}
 
         start_time = time.time()
@@ -311,7 +311,7 @@ class EnhancedR2Integration:
             # End performance tracking with failure
             self.performance_monitor.end_operation(operation_metrics, success=False, error_message=str(e))
 
-            self.logger.error(f"Analysis {analysis_type} failed: {e}")
+            self.logger.error("Analysis %s failed: %s", analysis_type, e)
             self.performance_stats["errors_handled"] += 1
 
             # Try recovery
@@ -338,7 +338,7 @@ class EnhancedR2Integration:
                     self._cache_result(cache_key, result)
                     return result
                 except Exception as retry_e:
-                    self.logger.error(f"Retry failed for {analysis_type}: {retry_e}")
+                    self.logger.error("Retry failed for %s: %s", analysis_type, retry_e)
 
             return {"error": str(e), "failed_analysis": analysis_type}
 
@@ -432,7 +432,7 @@ class EnhancedR2Integration:
                 time.sleep(self.config.get("monitoring_interval", 30))  # 30 seconds default
 
             except Exception as e:
-                self.logger.error(f"Monitoring loop error: {e}")
+                self.logger.error("Monitoring loop error: %s", e)
                 time.sleep(60)  # Wait longer on error
 
     def get_performance_stats(self) -> dict[str, Any]:
@@ -479,7 +479,7 @@ class EnhancedR2Integration:
             if data.get("success_rate", 0) > 0.9:  # High success rate
                 self.error_handler.reset_circuit_breaker(f"r2_{analysis_type}")
 
-        self.logger.info(f"Performance optimized: cache_ttl={self.cache_ttl}")
+        self.logger.info("Performance optimized: cache_ttl=%s", self.cache_ttl)
 
     def clear_cache(self) -> None:
         """Clear results cache."""
@@ -538,12 +538,12 @@ class EnhancedR2Integration:
         try:
             if self.components.get("diff"):
                 self.components["diff"].set_secondary_binary(secondary_path)
-                self.logger.info(f"Set secondary binary for diff: {secondary_path}")
+                self.logger.info("Set secondary binary for diff: %s", secondary_path)
                 return True
             self.logger.error("Binary diff component not initialized")
             return False
         except Exception as e:
-            self.logger.error(f"Failed to set secondary binary: {e}", exc_info=True)
+            self.logger.error("Failed to set secondary binary: %s", e, exc_info=True)
             return False
 
     def get_function_diffs(self) -> list[dict[str, Any]]:
@@ -576,7 +576,7 @@ class EnhancedR2Integration:
             self.logger.error("Binary diff component not initialized")
             return []
         except Exception as e:
-            self.logger.error(f"Failed to get function diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get function diffs: %s", e, exc_info=True)
             return []
 
     def get_basic_block_diffs(self, function_name: str) -> list[dict[str, Any]]:
@@ -609,7 +609,7 @@ class EnhancedR2Integration:
             self.logger.error("Binary diff component not initialized")
             return []
         except Exception as e:
-            self.logger.error(f"Failed to get basic block diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get basic block diffs: %s", e, exc_info=True)
             return []
 
     def get_performance_metrics(self) -> dict[str, Any]:
@@ -639,7 +639,7 @@ class EnhancedR2Integration:
 
         """
         self.performance_monitor.export_metrics(filepath)
-        self.logger.info(f"Exported performance metrics to {filepath}")
+        self.logger.info("Exported performance metrics to %s", filepath)
 
     def generate_control_flow_graph(self, function_name: str) -> dict[str, Any]:
         """Generate control flow graph for a function.
@@ -683,7 +683,7 @@ class EnhancedR2Integration:
             self.logger.error("Graph component not initialized")
             return {}
         except Exception as e:
-            self.logger.error(f"Failed to generate CFG: {e}")
+            self.logger.error("Failed to generate CFG: %s", e)
             return {}
 
     def generate_call_graph(self, max_depth: int = 3) -> dict[str, Any]:
@@ -728,7 +728,7 @@ class EnhancedR2Integration:
             self.logger.error("Graph component not initialized")
             return {}
         except Exception as e:
-            self.logger.error(f"Failed to generate call graph: {e}")
+            self.logger.error("Failed to generate call graph: %s", e)
             return {}
 
     def generate_xref_graph(self, address: int) -> dict[str, Any]:
@@ -771,7 +771,7 @@ class EnhancedR2Integration:
             self.logger.error("Graph component not initialized")
             return {}
         except Exception as e:
-            self.logger.error(f"Failed to generate xref graph: {e}")
+            self.logger.error("Failed to generate xref graph: %s", e)
             return {}
 
     def visualize_graph(self, graph_type: str, **kwargs: object) -> bool:
@@ -804,7 +804,7 @@ class EnhancedR2Integration:
             elif graph_type == "import":
                 graph_data = graph_gen.generate_import_dependency_graph()
             else:
-                self.logger.error(f"Unknown graph type: {graph_type}")
+                self.logger.error("Unknown graph type: %s", graph_type)
                 return False
 
             output_path = kwargs.get("output_path")
@@ -813,7 +813,7 @@ class EnhancedR2Integration:
             return graph_gen.visualize_graph(graph_data, output_path, layout)
 
         except Exception as e:
-            self.logger.error(f"Failed to visualize graph: {e}")
+            self.logger.error("Failed to visualize graph: %s", e)
             return False
 
     def cleanup(self) -> None:
@@ -823,10 +823,11 @@ class EnhancedR2Integration:
             self.clear_cache()
 
             if final_metrics := self.performance_monitor.end_session():
-                self.logger.info(f"Performance session ended: {final_metrics.session_id}")
+                self.logger.info("Performance session ended: %s", final_metrics.session_id)
                 self.logger.info(
-                    f"Total operations: {final_metrics.total_operations}, "
-                    f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}",
+                    "Total operations: %d, Success rate: %.2f%%",
+                    final_metrics.total_operations,
+                    100 * final_metrics.successful_operations / max(1, final_metrics.total_operations),
                 )
 
             # Cleanup components
@@ -835,12 +836,12 @@ class EnhancedR2Integration:
                     try:
                         component.cleanup()
                     except Exception as e:
-                        self.logger.error(f"Component cleanup failed: {e}")
+                        self.logger.error("Component cleanup failed: %s", e)
 
             self.logger.info("EnhancedR2Integration cleanup completed")
 
         except Exception as e:
-            self.logger.error(f"Cleanup failed: {e}", exc_info=True)
+            self.logger.error("Cleanup failed: %s", e, exc_info=True)
 
 
 def create_enhanced_r2_integration(binary_path: str, **config: object) -> EnhancedR2Integration:

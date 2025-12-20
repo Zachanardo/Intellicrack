@@ -112,14 +112,14 @@ class R2BinaryDiff:
         try:
             self.r2_primary = r2pipe.open(self.primary_path)
             self.r2_primary.cmd("aaa")  # Analyze all
-            self.logger.info(f"Initialized r2 session for primary: {self.primary_path}")
+            self.logger.info("Initialized r2 session for primary: %s", self.primary_path)
 
             if self.secondary_path:
                 self.r2_secondary = r2pipe.open(self.secondary_path)
                 self.r2_secondary.cmd("aaa")  # Analyze all
-                self.logger.info(f"Initialized r2 session for secondary: {self.secondary_path}")
+                self.logger.info("Initialized r2 session for secondary: %s", self.secondary_path)
         except Exception as e:
-            self.logger.error(f"Failed to initialize r2 sessions: {e}", exc_info=True)
+            self.logger.error("Failed to initialize r2 sessions: %s", e, exc_info=True)
             self.r2_primary = None
             self.r2_secondary = None
 
@@ -136,15 +136,15 @@ class R2BinaryDiff:
             try:
                 self.r2_secondary.quit()
             except Exception as e:
-                self.logger.warning(f"Failed to close previous r2 session: {e}")
+                self.logger.warning("Failed to close previous r2 session: %s", e)
 
         if self.r2pipe_available:
             try:
                 self.r2_secondary = r2pipe.open(secondary_path)
                 self.r2_secondary.cmd("aaa")
-                self.logger.info(f"Set secondary binary: {secondary_path}")
+                self.logger.info("Set secondary binary: %s", secondary_path)
             except Exception as e:
-                self.logger.error(f"Failed to set secondary binary: {e}", exc_info=True)
+                self.logger.error("Failed to set secondary binary: %s", e, exc_info=True)
                 self.r2_secondary = None
 
     def get_function_diffs(self) -> list[FunctionDiff]:
@@ -227,10 +227,10 @@ class R2BinaryDiff:
 
                     diffs.append(diff)
 
-            self.logger.info(f"Found {len(diffs)} function differences")
+            self.logger.info("Found %d function differences", len(diffs))
 
         except Exception as e:
-            self.logger.error(f"Failed to get function diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get function diffs: %s", e, exc_info=True)
 
         return diffs
 
@@ -304,10 +304,10 @@ class R2BinaryDiff:
                     diff = BasicBlockDiff(address=addr, status="removed", primary_size=bb.get("size", 0))
                     diffs.append(diff)
 
-            self.logger.info(f"Found {len(diffs)} basic block differences in {function_name}")
+            self.logger.info("Found %d basic block differences in %s", len(diffs), function_name)
 
         except Exception as e:
-            self.logger.error(f"Failed to get basic block diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get basic block diffs: %s", e, exc_info=True)
 
         return diffs
 
@@ -378,10 +378,10 @@ class R2BinaryDiff:
                         )
                         diffs.append(diff)
 
-            self.logger.info(f"Found {len(diffs)} string differences")
+            self.logger.info("Found %d string differences", len(diffs))
 
         except Exception as e:
-            self.logger.error(f"Failed to get string diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get string diffs: %s", e, exc_info=True)
 
         return diffs
 
@@ -426,7 +426,7 @@ class R2BinaryDiff:
                     })
 
         except Exception as e:
-            self.logger.error(f"Failed to get import diffs: {e}", exc_info=True)
+            self.logger.error("Failed to get import diffs: %s", e, exc_info=True)
 
         return diffs
 
@@ -488,7 +488,7 @@ class R2BinaryDiff:
 
             return 1.0 - (distance / max_len) if max_len > 0 else 1.0
         except Exception as e:
-            self.logger.error(f"Failed to calculate similarity: {e}", exc_info=True)
+            self.logger.error("Failed to calculate similarity: %s", e, exc_info=True)
             return 0.0
 
     def _levenshtein_distance(self, s1: list[str], s2: list[str]) -> int:
@@ -544,7 +544,7 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error(f"Failed to count opcode changes: {e}", exc_info=True)
+            self.logger.error("Failed to count opcode changes: %s", e, exc_info=True)
             return 0
 
     def _get_call_changes(self, func_name: str) -> list[str]:
@@ -572,7 +572,7 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error(f"Failed to get call changes: {e}", exc_info=True)
+            self.logger.error("Failed to get call changes: %s", e, exc_info=True)
             return []
 
     def _match_basic_blocks(self, primary_blocks: list[dict], secondary_blocks: list[dict]) -> dict[int, int]:
@@ -615,7 +615,7 @@ class R2BinaryDiff:
             xrefs = json.loads(xrefs) if xrefs else []
             return [x.get("from", 0) for x in xrefs]
         except Exception as e:
-            self.logger.warning(f"Failed to get xrefs for address {hex(address)}: {e}")
+            self.logger.warning("Failed to get xrefs for address %s: %s", hex(address), e)
             return []
 
     def _get_file_hash(self, r2_session: object | None) -> str:
@@ -633,7 +633,7 @@ class R2BinaryDiff:
                 result = r2_session.cmd("!rahash2 -a md5 -q $F")
                 return result.strip() if result else ""
         except Exception as e:
-            self.logger.warning(f"Failed to compute file hash: {e}")
+            self.logger.warning("Failed to compute file hash: %s", e)
         return ""
 
     def _get_file_size(self, r2_session: object | None) -> int:
@@ -651,7 +651,7 @@ class R2BinaryDiff:
                 result = r2_session.cmd("i~size[1]")
                 return int(result.strip()) if result and result.strip().isdigit() else 0
         except Exception as e:
-            self.logger.warning(f"Failed to get file size: {e}")
+            self.logger.warning("Failed to get file size: %s", e)
         return 0
 
     def cleanup(self) -> None:
@@ -660,12 +660,12 @@ class R2BinaryDiff:
             try:
                 self.r2_primary.quit()
             except Exception as e:
-                self.logger.warning(f"Error closing primary r2 session: {e}")
+                self.logger.warning("Error closing primary r2 session: %s", e)
         if self.r2_secondary:
             try:
                 self.r2_secondary.quit()
             except Exception as e:
-                self.logger.warning(f"Error closing secondary r2 session: {e}")
+                self.logger.warning("Error closing secondary r2 session: %s", e)
 
     def close(self) -> None:
         """Close radare2 sessions and release resources.

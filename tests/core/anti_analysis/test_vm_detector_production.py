@@ -5,15 +5,15 @@ using CPUID instructions, hardware fingerprinting, timing analysis, and artifact
 """
 
 import platform
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
+
+import pytest
 
 from intellicrack.core.anti_analysis.vm_detector import (
-    VMDetector,
     CPUIDResult,
-    TimingMeasurement,
     HardwareFingerprint,
+    TimingMeasurement,
+    VMDetector,
 )
 
 
@@ -161,10 +161,7 @@ class TestCPUIDHypervisorDetection:
             detected, confidence, details = detector._check_cpuid_hypervisor_bit()
 
             if platform.system() == "Windows":
-                is_vm = any(
-                    keyword in platform.processor().lower()
-                    for keyword in ["vmware", "virtualbox", "hyper-v", "kvm", "xen"]
-                )
+                is_vm = any(keyword in platform.processor().lower() for keyword in ["vmware", "virtualbox", "hyper-v", "kvm", "xen"])
 
                 if not is_vm:
                     assert detected is False or confidence < 0.5
@@ -347,10 +344,7 @@ class TestFalsePositiveMinimization:
 
         if platform.system() == "Windows":
             cpu_info = platform.processor().lower()
-            is_likely_vm = any(
-                keyword in cpu_info
-                for keyword in ["vmware", "virtualbox", "hyper-v", "kvm", "xen", "qemu"]
-            )
+            is_likely_vm = any(keyword in cpu_info for keyword in ["vmware", "virtualbox", "hyper-v", "kvm", "xen", "qemu"])
 
             if not is_likely_vm and detected:
                 assert confidence < 0.7

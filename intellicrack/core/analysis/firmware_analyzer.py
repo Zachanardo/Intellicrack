@@ -135,7 +135,7 @@ class ExtractedFile:
                 permissions=oct(stat_info.st_mode)[-3:],
             )
         except Exception as e:
-            logger.error(f"Error creating ExtractedFile from {file_path}: {e}")
+            logger.error("Error creating ExtractedFile from %s: %s", file_path, e)
             return cls(
                 file_path=file_path,
                 original_offset=original_offset,
@@ -285,12 +285,12 @@ class FirmwareAnalyzer:
             # Track analyzed files to prevent infinite recursion
             abs_path = os.path.abspath(file_path)
             if abs_path in self.analyzed_files:
-                logger.debug(f"File already analyzed: {abs_path}")
+                logger.debug("File already analyzed: %s", abs_path)
                 return result
             self.analyzed_files.add(abs_path)
 
             # Step 1: Signature scanning
-            logger.info(f"Scanning firmware signatures: {file_path}")
+            logger.info("Scanning firmware signatures: %s", file_path)
             result.signatures = self._scan_signatures(file_path)
 
             # Step 2: Determine firmware type
@@ -315,13 +315,15 @@ class FirmwareAnalyzer:
 
             result.analysis_time = time.time() - start_time
             logger.info(
-                f"Firmware analysis complete: {len(result.signatures)} signatures, {len(result.security_findings)} security findings",
+                "Firmware analysis complete: %d signatures, %d security findings",
+                len(result.signatures),
+                len(result.security_findings),
             )
 
             return result
 
         except Exception as e:
-            logger.error(f"Firmware analysis error: {e}")
+            logger.error("Firmware analysis error: %s", e)
             return FirmwareAnalysisResult(
                 file_path=file_path,
                 error=str(e),
@@ -346,7 +348,7 @@ class FirmwareAnalyzer:
                     signatures.append(signature)
 
         except Exception as e:
-            logger.error(f"Signature scanning failed: {e}")
+            logger.error("Signature scanning failed: %s", e)
             # Fallback to basic file type detection
             signatures.append(
                 FirmwareSignature(
@@ -415,7 +417,7 @@ class FirmwareAnalyzer:
             if file_size > 1 * 1024 * 1024:  # > 1MB
                 return FirmwareType.IOT_DEVICE
         except OSError as e:
-            self.logger.debug(f"Could not get file size for firmware type detection: {e}")
+            self.logger.debug("Could not get file size for firmware type detection: %s", e)
 
         return FirmwareType.UNKNOWN
 
@@ -471,7 +473,7 @@ class FirmwareAnalyzer:
                 entropy_analysis["file_entropy"] = round(avg_entropy, 3)
 
         except Exception as e:
-            logger.error(f"Entropy analysis failed: {e}")
+            logger.error("Entropy analysis failed: %s", e)
             # Fallback to basic entropy calculation
             try:
                 entropy_analysis["file_entropy"] = self._calculate_basic_entropy(file_path)
@@ -504,7 +506,7 @@ class FirmwareAnalyzer:
 
             return round(entropy, 3)
         except Exception as e:
-            logger.error(f"Basic entropy calculation failed: {e}")
+            logger.error("Basic entropy calculation failed: %s", e)
             return 0.0
 
     def _extract_embedded_files(self, file_path: str, max_depth: int = 2) -> FirmwareExtraction:
@@ -534,7 +536,7 @@ class FirmwareAnalyzer:
                             extraction.total_extracted += 1
 
                         except Exception as e:
-                            logger.warning(f"Error processing extracted file {extracted_path}: {e}")
+                            logger.warning("Error processing extracted file %s: %s", extracted_path, e)
                             extraction.errors.append(f"Failed to process {extracted_path}: {e}")
 
             # Recursive extraction if depth allows
@@ -552,10 +554,10 @@ class FirmwareAnalyzer:
                                 extraction.extracted_files.extend(sub_result.extractions.extracted_files)
                                 extraction.total_extracted += sub_result.extractions.total_extracted
                         except Exception as e:
-                            logger.debug(f"Recursive extraction failed for {extracted_file.file_path}: {e}")
+                            logger.debug("Recursive extraction failed for %s: %s", extracted_file.file_path, e)
 
         except Exception as e:
-            logger.error(f"File extraction failed: {e}")
+            logger.error("File extraction failed: %s", e)
             extraction.success = False
             extraction.errors.append(str(e))
 
@@ -572,7 +574,7 @@ class FirmwareAnalyzer:
             extracted_file.security_analysis = self._analyze_file_security(extracted_file.file_path)
 
         except Exception as e:
-            logger.debug(f"Failed to analyze extracted file {extracted_file.file_path}: {e}")
+            logger.debug("Failed to analyze extracted file %s: %s", extracted_file.file_path, e)
 
     def _extract_strings(self, file_path: str, min_length: int = 4) -> list[str]:
         """Extract printable strings from file."""
@@ -598,7 +600,7 @@ class FirmwareAnalyzer:
             return strings[:100]
 
         except Exception as e:
-            logger.debug(f"String extraction failed for {file_path}: {e}")
+            logger.debug("String extraction failed for %s: %s", file_path, e)
             return []
 
     def _analyze_file_security(self, file_path: str) -> dict[str, Any]:
@@ -630,7 +632,7 @@ class FirmwareAnalyzer:
                     security_info["has_crypto_keys"] = True
 
         except Exception as e:
-            logger.debug(f"Security analysis failed for {file_path}: {e}")
+            logger.debug("Security analysis failed for %s: %s", file_path, e)
 
         return security_info
 
@@ -675,7 +677,7 @@ class FirmwareAnalyzer:
                         )
 
                 except Exception as e:
-                    logger.debug(f"Security analysis failed for {extracted_file.file_path}: {e}")
+                    logger.debug("Security analysis failed for %s: %s", extracted_file.file_path, e)
 
         return findings
 
@@ -712,7 +714,7 @@ class FirmwareAnalyzer:
                         for match in matches
                     )
         except Exception as e:
-            logger.debug(f"Credential scanning failed: {e}")
+            logger.debug("Credential scanning failed: %s", e)
 
         return findings
 
@@ -751,7 +753,7 @@ class FirmwareAnalyzer:
                     )
 
         except Exception as e:
-            logger.debug(f"Crypto key scanning failed: {e}")
+            logger.debug("Crypto key scanning failed: %s", e)
 
         return findings
 
@@ -817,7 +819,7 @@ class FirmwareAnalyzer:
                         )
 
         except Exception as e:
-            logger.debug(f"Backdoor scanning failed: {e}")
+            logger.debug("Backdoor scanning failed: %s", e)
 
         return findings
 
@@ -1025,9 +1027,9 @@ class FirmwareAnalyzer:
         try:
             if os.path.exists(extraction_directory):
                 shutil.rmtree(extraction_directory)
-                logger.debug(f"Cleaned up extraction directory: {extraction_directory}")
+                logger.debug("Cleaned up extraction directory: %s", extraction_directory)
         except Exception as e:
-            logger.warning(f"Failed to cleanup extraction directory: {e}")
+            logger.warning("Failed to cleanup extraction directory: %s", e)
 
 
 # Singleton instance
@@ -1041,7 +1043,7 @@ def get_firmware_analyzer() -> FirmwareAnalyzer | None:
         try:
             _firmware_analyzer = FirmwareAnalyzer()
         except Exception as e:
-            logger.error(f"Failed to initialize firmware analyzer: {e}")
+            logger.error("Failed to initialize firmware analyzer: %s", e)
             return None
     return _firmware_analyzer
 

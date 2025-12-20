@@ -373,7 +373,7 @@ class HardwareIDSpoofer:
             self.driver_handle = self.kernel32.CreateFileW(r"\\.\HWIDSpoof", 0xC0000000, 0, None, 3, 0, None)
 
         except Exception as e:
-            logger.warning(f"Kernel driver loading failed, using usermode spoofing: {e}")
+            logger.warning("Kernel driver loading failed, using usermode spoofing: %s", e)
             self.driver_handle = None
 
     def collect_hardware_info(self) -> dict[str, Any]:
@@ -390,7 +390,7 @@ class HardwareIDSpoofer:
             info["gpu"] = self._get_gpu_info()
             info["usb_devices"] = self._get_usb_devices()
         except Exception as e:
-            logger.error(f"Error collecting hardware info: {e}")
+            logger.error("Error collecting hardware info: %s", e)
 
         return info
 
@@ -469,7 +469,7 @@ class HardwareIDSpoofer:
                 cpu_info["serial"] = f"{hex(result[2])}-{hex(result[3])}"
 
         except Exception as e:
-            logger.debug(f"ASM CPUID failed: {e}")
+            logger.debug("ASM CPUID failed: %s", e)
 
         return cpu_info
 
@@ -528,7 +528,7 @@ class HardwareIDSpoofer:
                 file_sys_name,
                 261,
             ):
-                logger.debug(f"GetVolumeInformationW for {drive} returned {result}")
+                logger.debug("GetVolumeInformationW for %s returned %s", drive, result)
                 return {
                     "drive": drive,
                     "volume_name": volume_name.value,
@@ -643,7 +643,7 @@ class HardwareIDSpoofer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
-                    logger.debug(f"CPUID spoof IOCTL returned {result}, {bytes_returned.value} bytes")
+                    logger.debug("CPUID spoof IOCTL returned %s, %d bytes", result, bytes_returned.value)
                     self.spoofed_values["cpu_vendor"] = vendor
                     self.spoofed_values["cpu_id"] = processor_id
                     return True
@@ -651,7 +651,7 @@ class HardwareIDSpoofer:
             return self._spoof_cpu_usermode(vendor, processor_id)
 
         except Exception as e:
-            logger.error(f"CPU ID spoofing failed: {e}")
+            logger.error("CPU ID spoofing failed: %s", e)
             return False
 
     def _generate_random_cpu_id(self) -> str:
@@ -697,7 +697,7 @@ class HardwareIDSpoofer:
             return True
 
         except Exception as e:
-            logger.warning(f"Usermode CPU spoofing failed: {e}")
+            logger.warning("Usermode CPU spoofing failed: %s", e)
             return False
 
     def spoof_mac_address(self, adapter_name: str = None, new_mac: str = None) -> bool:
@@ -740,7 +740,7 @@ class HardwareIDSpoofer:
                 return True
 
         except Exception as e:
-            logger.error(f"MAC address spoofing failed: {e}")
+            logger.error("MAC address spoofing failed: %s", e)
 
         return False
 
@@ -821,14 +821,14 @@ class HardwareIDSpoofer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
-                    logger.debug(f"Disk spoof IOCTL returned {result}, {bytes_returned.value} bytes")
+                    logger.debug("Disk spoof IOCTL returned %s, %d bytes", result, bytes_returned.value)
                     self.spoofed_values[f"disk_{drive}"] = new_serial
                     return True
 
             return self._spoof_disk_usermode(drive, new_serial)
 
         except Exception as e:
-            logger.error(f"Disk serial spoofing failed: {e}")
+            logger.error("Disk serial spoofing failed: %s", e)
             return False
 
     def _generate_random_disk_serial(self) -> str:
@@ -863,7 +863,7 @@ exit"""
             return True
 
         except Exception as e:
-            logger.warning(f"Usermode disk spoofing failed: {e}")
+            logger.warning("Usermode disk spoofing failed: %s", e)
             return False
 
     def spoof_motherboard_serial(self, manufacturer: str = None, product: str = None, serial: str = None) -> bool:
@@ -900,7 +900,7 @@ exit"""
                     ctypes.byref(bytes_returned),
                     None,
                 ):
-                    logger.debug(f"SMBIOS spoof IOCTL returned {result}, {bytes_returned.value} bytes")
+                    logger.debug("SMBIOS spoof IOCTL returned %s, %d bytes", result, bytes_returned.value)
                     self.spoofed_values["motherboard_manufacturer"] = manufacturer
                     self.spoofed_values["motherboard_product"] = product
                     self.spoofed_values["motherboard_serial"] = serial
@@ -909,7 +909,7 @@ exit"""
             return self._spoof_motherboard_usermode(manufacturer, product, serial)
 
         except Exception as e:
-            logger.error(f"Motherboard serial spoofing failed: {e}")
+            logger.error("Motherboard serial spoofing failed: %s", e)
             return False
 
     def _generate_random_serial(self) -> str:
@@ -959,7 +959,7 @@ objInstance.Put_
             return True
 
         except Exception as e:
-            logger.warning(f"Usermode motherboard spoofing failed: {e}")
+            logger.warning("Usermode motherboard spoofing failed: %s", e)
             return False
 
     def spoof_system_uuid(self, new_uuid: str = None) -> bool:
@@ -980,7 +980,7 @@ objInstance.Put_
             return True
 
         except Exception as e:
-            logger.error(f"System UUID spoofing failed: {e}")
+            logger.error("System UUID spoofing failed: %s", e)
             return False
 
     def spoof_all(self, profile: dict[str, Any] = None) -> dict[str, bool]:
@@ -1090,7 +1090,7 @@ objInstance.Put_
             return True
 
         except Exception as e:
-            logger.error(f"Failed to restore original values: {e}")
+            logger.error("Failed to restore original values: %s", e)
             return False
 
     def _restore_mac_address(self, adapter: str, original_mac: str) -> None:

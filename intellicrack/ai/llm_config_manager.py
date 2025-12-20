@@ -106,7 +106,7 @@ class LLMConfigManager:
                 self.metrics.update(central_metrics)
 
         except Exception as e:
-            logger.warning(f"Could not load from central config: {e}")
+            logger.warning("Could not load from central config: %s", e)
 
     def _load_json_file(
         self,
@@ -130,7 +130,7 @@ class LLMConfigManager:
             with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            logger.error(f"Failed to load {file_path}: {e}")
+            logger.error("Failed to load %s: %s", file_path, e)
             return default
 
     # NOTE: _save_json_file method has been REMOVED
@@ -264,7 +264,7 @@ class LLMConfigManager:
             }
 
         except Exception as e:
-            logger.debug(f"Could not get dynamic model recommendations: {e}")
+            logger.debug("Could not get dynamic model recommendations: %s", e)
             return {
                 "code_generation": [],
                 "analysis": [],
@@ -346,7 +346,7 @@ class LLMConfigManager:
                 custom_params=config_data.get("custom_params", {}),
             )
         except Exception as e:
-            logger.error(f"Failed to load config for {model_id}: {e}")
+            logger.error("Failed to load config for %s: %s", model_id, e)
             return None
 
     def delete_model_config(self, model_id: str) -> bool:
@@ -424,17 +424,17 @@ class LLMConfigManager:
                     try:
                         if llm_manager.register_llm(model_id, config):
                             loaded += 1
-                            logger.info(f"Auto-loaded model: {model_id}")
+                            logger.info("Auto-loaded model: %s", model_id)
                         else:
                             failed += 1
-                            logger.warning(f"Failed to register model: {model_id}")
+                            logger.warning("Failed to register model: %s", model_id)
                     except Exception as e:
                         failed += 1
-                        logger.error(f"Error loading model {model_id}: {e}")
+                        logger.error("Error loading model %s: %s", model_id, e)
                 else:
                     failed += 1
 
-        logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
+        logger.info("Auto-load complete: %d loaded, %d failed", loaded, failed)
         return loaded, failed
 
     @deprecated_config_method("IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)")
@@ -512,7 +512,7 @@ class LLMConfigManager:
         """
         profile = self.get_profile(profile_id)
         if not profile:
-            logger.warning(f"Profile not found: {profile_id}")
+            logger.warning("Profile not found: %s", profile_id)
             return config
 
         settings = profile.get("settings", {})
@@ -639,9 +639,9 @@ class LLMConfigManager:
         try:
             with open(export_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str)
-            logger.info(f"Exported configuration to {export_path}")
+            logger.info("Exported configuration to %s", export_path)
         except Exception as e:
-            logger.error(f"Failed to export configuration: {e}")
+            logger.error("Failed to export configuration: %s", e)
 
     def switch_backend(self, backend_name: str) -> bool:
         """Switch to a different LLM backend.
@@ -668,7 +668,7 @@ class LLMConfigManager:
         normalized_name = backend_name.lower().strip()
 
         if normalized_name not in valid_backends:
-            logger.error(f"Unknown backend: {backend_name}. Valid backends: {list(valid_backends.keys())}")
+            logger.error("Unknown backend: %s. Valid backends: %s", backend_name, list(valid_backends.keys()))
             return False
 
         try:
@@ -676,7 +676,7 @@ class LLMConfigManager:
             current_backend = central_config.get("llm_configuration.active_backend", "")
 
             if current_backend == normalized_name:
-                logger.info(f"Already using backend: {normalized_name}")
+                logger.info("Already using backend: %s", normalized_name)
                 return True
 
             backend_config = central_config.get(f"llm_configuration.backends.{normalized_name}", {})
@@ -709,13 +709,13 @@ class LLMConfigManager:
                 central_config.set("llm_configuration.active_backend_id", backend_id)
                 central_config.save()
 
-                logger.info(f"Successfully switched to backend: {normalized_name}")
+                logger.info("Successfully switched to backend: %s", normalized_name)
                 return True
-            logger.error(f"Failed to register backend: {normalized_name}")
+            logger.error("Failed to register backend: %s", normalized_name)
             return False
 
         except Exception as e:
-            logger.error(f"Error switching to backend {backend_name}: {e}")
+            logger.error("Error switching to backend %s: %s", backend_name, e)
             return False
 
     def _create_default_backend_config(self, backend_name: str) -> dict[str, Any]:
@@ -838,7 +838,7 @@ class LLMConfigManager:
                 if "***REDACTED***" not in str(config.get("api_key", "")):
                     self.configs[model_id] = config
                 else:
-                    logger.warning(f"Skipping {model_id} - API key redacted")
+                    logger.warning("Skipping %s - API key redacted", model_id)
 
             # Import profiles
             self.profiles.update(import_data.get("profiles", {}))
@@ -865,10 +865,10 @@ class LLMConfigManager:
             # Persist all changes
             central_config.save()
 
-            logger.info(f"Imported configuration from {import_path}")
+            logger.info("Imported configuration from %s", import_path)
 
         except Exception as e:
-            logger.error(f"Failed to import configuration: {e}")
+            logger.error("Failed to import configuration: %s", e)
 
 
 # Global instance

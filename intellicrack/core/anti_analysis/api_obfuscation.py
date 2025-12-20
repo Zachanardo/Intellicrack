@@ -84,7 +84,7 @@ class APIObfuscator:
 
         """
         try:
-            self.logger.info(f"Obfuscating API calls using {method}")
+            self.logger.info("Obfuscating API calls using %s", method)
 
             if method not in self.call_obfuscation_methods:
                 raise ValueError(f"Unknown obfuscation method: {method}")
@@ -99,7 +99,7 @@ class APIObfuscator:
             return code
 
         except Exception as e:
-            self.logger.error(f"API obfuscation failed: {e}")
+            self.logger.error("API obfuscation failed: %s", e)
             return code
 
     def resolve_api(self, dll_name: str, api_name: str, method: str = "normal") -> int | None:
@@ -140,7 +140,7 @@ class APIObfuscator:
             return address
 
         except Exception as e:
-            self.logger.error(f"API resolution failed: {e}")
+            self.logger.error("API resolution failed: %s", e)
             return None
 
     def _normal_resolve(self, dll_name: str, api_name: str) -> int | None:
@@ -159,7 +159,7 @@ class APIObfuscator:
             if h_module:
                 return kernel32.GetProcAddress(h_module, api_name.encode())
         except Exception as e:
-            self.logger.debug(f"Normal resolution failed: {e}")
+            self.logger.debug("Normal resolution failed: %s", e)
 
         return None
 
@@ -205,22 +205,24 @@ class APIObfuscator:
 
             # Validate export table consistency
             if num_functions == 0:
-                self.logger.warning(f"DLL {dll_name} has no exported functions")
+                self.logger.warning("DLL %s has no exported functions", dll_name)
                 return None
 
             if num_names > num_functions:
-                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
+                self.logger.warning("DLL %s has more names (%d) than functions (%d) - possible corruption", dll_name, num_names, num_functions)
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
             if num_functions > 10000:
                 self.logger.warning(
-                    f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique",
+                    "DLL %s has unusually large export table (%d functions) - possible anti-analysis technique",
+                    dll_name,
+                    num_functions,
                 )
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
+                self.logger.info("DLL %s has %d functions but no named exports (ordinal-only)", dll_name, num_functions)
                 return None
 
             names_array = h_module + names_rva
@@ -252,7 +254,7 @@ class APIObfuscator:
             return None
 
         except Exception as e:
-            self.logger.debug(f"Hash resolution failed: {e}")
+            self.logger.debug("Hash resolution failed: %s", e)
             return None
 
     def _resolve_by_ordinal(self, dll_name: str, ordinal: int) -> int | None:
@@ -322,7 +324,7 @@ class APIObfuscator:
                 return func_addr
 
             except Exception as pe_error:
-                self.logger.debug(f"PE parsing failed, using fallback: {pe_error}")
+                self.logger.debug("PE parsing failed, using fallback: %s", pe_error)
 
                 # Fallback: Use GetProcAddress with MAKEINTRESOURCE
                 try:
@@ -332,7 +334,7 @@ class APIObfuscator:
                     return None
 
         except Exception as e:
-            self.logger.debug(f"Ordinal resolution failed: {e}")
+            self.logger.debug("Ordinal resolution failed: %s", e)
             return None
 
     def _dynamic_resolve(self, dll_name: str, api_name: str) -> int | None:
@@ -367,7 +369,7 @@ class APIObfuscator:
             return self._normal_resolve(reconstructed_dll, reconstructed_api)
 
         except Exception as e:
-            self.logger.debug(f"Dynamic resolution failed: {e}")
+            self.logger.debug("Dynamic resolution failed: %s", e)
 
         return None
 
@@ -402,7 +404,7 @@ class APIObfuscator:
             return func(*args)
 
         except Exception as e:
-            self.logger.error(f"Indirect call failed: {e}", exc_info=True)
+            self.logger.error("Indirect call failed: %s", e, exc_info=True)
             return None
 
     def _obfuscated_string(self, string: str) -> bytes:
@@ -460,7 +462,7 @@ class APIObfuscator:
             return self._normal_resolve(dll_name, api_name)
 
         except Exception as e:
-            self.logger.debug(f"Forwarded export resolution failed: {e}", exc_info=True)
+            self.logger.debug("Forwarded export resolution failed: %s", e, exc_info=True)
             return None
 
     def _calculate_hash(self, string: str) -> int:
@@ -665,10 +667,10 @@ if (p{api_name}) {{
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)
 
-            self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
+            self.logger.info("Loaded %d API entries with %d hash mappings", len(common_apis), len(self.api_hash_db))
 
         except Exception as e:
-            self.logger.error(f"Failed to load API databases: {e}", exc_info=True)
+            self.logger.error("Failed to load API databases: %s", e, exc_info=True)
             # Initialize empty databases
             self.api_hash_db = {}
             self.encrypted_strings_db = {}
@@ -714,7 +716,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve encrypted strings: {e}", exc_info=True)
+            self.logger.error("Failed to resolve encrypted strings: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_dynamic_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -749,7 +751,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve dynamic imports: {e}", exc_info=True)
+            self.logger.error("Failed to resolve dynamic imports: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_redirected_apis(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -791,7 +793,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve redirected APIs: {e}", exc_info=True)
+            self.logger.error("Failed to resolve redirected APIs: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_indirect_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -875,7 +877,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate indirect calls: {e}", exc_info=True)
+            self.logger.error("Failed to generate indirect calls: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_trampoline_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -938,7 +940,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate trampoline calls: {e}", exc_info=True)
+            self.logger.error("Failed to generate trampoline calls: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_decryption_shellcode(self, offset: int, size: int, key: int) -> bytearray:
@@ -1085,7 +1087,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate encrypted payloads: {e}", exc_info=True)
+            self.logger.error("Failed to generate encrypted payloads: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _generate_polymorphic_wrappers(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -1148,7 +1150,7 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to generate polymorphic wrappers: {e}", exc_info=True)
+            self.logger.error("Failed to generate polymorphic wrappers: %s", e, exc_info=True)
             return code, {"error": str(e)}
 
     def _resolve_delayed_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
@@ -1234,5 +1236,5 @@ if (p{api_name}) {{
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve delayed imports: {e}", exc_info=True)
+            self.logger.error("Failed to resolve delayed imports: %s", e, exc_info=True)
             return code, {"error": str(e)}

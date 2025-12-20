@@ -406,7 +406,7 @@ class CryptoEngine:
             else:
                 return self._xor_encrypt(data, key)
         except Exception as e:
-            self.logger.error(f"Encryption error: {e}")
+            self.logger.error("Encryption error: %s", e)
             return self._xor_encrypt(data, key)
 
     def hasp_decrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
@@ -435,7 +435,7 @@ class CryptoEngine:
             else:
                 return self._xor_encrypt(data, key)
         except Exception as e:
-            self.logger.error(f"Decryption error: {e}")
+            self.logger.error("Decryption error: %s", e)
             return self._xor_encrypt(data, key)
 
     def sentinel_challenge_response(self, challenge: bytes, key: bytes) -> bytes:
@@ -473,7 +473,7 @@ class CryptoEngine:
             signer = PKCS1_v1_5.new(private_key)
             return signer.sign(h)
         except Exception as e:
-            self.logger.error(f"RSA signing error: {e}")
+            self.logger.error("RSA signing error: %s", e)
             return hashlib.sha256(data).digest()
 
     def _xor_encrypt(self, data: bytes, key: bytes) -> bytes:
@@ -625,7 +625,7 @@ class HardwareDongleEmulator:
                         "instance": dongle,
                     }
 
-        self.logger.info(f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation")
+        self.logger.info("Created %d virtual dongles with full memory emulation", len(self.virtual_dongles))
 
     def _setup_usb_emulation(self, dongle_types: list[str]) -> None:
         """Set up USB device emulation for dongles."""
@@ -667,7 +667,7 @@ class HardwareDongleEmulator:
                 usb.register_bulk_handler(0x81, self._wibukey_bulk_in_handler)
                 self.usb_emulators["WibuKey_USB"] = usb
 
-        self.logger.info(f"Setup USB emulation for {len(self.usb_emulators)} dongle types")
+        self.logger.info("Setup USB emulation for %d dongle types", len(self.usb_emulators))
 
     def _hasp_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
         """Handle HASP USB control transfers."""
@@ -1368,7 +1368,7 @@ class HardwareDongleEmulator:
             "script": frida_script,
             "target": f"Dongle APIs: {', '.join(dongle_types)}",
         })
-        self.logger.info(f"Comprehensive dongle API hooks installed for: {', '.join(dongle_types)}")
+        self.logger.info("Comprehensive dongle API hooks installed for: %s", ', '.join(dongle_types))
 
     def _patch_dongle_checks(self) -> None:
         """Patch binary instructions that check for dongle presence."""
@@ -1443,10 +1443,10 @@ class HardwareDongleEmulator:
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
-            self.logger.info(f"Identified {patches_applied} dongle check patterns to patch")
+            self.logger.info("Identified %d dongle check patterns to patch", patches_applied)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Error patching dongle checks: {e!s}")
+            self.logger.error("Error patching dongle checks: %s", e)
 
     def _spoof_dongle_registry(self) -> None:
         """Manipulate Windows registry to establish dongle presence."""
@@ -1508,12 +1508,12 @@ class HardwareDongleEmulator:
                     else:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
-                    self.logger.debug(f"Set registry entry {path}\\{name} = {value}")
+                    self.logger.debug("Set registry entry %s\\%s = %s", path, name, value)
                 except OSError as e:
-                    self.logger.warning(f"Could not set registry entry {path}\\{name}: {e!s}")
+                    self.logger.warning("Could not set registry entry %s\\%s: %s", path, name, e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error(f"Registry spoofing failed: {e!s}")
+            self.logger.error("Registry spoofing failed: %s", e)
 
     def process_hasp_challenge(self, challenge: bytes, dongle_id: int = 1) -> bytes:
         """Process HASP cryptographic challenge.
@@ -1527,7 +1527,7 @@ class HardwareDongleEmulator:
 
         """
         if dongle_id not in self.hasp_dongles:
-            self.logger.error(f"HASP dongle {dongle_id} not found")
+            self.logger.error("HASP dongle %s not found", dongle_id)
             return b""
 
         dongle = self.hasp_dongles[dongle_id]
@@ -1560,10 +1560,10 @@ class HardwareDongleEmulator:
             elif dongle_type.upper() == "WIBUKEY" and dongle_id in self.wibukey_dongles:
                 return self.wibukey_dongles[dongle_id].memory.read(region, offset, length)
             else:
-                self.logger.error(f"Dongle {dongle_type} {dongle_id} not found")
+                self.logger.error("Dongle %s %s not found", dongle_type, dongle_id)
                 return b""
         except (ValueError, PermissionError) as e:
-            self.logger.error(f"Memory read error: {e}")
+            self.logger.error("Memory read error: %s", e)
             return b""
 
     def write_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes) -> bool:
@@ -1591,10 +1591,10 @@ class HardwareDongleEmulator:
                 self.wibukey_dongles[dongle_id].memory.write(region, offset, data)
                 return True
             else:
-                self.logger.error(f"Dongle {dongle_type} {dongle_id} not found")
+                self.logger.error("Dongle %s %s not found", dongle_type, dongle_id)
                 return False
         except (ValueError, PermissionError) as e:
-            self.logger.error(f"Memory write error: {e}")
+            self.logger.error("Memory write error: %s", e)
             return False
 
     def generate_emulation_script(self, dongle_types: list[str]) -> str:
@@ -1886,7 +1886,7 @@ class HardwareDongleEmulator:
 
             return config
 
-        self.logger.warning(f"Unknown dongle type: {dongle_type}")
+        self.logger.warning("Unknown dongle type: %s", dongle_type)
         return None
 
 

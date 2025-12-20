@@ -104,7 +104,7 @@ class ModelShardingManager:
 
         if self.device_count > 0 and HAS_TORCH:
             self._initialize_device_properties()
-            logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
+            logger.info("Initialized sharding manager with %d %s devices", self.device_count, self.gpu_type)
         else:
             logger.info("No GPUs detected, sharding disabled")
 
@@ -258,11 +258,11 @@ class ModelShardingManager:
                     dtype=dtype,
                 )
 
-            logger.info(f"Created device map: {device_map}")
+            logger.info("Created device map: %s", device_map)
             return device_map
 
         except Exception as e:
-            logger.error(f"Failed to create device map: {e}")
+            logger.error("Failed to create device map: %s", e)
             return self._create_simple_device_map()
 
     def _create_simple_device_map(self) -> dict[str, object]:
@@ -295,7 +295,7 @@ class ModelShardingManager:
                 # Default to 20GB if can't determine
                 max_memory[i] = "20GB"
 
-        logger.info(f"Balanced memory allocation: {max_memory}")
+        logger.info("Balanced memory allocation: %s", max_memory)
         return max_memory
 
     def shard_model(
@@ -367,7 +367,7 @@ class ModelShardingManager:
                     model = optimized
                     logger.info("Applied GPU optimizations before sharding")
             except Exception as e:
-                logger.debug(f"Could not optimize model before sharding: {e}")
+                logger.debug("Could not optimize model before sharding: %s", e)
         return model
 
     def _dispatch_model_across_devices(
@@ -390,7 +390,7 @@ class ModelShardingManager:
             logger.info("Model successfully sharded across devices")
             return self._apply_post_sharding_optimizations(model)
         except Exception as e:
-            logger.error(f"Failed to shard model: {e}")
+            logger.error("Failed to shard model: %s", e)
             return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
 
     def _apply_post_sharding_optimizations(self, model: TorchModel) -> TorchModel:
@@ -402,7 +402,7 @@ class ModelShardingManager:
                     model = optimized
                     logger.info("Applied autoloader optimizations after sharding")
             except Exception as e:
-                logger.debug(f"Could not apply autoloader optimizations: {e}")
+                logger.debug("Could not apply autoloader optimizations: %s", e)
         return model
 
     def load_sharded_checkpoint(
@@ -471,7 +471,7 @@ class ModelShardingManager:
             logger.info("Checkpoint loaded and sharded across devices")
             return self._apply_autoloader_optimizations(model)
         except Exception as e:
-            logger.error(f"Failed to load sharded checkpoint: {e}")
+            logger.error("Failed to load sharded checkpoint: %s", e)
             return self._fallback_checkpoint_load(model, checkpoint)
 
     def _apply_gpu_optimizations(self, model: TorchModel) -> TorchModel:
@@ -483,7 +483,7 @@ class ModelShardingManager:
                     model = optimized
                     logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
             except Exception as e:
-                logger.debug(f"Could not optimize model: {e}")
+                logger.debug("Could not optimize model: %s", e)
         return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
 
     def _apply_autoloader_optimizations(self, model: TorchModel) -> TorchModel:
@@ -495,7 +495,7 @@ class ModelShardingManager:
                     model = optimized
                     logger.info("Applied autoloader optimizations to sharded checkpoint")
             except Exception as e:
-                logger.debug(f"Could not apply autoloader optimizations: {e}")
+                logger.debug("Could not apply autoloader optimizations: %s", e)
         return model
 
     def _fallback_checkpoint_load(self, model: TorchModel, checkpoint: str | Path) -> TorchModel:
@@ -617,7 +617,7 @@ class ModelShardingManager:
         optimized_map["pooler"] = last_device
         optimized_map["lm_head"] = last_device
 
-        logger.info(f"Optimized device map for {num_layers} layers across {self.device_count} devices")
+        logger.info("Optimized device map for %d layers across %d devices", num_layers, self.device_count)
         return optimized_map
 
     def monitor_memory_usage(self) -> dict[int, dict[str, object]]:
@@ -737,7 +737,8 @@ class ModelShardingManager:
 
         if num_stages > self.device_count:
             logger.warning(
-                f"Requested {num_stages} stages but only {self.device_count} devices available",
+                "Requested %d stages but only %d devices available",
+                num_stages, self.device_count,
             )
             num_stages = self.device_count
 
@@ -757,7 +758,7 @@ class ModelShardingManager:
             groups.append(group)
             device_idx += stage_devices
 
-        logger.info(f"Created {len(groups)} pipeline parallel groups: {groups}")
+        logger.info("Created %d pipeline parallel groups: %s", len(groups), groups)
         return groups
 
     def profile_model_distribution(
@@ -783,7 +784,7 @@ class ModelShardingManager:
             logger.error("PyTorch required for profiling")
             return {}
 
-        logger.info(f"Profiling model distribution over {num_iterations} iterations")
+        logger.info("Profiling model distribution over %d iterations", num_iterations)
 
         inputs = self._prepare_inputs_for_profiling(sample_input)
         self._warmup_model(model, inputs)
@@ -929,7 +930,7 @@ class ModelShardingManager:
             "balance_score": self.get_device_balance_score(device_map),
         }
 
-        logger.info(f"Profiling complete - Avg forward time: {avg_time:.2f}ms")
+        logger.info("Profiling complete - Avg forward time: %.2fms", avg_time)
         return results
 
 

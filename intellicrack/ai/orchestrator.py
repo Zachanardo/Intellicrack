@@ -313,10 +313,10 @@ class AIOrchestrator:
                 self.model_manager = None
                 logger.warning("Model Manager class not found. Complex reasoning capabilities may be limited.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Failed to initialize Model Manager: {e}")
+            logger.error("Failed to initialize Model Manager: %s", e)
             self.model_manager = None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during Model Manager initialization: {e}")
+            logger.error("An unexpected error occurred during Model Manager initialization: %s", e)
             self.model_manager = None
 
         # LLM manager for GGUF and API-based models
@@ -329,10 +329,10 @@ class AIOrchestrator:
                 self.llm_manager = None
                 logger.warning("LLM Manager function not found. LLM-based agentic workflows may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Failed to initialize LLM Manager: {e}")
+            logger.error("Failed to initialize LLM Manager: %s", e)
             self.llm_manager = None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during LLM Manager initialization: {e}")
+            logger.error("An unexpected error occurred during LLM Manager initialization: %s", e)
             self.llm_manager = None
 
         # AI assistant for tool-based workflows
@@ -348,11 +348,11 @@ class AIOrchestrator:
                 self.system_prompt = None
                 logger.warning("IntellicrackAIAssistant class not found. AI Assistant features may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Failed to initialize AI Assistant: {e}")
+            logger.error("Failed to initialize AI Assistant: %s", e)
             self.ai_assistant = None
             self.system_prompt = None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during AI Assistant initialization: {e}")
+            logger.error("An unexpected error occurred during AI Assistant initialization: %s", e)
             self.ai_assistant = None
             self.system_prompt = None
 
@@ -366,10 +366,10 @@ class AIOrchestrator:
                 self.hex_bridge = None
                 logger.warning("AIBinaryBridge class not found. Hex viewer AI integration may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Failed to initialize Hex Bridge: {e}")
+            logger.error("Failed to initialize Hex Bridge: %s", e)
             self.hex_bridge = None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during Hex AI Bridge initialization: {e}")
+            logger.error("An unexpected error occurred during Hex AI Bridge initialization: %s", e)
             self.hex_bridge = None
 
         logger.info("All AI components initialization attempt completed.")
@@ -395,9 +395,9 @@ class AIOrchestrator:
                     f"last_analysis_time_{source}": datetime.now(),
                 },
             )
-            logger.debug(f"Shared context updated with analysis results for task {task_id} from {source}.")
+            logger.debug("Shared context updated with analysis results for task %s from %s.", task_id, source)
         else:
-            logger.warning(f"Analysis completion event for task {task_id} from {source} did not contain 'results' data.")
+            logger.warning("Analysis completion event for task %s from %s did not contain 'results' data.", task_id, source)
 
     def _on_ml_prediction_complete(self, data: dict[str, Any], source: str) -> None:
         """Handle ML prediction completion events."""
@@ -591,7 +591,7 @@ class AIOrchestrator:
             try:
                 task.callback(result)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error in task callback for task {task.task_id}: {e}")
+                logger.error("Error in task callback for task %s: %s", task.task_id, e)
 
         # Clear progress tracking after short delay (keep for UI feedback)
         def clear_progress() -> None:
@@ -642,7 +642,7 @@ class AIOrchestrator:
                 confidence = max(confidence, llm_results.get("confidence", 0.0))
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"LLM analysis failed for vulnerability scan task {task.task_id}: {e}")
+                logger.error("LLM analysis failed for vulnerability scan task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
@@ -667,7 +667,7 @@ class AIOrchestrator:
                 confidence = license_results.get("confidence", 0.8)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"License analysis failed for task {task.task_id}: {e}")
+                logger.error("License analysis failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
@@ -693,7 +693,7 @@ class AIOrchestrator:
                 confidence = hex_results.get("confidence", 0.7)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Hex analysis failed for binary analysis task {task.task_id}: {e}")
+                logger.error("Hex analysis failed for binary analysis task %s: %s", task.task_id, e)
 
         # ML feature analysis functionality has been removed
 
@@ -725,10 +725,10 @@ class AIOrchestrator:
                     components_used.append("ai_assistant_complex")
                     confidence = max(confidence, ai_complex_results.get("confidence", 0.0))
 
-                    logger.info(f"AI complex analysis completed with confidence: {ai_complex_results.get('confidence', 0.0)}")
+                    logger.info("AI complex analysis completed with confidence: %s", ai_complex_results.get('confidence', 0.0))
 
             except Exception as e:
-                logger.error(f"AI complex binary analysis failed for task {task.task_id}: {e}")
+                logger.error("AI complex binary analysis failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
@@ -779,7 +779,7 @@ class AIOrchestrator:
                     logger.warning("LLM returned empty response")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"LLM reasoning failed for task {task.task_id}: {e}")
+                logger.error("LLM reasoning failed for task %s: %s", task.task_id, e)
 
         # Fallback to AI assistant if LLM not available
         elif self.ai_assistant:
@@ -795,7 +795,7 @@ class AIOrchestrator:
                 confidence = reasoning_results.get("confidence", 0.8)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"AI Assistant reasoning failed for task {task.task_id}: {e}")
+                logger.error("AI Assistant reasoning failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
@@ -857,7 +857,7 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error(f"Frida script generation failed for task {task.task_id}: {e}")
+            logger.error("Frida script generation failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -906,7 +906,7 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error(f"Ghidra script generation failed for task {task.task_id}: {e}")
+            logger.error("Ghidra script generation failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -973,7 +973,7 @@ class AIOrchestrator:
             )
 
         except Exception as e:
-            logger.error(f"Unified script generation failed for task {task.task_id}: {e}")
+            logger.error("Unified script generation failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -1028,7 +1028,7 @@ class AIOrchestrator:
             )
 
         except Exception as e:
-            logger.error(f"Script testing failed for task {task.task_id}: {e}")
+            logger.error("Script testing failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -1064,7 +1064,7 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error(f"Script refinement failed for task {task.task_id}: {e}")
+            logger.error("Script refinement failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -1104,7 +1104,7 @@ class AIOrchestrator:
                 )
 
         except Exception as e:
-            logger.error(f"Autonomous workflow failed for task {task.task_id}: {e}")
+            logger.error("Autonomous workflow failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -1237,7 +1237,7 @@ class AIOrchestrator:
 
         """
         self.progress_callbacks[task_id] = callback
-        logger.debug(f"Registered progress callback for task {task_id}")
+        logger.debug("Registered progress callback for task %s", task_id)
 
     def update_task_progress(self, task_id: str, progress: int, status: str = "") -> None:
         """Update progress for a specific task and notify callbacks.
@@ -1270,9 +1270,9 @@ class AIOrchestrator:
             try:
                 self.progress_callbacks[task_id](task_id, progress, status)
             except Exception as e:
-                logger.error(f"Error calling progress callback for task {task_id}: {e}")
+                logger.error("Error calling progress callback for task %s: %s", task_id, e)
 
-        logger.debug(f"Task {task_id} progress: {progress}% - {status}")
+        logger.debug("Task %s progress: %d%% - %s", task_id, progress, status)
 
     def get_task_progress(self, task_id: str) -> dict[str, Any] | None:
         """Get current progress for a task.
@@ -1294,7 +1294,7 @@ class AIOrchestrator:
         """Clear progress information for a completed task."""
         self.task_progress.pop(task_id, None)
         self.progress_callbacks.pop(task_id, None)
-        logger.debug(f"Cleared progress tracking for task {task_id}")
+        logger.debug("Cleared progress tracking for task %s", task_id)
 
     def shutdown(self) -> None:
         """Shutdown the orchestrator and all components."""
@@ -1306,7 +1306,7 @@ class AIOrchestrator:
             try:
                 self.llm_manager.shutdown()
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error shutting down LLM manager during orchestrator shutdown: {e}")
+                logger.error("Error shutting down LLM manager during orchestrator shutdown: %s", e)
 
         self.shared_context.clear_session()
         logger.info("AI Orchestrator shutdown complete")

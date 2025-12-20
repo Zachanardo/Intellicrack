@@ -233,10 +233,10 @@ class ControlFlowDeobfuscator:
             if self.architecture is None:
                 self.architecture = "x86_64"
 
-            self.logger.info(f"Detected architecture: {self.architecture}")
+            self.logger.info("Detected architecture: %s", self.architecture)
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize binary: {e}")
+            self.logger.error("Failed to initialize binary: %s", e)
             self.architecture = "x86_64"
 
     def _initialize_disassembler(self) -> None:
@@ -265,10 +265,10 @@ class ControlFlowDeobfuscator:
 
             if self.disassembler:
                 self.disassembler.detail = True
-                self.logger.info(f"Initialized disassembler for {self.architecture}")
+                self.logger.info("Initialized disassembler for %s", self.architecture)
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize disassembler: {e}")
+            self.logger.error("Failed to initialize disassembler: %s", e)
 
     def _initialize_opaque_analyzer(self) -> None:
         """Initialize advanced opaque predicate analyzer."""
@@ -277,7 +277,7 @@ class ControlFlowDeobfuscator:
                 self.opaque_analyzer = OpaquePredicateAnalyzer()
                 self.logger.info("Initialized advanced opaque predicate analyzer")
             except Exception as e:
-                self.logger.warning(f"Failed to initialize opaque analyzer: {e}")
+                self.logger.warning("Failed to initialize opaque analyzer: %s", e)
                 self.opaque_analyzer = None
         else:
             self.logger.warning("Advanced opaque predicate analyzer not available")
@@ -297,7 +297,7 @@ class ControlFlowDeobfuscator:
             DeobfuscationResult containing deobfuscated CFG and analysis data
 
         """
-        self.logger.info(f"Deobfuscating function at 0x{function_address:x}")
+        self.logger.info("Deobfuscating function at 0x%x", function_address)
 
         try:
             with r2_session(str(self.binary_path), self.radare2_path) as r2:
@@ -307,7 +307,8 @@ class ControlFlowDeobfuscator:
 
                 if dispatcher_info:
                     self.logger.info(
-                        f"Detected {len(dispatcher_info)} control flow flattening dispatchers",
+                        "Detected %d control flow flattening dispatchers",
+                        len(dispatcher_info),
                     )
                     deobfuscated_cfg = self._unflatten_control_flow(
                         r2,
@@ -322,7 +323,7 @@ class ControlFlowDeobfuscator:
                 opaque_predicates = self._detect_opaque_predicates(r2, deobfuscated_cfg, function_address)
 
                 if opaque_predicates:
-                    self.logger.info(f"Detected {len(opaque_predicates)} opaque predicates")
+                    self.logger.info("Detected %d opaque predicates", len(opaque_predicates))
                     deobfuscated_cfg = self._remove_opaque_predicates(
                         r2,
                         deobfuscated_cfg,
@@ -332,7 +333,7 @@ class ControlFlowDeobfuscator:
                 bogus_blocks = self._detect_bogus_blocks(r2, deobfuscated_cfg, function_address)
 
                 if bogus_blocks:
-                    self.logger.info(f"Detected {len(bogus_blocks)} bogus/unreachable blocks")
+                    self.logger.info("Detected %d bogus/unreachable blocks", len(bogus_blocks))
                     deobfuscated_cfg = self._remove_bogus_blocks(deobfuscated_cfg, bogus_blocks)
 
                 patch_info = self._generate_patch_information(
@@ -368,7 +369,7 @@ class ControlFlowDeobfuscator:
                 )
 
         except Exception as e:
-            self.logger.error(f"Deobfuscation failed: {e}")
+            self.logger.error("Deobfuscation failed: %s", e)
             raise
 
     def _build_control_flow_graph(self, r2: "Radare2Session", function_address: int) -> nx.DiGraph:
@@ -431,7 +432,7 @@ class ControlFlowDeobfuscator:
             return cfg
 
         except Exception as e:
-            self.logger.error(f"Failed to build CFG: {e}")
+            self.logger.error("Failed to build CFG: %s", e)
             raise
 
     def _detect_dispatchers(
@@ -460,7 +461,7 @@ class ControlFlowDeobfuscator:
             basic_block = cfg.nodes[node]["data"]
 
             if self._is_dispatcher_block(basic_block, cfg):
-                self.logger.debug(f"Potential dispatcher at 0x{node:x}")
+                self.logger.debug("Potential dispatcher at 0x%x", node)
 
                 state_var = self._identify_state_variable(r2, basic_block, function_address)
 
@@ -629,7 +630,7 @@ class ControlFlowDeobfuscator:
                 pass
 
         except Exception as e:
-            self.logger.debug(f"Failed to extract switch info via radare2: {e}")
+            self.logger.debug("Failed to extract switch info via radare2: %s", e)
 
         return dict(enumerate(controlled_blocks))
 
@@ -673,7 +674,7 @@ class ControlFlowDeobfuscator:
         deobfuscated = cfg.copy()
 
         for dispatcher in dispatchers:
-            self.logger.debug(f"Unflattening dispatcher at 0x{dispatcher.dispatcher_address:x}")
+            self.logger.debug("Unflattening dispatcher at 0x%x", dispatcher.dispatcher_address)
 
             original_edges = self._recover_original_edges(
                 r2,
@@ -812,14 +813,15 @@ class ControlFlowDeobfuscator:
                     for result in advanced_results
                 )
                 self.logger.info(
-                    f"Advanced analysis detected {len(advanced_results)} opaque predicates",
+                    "Advanced analysis detected %d opaque predicates",
+                    len(advanced_results),
                 )
 
                 if advanced_results:
                     return opaque_predicates
 
             except Exception as e:
-                self.logger.warning(f"Advanced opaque predicate analysis failed: {e}")
+                self.logger.warning("Advanced opaque predicate analysis failed: %s", e)
 
         for node in cfg.nodes():
             basic_block = cfg.nodes[node]["data"]
@@ -929,20 +931,26 @@ class ControlFlowDeobfuscator:
                         simplified.remove_edge(node, false_successor)
                         dead_branches_removed.append(false_successor)
                         self.logger.debug(
-                            f"Removed false branch from 0x{node:x} to 0x{false_successor:x}",
+                            "Removed false branch from 0x%x to 0x%x",
+                            node,
+                            false_successor,
                         )
                     else:
                         simplified.remove_edge(node, true_successor)
                         dead_branches_removed.append(true_successor)
                         self.logger.debug(
-                            f"Removed true branch from 0x{node:x} to 0x{true_successor:x}",
+                            "Removed true branch from 0x%x to 0x%x",
+                            node,
+                            true_successor,
                         )
 
             elif simplified.has_edge(node, dead_branch):
                 simplified.remove_edge(node, dead_branch)
                 dead_branches_removed.append(dead_branch)
                 self.logger.debug(
-                    f"Removed dead branch from 0x{node:x} to 0x{dead_branch:x}",
+                    "Removed dead branch from 0x%x to 0x%x",
+                    node,
+                    dead_branch,
                 )
         simplified = self._eliminate_dead_code(simplified, dead_branches_removed)
 
@@ -1004,10 +1012,10 @@ class ControlFlowDeobfuscator:
             for block in blocks_to_remove:
                 if block in cleaned.nodes():
                     cleaned.remove_node(block)
-                    self.logger.debug(f"Removed dead block at 0x{block:x}")
+                    self.logger.debug("Removed dead block at 0x%x", block)
 
         except Exception as e:
-            self.logger.debug(f"Dead code elimination failed: {e}")
+            self.logger.debug("Dead code elimination failed: %s", e)
 
         return cleaned
 
@@ -1064,7 +1072,7 @@ class ControlFlowDeobfuscator:
 
                 simplified.remove_node(successor)
                 changed = True
-                self.logger.debug(f"Collapsed linear chain: 0x{node:x} -> 0x{successor:x}")
+                self.logger.debug("Collapsed linear chain: 0x%x -> 0x%x", node, successor)
 
         return simplified
 
@@ -1097,7 +1105,7 @@ class ControlFlowDeobfuscator:
             bogus_blocks.extend(unreachable)
 
         except Exception as e:
-            self.logger.debug(f"Failed to detect unreachable blocks: {e}")
+            self.logger.debug("Failed to detect unreachable blocks: %s", e)
 
         for node in cfg.nodes():
             if node in bogus_blocks:
@@ -1243,7 +1251,7 @@ class ControlFlowDeobfuscator:
             metrics["deobfuscated_cycles"] = deobf_cycles
             metrics["cycles_removed"] = original_cycles - deobf_cycles
         except Exception as e:
-            self.logger.debug(f"Failed to calculate cycles: {e}")
+            self.logger.debug("Failed to calculate cycles: %s", e)
             metrics["original_cycles"] = 0
             metrics["deobfuscated_cycles"] = 0
             metrics["cycles_removed"] = 0
@@ -1429,11 +1437,11 @@ class ControlFlowDeobfuscator:
 
                 f.write("}\n")
 
-            self.logger.info(f"Exported deobfuscated CFG to {output_path}")
+            self.logger.info("Exported deobfuscated CFG to %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to export CFG: {e}")
+            self.logger.error("Failed to export CFG: %s", e)
             return False
 
     def apply_patches(
@@ -1492,11 +1500,11 @@ class ControlFlowDeobfuscator:
                         section.content = list(section_content)
 
             patched_binary.write(str(output_path))
-            self.logger.info(f"Wrote patched binary to {output_path}")
+            self.logger.info("Wrote patched binary to %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to apply patches: {e}")
+            self.logger.error("Failed to apply patches: %s", e)
             return False
 
     def _find_section_for_address(self, binary: "Binary", address: int) -> "Section | None":
@@ -1518,7 +1526,7 @@ class ControlFlowDeobfuscator:
                 if section_start <= address < section_end:
                     return section
         except Exception as e:
-            self.logger.debug(f"Error finding section: {e}")
+            self.logger.debug("Error finding section: %s", e)
 
         return None
 

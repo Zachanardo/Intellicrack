@@ -4110,6 +4110,17 @@ tests\core\exploitation\test_automated_unpacker.py:207: 'TestPackerType' has ran
 tests\core\exploitation\test_automated_unpacker.py:237: 'TestUnpackingContext' has rank C
 
 
+4 findings in tests\core\monitoring\test_base_monitor_production.py
+
+tests\core\monitoring\test_base_monitor_production.py:688: 'TestMonitorIntegration' has rank C
+
+tests\core\monitoring\test_base_monitor_production.py:691: 'test_complete_monitoring_lifecycle_with_events' has rank C
+
+tests\core\monitoring\test_base_monitor_production.py:153: 'test_event_type_enum_values' has rank C
+
+tests\core\monitoring\test_base_monitor_production.py:276: 'test_monitor_stats_get_stats_returns_complete_data' has rank C
+
+
 4 findings in tests\core\network\test_traffic_interception_engine_comprehensive.py
 
 tests\core\network\test_traffic_interception_engine_comprehensive.py:305: 'test_parse_raw_packet_extracts_flexlm_traffic' has rank C
@@ -4176,6 +4187,17 @@ tests\ml\test_license_protection_neural_network_production.py:396: 'test_hybrid_
 tests\ml\test_license_protection_neural_network_production.py:822: 'test_predictor_predicts_protection_type_from_binary' has rank C
 
 
+4 findings in tests\ui\test_cfg_explorer_inner_production.py
+
+tests\ui\test_cfg_explorer_inner_production.py:190: 'test_networkx_builds_cfg_with_functions_and_edges' has rank C
+
+tests\ui\test_cfg_explorer_inner_production.py:152: 'test_cfg_explorer_sets_up_license_patterns' has rank C
+
+tests\ui\test_cfg_explorer_inner_production.py:460: 'test_initializes_graph_visualization_structures' has rank C
+
+tests\ui\test_cfg_explorer_inner_production.py:479: 'test_builds_sample_cfg_from_detected_functions' has rank C
+
+
 4 findings in tests\unit\ai\test_llm_fallback_chains.py
 
 tests\unit\ai\test_llm_fallback_chains.py:933: 'test_health_report_accuracy_mixed_results' has rank C
@@ -4229,6 +4251,17 @@ tests\utilities\test_real_crypto_operations.py:128: 'test_real_secrets_managemen
 tests\utilities\test_real_crypto_operations.py:473: 'test_real_password_hashing' has rank C
 
 tests\utilities\test_real_crypto_operations.py:232: 'test_real_hash_operations' has rank C
+
+
+4 findings in tests\utils\core\test_dependency_feedback_production.py
+
+tests\utils\core\test_dependency_feedback_production.py:112: 'test_check_all_dependencies_comprehensive' has rank C
+
+tests\utils\core\test_dependency_feedback_production.py:38: 'test_dependency_info_completeness' has rank C
+
+tests\utils\core\test_dependency_feedback_production.py:64: 'test_get_dependency_status_available_dependency' has rank C
+
+tests\utils\core\test_dependency_feedback_production.py:407: 'test_platform_specific_install_commands' has rank C
 
 
 4 findings in tests\validation_system\cross_version_tester.py
@@ -4834,6 +4867,15 @@ tests\core\analysis\test_control_flow_analyzer_production.py:311: 'test_extract_
 tests\core\analysis\test_control_flow_analyzer_production.py:814: 'test_deobfuscation_result_contains_all_fields' has rank C
 
 tests\core\analysis\test_control_flow_analyzer_production.py:835: 'test_deobfuscation_metrics_calculation' has rank C
+
+
+3 findings in tests\core\analysis\test_stalker_manager_enhanced_production.py
+
+tests\core\analysis\test_stalker_manager_enhanced_production.py:340: 'test_stalker_export_results_real_data' has rank C
+
+tests\core\analysis\test_stalker_manager_enhanced_production.py:131: 'test_stalker_session_real_process_spawn' has rank C
+
+tests\core\analysis\test_stalker_manager_enhanced_production.py:551: 'test_stalker_trace_complete_coverage_parsing' has rank C
 
 
 3 findings in tests\core\analysis\test_streaming_entropy_analyzer_production.py
@@ -5728,6 +5770,13 @@ tests\core\test_debugging_engine.py:227: 'test_set_breakpoint_replaces_byte_with
 tests\core\test_debugging_engine.py:365: 'test_set_hardware_breakpoint_on_execute' has rank C
 
 
+2 findings in tests\core\test_gpu_acceleration_production.py
+
+tests\core\test_gpu_acceleration_production.py:279: 'TestGPUAcceleratorDeviceInfo' has rank C
+
+tests\core\test_gpu_acceleration_production.py:282: 'test_gpu_device_info_contains_expected_fields' has rank C
+
+
 2 findings in tests\core\test_hardware_spoofer.py
 
 tests\core\test_hardware_spoofer.py:861: 'test_hardware_to_dict_converts_all_fields' has rank C
@@ -5747,6 +5796,13 @@ tests\core\test_license_snapshot_comprehensive.py:22: 'TestLicenseSnapshotCore' 
 tests\core\test_serial_generator_comprehensive.py:33: 'test_generator_initializes_with_all_algorithms' has rank C
 
 tests\core\test_serial_generator_comprehensive.py:50: 'test_generator_initializes_with_all_checksums' has rank C
+
+
+2 findings in tests\core\test_trial_reset_engine_production.py
+
+tests\core\test_trial_reset_engine_production.py:108: 'test_trial_info_contains_complete_metadata' has rank C
+
+tests\core\test_trial_reset_engine_production.py:320: 'test_reset_strategies_initialization' has rank C
 
 
 2 findings in tests\core\analysis\test_arxan_analyzer_production.py
@@ -5782,6 +5838,13 @@ tests\core\analysis\test_frida_advanced_hooks_production.py:134: 'test_stalker_t
 tests\core\analysis\test_ghidra_analyzer_production.py:481: 'test_parse_xml_output_functions' has rank C
 
 tests\core\analysis\test_ghidra_analyzer_production.py:586: 'test_parse_xml_output_sections' has rank C
+
+
+2 findings in tests\core\analysis\test_ghidra_output_parser_production.py
+
+tests\core\analysis\test_ghidra_output_parser_production.py:245: 'TestGhidraOutputParserInitialization' has rank C
+
+tests\core\analysis\test_ghidra_output_parser_production.py:248: 'test_parser_initialization' has rank C
 
 
 2 findings in tests\core\analysis\test_import_analyzer_production.py
@@ -5831,6 +5894,13 @@ tests\core\certificate\test_api_signatures_comprehensive.py:472: 'test_calling_c
 tests\core\exploitation\test_keygen_generator_comprehensive.py:1010: 'TestKeyAlgorithmTypeEnum' has rank C
 
 tests\core\exploitation\test_keygen_generator_comprehensive.py:1013: 'test_key_algorithm_type_values' has rank C
+
+
+2 findings in tests\core\monitoring\test_event_aggregator_production.py
+
+tests\core\monitoring\test_event_aggregator_production.py:760: 'TestCompleteWorkflow' has rank C
+
+tests\core\monitoring\test_event_aggregator_production.py:763: 'test_complete_event_aggregation_lifecycle' has rank C
 
 
 2 findings in tests\core\network\test_license_protocol_handler_comprehensive.py
@@ -5943,6 +6013,34 @@ tests\protection\test_denuvo_ticket_analyzer_comprehensive.py:433: 'test_generat
 tests\protection\test_unified_protection_engine_comprehensive.py:610: 'test_perform_advanced_entropy_analysis' has rank C
 
 tests\protection\test_unified_protection_engine_comprehensive.py:607: 'TestAdvancedEntropyAnalysis' has rank C
+
+
+2 findings in tests\ui\dialogs\test_distributed_config_dialog_production.py
+
+tests\ui\dialogs\test_distributed_config_dialog_production.py:141: 'test_get_config_returns_correct_structure' has rank C
+
+tests\ui\dialogs\test_distributed_config_dialog_production.py:476: 'test_roundtrip_config_preservation' has rank C
+
+
+2 findings in tests\ui\dialogs\test_export_dialog_production.py
+
+tests\ui\dialogs\test_export_dialog_production.py:224: 'TestExportWorkerCSVExport' has rank C
+
+tests\ui\dialogs\test_export_dialog_production.py:227: 'test_csv_export_creates_valid_csv_file' has rank C
+
+
+2 findings in tests\ui\dialogs\test_help_documentation_widget_production.py
+
+tests\ui\dialogs\test_help_documentation_widget_production.py:78: 'test_features_tree_contains_all_78_features' has rank C
+
+tests\ui\dialogs\test_help_documentation_widget_production.py:42: 'test_help_widget_initialization' has rank C
+
+
+2 findings in tests\ui\dialogs\test_model_manager_dialog_production.py
+
+tests\ui\dialogs\test_model_manager_dialog_production.py:89: 'test_server_configuration_controls' has rank C
+
+tests\ui\dialogs\test_model_manager_dialog_production.py:60: 'test_dialog_initialization' has rank C
 
 
 2 findings in tests\ui\widgets\test_cpu_status_widget_production.py
@@ -6881,6 +6979,11 @@ tests\ai\test_qemu_manager_comprehensive.py:166: 'test_start_vm_for_snapshot_spa
 tests\ai\test_script_generation_agent.py:89: 'test_agent_initialization_creates_required_attributes' has rank C
 
 
+1 findings in tests\analysis\handlers\test_llm_handler_production.py
+
+tests\analysis\handlers\test_llm_handler_production.py:98: 'test_worker_build_llm_context' has rank C
+
+
 1 findings in tests\checkpoints\day2_checkpoint2_validation.py
 
 tests\checkpoints\day2_checkpoint2_validation.py:13: 'validate_production_readiness_checkpoint2' has rank F
@@ -6896,6 +6999,31 @@ tests\checkpoints\day3_checkpoint3_validation.py:14: 'validate_production_readin
 tests\checkpoints\day5_3_production_checkpoint.py:414: 'generate_production_report' has rank C
 
 
+1 findings in tests\cli\test_advanced_export_production.py
+
+tests\cli\test_advanced_export_production.py:92: 'TestAdvancedExporterInitialization' has rank C
+
+
+1 findings in tests\cli\test_ai_chat_interface_production.py
+
+tests\cli\test_ai_chat_interface_production.py:105: 'test_prepare_enriched_context_adds_security_analysis' has rank C
+
+
+1 findings in tests\cli\test_ai_wrapper_production.py
+
+tests\cli\test_ai_wrapper_production.py:340: 'test_generate_ghidra_comprehensive_script' has rank C
+
+
+1 findings in tests\cli\test_analysis_cli_production.py
+
+tests\cli\test_analysis_cli_production.py:74: 'test_analyze_binary_with_real_file' has rank C
+
+
+1 findings in tests\core\test_ai_model_manager_production.py
+
+tests\core\test_ai_model_manager_production.py:64: 'test_default_config_creation' has rank C
+
+
 1 findings in tests\core\test_license_validation_bypass_comprehensive.py
 
 tests\core\test_license_validation_bypass_comprehensive.py:147: 'test_extract_rsa_private_key_from_binary' has rank C
@@ -6904,6 +7032,11 @@ tests\core\test_license_validation_bypass_comprehensive.py:147: 'test_extract_rs
 1 findings in tests\core\test_offline_activation_emulator.py
 
 tests\core\test_offline_activation_emulator.py:88: 'test_get_hardware_profile_returns_complete_profile' has rank C
+
+
+1 findings in tests\core\test_process_manipulation_production.py
+
+tests\core\test_process_manipulation_production.py:179: 'test_enumerate_memory_regions_returns_valid_data' has rank C
 
 
 1 findings in tests\core\validate_debugging_tests.py
@@ -6924,6 +7057,11 @@ tests\core\analysis\test_concolic_executor.py:217: 'test_initialization_default_
 1 findings in tests\core\analysis\test_dynamic_analyzer_production.py
 
 tests\core\analysis\test_dynamic_analyzer_production.py:229: 'test_process_behavior_analysis_collects_real_process_info' has rank C
+
+
+1 findings in tests\core\analysis\test_dynamic_instrumentation_real_hooks.py
+
+tests\core\analysis\test_dynamic_instrumentation_real_hooks.py:183: 'test_real_module_enumeration' has rank C
 
 
 1 findings in tests\core\analysis\test_enhanced_binary_analyzer_production.py
@@ -6949,6 +7087,11 @@ tests\core\analysis\test_ghidra_advanced_analyzer_production.py:252: 'test_recov
 1 findings in tests\core\analysis\test_ghidra_integration_production.py
 
 tests\core\analysis\test_ghidra_integration_production.py:381: 'test_licensing_crack_workflow_execution' has rank C
+
+
+1 findings in tests\core\analysis\test_ghidra_results_production.py
+
+tests\core\analysis\test_ghidra_results_production.py:147: 'test_ghidra_analysis_result_instantiation' has rank C
 
 
 1 findings in tests\core\analysis\test_packer_detector_production.py
@@ -7016,6 +7159,11 @@ tests\core\exploitation\test_license_bypass_code_generator_comprehensive.py:97: 
 tests\core\exploitation\test_symbolic_execution_engine_production.py:167: 'test_symbolic_engine_initializes_with_valid_binary' has rank C
 
 
+1 findings in tests\core\network\test_cloud_license_hooker_production.py
+
+tests\core\network\test_cloud_license_hooker_production.py:96: 'test_http_license_request_generates_valid_response' has rank C
+
+
 1 findings in tests\core\network\test_license_protocol_handler_production.py
 
 tests\core\network\test_license_protocol_handler_production.py:224: 'test_initialization_default_config' has rank C
@@ -7034,6 +7182,11 @@ tests\core\network\test_traffic_analyzer_production.py:307: 'test_analyzer_initi
 1 findings in tests\core\patching\test_license_check_remover.py
 
 tests\core\patching\test_license_check_remover.py:156: 'test_check_type_values_exist' has rank C
+
+
+1 findings in tests\core\patching\test_windows_activator_production.py
+
+tests\core\patching\test_windows_activator_production.py:100: 'test_generate_hwid_produces_valid_format' has rank C
 
 
 1 findings in tests\core\patching\validate_tests.py
@@ -7091,9 +7244,34 @@ tests\functional\binary_analysis\test_binary_patcher_validation.py:14: 'validate
 tests\functional\binary_analysis\test_polymorphic_basic.py:13: 'test_basic_functionality' has rank C
 
 
+1 findings in tests\handlers\test_pefile_handler_production.py
+
+tests\handlers\test_pefile_handler_production.py:465: 'test_module_exports_all_required_objects' has rank C
+
+
+1 findings in tests\handlers\test_pyqt6_handler_production.py
+
+tests\handlers\test_pyqt6_handler_production.py:43: 'test_fallback_widget_creation_and_lifecycle' has rank C
+
+
+1 findings in tests\hexview\test_ai_bridge_production.py
+
+tests\hexview\test_ai_bridge_production.py:199: 'test_complete_context_build' has rank C
+
+
 1 findings in tests\hexview\test_hex_widget.py
 
 tests\hexview\test_hex_widget.py:116: 'test_folded_region_overlaps' has rank C
+
+
+1 findings in tests\hexview\test_performance_monitor_production.py
+
+tests\hexview\test_performance_monitor_production.py:412: 'test_get_stats_summary_with_handler' has rank C
+
+
+1 findings in tests\hexview\test_print_dialog_production.py
+
+tests\hexview\test_print_dialog_production.py:70: 'test_all_checkboxes_initialized' has rank C
 
 
 1 findings in tests\integration\simple_day5_2_test.py
@@ -7109,6 +7287,11 @@ tests\integration\test_application_startup_migration.py:459: 'test_full_applicat
 1 findings in tests\integration\test_cli_configuration.py
 
 tests\integration\test_cli_configuration.py:454: 'test_concurrent_cli_config_access' has rank C
+
+
+1 findings in tests\integration\test_complete_bypass_workflow_production.py
+
+tests\integration\test_complete_bypass_workflow_production.py:249: 'test_multi_layer_protection_workflow' has rank C
 
 
 1 findings in tests\integration\test_day6_2_hardware_protection_integration.py
@@ -7206,6 +7389,16 @@ tests\protection\test_themida_analyzer_comprehensive.py:1243: 'test_full_analysi
 tests\scripts\test_fix_types_summary.py:42: 'test_summary_harness_handles_max_parallelism' has rank D
 
 
+1 findings in tests\scripts\test_process_lint_json_production.py
+
+tests\scripts\test_process_lint_json_production.py:373: 'test_write_outputs_creates_all_formats' has rank C
+
+
+1 findings in tests\ui\test_main_window_production.py
+
+tests\ui\test_main_window_production.py:55: 'test_main_window_initialization_success' has rank C
+
+
 1 findings in tests\ui\test_thread_safety.py
 
 tests\ui\test_thread_safety.py:225: 'test_multiple_threads_concurrent_updates' has rank C
@@ -7216,9 +7409,24 @@ tests\ui\test_thread_safety.py:225: 'test_multiple_threads_concurrent_updates' h
 tests\ui\dialogs\test_ai_assistant_llm_integration.py:97: 'test_llm_generates_working_keygen_algorithm' has rank C
 
 
+1 findings in tests\ui\dialogs\test_ci_cd_dialog_production.py
+
+tests\ui\dialogs\test_ci_cd_dialog_production.py:92: 'test_cicd_dialog_initialization' has rank C
+
+
+1 findings in tests\ui\dialogs\test_debugger_dialog_production.py
+
+tests\ui\dialogs\test_debugger_dialog_production.py:98: 'test_debugger_dialog_initialization' has rank C
+
+
 1 findings in tests\ui\dialogs\test_frida_manager_dialog.py
 
 tests\ui\dialogs\test_frida_manager_dialog.py:212: 'test_dialog_initializes_with_all_tabs' has rank C
+
+
+1 findings in tests\ui\dialogs\test_hardware_spoofer_dialog_production.py
+
+tests\ui\dialogs\test_hardware_spoofer_dialog_production.py:270: 'test_generate_spoofed_ids_creates_realistic_values' has rank D
 
 
 1 findings in tests\ui\dialogs\test_model_finetuning_dialog.py
@@ -7226,9 +7434,24 @@ tests\ui\dialogs\test_frida_manager_dialog.py:212: 'test_dialog_initializes_with
 tests\ui\dialogs\test_model_finetuning_dialog.py:978: 'test_dialog_initialization' has rank C
 
 
+1 findings in tests\ui\dialogs\test_model_loading_dialog_production.py
+
+tests\ui\dialogs\test_model_loading_dialog_production.py:51: 'test_dialog_initialization' has rank C
+
+
 1 findings in tests\ui\dialogs\test_plugin_creation_wizard_production.py
 
 tests\ui\dialogs\test_plugin_creation_wizard_production.py:286: 'test_generate_basic_python_plugin' has rank C
+
+
+1 findings in tests\ui\dialogs\test_plugin_dialog_base_production.py
+
+tests\ui\dialogs\test_plugin_dialog_base_production.py:75: 'test_dialog_ui_components_exist' has rank C
+
+
+1 findings in tests\ui\dialogs\test_preferences_dialog_production.py
+
+tests\ui\dialogs\test_preferences_dialog_production.py:301: 'test_load_preferences_reads_hex_viewer_settings' has rank C
 
 
 1 findings in tests\ui\dialogs\validate_tests.py
@@ -7264,6 +7487,11 @@ tests\unit\core\analysis\test_radare2_binary_diff.py:35: 'execute' has rank C
 1 findings in tests\unit\core\analysis\test_radare2_error_handler.py
 
 tests\unit\core\analysis\test_radare2_error_handler.py:834: 'test_error_handler_production_readiness' has rank C
+
+
+1 findings in tests\unit\core\analysis\test_radare2_esil_emulator_production.py
+
+tests\unit\core\analysis\test_radare2_esil_emulator_production.py:234: 'test_steps_single_instruction' has rank C
 
 
 1 findings in tests\unit\core\analysis\test_radare2_imports.py
@@ -7419,6 +7647,26 @@ tests\utils\validate_test_structure.py:15: 'validate_test_file' has rank C
 1 findings in tests\utils\verify_pyqt6_consolidation.py
 
 tests\utils\verify_pyqt6_consolidation.py:8: 'check_pyqt6_consolidation' has rank D
+
+
+1 findings in tests\utils\core\test_import_patterns_production.py
+
+tests\utils\core\test_import_patterns_production.py:28: 'test_import_patterns_get_capstone_returns_complete_dictionary' has rank C
+
+
+1 findings in tests\utils\patching\test_patch_utils_production.py
+
+tests\utils\patching\test_patch_utils_production.py:36: 'test_parse_standard_format' has rank C
+
+
+1 findings in tests\utils\protection\test_certificate_utils_production.py
+
+tests\utils\protection\test_certificate_utils_production.py:43: 'test_generate_self_signed_cert_creates_valid_certificate' has rank C
+
+
+1 findings in tests\utils\tools\test_ghidra_utils_production.py
+
+tests\utils\tools\test_ghidra_utils_production.py:16: 'test_ghidra_utils_build_ghidra_command_basic' has rank C
 
 
 1 findings in tests\validation\day8_1_ui_integration.py

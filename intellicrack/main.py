@@ -49,7 +49,7 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
                 else:
                     logger.debug("Not running in WSL.")
         except OSError as e:
-            logger.warning(f"Could not read /proc/version to detect WSL: {e}")
+            logger.warning("Could not read /proc/version to detect WSL: %s", e)
     # Don't set offscreen mode on Windows - use native rendering
     elif os.name != "nt":
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -58,7 +58,9 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
         logger.debug("Running on Windows, not setting QT_QPA_PLATFORM to 'offscreen'.")
 else:
     logger.debug(
-        f"DISPLAY is '{os.environ.get('DISPLAY')}' or QT_QPA_PLATFORM is '{os.environ.get('QT_QPA_PLATFORM')}', skipping offscreen mode configuration."
+        "DISPLAY is '%s' or QT_QPA_PLATFORM is '%s', skipping offscreen mode configuration.",
+        os.environ.get('DISPLAY'),
+        os.environ.get('QT_QPA_PLATFORM'),
     )
 
 # Configure Qt font handling for Windows
@@ -68,34 +70,37 @@ if os.name == "nt":
     if "QT_QPA_FONTDIR" not in os.environ:
         windir = os.environ.get("WINDIR", "C:\\Windows")
         os.environ["QT_QPA_FONTDIR"] = os.path.join(windir, "Fonts")
-        logger.debug(f"QT_QPA_FONTDIR not set, setting to '{os.environ['QT_QPA_FONTDIR']}'.")
+        logger.debug("QT_QPA_FONTDIR not set, setting to '%s'.", os.environ['QT_QPA_FONTDIR'])
     else:
-        logger.debug(f"QT_QPA_FONTDIR already set to '{os.environ['QT_QPA_FONTDIR']}'.")
+        logger.debug("QT_QPA_FONTDIR already set to '%s'.", os.environ['QT_QPA_FONTDIR'])
 
     # Suppress Qt font warnings to reduce console noise
     if "QT_LOGGING_RULES" not in os.environ:
         os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.fonts=false"
         logger.debug("QT_LOGGING_RULES not set, setting to suppress Qt font warnings.")
     else:
-        logger.debug(f"QT_LOGGING_RULES already set to '{os.environ['QT_LOGGING_RULES']}'.")
+        logger.debug("QT_LOGGING_RULES already set to '%s'.", os.environ['QT_LOGGING_RULES'])
 
     # Force software rendering for Windows (especially Intel Arc compatibility)
     if "QT_OPENGL" not in os.environ:
         os.environ["QT_OPENGL"] = "software"
         logger.debug("QT_OPENGL not set, forcing 'software' rendering for Windows.")
     else:
-        logger.debug(f"QT_OPENGL already set to '{os.environ['QT_OPENGL']}'.")
+        logger.debug("QT_OPENGL already set to '%s'.", os.environ['QT_OPENGL'])
 
     # Additional Intel Arc compatibility settings
     gpu_vendor = os.environ.get("INTELLICRACK_GPU_VENDOR", "Unknown")
-    logger.debug(f"Detected INTELLICRACK_GPU_VENDOR: '{gpu_vendor}'.")
+    logger.debug("Detected INTELLICRACK_GPU_VENDOR: '%s'.", gpu_vendor)
     if gpu_vendor == "Intel":
         os.environ["QT_OPENGL"] = "software"  # Always force software for Intel
         os.environ["QT_QUICK_BACKEND"] = "software"
         os.environ["QT_ANGLE_PLATFORM"] = "warp"
         logger.info("Intel GPU detected, forcing software rendering and specific Qt backend/platform for compatibility.")
         logger.debug(
-            f"QT_OPENGL set to '{os.environ['QT_OPENGL']}', QT_QUICK_BACKEND set to '{os.environ['QT_QUICK_BACKEND']}', QT_ANGLE_PLATFORM set to '{os.environ['QT_ANGLE_PLATFORM']}'."
+            "QT_OPENGL set to '%s', QT_QUICK_BACKEND set to '%s', QT_ANGLE_PLATFORM set to '%s'.",
+            os.environ['QT_OPENGL'],
+            os.environ['QT_QUICK_BACKEND'],
+            os.environ['QT_ANGLE_PLATFORM'],
         )
     else:
         logger.debug("Intel GPU not detected or not specified as vendor.")
@@ -165,7 +170,7 @@ def main() -> int:
 
         logger.info("=== Intellicrack Application Starting ===")
         if log_file:
-            logger.info(f"Log file: {log_file}")
+            logger.info("Log file: %s", log_file)
         else:
             logger.info("File logging is disabled.")
 
@@ -176,7 +181,7 @@ def main() -> int:
             setup_comprehensive_logging()
             logger.info("Comprehensive logging system initialized successfully.")
         except Exception as e:
-            logger.warning(f"Failed to initialize comprehensive logging: {e}")
+            logger.warning("Failed to initialize comprehensive logging: %s", e)
 
         # Initialize GIL safety measures
         logger.debug("Attempting to initialize GIL safety...")
@@ -186,10 +191,10 @@ def main() -> int:
             initialize_gil_safety()
             logger.info("GIL safety initialized successfully.")
         except ImportError as e:
-            logger.warning(f"GIL safety not available: {e}. Setting PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF environment variable.")
+            logger.warning("GIL safety not available: %s. Setting PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF environment variable.", e)
             os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
         except Exception as e:
-            logger.exception(f"An unexpected error occurred during GIL safety initialization: {e}")
+            logger.exception("An unexpected error occurred during GIL safety initialization: %s", e)
 
         # Initialize security enforcement if available
         logger.debug("Attempting to initialize security enforcement...")
@@ -199,13 +204,13 @@ def main() -> int:
             security_enforcement.initialize_security()
             security_status = security_enforcement.get_security_status()
             if security_status.get("initialized"):
-                logger.info(f"Security enforcement initialized successfully with status: {security_status}.")
+                logger.info("Security enforcement initialized successfully with status: %s.", security_status)
             else:
-                logger.warning(f"Security enforcement initialized but reported not enabled. Status: {security_status}")
+                logger.warning("Security enforcement initialized but reported not enabled. Status: %s", security_status)
         except ImportError as e:
-            logger.warning(f"Security enforcement not available: {e}. Skipping security enforcement initialization.")
+            logger.warning("Security enforcement not available: %s. Skipping security enforcement initialization.", e)
         except Exception as e:
-            logger.exception(f"An unexpected error occurred during security enforcement initialization: {e}")
+            logger.exception("An unexpected error occurred during security enforcement initialization: %s", e)
 
         # Apply security mitigations
         logger.debug("Attempting to apply security mitigations...")
@@ -215,9 +220,9 @@ def main() -> int:
             apply_all_mitigations()
             logger.info("Security mitigations applied successfully.")
         except ImportError as e:
-            logger.warning(f"Security mitigations not available: {e}. Skipping security mitigation application.")
+            logger.warning("Security mitigations not available: %s. Skipping security mitigation application.", e)
         except Exception as e:
-            logger.exception(f"An unexpected error occurred during security mitigation application: {e}")
+            logger.exception("An unexpected error occurred during security mitigation application: %s", e)
 
         # Perform startup checks and auto-configuration
         logger.debug("Importing startup_checks module...")
@@ -228,7 +233,7 @@ def main() -> int:
             perform_startup_checks()
             logger.info("Startup checks completed successfully.")
         except Exception as e:
-            logger.exception(f"An error occurred during startup checks: {e}")
+            logger.exception("An error occurred during startup checks: %s", e)
             # Depending on severity, you might want to exit here or continue with a warning
             # For now, we'll just log and continue.
 
@@ -240,7 +245,7 @@ def main() -> int:
 
         logger.info("Launching GUI application...")
         result = launch()
-        logger.info(f"GUI application exited with code: {result}.")
+        logger.info("GUI application exited with code: %s.", result)
         return result
 
     except ImportError as e:

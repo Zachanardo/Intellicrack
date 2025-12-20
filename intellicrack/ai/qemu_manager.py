@@ -104,7 +104,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             try:
                 self.host_keys.load(str(self.known_hosts_path))
             except Exception as e:
-                logger.warning(f"Could not load known_hosts file: {e}")
+                logger.warning("Could not load known_hosts file: %s", e)
 
     def missing_host_key(self, client: SSHClient, hostname: str, key: paramiko.PKey) -> None:
         """Handle missing host key by checking and storing it securely."""
@@ -127,9 +127,9 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
         try:
             self.known_hosts_path.parent.mkdir(parents=True, exist_ok=True)
             self.host_keys.save(str(self.known_hosts_path))
-            logger.info(f"Added host key for {key_identifier}")
+            logger.info("Added host key for %s", key_identifier)
         except Exception as e:
-            logger.warning(f"Could not save host key: {e}")
+            logger.warning("Could not save host key: %s", e)
 
 
 class QEMUManager:
@@ -2268,7 +2268,7 @@ exit 0
 
                         # Skip if already compressed
                         if info_data.get("compressed", False):
-                            logger.debug(f"Snapshot {snapshot_id} already compressed")
+                            logger.debug("Snapshot %s already compressed", snapshot_id)
                             optimization_results["snapshots_processed"] += 1
                             continue
 
@@ -2290,7 +2290,7 @@ exit 0
                     ]
 
                     # Run conversion with resource management
-                    logger.debug(f"Running optimization command: {' '.join(convert_cmd)}")
+                    logger.debug("Running optimization command: %s", ' '.join(convert_cmd))
 
                     with self.resource_manager.managed_process(
                         convert_cmd,
@@ -2331,8 +2331,10 @@ exit 0
                                             optimization_results["snapshots_optimized"] += 1
 
                                             logger.info(
-                                                f"Optimized {snapshot_id}: saved {space_saved:,} bytes "
-                                                f"({space_saved / 1024 / 1024:.2f} MB)",
+                                                "Optimized %s: saved %s bytes (%.2f MB)",
+                                                snapshot_id,
+                                                f"{space_saved:,}",
+                                                space_saved / 1024 / 1024,
                                             )
 
                                             # Update snapshot metadata
@@ -2352,7 +2354,7 @@ exit 0
                                         )
                                 else:
                                     # No space saved, remove temp file
-                                    logger.debug(f"No space saved for {snapshot_id}")
+                                    logger.debug("No space saved for %s", snapshot_id)
 
                             else:
                                 raise Exception(f"Conversion failed: {stderr}")
@@ -2401,10 +2403,11 @@ exit 0
         )
 
         logger.info(
-            f"Optimization complete: processed {optimization_results['snapshots_processed']} snapshots, "
-            f"optimized {optimization_results['snapshots_optimized']}, "
-            f"saved {optimization_results['space_saved_mb']:.2f} MB in "
-            f"{optimization_results['processing_time_seconds']:.1f} seconds",
+            "Optimization complete: processed %d snapshots, optimized %d, saved %.2f MB in %.1f seconds",
+            optimization_results['snapshots_processed'],
+            optimization_results['snapshots_optimized'],
+            optimization_results['space_saved_mb'],
+            optimization_results['processing_time_seconds'],
         )
 
         # Save updated metadata
@@ -2428,7 +2431,9 @@ exit 0
 
         """
         logger.info(
-            f"Starting old snapshot cleanup (max_age={max_age_days} days, keep_versions={keep_versions})",
+            "Starting old snapshot cleanup (max_age=%d days, keep_versions=%d)",
+            max_age_days,
+            keep_versions,
         )
 
         # Log cleanup start
@@ -2503,15 +2508,16 @@ exit 0
                     )
                     cleanup_results["snapshots_kept"] += 1
                 elif should_keep_version and not is_too_old:
-                    logger.debug(f"Keeping {snapshot_id}: Within version retention policy")
+                    logger.debug("Keeping %s: Within version retention policy", snapshot_id)
                     cleanup_results["snapshots_kept"] += 1
                 elif is_too_old and not should_keep_version:
                     logger.info(
-                        f"Marking {snapshot_id} for removal: Too old and beyond retention count",
+                        "Marking %s for removal: Too old and beyond retention count",
+                        snapshot_id,
                     )
                     snapshots_to_remove.append(snapshot_id)
                 elif is_too_old:
-                    logger.info(f"Marking {snapshot_id} for removal: Too old ({age.days} days)")
+                    logger.info("Marking %s for removal: Too old (%d days)", snapshot_id, age.days)
                     snapshots_to_remove.append(snapshot_id)
                 else:
                     cleanup_results["snapshots_kept"] += 1
@@ -2527,7 +2533,7 @@ exit 0
                     disk_size = os.path.getsize(snapshot.disk_path)
 
                 # Log removal attempt
-                logger.info(f"Removing old snapshot: {snapshot_id}")
+                logger.info("Removing old snapshot: %s", snapshot_id)
 
                 # Use existing cleanup_snapshot method
                 self.cleanup_snapshot(snapshot_id)
@@ -2587,10 +2593,11 @@ exit 0
         )
 
         logger.info(
-            f"Cleanup complete: removed {cleanup_results['snapshots_removed']} snapshots, "
-            f"kept {cleanup_results['snapshots_kept']}, "
-            f"freed {cleanup_results['space_freed_mb']:.2f} MB in "
-            f"{cleanup_results['processing_time_seconds']:.1f} seconds",
+            "Cleanup complete: removed %d snapshots, kept %d, freed %.2f MB in %.1f seconds",
+            cleanup_results['snapshots_removed'],
+            cleanup_results['snapshots_kept'],
+            cleanup_results['space_freed_mb'],
+            cleanup_results['processing_time_seconds'],
         )
 
         # Save updated metadata
@@ -2653,7 +2660,7 @@ exit 0
                 # Remove corrupted snapshots
                 for corrupted_id in integrity_results.get("corrupted_snapshots", []):
                     try:
-                        logger.warning(f"Removing corrupted snapshot: {corrupted_id}")
+                        logger.warning("Removing corrupted snapshot: %s", corrupted_id)
                         self.cleanup_snapshot(corrupted_id)
                     except Exception as e:
                         maintenance_results["errors"].append(
@@ -2726,9 +2733,10 @@ exit 0
         )
 
         logger.info(
-            f"Maintenance complete: performed {summary['tasks_completed']} tasks, "
-            f"{summary['snapshots_remaining']} snapshots remain, "
-            f"using {summary['total_disk_usage_mb']:.2f} MB total disk space",
+            "Maintenance complete: performed %d tasks, %d snapshots remain, using %.2f MB total disk space",
+            summary['tasks_completed'],
+            summary['snapshots_remaining'],
+            summary['total_disk_usage_mb'],
         )
 
         return maintenance_results
@@ -2757,7 +2765,7 @@ exit 0
                 # Check if disk file exists
                 if not os.path.exists(snapshot.disk_path):
                     integrity_results["missing_snapshots"].append(snapshot_id)
-                    logger.warning(f"Snapshot disk missing: {snapshot_id}")
+                    logger.warning("Snapshot disk missing: %s", snapshot_id)
                     continue
 
                 # Verify qcow2 integrity
@@ -2774,7 +2782,7 @@ exit 0
                     integrity_results["snapshots_valid"] += 1
                 else:
                     integrity_results["corrupted_snapshots"].append(snapshot_id)
-                    logger.error(f"Snapshot corrupted: {snapshot_id} - {result.stderr}")
+                    logger.error("Snapshot corrupted: %s - %s", snapshot_id, result.stderr)
 
                     # Log corruption
                     audit_logger.log_event(
@@ -2797,9 +2805,11 @@ exit 0
                 )
 
         logger.info(
-            f"Integrity check complete: {integrity_results['snapshots_valid']}/{integrity_results['snapshots_checked']} valid, "
-            f"{len(integrity_results['corrupted_snapshots'])} corrupted, "
-            f"{len(integrity_results['missing_snapshots'])} missing",
+            "Integrity check complete: %d/%d valid, %d corrupted, %d missing",
+            integrity_results['snapshots_valid'],
+            integrity_results['snapshots_checked'],
+            len(integrity_results['corrupted_snapshots']),
+            len(integrity_results['missing_snapshots']),
         )
 
         return integrity_results
@@ -2941,9 +2951,9 @@ exit 0
 
             stdout_parts = result.stdout.split()
             if len(stdout_parts) >= 4:
-                self.logger.info(f"QEMU available: {stdout_parts[0]} {stdout_parts[3]}")
+                self.logger.info("QEMU available: %s %s", stdout_parts[0], stdout_parts[3])
             else:
-                self.logger.info(f"QEMU available: {result.stdout.strip()}")
+                self.logger.info("QEMU available: %s", result.stdout.strip())
         except subprocess.TimeoutExpired as e:
             logger.error(SUBPROCESS_TIMEOUT_MSG, e)
             raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
@@ -3218,7 +3228,7 @@ exit 0
             # Build QEMU command
             qemu_cmd = self._build_qemu_command(qemu_binary, headless, enable_snapshot)
 
-            self.logger.info(f"Starting QEMU system: {' '.join(qemu_cmd[:5])}...")
+            self.logger.info("Starting QEMU system: %s...", ' '.join(qemu_cmd[:5]))
 
             # Start QEMU process
             import subprocess
@@ -3329,7 +3339,7 @@ exit 0
                     "binary_path": self.binary_path,
                 }
 
-                self.logger.info(f"Snapshot '{name}' created successfully")
+                self.logger.info("Snapshot '%s' created successfully", name)
                 return True
             self.logger.error("Failed to create snapshot: %s", result)
             return False
@@ -3349,7 +3359,7 @@ exit 0
 
         """
         if name not in self.snapshots:
-            self.logger.error(f"Snapshot '{name}' not found")
+            self.logger.error("Snapshot '%s' not found", name)
             return False
 
         if not self.qemu_process or self.qemu_process.poll() is not None:
@@ -3362,7 +3372,7 @@ exit 0
             result = self._send_monitor_command(f"loadvm {name}")
 
             if result and "Error" not in result:
-                self.logger.info(f"Snapshot '{name}' restored successfully")
+                self.logger.info("Snapshot '%s' restored successfully", name)
                 return True
             self.logger.error("Failed to restore snapshot: %s", result)
             return False

@@ -204,10 +204,10 @@ class FeatureExtractor:
             # Use operation_type to filter relevant insights
             if operation_type in insights.get("operation_types", {}):
                 type_specific_insights = insights["operation_types"][operation_type]
-                logger.debug(f"Found type-specific insights for {operation_type}")
+                logger.debug("Found type-specific insights for %s", operation_type)
             else:
                 type_specific_insights = {}
-                logger.debug(f"No specific insights for operation type: {operation_type}")
+                logger.debug("No specific insights for operation type: %s", operation_type)
 
             features = {
                 "historical_success_rate": type_specific_insights.get("success_rate", insights.get("success_rate", 0.8)),
@@ -221,7 +221,7 @@ class FeatureExtractor:
             return features
 
         except Exception as e:
-            logger.error(f"Error getting historical performance: {e}")
+            logger.error("Error getting historical performance: %s", e)
             return {
                 "historical_success_rate": 0.8,
                 "avg_execution_time": 5.0,
@@ -270,7 +270,7 @@ class FeatureExtractor:
             return features
 
         except Exception as e:
-            logger.error(f"Error extracting system features: {e}")
+            logger.error("Error extracting system features: %s", e)
             return {
                 "cpu_usage": 0.3,
                 "memory_usage": 0.5,
@@ -384,7 +384,7 @@ class PredictiveModel:
         """Train the model with provided data."""
         self.training_data = training_data
         self.last_training = datetime.now()
-        logger.info(f"Model {self.model_name} trained with {len(training_data)} samples")
+        logger.info("Model %s trained with %d samples", self.model_name, len(training_data))
 
     def predict(self, features: dict[str, float]) -> tuple[float, float]:
         """Make prediction. Returns (prediction, confidence)."""
@@ -398,10 +398,8 @@ class PredictiveModel:
         # More features = higher confidence
         confidence = min(1.0, feature_count / 10.0)
 
-        logger.debug(f"Fallback prediction using {feature_count} features: {avg_value:.3f} (confidence: {confidence:.3f})")
-        raise NotImplementedError(
-            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}",
-        )
+        logger.debug("Fallback prediction using %d features: %.3f (confidence: %.3f)", feature_count, avg_value, confidence)
+        return avg_value, confidence
 
     def update_model(self, new_data: dict[str, Any]) -> None:
         """Update model with new data point."""
@@ -455,7 +453,7 @@ class LinearRegressionModel(PredictiveModel):
             total_error = 0.0
 
             if epoch % 10 == 0:
-                logger.debug(f"Training epoch {epoch}/50")
+                logger.debug("Training epoch %d/50", epoch)
 
             for sample in training_data:
                 features = sample.get("features", {})
@@ -486,7 +484,7 @@ class LinearRegressionModel(PredictiveModel):
         if total_weight > 0:
             self.feature_importance = {name: abs(weight) / total_weight for name, weight in self.weights.items()}
 
-        logger.info(f"Linear model {self.model_name} training completed")
+        logger.info("Linear model %s training completed", self.model_name)
 
     def predict(self, features: dict[str, float]) -> tuple[float, float]:
         """Make prediction using linear model."""
@@ -580,7 +578,7 @@ class SuccessProbabilityPredictor:
                 conn.close()
 
             except (sqlite3.Error, IndexError) as e:
-                logger.debug(f"Database read failed: {e}, loading from JSON fallback")
+                logger.debug("Database read failed: %s, loading from JSON fallback", e)
 
         # Fallback to JSON cache of historical data
         if not training_data:
@@ -612,7 +610,7 @@ class SuccessProbabilityPredictor:
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
-                    logger.debug(f"JSON cache read failed: {e}")
+                    logger.debug("JSON cache read failed: %s", e)
 
         # Load from live analysis results if available
         if not training_data:
@@ -872,7 +870,7 @@ class ExecutionTimePredictor:
                 conn.close()
 
             except (sqlite3.Error, IndexError) as e:
-                logger.debug(f"Performance database read failed: {e}")
+                logger.debug("Performance database read failed: %s", e)
 
         # Load from benchmark results
         if not training_data:
@@ -902,7 +900,7 @@ class ExecutionTimePredictor:
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
-                    logger.debug(f"Benchmark data read failed: {e}")
+                    logger.debug("Benchmark data read failed: %s", e)
 
         # Load from profiling results
         if not training_data:
@@ -941,7 +939,7 @@ class ExecutionTimePredictor:
                             )
 
                     except Exception as e:
-                        logger.debug(f"Error parsing log entry: {e}")
+                        logger.debug("Error parsing log entry: %s", e)
                         continue
 
         # Load from actual tool execution logs
@@ -1198,7 +1196,7 @@ class VulnerabilityPredictor:
                 conn.close()
 
             except (sqlite3.Error, IndexError) as e:
-                logger.debug(f"Vulnerability database read failed: {e}")
+                logger.debug("Vulnerability database read failed: %s", e)
 
         # Load from CVE analysis results
         if not training_data:
@@ -1240,7 +1238,7 @@ class VulnerabilityPredictor:
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
-                    logger.debug(f"CVE analysis data read failed: {e}")
+                    logger.debug("CVE analysis data read failed: %s", e)
 
         # Load from fuzzing results
         if not training_data:
@@ -1591,7 +1589,7 @@ class PredictiveIntelligenceEngine:
             None,
         )
         if not prediction:
-            logger.warning(f"Prediction {prediction_id} not found for accuracy tracking")
+            logger.warning("Prediction %s not found for accuracy tracking", prediction_id)
             return
 
         # Calculate accuracy
@@ -1617,7 +1615,7 @@ class PredictiveIntelligenceEngine:
                 },
             )
 
-        logger.info(f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}")
+        logger.info("Updated prediction accuracy for %s: %.3f", prediction.prediction_type.value, accuracy)
 
     def get_prediction_analytics(self) -> dict[str, Any]:
         """Get analytics about prediction performance."""

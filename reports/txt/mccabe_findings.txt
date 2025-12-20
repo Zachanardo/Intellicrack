@@ -3083,6 +3083,13 @@ tests\checkpoints\simple_day6_3_checkpoint.py:21:5: C901 'ProductionReadinessVal
 tests\checkpoints\simple_day6_3_checkpoint.py:105:5: C901 'ProductionReadinessValidator.test_radare2_integration_fields' is too complex (14)
 
 
+2 findings in tests\core\test_network_capture_production.py
+
+tests\core\test_network_capture_production.py:102:5: C901 'TestNetworkCaptureScapyIntegration.test_capture_with_scapy_processes_packets' is too complex (15)
+
+tests\core\test_network_capture_production.py:181:5: C901 'TestNetworkCaptureScapyIntegration.test_capture_with_scapy_identifies_license_traffic' is too complex (14)
+
+
 2 findings in tests\integration\test_config_cleanup_after_migration.py
 
 tests\integration\test_config_cleanup_after_migration.py:176:5: C901 'TestConfigCleanupAfterMigration.test_20_1_4_cleanup_preserves_failed_migrations' is too complex (11)
@@ -3744,7 +3751,7 @@ intellicrack\tools\deobfuscate_cfg.py:48:1: C901 'deobfuscate_function' is too c
 
 1 findings in intellicrack\tools\train_classifier.py
 
-intellicrack\tools\train_classifier.py:49:1: C901 'load_training_data' is too complex (11)
+intellicrack\tools\train_classifier.py:48:1: C901 'load_training_data' is too complex (11)
 
 
 1 findings in intellicrack\ui\__init__.py
@@ -4060,6 +4067,11 @@ tests\test_dashboard_integration.py:79:5: C901 'RealTestAnalyzer.analyze' is too
 1 findings in tests\tools\verify_accesschk_config.py
 
 tests\tools\verify_accesschk_config.py:25:1: C901 'TryExcept 25' is too complex (11)
+
+
+1 findings in tests\ui\dialogs\test_hardware_spoofer_dialog_production.py
+
+tests\ui\dialogs\test_hardware_spoofer_dialog_production.py:100:1: C901 'mock_winreg' is too complex (12)
 
 
 1 findings in tests\ui\dialogs\validate_tests.py

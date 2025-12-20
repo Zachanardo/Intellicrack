@@ -192,7 +192,7 @@ class DenuvoTicketAnalyzer:
                 self.TICKET_MAGIC_V6,
                 self.TICKET_MAGIC_V7,
             ]:
-                logger.error(f"Invalid ticket magic: {magic.hex()}")
+                logger.error("Invalid ticket magic: %s", magic.hex())
                 return None
 
             header = self._parse_header(ticket_data, magic)
@@ -221,7 +221,7 @@ class DenuvoTicketAnalyzer:
             return ticket
 
         except Exception as e:
-            logger.error(f"Ticket parsing failed: {e}")
+            logger.error("Ticket parsing failed: %s", e)
             return None
 
     def parse_token(self, token_data: bytes) -> ActivationToken | None:
@@ -241,7 +241,7 @@ class DenuvoTicketAnalyzer:
 
             magic = token_data[:4]
             if magic != self.TOKEN_MAGIC:
-                logger.error(f"Invalid token magic: {magic.hex()}")
+                logger.error("Invalid token magic: %s", magic.hex())
                 return None
 
             offset = 4
@@ -271,7 +271,7 @@ class DenuvoTicketAnalyzer:
                 signature=signature,
             )
         except Exception as e:
-            logger.error(f"Token parsing failed: {e}")
+            logger.error("Token parsing failed: %s", e)
             return None
 
     def generate_activation_response(
@@ -339,7 +339,7 @@ class DenuvoTicketAnalyzer:
             return response
 
         except Exception as e:
-            logger.error(f"Response generation failed: {e}")
+            logger.error("Response generation failed: %s", e)
             return None
 
     def forge_token(
@@ -393,11 +393,11 @@ class DenuvoTicketAnalyzer:
             signature = self._sign_token(bytes(token_data))
             token_data.extend(signature)
 
-            logger.info(f"Forged token for game {game_id.hex()[:16]}")
+            logger.info("Forged token for game %s", game_id.hex()[:16])
             return bytes(token_data)
 
         except Exception as e:
-            logger.error(f"Token forging failed: {e}")
+            logger.error("Token forging failed: %s", e)
             return None
 
     def convert_trial_to_full(self, ticket_data: bytes) -> bytes | None:
@@ -438,7 +438,7 @@ class DenuvoTicketAnalyzer:
             return new_ticket
 
         except Exception as e:
-            logger.error(f"Trial conversion failed: {e}")
+            logger.error("Trial conversion failed: %s", e)
             return None
 
     def extract_machine_id(self, ticket_data: bytes) -> bytes | None:
@@ -459,11 +459,11 @@ class DenuvoTicketAnalyzer:
             machine_id = ticket.payload.machine_id
             combined = machine_id.combined_hash
 
-            logger.info(f"Extracted machine ID: {combined.hex()[:32]}")
+            logger.info("Extracted machine ID: %s", combined.hex()[:32])
             return combined
 
         except Exception as e:
-            logger.error(f"Machine ID extraction failed: {e}")
+            logger.error("Machine ID extraction failed: %s", e)
             return None
 
     def spoof_machine_id(
@@ -495,11 +495,11 @@ class DenuvoTicketAnalyzer:
                 return None
 
             new_ticket = self._rebuild_ticket(ticket.header, new_encrypted)
-            logger.info(f"Spoofed machine ID: {original_id.hex()[:16]} -> {target_machine_id.hex()[:16]}")
+            logger.info("Spoofed machine ID: %s -> %s", original_id.hex()[:16], target_machine_id.hex()[:16])
             return new_ticket
 
         except Exception as e:
-            logger.error(f"Machine ID spoofing failed: {e}")
+            logger.error("Machine ID spoofing failed: %s", e)
             return None
 
     def analyze_activation_traffic(self, pcap_file: str) -> list[dict[str, Any]]:
@@ -543,14 +543,14 @@ class DenuvoTicketAnalyzer:
                                 sessions.append(session)
 
                     except Exception as e:
-                        logger.debug(f"Error parsing activation session: {e}")
+                        logger.debug("Error parsing activation session: %s", e)
                         continue
 
-            logger.info(f"Analyzed {len(sessions)} activation sessions")
+            logger.info("Analyzed %d activation sessions", len(sessions))
             return sessions
 
         except Exception as e:
-            logger.error(f"Traffic analysis failed: {e}")
+            logger.error("Traffic analysis failed: %s", e)
             return []
 
     def _parse_header(self, data: bytes, magic: bytes) -> TicketHeader | None:
@@ -588,7 +588,7 @@ class DenuvoTicketAnalyzer:
             )
 
         except Exception as e:
-            logger.error(f"Header parsing failed: {e}")
+            logger.error("Header parsing failed: %s", e)
             return None
 
     def _verify_signature(self, ticket: DenuvoTicket) -> bool:
@@ -612,7 +612,7 @@ class DenuvoTicketAnalyzer:
                         logger.info("Signature verified with RSA key")
                         return True
                     except Exception as e:
-                        logger.debug(f"Failed to verify signature with RSA key: {e}")
+                        logger.debug("Failed to verify signature with RSA key: %s", e)
                         continue
                 elif key_info["type"] == "hmac":
                     expected = hmac.new(
@@ -628,7 +628,7 @@ class DenuvoTicketAnalyzer:
             return False
 
         except Exception as e:
-            logger.error(f"Signature verification failed: {e}")
+            logger.error("Signature verification failed: %s", e)
             return False
 
     def _decrypt_payload(self, ticket: DenuvoTicket) -> TicketPayload | None:
@@ -668,14 +668,14 @@ class DenuvoTicketAnalyzer:
                             return payload
 
                 except Exception as e:
-                    logger.debug(f"Failed to parse session data: {e}")
+                    logger.debug("Failed to parse session data: %s", e)
                     continue
 
             logger.warning("Failed to decrypt payload with known keys")
             return None
 
         except Exception as e:
-            logger.error(f"Payload decryption failed: {e}")
+            logger.error("Payload decryption failed: %s", e)
             return None
 
     def _decrypt_aes256_cbc(self, data: bytes, key: bytes, iv: bytes) -> bytes | None:
@@ -779,7 +779,7 @@ class DenuvoTicketAnalyzer:
             )
 
         except Exception as e:
-            logger.error(f"Payload parsing failed: {e}")
+            logger.error("Payload parsing failed: %s", e)
             return None
 
     def _encrypt_payload(
@@ -827,7 +827,7 @@ class DenuvoTicketAnalyzer:
             return bytes(data)
 
         except Exception as e:
-            logger.error(f"Payload encryption failed: {e}")
+            logger.error("Payload encryption failed: %s", e)
             return None
 
     def _rebuild_ticket(self, header: TicketHeader, encrypted_payload: bytes) -> bytes:

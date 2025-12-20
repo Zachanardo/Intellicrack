@@ -225,7 +225,7 @@ class PerformanceOptimizer:
         cached_result = self.cache_manager.get(cache_key)
         if cached_result is not None:
             self.optimization_stats["cache_hits"] += 1
-            logger.debug(f"Cache hit for operation {operation_id}")
+            logger.debug("Cache hit for operation %s", operation_id)
             return operation_func(*args, **kwargs) if cached_result is None else cached_result
 
         self.optimization_stats["cache_misses"] += 1
@@ -280,7 +280,7 @@ class PerformanceOptimizer:
             return result if result is not None else operation_func(*args, **kwargs)
 
         except Exception as e:
-            logger.error(f"Error in optimized operation {operation_id}: {e}")
+            logger.error("Error in optimized operation %s: %s", operation_id, e)
             # Fall back to original function
             fallback_result = operation_func(*args, **kwargs)
             return fallback_result if fallback_result is not None else None
@@ -329,7 +329,7 @@ class PerformanceOptimizer:
                     rule.parameters,
                 )
                 rule.times_applied += 1
-                logger.debug(f"Applied optimization rule: {rule.name}")
+                logger.debug("Applied optimization rule: %s", rule.name)
 
         return optimized_func
 
@@ -697,7 +697,7 @@ class ResourceManager:
             max_workers=max_processes,
         )
 
-        logger.info(f"Initialized resource pools: {max_threads} threads, {max_processes} processes")
+        logger.info("Initialized resource pools: %d threads, %d processes", max_threads, max_processes)
 
     @profile_ai_operation("resource_allocation")
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
@@ -716,7 +716,7 @@ class ResourceManager:
         """
         # Check if resources are available
         if not self._check_resource_availability(requirements):
-            logger.warning(f"Insufficient resources for operation {operation_id}")
+            logger.warning("Insufficient resources for operation %s", operation_id)
             return False
 
         # Reserve resources
@@ -732,7 +732,7 @@ class ResourceManager:
             },
         )
 
-        logger.debug(f"Allocated resources for operation {operation_id}")
+        logger.debug("Allocated resources for operation %s", operation_id)
         return True
 
     def release_resources(self, operation_id: str) -> None:
@@ -759,7 +759,7 @@ class ResourceManager:
                 },
             )
 
-            logger.debug(f"Released resources for operation {operation_id}")
+            logger.debug("Released resources for operation %s", operation_id)
 
     def _check_resource_availability(self, requirements: ResourceAllocation) -> bool:
         """Check if required resources are currently available.
@@ -947,7 +947,7 @@ class ParallelExecutor:
                     result = future.result()
                     results.append(result)
                 except Exception as e:
-                    logger.error(f"Error in parallel execution: {e}")
+                    logger.error("Error in parallel execution: %s", e)
                     results.append(None)
 
         parallel_time = time.time() - start_parallel
@@ -963,7 +963,7 @@ class ParallelExecutor:
             self.execution_stats["average_speedup"] * (self.execution_stats["parallel_executions"] - 1) + speedup
         ) / self.execution_stats["parallel_executions"]
 
-        logger.info(f"Parallel execution: {speedup:.2f}x speedup, saved {time_saved:.2f}s")
+        logger.info("Parallel execution: %.2fx speedup, saved %.2fs", speedup, time_saved)
 
         return results
 
@@ -1002,7 +1002,7 @@ class ParallelExecutor:
                     result = future.result()
                     results.append(result)
                 except Exception as e:
-                    logger.error(f"Error in batch parallel execution: {e}")
+                    logger.error("Error in batch parallel execution: %s", e)
                     results.append(None)
 
         self.execution_stats["parallel_executions"] += 1
@@ -1072,7 +1072,7 @@ class CacheManager:
             "total_size_mb": 0.0,
         }
 
-        logger.info(f"Cache manager initialized with {max_size_mb}MB limit")
+        logger.info("Cache manager initialized with %.1fMB limit", max_size_mb)
 
     def get(self, key: str) -> object | None:
         """Retrieve value from cache if present.
@@ -1133,7 +1133,7 @@ class CacheManager:
         self.current_size_mb += item_size_mb
         self.stats["total_size_mb"] = self.current_size_mb
 
-        logger.debug(f"Cached item {key[:8]}... ({item_size_mb:.2f}MB)")
+        logger.debug("Cached item %s... (%.2fMB)", key[:8], item_size_mb)
 
     def _evict_lru_item(self) -> None:
         """Evict least recently used cache item.
@@ -1157,7 +1157,7 @@ class CacheManager:
             self.current_size_mb -= item_size
             self.stats["evictions"] += 1
 
-            logger.debug(f"Evicted LRU item {lru_key[:8]}... ({item_size:.2f}MB)")
+            logger.debug("Evicted LRU item %s... (%.2fMB)", lru_key[:8], item_size)
 
     def cleanup_expired(self) -> None:
         """Remove expired items from cache.
@@ -1171,7 +1171,7 @@ class CacheManager:
             self._remove_item(key)
 
         if expired_keys:
-            logger.debug(f"Removed {len(expired_keys)} expired cache items")
+            logger.debug("Removed %d expired cache items", len(expired_keys))
 
     def _remove_item(self, key: str) -> None:
         """Remove specific item from cache.
@@ -1269,7 +1269,7 @@ class PerformanceOptimizationLayer:
                     time.sleep(300)
 
                 except Exception as e:
-                    logger.error(f"Error in background optimization: {e}")
+                    logger.error("Error in background optimization: %s", e)
                     time.sleep(60)  # Wait 1 minute on error
 
         thread = threading.Thread(target=background_worker, daemon=True)

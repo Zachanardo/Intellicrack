@@ -161,7 +161,7 @@ class CodeAnalyzer:
             return self._analyze_generic_file(file_path, content, language)
 
         except Exception as e:
-            logger.error(f"Error analyzing file {file_path}: {e}")
+            logger.error("Error analyzing file %s: %s", file_path, e)
             return CodeContext(
                 file_path=file_path,
                 content="",
@@ -207,7 +207,7 @@ class CodeAnalyzer:
             }
 
         except SyntaxError as e:
-            logger.warning(f"Syntax error in {file_path}: {e}")
+            logger.warning("Syntax error in %s: %s", file_path, e)
 
         return CodeContext(
             file_path=file_path,
@@ -478,7 +478,7 @@ class IntelligentCodeModifier:
 
     def gather_project_context(self, project_root: str, target_files: list[str] = None) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
-        logger.info(f"Gathering project context from: {project_root}")
+        logger.info("Gathering project context from: %s", project_root)
 
         project_path = Path(project_root)
         context = {}
@@ -494,7 +494,7 @@ class IntelligentCodeModifier:
         # Limit number of files to analyze
         if len(files_to_analyze) > self.max_context_files:
             files_to_analyze = files_to_analyze[: self.max_context_files]
-            logger.warning(f"Limited analysis to {self.max_context_files} files")
+            logger.warning("Limited analysis to %d files", self.max_context_files)
 
         # Analyze each file
         for file_path in files_to_analyze:
@@ -502,10 +502,10 @@ class IntelligentCodeModifier:
                 relative_path = file_path.relative_to(project_path)
                 context[str(relative_path)] = self.analyzer.analyze_file(str(file_path))
             except Exception as e:
-                logger.error(f"Failed to analyze {file_path}: {e}")
+                logger.error("Failed to analyze %s: %s", file_path, e)
 
         self.project_context = context
-        logger.info(f"Analyzed {len(context)} files for project context")
+        logger.info("Analyzed %d files for project context", len(context))
         return context
 
     def create_modification_request(
@@ -530,7 +530,7 @@ class IntelligentCodeModifier:
 
     def analyze_modification_request(self, request: ModificationRequest) -> list[CodeChange]:
         """Analyze a modification request and generate code changes."""
-        logger.info(f"Analyzing modification request: {request.request_id}")
+        logger.info("Analyzing modification request: %s", request.request_id)
 
         # Gather context for target files
         changes = []
@@ -550,13 +550,13 @@ class IntelligentCodeModifier:
                 changes.extend(file_changes)
 
             except Exception as e:
-                logger.error(f"Failed to analyze {target_file}: {e}")
+                logger.error("Failed to analyze %s: %s", target_file, e)
 
         # Store pending changes
         for change in changes:
             self.pending_changes[change.change_id] = change
 
-        logger.info(f"Generated {len(changes)} code changes")
+        logger.info("Generated %d code changes", len(changes))
         return changes
 
     def _create_modification_prompt(self, request: ModificationRequest, context: CodeContext) -> str:
@@ -630,7 +630,7 @@ Requirements:
             return response.content if response else ""
 
         except Exception as e:
-            logger.error(f"Failed to get AI response: {e}")
+            logger.error("Failed to get AI response: %s", e)
             return ""
 
     def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
@@ -678,9 +678,9 @@ Requirements:
                 changes.append(change)
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
+            logger.error("Failed to parse JSON response: %s", e)
         except Exception as e:
-            logger.error(f"Error parsing modification response: {e}")
+            logger.error("Error parsing modification response: %s", e)
 
         return changes
 
@@ -764,7 +764,7 @@ Requirements:
                     results["backups_created"].append(str(backup_path))
 
                 if success := self._apply_changes_to_file(file_path, file_changes):
-                    logger.debug(f"Successfully applied changes to {file_path}: {success}")
+                    logger.debug("Successfully applied changes to %s: %s", file_path, success)
                     for change in file_changes:
                         change.status = ChangeStatus.APPLIED
                         change.applied_at = datetime.now()
@@ -778,7 +778,7 @@ Requirements:
                     results["errors"].append(f"Failed to apply changes to {file_path}")
 
             except Exception as e:
-                logger.error(f"Error applying changes to {file_path}: {e}")
+                logger.error("Error applying changes to %s: %s", file_path, e)
                 for change in file_changes:
                     change.status = ChangeStatus.FAILED
                     results["failed"].append(change.change_id)
@@ -797,7 +797,7 @@ Requirements:
 
         shutil.copy2(source_path, backup_path)
 
-        logger.info(f"Created backup: {backup_path}")
+        logger.info("Created backup: %s", backup_path)
         return backup_path
 
     def _apply_changes_to_file(self, file_path: str, changes: list[CodeChange]) -> bool:
@@ -832,7 +832,7 @@ Requirements:
 
                 # Validate line numbers
                 if start_idx < 0 or end_idx > len(lines):
-                    logger.warning(f"Invalid line range for change {change.change_id}")
+                    logger.warning("Invalid line range for change %s", change.change_id)
                     continue
 
                 # Replace lines
@@ -844,11 +844,11 @@ Requirements:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(modified_content)
 
-            logger.info(f"Applied {len(changes)} changes to {file_path}")
+            logger.info("Applied %d changes to %s", len(changes), file_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply changes to {file_path}: {e}")
+            logger.error("Failed to apply changes to %s: %s", file_path, e)
             return False
 
     def reject_changes(self, change_ids: list[str]) -> dict[str, Any]:

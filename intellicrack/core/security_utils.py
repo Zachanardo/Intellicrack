@@ -48,7 +48,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
         Hex digest of the hash
 
     """
-    logger.debug(f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}")
+    logger.debug("Generating secure hash for data (type: %s) using algorithm: %s", type(data), algorithm)
     if isinstance(data, str):
         data = data.encode("utf-8")
         logger.debug("Data converted to UTF-8 bytes.")
@@ -56,17 +56,17 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
     if algorithm == "md5":
         # MD5 only for non-security purposes
         hashed_data = hashlib.md5(data, usedforsecurity=False).hexdigest()
-        logger.debug(f"MD5 hash generated (non-security): {hashed_data}")
+        logger.debug("MD5 hash generated (non-security): %s", hashed_data)
         return hashed_data
     if algorithm == "sha256":
         hashed_data = hashlib.sha256(data).hexdigest()
-        logger.debug(f"SHA256 hash generated: {hashed_data}")
+        logger.debug("SHA256 hash generated: %s", hashed_data)
         return hashed_data
     if algorithm == "sha512":
         hashed_data = hashlib.sha512(data).hexdigest()
-        logger.debug(f"SHA512 hash generated: {hashed_data}")
+        logger.debug("SHA512 hash generated: %s", hashed_data)
         return hashed_data
-    logger.error(f"Unsupported algorithm: {algorithm}")
+    logger.error("Unsupported algorithm: %s", algorithm)
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
@@ -89,7 +89,7 @@ def secure_subprocess(
         SecurityError: If shell=True without whitelist
 
     """
-    logger.debug(f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}")
+    logger.debug("Executing secure_subprocess command: %s, shell: %s, timeout: %s", command, shell, timeout)
     if shell:
         error_msg = "shell=True is not allowed for security reasons. Use a list of arguments instead."
         logger.error(error_msg)
@@ -98,7 +98,7 @@ def secure_subprocess(
     if isinstance(command, str):
         # Parse command string into list safely
         command = shlex.split(command)
-        logger.debug(f"Command string split into list: {command}")
+        logger.debug("Command string split into list: %s", command)
 
     try:
         result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -110,17 +110,20 @@ def secure_subprocess(
             **kwargs,
         )
         logger.debug(
-            f"Subprocess command completed. Return code: {result.returncode}, Stdout: {result.stdout.strip()}, Stderr: {result.stderr.strip()}"
+            "Subprocess command completed. Return code: %s, Stdout: %s, Stderr: %s",
+            result.returncode,
+            result.stdout.strip(),
+            result.stderr.strip(),
         )
         return result
     except subprocess.TimeoutExpired:
-        logger.error(f"Subprocess command timed out after {timeout} seconds: {command}")
+        logger.error("Subprocess command timed out after %s seconds: %s", timeout, command)
         raise
     except FileNotFoundError:
-        logger.error(f"Subprocess command failed: Command not found: {command[0]}")
+        logger.error("Subprocess command failed: Command not found: %s", command[0])
         raise
     except Exception as e:
-        logger.error(f"Subprocess command failed with an unexpected error: {e}", exc_info=True)
+        logger.error("Subprocess command failed with an unexpected error: %s", e, exc_info=True)
         raise
 
 
@@ -171,7 +174,7 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
     """
     import os
 
-    logger.debug(f"Validating file path: '{path}' with allowed extensions: {allowed_extensions}")
+    logger.debug("Validating file path: '%s' with allowed extensions: %s", path, allowed_extensions)
     # Prevent path traversal
     if ".." in path or path.startswith("/"):
         error_msg = f"Potentially malicious path: {path}"
@@ -186,8 +189,8 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
             error_msg = f"File extension not allowed: {ext}"
             logger.error(error_msg)
             raise SecurityError(error_msg)
-        logger.debug(f"File extension '{ext}' is allowed.")
-    logger.debug(f"File path '{path}' validated successfully.")
+        logger.debug("File extension '%s' is allowed.", ext)
+    logger.debug("File path '%s' validated successfully.", path)
     return True
 
 
@@ -203,14 +206,14 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
         Sanitized text
 
     """
-    logger.debug(f"Sanitizing input text (length: {len(text)}, max_length: {max_length}).")
+    logger.debug("Sanitizing input text (length: %d, max_length: %d).", len(text), max_length)
     # Remove null bytes
     text = text.replace("\x00", "")
     logger.debug("Null bytes removed.")
 
     # Limit length
     text = text[:max_length]
-    logger.debug(f"Text length limited to {max_length}.")
+    logger.debug("Text length limited to %d.", max_length)
 
     # Remove control characters
     import re
@@ -218,6 +221,8 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
     text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)
     sanitized_text = text.strip()
     logger.debug(
-        f"Control characters removed and text stripped. Sanitized output (length: {len(sanitized_text)}): '{sanitized_text[:100]}...'"
+        "Control characters removed and text stripped. Sanitized output (length: %d): '%s...'",
+        len(sanitized_text),
+        sanitized_text[:100],
     )
     return sanitized_text

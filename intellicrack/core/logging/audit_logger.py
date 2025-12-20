@@ -365,7 +365,7 @@ class AuditLogger:
             try:
                 return hash_file.read_text().strip()
             except Exception as e:
-                logger.error(f"Failed to load hash chain: {e}")
+                logger.error("Failed to load hash chain: %s", e)
         return None
 
     def _save_hash(self, hash_value: str) -> None:
@@ -386,7 +386,7 @@ class AuditLogger:
             if platform.system() != "Windows":
                 Path(hash_file).chmod(0o600)
         except Exception as e:
-            logger.error(f"Failed to save hash chain: {e}")
+            logger.error("Failed to save hash chain: %s", e)
 
     def _get_current_log_file(self) -> Path:
         """Get the current log file path.
@@ -506,7 +506,7 @@ class AuditLogger:
                     logger.info(log_msg)
 
             except Exception as e:
-                logger.error(f"Failed to write audit log: {e}")
+                logger.error("Failed to write audit log: %s", e)
 
     def log_exploit_attempt(
         self,
@@ -746,7 +746,7 @@ class AuditLogger:
                         if previous_hash:
                             stored_prev = event_data.get("details", {}).get("previous_hash")
                             if stored_prev != previous_hash:
-                                logger.error(f"Hash chain broken at line {line_num}")
+                                logger.error("Hash chain broken at line %d", line_num)
                                 return False
 
                         if stored_hash := event_data.get("details", {}).get("hash"):
@@ -762,23 +762,23 @@ class AuditLogger:
                             ).hexdigest()
 
                             if calculated_hash != stored_hash:
-                                logger.error(f"Hash mismatch at line {line_num}")
+                                logger.error("Hash mismatch at line %d", line_num)
                                 return False
 
                             previous_hash = stored_hash
 
                     except json.JSONDecodeError:
-                        logger.error(f"Invalid JSON at line {line_num}")
+                        logger.error("Invalid JSON at line %d", line_num)
                         return False
                     except Exception as e:
-                        logger.error(f"Error verifying line {line_num}: {e}")
+                        logger.error("Error verifying line %d: %s", line_num, e)
                         return False
 
-            logger.info(f"Log file {log_file} integrity verified")
+            logger.info("Log file %s integrity verified", log_file)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to verify log integrity: {e}")
+            logger.error("Failed to verify log integrity: %s", e)
             return False
 
     def search_events(
@@ -857,10 +857,10 @@ class AuditLogger:
                             results.append(event_data)
 
                         except Exception as e:
-                            logger.debug(f"Error parsing log entry: {e}")
+                            logger.debug("Error parsing log entry: %s", e)
 
             except Exception as e:
-                logger.error(f"Error reading log file {log_file}: {e}")
+                logger.error("Error reading log file %s: %s", log_file, e)
 
         return results
 
@@ -938,7 +938,7 @@ Critical Events ({len(critical_events)}):
         # Save report if output file specified
         if output_file:
             output_file.write_text(report)
-            logger.info(f"Audit report saved to {output_file}")
+            logger.info("Audit report saved to %s", output_file)
 
         return report
 
@@ -1016,7 +1016,7 @@ class PerformanceMonitor:
 
                 # Log slow operations
                 if duration > 5.0:  # More than 5 seconds
-                    logger.warning(f"Slow operation {operation}: {duration:.2f}s")
+                    logger.warning("Slow operation %s: %.2fs", operation, duration)
 
     def increment_counter(self, metric: str, value: int = 1, tags: dict[str, Any] | None = None) -> None:
         """Increment a counter metric.
@@ -1239,7 +1239,7 @@ class TelemetryCollector:
                 self._collect_and_export()
                 time.sleep(self.export_interval)
             except Exception as e:
-                logger.error(f"Telemetry export error: {e}")
+                logger.error("Telemetry export error: %s", e)
                 time.sleep(60)  # Wait before retrying
 
     def _collect_and_export(self) -> None:
@@ -1264,7 +1264,7 @@ class TelemetryCollector:
                     "health": resource_health,
                 }
             except Exception as e:
-                logger.debug(f"Failed to get resource stats: {e}")
+                logger.debug("Failed to get resource stats: %s", e)
 
             # Add external tools status
             try:
@@ -1273,7 +1273,7 @@ class TelemetryCollector:
                 tools_status = external_tools_manager.generate_status_report()
                 metrics["external_tools"] = tools_status
             except Exception as e:
-                logger.debug(f"Failed to get tools status: {e}")
+                logger.debug("Failed to get tools status: %s", e)
 
             # Store telemetry data
             with self._lock:
@@ -1287,7 +1287,7 @@ class TelemetryCollector:
             self._log_telemetry_summary(metrics)
 
         except Exception as e:
-            logger.error(f"Failed to collect telemetry: {e}")
+            logger.error("Failed to collect telemetry: %s", e)
 
     def _log_telemetry_summary(self, metrics: dict[str, Any]) -> None:
         """Log telemetry summary.
@@ -1317,26 +1317,32 @@ class TelemetryCollector:
             total_tools = ext_tools.get("total_tools", 0)
 
             logger.info(
-                f"Telemetry: CPU={cpu_percent:.1f}% Memory={memory_percent:.1f}% "
-                f"Resources={total_resources} Tools={available_tools}/{total_tools}",
+                "Telemetry: CPU=%.1f%% Memory=%.1f%% Resources=%d Tools=%d/%d",
+                cpu_percent,
+                memory_percent,
+                total_resources,
+                available_tools,
+                total_tools,
             )
 
             # Check for alerts
             if cpu_percent > 90:
-                logger.warning(f"High CPU usage detected: {cpu_percent:.1f}%")
+                logger.warning("High CPU usage detected: %.1f%%", cpu_percent)
 
             if memory_percent > 90:
-                logger.warning(f"High memory usage detected: {memory_percent:.1f}%")
+                logger.warning("High memory usage detected: %.1f%%", memory_percent)
 
             # Resource health alerts
             resource_health = resource_mgmt.get("health", {})
             if resource_health.get("status") != "healthy":
                 logger.warning(
-                    f"Resource manager health: {resource_health.get('status')} - Issues: {resource_health.get('issues', [])}",
+                    "Resource manager health: %s - Issues: %s",
+                    resource_health.get("status"),
+                    resource_health.get("issues", []),
                 )
 
         except Exception as e:
-            logger.debug(f"Failed to log telemetry summary: {e}")
+            logger.debug("Failed to log telemetry summary: %s", e)
 
     def get_telemetry_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent telemetry history.
@@ -1376,10 +1382,10 @@ class TelemetryCollector:
             with open(filepath, "w") as f:
                 json.dump(data, f, indent=2, default=str)
 
-            logger.info(f"Telemetry data exported to {filepath}")
+            logger.info("Telemetry data exported to %s", filepath)
 
         except Exception as e:
-            logger.error(f"Failed to export telemetry: {e}")
+            logger.error("Failed to export telemetry: %s", e)
 
 
 class ContextualLogger:
@@ -1486,7 +1492,7 @@ class ContextualLogger:
                 # Don't fail on audit logging errors, but log for debugging
                 import logging
 
-                logging.getLogger(__name__).debug(f"Audit logging error: {e}")
+                logging.getLogger(__name__).debug("Audit logging error: %s", e)
 
     def critical(self, message: str, **kwargs: object) -> None:
         """Log critical message with context.
@@ -1511,7 +1517,7 @@ class ContextualLogger:
                 # Don't fail on audit logging errors, but log for debugging
                 import logging
 
-                logging.getLogger(__name__).debug(f"Critical audit logging error: {e}")
+                logging.getLogger(__name__).debug("Critical audit logging error: %s", e)
 
 
 telemetry_collector: TelemetryCollector = TelemetryCollector()
@@ -1576,12 +1582,12 @@ def setup_comprehensive_logging() -> None:
             audit_logger = get_audit_logger()
             telemetry_collector.set_audit_logger(audit_logger)
         except Exception as e:
-            logger.debug(f"Failed to integrate audit logger: {e}")
+            logger.debug("Failed to integrate audit logger: %s", e)
 
         logger.info("Comprehensive logging and monitoring system initialized")
 
     except Exception as e:
-        logger.error(f"Failed to setup comprehensive logging: {e}")
+        logger.error("Failed to setup comprehensive logging: %s", e)
 
 
 # Note: Call setup_comprehensive_logging() explicitly from main application

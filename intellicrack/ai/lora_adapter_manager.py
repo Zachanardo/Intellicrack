@@ -175,7 +175,7 @@ class LoRAAdapterManager:
                 )
             )
         except Exception as e:
-            logger.error(f"Failed to create LoRA config: {e}")
+            logger.error("Failed to create LoRA config: %s", e)
             return None
 
     def _get_default_target_modules(self, model_type: str | None = None) -> list[str]:
@@ -245,15 +245,17 @@ class LoRAAdapterManager:
             total_params = sum(p.numel() for p in peft_model.parameters())
 
             logger.info(
-                f"Applied LoRA adapter '{adapter_name}': "
-                f"{trainable_params:,} trainable params / {total_params:,} total params "
-                f"({100 * trainable_params / total_params:.2f}% trainable)",
+                "Applied LoRA adapter '%s': %s trainable params / %s total params (%.2f%% trainable)",
+                adapter_name,
+                f"{trainable_params:,}",
+                f"{total_params:,}",
+                100 * trainable_params / total_params,
             )
 
             return peft_model
 
         except Exception as e:
-            logger.error(f"Failed to apply LoRA: {e}")
+            logger.error("Failed to apply LoRA: %s", e)
             return None
 
     def load_adapter(
@@ -285,7 +287,7 @@ class LoRAAdapterManager:
             # Check if adapter exists in cache
             cache_key = f"{adapter_path}_{adapter_name}"
             if cache_key in self.loaded_adapters:
-                logger.info(f"Using cached adapter: {adapter_name}")
+                logger.info("Using cached adapter: %s", adapter_name)
                 return self.loaded_adapters[cache_key]
 
             # Load adapter
@@ -301,16 +303,16 @@ class LoRAAdapterManager:
             # Merge adapter if requested
             if kwargs.get("merge_adapter"):
                 model = model.merge_and_unload()
-                logger.info(f"Merged adapter '{adapter_name}' into base model")
+                logger.info("Merged adapter '%s' into base model", adapter_name)
 
             # Cache the model
             self.loaded_adapters[cache_key] = model
 
-            logger.info(f"Loaded LoRA adapter from {adapter_path}")
+            logger.info("Loaded LoRA adapter from %s", adapter_path)
             return model
 
         except Exception as e:
-            logger.error(f"Failed to load adapter: {e}")
+            logger.error("Failed to load adapter: %s", e)
             return None
 
     def save_adapter(
@@ -347,13 +349,13 @@ class LoRAAdapterManager:
                     adapter_name=adapter_name,
                     save_config=save_config,
                 )
-                logger.info(f"Saved LoRA adapter to {save_path}")
+                logger.info("Saved LoRA adapter to %s", save_path)
                 return True
             logger.error("Model does not support save_pretrained")
             return False
 
         except Exception as e:
-            logger.error(f"Failed to save adapter: {e}")
+            logger.error("Failed to save adapter: %s", e)
             return False
 
     def prepare_model_for_qlora(
@@ -389,7 +391,7 @@ class LoRAAdapterManager:
             return model
 
         except Exception as e:
-            logger.error(f"Failed to prepare model for QLoRA: {e}")
+            logger.error("Failed to prepare model for QLoRA: %s", e)
             return model
 
     def list_adapters(self, model: ModelType) -> list[str]:
@@ -418,13 +420,13 @@ class LoRAAdapterManager:
         try:
             if hasattr(model, "set_adapter"):
                 model.set_adapter(adapter_name)
-                logger.info(f"Activated adapter: {adapter_name}")
+                logger.info("Activated adapter: %s", adapter_name)
                 return True
             logger.error("Model does not support multiple adapters")
             return False
 
         except Exception as e:
-            logger.error(f"Failed to set adapter: {e}")
+            logger.error("Failed to set adapter: %s", e)
             return False
 
     def merge_adapters(
@@ -460,11 +462,11 @@ class LoRAAdapterManager:
                 new_adapter_name,
             )
 
-            logger.info(f"Merged {len(adapter_names)} adapters into '{new_adapter_name}'")
+            logger.info("Merged %d adapters into '%s'", len(adapter_names), new_adapter_name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to merge adapters: {e}")
+            logger.error("Failed to merge adapters: %s", e)
             return False
 
     def compare_adapter_configs(
@@ -580,14 +582,14 @@ class LoRAAdapterManager:
                 revision=revision,
             )
 
-            logger.info(f"Downloaded adapter: {adapter_id}")
+            logger.info("Downloaded adapter: %s", adapter_id)
             return Path(local_path)
 
         except ImportError:
             logger.error("huggingface_hub required for adapter downloads")
             return None
         except Exception as e:
-            logger.error(f"Failed to download adapter: {e}")
+            logger.error("Failed to download adapter: %s", e)
             return None
 
     def get_adapter_info(self, adapter_path: str | Path) -> dict[str, object]:
@@ -629,11 +631,11 @@ class LoRAAdapterManager:
                         info["adapter_type"] = peft_config.peft_type
                         if hasattr(peft_config, "target_modules"):
                             info["target_modules"] = peft_config.target_modules
-                        logger.debug(f"Loaded PeftConfig for adapter: {adapter_path}")
+                        logger.debug("Loaded PeftConfig for adapter: %s", adapter_path)
                     except Exception as e:
-                        logger.debug(f"Could not parse as PeftConfig: {e}")
+                        logger.debug("Could not parse as PeftConfig: %s", e)
             except Exception as e:
-                logger.debug(f"Could not load adapter config: {e}")
+                logger.debug("Could not load adapter config: %s", e)
 
         total_size = sum(file.stat().st_size for file in adapter_path.rglob("*.bin"))
         for file in adapter_path.rglob("*.safetensors"):
@@ -727,7 +729,7 @@ class LoRAAdapterManager:
         for key in list(self.loaded_adapters)[:to_remove]:
             del self.loaded_adapters[key]
 
-        logger.info(f"Cleaned up adapter cache, kept {keep_recent} recent adapters")
+        logger.info("Cleaned up adapter cache, kept %d recent adapters", keep_recent)
 
 
 # Global instance

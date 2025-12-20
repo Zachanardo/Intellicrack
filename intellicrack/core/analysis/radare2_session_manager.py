@@ -122,7 +122,7 @@ class R2SessionWrapper:
                     return True
 
                 self.state = SessionState.RECONNECTING
-                logger.info(f"Opening r2pipe session {self.session_id} for {self.binary_path}")
+                logger.info("Opening r2pipe session %s for %s", self.session_id, self.binary_path)
 
                 self.r2 = r2pipe.open(str(self.binary_path), flags=self.flags)
 
@@ -134,7 +134,7 @@ class R2SessionWrapper:
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to connect session {self.session_id}: {e}")
+                logger.error("Failed to connect session %s: %s", self.session_id, e)
                 self.state = SessionState.ERROR
                 self.metrics.errors_count += 1
                 return False
@@ -146,11 +146,11 @@ class R2SessionWrapper:
                 try:
                     self.r2.quit()
                 except Exception as e:
-                    logger.warning(f"Error closing session {self.session_id}: {e}")
+                    logger.warning("Error closing session %s: %s", self.session_id, e)
                 finally:
                     self.r2 = None
                     self.state = SessionState.CLOSED
-                    logger.debug(f"Session {self.session_id} closed")
+                    logger.debug("Session %s closed", self.session_id)
 
     def execute(self, command: str, expect_json: bool = False) -> str | dict | list | None:
         """Execute radare2 command with error handling.
@@ -187,7 +187,7 @@ class R2SessionWrapper:
 
             except Exception as e:
                 self.metrics.errors_count += 1
-                logger.error(f"Command failed in session {self.session_id}: {command}, Error: {e}")
+                logger.error("Command failed in session %s: %s, Error: %s", self.session_id, command, e)
                 raise
 
     def reconnect(self) -> bool:
@@ -198,7 +198,7 @@ class R2SessionWrapper:
 
         """
         with self._lock:
-            logger.info(f"Attempting to reconnect session {self.session_id}")
+            logger.info("Attempting to reconnect session %s", self.session_id)
             self.disconnect()
             self.metrics.reconnections += 1
             return self.connect()
@@ -218,7 +218,7 @@ class R2SessionWrapper:
                 self.r2.cmd("?V")
                 return True
             except Exception as e:
-                logger.warning(f"Session {self.session_id} health check failed: {e}")
+                logger.warning("Session %s health check failed: %s", self.session_id, e)
                 return False
 
     @property
@@ -372,9 +372,9 @@ class R2SessionPool:
             try:
                 session = self._available_sessions[pool_key].get_nowait()
                 if session.is_alive():
-                    logger.debug(f"Reusing session {session.session_id} from pool")
+                    logger.debug("Reusing session %s from pool", session.session_id)
                     return session
-                logger.info(f"Session {session.session_id} not alive, reconnecting")
+                logger.info("Session %s not alive, reconnecting", session.session_id)
                 if session.reconnect():
                     return session
                 session.disconnect()
@@ -403,7 +403,7 @@ class R2SessionPool:
             self._sessions[session_id] = session
             self._total_sessions_created += 1
 
-            logger.info(f"Created new session {session_id} for {binary_path}")
+            logger.info("Created new session %s for %s", session_id, binary_path)
             return session
 
     def return_session(self, session: R2SessionWrapper) -> None:
@@ -422,9 +422,9 @@ class R2SessionPool:
             if session.is_alive():
                 if pool_key in self._available_sessions:
                     self._available_sessions[pool_key].put(session)
-                    logger.debug(f"Returned session {session.session_id} to pool")
+                    logger.debug("Returned session %s to pool", session.session_id)
             else:
-                logger.warning(f"Session {session.session_id} not alive, removing from pool")
+                logger.warning("Session %s not alive, removing from pool", session.session_id)
                 self._remove_session(session.session_id)
 
     def _remove_session(self, session_id: str) -> None:
@@ -439,7 +439,7 @@ class R2SessionPool:
                 session = self._sessions[session_id]
                 session.disconnect()
                 del self._sessions[session_id]
-                logger.debug(f"Removed session {session_id} from pool")
+                logger.debug("Removed session %s from pool", session_id)
 
     def _cleanup_idle_sessions(self, force: bool = False) -> None:
         """Clean up idle sessions.
@@ -465,7 +465,7 @@ class R2SessionPool:
                 self._remove_session(session_id)
 
             if sessions_to_remove:
-                logger.info(f"Cleaned up {len(sessions_to_remove)} idle sessions")
+                logger.info("Cleaned up %d idle sessions", len(sessions_to_remove))
 
     def _cleanup_loop(self) -> None:
         """Background cleanup thread."""
@@ -475,7 +475,7 @@ class R2SessionPool:
             try:
                 self._cleanup_idle_sessions()
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.error("Error in cleanup loop: %s", e)
 
             self._stop_cleanup.wait(self.cleanup_interval)
 
@@ -495,7 +495,7 @@ class R2SessionPool:
     def close_all(self) -> None:
         """Close all sessions in the pool."""
         with self._lock:
-            logger.info(f"Closing all {len(self._sessions)} sessions in pool")
+            logger.info("Closing all %d sessions in pool", len(self._sessions))
 
             for session_id in list(self._sessions):
                 self._remove_session(session_id)

@@ -1,4 +1,4 @@
-20 findings in intellicrack\handlers\pyelftools_handler.py
+18 findings in intellicrack\handlers\pyelftools_handler.py
 
 intellicrack\handlers\pyelftools_handler.py: Unused function data_alignment
 
@@ -12,8 +12,6 @@ intellicrack\handlers\pyelftools_handler.py: Unused function get_parent
 
 intellicrack\handlers\pyelftools_handler.py: Unused function get_relocation
 
-intellicrack\handlers\pyelftools_handler.py: Unused function get_section
-
 intellicrack\handlers\pyelftools_handler.py: Unused function get_section_by_name
 
 intellicrack\handlers\pyelftools_handler.py: Unused function get_segment
@@ -21,8 +19,6 @@ intellicrack\handlers\pyelftools_handler.py: Unused function get_segment
 intellicrack\handlers\pyelftools_handler.py: Unused function get_symbol
 
 intellicrack\handlers\pyelftools_handler.py: Unused function get_tag
-
-intellicrack\handlers\pyelftools_handler.py: Unused function is_null
 
 intellicrack\handlers\pyelftools_handler.py: Unused function iter_CUs
 
@@ -39,45 +35,6 @@ intellicrack\handlers\pyelftools_handler.py: Unused function iter_symbols
 intellicrack\handlers\pyelftools_handler.py: Unused function iter_tags
 
 intellicrack\handlers\pyelftools_handler.py: Unused function num_segments
-
-
-18 findings in intellicrack\handlers\tkinter_handler.py
-
-intellicrack\handlers\tkinter_handler.py: Unused function askcolor
-
-intellicrack\handlers\tkinter_handler.py: Unused function askokcancel
-
-intellicrack\handlers\tkinter_handler.py: Unused function askopenfilenames
-
-intellicrack\handlers\tkinter_handler.py: Unused function askquestion
-
-intellicrack\handlers\tkinter_handler.py: Unused function askretrycancel
-
-intellicrack\handlers\tkinter_handler.py: Unused function deiconify
-
-intellicrack\handlers\tkinter_handler.py: Unused function grab_release
-
-intellicrack\handlers\tkinter_handler.py: Unused function grid_info
-
-intellicrack\handlers\tkinter_handler.py: Unused function iconify
-
-intellicrack\handlers\tkinter_handler.py: Unused function pack_info
-
-intellicrack\handlers\tkinter_handler.py: Unused function place_info
-
-intellicrack\handlers\tkinter_handler.py: Unused function unbind
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_children
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_height
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqheight
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqwidth
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_x
-
-intellicrack\handlers\tkinter_handler.py: Unused function winfo_y
 
 
 17 findings in intellicrack\scripts\ghidra\anti_analysis_detector.py
@@ -117,54 +74,33 @@ intellicrack\scripts\ghidra\anti_analysis_detector.py: Unused function setProgre
 intellicrack\scripts\ghidra\anti_analysis_detector.py: Unused function setScriptArgs
 
 
-11 findings in intellicrack\cli\interactive_mode.py
+13 findings in intellicrack\handlers\tkinter_handler.py
 
-intellicrack\cli\interactive_mode.py: Unused function do_ai
+intellicrack\handlers\tkinter_handler.py: Unused function askcolor
 
-intellicrack\cli\interactive_mode.py: Unused function do_analyze
+intellicrack\handlers\tkinter_handler.py: Unused function askopenfilenames
 
-intellicrack\cli\interactive_mode.py: Unused function do_clear
+intellicrack\handlers\tkinter_handler.py: Unused function askquestion
 
-intellicrack\cli\interactive_mode.py: Unused function do_export
+intellicrack\handlers\tkinter_handler.py: Unused function askretrycancel
 
-intellicrack\cli\interactive_mode.py: Unused function do_hexview
+intellicrack\handlers\tkinter_handler.py: Unused function deiconify
 
-intellicrack\cli\interactive_mode.py: Unused function do_load
+intellicrack\handlers\tkinter_handler.py: Unused function grab_release
 
-intellicrack\cli\interactive_mode.py: Unused function do_patch
+intellicrack\handlers\tkinter_handler.py: Unused function iconify
 
-intellicrack\cli\interactive_mode.py: Unused function do_protection
+intellicrack\handlers\tkinter_handler.py: Unused function unbind
 
-intellicrack\cli\interactive_mode.py: Unused function do_quit
+intellicrack\handlers\tkinter_handler.py: Unused function winfo_height
 
-intellicrack\cli\interactive_mode.py: Unused function do_status
+intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqheight
 
-intellicrack\cli\interactive_mode.py: Unused function do_strings
+intellicrack\handlers\tkinter_handler.py: Unused function winfo_reqwidth
 
+intellicrack\handlers\tkinter_handler.py: Unused function winfo_x
 
-11 findings in intellicrack\core\app_context.py
-
-intellicrack\core\app_context.py: Unused function add_to_session_history
-
-intellicrack\core\app_context.py: Unused function get_active_tasks
-
-intellicrack\core\app_context.py: Unused function get_all_settings
-
-intellicrack\core\app_context.py: Unused function get_analysis_results
-
-intellicrack\core\app_context.py: Unused function get_full_state
-
-intellicrack\core\app_context.py: Unused function get_loaded_plugins
-
-intellicrack\core\app_context.py: Unused function get_recent_files
-
-intellicrack\core\app_context.py: Unused function get_recent_projects
-
-intellicrack\core\app_context.py: Unused function get_session_history
-
-intellicrack\core\app_context.py: Unused function set_analysis_results
-
-intellicrack\core\app_context.py: Unused function unregister_plugin
+intellicrack\handlers\tkinter_handler.py: Unused function winfo_y
 
 
 9 findings in intellicrack\handlers\matplotlib_handler.py
@@ -207,76 +143,6 @@ intellicrack\cli\tutorial_system.py: Unused function interactive_tutorial_select
 intellicrack\cli\tutorial_system.py: Unused function show_tutorial_progress_bar
 
 
-8 findings in intellicrack\ui\config_manager.py
-
-intellicrack\ui\config_manager.py: Unused function get_accessibility_config
-
-intellicrack\ui\config_manager.py: Unused function get_animation_config
-
-intellicrack\ui\config_manager.py: Unused function get_editor_config
-
-intellicrack\ui\config_manager.py: Unused function set_accessibility_config
-
-intellicrack\ui\config_manager.py: Unused function set_animation_config
-
-intellicrack\ui\config_manager.py: Unused function set_editor_config
-
-intellicrack\ui\config_manager.py: Unused function set_font_config
-
-intellicrack\ui\config_manager.py: Unused function set_layout_config
-
-
-7 findings in intellicrack\ai\realtime_adaptation_engine.py
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function add_adaptation_rule
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function get_adaptation_insights
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function get_adaptation_status
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function get_debug_insights
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function get_hook_statistics
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function get_metric_trend
-
-intellicrack\ai\realtime_adaptation_engine.py: Unused function install_hook
-
-
-7 findings in intellicrack\handlers\pdfkit_handler.py
-
-intellicrack\handlers\pdfkit_handler.py: Unused function add_keyword
-
-intellicrack\handlers\pdfkit_handler.py: Unused function add_page
-
-intellicrack\handlers\pdfkit_handler.py: Unused function drawCentredString
-
-intellicrack\handlers\pdfkit_handler.py: Unused function drawRightString
-
-intellicrack\handlers\pdfkit_handler.py: Unused function set_author
-
-intellicrack\handlers\pdfkit_handler.py: Unused function set_subject
-
-intellicrack\handlers\pdfkit_handler.py: Unused function showPage
-
-
-7 findings in intellicrack\ui\dialogs\base_dialog.py
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function add_content_layout
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function add_content_widget
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function add_custom_button
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function get_result
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function set_cancel_text
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function set_content_layout
-
-intellicrack\ui\dialogs\base_dialog.py: Unused function set_loading
-
-
 7 findings in intellicrack\utils\tools\radare2_utils.py
 
 intellicrack\utils\tools\radare2_utils.py: Unused function analyze_all
@@ -311,36 +177,6 @@ tests\unit\core\network\test_protocol_tool.py: Unused function get_security_asse
 tests\unit\core\network\test_protocol_tool.py: Unused function get_vulnerability_details
 
 
-6 findings in intellicrack\core\analysis\ghidra_output_parser.py
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_call_targets
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_function_by_address
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_xrefs_to
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function parse_call_graph
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function parse_data_types
-
-intellicrack\core\analysis\ghidra_output_parser.py: Unused function parse_decompilation_output
-
-
-6 findings in intellicrack\hexview\file_compare.py
-
-intellicrack\hexview\file_compare.py: Unused function get_current
-
-intellicrack\hexview\file_compare.py: Unused function go_to_first
-
-intellicrack\hexview\file_compare.py: Unused function go_to_last
-
-intellicrack\hexview\file_compare.py: Unused function go_to_next
-
-intellicrack\hexview\file_compare.py: Unused function go_to_previous
-
-intellicrack\hexview\file_compare.py: Unused function has_differences
-
-
 6 findings in intellicrack\plugins\custom_modules\license_server_emulator.py
 
 intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function analyze_binary_for_protection
@@ -354,21 +190,6 @@ intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function 
 intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function scan_memory_for_keys
 
 intellicrack\plugins\custom_modules\license_server_emulator.py: Unused function set_target_binary
-
-
-6 findings in intellicrack\ui\style_manager.py
-
-intellicrack\ui\style_manager.py: Unused function batch_apply_styles
-
-intellicrack\ui\style_manager.py: Unused function update_cpu_progress_style
-
-intellicrack\ui\style_manager.py: Unused function update_gpu_progress_style
-
-intellicrack\ui\style_manager.py: Unused function update_memory_progress_style
-
-intellicrack\ui\style_manager.py: Unused function update_progress_style
-
-intellicrack\ui\style_manager.py: Unused function update_status_style
 
 
 5 findings in intellicrack\ai\gpu_integration.py
@@ -410,6 +231,19 @@ intellicrack\ai\quantization_manager.py: Unused function prepare_model_for_gptq_
 intellicrack\ai\quantization_manager.py: Unused function quantize_model_with_bnb
 
 
+5 findings in intellicrack\ai\realtime_adaptation_engine.py
+
+intellicrack\ai\realtime_adaptation_engine.py: Unused function add_adaptation_rule
+
+intellicrack\ai\realtime_adaptation_engine.py: Unused function get_adaptation_insights
+
+intellicrack\ai\realtime_adaptation_engine.py: Unused function get_adaptation_status
+
+intellicrack\ai\realtime_adaptation_engine.py: Unused function get_debug_insights
+
+intellicrack\ai\realtime_adaptation_engine.py: Unused function get_hook_statistics
+
+
 5 findings in intellicrack\ai\script_generation_prompts.py
 
 intellicrack\ai\script_generation_prompts.py: Unused function build_context_data
@@ -436,43 +270,17 @@ intellicrack\cli\terminal_dashboard.py: Unused function show_analysis_progress
 intellicrack\cli\terminal_dashboard.py: Unused function update_session_info
 
 
-5 findings in intellicrack\core\orchestration\tool_communication_bridge.py
+5 findings in intellicrack\core\analysis\ghidra_output_parser.py
 
-intellicrack\core\orchestration\tool_communication_bridge.py: Unused function add_message_handler
+intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_call_targets
 
-intellicrack\core\orchestration\tool_communication_bridge.py: Unused function get_tool_status
+intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_function_by_address
 
-intellicrack\core\orchestration\tool_communication_bridge.py: Unused function share_function_signature
+intellicrack\core\analysis\ghidra_output_parser.py: Unused function get_xrefs_to
 
-intellicrack\core\orchestration\tool_communication_bridge.py: Unused function synchronize_breakpoints
+intellicrack\core\analysis\ghidra_output_parser.py: Unused function parse_call_graph
 
-intellicrack\core\orchestration\tool_communication_bridge.py: Unused function unregister_tool
-
-
-5 findings in intellicrack\core\resources\resource_manager.py
-
-intellicrack\core\resources\resource_manager.py: Unused function get_duration
-
-intellicrack\core\resources\resource_manager.py: Unused function get_fallback_handler
-
-intellicrack\core\resources\resource_manager.py: Unused function get_resource
-
-intellicrack\core\resources\resource_manager.py: Unused function get_resource_count
-
-intellicrack\core\resources\resource_manager.py: Unused function set_resource_limits
-
-
-5 findings in intellicrack\core\task_manager.py
-
-intellicrack\core\task_manager.py: Unused function get_active_tasks
-
-intellicrack\core\task_manager.py: Unused function get_task_history
-
-intellicrack\core\task_manager.py: Unused function get_thread_count
-
-intellicrack\core\task_manager.py: Unused function set_thread_count
-
-intellicrack\core\task_manager.py: Unused function wait_for_all
+intellicrack\core\analysis\ghidra_output_parser.py: Unused function parse_data_types
 
 
 5 findings in intellicrack\utils\windows\service_manager.py
@@ -488,17 +296,6 @@ intellicrack\utils\windows\service_manager.py: Unused function pause_service
 intellicrack\utils\windows\service_manager.py: Unused function wait_for_state
 
 
-4 findings in intellicrack\ai\lazy_model_loader.py
-
-intellicrack\ai\lazy_model_loader.py: Unused function add_load_callback
-
-intellicrack\ai\lazy_model_loader.py: Unused function get_lazy_model
-
-intellicrack\ai\lazy_model_loader.py: Unused function get_load_priority
-
-intellicrack\ai\lazy_model_loader.py: Unused function unload_all
-
-
 4 findings in intellicrack\core\integration\intelligent_correlation.py
 
 intellicrack\core\integration\intelligent_correlation.py: Unused function add_mapping
@@ -510,70 +307,26 @@ intellicrack\core\integration\intelligent_correlation.py: Unused function detect
 intellicrack\core\integration\intelligent_correlation.py: Unused function set_base_address
 
 
-4 findings in intellicrack\core\network_capture.py
+4 findings in intellicrack\core\resources\resource_manager.py
 
-intellicrack\core\network_capture.py: Unused function analyze_pcap_file
+intellicrack\core\resources\resource_manager.py: Unused function get_duration
 
-intellicrack\core\network_capture.py: Unused function detect_cloud_licensing_traffic
+intellicrack\core\resources\resource_manager.py: Unused function get_fallback_handler
 
-intellicrack\core\network_capture.py: Unused function identify_license_servers
+intellicrack\core\resources\resource_manager.py: Unused function get_resource
 
-intellicrack\core\network_capture.py: Unused function parse_pcap_binary
-
-
-4 findings in intellicrack\hexview\hex_commands.py
-
-intellicrack\hexview\hex_commands.py: Unused function get_history_summary
-
-intellicrack\hexview\hex_commands.py: Unused function get_redo_description
-
-intellicrack\hexview\hex_commands.py: Unused function get_undo_description
-
-intellicrack\hexview\hex_commands.py: Unused function set_auto_merge
+intellicrack\core\resources\resource_manager.py: Unused function get_resource_count
 
 
-4 findings in intellicrack\hexview\hex_highlighter.py
+4 findings in intellicrack\core\task_manager.py
 
-intellicrack\hexview\hex_highlighter.py: Unused function add_ai_pattern_highlight
+intellicrack\core\task_manager.py: Unused function get_task_history
 
-intellicrack\hexview\hex_highlighter.py: Unused function get_highlight_count
+intellicrack\core\task_manager.py: Unused function get_thread_count
 
-intellicrack\hexview\hex_highlighter.py: Unused function get_highlights_at_offset
+intellicrack\core\task_manager.py: Unused function set_thread_count
 
-intellicrack\hexview\hex_highlighter.py: Unused function update_highlight
-
-
-4 findings in intellicrack\utils\binary\hex_utils.py
-
-intellicrack\utils\binary\hex_utils.py: Unused function bytes_to_hex
-
-intellicrack\utils\binary\hex_utils.py: Unused function detect_encoding
-
-intellicrack\utils\binary\hex_utils.py: Unused function hex_to_bytes
-
-intellicrack\utils\binary\hex_utils.py: Unused function is_printable_ascii
-
-
-4 findings in intellicrack\utils\deprecation_warnings.py
-
-intellicrack\utils\deprecation_warnings.py: Unused function deprecated_cli_config_file
-
-intellicrack\utils\deprecation_warnings.py: Unused function deprecated_legacy_config_path
-
-intellicrack\utils\deprecation_warnings.py: Unused function deprecated_llm_file_storage
-
-intellicrack\utils\deprecation_warnings.py: Unused function deprecated_qsettings
-
-
-4 findings in tests\test_cross_tool_integration.py
-
-tests\test_cross_tool_integration.py: Unused function get_assembly
-
-tests\test_cross_tool_integration.py: Unused function get_decompiled_code
-
-tests\test_cross_tool_integration.py: Unused function install_hook
-
-tests\test_cross_tool_integration.py: Unused function intercept_api
+intellicrack\core\task_manager.py: Unused function wait_for_all
 
 
 4 findings in tests\utils\secure_assertions.py
@@ -616,42 +369,6 @@ intellicrack\ai\model_download_manager.py: Unused function get_model_readme
 intellicrack\ai\model_download_manager.py: Unused function search_models
 
 
-3 findings in intellicrack\cli\ascii_charts.py
-
-intellicrack\cli\ascii_charts.py: Unused function display_chart_rich
-
-intellicrack\cli\ascii_charts.py: Unused function generate_line_chart
-
-intellicrack\cli\ascii_charts.py: Unused function generate_scatter_plot
-
-
-3 findings in intellicrack\core\analysis\ghidra_project_manager.py
-
-intellicrack\core\analysis\ghidra_project_manager.py: Unused function add_collaborator
-
-intellicrack\core\analysis\ghidra_project_manager.py: Unused function diff_versions
-
-intellicrack\core\analysis\ghidra_project_manager.py: Unused function unlock_project
-
-
-3 findings in intellicrack\core\config_migration_handler.py
-
-intellicrack\core\config_migration_handler.py: Unused function get_migration_report
-
-intellicrack\core\config_migration_handler.py: Unused function handle_partial_migration
-
-intellicrack\core\config_migration_handler.py: Unused function save_migration_log
-
-
-3 findings in intellicrack\core\orchestration\result_serialization_protocol.py
-
-intellicrack\core\orchestration\result_serialization_protocol.py: Unused function batch_serialize
-
-intellicrack\core\orchestration\result_serialization_protocol.py: Unused function ghidra_to_standard
-
-intellicrack\core\orchestration\result_serialization_protocol.py: Unused function ida_to_standard
-
-
 3 findings in intellicrack\core\tool_discovery.py
 
 intellicrack\core\tool_discovery.py: Unused function discover_tool_with_fallbacks
@@ -688,24 +405,6 @@ intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function ge
 intellicrack\plugins\custom_modules\performance_optimizer.py: Unused function set_optimization_level
 
 
-3 findings in intellicrack\ui\widgets\pe_file_model.py
-
-intellicrack\ui\widgets\pe_file_model.py: Unused function get_section_at_offset
-
-intellicrack\ui\widgets\pe_file_model.py: Unused function is_valid_offset
-
-intellicrack\ui\widgets\pe_file_model.py: Unused function is_valid_rva
-
-
-3 findings in intellicrack\utils\analysis\analysis_stats.py
-
-intellicrack\utils\analysis\analysis_stats.py: Unused function generate_correlation_matrix
-
-intellicrack\utils\analysis\analysis_stats.py: Unused function generate_percentiles
-
-intellicrack\utils\analysis\analysis_stats.py: Unused function generate_time_series_stats
-
-
 3 findings in intellicrack\utils\service_health_checker.py
 
 intellicrack\utils\service_health_checker.py: Unused function get_healthy_services
@@ -722,6 +421,15 @@ tests\base_test.py: Unused function assert_ai_script_executable
 tests\base_test.py: Unused function assert_binary_analysis_real
 
 tests\base_test.py: Unused function assert_network_response_valid
+
+
+3 findings in tests\test_cross_tool_integration.py
+
+tests\test_cross_tool_integration.py: Unused function get_assembly
+
+tests\test_cross_tool_integration.py: Unused function get_decompiled_code
+
+tests\test_cross_tool_integration.py: Unused function intercept_api
 
 
 3 findings in tests\unit\core\anti_analysis\test_debugger_detector.py
@@ -745,13 +453,6 @@ intellicrack\ai\llm_config_as_code.py: Unused function save_current_config
 intellicrack\ai\lora_adapter_manager.py: Unused function download_adapter
 
 intellicrack\ai\lora_adapter_manager.py: Unused function prepare_model_for_qlora
-
-
-2 findings in intellicrack\ai\model_cache_manager.py
-
-intellicrack\ai\model_cache_manager.py: Unused function preload_models
-
-intellicrack\ai\model_cache_manager.py: Unused function set_memory_limit
 
 
 2 findings in intellicrack\ai\model_comparison.py
@@ -817,32 +518,11 @@ intellicrack\ai\vulnerability_research_integration_helper.py: Unused function up
 intellicrack\ai\vulnerability_research_integration_helper.py: Unused function update_strategy_weights
 
 
-2 findings in intellicrack\analysis\analysis_result_orchestrator.py
-
-intellicrack\analysis\analysis_result_orchestrator.py: Unused function get_current_result
-
-intellicrack\analysis\analysis_result_orchestrator.py: Unused function unregister_handler
-
-
-2 findings in intellicrack\core\ai_model_manager.py
-
-intellicrack\core\ai_model_manager.py: Unused function disable_model
-
-intellicrack\core\ai_model_manager.py: Unused function get_model_manager
-
-
 2 findings in intellicrack\core\analysis\cross_tool_orchestrator.py
 
 intellicrack\core\analysis\cross_tool_orchestrator.py: Unused function get_next_tool
 
 intellicrack\core\analysis\cross_tool_orchestrator.py: Unused function schedule_tool
-
-
-2 findings in intellicrack\core\binary_analyzer.py
-
-intellicrack\core\binary_analyzer.py: Unused function get_supported_formats
-
-intellicrack\core\binary_analyzer.py: Unused function is_supported_format
 
 
 2 findings in intellicrack\core\debugging_engine.py
@@ -852,46 +532,11 @@ intellicrack\core\debugging_engine.py: Unused function set_conditional_breakpoin
 intellicrack\core\debugging_engine.py: Unused function unregister_exception_filter
 
 
-2 findings in intellicrack\core\integration\real_tool_communication.py
-
-intellicrack\core\integration\real_tool_communication.py: Unused function broadcast_message
-
-intellicrack\core\integration\real_tool_communication.py: Unused function get_tool_status
-
-
-2 findings in intellicrack\core\reporting\pdf_generator.py
-
-intellicrack\core\reporting\pdf_generator.py: Unused function add_subsection
-
-intellicrack\core\reporting\pdf_generator.py: Unused function isWidgetType
-
-
-2 findings in intellicrack\core\reporting\report_generator.py
-
-intellicrack\core\reporting\report_generator.py: Unused function get_format_mime_types
-
-intellicrack\core\reporting\report_generator.py: Unused function get_supported_formats
-
-
-2 findings in intellicrack\handlers\numpy_handler.py
-
-intellicrack\handlers\numpy_handler.py: Unused function ifft
-
-intellicrack\handlers\numpy_handler.py: Unused function inv
-
-
 2 findings in intellicrack\handlers\tensorflow_handler.py
 
 intellicrack\handlers\tensorflow_handler.py: Unused function set_inter_op_parallelism_threads
 
 intellicrack\handlers\tensorflow_handler.py: Unused function set_intra_op_parallelism_threads
-
-
-2 findings in intellicrack\hexview\file_handler.py
-
-intellicrack\hexview\file_handler.py: Unused function get_modification_time
-
-intellicrack\hexview\file_handler.py: Unused function undo_last_edit
 
 
 2 findings in intellicrack\hexview\hex_dialog.py
@@ -915,13 +560,6 @@ intellicrack\protection\icp_backend.py: Unused function add_supplemental_data
 intellicrack\protection\icp_backend.py: Unused function get_supplemental_engines_status
 
 
-2 findings in intellicrack\protection\intellicrack_protection_advanced.py
-
-intellicrack\protection\intellicrack_protection_advanced.py: Unused function advanced_analyze
-
-intellicrack\protection\intellicrack_protection_advanced.py: Unused function get_format_capabilities
-
-
 2 findings in intellicrack\tools\plugin_debugger.py
 
 intellicrack\tools\plugin_debugger.py: Unused function get_source_code
@@ -934,13 +572,6 @@ intellicrack\tools\plugin_debugger.py: Unused function set_exception_breakpoint
 intellicrack\tools\plugin_test_generator.py: Unused function get_test_summary
 
 intellicrack\tools\plugin_test_generator.py: Unused function set_output_directory
-
-
-2 findings in intellicrack\ui\dialog_utils.py
-
-intellicrack\ui\dialog_utils.py: Unused function browse_binary_file
-
-intellicrack\ui\dialog_utils.py: Unused function setup_binary_header
 
 
 2 findings in intellicrack\ui\dialogs\plugin_browser_utils.py
@@ -964,55 +595,6 @@ intellicrack\ui\dialogs\similarity_search_dialog.py: Unused function get_search_
 intellicrack\ui\dialogs\similarity_search_dialog.py: Unused function get_selected_pattern
 
 
-2 findings in intellicrack\ui\dialogs\visual_patch_editor.py
-
-intellicrack\ui\dialogs\visual_patch_editor.py: Unused function get_patches
-
-intellicrack\ui\dialogs\visual_patch_editor.py: Unused function has_unsaved_changes
-
-
-2 findings in intellicrack\ui\emulator_ui_enhancements.py
-
-intellicrack\ui\emulator_ui_enhancements.py: Unused function add_emulator_tooltips
-
-intellicrack\ui\emulator_ui_enhancements.py: Unused function update_emulator_status
-
-
-2 findings in intellicrack\ui\gpu_analysis.py
-
-intellicrack\ui\gpu_analysis.py: Unused function get_gpu_status
-
-intellicrack\ui\gpu_analysis.py: Unused function get_supported_formats
-
-
-2 findings in intellicrack\ui\radare2_ui_manager.py
-
-intellicrack\ui\radare2_ui_manager.py: Unused function get_analysis_history
-
-intellicrack\ui\radare2_ui_manager.py: Unused function get_current_results
-
-
-2 findings in intellicrack\ui\syntax_highlighter.py
-
-intellicrack\ui\syntax_highlighter.py: Unused function get_supported_languages
-
-intellicrack\ui\syntax_highlighter.py: Unused function set_language
-
-
-2 findings in intellicrack\ui\widgets\batch_analysis_widget.py
-
-intellicrack\ui\widgets\batch_analysis_widget.py: Unused function add_files_from_list
-
-intellicrack\ui\widgets\batch_analysis_widget.py: Unused function get_analysis_results
-
-
-2 findings in intellicrack\ui\widgets\console_widget.py
-
-intellicrack\ui\widgets\console_widget.py: Unused function append_debug
-
-intellicrack\ui\widgets\console_widget.py: Unused function get_content
-
-
 2 findings in intellicrack\ui\widgets\pe_structure_model.py
 
 intellicrack\ui\widgets\pe_structure_model.py: Unused function headerData
@@ -1027,48 +609,6 @@ intellicrack\utils\http_utils.py: Unused function secure_get
 intellicrack\utils\http_utils.py: Unused function secure_post
 
 
-2 findings in intellicrack\utils\log_message.py
-
-intellicrack\utils\log_message.py: Unused function get_message_queue
-
-intellicrack\utils\log_message.py: Unused function unregister_message_callback
-
-
-2 findings in intellicrack\utils\protection\protection_helpers.py
-
-intellicrack\utils\protection\protection_helpers.py: Unused function add_bypass_error
-
-intellicrack\utils\protection\protection_helpers.py: Unused function add_bypass_method
-
-
-2 findings in intellicrack\utils\report_generator.py
-
-intellicrack\utils\report_generator.py: Unused function generate_batch_report
-
-intellicrack\utils\report_generator.py: Unused function generate_comparison_report
-
-
-2 findings in intellicrack\utils\system\program_discovery.py
-
-intellicrack\utils\system\program_discovery.py: Unused function get_installed_programs
-
-intellicrack\utils\system\program_discovery.py: Unused function scan_executable_directories
-
-
-2 findings in intellicrack\utils\url_validation.py
-
-intellicrack\utils\url_validation.py: Unused function is_domain_in_string
-
-intellicrack\utils\url_validation.py: Unused function is_domain_in_url
-
-
-2 findings in intellicrack\utils\validation\import_validator.py
-
-intellicrack\utils\validation\import_validator.py: Unused function get_function_definitions
-
-intellicrack\utils\validation\import_validator.py: Unused function get_import_nodes
-
-
 2 findings in tests\core\analysis\test_frida_analyzer_production.py
 
 tests\core\analysis\test_frida_analyzer_production.py: Unused function analysis_completed_emit
@@ -1081,13 +621,6 @@ tests\core\analysis\test_frida_analyzer_production.py: Unused function update_ou
 tests\unit\core\analysis\test_automated_patch_agent.py: Unused function setup_advanced
 
 tests\unit\core\analysis\test_automated_patch_agent.py: Unused function setup_real_binaries
-
-
-2 findings in tests\unit\core\analysis\test_concolic_executor.py
-
-tests\unit\core\analysis\test_concolic_executor.py: Unused function get_analysis_results
-
-tests\unit\core\analysis\test_concolic_executor.py: Unused function get_execution_events
 
 
 2 findings in tests\unit\core\analysis\test_frida_analyzer.py
@@ -1154,11 +687,6 @@ intellicrack\ai\local_gguf_server.py: Unused function unload_model_endpoint
 intellicrack\ai\optimization_config.py: Unused function disable_rule
 
 
-1 findings in intellicrack\ai\parsing_utils.py
-
-intellicrack\ai\parsing_utils.py: Unused function parse_lines_with_categorization
-
-
 1 findings in intellicrack\ai\pattern_library.py
 
 intellicrack\ai\pattern_library.py: Unused function update_success_rate
@@ -1189,19 +717,19 @@ intellicrack\ai\vulnerability_research_integration.py: Unused function get_analy
 intellicrack\analysis\handlers\llm_handler.py: Unused function suggest_bypass_strategies
 
 
+1 findings in intellicrack\cli\ascii_charts.py
+
+intellicrack\cli\ascii_charts.py: Unused function display_chart_rich
+
+
+1 findings in intellicrack\cli\interactive_mode.py
+
+intellicrack\cli\interactive_mode.py: Unused function do_hexview
+
+
 1 findings in intellicrack\core\adobe_injector_integration.py
 
 intellicrack\core\adobe_injector_integration.py: Unused function set_window_pos
-
-
-1 findings in intellicrack\core\analysis\binary_similarity_search.py
-
-intellicrack\core\analysis\binary_similarity_search.py: Unused function get_fuzzy_match_statistics
-
-
-1 findings in intellicrack\core\analysis\frida_gui_integration.py
-
-intellicrack\core\analysis\frida_gui_integration.py: Unused function update_callstack
 
 
 1 findings in intellicrack\core\analysis\frida_script_manager.py
@@ -1234,34 +762,29 @@ intellicrack\core\anti_analysis\sandbox_detector.py: Unused function distance_to
 intellicrack\core\anti_analysis\vm_detector.py: Unused function get_hardware_fingerprint
 
 
-1 findings in intellicrack\core\frida_bypass_wizard.py
+1 findings in intellicrack\core\integration\real_tool_communication.py
 
-intellicrack\core\frida_bypass_wizard.py: Unused function apply_software_preset
-
-
-1 findings in intellicrack\core\orchestration\intelligent_correlation_engine.py
-
-intellicrack\core\orchestration\intelligent_correlation_engine.py: Unused function add_results_batch
+intellicrack\core\integration\real_tool_communication.py: Unused function broadcast_message
 
 
-1 findings in intellicrack\core\protection_bypass\cloud_license_analyzer.py
+1 findings in intellicrack\core\orchestration\tool_communication_bridge.py
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py: Unused function bypass_license_check
+intellicrack\core\orchestration\tool_communication_bridge.py: Unused function add_message_handler
 
 
-1 findings in intellicrack\core\security_enforcement.py
+1 findings in intellicrack\core\reporting\pdf_generator.py
 
-intellicrack\core\security_enforcement.py: Unused function disable_bypass
+intellicrack\core\reporting\pdf_generator.py: Unused function isWidgetType
+
+
+1 findings in intellicrack\core\reporting\report_generator.py
+
+intellicrack\core\reporting\report_generator.py: Unused function get_format_mime_types
 
 
 1 findings in intellicrack\core\shared\bypass_config.py
 
 intellicrack\core\shared\bypass_config.py: Unused function get_bypasses_by_difficulty
-
-
-1 findings in intellicrack\core\terminal_manager.py
-
-intellicrack\core\terminal_manager.py: Unused function get_terminal_widget
 
 
 1 findings in intellicrack\core\vulnerability_research\patch_analyzer.py
@@ -1279,29 +802,14 @@ intellicrack\core\vulnerability_research\vulnerability_analyzer.py: Unused funct
 intellicrack\dashboard\dashboard_integration.py: Unused function integrate_cross_tool_orchestrator
 
 
-1 findings in intellicrack\dashboard\live_data_pipeline.py
-
-intellicrack\dashboard\live_data_pipeline.py: Unused function add_websocket_connection
-
-
 1 findings in intellicrack\handlers\aiohttp_handler.py
 
 intellicrack\handlers\aiohttp_handler.py: Unused function add_routes
 
 
-1 findings in intellicrack\handlers\pefile_handler.py
-
-intellicrack\handlers\pefile_handler.py: Unused function get_rich_header_hash
-
-
 1 findings in intellicrack\handlers\psutil_handler.py
 
 intellicrack\handlers\psutil_handler.py: Unused function as_dict
-
-
-1 findings in intellicrack\handlers\pyqt6_handler.py
-
-intellicrack\handlers\pyqt6_handler.py: Unused function killTimer
 
 
 1 findings in intellicrack\handlers\requests_handler.py
@@ -1312,6 +820,21 @@ intellicrack\handlers\requests_handler.py: Unused function iter_lines
 1 findings in intellicrack\hexview\compare_dialog.py
 
 intellicrack\hexview\compare_dialog.py: Unused function show_quick_stats
+
+
+1 findings in intellicrack\hexview\file_compare.py
+
+intellicrack\hexview\file_compare.py: Unused function get_current
+
+
+1 findings in intellicrack\hexview\file_handler.py
+
+intellicrack\hexview\file_handler.py: Unused function get_modification_time
+
+
+1 findings in intellicrack\hexview\hex_commands.py
+
+intellicrack\hexview\hex_commands.py: Unused function get_redo_description
 
 
 1 findings in intellicrack\hexview\integration.py
@@ -1334,16 +857,6 @@ intellicrack\llm\tools\memory_forensics_tool.py: Unused function analyze_specifi
 intellicrack\llm\tools\yara_pattern_analysis_tool.py: Unused function analyze_custom_patterns
 
 
-1 findings in intellicrack\models\protection_knowledge_base.py
-
-intellicrack\models\protection_knowledge_base.py: Unused function get_analysis_workflow
-
-
-1 findings in intellicrack\models\repositories\factory.py
-
-intellicrack\models\repositories\factory.py: Unused function get_available_repository_types
-
-
 1 findings in intellicrack\plugins\__init__.py
 
 intellicrack\plugins\__init__.py: Unused function get_plugin_size
@@ -1359,34 +872,9 @@ intellicrack\plugins\custom_modules\hardware_dongle_emulator.py: Unused function
 intellicrack\plugins\custom_modules\intellicrack_core_engine.py: Unused function get_recent_events
 
 
-1 findings in intellicrack\ui\comprehensive_integration.py
-
-intellicrack\ui\comprehensive_integration.py: Unused function get_ui_manager
-
-
-1 findings in intellicrack\ui\dialogs\ai_coding_assistant_dialog.py
-
-intellicrack\ui\dialogs\ai_coding_assistant_dialog.py: Unused function get_content
-
-
-1 findings in intellicrack\ui\dialogs\debugger_dialog.py
-
-intellicrack\ui\dialogs\debugger_dialog.py: Unused function sizeHint
-
-
-1 findings in intellicrack\ui\dialogs\distributed_config_dialog.py
-
-intellicrack\ui\dialogs\distributed_config_dialog.py: Unused function set_defaults
-
-
 1 findings in intellicrack\ui\dialogs\event_handler_utils.py
 
 intellicrack\ui\dialogs\event_handler_utils.py: Unused function apply_state
-
-
-1 findings in intellicrack\ui\dialogs\ghidra_script_selector.py
-
-intellicrack\ui\dialogs\ghidra_script_selector.py: Unused function get_selected_script
 
 
 1 findings in intellicrack\ui\dialogs\keygen_dialog.py
@@ -1394,19 +882,9 @@ intellicrack\ui\dialogs\ghidra_script_selector.py: Unused function get_selected_
 intellicrack\ui\dialogs\keygen_dialog.py: Unused function show_keygen_dialog
 
 
-1 findings in intellicrack\ui\dialogs\program_selector_dialog.py
-
-intellicrack\ui\dialogs\program_selector_dialog.py: Unused function isComplete
-
-
 1 findings in intellicrack\ui\dialogs\script_generator_dialog.py
 
 intellicrack\ui\dialogs\script_generator_dialog.py: Unused function show_script_generator_dialog
-
-
-1 findings in intellicrack\ui\dialogs\splash_screen.py
-
-intellicrack\ui\dialogs\splash_screen.py: Unused function set_progress
 
 
 1 findings in intellicrack\ui\dialogs\system_utilities_dialog.py
@@ -1414,24 +892,14 @@ intellicrack\ui\dialogs\splash_screen.py: Unused function set_progress
 intellicrack\ui\dialogs\system_utilities_dialog.py: Unused function show_system_utilities_dialog
 
 
-1 findings in intellicrack\ui\dialogs\text_editor_dialog.py
-
-intellicrack\ui\dialogs\text_editor_dialog.py: Unused function get_content
-
-
 1 findings in intellicrack\ui\dialogs\vm_manager_dialog.py
 
 intellicrack\ui\dialogs\vm_manager_dialog.py: Unused function headerData
 
 
-1 findings in intellicrack\ui\shared_ui_layouts.py
+1 findings in intellicrack\ui\radare2_ui_manager.py
 
-intellicrack\ui\shared_ui_layouts.py: Unused function setup_standard_form_field
-
-
-1 findings in intellicrack\ui\style_utils.py
-
-intellicrack\ui\style_utils.py: Unused function get_splash_progress_bar_style
+intellicrack\ui\radare2_ui_manager.py: Unused function get_current_results
 
 
 1 findings in intellicrack\ui\tabs\settings_tab.py
@@ -1439,14 +907,9 @@ intellicrack\ui\style_utils.py: Unused function get_splash_progress_bar_style
 intellicrack\ui\tabs\settings_tab.py: Unused function browse_path
 
 
-1 findings in intellicrack\ui\tabs\terminal_tab.py
+1 findings in intellicrack\ui\widgets\batch_analysis_widget.py
 
-intellicrack\ui\tabs\terminal_tab.py: Unused function get_terminal_widget
-
-
-1 findings in intellicrack\ui\widgets\drop_zone_widget.py
-
-intellicrack\ui\widgets\drop_zone_widget.py: Unused function dragLeaveEvent
+intellicrack\ui\widgets\batch_analysis_widget.py: Unused function add_files_from_list
 
 
 1 findings in intellicrack\ui\widgets\entropy_graph_widget.py
@@ -1464,84 +927,14 @@ intellicrack\ui\widgets\file_metadata_widget.py: Unused function get_file_histor
 intellicrack\ui\widgets\hex_viewer_widget.py: Unused function interpret_data_at_cursor
 
 
-1 findings in intellicrack\ui\widgets\icp_analysis_widget.py
-
-intellicrack\ui\widgets\icp_analysis_widget.py: Unused function get_current_result
-
-
-1 findings in intellicrack\ui\window_sizing.py
-
-intellicrack\ui\window_sizing.py: Unused function apply_dialog_sizing
-
-
-1 findings in intellicrack\utils\binary\pe_common.py
-
-intellicrack\utils\binary\pe_common.py: Unused function analyze_pe_import_security
-
-
-1 findings in intellicrack\utils\core\dependency_feedback.py
-
-intellicrack\utils\core\dependency_feedback.py: Unused function generate_missing_dependency_report
-
-
-1 findings in intellicrack\utils\core\path_discovery.py
-
-intellicrack\utils\core\path_discovery.py: Unused function get_cuda_path
-
-
-1 findings in intellicrack\utils\exploitation\patch_engine.py
-
-intellicrack\utils\exploitation\patch_engine.py: Unused function generate_patch_config
-
-
-1 findings in intellicrack\utils\patching\patch_generator.py
-
-intellicrack\utils\patching\patch_generator.py: Unused function generate_binary_patch
-
-
 1 findings in intellicrack\utils\qemu_image_discovery.py
 
 intellicrack\utils\qemu_image_discovery.py: Unused function get_images_by_format
 
 
-1 findings in intellicrack\utils\reporting\report_common.py
-
-intellicrack\utils\reporting\report_common.py: Unused function generate_analysis_report
-
-
 1 findings in intellicrack\utils\runtime\additional_runners.py
 
 intellicrack\utils\runtime\additional_runners.py: Unused function detect_local_tpm_protection
-
-
-1 findings in intellicrack\utils\system\file_resolution.py
-
-intellicrack\utils\system\file_resolution.py: Unused function get_supported_file_filters
-
-
-1 findings in intellicrack\utils\system\os_detection_mixin.py
-
-intellicrack\utils\system\os_detection_mixin.py: Unused function detect_platform
-
-
-1 findings in intellicrack\utils\system\snapshot_common.py
-
-intellicrack\utils\system\snapshot_common.py: Unused function get_snapshot_data
-
-
-1 findings in intellicrack\utils\system\windows_structures.py
-
-intellicrack\utils\system\windows_structures.py: Unused function get_entry_point
-
-
-1 findings in intellicrack\utils\tools\ghidra_script_manager.py
-
-intellicrack\utils\tools\ghidra_script_manager.py: Unused function add_script_directory
-
-
-1 findings in intellicrack\utils\tools\pcapy_compat.py
-
-intellicrack\utils\tools\pcapy_compat.py: Unused function setfilter
 
 
 1 findings in intellicrack\utils\torch_gil_safety.py
@@ -1552,6 +945,11 @@ intellicrack\utils\torch_gil_safety.py: Unused function with_torch_gil_safety
 1 findings in intellicrack\utils\ui\ui_common.py
 
 intellicrack\utils\ui\ui_common.py: Unused function get_save_filename
+
+
+1 findings in tests\core\certificate\test_validation_detector_production.py
+
+tests\core\certificate\test_validation_detector_production.py: Unused function windows_system_binary
 
 
 1 findings in tests\exploitation\test_exploitation_validation.py
@@ -1567,6 +965,11 @@ tests\exploitation\test_protection_coverage.py: Unused function setUpClass
 1 findings in tests\framework\real_world_testing_framework.py
 
 tests\framework\real_world_testing_framework.py: Unused function benchmark_performance
+
+
+1 findings in tests\handlers\test_requests_handler_production.py
+
+tests\handlers\test_requests_handler_production.py: Unused function do_POST
 
 
 1 findings in tests\integration\real_binary_tests\test_securom_real.py
@@ -1622,6 +1025,11 @@ tests\production_standards\test_actual_modules.py: Unused function setUpClass
 1 findings in tests\unit\core\analysis\test_arxan_analyzer.py
 
 tests\unit\core\analysis\test_arxan_analyzer.py: Unused function setUpClass
+
+
+1 findings in tests\unit\core\analysis\test_concolic_executor.py
+
+tests\unit\core\analysis\test_concolic_executor.py: Unused function get_execution_events
 
 
 1 findings in tests\unit\core\analysis\test_dynamic_analyzer.py
